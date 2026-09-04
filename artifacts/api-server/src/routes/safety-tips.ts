@@ -23,6 +23,11 @@ const CATEGORY_LABELS: Record<TipCategory, string> = {
   other: "Safety Concern",
 };
 
+function publicSafetyTip<T extends { submittedById?: unknown }>(tip: T): Omit<T, "submittedById"> {
+  const { submittedById: _privateSubmitterId, ...publicTip } = tip;
+  return publicTip;
+}
+
 function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 3958.8;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -132,7 +137,7 @@ router.post("/safety-tips", async (req: Request, res: Response) => {
     await db.update(safetyTipsTable).set({ alertsSent: true }).where(eq(safetyTipsTable.id, tip.id));
 
     logger.info({ tipId: tip.id, city, category: cat }, "[safety-tips] submitted + alerts sent");
-    res.status(201).json({ tip });
+    res.status(201).json({ tip: publicSafetyTip(tip) });
   } catch (err) {
     req.log.error({ err }, "POST /safety-tips error");
     res.status(500).json({ error: "Failed to submit safety tip" });
@@ -169,11 +174,11 @@ router.get("/safety-tips/nearby", async (req: Request, res: Response) => {
         .from(safetyTipConfirmationsTable)
         .where(eq(safetyTipConfirmationsTable.userId, userId));
       const confirmedSet = new Set(confirmed.map((c) => c.tipId));
-      res.json({ tips: nearby.map((t) => ({ ...t, confirmedByMe: confirmedSet.has(t.id) })) });
+      res.json({ tips: nearby.map((t) => ({ ...publicSafetyTip(t), confirmedByMe: confirmedSet.has(t.id) })) });
       return;
     }
 
-    res.json({ tips: nearby });
+    res.json({ tips: nearby.map(publicSafetyTip) });
   } catch (err) {
     req.log.error({ err }, "GET /safety-tips/nearby error");
     res.status(500).json({ error: "Failed to fetch nearby tips" });
@@ -188,7 +193,7 @@ router.get("/safety-tips", async (req: Request, res: Response) => {
       .where(ne(safetyTipsTable.status, "dismissed"))
       .orderBy(desc(safetyTipsTable.createdAt))
       .limit(50);
-    res.json({ tips });
+    res.json({ tips: tips.map(publicSafetyTip) });
   } catch (err) {
     req.log.error({ err }, "GET /safety-tips error");
     res.status(500).json({ error: "Failed to fetch tips" });
@@ -264,7 +269,7 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
       logger.info({ tipId: id, count: updated.confirmationCount }, "[safety-tips] threshold reached — tip confirmed");
     }
 
-    res.json({ tip: updated, confirmed: true });
+    res.json({ tip: updated ? publicSafetyTip(updated) : updated, confirmed: true });
   } catch (err) {
     req.log.error({ err }, "POST /safety-tips/:id/confirm error");
     res.status(500).json({ error: "Failed to confirm tip" });

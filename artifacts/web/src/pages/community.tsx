@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { CommentsDialog } from "@/components/community/CommentsDialog";
 import { CommunityMedia } from "@/components/community/CommunityMedia";
-import { HappeningPanel } from "@/components/community/HappeningPanel";
 import { communityFeedErrorState } from "@/features/community/feedErrorState";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
@@ -250,7 +249,6 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   const { data: auth } = useGetCurrentAuthUser();
   const { toast } = useToast();
   const [content, setContent] = useState("");
-  const [postType, setPostType] = useState<"community" | "recommendation" | "alert">("community");
   const [visibility, setVisibility] = useState<"public" | "followers_only">("public");
   const [commentPolicy, setCommentPolicy] = useState<"everyone" | "followers" | "off">("everyone");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
@@ -261,6 +259,8 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   const [mediaUrlInput, setMediaUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [locationTag, setLocationTag] = useState("");
+  const [topicTag, setTopicTag] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -317,10 +317,13 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
     try {
       const body = {
         content: content.trim(),
-        postType,
-        category: postType === "recommendation" ? "recommendation" : postType === "alert" ? "alert" : "general",
+        postType: "community",
+        category: "general",
         visibility,
         commentPolicy,
+        locationTag: locationTag.trim() || undefined,
+        locationVenueName: locationTag.trim() || undefined,
+        topicTag: topicTag.trim() || undefined,
         mediaUrls: mediaUrls.length ? mediaUrls : undefined,
         hashtags: hashtags.length ? hashtags : undefined,
       };
@@ -347,7 +350,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         commentsCount: 0,
         commentPolicy,
         createdAt: new Date().toISOString(),
-        category: postType === "recommendation" ? "recommendation" : postType === "alert" ? "alert" : "general",
+        category: "general",
         postType: "community",
         mediaUrls,
         hashtags,
@@ -373,30 +376,29 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Post type */}
-          <div className="flex gap-2">
-            {(["community", "recommendation", "alert"] as const).map(t => (
-              <button key={t} onClick={() => setPostType(t)}
-                className={`flex-1 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors border ${
-                  postType === t ? "bg-[#2B1507] text-[#F5EBD8] border-[#2B1507]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/15 hover:border-[#CA922B]/40"
-                }`}>
-                {t === "community" ? "Discussion" : t === "recommendation" ? "Rec" : "Alert"}
-              </button>
-            ))}
-          </div>
-
           {/* Text area */}
           <textarea
             data-testid="community-compose-content"
             autoFocus
             value={content}
             onChange={e => setContent(e.target.value)}
-            placeholder={postType === "recommendation" ? "Share a recommendation with the community..." : postType === "alert" ? "Share an important alert or update..." : "What's on your mind?"}
+            placeholder="What's on your mind?"
             className="w-full min-h-28 resize-none border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/35 focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]"
             maxLength={1000}
           />
           <div className="flex justify-between items-center -mt-2">
             <span className="text-[10px] text-[#3A1F0E]/35">{content.length}/1000</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="relative">
+              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#CA922B]" />
+              <input aria-label="Tag a place" value={locationTag} onChange={(event) => setLocationTag(event.target.value)} placeholder="Tag a place" className="w-full rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] py-2.5 pl-9 pr-3 text-xs text-[#3A1F0E] outline-none focus:border-[#CA922B]/50" />
+            </label>
+            <label className="relative">
+              <Hash className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#CA922B]" />
+              <input aria-label="Tag a topic" value={topicTag} onChange={(event) => setTopicTag(event.target.value)} placeholder="Tag a topic" className="w-full rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] py-2.5 pl-9 pr-3 text-xs text-[#3A1F0E] outline-none focus:border-[#CA922B]/50" />
+            </label>
           </div>
 
           {/* Media preview */}
@@ -519,11 +521,11 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
                   visibility === "public" ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border-[#3A1F0E]/10" : "bg-[#CA922B]/10 text-[#CA922B] border-[#CA922B]/20"
                 }`}>
                 {visibility === "public" ? <Globe className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-                {visibility === "public" ? "Everyone" : "Followers"}
+                {visibility === "public" ? "Public" : "Friends only"}
               </button>
               <select data-testid="community-comment-policy" value={commentPolicy} onChange={(event) => setCommentPolicy(event.target.value as typeof commentPolicy)} aria-label="Who can comment" className="rounded-full border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 py-1.5 text-xs font-semibold text-[#3A1F0E]/60">
                 <option value="everyone">Comments: everyone</option>
-                <option value="followers">Comments: followers</option>
+                <option value="followers">Comments: friends</option>
                 <option value="off">Comments off</option>
               </select>
             </div>
@@ -705,7 +707,7 @@ function MemberCard({ m }: { m: MemberResult }) {
 }
 
 // ── Main Community Page ────────────────────────────────────────────────────
-const TABS = ["Feed", "What's Happening", "Events", "Groups"] as const;
+const TABS = ["Feed", "Events", "Groups"] as const;
 type Tab = typeof TABS[number];
 
 export default function Community() {
@@ -887,6 +889,11 @@ export default function Community() {
               ))}
             </div>
           )}
+          {!searchActive && (
+            <Link href="/community-guidelines" className="mt-2 block text-center text-xs font-semibold text-[#F5EBD8]/70 underline-offset-4 hover:text-white hover:underline">
+              Community guidance
+            </Link>
+          )}
         </div>
       </div>
 
@@ -1035,7 +1042,6 @@ export default function Community() {
           </>
         )}
 
-        {!searchActive && activeTab === "What's Happening" && <HappeningPanel isAuthenticated={isAuthenticated} onDiscuss={(postId, label) => setCommentTarget({ postId, label })} />}
         {!searchActive && activeTab === "Events" && <EventsTab />}
         {!searchActive && activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
       </div>

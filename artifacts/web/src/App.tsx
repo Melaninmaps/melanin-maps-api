@@ -83,6 +83,7 @@ import SubmitBusiness from "@/pages/submit-business";
 import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
 import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
+import SubmitEvent from "@/pages/submit-event";
 
 const BASE = import.meta.env.BASE_URL;
 const ROUTER_BASE = (() => {
@@ -298,6 +299,7 @@ function Router() {
       <Route path="/businesses">
         <Layout><PreLaunchRoute><LocationFirstBusinessDirectory /></PreLaunchRoute></Layout>
       </Route>
+      <Route path="/businesses/submit"><Redirect to="/submit-business" /></Route>
       <Route path="/businesses/:id">
         <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
       </Route>
@@ -348,6 +350,9 @@ function Router() {
       </Route>
       <Route path="/events">
         <Layout><PreLaunchRoute><LocationFirstEvents /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/events/submit">
+        <Layout><ProtectedRoute><SubmitEvent /></ProtectedRoute></Layout>
       </Route>
       <Route path="/travel">
         <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
@@ -402,6 +407,7 @@ function Router() {
       <Route path="/wellness">
         <Layout><ProtectedRoute><Wellness /></ProtectedRoute></Layout>
       </Route>
+      <Route path="/health-hub"><Redirect to="/wellness" /></Route>
       <Route path="/connections">
         <Layout><ProtectedRoute><Connections /></ProtectedRoute></Layout>
       </Route>

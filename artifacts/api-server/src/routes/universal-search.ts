@@ -579,6 +579,7 @@ async function searchBusinesses(opts: {
   const listingFilter = isTester
     ? "1=1"
     : "b.listing_status IN ('live_unclaimed', 'live_claimed')";
+  const nonDemoFilter = "COALESCE(b.name, '') NOT ILIKE '%[demo]%' AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'";
 
   const geoFilter = (lat !== undefined && lng !== undefined)
     ? `AND (
@@ -631,6 +632,7 @@ async function searchBusinesses(opts: {
          FROM businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
+           AND ${nonDemoFilter}
            AND b.name ILIKE $1
            ${cityClause} ${geoClause}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
@@ -705,6 +707,7 @@ async function searchBusinesses(opts: {
          FROM businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
+           AND ${nonDemoFilter}
            AND (
              b.description ILIKE $1
              OR b.tags::text ILIKE $1
@@ -761,6 +764,7 @@ async function searchBusinesses(opts: {
          JOIN community_says cs ON cs.business_id = b.id
          WHERE b.status = 'active'
            AND ${listingFilter}
+           AND ${nonDemoFilter}
            AND cs.says_text ILIKE $1
            ${city ? `AND b.city ILIKE $2` : ""}
          ORDER BY b.id, b.verified DESC
@@ -818,7 +822,10 @@ async function searchBusinesses(opts: {
         const cityCheckRes = await pool.query<{ city_lower: string }>(
           `SELECT DISTINCT lower(city) AS city_lower
            FROM businesses
-           WHERE status = 'active' AND lower(city) = ANY($1::text[])
+           WHERE status = 'active'
+             AND COALESCE(name, '') NOT ILIKE '%[demo]%'
+             AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+             AND lower(city) = ANY($1::text[])
            LIMIT 10`,
           [allWords],
         );
@@ -860,6 +867,7 @@ async function searchBusinesses(opts: {
              FROM businesses b
              WHERE b.status = 'active'
                AND ${listingFilter}
+               AND ${nonDemoFilter}
                AND lower(b.city) = ANY($1::text[])
                AND (
                  lower(b.name)           LIKE ANY($2::text[])
@@ -955,7 +963,11 @@ async function searchBusinesses(opts: {
           // to Illinois, silently excluding the LA business.
           const bizGate = await pool.query<{ id: string }>(
             `SELECT id FROM businesses
-             WHERE (name ILIKE $1 OR name ILIKE $2) AND status = 'active' LIMIT 1`,
+             WHERE (name ILIKE $1 OR name ILIKE $2)
+               AND status = 'active'
+               AND COALESCE(name, '') NOT ILIKE '%[demo]%'
+               AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+             LIMIT 1`,
             [geoQ, geoQ + "%"],
           );
           if (bizGate.rows.length > 0) skipGeocode = true;
@@ -1046,6 +1058,7 @@ async function searchBusinesses(opts: {
          FROM businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
+           AND ${nonDemoFilter}
            AND (${catIlikeParts})
            ${extraClauses} ${excludeClause}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
@@ -1125,6 +1138,7 @@ async function searchBusinesses(opts: {
            FROM businesses b
            WHERE b.status = 'active'
              AND ${listingFilter}
+             AND ${nonDemoFilter}
              AND (3959 * acos(GREATEST(-1, LEAST(1,
                    cos(radians($1)) * cos(radians(b.latitude)) *
                    cos(radians(b.longitude) - radians($2)) +
@@ -1186,6 +1200,7 @@ async function searchBusinesses(opts: {
          FROM businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
+           AND ${nonDemoFilter}
            AND similarity(LOWER(b.name), LOWER($1)) > 0.2
            ${excludeClause}
          ORDER BY similarity DESC, b.verified DESC
@@ -1939,12 +1954,14 @@ router.get("/search/suggest/universal", async (req: Request, res: Response) => {
 
     const [bizRows, eventRows] = await Promise.all([
       pool.query<{ label: string; type: string; category: string }>(
-        `SELECT name as label, 'business' as type, category
-         FROM businesses
-         WHERE status = 'active'
-           AND listing_status IN ('live_unclaimed', 'live_claimed')
-           AND name ILIKE $1 ${cityClause}
-         ORDER BY name ASC LIMIT 5`,
+        `SELECT b.name as label, 'business' as type, b.category
+         FROM businesses b
+         WHERE b.status = 'active'
+           AND b.listing_status IN ('live_unclaimed', 'live_claimed')
+           AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
+           AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
+           AND b.name ILIKE $1 ${cityClause}
+         ORDER BY b.name ASC LIMIT 5`,
         params,
       ).catch(() => ({ rows: [] })),
 

@@ -1151,8 +1151,8 @@ export default function MapPage() {
     clearRoute();
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current) return;
-    mapRef.current.panTo({ lat: 39.9526, lng: -75.1652 }); // Philadelphia — live city
-    mapRef.current.setZoom(12);
+    mapRef.current.panTo(userCoords ?? { lat: 39.9526, lng: -75.1652 });
+    mapRef.current.setZoom(userCoords ? 13 : 12);
     infoWindowRef.current?.close();
     markersRef.current.forEach((mk) => {
       mk.setIcon({
@@ -1164,7 +1164,7 @@ export default function MapPage() {
         strokeWeight: 2,
       });
     });
-  }, []);
+  }, [userCoords]);
 
   const clearRoute = useCallback(() => {
     if (directionsRendererRef.current) {
@@ -1240,6 +1240,28 @@ export default function MapPage() {
     : [];
 
   const legendTileLabel = LEGEND_TILES.find((t) => t.key === legendFilter)?.label ?? "";
+
+  function selectLegendLayer(next: string | null) {
+    setLegendFilter(next);
+    setSidebarOpen(next !== null);
+    if (!next || next === "business") return;
+
+    const matching = culturalSites.filter((site) => siteMatchesFilter(site, next));
+    const g = (window as any).google?.maps;
+    const map = mapRef.current;
+    if (!g || !map || matching.length === 0) return;
+    if (matching.length === 1) {
+      map.panTo({ lat: matching[0].latitude, lng: matching[0].longitude });
+      map.setZoom(14);
+      return;
+    }
+    const bounds = new g.LatLngBounds();
+    matching.forEach((site) => bounds.extend({ lat: site.latitude, lng: site.longitude }));
+    map.fitBounds(bounds, { top: 84, right: 32, bottom: 120, left: 352 });
+    g.event.addListenerOnce(map, "idle", () => {
+      if ((map.getZoom() ?? 0) > 13) map.setZoom(13);
+    });
+  }
 
   // ── MapViewportAdapter backed by the live Google Maps instance ──────────────
   // Passed to applyLocalMapViewport(makeMapAdapter(), area, pins) inside the
@@ -1822,6 +1844,16 @@ export default function MapPage() {
           </button>
         )}
 
+        <button
+          type="button"
+          onClick={resetView}
+          aria-label={userCoords ? "Recenter map on my location" : "Reset map to Philadelphia"}
+          className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-2xl border border-[#3A1F0E]/10 bg-white px-4 py-2.5 text-sm font-bold text-[#2B1507] shadow-lg transition-all hover:border-[#CA922B]/30 hover:shadow-xl"
+        >
+          <Navigation className="h-4 w-4 text-[#CA922B]" />
+          Recenter
+        </button>
+
         {/* Active route info bar */}
         {routeInfo && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#2B1507] text-[#F5EBD8] rounded-2xl px-5 py-3 shadow-xl flex items-center gap-4 z-10">
@@ -1850,8 +1882,7 @@ export default function MapPage() {
                   key={key}
                   onClick={() => {
                     const next = isActive ? null : key;
-                    setLegendFilter(next);
-                    setSidebarOpen(next !== null);
+                    selectLegendLayer(next);
                   }}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all text-left ${
                     isActive

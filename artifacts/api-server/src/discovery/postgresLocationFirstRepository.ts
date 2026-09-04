@@ -87,6 +87,8 @@ export async function findExactRecords(
         ON l.record_type = 'business' AND l.record_id = b.id::uuid
       LEFT JOIN business_specialties bs ON bs.business_id = b.id
       WHERE LOWER(l.city_name) = $1
+        AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
+        AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
         ${stateClause}
         ${specialtyClause}
         ${categoryClause}

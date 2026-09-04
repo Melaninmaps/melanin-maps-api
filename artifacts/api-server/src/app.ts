@@ -37,9 +37,6 @@ import { registerKinfolkCapabilityRoutes } from "./kinfolk/capabilities/register
 import { registerKinfolkToneRoute } from "./profile/registerKinfolkToneRoute";
 import { registerHairCareRoutes } from "./kinfolk/hairCare/registerHairCareRoutes";
 import { createPostgresHairCareRepository, createPostgresMemberLocationRepository } from "./kinfolk/hairCare/postgresHairCareRepository";
-import { registerVoiceTranscriptionRoute } from "./kinfolk/voice/registerVoiceTranscriptionRoute";
-import { createOpenAiTranscriptionProvider } from "./kinfolk/voice/openAiTranscriptionProvider";
-import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDiagnostics";
 import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
 import { CommunityVibesRepository } from "./communityVibes/communityVibesRepository";
 import { registerCommunityVibesRoutes } from "./communityVibes/registerCommunityVibesRoutes";
@@ -430,16 +427,6 @@ registerKinfolkToneRoute(app, pool);
 registerHairCareRoutes(app, {
   hairCareRepository: createPostgresHairCareRepository(pool),
   memberLocationRepository: createPostgresMemberLocationRepository(pool),
-});
-
-// ── Kinfolk voice transcription route ────────────────────────────────────────
-registerVoiceTranscriptionRoute(app, {
-  transcriptionProvider: createOpenAiTranscriptionProvider({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-    baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
-    model: process.env.VOICE_TRANSCRIPTION_MODEL ?? "whisper-1",
-  }),
-  diagnostics: createPostgresVoiceDiagnostics(pool),
 });
 
 // ── Location-First Discovery — single endpoint for Map, Businesses, Explore, Events ─

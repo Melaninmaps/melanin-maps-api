@@ -61,6 +61,10 @@ router.get("/events", async (req: Request, res: Response) => {
 
     // Show only active events
     conditions.push(eq(eventsTable.status, "active"));
+    // Production calendar policy: only member/staff-created rows are publishable.
+    // Legacy system fixtures have no creator and remain in storage for audit/history,
+    // but must never appear to members as real scheduled events.
+    conditions.push(isNotNull(eventsTable.createdById));
 
     const rawEvents = await db
       .select()
@@ -137,7 +141,11 @@ router.get("/events/:id", async (req: Request, res: Response) => {
     const [event] = await db
       .select()
       .from(eventsTable)
-      .where(eq(eventsTable.id, id));
+      .where(and(
+        eq(eventsTable.id, id),
+        eq(eventsTable.status, "active"),
+        isNotNull(eventsTable.createdById),
+      ));
 
     if (!event) {
       res.status(404).json({ error: "Event not found" });

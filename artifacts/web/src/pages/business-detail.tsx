@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, CheckCircle, Instagram, Award, Users, MessageCircle, Heart } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, CheckCircle, Instagram, Award, Users, MessageCircle, Heart, UtensilsCrossed, Scissors, HeartPulse, BriefcaseBusiness, Palette, ShoppingBag, Landmark, GraduationCap, Wrench, Plane, Store, Sparkles } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
 
 // Parse a Google Places JSON hours array (["Monday: 9 AM–5 PM", ...]) or a plain string.
 function parseHoursArray(hours: string | null | undefined): string[] | null {
@@ -129,6 +130,37 @@ function BusinessMapEmbed({ business }: { business: { name?: string | null; addr
         </div>
       </div>
     </a>
+  );
+}
+
+function BusinessHeroPlaceholder({ business }: { business: BusinessHeroRecord }) {
+  const icon = getBusinessHeroIcon(business);
+  const iconClass = "h-24 w-24 stroke-[1.35] md:h-32 md:w-32";
+  const categoryIcon = (() => {
+    switch (icon) {
+      case "food": return <UtensilsCrossed className={iconClass} />;
+      case "beauty": return <span className="relative"><Scissors className={iconClass} /><Sparkles className="absolute -right-8 -top-5 h-12 w-12 stroke-[1.35]" /></span>;
+      case "health": return <HeartPulse className={iconClass} />;
+      case "professional": return <BriefcaseBusiness className={iconClass} />;
+      case "arts": return <Palette className={iconClass} />;
+      case "retail": return <ShoppingBag className={iconClass} />;
+      case "faith": return <Landmark className={iconClass} />;
+      case "education": return <GraduationCap className={iconClass} />;
+      case "home": return <Wrench className={iconClass} />;
+      case "travel": return <Plane className={iconClass} />;
+      default: return <Store className={iconClass} />;
+    }
+  })();
+
+  return (
+    <div data-testid="business-category-placeholder" className="absolute inset-0 overflow-hidden bg-[#24150D]" aria-label="Business category illustration">
+      <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_center,_#CA922B_0,_transparent_58%)]" />
+      <div className="absolute inset-0 flex items-center justify-center text-[#E5B94B]">
+        <div className="flex h-56 w-56 items-center justify-center rounded-full border-2 border-[#CA922B]/70 bg-[#CA922B]/10 shadow-[0_0_80px_rgba(202,146,43,0.22)] md:h-72 md:w-72">
+          {categoryIcon}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -997,8 +1029,10 @@ export default function BusinessDetail() {
 
       {/* Hero Header */}
       <div data-testid="business-hero" className="relative w-full h-[50vh] md:h-[60vh] bg-[#2B1507]">
-        {business.imageUrl && (
-          <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover" />
+        {canDisplayBusinessCover(business as typeof business & { profileStatus?: string | null }) ? (
+          <img src={business.imageUrl ?? undefined} alt={business.name} className="w-full h-full object-cover" />
+        ) : (
+          <BusinessHeroPlaceholder business={business as typeof business & { profileStatus?: string | null }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507] via-[#2B1507]/40 to-transparent" />
         
@@ -1009,11 +1043,6 @@ export default function BusinessDetail() {
                 <span data-testid="business-category" className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
                   {business.category}
                 </span>
-                {business.description?.startsWith("[DEMO]") && (
-                  <span className="bg-amber-100 text-amber-700 border border-amber-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                    Demo Listing
-                  </span>
-                )}
                 {/* confidenceScore is an internal metric — never shown; community builds scores */}
               </div>
               <h1 data-testid="business-name" className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>

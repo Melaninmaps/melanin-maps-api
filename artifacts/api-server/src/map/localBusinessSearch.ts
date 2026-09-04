@@ -75,6 +75,8 @@ export class LocalBusinessSearch {
         FROM public.public_businesses b
         WHERE b.latitude IS NOT NULL
           AND b.longitude IS NOT NULL
+          AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
+          AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
           AND (
             to_tsvector('simple',
               coalesce(b.name, '') || ' ' ||

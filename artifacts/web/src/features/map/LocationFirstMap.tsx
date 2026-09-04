@@ -177,7 +177,7 @@ function CoverageGapPanel({ response }: { response: LocationFirstResponse }) {
         This local need has been recorded so the community can grow coverage — we never show a distant listing as local.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Link href="/businesses/submit" className="rounded-full border border-[#CA922B] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]">
+        <Link href="/submit-business" className="rounded-full border border-[#CA922B] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]">
           Add a listing
         </Link>
       </div>

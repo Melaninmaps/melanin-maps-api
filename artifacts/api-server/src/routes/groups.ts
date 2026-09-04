@@ -26,7 +26,35 @@ function requireAuth(req: Request, res: Response): boolean {
   return true;
 }
 
+async function findGroupMembership(groupId: number, userId: string) {
+  const [membership] = await db
+    .select()
+    .from(groupMembers)
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+    .limit(1);
+  return membership ?? null;
+}
+
+function groupCatalogRecord(group: typeof groups.$inferSelect, isMember: boolean) {
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    category: group.category,
+    memberCount: group.memberCount,
+    maxMembers: group.maxMembers,
+    isPrivate: group.isPrivate,
+    isAgeRestricted: group.isAgeRestricted,
+    city: group.city,
+    state: group.state,
+    imageUrl: group.imageUrl,
+    createdAt: group.createdAt,
+    isMember,
+  };
+}
+
 router.get("/groups", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
   try {
     const rows = await db
       .select()
@@ -35,32 +63,28 @@ router.get("/groups", async (req: Request, res: Response) => {
 
     let memberGroupIds = new Set<number>();
     let userAudiencePrefs: string[] = [];
-    if (req.isAuthenticated()) {
-      const memberships = await db
-        .select({ groupId: groupMembers.groupId })
-        .from(groupMembers)
-        .where(eq(groupMembers.userId, req.user.id));
-      memberGroupIds = new Set(memberships.map((m) => m.groupId));
+    const memberships = await db
+      .select({ groupId: groupMembers.groupId })
+      .from(groupMembers)
+      .where(eq(groupMembers.userId, req.user!.id));
+    memberGroupIds = new Set(memberships.map((m) => m.groupId));
 
-      const [prefs] = await db
-        .select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes })
-        .from(userPreferencesTable)
-        .where(eq(userPreferencesTable.userId, req.user.id))
-        .limit(1);
-      userAudiencePrefs = (prefs?.preferredOwnershipTypes as string[] | null) ?? [];
-    }
+    const [prefs] = await db
+      .select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user!.id))
+      .limit(1);
+    userAudiencePrefs = (prefs?.preferredOwnershipTypes as string[] | null) ?? [];
 
     const result = rows
       .filter((g) => {
+        if (g.isPrivate && !memberGroupIds.has(g.id)) return false;
         const aud = (g.audiencePreferences as string[] | null) ?? [];
         if (aud.length === 0) return true;
         if (userAudiencePrefs.length === 0) return true;
         return aud.some((a) => userAudiencePrefs.includes(a));
       })
-      .map((g) => ({
-        ...g,
-        isMember: memberGroupIds.has(g.id),
-      }));
+      .map((g) => groupCatalogRecord(g, memberGroupIds.has(g.id)));
 
     res.json({ groups: result });
   } catch (err) {
@@ -100,6 +124,7 @@ router.get("/groups/my-invites", async (req: Request, res: Response) => {
 });
 
 router.get("/groups/:id", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
   try {
     const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -107,19 +132,21 @@ router.get("/groups/:id", async (req: Request, res: Response) => {
     const [group] = await db.select().from(groups).where(eq(groups.id, id)).limit(1);
     if (!group) { res.status(404).json({ error: "Group not found" }); return; }
 
-    const members = await db
+    const membership = await findGroupMembership(id, req.user!.id);
+    if (group.isPrivate && !membership) {
+      res.status(404).json({ error: "Group not found" });
+      return;
+    }
+
+    const members = membership ? await db
       .select({ userId: groupMembers.userId, role: groupMembers.role, joinedAt: groupMembers.joinedAt })
       .from(groupMembers)
       .where(eq(groupMembers.groupId, id))
-      .limit(100);
+      .limit(100) : [];
 
-    const isMember = req.isAuthenticated()
-      ? members.some((m) => m.userId === req.user.id)
-      : false;
+    const isMember = Boolean(membership);
 
-    const isAdmin = req.isAuthenticated()
-      ? members.some((m) => m.userId === req.user.id && m.role === "admin")
-      : false;
+    const isAdmin = membership?.role === "admin";
 
     let pendingInvites: { id: number; invitedUserId: string; invitedUserFirstName: string | null; invitedUserLastName: string | null; createdAt: Date }[] = [];
     if (isAdmin) {
@@ -136,7 +163,7 @@ router.get("/groups/:id", async (req: Request, res: Response) => {
         .where(and(eq(groupInvites.groupId, id), eq(groupInvites.status, "pending")));
     }
 
-    res.json({ group: { ...group, isMember, isAdmin }, members, pendingInvites });
+    res.json({ group: { ...groupCatalogRecord(group, isMember), rules: group.rules ?? [], isAdmin }, members, pendingInvites });
   } catch (err) {
     req.log.error({ err }, "GET /api/groups/:id error");
     res.status(500).json({ error: "Internal server error" });
@@ -711,9 +738,13 @@ router.delete("/groups/:id/leave", async (req: Request, res: Response) => {
 });
 
 router.get("/groups/:id/suggestions", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
   try {
     const groupId = parseInt(String(req.params.id), 10);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const membership = await findGroupMembership(groupId, req.user!.id);
+    if (!membership) { res.status(403).json({ error: "Group membership required" }); return; }
 
     const items = await db
       .select()
@@ -734,6 +765,9 @@ router.post("/groups/:id/suggestions", async (req: Request, res: Response) => {
     const groupId = parseInt(String(req.params.id), 10);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
     const userId = req.user!.id;
+
+    const membership = await findGroupMembership(groupId, userId);
+    if (!membership) { res.status(403).json({ error: "Group membership required" }); return; }
 
     const { type, value, notes } = req.body as {
       type?: string;
@@ -767,6 +801,9 @@ router.post("/groups/:id/suggestions/:suggId/upvote", async (req: Request, res: 
     const groupId = parseInt(String(req.params.id), 10);
     const suggId = parseInt(String(req.params.suggId), 10);
     if (isNaN(groupId) || isNaN(suggId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const membership = await findGroupMembership(groupId, req.user!.id);
+    if (!membership) { res.status(403).json({ error: "Group membership required" }); return; }
 
     const [updated] = await db
       .update(groupSuggestions)

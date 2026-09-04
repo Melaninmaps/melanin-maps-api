@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { db, locationSharesTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import crypto from "node:crypto";
 import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
@@ -46,12 +46,20 @@ router.post("/safety/location-shares", requireFamilySafety, async (req: Request,
 });
 
 router.patch("/safety/location-shares/:token/update", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res); if (!userId) return;
   try {
     const { lat, lng } = req.body as { lat?: number; lng?: number };
-    if (lat == null || lng == null) { res.status(400).json({ error: "lat and lng are required" }); return; }
+    if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      res.status(400).json({ error: "Valid lat and lng are required" }); return;
+    }
     const [share] = await db.update(locationSharesTable)
       .set({ currentLat: lat, currentLng: lng, lastUpdatedAt: new Date() })
-      .where(and(eq(locationSharesTable.shareToken, req.params["token"] as string), eq(locationSharesTable.isActive, true)))
+      .where(and(
+        eq(locationSharesTable.shareToken, req.params["token"] as string),
+        eq(locationSharesTable.sharerId, userId),
+        eq(locationSharesTable.isActive, true),
+        gt(locationSharesTable.expiresAt, new Date()),
+      ))
       .returning();
     if (!share) { res.status(404).json({ error: "Share not found or expired" }); return; }
     res.json({ ok: true });

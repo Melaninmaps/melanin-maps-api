@@ -105,6 +105,8 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
         AND longitude IS NOT NULL
         AND latitude::numeric != 0
         AND longitude::numeric != 0
+        AND COALESCE(name, '') NOT ILIKE '%[demo]%'
+        AND COALESCE(description, '') NOT ILIKE '%[demo]%'
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
     `);
     sendDynamicJson(res, { pins: rows });
@@ -138,6 +140,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
     );
     conditions.push(
       sql`COALESCE(${businessesTable}.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')`
+    );
+    conditions.push(
+      sql`COALESCE(${businessesTable}.name, '') NOT ILIKE '%[demo]%'`
+    );
+    conditions.push(
+      sql`COALESCE(${businessesTable}.description, '') NOT ILIKE '%[demo]%'`
     );
 
     // ── listing_status gate — real users only see live listings ──────────────
@@ -370,6 +378,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const fuzzyScope: string[] = [
           "COALESCE(b.is_duplicate, false) = false",
           "COALESCE(b.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')",
+          "COALESCE(b.name, '') NOT ILIKE '%[demo]%'",
+          "COALESCE(b.description, '') NOT ILIKE '%[demo]%'",
         ];
         const fuzzyScopeParams: unknown[] = [];
         if (!isTester) {
@@ -1167,6 +1177,13 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
       .where(eq(businessesTable.id, id));
 
     if (!business) {
+      res.status(404).json({ error: "Business not found" });
+      return;
+    }
+
+    const containsDemoMarker = [business.name, business.description]
+      .some((value) => typeof value === "string" && value.toLowerCase().includes("[demo]"));
+    if (containsDemoMarker) {
       res.status(404).json({ error: "Business not found" });
       return;
     }
@@ -2908,5 +2925,3 @@ router.get("/admin/contributions", async (req: Request, res: Response): Promise<
 });
 
 export default router;
-
-

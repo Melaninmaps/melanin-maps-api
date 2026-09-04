@@ -82,7 +82,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/circles", label: "Circles" },
     { href: "/guides", label: "Guides" },
     { href: "/marketplace", label: "Marketplace" },
-    { href: "/connections", label: "Connections" },
   ];
 
   const navItems: NavItem[] = isMember

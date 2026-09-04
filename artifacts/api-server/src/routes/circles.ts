@@ -21,11 +21,11 @@ import { sendPushToUser } from "../lib/pushNotifications";
 
 // Tier limits for circle creation
 const CIRCLE_LIMITS: Record<string, { maxCircles: number; maxPrivateMembers: number; maxCommunityMembers: number }> = {
-  free:        { maxCircles: 1,        maxPrivateMembers: 4,  maxCommunityMembers: 0   },
-  navigator:   { maxCircles: 3,        maxPrivateMembers: 10, maxCommunityMembers: 25  },
-  trailblazer: { maxCircles: Infinity, maxPrivateMembers: 20, maxCommunityMembers: 100 },
-  founding:    { maxCircles: Infinity, maxPrivateMembers: 20, maxCommunityMembers: 100 },
-  beta:        { maxCircles: Infinity, maxPrivateMembers: 20, maxCommunityMembers: 100 },
+  free:        { maxCircles: 1,        maxPrivateMembers: 8, maxCommunityMembers: 0 },
+  navigator:   { maxCircles: 3,        maxPrivateMembers: 8, maxCommunityMembers: 8 },
+  trailblazer: { maxCircles: Infinity, maxPrivateMembers: 8, maxCommunityMembers: 8 },
+  founding:    { maxCircles: Infinity, maxPrivateMembers: 8, maxCommunityMembers: 8 },
+  beta:        { maxCircles: Infinity, maxPrivateMembers: 8, maxCommunityMembers: 8 },
 };
 function getTierKey(memberType: string | null | undefined): keyof typeof CIRCLE_LIMITS {
   if (!memberType) return "free";
@@ -54,6 +54,61 @@ async function getCircleWithAuth(circleId: number, userId: string, res: Response
   return { circle, membership: membership ?? null };
 }
 
+type CircleMemberRow = { id: number; circleId: number; userId: string; role: string; joinedAt: Date };
+type CapacityJoinResult = {
+  status: "joined" | "already_member" | "full" | "missing";
+  member?: CircleMemberRow;
+};
+
+async function addCircleMemberWithinCap(circleId: number, userId: string): Promise<CapacityJoinResult> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const circleResult = await client.query<{ max_members: number }>(
+      `SELECT max_members FROM kinfolk_circles WHERE id = $1 FOR UPDATE`,
+      [circleId],
+    );
+    if (!circleResult.rows[0]) {
+      await client.query("ROLLBACK");
+      return { status: "missing" };
+    }
+
+    const existingResult = await client.query<CircleMemberRow>(
+      `SELECT id, circle_id AS "circleId", user_id AS "userId", role, joined_at AS "joinedAt"
+       FROM circle_members WHERE circle_id = $1 AND user_id = $2 LIMIT 1`,
+      [circleId, userId],
+    );
+    if (existingResult.rows[0]) {
+      await client.query("ROLLBACK");
+      return { status: "already_member", member: existingResult.rows[0] };
+    }
+
+    const countResult = await client.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM circle_members WHERE circle_id = $1`,
+      [circleId],
+    );
+    const effectiveMax = Math.min(Number(circleResult.rows[0].max_members) || 8, 8);
+    if ((countResult.rows[0]?.count ?? 0) >= effectiveMax) {
+      await client.query("ROLLBACK");
+      return { status: "full" };
+    }
+
+    const insertedResult = await client.query<CircleMemberRow>(
+      `INSERT INTO circle_members (circle_id, user_id, role)
+       VALUES ($1, $2, 'member')
+       RETURNING id, circle_id AS "circleId", user_id AS "userId", role, joined_at AS "joinedAt"`,
+      [circleId, userId],
+    );
+    await client.query("COMMIT");
+    return { status: "joined", member: insertedResult.rows[0] };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 router.get("/circles", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
   try {
@@ -74,11 +129,20 @@ router.get("/circles", async (req: Request, res: Response) => {
 });
 
 router.get("/circles/community", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
   try {
     const circles = await db.select().from(kinfolkCircles)
       .where(and(eq(kinfolkCircles.type, "community"), eq(kinfolkCircles.privacy, "public")))
       .orderBy(desc(kinfolkCircles.createdAt)).limit(30);
-    res.json({ circles });
+    res.json({ circles: circles.map((circle) => ({
+      id: circle.id,
+      name: circle.name,
+      description: circle.description,
+      emoji: circle.emoji,
+      city: circle.city,
+      state: circle.state,
+      maxMembers: Math.min(circle.maxMembers, 8),
+    })) });
   } catch (err) {
     (req as any).log.error({ err }, "GET /circles/community error");
     res.status(500).json({ error: "Failed to load community circles" });
@@ -146,7 +210,7 @@ router.post("/circles", async (req: Request, res: Response) => {
       hostUserId: uid(req),
       description: description ? String(description).trim() : null,
       emoji: emoji ? String(emoji) : "✨",
-      maxMembers: typeof maxMembers === "number" ? Math.min(maxMembers, defaultMax) : defaultMax,
+      maxMembers: typeof maxMembers === "number" ? Math.max(1, Math.min(Math.floor(maxMembers), defaultMax, 8)) : Math.min(defaultMax, 8),
       city: city ? String(city) : null,
       state: state ? String(state) : null,
       planningMode: String(planningMode ?? "open"),
@@ -194,7 +258,7 @@ router.get("/circles/:id", async (req: Request, res: Response) => {
     const result = await getCircleWithAuth(circleId, uid(req), res);
     if (!result) return;
     const { circle, membership } = result;
-    if (!membership && circle.privacy !== "public") {
+    if (!membership) {
       res.status(403).json({ error: "Not a member of this circle" }); return;
     }
     const members = await db.select({ id: circleMembers.id, userId: circleMembers.userId, role: circleMembers.role, joinedAt: circleMembers.joinedAt })
@@ -225,7 +289,7 @@ router.patch("/circles/:id", async (req: Request, res: Response) => {
     if (typeof emoji === "string") updates.emoji = emoji;
     if (typeof privacy === "string") updates.privacy = privacy;
     if (typeof planningMode === "string") updates.planningMode = planningMode;
-    if (typeof maxMembers === "number") updates.maxMembers = maxMembers;
+    if (typeof maxMembers === "number") updates.maxMembers = Math.max(1, Math.min(Math.floor(maxMembers), 8));
     if (typeof city === "string") updates.city = city || null;
     if (typeof state === "string") updates.state = state || null;
     const [updated] = await db.update(kinfolkCircles).set(updates).where(eq(kinfolkCircles.id, circleId)).returning();
@@ -260,13 +324,11 @@ router.post("/circles/:id/join", async (req: Request, res: Response) => {
     const [circle] = await db.select().from(kinfolkCircles).where(eq(kinfolkCircles.id, circleId)).limit(1);
     if (!circle) { res.status(404).json({ error: "Circle not found" }); return; }
     if (circle.privacy === "invite_only") { res.status(403).json({ error: "This circle is invite-only" }); return; }
-    const [existing] = await db.select().from(circleMembers)
-      .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, uid(req)))).limit(1);
-    if (existing) { res.status(409).json({ error: "Already a member" }); return; }
-    const memberCount = await db.select({ count: sql<number>`count(*)`.mapWith(Number) }).from(circleMembers).where(eq(circleMembers.circleId, circleId));
-    if ((memberCount[0]?.count ?? 0) >= circle.maxMembers) { res.status(409).json({ error: "Circle is full" }); return; }
-    await db.insert(circleMembers).values({ circleId, userId: uid(req), role: "member" });
-    res.json({ ok: true });
+    const joinResult = await addCircleMemberWithinCap(circleId, uid(req));
+    if (joinResult.status === "missing") { res.status(404).json({ error: "Circle not found" }); return; }
+    if (joinResult.status === "already_member") { res.status(409).json({ error: "Already a member" }); return; }
+    if (joinResult.status === "full") { res.status(409).json({ error: "Circle is full" }); return; }
+    res.json({ ok: true, member: joinResult.member });
   } catch (err) {
     (req as any).log.error({ err }, "POST /circles/:id/join error");
     res.status(500).json({ error: "Failed to join circle" });
@@ -298,12 +360,12 @@ router.post("/circles/:id/invite", async (req: Request, res: Response) => {
   try {
     const result = await getCircleWithAuth(circleId, uid(req), res);
     if (!result) return;
-    if (!result.membership) { res.status(403).json({ error: "Not a member" }); return; }
-    const [existing] = await db.select().from(circleMembers)
-      .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, inviteeId))).limit(1);
-    if (existing) { res.status(409).json({ error: "User is already a member" }); return; }
-    await db.insert(circleMembers).values({ circleId, userId: inviteeId, role: "member" });
-    res.json({ ok: true });
+    if (result.circle.hostUserId !== uid(req)) { res.status(403).json({ error: "Only the Circle Host can invite members" }); return; }
+    const joinResult = await addCircleMemberWithinCap(circleId, inviteeId);
+    if (joinResult.status === "missing") { res.status(404).json({ error: "Circle not found" }); return; }
+    if (joinResult.status === "already_member") { res.status(409).json({ error: "User is already a member" }); return; }
+    if (joinResult.status === "full") { res.status(409).json({ error: "Circle is full (maximum 8 members)" }); return; }
+    res.json({ ok: true, member: joinResult.member });
   } catch (err) {
     (req as any).log.error({ err }, "POST /circles/:id/invite error");
     res.status(500).json({ error: "Failed to invite member" });
@@ -338,6 +400,9 @@ router.post("/circles/:id/transfer", async (req: Request, res: Response) => {
     const [circle] = await db.select().from(kinfolkCircles).where(eq(kinfolkCircles.id, circleId)).limit(1);
     if (!circle) { res.status(404).json({ error: "Circle not found" }); return; }
     if (circle.hostUserId !== uid(req)) { res.status(403).json({ error: "Only the Circle Host can transfer ownership" }); return; }
+    const [newHostMembership] = await db.select().from(circleMembers)
+      .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, newHostId))).limit(1);
+    if (!newHostMembership) { res.status(400).json({ error: "The new host must already be a Circle member" }); return; }
     await db.update(kinfolkCircles).set({ hostUserId: newHostId, updatedAt: new Date() }).where(eq(kinfolkCircles.id, circleId));
     await db.update(circleMembers).set({ role: "host" }).where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, newHostId)));
     await db.update(circleMembers).set({ role: "member" }).where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, uid(req))));
@@ -353,6 +418,9 @@ router.get("/circles/:id/suggestions", async (req: Request, res: Response) => {
   const circleId = parseInt(req.params.id as string);
   if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
   try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result) return;
+    if (!result.membership) { res.status(403).json({ error: "Not a member" }); return; }
     const suggestions = await db.select().from(circleSuggestions)
       .where(eq(circleSuggestions.circleId, circleId))
       .orderBy(desc(circleSuggestions.upvotes), desc(circleSuggestions.createdAt));
@@ -602,6 +670,9 @@ router.get("/circles/:id/plans", async (req: Request, res: Response) => {
   const circleId = parseInt(req.params.id as string);
   if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
   try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result) return;
+    if (!result.membership) { res.status(403).json({ error: "Not a member" }); return; }
     const plans = await db.select().from(circlePlans)
       .where(eq(circlePlans.circleId, circleId)).orderBy(desc(circlePlans.createdAt));
     res.json({ plans });

@@ -185,10 +185,10 @@ export default function Home() {
   const { data: auth } = useGetCurrentAuthUser();
   const [, navigate] = useLocation();
 
-  // Authenticated members belong on the map, not the marketing homepage
+  // Authenticated members begin with the visual Discover experience.
   useEffect(() => {
     if (auth?.user) {
-      navigate("/map", { replace: true });
+      navigate("/discover", { replace: true });
     }
   }, [auth?.user, navigate]);
 

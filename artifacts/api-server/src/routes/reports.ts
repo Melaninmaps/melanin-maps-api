@@ -37,6 +37,21 @@ const SAFETY_RATING_THRESHOLD = 3;
 
 const SEVERITY_WEIGHTS: Record<string, number> = { low: 0.2, medium: 0.5, high: 1.0, critical: 2.0 };
 
+function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
+  return {
+    id: report.id,
+    category: report.category,
+    targetType: report.targetType,
+    targetId: report.targetId,
+    targetName: report.targetName,
+    description: report.description,
+    severity: report.severity,
+    status: report.status,
+    businessResponseText: report.businessResponseText,
+    createdAt: report.createdAt,
+  };
+}
+
 // Short-lived coordinate-keyed cache for proximity-warnings.
 // Rounds to 3 decimal places (~111 m) so nearby poll ticks share a cache entry.
 // Community safety data only — no user-specific fields in the cached payload.
@@ -209,7 +224,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     const [report] = await db
       .insert(safetyReportsTable)
       .values({
-        reporterId: req.user?.id ?? null,
+        reporterId: isAnon ? null : (req.user?.id ?? null),
         reporterName,
         category: category as string,
         targetType: resolvedTargetType,
@@ -274,7 +289,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     }).catch((err) => req.log.warn({ err }, "Failed to send admin safety report alert"));
 
     res.status(201).json({
-      report,
+      report: publicSafetyReport(report),
       message: "Report submitted. Thank you for keeping the community safe.",
     });
   } catch (err) {
@@ -299,7 +314,7 @@ router.get("/reports", async (req: Request, res: Response): Promise<void> => {
     }
 
     const reports = await query;
-    res.json({ reports });
+    res.json({ reports: reports.map(publicSafetyReport) });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch safety reports");
     res.status(500).json({ error: "Failed to fetch reports" });

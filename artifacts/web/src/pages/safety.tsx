@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   Shield, AlertTriangle, Radio, Users, MapPin, Phone, ChevronRight,
   X, CheckCircle, Loader2, Eye, EyeOff, Navigation, Flag, Building2,
@@ -21,6 +21,15 @@ const SAFETY_TYPES = [
   { value: "Community Resource", label: "Community Resource", desc: "Share a helpful resource" },
   { value: "Positive Safety Tip", label: "Positive Safety Tip", desc: "Share a welcoming place or experience" },
 ];
+
+const SAFETY_CATEGORY_VALUES: Record<string, "safety" | "sundown" | "discrimination" | "business" | "resource" | "positive"> = {
+  "Safety Concern": "safety",
+  "Sundown Town Warning": "sundown",
+  Discrimination: "discrimination",
+  "Business Update": "business",
+  "Community Resource": "resource",
+  "Positive Safety Tip": "positive",
+};
 
 const POLICE_TYPES = [
   { value: "Police Stop/Questioning", label: "Police Stop / Questioning" },
@@ -83,10 +92,10 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
   const submit = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}api/reports`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/reports`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: type, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium" }),
+        body: JSON.stringify({ category: SAFETY_CATEGORY_VALUES[type] ?? "safety", targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium", isAnonymous }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else { toast({ title: "Could not submit", description: "Please try again.", variant: "destructive" }); }
@@ -163,7 +172,7 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
             {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
             <div className="text-left">
               <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous report"}</p>
-              <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Your identity is protected" : "Your name may be visible to moderators"}</p>
+              <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Hidden from public views; moderators can still review the report" : "Moderators may use your account to follow up"}</p>
             </div>
           </button>
           <div className="flex gap-3">
@@ -196,10 +205,10 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
     if (!description || description.length < 10) { toast({ title: "Please provide a description (min 10 chars)", variant: "destructive" }); return; }
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}api/reports`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/reports`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "police", encounterType, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium" }),
+        body: JSON.stringify({ category: "police", encounterType, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium", isAnonymous }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else toast({ title: "Could not submit", variant: "destructive" });
@@ -262,7 +271,7 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
         {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
         <div className="text-left">
           <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous"}</p>
-          <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Your identity is protected" : "Your name visible to moderators"}</p>
+          <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Hidden from public views; moderators can still review the report" : "Moderators may use your account to follow up"}</p>
         </div>
       </button>
       <button disabled={!encounterType || !city || !severity || description.length < 10 || submitting} onClick={submit}
@@ -293,8 +302,8 @@ function SpaceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucces
     if (description.length < 10) { toast({ title: "Please describe what happened (min 10 chars)", variant: "destructive" }); return; }
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}api/space-reports`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/space-reports`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ spaceName, address, city, category, concernTypes: concerns, description, isAnonymous }),
       });
@@ -371,8 +380,8 @@ function ExperienceReportForm({ onClose, onSuccess }: { onClose: () => void; onS
   const submit = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}api/safety-tips`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/safety-tips`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ experienceChip: chip, city, description: description || undefined }),
       });
@@ -408,7 +417,7 @@ function ExperienceReportForm({ onClose, onSuccess }: { onClose: () => void; onS
       <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
         placeholder="Want to add more detail? (optional)"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
-      <p className="text-xs text-[#3A1F0E]/40">Your experience is submitted anonymously unless you've turned off anonymous mode in settings.</p>
+      <p className="text-xs text-[#3A1F0E]/40">Your name is not shown on the community alert. Moderators retain the account record for safety and abuse review.</p>
       <button disabled={!chip || submitting} onClick={submit}
         className="w-full py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] flex items-center justify-center gap-2">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
@@ -456,13 +465,11 @@ type FeatureCard = { icon: React.ElementType; label: string; color: string; bg: 
 
 // ── Main Safety Hub ────────────────────────────────────────────────────────
 export default function Safety() {
-  const { data: auth } = useGetCurrentAuthUser();
   const [activeSheet, setActiveSheet] = useState<ReportSheet>("none");
   const [alerts, setAlerts] = useState<Array<{id:string; type:string; description?:string; city?:string; createdAt:string; confirmCount:number}>>([]);
-  const isAuthenticated = !!(auth?.user);
 
   useEffect(() => {
-    fetch(`${BASE}api/community-alerts/nearby?lat=39.9526&lng=-75.1652&radius=50`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/community-alerts/nearby?lat=39.9526&lng=-75.1652&radius=50`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.alerts) setAlerts(d.alerts.slice(0, 5)); })
       .catch(() => {});
@@ -505,15 +512,13 @@ export default function Safety() {
               <p className="text-[#F5EBD8]/60 text-xs">Community-sourced context for informed choices</p>
             </div>
           </div>
-          {!isAuthenticated && (
-            <div className="mt-4 bg-white/10 rounded-2xl px-4 py-3 flex items-start gap-3">
-              <Eye className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-bold text-white">No account needed to report</p>
-                <p className="text-xs text-[#F5EBD8]/70 mt-0.5">Every report below is fully anonymous. No sign-in required. Just submit and go.</p>
-              </div>
+          <div className="mt-4 bg-white/10 rounded-2xl px-4 py-3 flex items-start gap-3">
+            <Eye className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-white">You control report privacy</p>
+              <p className="text-xs text-[#F5EBD8]/70 mt-0.5">Choose Anonymous inside detailed reports to keep your identity out of public views. Moderators can still review signed-in submissions for safety and abuse prevention.</p>
             </div>
-          )}
+          </div>
         </div>
       </div>
 

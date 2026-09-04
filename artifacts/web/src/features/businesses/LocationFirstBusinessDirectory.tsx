@@ -5,6 +5,8 @@ import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import type { DiscoveryRecord, LocationFirstResponse } from "@/shared/discoveryContracts";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 import { buildBusinessDirectoryQuery } from "./businessDirectoryQuery";
+import { readBusinessDirectoryResponse } from "./businessDirectoryResponse";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -26,6 +28,8 @@ export function LocationFirstBusinessDirectory() {
   const [searchText, setSearchText] = useState("");
   const [response, setResponse] = useState<LocationFirstResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   const query = useMemo(
     () => buildBusinessDirectoryQuery({
@@ -41,25 +45,31 @@ export function LocationFirstBusinessDirectory() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    fetch(`${BASE}api/discovery/query`, {
+    setError(null);
+    authenticatedFetch(`${BASE}api/discovery/query`, {
       method: "POST",
-      credentials: "include",
       signal: controller.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(query),
     })
-      .then((r) => r.json())
+      .then(readBusinessDirectoryResponse)
       .then(setResponse)
-      .catch((e) => { if (e.name !== "AbortError") console.error("Business discovery failed", e); })
-      .finally(() => setLoading(false));
+      .catch((caught: unknown) => {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setResponse(null);
+        setError(caught instanceof Error ? caught.message : "Business search is unavailable right now.");
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [query]);
+  }, [query, retryKey]);
 
   const locationLabel = [location.neighborhood, location.city, location.stateCode].filter(Boolean).join(", ");
   const countLabel = !location.city
     ? "Choose your area to begin"
     : loading
     ? "Loading…"
+    : error
+    ? "We could not load this search"
     : `${response?.records.length ?? 0} verified businesses in ${locationLabel}`;
 
   function toggleOwnership(value: string) {
@@ -129,6 +139,15 @@ export function LocationFirstBusinessDirectory() {
 
         {/* States */}
         {!location.city && <LocationNeededState />}
+        {!loading && error && (
+          <section role="alert" className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
+            <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Your search did not load</h2>
+            <p className="mt-2 leading-7 text-[#3A1F0E]/70">{error}</p>
+            <button type="button" onClick={() => setRetryKey((value) => value + 1)} className="mt-4 rounded-full bg-[#2B1507] px-4 py-2 text-sm font-semibold text-white">
+              Try again
+            </button>
+          </section>
+        )}
         {!loading && response?.coverageGap && <DirectoryGapState response={response} />}
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -210,7 +229,7 @@ function DirectoryGapState({ response }: { response: LocationFirstResponse }) {
         This local need has been recorded so we can improve coverage. You can expand your search, view the nearest available city, or help add a listing.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <Link href="/businesses/submit" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
+        <Link href="/submit-business" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
           Add a business
         </Link>
       </div>

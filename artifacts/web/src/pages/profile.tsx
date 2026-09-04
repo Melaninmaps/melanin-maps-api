@@ -1248,18 +1248,6 @@ export default function Profile() {
               </div>
             </div>
             <div className="space-y-2">
-              <Link href="/connections">
-                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-2.5">
-                    <Users className="w-4 h-4 text-[#CA922B] shrink-0" />
-                    <div>
-                      <div className="text-sm font-semibold text-[#3A1F0E]">Connections</div>
-                      <div className="text-xs text-[#3A1F0E]/50">People you're directly connected with</div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </div>
-              </Link>
               <Link href="/circles">
                 <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
                   <div className="flex items-center gap-2.5">
@@ -1701,7 +1689,7 @@ export default function Profile() {
             <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">Only you can see these. They are never shared with businesses, other members, or Kinfolk without your permission.</p>
             <div className="flex flex-wrap gap-2">
               {healthTopics.pinnedTopicIds.map(id => (
-                <Link key={id} href="/health-hub">
+                <Link key={id} href="/wellness">
                   <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#3A1F0E]/10 text-xs font-semibold text-[#3A1F0E] hover:border-[#CA922B]/30 transition-colors cursor-pointer capitalize">
                     {id.replace(/-/g, " ").replace(/_/g, " ")}
                   </span>
@@ -1709,7 +1697,7 @@ export default function Profile() {
               ))}
             </div>
             {healthTopics.topicIds.length > healthTopics.pinnedTopicIds.length && (
-              <Link href="/health-hub">
+              <Link href="/wellness">
                 <button className="mt-4 text-xs font-bold text-[#CA922B] hover:underline">
                   View all {healthTopics.topicIds.length} followed topics in Health Hub →
                 </button>
