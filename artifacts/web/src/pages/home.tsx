@@ -4,10 +4,11 @@ import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, 
 import { useState, useEffect, useRef } from "react";
 import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { getSocialShareUrl, type SharePlatform } from "@/lib/socialLinks";
 
 const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
-const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
+const SHARE_TEXT = "Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾";
 const BIZ_CATEGORIES = [
   "Food & Drink", "Beauty & Personal Care", "Health & Wellness", "Shopping & Retail",
   "Travel & Hospitality", "Arts, Culture & Entertainment", "Professional Services",
@@ -19,14 +20,8 @@ const BIZ_CATEGORIES = [
 ];
 
 function openShare(platform: string) {
-  const url = encodeURIComponent(SITE_URL);
-  const urls: Record<string, string> = {
-    X: `https://twitter.com/intent/tweet?text=${SHARE_TEXT}&url=${url}`,
-    Facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-    LinkedIn: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
-  };
-  if (urls[platform]) {
-    window.open(urls[platform], "_blank", "noopener,noreferrer,width=600,height=500");
+  if (platform === "Threads" || platform === "Facebook" || platform === "LinkedIn") {
+    window.open(getSocialShareUrl(platform as SharePlatform, SHARE_TEXT, SITE_URL), "_blank", "noopener,noreferrer,width=600,height=500");
   } else {
     navigator.clipboard.writeText(SITE_URL).catch(() => {});
   }
@@ -460,7 +455,7 @@ export default function Home() {
                       <p className="text-[#F5EBD8]/60 text-xs font-semibold uppercase tracking-widest">Share & move up the list</p>
                       <div className="flex gap-3 justify-center">
                         {[
-                          { label: "X", icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>, platform: "X" },
+                          { label: "Threads", icon: <span className="text-base font-bold" aria-hidden="true">@</span>, platform: "Threads" },
                           { label: "Facebook", icon: <Facebook className="w-4 h-4" />, platform: "Facebook" },
                           { label: "LinkedIn", icon: <Linkedin className="w-4 h-4" />, platform: "LinkedIn" },
                           { label: "Copy link", icon: <Link2 className="w-4 h-4" />, platform: "Copy" },
@@ -542,7 +537,7 @@ export default function Home() {
                           className="w-full px-3 py-2.5 rounded-lg bg-[#2B1507] border border-white/15 text-white focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm">
                           <option value="instagram">Instagram</option>
                           <option value="tiktok">TikTok</option>
-                          <option value="x">X / Twitter</option>
+                          <option value="threads">Threads</option>
                           <option value="facebook">Facebook</option>
                           <option value="linkedin">LinkedIn</option>
                           <option value="other">Other</option>
@@ -686,7 +681,7 @@ export default function Home() {
                     <p className="text-xs text-[#F5EBD8]/40 font-medium mb-2">Know someone? Refer them:</p>
                     <div className="flex gap-2">
                       {[
-                        { label: "X", icon: <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>, platform: "X" },
+                        { label: "Threads", icon: <span className="text-sm font-bold" aria-hidden="true">@</span>, platform: "Threads" },
                         { label: "Facebook", icon: <Facebook className="w-3.5 h-3.5" />, platform: "Facebook" },
                         { label: "LinkedIn", icon: <Linkedin className="w-3.5 h-3.5" />, platform: "LinkedIn" },
                         { label: "Instagram", icon: <Instagram className="w-3.5 h-3.5" />, platform: "Instagram" },

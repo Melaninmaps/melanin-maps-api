@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Mail, Users, Copy, Check, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { getSocialShareUrl, type SharePlatform } from "@/lib/socialLinks";
 
 const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
@@ -17,15 +18,9 @@ interface WaitlistEntry {
 }
 
 function openShare(platform: string, url: string) {
-  const text = encodeURIComponent("I just joined the Mapping with Melanin™ waitlist! Use my link to get early access:");
-  const encodedUrl = encodeURIComponent(url);
-  const urls: Record<string, string> = {
-    X: `https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`,
-    Facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    LinkedIn: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-  };
-  if (urls[platform]) {
-    window.open(urls[platform], "_blank", "noopener,noreferrer,width=600,height=500");
+  const text = "I just joined the Mapping with Melanin™ waitlist! Use my link to get early access:";
+  if (platform === "Threads" || platform === "Facebook" || platform === "LinkedIn") {
+    window.open(getSocialShareUrl(platform as SharePlatform, text, url), "_blank", "noopener,noreferrer,width=600,height=500");
   }
 }
 
@@ -129,7 +124,7 @@ export default function PendingApproval() {
             {/* Share buttons */}
             <div className="flex gap-2">
               {[
-                { label: "X", platform: "X", icon: <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg> },
+                { label: "Threads", platform: "Threads", icon: <span className="text-sm font-bold" aria-hidden="true">@</span> },
                 { label: "Facebook", platform: "Facebook", icon: <Share2 size={14} /> },
                 { label: "LinkedIn", platform: "LinkedIn", icon: <Share2 size={14} /> },
               ].map(({ label, platform, icon }) => (

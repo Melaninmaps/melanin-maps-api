@@ -1,13 +1,21 @@
 import { Link, useLocation, Redirect } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Menu, X, MessageSquare, Bell, Sun, Moon, Compass, Map, Users, Shield, BookOpen, User } from "lucide-react";
+import { Menu, X, MessageSquare, Bell, Sun, Moon, Compass, Map, Users, Shield, BookOpen, User, Instagram, Facebook, Music2, AtSign, ExternalLink } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/theme";
 import { FeedbackButton } from "./FeedbackButton";
 import { KinfolkOnboarding } from "./KinfolkOnboarding";
+import { OFFICIAL_SOCIAL_LINKS } from "@/lib/socialLinks";
 
 const BASE = import.meta.env.BASE_URL;
+
+const SOCIAL_ICONS = {
+  tiktok: Music2,
+  instagram: Instagram,
+  facebook: Facebook,
+  threads: AtSign,
+} as const;
 
 function useRequireApproval() {
   const [requireApproval, setRequireApproval] = useState(false);
@@ -248,7 +256,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#2B1507] text-[#F5EBD8] py-16 border-t border-white/10">
+      <footer className="bg-[#2B1507] text-[#F5EBD8] pt-16 pb-28 sm:py-16 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div>
@@ -298,6 +306,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/privacy-policy"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Privacy Policy</span></Link></li>
                 <li><Link href="/community-guidelines"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Guidelines</span></Link></li>
               </ul>
+            </div>
+          </div>
+
+          <div className="mb-10 rounded-2xl border border-white/10 bg-white/5 px-5 py-5 md:px-6 md:py-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-white">Follow Mapping With Melanin</h3>
+                <p className="mt-1 text-sm text-[#F5EBD8]/60">Stay connected for community stories, businesses, events, and platform updates.</p>
+              </div>
+              <nav aria-label="Mapping With Melanin social media" className="flex flex-wrap gap-2">
+                {OFFICIAL_SOCIAL_LINKS.map(({ id, label, handle, href }) => {
+                  const Icon = SOCIAL_ICONS[id];
+                  return (
+                    <a
+                      key={id}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Follow Mapping With Melanin on ${label} (${handle})`}
+                      data-testid={`official-social-${id}`}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-[#F5EBD8] transition-colors hover:border-[#CA922B]/60 hover:bg-[#CA922B]/10 hover:text-[#CA922B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
+                    >
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      <span>{label}</span>
+                      <ExternalLink className="h-3 w-3 opacity-60" aria-hidden="true" />
+                    </a>
+                  );
+                })}
+              </nav>
             </div>
           </div>
           
