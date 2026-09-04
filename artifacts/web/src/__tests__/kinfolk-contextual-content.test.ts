@@ -37,7 +37,7 @@ describe("Kinfolk contextual content", () => {
         { title: "Unsafe video", creator: null, platform: "Video", url: "javascript:alert(1)", reason: "Must not render" },
       ],
       relatedConnections: [
-        { title: "Library topic", relationship: "Related work", reason: "A supported connection.", href: "/library/topic", evidenceUrl: "https://example.com/evidence" },
+        { title: "Library topic", relationship: "Related work", reason: "A supported connection.", href: "/library/topics/music", evidenceUrl: "https://example.com/evidence" },
         { title: "Unsafe connection", relationship: "Nope", reason: "Must not link.", href: "javascript:alert(1)", evidenceUrl: "data:text/html,nope" },
       ],
       researchStatus: { usedInternal: true, usedLiveWeb: true, degraded: false, asOf: "2025-01-01" },
@@ -48,7 +48,7 @@ describe("Kinfolk contextual content", () => {
     expect(markup).toContain('href="https://example.com/video"');
     expect(markup).toContain("Verified interview");
     expect(markup).not.toContain("Unsafe video");
-    expect(markup).toContain('href="/library/topic"');
+    expect(markup).toContain('href="/library/topics/music"');
     expect(markup).toContain('href="https://example.com/evidence"');
     expect(markup).not.toContain("javascript:");
     expect(markup).not.toContain("data:text");

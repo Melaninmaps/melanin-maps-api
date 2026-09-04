@@ -84,6 +84,9 @@ export type ResearchDocument = {
   content: string;
   publisher: string | null;
   publishedAt: Date | null;
+  /** Set only when a provider verifies that the named creator owns the source account. */
+  creatorVerified?: boolean;
+  creatorName?: string | null;
 };
 
 export type ResearchProviderResult = {
@@ -138,6 +141,7 @@ export interface ExternalResearchProvider {
     query: string;
     allowedDomains: string[];
     maxResults: number;
+    signal?: AbortSignal;
   }): Promise<ResearchProviderResult>;
 }
 

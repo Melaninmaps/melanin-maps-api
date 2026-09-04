@@ -33,6 +33,7 @@ function evidence(
     publishedAt,
     retrievedAt: NOW,
     supports: [excerpt],
+    creatorVerified: kind === "creator" ? true : undefined,
   };
 }
 
@@ -90,9 +91,12 @@ async function contextualTurn(input: {
   const allEvidence = [...bundle.internal, ...bundle.external, ...bundle.media];
   const payload = input.synthesize(plan, allEvidence);
   const bound = bindContextualLinksToEvidence({
+    structuredContent: parseKinfolkStructuredContent(payload.structuredContent),
     mediaLinks: parseKinfolkMediaLinks(payload.mediaLinks),
     relatedConnections: parseKinfolkRelatedConnections(payload.relatedConnections),
     evidenceUrls: allEvidence.map((item) => item.url),
+    mediaEvidence: bundle.media,
+    libraryPaths: bundle.internal.flatMap((item) => item.libraryPath ? [item.libraryPath] : []),
   });
   return {
     reply: payload.reply,
@@ -101,7 +105,6 @@ async function contextualTurn(input: {
     libraryAction: payload.libraryAction ?? null,
     recommendations: null,
     answerMode: plan.taskMode,
-    structuredContent: parseKinfolkStructuredContent(payload.structuredContent),
     ...bound,
     researchStatus: {
       usedInternal: bundle.internal.length > 0,
@@ -307,7 +310,10 @@ describe("contextual intelligence behavior integration", () => {
 
   it("explores a named public entity through source-backed Library pathways", async () => {
     const biography = evidence("Jay-Z primary biography", "https://artist.example/jay-z", "primary", "Works and career history.");
-    const library = evidence("Published hip-hop topic", "https://library.example/topics/hip-hop", "library_published", "Published Library context.");
+    const library = {
+      ...evidence("Published hip-hop topic", "https://library.example/topics/hip-hop", "library_published", "Published Library context."),
+      libraryPath: "/library/topics/hip-hop",
+    };
     const result = await contextualTurn({
       message: "Jay-Z",
       internal: [library],
@@ -321,15 +327,15 @@ describe("contextual intelligence behavior integration", () => {
             canonicalName: "Jay-Z",
             overview: "A public artist, songwriter, and business figure.",
             pathways: [
-              { label: "Works", description: "Explore recordings.", libraryHref: library.url },
-              { label: "Storytelling and lyrics", description: "Explore writing.", libraryHref: library.url },
-              { label: "Influence", description: "Review supported cultural history.", libraryHref: library.url },
-              { label: "Business history", description: "Review sourced ventures.", libraryHref: library.url },
-              { label: "Related content", description: "Open the published topic.", libraryHref: library.url },
+              { label: "Works", description: "Explore recordings.", libraryHref: "/library/topics/hip-hop" },
+              { label: "Storytelling and lyrics", description: "Explore writing.", libraryHref: "/library/topics/hip-hop" },
+              { label: "Influence", description: "Review supported cultural history.", libraryHref: "/library/topics/hip-hop" },
+              { label: "Business history", description: "Review sourced ventures.", libraryHref: "/library/topics/hip-hop" },
+              { label: "Related content", description: "Open the published topic.", libraryHref: "/library/topics/hip-hop" },
             ],
           },
           relatedConnections: [
-            { title: "Published hip-hop topic", relationship: "Library topic", reason: "Published related context", href: library.url, evidenceUrl: library.url },
+            { title: "Published hip-hop topic", relationship: "Library topic", reason: "Published related context", href: "/library/topics/hip-hop", evidenceUrl: library.url },
             { title: "Unsupported local artist", relationship: "Influence", reason: "Genre alone", href: null, evidenceUrl: "https://invented.example/claim" },
           ],
           libraryAction: { type: "open_topic", topicId: "hip-hop", topicName: "Hip-hop" },
@@ -413,6 +419,7 @@ describe("contextual intelligence behavior integration", () => {
     expect(first).toEqual([expect.objectContaining({
       kind: "library_published",
       url: "https://museum.example/brazil",
+      libraryPath: "/library/topics/culture-heritage",
       supports: ["Brazilian cultural history"],
     })]);
     expect(writes.memory).not.toHaveBeenCalled();

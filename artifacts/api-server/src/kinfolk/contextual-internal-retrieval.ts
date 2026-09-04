@@ -9,8 +9,10 @@ import type { ContextualEvidenceItem } from "./contextual-research-orchestrator"
 export async function retrieveApprovedInternalLibrary(input: {
   repository: LibraryRepository;
   queries: string[];
+  signal?: AbortSignal;
   now?: () => string;
 }): Promise<ContextualEvidenceItem[]> {
+  if (input.signal?.aborted) return [];
   const now = input.now?.() ?? new Date().toISOString();
   const query = input.queries[0]?.trim();
   if (!query) return [];
@@ -25,6 +27,7 @@ export async function retrieveApprovedInternalLibrary(input: {
       limit: 8,
       offset: 0,
     });
+    if (input.signal?.aborted) return [];
     return page.results.flatMap((result) => result.kind === "entry"
       ? result.sources.map((source) => ({
           title: source.title,
@@ -35,6 +38,7 @@ export async function retrieveApprovedInternalLibrary(input: {
           publishedAt: result.refreshedAt.toISOString(),
           retrievedAt: now,
           supports: [result.title],
+          libraryPath: `/library/topics/${encodeURIComponent(result.topicSlug)}`,
         }))
       : []).slice(0, 8);
   } catch {

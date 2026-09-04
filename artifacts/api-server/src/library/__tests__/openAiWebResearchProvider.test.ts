@@ -28,8 +28,19 @@ describe("OpenAI Responses native Library research", () => {
       { type: "message", content: [{ type: "output_text", text: "An uncited answer.", annotations: [] }] },
     ] }), { status: 200 })));
     const provider = createOpenAiWebResearchProvider({ apiKey: "secret", baseUrl: "https://api.openai.example/v1" });
-    const result = await provider.search({ query: "oldest bookstore in the US", allowedDomains: ["loc.gov"], maxResults: 6 });
-    expect(result.documents).toEqual([]);
+    await expect(provider.search({ query: "oldest bookstore in the US", allowedDomains: ["loc.gov"], maxResults: 6 }))
+      .rejects.toThrow(/no safe cited sources/i);
+  });
+
+  it("forwards the caller AbortSignal to the native web request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ output: [
+      { type: "message", content: [{ type: "output_text", text: "Cited.", annotations: [{ type: "url_citation", url: "https://loc.gov/a", title: "LOC" }] }] },
+    ] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    const provider = createOpenAiWebResearchProvider({ apiKey: "secret", baseUrl: "https://api.openai.example/v1" });
+    await provider.search({ query: "history", allowedDomains: ["loc.gov"], maxResults: 2, signal: controller.signal });
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
   });
 });
 
@@ -46,5 +57,14 @@ describe("Library research provider chain", () => {
   it("throws a retryable unavailable error rather than returning zero results", async () => {
     const primary: ExternalResearchProvider = { name: "openai", search: vi.fn().mockResolvedValue({ documents: [], provider: "openai", status: "available" }) };
     await expect(createResearchProviderChain([primary]).search({ query: "history", allowedDomains: ["loc.gov"], maxResults: 6 })).rejects.toBeInstanceOf(LibraryResearchProviderUnavailableError);
+  });
+
+  it("does not start a fallback provider after cancellation", async () => {
+    const controller = new AbortController();
+    const primary: ExternalResearchProvider = { name: "openai", search: vi.fn().mockImplementation(async () => { controller.abort(); throw new Error("cancelled"); }) };
+    const fallback: ExternalResearchProvider = { name: "tavily", search: vi.fn() };
+    await expect(createResearchProviderChain([primary, fallback]).search({ query: "history", allowedDomains: ["loc.gov"], maxResults: 6, signal: controller.signal }))
+      .rejects.toThrow(/cancelled/i);
+    expect(fallback.search).not.toHaveBeenCalled();
   });
 });

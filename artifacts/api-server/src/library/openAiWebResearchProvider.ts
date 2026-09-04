@@ -88,12 +88,13 @@ export function createOpenAiWebResearchProvider(input: {
 }): ExternalResearchProvider {
   return {
     name: "openai",
-    async search({ query, allowedDomains, maxResults }): Promise<ResearchProviderResult> {
+    async search({ query, allowedDomains, maxResults, signal }): Promise<ResearchProviderResult> {
       if (!input.apiKey || !input.baseUrl) throw new Error("OPENAI_LIBRARY_RESEARCH_NOT_CONFIGURED");
       const providerQuery = enforceDiasporaFirstProviderQuery(query);
       const concreteDomains = [...new Set(allowedDomains.filter((domain) => !domain.startsWith("*.")))].slice(0, 100);
       const response = await fetch(`${input.baseUrl.replace(/\/$/, "")}/responses`, {
         method: "POST",
+        signal,
         headers: {
           Authorization: `Bearer ${input.apiKey}`,
           "Content-Type": "application/json",
@@ -101,7 +102,7 @@ export function createOpenAiWebResearchProvider(input: {
         body: JSON.stringify({
           model: boundedLibraryResearchModel(input.model),
           reasoning: { effort: "low" },
-          max_output_tokens: 2_400,
+          max_output_tokens: 1_200,
           tools: [{
             type: "web_search",
             ...(concreteDomains.length > 0
@@ -129,7 +130,9 @@ export function createOpenAiWebResearchProvider(input: {
       if (!response.ok) throw new Error(`OpenAI web research failed with status ${response.status}.`);
       const payload = (await response.json()) as ResponsePayload;
       const extracted = extractResponse(payload);
-      if (!extracted.text) throw new Error("OpenAI web research returned no cited answer.");
+      if (!extracted.text || extracted.documents.length === 0) {
+        throw new Error("OpenAI web research returned no safe cited sources.");
+      }
       return {
         documents: extracted.documents.slice(0, Math.max(1, maxResults)),
         provider: "openai",
