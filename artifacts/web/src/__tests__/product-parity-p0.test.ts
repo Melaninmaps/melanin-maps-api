@@ -96,4 +96,35 @@ describe("bounded cross-platform website repairs", () => {
     expect(map).toContain("Recenter");
     expect(map).toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
   });
+
+  it("keeps community business proposals authenticated, field-complete, and review-first", () => {
+    const app = source("../App.tsx");
+    const submit = source("../pages/submit-business.tsx");
+    const founder = source("../pages/founder-business-submissions.tsx");
+    const mediaUploader = source("../components/MediaUploader.tsx");
+    const mine = source("../pages/my-business-submissions.tsx");
+    const discover = source("../pages/discover.tsx");
+
+    expect(app).toContain("<ProtectedRoute><SubmitBusiness /></ProtectedRoute>");
+    expect(app).toContain("<ProtectedRoute><MyBusinessSubmissions /></ProtectedRoute>");
+    expect(submit).toContain("authenticatedFetch(endpoint");
+    expect(submit).toContain('method: amendId ? "PATCH" : "POST"');
+    expect(submit).toContain('"Idempotency-Key": clientRequestId.current');
+    expect(submit).toContain("socialProfiles:");
+    expect(submit).toContain("mediaUrls: uploadedUrls");
+    expect(submit).toContain("postalCode: form.postalCode");
+    expect(submit).toContain("Submission ID:");
+    expect(submit).toContain("publication does not mean verified ownership");
+    expect(submit).not.toContain("Nothing goes live until verified");
+    expect(mediaUploader).toContain("authenticatedFetch(`${BASE}api/media/upload");
+    expect(mine).toContain("api/community/business-submissions/mine");
+    expect(mine).toContain("Update and resubmit");
+    expect(mine).toContain("Community-listed · Unclaimed · Not verified");
+    expect(discover).toContain("authenticatedFetch(`${BASE}api/submit-business`");
+    expect(discover).toContain('"Idempotency-Key": clientRequestId.current');
+    expect(discover).not.toContain("submitterEmail");
+    expect(discover).not.toContain("within 48 hours");
+    expect(founder).toContain('type Filter = "pending_review" | "published"');
+    expect(founder).toContain('decide(s.id, "published")');
+  });
 });

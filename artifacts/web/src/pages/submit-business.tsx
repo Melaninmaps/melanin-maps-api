@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
 import { Layout } from "@/components/layout";
 import { MediaUploader, getMediaUrls } from "@/components/MediaUploader";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   MapPin, Store, Globe, Phone, Heart, ChevronDown, CheckCircle2, ArrowLeft,
 } from "lucide-react";
@@ -18,6 +19,14 @@ const OWNERSHIP_OPTIONS = [
   { value: "indigenous-owned", label: "Indigenous-owned" },
 ];
 
+const OWNERSHIP_TO_FORM: Record<string, string> = {
+  "Black / African American-Owned": "black-owned",
+  "Woman-Owned": "woman-owned",
+  "LGBTQIA+-Owned": "lgbtq-owned",
+  "Minority-Owned (general / legacy)": "minority-owned",
+  "Indigenous / Native-Owned": "indigenous-owned",
+};
+
 const CATEGORIES = [
   "Restaurant", "Café / Coffee", "Bar / Lounge", "Bakery", "Food Truck",
   "Grocery / Market", "Clothing & Fashion", "Beauty & Hair", "Barbershop",
@@ -30,23 +39,30 @@ const CATEGORIES = [
 ];
 
 export default function SubmitBusiness() {
-  const [, navigate] = useLocation();
+  const amendId = new URLSearchParams(window.location.search).get("amend");
   const [step, setStep] = useState<Step>("form");
   const [submissionId, setSubmissionId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const clientRequestId = useRef(crypto.randomUUID());
 
   const [form, setForm] = useState({
     name: "",
     category: "",
+    subcategory: "",
     description: "",
     address: "",
     city: "",
     state: "",
+    postalCode: "",
     country: "",
     website: "",
     phone: "",
+    instagram: "",
+    facebook: "",
+    tiktok: "",
+    youtube: "",
     ownershipDesignations: [] as string[],
     submitterNote: "",
   });
@@ -61,6 +77,45 @@ export default function SubmitBusiness() {
         ? f.ownershipDesignations.filter((v) => v !== val)
         : [...f.ownershipDesignations, val],
     }));
+
+  useEffect(() => {
+    if (!amendId) return;
+    let active = true;
+    void authenticatedFetch(`${BASE}api/community/business-submissions/${encodeURIComponent(amendId)}`)
+      .then(async (response) => {
+        const data = await response.json() as { submission?: Record<string, unknown>; error?: string };
+        if (!response.ok || !data.submission) throw new Error(data.error ?? "Unable to load submission");
+        if (!active) return;
+        const item = data.submission;
+        const socials = (item.social_profiles ?? {}) as Record<string, string>;
+        setForm({
+          name: String(item.name ?? ""),
+          category: String(item.category ?? ""),
+          subcategory: String(item.subcategory ?? ""),
+          description: String(item.description ?? ""),
+          address: String(item.address ?? ""),
+          city: String(item.city ?? ""),
+          state: String(item.state ?? ""),
+          postalCode: String(item.postal_code ?? ""),
+          country: String(item.country ?? ""),
+          website: String(item.website ?? ""),
+          phone: String(item.phone ?? ""),
+          instagram: socials.instagram ?? "",
+          facebook: socials.facebook ?? "",
+          tiktok: socials.tiktok ?? "",
+          youtube: socials.youtube ?? "",
+          ownershipDesignations: Array.isArray(item.ownership_designations)
+            ? item.ownership_designations.map(String).map((value) => OWNERSHIP_TO_FORM[value] ?? value)
+            : [],
+          submitterNote: String(item.submitter_note ?? ""),
+        });
+        setUploadedUrls(Array.isArray(item.media_urls) ? item.media_urls.map(String) : []);
+      })
+      .catch((reason: unknown) => {
+        if (active) setError(reason instanceof Error ? reason.message : "Unable to load submission");
+      });
+    return () => { active = false; };
+  }, [amendId]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,15 +132,40 @@ export default function SubmitBusiness() {
     const sourceCampaign = params.get("campaign") ?? undefined;
 
     try {
-      const resp = await fetch(`${BASE}api/community/business-submissions`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+      const endpoint = amendId
+        ? `${BASE}api/community/business-submissions/${encodeURIComponent(amendId)}`
+        : `${BASE}api/community/business-submissions`;
+      const resp = await authenticatedFetch(endpoint, {
+        method: amendId ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(!amendId ? { "Idempotency-Key": clientRequestId.current } : {}),
+        },
         body: JSON.stringify({
-          ...form,
+          name: form.name,
+          category: form.category,
+          subcategory: form.subcategory || undefined,
+          description: form.description,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          postalCode: form.postalCode,
+          country: form.country,
+          website: form.website,
+          phone: form.phone,
+          socialProfiles: {
+            ...(form.instagram ? { instagram: form.instagram } : {}),
+            ...(form.facebook ? { facebook: form.facebook } : {}),
+            ...(form.tiktok ? { tiktok: form.tiktok } : {}),
+            ...(form.youtube ? { youtube: form.youtube } : {}),
+          },
+          ownershipDesignations: form.ownershipDesignations,
+          submitterNote: form.submitterNote,
           sourceChannel,
           sourceCampaign,
           mediaUrls: uploadedUrls,
+          locationSource: "member_entered",
+          ...(!amendId ? { clientRequestId: clientRequestId.current } : {}),
         }),
       });
 
@@ -115,33 +195,40 @@ export default function SubmitBusiness() {
             </div>
             <div>
               <h1 className="font-serif text-3xl font-bold text-[#3A1F0E] mb-3">
-                Thank you for putting your people on!
+                {amendId ? "Your update is back in review" : "Thank you for putting your people on!"}
               </h1>
               <p className="text-[#3A1F0E]/70 leading-relaxed">
-                Your submission is in review. Once we verify the details, this
-                business will appear on the map and in our community directory.
+                Your submission is pending review and is not public. If approved,
+                it will be published as community-listed and unclaimed—not verified.
               </p>
             </div>
+            {submissionId && (
+              <p className="text-xs text-[#3A1F0E]/50 break-all" data-testid="business-submission-id">
+                Submission ID: {submissionId}
+              </p>
+            )}
             <div className="bg-[#FAF6EF] rounded-2xl p-4 text-left space-y-1">
               <p className="text-xs font-semibold text-[#CA922B] uppercase tracking-wide">
                 What happens next
               </p>
               <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
-                <li>• Our team reviews your submission (usually within 48 hrs)</li>
-                <li>• We verify the business is active and community-serving</li>
-                <li>• It goes live on the map for the whole community to find</li>
+                <li>• Our team reviews the business details and possible duplicates</li>
+                <li>• Submitted ownership information remains a community claim</li>
+                <li>• Nothing appears in the directory unless an administrator publishes it</li>
               </ul>
             </div>
             <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => { setStep("form"); setForm({ name: "", category: "", description: "", address: "", city: "", state: "", country: "", website: "", phone: "", ownershipDesignations: [], submitterNote: "" }); }}
-                className="px-6 py-3 border border-[#CA922B]/30 text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm"
-              >
-                Submit another
-              </button>
-              <Link href="/businesses">
+              {!amendId && (
+                <button
+                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedUrls([]); setSubmissionId(""); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", ownershipDesignations: [], submitterNote: "" }); }}
+                  className="px-6 py-3 border border-[#CA922B]/30 text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm"
+                >
+                  Submit another
+                </button>
+              )}
+              <Link href="/my-business-submissions">
                 <button className="px-6 py-3 bg-[#CA922B] text-white font-semibold rounded-2xl hover:bg-[#B38024] transition-colors text-sm">
-                  Browse directory →
+                  View my submissions →
                 </button>
               </Link>
             </div>
@@ -156,10 +243,10 @@ export default function SubmitBusiness() {
       <div className="max-w-2xl mx-auto px-4 py-12 md:py-16">
         {/* Header */}
         <div className="mb-10">
-          <Link href="/businesses">
+          <Link href={amendId ? "/my-business-submissions" : "/businesses"}>
             <button className="flex items-center gap-1.5 text-sm text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors mb-6">
               <ArrowLeft className="w-4 h-4" />
-              Back to directory
+              {amendId ? "Back to my submissions" : "Back to directory"}
             </button>
           </Link>
           <div className="flex items-center gap-3 mb-3">
@@ -171,11 +258,12 @@ export default function SubmitBusiness() {
             </span>
           </div>
           <h1 className="font-serif text-4xl font-bold text-[#3A1F0E] mb-3">
-            Share a Business
+            {amendId ? "Update Your Submission" : "Share a Business"}
           </h1>
           <p className="text-[#3A1F0E]/70 leading-relaxed text-lg">
-            Know a community business that deserves a spot on the map?
-            Share it here — we'll review and add it to the directory.
+            {amendId
+              ? "Add the requested information and send this business back for review."
+              : "Know a community business that deserves a spot on the map? Share it here — we'll review it before anything is published."}
           </p>
         </div>
 
@@ -215,8 +303,18 @@ export default function SubmitBusiness() {
             </div>
           </div>
 
-          {/* City + State row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-[#3A1F0E]">Subcategory</label>
+            <input
+              value={form.subcategory}
+              onChange={(e) => set("subcategory", e.target.value)}
+              placeholder="e.g. Ethiopian restaurant, bookstore, HVAC"
+              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
+            />
+          </div>
+
+          {/* City + State + postal row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-[#3A1F0E]">
                 City <span className="text-[#CA922B]">*</span>
@@ -238,6 +336,25 @@ export default function SubmitBusiness() {
                 className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
               />
             </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-[#3A1F0E]">ZIP / Postal code</label>
+              <input
+                value={form.postalCode}
+                onChange={(e) => set("postalCode", e.target.value)}
+                placeholder="e.g. 19106"
+                className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-[#3A1F0E]">Country</label>
+            <input
+              value={form.country}
+              onChange={(e) => set("country", e.target.value)}
+              placeholder="e.g. United States"
+              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
+            />
           </div>
 
           {/* Address */}
@@ -281,6 +398,30 @@ export default function SubmitBusiness() {
                 type="tel"
                 className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
               />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-[#3A1F0E]">Social profiles</label>
+            <p className="text-xs text-[#3A1F0E]/45">Optional. Add handles or full profile links; each is validated for the selected platform.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {([
+                ["instagram", "Instagram", "@yourbusiness"],
+                ["facebook", "Facebook", "facebook.com/yourbusiness"],
+                ["tiktok", "TikTok", "@yourbusiness"],
+                ["youtube", "YouTube", "@yourbusiness"],
+              ] as const).map(([field, label, placeholder]) => (
+                <div key={field} className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#3A1F0E]/70">{label}</label>
+                  <input
+                    value={form[field]}
+                    onChange={(e) => set(field, e.target.value)}
+                    placeholder={placeholder}
+                    inputMode="url"
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -335,8 +476,11 @@ export default function SubmitBusiness() {
               maxFiles={3}
               accept="images"
               label="Add photos of this business"
-              onFilesChange={(files) => setUploadedUrls(getMediaUrls(files))}
+              onFilesChange={(files) => setUploadedUrls((current) => Array.from(new Set([...current, ...getMediaUrls(files)])))}
             />
+            {amendId && uploadedUrls.length > 0 && (
+              <p className="text-xs text-[#3A1F0E]/45">{uploadedUrls.length} previously submitted photo{uploadedUrls.length === 1 ? " is" : "s are"} retained for private review.</p>
+            )}
           </div>
 
           {/* Note to reviewer */}
@@ -372,12 +516,12 @@ export default function SubmitBusiness() {
                 Submitting…
               </span>
             ) : (
-              "Submit for review →"
+              amendId ? "Update and resubmit →" : "Submit for review →"
             )}
           </button>
 
           <p className="text-center text-xs text-[#3A1F0E]/40">
-            Submissions are reviewed by our team. Nothing goes live until verified.
+            Submissions are reviewed by our team. Nothing goes live until an administrator publishes it; publication does not mean verified ownership.
           </p>
         </form>
       </div>

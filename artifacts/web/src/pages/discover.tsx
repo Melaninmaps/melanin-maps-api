@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useListBusinesses } from "@workspace/api-client-react";
 import { Link, useSearch } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, Star, ShieldCheck, Grid, Map as MapIcon, Compass, Clock, PlusCircle, X, Building2, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   Select,
   SelectContent,
@@ -77,8 +78,9 @@ const BUSINESS_CATEGORIES = [
 ];
 
 function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ name: "", category: "", city: "", state: "", website: "", phone: "", description: "", submitterEmail: "" });
+  const [form, setForm] = useState({ name: "", category: "", city: "", state: "", website: "", phone: "", description: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const clientRequestId = useRef(crypto.randomUUID());
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -88,11 +90,10 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
     if (!form.name.trim() || !form.city.trim() || !form.state.trim()) return;
     setStatus("loading");
     try {
-      const r = await fetch(`${BASE}api/submit-business`, {
+      const r = await authenticatedFetch(`${BASE}api/submit-business`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-        credentials: "include",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": clientRequestId.current },
+        body: JSON.stringify({ ...form, clientRequestId: clientRequestId.current }),
       });
       setStatus(r.ok ? "success" : "error");
     } catch {
@@ -112,7 +113,7 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 <span className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase">Submit a Business</span>
               </div>
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">Know a great spot?</h2>
-              <p className="text-sm text-[#3A1F0E]/60 mt-1">Help grow the directory. We review every submission within 48 hours.</p>
+              <p className="text-sm text-[#3A1F0E]/60 mt-1">Help grow the directory. Every submission stays private until administrator review.</p>
             </div>
             <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#FAF6EF] flex items-center justify-center hover:bg-[#3A1F0E]/10 transition-colors shrink-0">
               <X className="w-4 h-4 text-[#3A1F0E]/60" />
@@ -128,8 +129,8 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-xl font-serif font-bold text-[#3A1F0E]">Submission received!</h3>
-              <p className="text-[#3A1F0E]/60 max-w-sm">Thank you for helping grow the community. We'll review the listing and add it within 48 hours.</p>
-              <Button onClick={onClose} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11 mt-2">Done</Button>
+              <p className="text-[#3A1F0E]/60 max-w-sm">This business is pending review and is not public or verified.</p>
+              <Link href="/my-business-submissions"><Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11 mt-2">View My Submissions</Button></Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -188,12 +189,6 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 />
               </div>
 
-              {/* Submitter email */}
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Your Email (optional — for updates)</label>
-                <Input value={form.submitterEmail} onChange={set("submitterEmail")} type="email" placeholder="you@example.com" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B]" />
-              </div>
-
               {status === "error" && (
                 <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">Something went wrong. Please try again.</p>
               )}
@@ -201,7 +196,7 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={onClose} className="rounded-full flex-1 h-12 border-[#3A1F0E]/15">Cancel</Button>
                 <Button type="submit" disabled={status === "loading"} className="rounded-full flex-1 h-12 bg-[#CA922B] hover:bg-[#B38024] text-white font-bold">
-                  {status === "loading" ? "Submitting..." : "Submit Business"}
+                  {status === "loading" ? "Submitting..." : "Submit for Review"}
                 </Button>
               </div>
             </form>
