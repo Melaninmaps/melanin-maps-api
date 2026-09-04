@@ -40,4 +40,25 @@ describe("location share public view", () => {
     expect(route).toContain("eq(locationSharesTable.sharerId, userId)");
     expect(route).toContain("gt(locationSharesTable.expiresAt, new Date())");
   });
+
+  it("publishes a first native coordinate before claiming the share is live", () => {
+    const mobile = readFileSync(
+      fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
+      "utf8",
+    );
+    const firstUpdate = mobile.indexOf("await publishCurrentLocation(createdShare, token)");
+    const activeMessage = mobile.indexOf('"Location Sharing Active"');
+    expect(firstUpdate).toBeGreaterThan(-1);
+    expect(activeMessage).toBeGreaterThan(firstUpdate);
+    expect(mobile).toContain("still waiting for your first location update");
+    expect(mobile).toContain("startLocationUpdates(activeShare, token)");
+    expect(mobile).toContain("const activeShares = unexpiredShares.filter(hasPublishedCoordinate)");
+    expect(mobile).toContain("const waitingShares = unexpiredShares.filter");
+    expect(mobile).toContain("Waiting for first location — retrying");
+    expect(mobile).toContain("setShares((current) => current.map");
+    expect(mobile).toContain("const resumableShare = unexpired.find");
+    expect(mobile).toContain("activeShareRef.current = resumableShare");
+    expect(mobile).toContain("setActiveShareId(resumableShare?.id ?? null)");
+    expect(mobile).toContain("activeShareRef.current?.id === activeShareId");
+  });
 });

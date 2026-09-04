@@ -9,6 +9,8 @@ const REQUIRED_COLUMNS = [
   "incident_location_precision",
 ] as const;
 
+const REQUIRED_INCIDENT_COLUMNS = ["region"] as const;
+
 export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void> {
   await pool.query(`
     ALTER TABLE safety_reports
@@ -30,6 +32,12 @@ export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void
       ALTER COLUMN incident_location_source SET NOT NULL,
       ALTER COLUMN incident_location_precision SET DEFAULT 'city',
       ALTER COLUMN incident_location_precision SET NOT NULL;
+
+    ALTER TABLE safety_incidents
+      ADD COLUMN IF NOT EXISTS region varchar(100);
+
+    CREATE INDEX IF NOT EXISTS safety_incidents_region_identity_idx
+      ON safety_incidents (LOWER(city), LOWER(region), category, status, triggered_at DESC);
   `);
 
   const result = await pool.query<{ column_name: string }>(
@@ -44,5 +52,19 @@ export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void
   const missing = REQUIRED_COLUMNS.filter((column) => !ready.has(column));
   if (missing.length > 0) {
     throw new Error(`Required safety report schema is incomplete: ${missing.join(", ")}`);
+  }
+
+  const incidentResult = await pool.query<{ column_name: string }>(
+    `SELECT column_name
+     FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'safety_incidents'
+       AND column_name = ANY($1::text[])`,
+    [REQUIRED_INCIDENT_COLUMNS],
+  );
+  const incidentReady = new Set(incidentResult.rows.map((row) => row.column_name));
+  const missingIncident = REQUIRED_INCIDENT_COLUMNS.filter((column) => !incidentReady.has(column));
+  if (missingIncident.length > 0) {
+    throw new Error(`Required safety incident schema is incomplete: ${missingIncident.join(", ")}`);
   }
 }

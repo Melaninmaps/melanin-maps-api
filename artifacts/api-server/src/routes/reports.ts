@@ -3,8 +3,13 @@ import { db, pool, safetyReportsTable, safetyIncidentsTable, businessesTable } f
 import { desc, eq } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { sendAdminSafetyReportAlert } from "../lib/email";
-import { checkApprovedIncidentThreshold } from "../safety/approvedIncidentAlerts";
-import { updateBusinessSafetyRating } from "../safety/businessSafetyRating";
+import { moderateSafetyReport } from "../safety/moderateSafetyReport";
+import {
+  getCachedProximityWarnings,
+  invalidateProximityWarningCache,
+  proximityCacheKey,
+  setCachedProximityWarnings,
+} from "../safety/proximityWarningCache";
 import {
   normalizeIncidentLocation,
   normalizePoliceEncounterType,
@@ -88,20 +93,6 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
     businessResponseText: report.businessResponseText,
     createdAt: report.createdAt,
   };
-}
-
-// Short-lived coordinate-keyed cache for proximity-warnings.
-// Rounds to 3 decimal places (~111 m) so nearby poll ticks share a cache entry.
-// Community safety data only — no user-specific fields in the cached payload.
-const PROXIMITY_CACHE_TTL_MS = 60_000;
-interface ProximityCacheEntry {
-  data: { warnings: unknown[]; areaIncidents: unknown[] };
-  expiresAt: number;
-}
-const proximityCache = new Map<string, ProximityCacheEntry>();
-
-function proximityCacheKey(lat: number, lng: number, radius: number): string {
-  return `${Math.round(lat * 1000) / 1000}:${Math.round(lng * 1000) / 1000}:${radius}`;
 }
 
 router.post("/reports", reportLimiter, async (req: Request, res: Response): Promise<void> => {
@@ -256,7 +247,7 @@ router.get("/reports", async (req: Request, res: Response): Promise<void> => {
 router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
   try {
     const incidents = await pool.query(
-      `SELECT si.id, si.city, si.neighborhood, si.category, si.severity,
+      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
               approved.report_count::int AS "reportCount",
               si.status, si.notifications_sent AS "notificationsSent",
               si.triggered_at AS "triggeredAt"
@@ -264,12 +255,14 @@ router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
        JOIN LATERAL (
          SELECT COUNT(*) AS report_count
          FROM safety_reports sr
-         WHERE sr.incident_city ILIKE si.city
+         WHERE LOWER(sr.incident_city) = LOWER(si.city)
+           AND LOWER(sr.incident_region) = LOWER(si.region)
            AND sr.category = si.category
            AND sr.status = 'approved'
            AND sr.created_at > NOW() - INTERVAL '7 days'
        ) approved ON approved.report_count >= $1
        WHERE si.status = 'active'
+         AND si.region IS NOT NULL
          AND si.triggered_at > NOW() - INTERVAL '7 days'
        ORDER BY si.triggered_at DESC
        LIMIT 50`,
@@ -317,42 +310,18 @@ router.patch("/admin/safety-reports/:id", async (req: any, res: Response): Promi
   }
 
   try {
-    const [updated] = await db
-      .update(safetyReportsTable)
-      .set({
-        status: status as string,
-        moderatorNotes: moderatorNotes ?? null,
-        reviewedAt: new Date(),
-        reviewedBy: req.user.id,
-      })
-      .where(eq(safetyReportsTable.id, req.params.id))
-      .returning();
+    const result = await moderateSafetyReport({
+      id: req.params.id,
+      status: status as "pending" | "approved" | "rejected",
+      moderatorNotes,
+      reviewedBy: req.user.id,
+    });
 
-    if (!updated) {
+    if (!result) {
       res.status(404).json({ error: "Report not found" });
       return;
     }
-
-    // Public ratings and incident alerts change only after explicit approval.
-    if (status === "approved" && updated.targetType === "business" && updated.targetId) {
-      const [biz] = await db
-        .select({ blackOwned: businessesTable.blackOwned })
-        .from(businessesTable)
-        .where(eq(businessesTable.id, updated.targetId))
-        .limit(1);
-      if (biz) await updateBusinessSafetyRating(updated.targetId);
-    }
-
-    if (status === "approved") {
-      await checkApprovedIncidentThreshold({
-        city: updated.incidentCity,
-        category: updated.category,
-        severity: updated.severity,
-        area: reportMustBeAnonymous(updated.category) ? null : updated.incidentArea,
-      });
-    }
-
-    res.json({ report: updated });
+    res.json({ report: result.report });
   } catch (err) {
     req.log.error({ err }, "Failed to update safety report");
     res.status(500).json({ error: "Failed to update report" });
@@ -395,9 +364,9 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
 
   // Return cached response for identical (or very nearby) coordinates within TTL
   const cacheKey = proximityCacheKey(lat, lng, radius);
-  const cached = proximityCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    res.json(cached.data);
+  const cached = getCachedProximityWarnings(cacheKey);
+  if (cached) {
+    res.json(cached);
     return;
   }
 
@@ -418,7 +387,19 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
         sr.target_id,
         b.name AS business_name,
         sr.category,
-        MAX(sr.severity) AS severity,
+        CASE MAX(CASE sr.severity
+          WHEN 'critical' THEN 4
+          WHEN 'high' THEN 3
+          WHEN 'medium' THEN 2
+          WHEN 'low' THEN 1
+          ELSE 0
+        END)
+          WHEN 4 THEN 'critical'
+          WHEN 3 THEN 'high'
+          WHEN 2 THEN 'medium'
+          WHEN 1 THEN 'low'
+          ELSE 'medium'
+        END AS severity,
         COUNT(*) AS report_count,
         b.latitude::text,
         b.longitude::text,
@@ -458,23 +439,26 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
     const areaIncidents = await pool.query<{
       id: string;
       city: string;
+      region: string;
       neighborhood: string | null;
       category: string;
       severity: string;
       report_count: string;
     }>(
-      `SELECT si.id, si.city, si.neighborhood, si.category, si.severity,
+      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
               approved.report_count::text
        FROM safety_incidents si
        JOIN LATERAL (
          SELECT COUNT(*) AS report_count
          FROM safety_reports sr
-         WHERE sr.incident_city ILIKE si.city
+         WHERE LOWER(sr.incident_city) = LOWER(si.city)
+           AND LOWER(sr.incident_region) = LOWER(si.region)
            AND sr.category = si.category
            AND sr.status = 'approved'
            AND sr.created_at > NOW() - INTERVAL '7 days'
        ) approved ON approved.report_count >= $1
        WHERE si.status = 'active'
+         AND si.region IS NOT NULL
          AND si.triggered_at > NOW() - INTERVAL '7 days'
        ORDER BY approved.report_count DESC
        LIMIT 10`,
@@ -498,6 +482,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
       areaIncidents: areaIncidents.rows.map((r) => ({
         id: r.id,
         city: r.city,
+        region: r.region,
         neighborhood: r.neighborhood,
         category: r.category,
         severity: r.severity,
@@ -506,7 +491,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
     };
 
     // Cache the result — community data only, no user-specific fields
-    proximityCache.set(cacheKey, { data: responseData, expiresAt: Date.now() + PROXIMITY_CACHE_TTL_MS });
+    setCachedProximityWarnings(cacheKey, responseData);
 
     res.json(responseData);
   } catch (err) {
@@ -532,6 +517,7 @@ router.patch("/admin/safety-incidents/:id/resolve", async (req: any, res: Respon
       res.status(404).json({ error: "Incident not found" });
       return;
     }
+    invalidateProximityWarningCache();
     res.json({ incident: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to resolve safety incident");

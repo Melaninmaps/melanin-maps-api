@@ -45,6 +45,10 @@ const DURATION_OPTIONS = [
   { label: "24 hours", minutes: 1440 },
 ];
 
+function hasPublishedCoordinate(share: LocationShare): boolean {
+  return share.currentLat !== null && share.currentLng !== null && Boolean(share.lastUpdatedAt);
+}
+
 export default function LocationShareScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -61,6 +65,7 @@ export default function LocationShareScreen() {
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [creating, setCreating] = useState(false);
   const [activeShareId, setActiveShareId] = useState<number | null>(null);
+  const activeShareRef = useRef<LocationShare | null>(null);
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchShares = useCallback(async () => {
@@ -68,31 +73,63 @@ export default function LocationShareScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const res = await fetch(`${getApiBase()}/api/safety/location-shares`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const d = await res.json() as { shares: LocationShare[] }; setShares(d.shares ?? []); }
+      if (res.ok) {
+        const d = await res.json() as { shares: LocationShare[] };
+        const fetchedShares = d.shares ?? [];
+        setShares(fetchedShares);
+        const unexpired = fetchedShares.filter((share) => share.isActive && new Date(share.expiresAt) > new Date());
+        // This screen resumes one server-ordered share at a time. Prioritize a
+        // link that still needs its first fix; otherwise resume the newest link.
+        const resumableShare = unexpired.find((share) => !hasPublishedCoordinate(share)) ?? unexpired[0] ?? null;
+        activeShareRef.current = resumableShare;
+        setActiveShareId(resumableShare?.id ?? null);
+      }
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { queueMicrotask(() => { void fetchShares(); }); }, [fetchShares]);
 
-  const startLocationUpdates = useCallback((token: string) => {
+  const publishCurrentLocation = useCallback(async (
+    share: LocationShare,
+    token: string,
+  ): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const response = await fetch(`${getApiBase()}/api/safety/location-shares/${share.shareToken}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
+      });
+      if (!response.ok) return null;
+      return { lat: loc.coords.latitude, lng: loc.coords.longitude };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const startLocationUpdates = useCallback((share: LocationShare, token: string) => {
     if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
-    locationIntervalRef.current = setInterval(async () => {
-      try {
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        const activeShare = shares.find((s) => s.isActive && s.id === activeShareId);
-        if (!activeShare) return;
-        await fetch(`${getApiBase()}/api/safety/location-shares/${activeShare.shareToken}/update`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
-        });
-      } catch { /* silent */ }
+    locationIntervalRef.current = setInterval(() => {
+      void publishCurrentLocation(share, token).then((position) => {
+        if (!position) return;
+        setShares((current) => current.map((candidate) => candidate.id === share.id
+          ? {
+              ...candidate,
+              currentLat: position.lat,
+              currentLng: position.lng,
+              lastUpdatedAt: new Date().toISOString(),
+            }
+          : candidate));
+      });
     }, 30000);
-  }, [shares, activeShareId]);
+  }, [publishCurrentLocation]);
 
   useEffect(() => {
-    if (activeShareId) {
-      SecureStore.getItemAsync("auth_session_token").then((t) => { if (t) startLocationUpdates(t); }).catch(() => {});
+    const activeShare = activeShareRef.current?.id === activeShareId ? activeShareRef.current : null;
+    if (activeShare) {
+      SecureStore.getItemAsync("auth_session_token")
+        .then((token) => { if (token) startLocationUpdates(activeShare, token); })
+        .catch(() => {});
     }
     return () => { if (locationIntervalRef.current) clearInterval(locationIntervalRef.current); };
   }, [activeShareId, startLocationUpdates]);
@@ -107,6 +144,10 @@ export default function LocationShareScreen() {
         return;
       }
       const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) {
+        Alert.alert("Sign In Required", "Please sign in again before sharing your location.");
+        return;
+      }
       const res = await fetch(`${getApiBase()}/api/safety/location-shares`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -118,15 +159,28 @@ export default function LocationShareScreen() {
       });
       const d = await res.json() as { share?: LocationShare; error?: string };
       if (res.ok && d.share) {
-        setShares((prev) => [d.share!, ...prev]);
-        setActiveShareId(d.share!.id);
+        const createdShare = d.share;
+        const firstLocation = await publishCurrentLocation(createdShare, token);
+        const readyShare = firstLocation
+          ? {
+              ...createdShare,
+              currentLat: firstLocation.lat,
+              currentLng: firstLocation.lng,
+              lastUpdatedAt: new Date().toISOString(),
+            }
+          : createdShare;
+        setShares((prev) => [readyShare, ...prev]);
+        activeShareRef.current = readyShare;
+        setActiveShareId(readyShare.id);
         setShowNew(false);
         setLabel(""); setRecipientEmail("");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const shareUrl = `${getApiBase()}/safety/location/${encodeURIComponent(d.share!.shareToken)}`;
+        const shareUrl = `${getApiBase()}/safety/location/${encodeURIComponent(readyShare.shareToken)}`;
         Alert.alert(
-          "Location Sharing Active",
-          `Your location is now being shared. Copy the link to send to ${recipientEmail || "your contact"}.`,
+          firstLocation ? "Location Sharing Active" : "Share Link Ready",
+          firstLocation
+            ? `Your current location is now available. Copy the link to send to ${recipientEmail || "your contact"}.`
+            : "The secure link is active but is still waiting for your first location update. Keep the app open and we will retry.",
           [
             { text: "Copy Link", onPress: () => { void Clipboard.setStringAsync(shareUrl); Haptics.selectionAsync(); } },
             { text: "Done" },
@@ -135,6 +189,8 @@ export default function LocationShareScreen() {
       } else {
         Alert.alert("Error", d.error ?? "Failed to start location share.");
       }
+    } catch {
+      Alert.alert("Error", "Failed to start location sharing. Please try again.");
     } finally { setCreating(false); }
   };
 
@@ -146,7 +202,11 @@ export default function LocationShareScreen() {
           const token = await SecureStore.getItemAsync("auth_session_token");
           await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
           setShares((prev) => prev.map((s) => s.id === id ? { ...s, isActive: false } : s));
-          if (activeShareId === id) { setActiveShareId(null); if (locationIntervalRef.current) clearInterval(locationIntervalRef.current); }
+          if (activeShareId === id) {
+            activeShareRef.current = null;
+            setActiveShareId(null);
+            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+          }
         },
       },
     ]);
@@ -170,7 +230,9 @@ export default function LocationShareScreen() {
     return m > 0 ? `${h}h ${m}m remaining` : `${h}h remaining`;
   };
 
-  const activeShares = shares.filter((s) => s.isActive && new Date(s.expiresAt) > new Date());
+  const unexpiredShares = shares.filter((s) => s.isActive && new Date(s.expiresAt) > new Date());
+  const activeShares = unexpiredShares.filter(hasPublishedCoordinate);
+  const waitingShares = unexpiredShares.filter((share) => !hasPublishedCoordinate(share));
   const pastShares = shares.filter((s) => !s.isActive || new Date(s.expiresAt) <= new Date());
 
   return (
@@ -261,6 +323,42 @@ export default function LocationShareScreen() {
             </View>
           )}
 
+          {waitingShares.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Waiting for Location</Text>
+              {waitingShares.map((share) => (
+                <View key={share.id} style={[styles.shareCard, { backgroundColor: colors.card, borderColor: "#D9770640" }]}>
+                  <View style={styles.shareHeader}>
+                    <View style={[styles.shareIconWrap, { backgroundColor: "#D9770618" }]}>
+                      <Feather name="clock" size={16} color="#D97706" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.shareLabel, { color: colors.foreground }]}>{share.label}</Text>
+                      <Text style={[styles.shareExpiry, { color: "#D97706" }]}>Waiting for first location — retrying</Text>
+                      <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>{formatExpiry(share.expiresAt)}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.stopBtn, { borderColor: "#DC2626" }]}
+                      onPress={() => handleStop(share.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="x" size={14} color="#DC2626" />
+                      <Text style={styles.stopBtnText}>Stop</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.copyBtn, { backgroundColor: "#D9770618", borderColor: "#D9770630" }]}
+                    onPress={() => void handleCopyLink(share.shareToken)}
+                    activeOpacity={0.7}
+                  >
+                    <Feather name="copy" size={14} color="#D97706" />
+                    <Text style={[styles.copyBtnText, { color: "#D97706" }]}>Copy Pending Link</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+
           {activeShares.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Active Shares</Text>
@@ -301,7 +399,7 @@ export default function LocationShareScreen() {
             </View>
           )}
 
-          {activeShares.length === 0 && pastShares.length === 0 && (
+          {activeShares.length === 0 && waitingShares.length === 0 && pastShares.length === 0 && (
             <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="map-pin" size={28} color={colors.mutedForeground} />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No location shares yet</Text>

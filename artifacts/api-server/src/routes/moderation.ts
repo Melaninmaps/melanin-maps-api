@@ -6,9 +6,7 @@ type ReportCategory = (typeof SAFETY_REPORT_CATEGORIES)[number];
 type ReportSeverity = (typeof SAFETY_REPORT_SEVERITIES)[number];
 
 import { isAdmin } from "../lib/adminAuth";
-import { checkApprovedIncidentThreshold } from "../safety/approvedIncidentAlerts";
-import { updateBusinessSafetyRating } from "../safety/businessSafetyRating";
-import { reportMustBeAnonymous } from "../safety/reportContract";
+import { moderateSafetyReport } from "../safety/moderateSafetyReport";
 
 const router: IRouter = Router();
 
@@ -115,28 +113,12 @@ router.patch("/moderation/reports/:id", async (req: Request, res: Response) => {
       }
       res.json({ id: updated.id, status: updated.status });
     } else {
-      const [updated] = await db
-        .update(safetyReportsTable)
-        .set({ status, moderatorNotes: moderatorNotes ?? null, reviewedAt, reviewedBy })
-        .where(eq(safetyReportsTable.id, id))
-        .returning();
-
-      if (!updated) {
+      const result = await moderateSafetyReport({ id, status, moderatorNotes, reviewedBy });
+      if (!result) {
         res.status(404).json({ error: "Report not found" });
         return;
       }
-      if (status === "approved") {
-        if (updated.targetType === "business" && updated.targetId) {
-          await updateBusinessSafetyRating(updated.targetId);
-        }
-        await checkApprovedIncidentThreshold({
-          city: updated.incidentCity,
-          category: updated.category,
-          severity: updated.severity,
-          area: reportMustBeAnonymous(updated.category) ? null : updated.incidentArea,
-        });
-      }
-      res.json({ id: updated.id, status: updated.status });
+      res.json({ id: result.report.id, status: result.report.status });
     }
   } catch (err) {
     req.log.error({ err }, "Failed to update report status");

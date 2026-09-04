@@ -114,6 +114,7 @@ export const selectSafetyReportSchema = createSelectSchema(safetyReportsTable);
 export const safetyIncidentsTable = pgTable("safety_incidents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   city: varchar("city", { length: 100 }).notNull(),
+  region: varchar("region", { length: 100 }),
   neighborhood: varchar("neighborhood", { length: 255 }),
   category: varchar("category", { length: 100 }).notNull(),
   severity: varchar("severity", { length: 20 }).notNull().default("medium"),

@@ -2,6 +2,7 @@ import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTa
 import { pool } from "@workspace/db";
 import { eq, inArray, ilike, isNotNull, gte, lte, ne, and, or } from "drizzle-orm";
 import { logger } from "./logger";
+import { normalizeHomeState } from "./happening-personalization";
 
 interface PushMessage {
   title: string;
@@ -303,18 +304,33 @@ export async function sendPushToAllMembers(message: PushMessage): Promise<void> 
 
 export async function sendPushToBusinessOwnersByCity(
   city: string,
+  region: string,
   message: PushMessage,
 ): Promise<{ recipientCount: number; delivered: boolean }> {
   try {
     // Only notify owners of minority-owned businesses — never alert non-minority
     // businesses that safety reports are being filed in their area.
     const businesses = await db
-      .select({ submittedById: businessesTable.submittedById, id: businessesTable.id, name: businessesTable.name })
+      .select({
+        submittedById: businessesTable.submittedById,
+        id: businessesTable.id,
+        name: businessesTable.name,
+        state: businessesTable.state,
+      })
       .from(businessesTable)
-      .where(and(ilike(businessesTable.city, `%${city}%`), eq(businessesTable.blackOwned, true)));
+      .where(and(
+        ilike(businessesTable.city, city),
+        eq(businessesTable.blackOwned, true),
+      ));
+
+    const canonicalRegion = normalizeHomeState(region);
+    const normalizedRegion = region.trim().toLocaleLowerCase();
 
     const ownerIds = [...new Set(
       businesses
+        .filter((business) => canonicalRegion
+          ? normalizeHomeState(business.state) === canonicalRegion
+          : business.state?.trim().toLocaleLowerCase() === normalizedRegion)
         .map((b) => b.submittedById)
         .filter((id): id is string => id != null && id.length > 0),
     )];
@@ -342,7 +358,7 @@ export async function sendPushToBusinessOwnersByCity(
       );
     }
 
-    logger.info({ city, ownerCount: ownerIds.length, deliveredCount }, "[push] Safety incident notifications sent to business owners");
+    logger.info({ city, region, ownerCount: ownerIds.length, deliveredCount }, "[push] Safety incident notifications sent to business owners");
     return { recipientCount: deliveredCount, delivered: deliveredCount > 0 };
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send safety incident push to business owners");
