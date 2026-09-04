@@ -84,6 +84,7 @@ import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
 import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
 import SubmitEvent from "@/pages/submit-event";
+import LocationShareView from "@/pages/location-share-view";
 
 const BASE = import.meta.env.BASE_URL;
 const ROUTER_BASE = (() => {
@@ -279,6 +280,9 @@ function Router() {
       <Route path="/referral-redirect" component={MyReferral} />
       <Route path="/business-response/:token" component={BusinessResponse} />
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
+      {/* Mobile location links open without account access; the opaque token is
+          the only capability and the viewer returns no identity information. */}
+      <Route path="/safety/location/:token" component={LocationShareView} />
       <Route path="/admin">
         <ProtectedRoute><Admin /></ProtectedRoute>
       </Route>

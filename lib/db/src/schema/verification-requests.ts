@@ -1,8 +1,9 @@
 import { sql } from "drizzle-orm";
-import { pgTable, timestamp, varchar, text, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, varchar, text, integer, boolean, unique } from "drizzle-orm/pg-core";
 
 export const verificationRequestsTable = pgTable("verification_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  idempotencyKey: varchar("idempotency_key", { length: 200 }),
   submitterId: varchar("submitter_id"),
   businessId: varchar("business_id"),
   businessName: varchar("business_name").notNull(),
@@ -37,9 +38,14 @@ export const verificationRequestsTable = pgTable("verification_requests", {
     .notNull()
     .default("pending"),
   adminNotes: text("admin_notes"),
+  notificationStatus: varchar("notification_status", {
+    enum: ["pending", "sent", "failed"],
+  }).notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => [
+  unique("verification_requests_submitter_idempotency_unique").on(table.submitterId, table.idempotencyKey),
+]);
 
 export type VerificationRequest = typeof verificationRequestsTable.$inferSelect;
 export type InsertVerificationRequest = typeof verificationRequestsTable.$inferInsert;

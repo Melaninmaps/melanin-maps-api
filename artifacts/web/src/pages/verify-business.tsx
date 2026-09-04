@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, Shield, CheckCircle, Clock, Building2, Award, FileText, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -70,6 +70,7 @@ export default function VerifyBusiness() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [earnedLevel, setEarnedLevel] = useState<"basic" | "ownership" | "certified">("basic");
+  const submissionKeyRef = useRef<string | null>(null);
 
   function set(key: string, val: string | boolean) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -100,10 +101,14 @@ export default function VerifyBusiness() {
     }
     setLoading(true);
     try {
+      submissionKeyRef.current ??= `web:${globalThis.crypto.randomUUID()}`;
       const res = await fetch(`${BASE}api/verification/submit`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": submissionKeyRef.current,
+        },
         body: JSON.stringify({
           businessName: form.businessName,
           businessType: form.businessType,

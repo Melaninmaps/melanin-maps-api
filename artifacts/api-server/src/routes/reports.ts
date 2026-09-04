@@ -10,6 +10,66 @@ const router: IRouter = Router();
 
 const VALID_CATEGORIES = ["safety", "sundown", "discrimination", "business", "resource", "positive", "police"] as const;
 const VALID_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+const VALID_ENCOUNTER_TYPES = [
+  "police_stop",
+  "ice_activity",
+  "racial_profiling",
+  "excessive_force",
+  "checkpoint",
+  "other_encounter",
+] as const;
+
+/**
+ * Keep the API's persisted category vocabulary stable even when an older
+ * client submits the label it displays to a person. New clients send the
+ * canonical values directly.
+ */
+const REPORT_CATEGORY_ALIASES: Record<string, typeof VALID_CATEGORIES[number]> = {
+  "safety concern": "safety",
+  "sundown town warning": "sundown",
+  discrimination: "discrimination",
+  "business update": "business",
+  "community resource": "resource",
+  "positive safety tip": "positive",
+  "police stop/questioning": "police",
+  "ice activity": "police",
+  "racial profiling": "police",
+  "excessive force/misconduct": "police",
+  "checkpoint/roadblock": "police",
+  "other encounter": "police",
+};
+
+export function normalizeReportCategory(category: unknown): typeof VALID_CATEGORIES[number] | null {
+  if (typeof category !== "string") return null;
+  const normalized = category.trim().toLowerCase();
+  if ((VALID_CATEGORIES as readonly string[]).includes(normalized)) {
+    return normalized as typeof VALID_CATEGORIES[number];
+  }
+  return REPORT_CATEGORY_ALIASES[normalized] ?? null;
+}
+
+const ENCOUNTER_TYPE_ALIASES: Record<string, typeof VALID_ENCOUNTER_TYPES[number]> = {
+  "police stop/questioning": "police_stop",
+  "police stop / questioning": "police_stop",
+  "ice activity": "ice_activity",
+  "racial profiling": "racial_profiling",
+  "excessive force/misconduct": "excessive_force",
+  "excessive force / misconduct": "excessive_force",
+  "checkpoint/roadblock": "checkpoint",
+  "checkpoint / roadblock": "checkpoint",
+  "other encounter": "other_encounter",
+};
+
+export function normalizeReportEncounterType(
+  encounterType: unknown,
+): typeof VALID_ENCOUNTER_TYPES[number] | null {
+  if (typeof encounterType !== "string") return null;
+  const normalized = encounterType.trim().toLowerCase();
+  if ((VALID_ENCOUNTER_TYPES as readonly string[]).includes(normalized)) {
+    return normalized as typeof VALID_ENCOUNTER_TYPES[number];
+  }
+  return ENCOUNTER_TYPE_ALIASES[normalized] ?? null;
+}
 
 // Spoken severity labels from the UI → internal severity values
 const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
@@ -41,6 +101,7 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
   return {
     id: report.id,
     category: report.category,
+    encounterType: report.encounterType,
     targetType: report.targetType,
     targetId: report.targetId,
     targetName: report.targetName,
@@ -191,8 +252,17 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     encounterType,  // police/ICE sub-type (e.g. "Excessive Force/Misconduct")
   } = req.body as Record<string, unknown>;
 
-  if (!category || !VALID_CATEGORIES.includes(category as typeof VALID_CATEGORIES[number])) {
+  const resolvedCategory = normalizeReportCategory(category);
+  if (!resolvedCategory) {
     res.status(400).json({ error: "Invalid category" });
+    return;
+  }
+
+  const resolvedEncounterType = resolvedCategory === "police"
+    ? normalizeReportEncounterType(encounterType)
+    : null;
+  if (resolvedCategory === "police" && encounterType != null && !resolvedEncounterType) {
+    res.status(400).json({ error: "Invalid encounterType" });
     return;
   }
 
@@ -226,7 +296,8 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
       .values({
         reporterId: isAnon ? null : (req.user?.id ?? null),
         reporterName,
-        category: category as string,
+        category: resolvedCategory,
+        encounterType: resolvedEncounterType,
         targetType: resolvedTargetType,
         targetId: typeof targetId === "string" ? targetId : null,
         targetName: (targetName as string).trim(),
@@ -234,7 +305,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         severity: resolvedSeverity,
         routingType:
           // Always priority: safety concern, discrimination, sundown, and police/ICE encounters
-          (category === "safety" || category === "discrimination" || category === "sundown" || category === "police")
+          (resolvedCategory === "safety" || resolvedCategory === "discrimination" || resolvedCategory === "sundown" || resolvedCategory === "police")
             ? "priority"
             // Excessive force is doubly prioritized — already covered by police category above
             : businessResponseRequested === true ? "private" : "moderation",
@@ -255,7 +326,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     const city = nameParts[nameParts.length - 1]?.trim() ?? (targetName as string).trim();
     const neighborhood = nameParts.length > 1 ? nameParts[0].trim() : null;
 
-    await checkAndTriggerIncident(city, category as string, resolvedSeverity, neighborhood);
+    await checkAndTriggerIncident(city, resolvedCategory, resolvedSeverity, neighborhood);
 
     // Look up the targeted business (if any) to determine ownership for rating + email
     let isMinorityOwned: boolean | null = null;
@@ -278,7 +349,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
 
     // Always email admin on every report
     sendAdminSafetyReportAlert({
-      category: category as string,
+      category: resolvedCategory,
       targetType: resolvedTargetType,
       targetName: (targetName as string).trim(),
       severity: resolvedSeverity,

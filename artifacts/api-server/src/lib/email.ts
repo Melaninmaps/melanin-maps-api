@@ -55,6 +55,67 @@ export async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]
   return data;
 }
 
+type VerificationSubmissionAdminAlertInput = {
+  requestId: string;
+  businessName: string;
+  businessType: string;
+  ownerName: string;
+  submitterEmail: string;
+  verificationLevel: string;
+  city: string | null;
+  state: string | null;
+};
+
+function escapeEmailHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export function buildVerificationSubmissionAdminAlert(
+  input: VerificationSubmissionAdminAlertInput,
+): Parameters<Resend["emails"]["send"]>[0] {
+  const adminTo = process.env.ADMIN_EMAILS
+    ?.split(",")
+    .map((email) => email.trim())
+    .filter(Boolean)[0] ?? "hello@mappingwithmelanin.com";
+  const location = [input.city, input.state].filter(Boolean).join(", ") || "Not provided";
+  const requestId = escapeEmailHtml(input.requestId);
+  const businessName = escapeEmailHtml(input.businessName);
+
+  return {
+    from: FROM,
+    to: adminTo,
+    replyTo: input.submitterEmail,
+    subject: `[Verification] ${businessName} submitted for review`,
+    headers: { "Idempotency-Key": `verification-submission:${input.requestId}` },
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <p style="color:#2B1507;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 8px">Verification submission</p>
+        <h1 style="font-size:22px;color:#2B1507;font-weight:800;margin:0 0 24px;line-height:1.3">${businessName}</h1>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+          <tr><td style="padding:8px 0;color:#6B5744;font-size:13px;width:150px">Request ID</td><td style="padding:8px 0;color:#2B1507;font-size:13px;font-family:monospace">${requestId}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Business type</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(input.businessType)}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Owner</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(input.ownerName)}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Submitter email</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(input.submitterEmail)}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Level</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(input.verificationLevel)}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Location</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(location)}</td></tr>
+        </table>
+        <a href="https://mappingwithmelanin.com/admin/verification" style="display:inline-block;background:#2B1507;color:#FAF6EF;font-weight:700;font-size:14px;padding:12px 28px;border-radius:50px;text-decoration:none">Review submission</a>
+      </div>
+    `,
+  };
+}
+
+export async function sendVerificationSubmissionAdminAlert(
+  input: VerificationSubmissionAdminAlertInput,
+) {
+  return sendEmail(buildVerificationSubmissionAdminAlert(input));
+}
+
 // ─── Tester Issue Report → Founder direct alert ───────────────────────────────
 export async function sendTesterReportEmail({
   userId, userEmail, firstName, page, action, message, timestamp,

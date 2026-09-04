@@ -24,8 +24,9 @@
  */
 
 import { pool } from "@workspace/db";
+import { resolveMemberAgeBand, type AgeBand } from "../lib/audience-policy";
 
-export type AudienceBand = "unknown" | "13_15" | "16_17" | "18_plus";
+export type AudienceBand = AgeBand;
 
 export type PronounMode =
   | "none"       // not opted in, or not set
@@ -56,7 +57,8 @@ interface IdentityContextRow {
 
 /** Raw row from age assurance query */
 interface AgeAssuranceRow {
-  age_band: AudienceBand;
+  age_band: AudienceBand | null;
+  date_of_birth: Date | string | null;
 }
 
 // Keywords that indicate the question is specifically about reproductive anatomy.
@@ -104,7 +106,11 @@ export async function loadKinfolkMemberContext(
   try {
     const [ageRow, identityRow] = await Promise.all([
       pool.query<AgeAssuranceRow>(
-        `SELECT age_band FROM user_age_assurance WHERE user_id = $1 LIMIT 1`,
+        `SELECT uaa.age_band, u.date_of_birth
+           FROM users u
+           LEFT JOIN user_age_assurance uaa ON uaa.user_id = u.id
+          WHERE u.id = $1
+          LIMIT 1`,
         [userId],
       ).then((r) => r.rows[0] ?? null),
       pool.query<IdentityContextRow>(
@@ -116,10 +122,12 @@ export async function loadKinfolkMemberContext(
       ).then((r) => r.rows[0] ?? null),
     ]);
 
-    // Null means the user signed up before age assurance was introduced.
-    // Default to "adult" so pre-existing users are not silently given
-    // child-safe responses. Only a confirmed "under_13" record is protected.
-    const audienceBand: AudienceBand = ageRow?.age_band ?? "adult";
+    // A legacy null band can use DOB only to establish adulthood. Minors and
+    // absent/invalid DOBs remain in the protective unknown band.
+    const audienceBand: AudienceBand = resolveMemberAgeBand(
+      ageRow?.age_band,
+      ageRow?.date_of_birth,
+    );
 
     const out: KinfolkMemberContext = {
       audienceBand,

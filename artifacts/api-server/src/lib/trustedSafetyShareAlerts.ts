@@ -56,6 +56,25 @@ const SEVERE_TYPES: TrustedSafetyAlertPayload["alertType"][] = [
   "community_safety",
 ];
 
+export function trustedSafetyInAppNotification(
+  shareId: string,
+  alertType: TrustedSafetyAlertPayload["alertType"],
+  locationCity: string,
+  locationRegion: string,
+  title: string,
+  body: string,
+) {
+  // This is the documented fallback for an unavailable push token or a failed
+  // Expo request. The member sees it in the in-app notification center on
+  // their next open. Do not add owner IDs, coordinates, or activity here.
+  return {
+    type: "safety",
+    title,
+    body,
+    data: { alertType, locationCity, locationRegion, shareId },
+  };
+}
+
 /**
  * Mirror a safety alert to all active trusted contacts of the given user.
  * Safe to call on every alert — the function applies all filtering internally.
@@ -105,7 +124,8 @@ export async function notifyTrustedSafetyContacts(
       `SELECT * FROM trusted_safety_shares
        WHERE owner_id = $1
          AND status = 'active'
-         AND owner_enabled = true`,
+         AND owner_enabled = true
+         AND contact_accepted = true`,
       [ownerId]
     );
 
@@ -153,22 +173,27 @@ export async function notifyTrustedSafetyContacts(
             deliveryStatus = resp.ok ? "sent" : "failed";
             if (!resp.ok) errorMessage = `Expo push HTTP ${resp.status}`;
 
-            // Also store in notifications table so the contact sees it in-app.
-            await pool.query(
-              `INSERT INTO notifications (id, user_id, type, title, body, data, read, created_at)
-               VALUES (gen_random_uuid(), $1, 'safety', $2, $3, $4::jsonb, false, NOW())
-               ON CONFLICT DO NOTHING`,
-              [
-                share.contact_user_id,
-                notifTitle,
-                notifBody,
-                JSON.stringify({ alertType, locationCity, locationRegion, shareId: share.id }),
-              ]
-            );
           } else {
-            deliveryMethod = "push";
-            deliveryStatus = "failed";
-            errorMessage = "No push token on file";
+            deliveryMethod = "in_app";
+            deliveryStatus = "sent";
+            errorMessage = "Push unavailable; delivered to in-app notification center";
+          }
+          // Persist every MWM alert. This is the reliable fallback when push is
+          // unavailable or Expo rejects a send; it exposes only the safety-safe
+          // city/region payload described above.
+          const inApp = trustedSafetyInAppNotification(
+            share.id, alertType, locationCity, locationRegion, notifTitle, notifBody,
+          );
+          await pool.query(
+            `INSERT INTO notifications (id, user_id, type, title, body, data, read, created_at)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, false, NOW())
+             ON CONFLICT DO NOTHING`,
+            [share.contact_user_id, inApp.type, inApp.title, inApp.body, JSON.stringify(inApp.data)]
+          );
+          if (deliveryStatus === "failed") {
+            deliveryMethod = "in_app";
+            deliveryStatus = "sent";
+            errorMessage = `${errorMessage ?? "Push delivery failed"}; delivered to in-app notification center`;
           }
         } else if (share.contact_type === "phone" && share.contact_phone) {
           // ── SMS via Twilio ────────────────────────────────────────────────

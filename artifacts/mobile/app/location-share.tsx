@@ -83,7 +83,7 @@ export default function LocationShareScreen() {
         if (!activeShare) return;
         await fetch(`${getApiBase()}/api/safety/location-shares/${activeShare.shareToken}/update`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
         });
       } catch { /* silent */ }
@@ -123,7 +123,7 @@ export default function LocationShareScreen() {
         setShowNew(false);
         setLabel(""); setRecipientEmail("");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const shareUrl = `https://mappingwithmelanin.com/safety/location/${d.share!.shareToken}`;
+        const shareUrl = `${getApiBase()}/safety/location/${encodeURIComponent(d.share!.shareToken)}`;
         Alert.alert(
           "Location Sharing Active",
           `Your location is now being shared. Copy the link to send to ${recipientEmail || "your contact"}.`,
@@ -153,7 +153,7 @@ export default function LocationShareScreen() {
   };
 
   const handleCopyLink = async (token: string) => {
-    const url = `https://mappingwithmelanin.com/safety/location/${token}`;
+    const url = `${getApiBase()}/safety/location/${encodeURIComponent(token)}`;
     await Clipboard.setStringAsync(url);
     if (Platform.OS !== "web") Haptics.selectionAsync();
     Alert.alert("Copied!", "Location link copied to clipboard.");
@@ -176,7 +176,13 @@ export default function LocationShareScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/safety-hub" as never)}
+          style={styles.backBtn}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Location Sharing</Text>

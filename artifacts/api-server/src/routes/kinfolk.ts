@@ -105,6 +105,12 @@ import { createPostgresDiscoverySignalRepository } from "../discovery/postgresFl
 import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 import {
+  answerPlanDomainForIntent,
+  persistAnswerPlan,
+  updateOwnedAnswerPlanDepth,
+} from "../kinfolk/answer-plan-persistence";
+import { eligibleForDefaultLearning } from "../kinfolk/adaptive-delivery";
+import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
 } from "../kinfolk/private-memory";
@@ -4194,6 +4200,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     recommendations = enforced.recommendations as Record<string, unknown> | null;
     if (travelPlanning) recommendations = null;
 
+    const answerPlanDomain = answerPlanDomainForIntent(intentClass);
+    const answerPlanId = req.user?.id
+      ? await persistAnswerPlan({
+          query: pool,
+          logger: req.log,
+          userId: req.user.id,
+          sessionId: finalSessionId ?? undefined,
+          domainClass: answerPlanDomain,
+          isSensitive: effectivePrivacySuppressed,
+          audienceBand: memberCtx.audienceBand,
+          plan: { depth: "standard" },
+        })
+      : null;
+
     // ── Telemetry: successful generation ──────────────────────────────────────
     recordKinfolkTelemetry({
       requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
@@ -4262,7 +4282,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       depth: "standard" as "brief" | "standard" | "deep",
       canShowMore: true,
       canShowLess: false,
-      answerPlanId: null as string | null,
+      answerPlanId,
       // Four-purpose enforcement fields — always present so clients can branch on them.
       // educationalStatus: how well this answer is backed by sources.
       // sourceNote: quiet attribution-style note only when a material source
@@ -5520,26 +5540,33 @@ router.patch("/kinfolk/answer-plans/:answerPlanId/depth", async (req: Request, r
     return void res.status(400).json({ error: "action must be show_more or show_less" });
   }
   try {
-    // Verify the plan belongs to the requesting user
-    const planRow = await pool.query(
-      `SELECT domain_class, is_sensitive, audience_band FROM kinfolk_answer_plans WHERE id = $1 AND user_id = $2`,
-      [answerPlanId, req.user.id],
-    );
-    if (!planRow.rows[0]) return void res.status(404).json({ error: "Answer plan not found" });
-    const { domain_class, is_sensitive, audience_band } = planRow.rows[0] as {
-      domain_class: string; is_sensitive: boolean; audience_band: string;
-    };
-    const eligible = !is_sensitive && !["under_13"].includes(audience_band);
-    await pool.query(
-      `INSERT INTO kinfolk_depth_feedback_events
-         (user_id, domain_class, action, eligible_for_default_learning, age_band_at_action)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [req.user.id, domain_class, action, eligible, audience_band],
-    );
-    res.json({ ok: true, recorded: true, eligibleForLearning: eligible });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "unknown";
-    res.status(500).json({ error: "Failed to record depth event", detail: msg });
+    // Ownership, expiry, and the depth change are enforced by one UPDATE.
+    const plan = await updateOwnedAnswerPlanDepth({
+      query: pool,
+      answerPlanId,
+      userId: req.user.id,
+      action,
+    });
+    if (!plan) return void res.status(404).json({ error: "Answer plan not found" });
+
+    const eligible = !plan.isSensitive
+      && eligibleForDefaultLearning(plan.domainClass, plan.audienceBand);
+    let recorded = true;
+    try {
+      await pool.query(
+        `INSERT INTO kinfolk_depth_feedback_events
+           (user_id, domain_class, action, eligible_for_default_learning, age_band_at_action)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [req.user.id, plan.domainClass, action, eligible, plan.audienceBand],
+      );
+    } catch (err) {
+      recorded = false;
+      req.log?.warn({ err }, "Kinfolk depth feedback persistence unavailable");
+    }
+    res.json({ ok: true, recorded, eligibleForLearning: eligible });
+  } catch (err) {
+    req.log?.warn({ err }, "Kinfolk answer-plan depth persistence unavailable");
+    res.status(503).json({ error: "Answer-plan persistence is temporarily unavailable" });
   }
 });
 

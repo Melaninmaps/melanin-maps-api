@@ -214,6 +214,7 @@ export default function ReportSafetyScreen() {
           targetName,
           description: form.description.trim(),
           severity: form.severity,
+          isAnonymous: form.isAnonymous,
         }),
       });
 

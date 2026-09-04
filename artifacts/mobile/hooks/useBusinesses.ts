@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import * as SecureStore from "expo-secure-store";
 import type { Business } from "@/constants/types";
-import { BUSINESSES } from "@/constants/data";
+
+const AUTH_TOKEN_KEY = "auth_session_token";
+const BUSINESS_LOAD_ERROR = "Unable to load businesses. Check your connection and try again.";
 
 interface UseBusinessesOptions {
   search?: string;
@@ -12,6 +15,12 @@ interface UseBusinessesResult {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
+}
+
+interface UseBusinessByIdResult {
+  business: Business | undefined;
+  isLoading: boolean;
+  error: string | null;
 }
 
 function getApiBaseUrl(): string {
@@ -56,6 +65,8 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     hours: b.hours as string | undefined,
     priceRange: b.priceRange as string | undefined,
     imageUrl: b.imageUrl as string | undefined,
+    profileStatus: b.profileStatus as string | null | undefined,
+    listingStatus: b.listingStatus as string | null | undefined,
     instagram: b.instagram as string | undefined,
     tiktok: b.tiktok as string | undefined,
     twitter: b.twitter as string | undefined,
@@ -69,55 +80,51 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
 
 export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinessesResult {
   const { search = "", category = "All" } = options;
-  const [businesses, setBusinesses] = useState<Business[]>(BUSINESSES);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const fetchBusinesses = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
 
-    const apiBase = getApiBaseUrl();
-    const params = new URLSearchParams();
-    if (search.length > 0) params.set("search", search);
-    if (category && category !== "All") params.set("category", category);
-    const qs = params.toString();
-    const url = `${apiBase}/api/businesses${qs ? `?${qs}` : ""}`;
-
-    const tryFetch = async (): Promise<Record<string, unknown>[] | null> => {
+    try {
+      const apiBase = getApiBaseUrl();
+      const params = new URLSearchParams();
+      if (search.length > 0) params.set("search", search);
+      if (category && category !== "All") params.set("category", category);
+      const qs = params.toString();
+      const url = `${apiBase}/api/businesses${qs ? `?${qs}` : ""}`;
+      const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 6000);
       try {
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
+        const res = await fetch(url, {
+          signal: controller.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        return (data.businesses as Record<string, unknown>[]) ?? null;
-      } catch {
+        const data = (await res.json()) as { businesses?: unknown };
+        if (!Array.isArray(data.businesses)) {
+          throw new Error("Invalid businesses response");
+        }
+        if (requestId === requestIdRef.current) {
+          setBusinesses(data.businesses.map((business) =>
+            mapApiBusinessToLocal(business as Record<string, unknown>),
+          ));
+        }
+      } finally {
         clearTimeout(timeout);
-        return null;
-      }
-    };
-
-    try {
-      let businesses = await tryFetch();
-      if (!businesses) {
-        // One retry after a short delay before falling back to static data
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        businesses = await tryFetch();
-      }
-
-      if (businesses && businesses.length > 0) {
-        setBusinesses(businesses.map(mapApiBusinessToLocal));
-      } else {
-        setBusinesses(BUSINESSES);
-        if (!businesses) setError("Showing cached results — tap to refresh");
       }
     } catch {
-      setBusinesses(BUSINESSES);
-      setError("Showing cached results — tap to refresh");
+      if (requestId === requestIdRef.current) {
+        setBusinesses([]);
+        setError(BUSINESS_LOAD_ERROR);
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) setIsLoading(false);
     }
   }, [search, category]);
 
@@ -128,35 +135,51 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
   return { businesses, isLoading, error, refetch: fetchBusinesses };
 }
 
-export function useBusinessById(id: string): { business: Business | undefined; isLoading: boolean } {
-  const [business, setBusiness] = useState<Business | undefined>(
-    BUSINESSES.find((b) => b.id === id),
-  );
+export function useBusinessById(id: string): UseBusinessByIdResult {
+  const [business, setBusiness] = useState<Business | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isCurrent = true;
+
     async function fetch_() {
       setIsLoading(true);
+      setError(null);
+      setBusiness(undefined);
       try {
         const apiBase = getApiBaseUrl();
+        const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(`${apiBase}/api/businesses/${id}`, {
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setBusiness(mapApiBusinessToLocal(data.business as Record<string, unknown>));
+        try {
+          const res = await fetch(`${apiBase}/api/businesses/${id}`, {
+            signal: controller.signal,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = (await res.json()) as { business?: unknown };
+          if (!data.business || typeof data.business !== "object") {
+            throw new Error("Invalid business response");
+          }
+          if (isCurrent) setBusiness(mapApiBusinessToLocal(data.business as Record<string, unknown>));
+        } finally {
+          clearTimeout(timeout);
+        }
       } catch {
-        setBusiness(BUSINESSES.find((b) => b.id === id));
+        if (isCurrent) {
+          setBusiness(undefined);
+          setError(BUSINESS_LOAD_ERROR);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent) setIsLoading(false);
       }
     }
-    fetch_();
+    void fetch_();
+    return () => {
+      isCurrent = false;
+    };
   }, [id]);
 
-  return { business, isLoading };
+  return { business, isLoading, error };
 }

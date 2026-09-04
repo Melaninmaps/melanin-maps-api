@@ -17,7 +17,16 @@ import {
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
-router.use(requireAuth);
+// The feed badge is safe to request before a session has been restored. Its
+// endpoint returns an explicit zero for anonymous users; every other knowledge
+// route remains behind the member wall.
+router.use((req: Request, res: Response, next) => {
+  if (req.path === "/knowledge/feed/count") {
+    next();
+    return;
+  }
+  requireAuth(req, res, next);
+});
 
 // ─── Topic Type Classifier ────────────────────────────────────────────────────
 type TopicType = "location" | "medical" | "wellness" | "education" | "business" | "community" | "hobby" | "general";
