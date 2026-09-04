@@ -6,6 +6,9 @@ type ReportCategory = (typeof SAFETY_REPORT_CATEGORIES)[number];
 type ReportSeverity = (typeof SAFETY_REPORT_SEVERITIES)[number];
 
 import { isAdmin } from "../lib/adminAuth";
+import { checkApprovedIncidentThreshold } from "../safety/approvedIncidentAlerts";
+import { updateBusinessSafetyRating } from "../safety/businessSafetyRating";
+import { reportMustBeAnonymous } from "../safety/reportContract";
 
 const router: IRouter = Router();
 
@@ -116,11 +119,22 @@ router.patch("/moderation/reports/:id", async (req: Request, res: Response) => {
         .update(safetyReportsTable)
         .set({ status, moderatorNotes: moderatorNotes ?? null, reviewedAt, reviewedBy })
         .where(eq(safetyReportsTable.id, id))
-        .returning({ id: safetyReportsTable.id, status: safetyReportsTable.status });
+        .returning();
 
       if (!updated) {
         res.status(404).json({ error: "Report not found" });
         return;
+      }
+      if (status === "approved") {
+        if (updated.targetType === "business" && updated.targetId) {
+          await updateBusinessSafetyRating(updated.targetId);
+        }
+        await checkApprovedIncidentThreshold({
+          city: updated.incidentCity,
+          category: updated.category,
+          severity: updated.severity,
+          area: reportMustBeAnonymous(updated.category) ? null : updated.incidentArea,
+        });
       }
       res.json({ id: updated.id, status: updated.status });
     }

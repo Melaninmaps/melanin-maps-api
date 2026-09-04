@@ -44,6 +44,12 @@ export const safetyReportsTable = pgTable("safety_reports", {
   targetType: varchar("target_type", { length: 50 }).notNull().default("business"),
   targetId: varchar("target_id"),
   targetName: varchar("target_name", { length: 255 }).notNull(),
+  encounterType: varchar("encounter_type", { length: 50 }),
+  incidentCity: varchar("incident_city", { length: 100 }),
+  incidentRegion: varchar("incident_region", { length: 100 }),
+  incidentArea: varchar("incident_area", { length: 255 }),
+  incidentLocationSource: varchar("incident_location_source", { length: 30 }).notNull().default("manual_area"),
+  incidentLocationPrecision: varchar("incident_location_precision", { length: 30 }).notNull().default("city"),
   description: text("description"),
   severity: varchar("severity", { length: 20 }).notNull().default("medium"),
   routingType: varchar("routing_type", { length: 20 }).notNull().default("moderation"),
@@ -81,6 +87,7 @@ export const SAFETY_REPORT_CATEGORIES = [
   "business",
   "resource",
   "positive",
+  "police",
 ] as const;
 
 export const SAFETY_REPORT_SEVERITIES = ["low", "medium", "high", "critical"] as const;

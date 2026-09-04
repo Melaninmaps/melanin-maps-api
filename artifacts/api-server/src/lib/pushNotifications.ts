@@ -9,7 +9,7 @@ interface PushMessage {
   data?: Record<string, unknown>;
 }
 
-async function sendToToken(token: string, message: PushMessage): Promise<void> {
+async function sendToToken(token: string, message: PushMessage): Promise<boolean> {
   try {
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
@@ -30,8 +30,10 @@ async function sendToToken(token: string, message: PushMessage): Promise<void> {
     if (!response.ok) {
       logger.warn({ status: response.status }, "[push] Expo push failed");
     }
+    return response.ok;
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notification");
+    return false;
   }
 }
 
@@ -302,7 +304,7 @@ export async function sendPushToAllMembers(message: PushMessage): Promise<void> 
 export async function sendPushToBusinessOwnersByCity(
   city: string,
   message: PushMessage,
-): Promise<void> {
+): Promise<{ recipientCount: number; delivered: boolean }> {
   try {
     // Only notify owners of minority-owned businesses — never alert non-minority
     // businesses that safety reports are being filed in their area.
@@ -317,16 +319,17 @@ export async function sendPushToBusinessOwnersByCity(
         .filter((id): id is string => id != null && id.length > 0),
     )];
 
-    if (ownerIds.length === 0) return;
+    if (ownerIds.length === 0) return { recipientCount: 0, delivered: false };
 
     const tokens = await db
       .select({ token: pushTokensTable.token, userId: pushTokensTable.userId })
       .from(pushTokensTable)
       .where(inArray(pushTokensTable.userId, ownerIds));
 
-    for (const row of tokens) {
-      if (row.token) await sendToToken(row.token, message);
-    }
+    const deliveryResults = await Promise.all(
+      tokens.filter((row) => Boolean(row.token)).map((row) => sendToToken(row.token!, message)),
+    );
+    const deliveredCount = deliveryResults.filter(Boolean).length;
 
     if (ownerIds.length > 0) {
       await db.insert(notificationsTable).values(
@@ -339,9 +342,11 @@ export async function sendPushToBusinessOwnersByCity(
       );
     }
 
-    logger.info({ city, ownerCount: ownerIds.length }, "[push] Safety incident notifications sent to business owners");
+    logger.info({ city, ownerCount: ownerIds.length, deliveredCount }, "[push] Safety incident notifications sent to business owners");
+    return { recipientCount: deliveredCount, delivered: deliveredCount > 0 };
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send safety incident push to business owners");
+    return { recipientCount: 0, delivered: false };
   }
 }
 
