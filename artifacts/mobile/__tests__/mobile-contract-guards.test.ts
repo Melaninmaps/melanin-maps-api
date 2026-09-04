@@ -25,7 +25,7 @@ describe("community media URL normalization", () => {
     expect(parseMediaUrls(["https://example.com/a.jpg"])).toEqual([
       "https://example.com/a.jpg",
     ]);
-    expect(parseMediaUrls('[\"https://example.com/a.jpg\"]')).toEqual([
+    expect(parseMediaUrls('["https://example.com/a.jpg"]')).toEqual([
       "https://example.com/a.jpg",
     ]);
   });
@@ -102,5 +102,31 @@ describe("review-first business submission governance", () => {
     expect(status).toContain("More information needed");
     expect(profile).toContain('route: "/my-business-submissions"');
     expect(listBusiness).toContain('router.replace("/my-business-submissions"');
+  });
+});
+
+describe("safety report incident-location contract", () => {
+  it("submits Police/ICE as a governed subtype and never sends exact GPS", () => {
+    const reportSource = source("../app/report-police.tsx");
+    expect(reportSource).toContain('category: "police"');
+    expect(reportSource).toContain("encounterType: form.encounterType");
+    expect(reportSource).toContain("isAnonymous: true");
+    expect(reportSource).not.toContain("category: form.encounterType");
+    expect(reportSource).not.toContain("geo.streetNumber");
+    expect(reportSource).not.toContain("geo.street");
+    const payload = reportSource.slice(reportSource.indexOf("body: JSON.stringify"), reportSource.indexOf("if (!res.ok)"));
+    expect(payload).not.toContain("latitude");
+    expect(payload).not.toContain("longitude");
+  });
+
+  it("requests current location only after the member chooses the incident-location button", () => {
+    const reportSource = source("../app/report-safety.tsx");
+    expect(reportSource).toContain("handleUseCurrentLocation");
+    expect(reportSource).toContain("Use current location for this incident");
+    expect(reportSource).toContain('locationSource: "current_device"');
+    expect(reportSource).not.toContain("Auto-detect city from GPS on mount");
+    expect(reportSource).not.toContain("useEffect(() =>");
+    expect(reportSource).not.toContain("place.streetNumber");
+    expect(reportSource).not.toContain("place.street");
   });
 });

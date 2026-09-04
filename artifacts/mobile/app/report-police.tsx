@@ -19,7 +19,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
@@ -79,60 +78,25 @@ interface ReportForm {
   encounterType: string;
   severity: string;
   city: string;
-  neighborhood: string;
+  locationSource: "manual_area" | "current_device";
   description: string;
-  isAnonymous: boolean;
 }
 
 const INITIAL: ReportForm = {
   encounterType: "",
   severity: "medium",
   city: "",
-  neighborhood: "",
+  locationSource: "manual_area",
   description: "",
-  isAnonymous: true,
 };
-
-function Toggle({ label, sub, value, onToggle, colors }: {
-  label: string; sub?: string; value: boolean; onToggle: () => void; colors: any;
-}) {
-  return (
-    <TouchableOpacity
-      style={[toggleS.row, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={() => { Haptics.selectionAsync(); onToggle(); }}
-      activeOpacity={0.8}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[toggleS.label, { color: colors.foreground }]}>{label}</Text>
-        {sub && <Text style={[toggleS.sub, { color: colors.mutedForeground }]}>{sub}</Text>}
-      </View>
-      <View style={[toggleS.track, { backgroundColor: value ? colors.primary : colors.muted }]}>
-        <View style={[toggleS.thumb, { transform: [{ translateX: value ? 20 : 2 }] }]} />
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-const toggleS = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", padding: 14, borderRadius: 12, borderWidth: 1.5, marginBottom: 14 },
-  label: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
-  sub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
-  track: { width: 44, height: 26, borderRadius: 13, justifyContent: "center" },
-  thumb: {
-    width: 20, height: 20, borderRadius: 10, backgroundColor: "#FFF", position: "absolute",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2,
-  },
-});
 
 export default function ReportPoliceScreen() {
   const colors = useColors();
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<ReportForm>(INITIAL);
   const [cityFocused, setCityFocused] = useState(false);
-  const [neighFocused, setNeighFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -145,8 +109,12 @@ export default function ReportPoliceScreen() {
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       if (geo) {
-        const neigh = [geo.streetNumber, geo.street].filter(Boolean).join(" ") || geo.subregion || "";
-        setForm((f) => ({ ...f, neighborhood: neigh, city: geo.city ?? f.city }));
+        const region = geo.region ?? geo.subregion ?? "";
+        setForm((f) => ({
+          ...f,
+          city: geo.city ? `${geo.city}${region ? `, ${region}` : ""}` : f.city,
+          locationSource: "current_device",
+        }));
       }
     } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
     finally { setLocating(false); }
@@ -186,9 +154,7 @@ export default function ReportPoliceScreen() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const targetName = form.neighborhood.trim()
-        ? `${form.neighborhood.trim()}, ${form.city.trim()}`
-        : form.city.trim();
+      const targetName = form.city.trim();
 
       const sessionToken = await SecureStore.getItemAsync("auth_session_token");
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -198,11 +164,19 @@ export default function ReportPoliceScreen() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          category: form.encounterType,
+          category: "police",
+          encounterType: form.encounterType,
           targetType: "neighborhood",
           targetName,
+          incidentLocation: {
+            city: form.city.trim(),
+            area: null,
+            source: form.locationSource,
+            precision: "city",
+          },
           description: form.description.trim(),
           severity: form.severity,
+          isAnonymous: true,
         }),
       });
 
@@ -264,9 +238,9 @@ export default function ReportPoliceScreen() {
                   <Feather name="check" size={18} color="#FFF" />
                 </View>
               </View>
-              <Text style={[styles.successTitle, { color: colors.foreground }]}>Report Received — Community Alerted</Text>
+              <Text style={[styles.successTitle, { color: colors.foreground }]}>Report Received — Under Review</Text>
               <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-                Your report has been submitted{form.isAnonymous ? " anonymously" : ""}. Our moderation team reviews reports and verified alerts are posted as real-time notifications to nearby community members.
+                Your report was submitted anonymously. It will not become a public or real-time alert unless the moderation and safety rules allow it.
               </Text>
             </View>
 
@@ -275,8 +249,8 @@ export default function ReportPoliceScreen() {
               {[
                 { icon: selectedType?.icon ?? "alert-circle", label: "Type", value: selectedType?.label ?? "", color: selectedType?.color ?? colors.primary },
                 { icon: "alert-triangle", label: "Severity", value: selectedSeverity.label, color: selectedSeverity.color },
-                { icon: "map-pin", label: "Location", value: form.neighborhood ? `${form.neighborhood}, ${form.city}` : form.city, color: colors.primary },
-                { icon: "user", label: "Submitted", value: form.isAnonymous ? "Anonymously" : `As ${[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}`, color: colors.mutedForeground },
+                { icon: "map-pin", label: "Incident city", value: form.city, color: colors.primary },
+                { icon: "user", label: "Submitted", value: "Anonymously", color: colors.mutedForeground },
               ].map((row) => (
                 <View key={row.label} style={styles.summaryRow}>
                   <Feather name={row.icon as any} size={15} color={row.color} />
@@ -292,7 +266,7 @@ export default function ReportPoliceScreen() {
                 <Text style={[styles.nextStepsTitle, { color: colors.foreground }]}>What Happens Next</Text>
                 {[
                   "Moderation team reviews your report",
-                  "Verified reports appear as community alerts",
+                  "Approved reports may appear as a coarse community alert",
                   "Repeat locations are escalated automatically",
                 ].map((item, i) => (
                   <View key={i} style={styles.nextStepRow}>
@@ -383,9 +357,9 @@ export default function ReportPoliceScreen() {
 
               {step === 2 && (
                 <View>
-                  <Text style={[styles.stepTitle, { color: colors.foreground }]}>Location & Details</Text>
+                  <Text style={[styles.stepTitle, { color: colors.foreground }]}>Incident Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Be as specific as you&apos;re comfortable with. More detail helps the community stay safer.
+                    Enter where the incident happened. This may be different from where you are now. City is required; a street or neighborhood is optional.
                   </Text>
 
                   {selectedType && (
@@ -399,10 +373,10 @@ export default function ReportPoliceScreen() {
                   )}
 
                   <View style={styles.fieldWrap}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>City / Area *</Text>
+                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Incident City / Area *</Text>
                     <TextInput
                       value={form.city}
-                      onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
+                      onChangeText={(v) => setForm((f) => ({ ...f, city: v, locationSource: "manual_area" }))}
                       placeholder="e.g. Philadelphia, PA"
                       placeholderTextColor={colors.mutedForeground}
                       onFocus={() => setCityFocused(true)}
@@ -411,30 +385,18 @@ export default function ReportPoliceScreen() {
                     />
                   </View>
 
-                  <View style={styles.fieldWrap}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood / Street</Text>
-                    <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Optional — helps narrow the location</Text>
-                    <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                      <TextInput
-                        value={form.neighborhood}
-                        onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))}
-                        placeholder="e.g. West Philly, Germantown Ave"
-                        placeholderTextColor={colors.mutedForeground}
-                        onFocus={() => setNeighFocused(true)}
-                        onBlur={() => setNeighFocused(false)}
-                        style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: neighFocused ? colors.primary : colors.border, color: colors.foreground }]}
-                      />
-                      <TouchableOpacity
-                        onPress={() => void handleUseLocation()}
-                        disabled={locating}
-                        style={{ padding: 10, borderRadius: 10, backgroundColor: colors.primary, opacity: locating ? 0.6 : 1 }}
-                      >
-                        {locating
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : <Feather name="navigation" size={16} color="#fff" />}
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                  <TouchableOpacity
+                    onPress={() => void handleUseLocation()}
+                    disabled={locating}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use my current city as the incident city"
+                    style={[styles.locationButton, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: locating ? 0.65 : 1 }]}
+                  >
+                    {locating
+                      ? <ActivityIndicator size="small" color={colors.primary} />
+                      : <Feather name="navigation" size={16} color={colors.primary} />}
+                    <Text style={[styles.locationButtonText, { color: colors.foreground }]}>Use my current city</Text>
+                  </TouchableOpacity>
 
                   <View style={styles.fieldWrap}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description *</Text>
@@ -457,18 +419,10 @@ export default function ReportPoliceScreen() {
                     </Text>
                   </View>
 
-                  <Toggle
-                    label="Submit Anonymously"
-                    sub="Your name won't be shown on the alert. Recommended."
-                    value={form.isAnonymous}
-                    onToggle={() => setForm((f) => ({ ...f, isAnonymous: !f.isAnonymous }))}
-                    colors={colors}
-                  />
-
                   <View style={[styles.disclaimer, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                     <Feather name="lock" size={14} color={colors.mutedForeground} />
                     <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
-                      All reports are reviewed before publication. False or malicious reports will not be posted and may result in account restrictions.
+                      Police, ICE, profiling, and misconduct reports are always stored without your account identity. Only the incident city is stored; neighborhood, street, and exact GPS are not sent with this report.
                     </Text>
                   </View>
                 </View>
@@ -536,6 +490,8 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 4 },
   fieldHint: { fontFamily: "Inter_400Regular", fontSize: 12, marginBottom: 8 },
   input: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 15 },
+  locationButton: { minHeight: 44, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, marginBottom: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  locationButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   textarea: { height: 120, textAlignVertical: "top", paddingTop: 12 },
   charCount: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 4, textAlign: "right" },
   disclaimer: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
