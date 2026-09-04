@@ -18,12 +18,13 @@ type TavilyResponse = { results?: TavilyResult[] };
 export function createTavilyResearchProvider(apiKey: string): ExternalResearchProvider {
   return {
     name: "tavily",
-    async search({ query, allowedDomains, maxResults }) {
+    async search({ query, allowedDomains, maxResults, signal }) {
       if (!apiKey) throw new Error("TAVILY_LIBRARY_RESEARCH_NOT_CONFIGURED");
       const concreteDomains = allowedDomains.filter((domain) => !domain.startsWith("*."));
       const providerQuery = enforceDiasporaFirstProviderQuery(query);
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST",
+        signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",

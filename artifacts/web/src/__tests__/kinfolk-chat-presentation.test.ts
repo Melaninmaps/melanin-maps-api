@@ -13,6 +13,7 @@ import {
   KINFOLK_RESPONSE_STATUS_STAGES,
   responseStatusForElapsedTime,
   safeExternalSourceHref,
+  safeLibraryHref,
 } from "../components/kinfolk/KinfolkChatPresentation";
 
 const travelPageSource = readFileSync(
@@ -128,7 +129,7 @@ describe("Kinfolk chat presentation", () => {
     const markup = renderToStaticMarkup(React.createElement(KinfolkSourceLinks, {
       sources: [
         { title: "Trusted source", url: "https://example.com/research" },
-        { title: "MWM place", url: "/places/for-keeps-books" },
+        { title: "Unapproved internal path", url: "/places/for-keeps-books" },
         { title: "Unsafe source", url: "javascript:alert(1)" },
         { title: "Protocol-relative source", url: "//evil.example/path" },
       ],
@@ -138,11 +139,19 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).toContain('target="_blank"');
     expect(markup).toContain('rel="noopener noreferrer"');
     expect(markup).toContain("Trusted source");
-    expect(markup).toContain('href="/places/for-keeps-books"');
-    expect(markup).toContain("MWM place");
+    expect(markup).not.toContain('href="/places/for-keeps-books"');
+    expect(markup).not.toContain("Unapproved internal path");
     expect(markup).not.toContain("Unsafe source");
     expect(markup).not.toContain("Protocol-relative source");
     expect(safeExternalSourceHref("javascript:alert(1)")).toBeNull();
     expect(safeExternalSourceHref("//evil.example/path")).toBeNull();
+  });
+
+  it("accepts only canonical internal topic routes as Library actions", () => {
+    expect(safeLibraryHref("/library/topics/hip-hop")).toBe("/library/topics/hip-hop");
+    expect(safeLibraryHref("/library/topics/health#evidence")).toBe("/library/topics/health#evidence");
+    expect(safeLibraryHref("https://untrusted.example/library/topics/hip-hop")).toBeNull();
+    expect(safeLibraryHref("/places/not-a-library-topic")).toBeNull();
+    expect(safeLibraryHref("//evil.example/library/topics/hip-hop")).toBeNull();
   });
 });

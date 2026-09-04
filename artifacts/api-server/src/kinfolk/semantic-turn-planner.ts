@@ -24,20 +24,33 @@ export type SemanticPlannerInput = {
 
 const cap = (value: unknown, max: number): string => typeof value === "string" ? value.trim().slice(0, max) : "";
 const current = (message: string) => /\b(current|latest|today|tonight|recent|as of|right now)\b/i.test(message);
-const recipe = (message: string) => /\b(recipe|cook|make|bake|roast|ingredients?)\b/i.test(message);
+const recipe = (message: string) => /\b(recipe|cook|cooking|bake|baking|roast|braise|grill|fry|ingredients?|dish|meal|beef|chicken|pork|fish|rice|pasta|soup|stew|cake|bread)\b/i.test(message);
+const culturalConflict = (message: string) => /\b(diss|feud|rap battle)\b/i.test(message)
+  || /\b(?:won|winner|between)\b.{0,40}\bbeef\b|\bbeef\b.{0,40}\b(?:between|winner)\b/i.test(message);
+const travelPlan = (message: string) => /\b(plan|build|create|suggest|help with)\b.{0,40}\b(trip|itinerary|vacation|visit|weekend|getaway)\b|\b(trip|itinerary|vacation|getaway)\b.{0,40}\b(to|in|for)\b/i.test(message);
 const high = (route: EvidenceRoute) => route.risk === "high";
 
 function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
   const message = input.message.trim();
-  const isRecipe = recipe(message);
+  const namedConflictParticipants = (message.match(/\b[A-Z][\p{L}'’-]+\b/gu) ?? [])
+    .filter((token) => !/^(Who|What|Which|Where|When|How|Did|Does|Is|Was|The)$/i.test(token));
+  const namedVersusBeef = /\b(?:versus|vs\.?)\b.{0,40}\bbeef\b|\bbeef\b.{0,40}\b(?:versus|vs\.?)\b/i.test(message)
+    && namedConflictParticipants.length >= 2
+    && !/\b(cook|recipe|ingredients?|stew|roast|braise|grill|fry|bake)\b/i.test(message);
+  const isCulturalConflict = culturalConflict(message) || namedVersusBeef;
+  const isRecipe = recipe(message) && !isCulturalConflict;
   const broadIngredientQuestion = /^how\s+(?:do|would|should)\s+i\s+cook\s+[\p{L}\s'’-]{1,48}\??$/iu.test(message);
   const specificRecipe = isRecipe
     && !broadIngredientQuestion
     && /\b(make|recipe|how to|ingredients|steps|temperature|instructions)\b/i.test(message);
   const evaluative = input.evidenceRoute.claimMode === "evaluative";
   const entity = /^[A-Z][\p{L}'’-]+(?:\s+[A-Z][\p{L}'’-]+){0,3}$/u.test(message);
+  const isTravelPlan = travelPlan(message);
+  const isCulturalConsensus = isCulturalConflict && namedConflictParticipants.length >= 2;
   const mode: KinfolkTaskMode = high(input.evidenceRoute) ? "high_consequence"
     : isRecipe ? (specificRecipe ? "recipe_instructions" : "recipe_options")
+    : isTravelPlan ? "travel_plan"
+    : isCulturalConsensus ? "cultural_consensus"
     : input.evidenceRoute.domain === "business_discovery" ? "local_discovery"
     : evaluative ? "ranked_perspectives" : entity ? "entity_explorer" : "direct_answer";
   const fresh = current(message);
@@ -46,14 +59,19 @@ function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
     namedEntities: entity ? [{ text: message, type: null }] : [],
     candidateMeanings: [], resolvedMeaning: entity ? message : null, confidence: entity || isRecipe || high(input.evidenceRoute) ? 0.9 : 0.8,
     needsClarification: false, clarificationQuestion: null, freshness: fresh ? "current" : "stable",
-    evidenceNeeds: high(input.evidenceRoute) ? ["official_current"] : fresh ? ["official_current"] : evaluative ? ["primary_cultural", "critical_consensus"] : ["approved_internal"],
+    evidenceNeeds: high(input.evidenceRoute) ? ["official_current"]
+      : isRecipe ? ["approved_internal", "creator_media"]
+      : fresh || isTravelPlan || input.evidenceRoute.domain === "business_discovery" ? ["official_current", "platform_records"]
+      : evaluative || isCulturalConsensus ? ["primary_cultural", "critical_consensus"]
+      : entity ? ["approved_internal", "primary_cultural"]
+      : ["approved_internal"],
     retrievalQueries: [message.slice(0, 180)], answerPerspective: evaluative ? "evaluative" : "factual",
     identityContextUsed: [],
   };
 }
 
 function ambiguous(message: string, plan: SemanticTurnPlan): boolean {
-  if (plan.taskMode === "high_consequence" || recipe(message)) return false;
+  if (plan.taskMode === "high_consequence" || plan.taskMode === "recipe_options" || plan.taskMode === "recipe_instructions") return false;
   const words = message.trim().split(/\s+/);
   // A short referential question ("Who won that conflict?", "Which one?") has
   // no stable named subject. This is intentionally domain-general: it does not

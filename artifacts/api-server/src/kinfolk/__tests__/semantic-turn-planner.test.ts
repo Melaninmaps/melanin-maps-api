@@ -67,4 +67,50 @@ describe("semantic turn planner", () => {
     });
     expect(plan).toMatchObject({ taskMode: "recipe_instructions", primaryDomain: "hobby_lifestyle" });
   });
+
+  it.each([
+    "How do I make friends?",
+    "How do I make a complaint?",
+    "How do I make an appointment?",
+  ])("does not misroute ordinary uses of make as cooking: %s", async (message) => {
+    const plan = await planSemanticTurn({ message, evidenceRoute: routeEvidence(message) });
+    expect(plan.taskMode).not.toMatch(/^recipe_/);
+  });
+
+  it("selects cultural consensus for a named cultural conflict", async () => {
+    const message = "Who won the Kendrick and Drake beef?";
+    await expect(planSemanticTurn({ message, evidenceRoute: routeEvidence(message) })).resolves.toMatchObject({
+      taskMode: "cultural_consensus",
+      evidenceNeeds: ["primary_cultural", "critical_consensus"],
+    });
+  });
+
+  it("keeps a beef stew versus pot roast comparison in recipe mode", async () => {
+    const message = "How do I cook beef stew vs. pot roast?";
+    await expect(planSemanticTurn({ message, evidenceRoute: routeEvidence(message) })).resolves.toMatchObject({
+      taskMode: "recipe_options",
+    });
+  });
+
+  it("routes a named Kendrick versus Drake beef to cultural consensus", async () => {
+    const message = "Kendrick vs Drake beef";
+    await expect(planSemanticTurn({ message, evidenceRoute: routeEvidence(message) })).resolves.toMatchObject({
+      taskMode: "cultural_consensus",
+    });
+  });
+
+  it("selects travel planning and current platform evidence for an itinerary request", async () => {
+    const message = "Plan a three day trip to Philadelphia";
+    await expect(planSemanticTurn({ message, evidenceRoute: routeEvidence(message) })).resolves.toMatchObject({
+      taskMode: "travel_plan",
+      evidenceNeeds: ["official_current", "platform_records"],
+    });
+  });
+
+  it("requires both approved Library and primary evidence for a named public entity", async () => {
+    await expect(planSemanticTurn({ message: "Jay-Z", evidenceRoute: routeEvidence("Jay-Z") })).resolves.toMatchObject({
+      taskMode: "entity_explorer",
+      evidenceNeeds: ["approved_internal", "primary_cultural"],
+    });
+  });
 });
