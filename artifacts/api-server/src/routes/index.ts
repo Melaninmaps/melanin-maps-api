@@ -197,6 +197,10 @@ router.use(monitorBuild97Router); // internal health monitoring endpoint
 router.use(feedbackRouter);       // in-app feedback (submitted before session check)
 router.use(impactRouter);         // public platform stats (homepage "Growing Every Day" section)
 router.use(communityFeedbackRouter); // GET public (counts); PUT self-authenticates (returns 401 if no session)
+// Both routers enforce auth on member-only operations themselves. Their
+// bearer-link views stay public without opening any platform intelligence.
+router.use(locationSharesRouter);
+router.use(trustedSafetyShareRouter);
 
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
@@ -276,7 +280,6 @@ router.use(travelFlightsRouter);
 router.use(connectionsRouter);
 router.use(familyRouter);
 router.use(safetyCheckinsRouter);
-router.use(locationSharesRouter);
 router.use(meetupVerificationsRouter);
 router.use(safetyTipsRouter);
 router.use(skipFeedbackRouter);
@@ -386,7 +389,6 @@ router.use(safetyHeatmapRouter);
 router.use(canonicalCulturalSitesRouter);
 router.use(culturalSitesRouter);
 router.use(sundownTownsRouter);
-router.use(trustedSafetyShareRouter);
 router.use(safetyExperienceRouter);
 router.use(whatshappeningRouter);
 router.use(ageAssuranceRouter);

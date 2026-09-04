@@ -28,6 +28,22 @@ const router = Router();
 
 const MAX_SHARES = 5;
 
+/**
+ * Normalize an address before both comparison and storage. This keeps cosmetic
+ * differences (case, spaces, punctuation in a US phone number) from creating
+ * multiple alerts for the same person.
+ */
+export function normalizeTrustedContactEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function normalizeTrustedContactPhone(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  // Keep the country prefix when supplied. A leading 1 is normalized so
+  // +1 (555) 123-4567 and 555-123-4567 compare as the same US number.
+  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
+}
+
 function requireAuth(req: Request, res: Response): boolean {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Authentication required" });
@@ -77,37 +93,19 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
       res.status(400).json({ error: "contactEmail required for email type" });
       return;
     }
+    const normalizedPhone = contactPhone ? normalizeTrustedContactPhone(contactPhone) : null;
+    const normalizedEmail = contactEmail ? normalizeTrustedContactEmail(contactEmail) : null;
+    if (type === "phone" && !normalizedPhone?.match(/^\+\d{7,15}$/)) {
+      res.status(400).json({ error: "contactPhone must be a valid phone number" });
+      return;
+    }
+    if (type === "email" && !normalizedEmail?.includes("@")) {
+      res.status(400).json({ error: "contactEmail must be a valid email address" });
+      return;
+    }
     // Can't add yourself
     if (type === "mwm_user" && contactUserId === ownerId) {
       res.status(400).json({ error: "Cannot add yourself as a trusted contact" });
-      return;
-    }
-
-    // Enforce 5-contact cap
-    const countResult = await pool.query<{ count: string }>(
-      `SELECT COUNT(*) AS count FROM trusted_safety_shares
-       WHERE owner_id = $1 AND status != 'revoked' AND status != 'declined'`,
-      [ownerId]
-    );
-    if (parseInt(countResult.rows[0]?.count ?? "0", 10) >= MAX_SHARES) {
-      res.status(400).json({ error: `Maximum of ${MAX_SHARES} trusted contacts allowed` });
-      return;
-    }
-
-    // No duplicate contacts
-    const dupCheck = await pool.query(
-      `SELECT id FROM trusted_safety_shares
-       WHERE owner_id = $1
-         AND status NOT IN ('revoked','declined')
-         AND (
-           ($2 = 'mwm_user' AND contact_user_id = $3)
-           OR ($2 = 'phone'    AND contact_phone  = $4)
-           OR ($2 = 'email'    AND contact_email  = $5)
-         )`,
-      [ownerId, type, contactUserId ?? null, contactPhone ?? null, contactEmail ?? null]
-    );
-    if (dupCheck.rows.length > 0) {
-      res.status(409).json({ error: "This contact is already added" });
       return;
     }
 
@@ -119,8 +117,44 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
     const initialStatus = "pending";
     // MWM users: contact_accepted stays false until they respond.
 
-    const result = await pool.query(
-      `INSERT INTO trusted_safety_shares
+    // The lock makes the cap and duplicate checks atomic for an owner. It is
+    // intentionally transaction-scoped: a concurrent add cannot slip between
+    // the check and insert and cause duplicate emergency notifications.
+    const client = await pool.connect();
+    let share!: { id: string };
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [ownerId]);
+      const countResult = await client.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM trusted_safety_shares
+         WHERE owner_id = $1 AND status != 'revoked' AND status != 'declined'`,
+        [ownerId]
+      );
+      if (parseInt(countResult.rows[0]?.count ?? "0", 10) >= MAX_SHARES) {
+        await client.query("ROLLBACK");
+        res.status(400).json({ error: `Maximum of ${MAX_SHARES} trusted contacts allowed` });
+        return;
+      }
+
+      const dupCheck = await client.query(
+        `SELECT id FROM trusted_safety_shares
+         WHERE owner_id = $1
+           AND status NOT IN ('revoked','declined')
+           AND (
+             ($2 = 'mwm_user' AND contact_user_id = $3)
+             OR ($2 = 'phone' AND regexp_replace(contact_phone, '\\D', '', 'g') = regexp_replace($4, '\\D', '', 'g'))
+             OR ($2 = 'email' AND lower(trim(contact_email)) = lower(trim($5)))
+           )`,
+        [ownerId, type, contactUserId ?? null, normalizedPhone, normalizedEmail]
+      );
+      if (dupCheck.rows.length > 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "This contact is already added" });
+        return;
+      }
+
+      const result = await client.query(
+        `INSERT INTO trusted_safety_shares
          (id, owner_id, contact_type, contact_user_id, contact_name,
           contact_phone, contact_email, owner_enabled, contact_accepted,
           status, invite_token, invite_expires_at, created_at, updated_at)
@@ -132,15 +166,21 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
         type,
         contactUserId ?? null,
         contactName.trim(),
-        contactPhone?.trim() ?? null,
-        contactEmail?.trim() ?? null,
+        normalizedPhone,
+        normalizedEmail,
         initialStatus,
         inviteToken,
         inviteExpiresAt,
       ]
-    );
-
-    const share = result.rows[0];
+      );
+      share = result.rows[0];
+      await client.query("COMMIT");
+    } catch (transactionErr) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw transactionErr;
+    } finally {
+      client.release();
+    }
 
     // If MWM user: send them a push notification asking them to accept.
     if (type === "mwm_user" && contactUserId) {

@@ -5,6 +5,7 @@ import { db, verificationRequestsTable, businessClaimsTable, businessesTable, do
 import { desc, eq } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { createVerificationEnvelope } from "../lib/docusign";
+import { sendVerificationSubmissionAdminAlert } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -148,7 +149,31 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
       certificationUrl: certificationUrl?.trim() || null,
       certificationNumber: certificationNumber?.trim() || null,
     }).returning();
-    res.status(201).json({ request, verificationLevel });
+    try {
+      await sendVerificationSubmissionAdminAlert({
+        requestId: request.id,
+        businessName: request.businessName,
+        businessType: request.businessType,
+        ownerName: request.ownerName,
+        submitterEmail: request.submitterEmail,
+        verificationLevel: request.verificationLevel,
+        city: request.city,
+        state: request.state,
+      });
+    } catch (notificationError) {
+      req.log.error(
+        { err: notificationError, verificationRequestId: request.id },
+        "Verification request persisted but admin notification failed",
+      );
+      res.status(503).json({
+        error: "Verification request was received, but the admin notification could not be sent",
+        requestId: request.id,
+        notificationStatus: "failed",
+      });
+      return;
+    }
+
+    res.status(201).json({ request, verificationLevel, notificationStatus: "sent" });
 
     // Async: send verification certification via DocuSign — non-fatal if it fails
     if (req.user?.id && submitterEmail) {

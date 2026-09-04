@@ -12,7 +12,12 @@ router.get("/recurring-events", async (req: Request, res: Response) => {
   try {
     const { city, state, category, q, limit = "50", offset = "0" } = req.query as Record<string, string>;
 
-    const conditions: string[] = ["is_active = true"];
+    // `recurring_events.active_until` is the schema's expiry field. A NULL
+    // value means the recurring event has no scheduled end date.
+    const conditions: string[] = [
+      "is_active = true",
+      "(active_until IS NULL OR active_until >= CURRENT_DATE)",
+    ];
     const params: unknown[] = [];
     let i = 1;
 
@@ -57,7 +62,10 @@ router.get("/recurring-events/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const r = await pool.query(
-      `SELECT * FROM recurring_events WHERE id = $1 AND is_active = true`,
+      `SELECT * FROM recurring_events
+       WHERE id = $1
+         AND is_active = true
+         AND (active_until IS NULL OR active_until >= CURRENT_DATE)`,
       [id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: "Event not found" });
