@@ -405,6 +405,11 @@ registerFoundationTopicRoutes(app, new FoundationTopicRepository(pool));
 // map pin's list record and canonical detail URL remain directly resolvable.
 registerUniversalMapEntityRoutes(app, pool);
 
+// ── Location resolution — public city/area lookup for all discovery surfaces ─
+// Register before the aggregate /api router, whose global requireAuth middleware
+// would otherwise turn this intentionally public resolver into a cookie-only 401.
+registerLocationResolutionRoutes(app, pool);
+
 app.use("/api", router);
 app.use(webSsrRouter);
 app.use(privacyRouter);
@@ -451,12 +456,6 @@ registerLocationFirstDiscoveryRoutes(
 // GET /api/map/local-business-search?q=&lat=&lng=&radius=5&expand=0
 // Constrained by Haversine radius server-side; pins == results (no independent source).
 registerLocalBusinessSearchRoute(app, new LocalBusinessSearch(pool));
-
-// ── Location resolution — backs LocationSearchBar on Businesses, Explore, Events ──
-// GET /api/locations/resolve?q=  — text → nearest community_locations row
-// GET /api/locations/reverse?lat=&lng=  — coords → nearest area within 80 km
-// Both are public; neither reveals individual user location data.
-registerLocationResolutionRoutes(app, pool);
 
 // ── Community Vibes — evidence-backed member signals ─────────────────────────
 // Public GET returns aggregate approved vibes (never contributor identity).
