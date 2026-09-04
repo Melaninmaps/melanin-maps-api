@@ -138,7 +138,7 @@ router.get("/events/:id", async (req: Request, res: Response) => {
         isNotNull(eventsTable.createdById),
       ));
 
-    if (!event) {
+    if (!event || !isUpcomingOneOffEventDate(event.date)) {
       res.status(404).json({ error: "Event not found" });
       return;
     }

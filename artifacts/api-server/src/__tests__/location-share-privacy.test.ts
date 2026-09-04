@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { publicLocationShare } from "../routes/location-shares";
 
@@ -27,5 +29,15 @@ describe("location share public view", () => {
     expect(share).not.toHaveProperty("sharerId");
     expect(share).not.toHaveProperty("recipientEmail");
     expect(share).not.toHaveProperty("shareToken");
+  });
+
+  it("accepts only app-supported durations and owner updates before expiry", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(route).toContain("new Set([30, 60, 120, 240, 480, 1440])");
+    expect(route).toContain("eq(locationSharesTable.sharerId, userId)");
+    expect(route).toContain("gt(locationSharesTable.expiresAt, new Date())");
   });
 });

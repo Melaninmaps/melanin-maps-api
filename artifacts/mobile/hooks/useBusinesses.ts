@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import type { Business } from "@/constants/types";
 
@@ -65,6 +65,8 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     hours: b.hours as string | undefined,
     priceRange: b.priceRange as string | undefined,
     imageUrl: b.imageUrl as string | undefined,
+    profileStatus: b.profileStatus as string | null | undefined,
+    listingStatus: b.listingStatus as string | null | undefined,
     instagram: b.instagram as string | undefined,
     tiktok: b.tiktok as string | undefined,
     twitter: b.twitter as string | undefined,
@@ -81,8 +83,10 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const fetchBusinesses = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
 
@@ -106,17 +110,21 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
         if (!Array.isArray(data.businesses)) {
           throw new Error("Invalid businesses response");
         }
-        setBusinesses(data.businesses.map((business) =>
-          mapApiBusinessToLocal(business as Record<string, unknown>),
-        ));
+        if (requestId === requestIdRef.current) {
+          setBusinesses(data.businesses.map((business) =>
+            mapApiBusinessToLocal(business as Record<string, unknown>),
+          ));
+        }
       } finally {
         clearTimeout(timeout);
       }
     } catch {
-      setBusinesses([]);
-      setError(BUSINESS_LOAD_ERROR);
+      if (requestId === requestIdRef.current) {
+        setBusinesses([]);
+        setError(BUSINESS_LOAD_ERROR);
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) setIsLoading(false);
     }
   }, [search, category]);
 

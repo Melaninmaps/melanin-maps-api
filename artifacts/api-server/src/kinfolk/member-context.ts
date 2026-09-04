@@ -24,9 +24,9 @@
  */
 
 import { pool } from "@workspace/db";
-import { resolveMemberAgeBand } from "../lib/audience-policy";
+import { resolveMemberAgeBand, type AgeBand } from "../lib/audience-policy";
 
-export type AudienceBand = "unknown" | "13_15" | "16_17" | "18_plus";
+export type AudienceBand = AgeBand;
 
 export type PronounMode =
   | "none"       // not opted in, or not set

@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
+const ALLOWED_DURATION_MINUTES = new Set([30, 60, 120, 240, 480, 1440]);
 
 function requireAuth(req: Request, res: Response): string | null {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return null; }
@@ -44,6 +45,10 @@ router.post("/safety/location-shares", requireFamilySafety, async (req: Request,
   try {
     const { recipientEmail, label, durationMinutes = 60 } =
       req.body as { recipientEmail?: string; label?: string; durationMinutes?: number };
+    if (!Number.isInteger(durationMinutes) || !ALLOWED_DURATION_MINUTES.has(durationMinutes)) {
+      res.status(400).json({ error: "Invalid location share duration" });
+      return;
+    }
     const token = crypto.randomBytes(24).toString("hex");
     const expiresAt = new Date(Date.now() + (durationMinutes) * 60 * 1000);
     const [share] = await db.insert(locationSharesTable).values({

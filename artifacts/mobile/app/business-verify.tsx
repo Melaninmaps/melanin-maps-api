@@ -1,9 +1,10 @@
 import { Feather } from "@expo/vector-icons";
+import * as Crypto from "expo-crypto";
 import * as DocumentPicker from "expo-document-picker";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -95,6 +96,7 @@ interface UploadedDoc {
 }
 
 export default function BusinessVerifyScreen() {
+  const submissionKeyRef = useRef<string | null>(null);
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -209,11 +211,14 @@ export default function BusinessVerifyScreen() {
         documentUrls: uploadedDocs,
       };
 
+      submissionKeyRef.current ??= `mobile:${Crypto.randomUUID()}`;
+
       const resp = await fetch(`${base}/api/verification/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Idempotency-Key": submissionKeyRef.current,
         },
         body: JSON.stringify(body),
       });

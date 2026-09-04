@@ -31,6 +31,8 @@ export interface Business {
   hours?: string;
   priceRange?: string;
   imageUrl?: string;
+  profileStatus?: string | null;
+  listingStatus?: string | null;
   instagram?: string;
   tiktok?: string;
   twitter?: string;

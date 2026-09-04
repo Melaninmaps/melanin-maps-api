@@ -123,10 +123,7 @@ export default function LocationShareScreen() {
         setShowNew(false);
         setLabel(""); setRecipientEmail("");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // This resolves directly to the existing public, no-store API view.
-        // The response deliberately excludes the member's identity and other
-        // private account data; the bearer token only permits this share.
-        const shareUrl = `${getApiBase()}/api/safety/location-shares/${d.share!.shareToken}/view`;
+        const shareUrl = `${getApiBase()}/safety/location/${encodeURIComponent(d.share!.shareToken)}`;
         Alert.alert(
           "Location Sharing Active",
           `Your location is now being shared. Copy the link to send to ${recipientEmail || "your contact"}.`,
@@ -156,7 +153,7 @@ export default function LocationShareScreen() {
   };
 
   const handleCopyLink = async (token: string) => {
-    const url = `${getApiBase()}/api/safety/location-shares/${token}/view`;
+    const url = `${getApiBase()}/safety/location/${encodeURIComponent(token)}`;
     await Clipboard.setStringAsync(url);
     if (Platform.OS !== "web") Haptics.selectionAsync();
     Alert.alert("Copied!", "Location link copied to clipboard.");
@@ -179,7 +176,13 @@ export default function LocationShareScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/safety-hub" as never)}
+          style={styles.backBtn}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Location Sharing</Text>

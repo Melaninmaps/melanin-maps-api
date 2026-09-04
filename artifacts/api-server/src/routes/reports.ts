@@ -10,6 +10,14 @@ const router: IRouter = Router();
 
 const VALID_CATEGORIES = ["safety", "sundown", "discrimination", "business", "resource", "positive", "police"] as const;
 const VALID_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+const VALID_ENCOUNTER_TYPES = [
+  "police_stop",
+  "ice_activity",
+  "racial_profiling",
+  "excessive_force",
+  "checkpoint",
+  "other_encounter",
+] as const;
 
 /**
  * Keep the API's persisted category vocabulary stable even when an older
@@ -38,6 +46,29 @@ export function normalizeReportCategory(category: unknown): typeof VALID_CATEGOR
     return normalized as typeof VALID_CATEGORIES[number];
   }
   return REPORT_CATEGORY_ALIASES[normalized] ?? null;
+}
+
+const ENCOUNTER_TYPE_ALIASES: Record<string, typeof VALID_ENCOUNTER_TYPES[number]> = {
+  "police stop/questioning": "police_stop",
+  "police stop / questioning": "police_stop",
+  "ice activity": "ice_activity",
+  "racial profiling": "racial_profiling",
+  "excessive force/misconduct": "excessive_force",
+  "excessive force / misconduct": "excessive_force",
+  "checkpoint/roadblock": "checkpoint",
+  "checkpoint / roadblock": "checkpoint",
+  "other encounter": "other_encounter",
+};
+
+export function normalizeReportEncounterType(
+  encounterType: unknown,
+): typeof VALID_ENCOUNTER_TYPES[number] | null {
+  if (typeof encounterType !== "string") return null;
+  const normalized = encounterType.trim().toLowerCase();
+  if ((VALID_ENCOUNTER_TYPES as readonly string[]).includes(normalized)) {
+    return normalized as typeof VALID_ENCOUNTER_TYPES[number];
+  }
+  return ENCOUNTER_TYPE_ALIASES[normalized] ?? null;
 }
 
 // Spoken severity labels from the UI → internal severity values
@@ -70,6 +101,7 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
   return {
     id: report.id,
     category: report.category,
+    encounterType: report.encounterType,
     targetType: report.targetType,
     targetId: report.targetId,
     targetName: report.targetName,
@@ -226,6 +258,14 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     return;
   }
 
+  const resolvedEncounterType = resolvedCategory === "police"
+    ? normalizeReportEncounterType(encounterType)
+    : null;
+  if (resolvedCategory === "police" && encounterType != null && !resolvedEncounterType) {
+    res.status(400).json({ error: "Invalid encounterType" });
+    return;
+  }
+
   if (!targetName || typeof targetName !== "string" || targetName.trim().length === 0) {
     res.status(400).json({ error: "targetName (location) is required" });
     return;
@@ -257,6 +297,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         reporterId: isAnon ? null : (req.user?.id ?? null),
         reporterName,
         category: resolvedCategory,
+        encounterType: resolvedEncounterType,
         targetType: resolvedTargetType,
         targetId: typeof targetId === "string" ? targetId : null,
         targetName: (targetName as string).trim(),
