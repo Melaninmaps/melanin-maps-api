@@ -11,6 +11,22 @@ function requireAuth(req: Request, res: Response): string | null {
   return req.user.id;
 }
 
+export function publicLocationShare(share: {
+  label: string;
+  currentLat: number | null;
+  currentLng: number | null;
+  lastUpdatedAt: Date | null;
+  expiresAt: Date;
+}) {
+  return {
+    label: share.label,
+    currentLat: share.currentLat,
+    currentLng: share.currentLng,
+    lastUpdatedAt: share.lastUpdatedAt,
+    expiresAt: share.expiresAt,
+  };
+}
+
 router.get("/safety/location-shares", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
@@ -70,6 +86,10 @@ router.patch("/safety/location-shares/:token/update", async (req: Request, res: 
 });
 
 router.get("/safety/location-shares/:token/view", async (req: Request, res: Response) => {
+  // A location URL is deliberately bearer-style. Do not allow browsers,
+  // intermediary caches, or shared devices to retain a coordinate response.
+  res.set("Cache-Control", "no-store, private, max-age=0");
+  res.set("Pragma", "no-cache");
   try {
     const [share] = await db.select({
       label: locationSharesTable.label,
@@ -85,7 +105,9 @@ router.get("/safety/location-shares/:token/view", async (req: Request, res: Resp
     if (!share.isActive || new Date() > share.expiresAt) {
       res.status(410).json({ error: "This location share has expired" }); return;
     }
-    res.json({ share });
+    // Do not expose the sharer's identity, recipient, token, or internal ID
+    // to a person holding a location link.
+    res.json({ share: publicLocationShare(share) });
   } catch (err) {
     req.log.error({ err }, "GET /safety/location-shares/:token/view error");
     res.status(500).json({ error: "Failed to load share" });
