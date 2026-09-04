@@ -198,11 +198,15 @@ export default function ReportPoliceScreen() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          category: form.encounterType,
+          // Encounter types describe a police/ICE report; the report category
+          // itself must remain the canonical API category.
+          category: "police",
+          encounterType: form.encounterType,
           targetType: "neighborhood",
           targetName,
           description: form.description.trim(),
           severity: form.severity,
+          isAnonymous: form.isAnonymous,
         }),
       });
 

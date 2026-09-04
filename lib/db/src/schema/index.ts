@@ -30,6 +30,7 @@ export * from "./user-preferences";
 export * from "./kinfolk-sessions";
 export * from "./kinfolk-private-memories";
 export * from "./kinfolk-feedback";
+export * from "./kinfolk-answer-plans";
 export * from "./kinfolk-task-lists";
 export * from "./kinfolk-tasks";
 export * from "./wishlist-items";

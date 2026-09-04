@@ -83,7 +83,7 @@ export default function LocationShareScreen() {
         if (!activeShare) return;
         await fetch(`${getApiBase()}/api/safety/location-shares/${activeShare.shareToken}/update`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
         });
       } catch { /* silent */ }
