@@ -7,6 +7,7 @@ import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import { runStartupMigrations } from "./lib/startup-migrations";
+import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
@@ -94,6 +95,15 @@ async function initStripe() {
   }
 })();
 
+try {
+  await ensureRequiredSafetyReportSchema(pool);
+  logger.info("Required safety report schema ready");
+} catch (error) {
+  logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
+  await pool.end().catch(() => undefined);
+  process.exit(1);
+}
+
 const server = app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
@@ -125,9 +135,8 @@ const server = app.listen(port, (err) => {
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 
-  // Apply any schema columns that exist in the Drizzle model but are missing
-  // from older Railway deployments.  Runs after the port opens so the server
-  // is never delayed, but completes in <1 s — before any auth request arrives.
+  // Apply optional and backfill migrations after the required request-path
+  // schema has already been verified above.
   //
   // startCityHealthAlertScheduler is called inside the resolved callback so the
   // alert_claim_token and alert_lease_expires_at columns are guaranteed present

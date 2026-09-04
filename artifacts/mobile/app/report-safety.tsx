@@ -5,8 +5,9 @@ import * as SecureStore from "expo-secure-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   KeyboardAvoidingView,
@@ -81,6 +82,7 @@ interface FormData {
   severity: string;
   city: string;
   neighborhood: string;
+  locationSource: "manual_area" | "current_device";
   description: string;
   isAnonymous: boolean;
 }
@@ -90,18 +92,20 @@ const INITIAL: FormData = {
   severity: "medium",
   city: "",
   neighborhood: "",
+  locationSource: "manual_area",
   description: "",
   isAnonymous: true,
 };
 
-function Toggle({ label, sub, value, onToggle, colors }: {
-  label: string; sub?: string; value: boolean; onToggle: () => void; colors: any;
+function Toggle({ label, sub, value, onToggle, colors, disabled = false }: {
+  label: string; sub?: string; value: boolean; onToggle: () => void; colors: any; disabled?: boolean;
 }) {
   return (
     <TouchableOpacity
-      style={[toggleS.row, { backgroundColor: colors.card, borderColor: colors.border }]}
       onPress={() => { Haptics.selectionAsync(); onToggle(); }}
+      disabled={disabled}
       activeOpacity={0.8}
+      style={[toggleS.row, { backgroundColor: colors.card, borderColor: colors.border, opacity: disabled ? 0.75 : 1 }]}
     >
       <View style={{ flex: 1 }}>
         <Text style={[toggleS.label, { color: colors.foreground }]}>{label}</Text>
@@ -143,24 +147,32 @@ export default function ReportSafetyScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [cityDetecting, setCityDetecting] = useState(false);
 
-  // Auto-detect city from GPS on mount — user can still edit
-  useEffect(() => {
-    queueMicrotask(() => { setCityDetecting(true); });
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") return;
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        const geo = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-        const place = geo[0];
-        if (place?.city) {
-          const region = place.region ?? place.subregion ?? "";
-          setForm((f) => f.city.trim() ? f : { ...f, city: `${place.city}${region ? `, ${region}` : ""}` });
-        }
-      } catch { /* GPS unavailable */ }
-      finally { setCityDetecting(false); }
-    })();
-  }, []);
+  const handleUseCurrentLocation = async () => {
+    setCityDetecting(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Location Access", "You can continue by entering the incident city or area manually.");
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const [place] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      if (place?.city) {
+        const region = place.region ?? place.subregion ?? "";
+        const neighborhood = place.district || place.subregion || "";
+        setForm((form) => ({
+          ...form,
+          city: `${place.city}${region ? `, ${region}` : ""}`,
+          neighborhood: form.reportType === "discrimination" ? "" : neighborhood,
+          locationSource: "current_device",
+        }));
+      }
+    } catch {
+      Alert.alert("Location Error", "We could not fill the incident area. You can still enter it manually.");
+    } finally {
+      setCityDetecting(false);
+    }
+  };
 
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const [slideAnim] = useState(() => new Animated.Value(0));
@@ -200,7 +212,7 @@ export default function ReportSafetyScreen() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const targetName = form.neighborhood.trim()
+      const targetName = form.reportType !== "discrimination" && form.neighborhood.trim()
         ? `${form.neighborhood.trim()}, ${form.city.trim()}`
         : form.city.trim();
 
@@ -212,8 +224,15 @@ export default function ReportSafetyScreen() {
           category: form.reportType,
           targetType: "neighborhood",
           targetName,
+          incidentLocation: {
+            city: form.city.trim(),
+            area: form.reportType === "discrimination" ? null : form.neighborhood.trim() || null,
+            source: form.locationSource,
+            precision: form.reportType !== "discrimination" && form.neighborhood.trim() ? "neighborhood" : "city",
+          },
           description: form.description.trim(),
           severity: form.severity,
+          isAnonymous: form.reportType === "discrimination" ? true : form.isAnonymous,
         }),
       });
 
@@ -281,7 +300,7 @@ export default function ReportSafetyScreen() {
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Thank You for Keeping the Community Safe</Text>
               <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-                Your report has been submitted{form.isAnonymous ? " anonymously" : ""}. Our moderation team reviews reports and verified alerts are posted to the community.
+                Your report has been submitted{form.reportType === "discrimination" || form.isAnonymous ? " anonymously" : ""}. Our moderation team reviews reports before approved information can appear to the community.
               </Text>
             </View>
 
@@ -290,8 +309,8 @@ export default function ReportSafetyScreen() {
               {[
                 { icon: selectedType?.icon ?? "shield", label: "Type", value: selectedType?.label ?? "", color: selectedType?.color ?? colors.primary },
                 { icon: "alert-triangle", label: "Severity", value: selectedSeverity.label, color: selectedSeverity.color },
-                { icon: "map-pin", label: "Location", value: form.neighborhood ? `${form.neighborhood}, ${form.city}` : form.city, color: colors.primary },
-                { icon: "user", label: "Submitted", value: form.isAnonymous ? "Anonymously" : `As ${[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}`, color: colors.mutedForeground },
+                { icon: "map-pin", label: "Location", value: form.reportType !== "discrimination" && form.neighborhood ? `${form.neighborhood}, ${form.city}` : form.city, color: colors.primary },
+                { icon: "user", label: "Submitted", value: form.reportType === "discrimination" || form.isAnonymous ? "Anonymously" : `As ${[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}`, color: colors.mutedForeground },
               ].map((row) => (
                 <View key={row.label} style={styles.summaryRow}>
                   <Feather name={row.icon as any} size={15} color={row.color} />
@@ -307,7 +326,7 @@ export default function ReportSafetyScreen() {
                 <Text style={[styles.nextStepsTitle, { color: colors.foreground }]}>What Happens Next</Text>
                 {[
                   "Moderation team reviews your report",
-                  "Verified reports appear as community alerts",
+                  "Approved reports may appear as coarse community alerts",
                   "Repeat locations are escalated automatically",
                 ].map((item, i) => (
                   <View key={i} style={styles.nextStepRow}>
@@ -362,7 +381,12 @@ export default function ReportSafetyScreen() {
                           ]}
                           onPress={() => {
                             Haptics.selectionAsync();
-                            setForm((f) => ({ ...f, reportType: type.id }));
+                            setForm((f) => ({
+                              ...f,
+                              reportType: type.id,
+                              neighborhood: type.id === "discrimination" ? "" : f.neighborhood,
+                              isAnonymous: type.id === "discrimination" ? true : f.isAnonymous,
+                            }));
                           }}
                           activeOpacity={0.82}
                         >
@@ -415,9 +439,9 @@ export default function ReportSafetyScreen() {
 
               {step === 2 && (
                 <View>
-                  <Text style={[styles.stepTitle, { color: colors.foreground }]}>Location & Details</Text>
+                  <Text style={[styles.stepTitle, { color: colors.foreground }]}>Incident Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Be as specific as you&apos;re comfortable with. More detail helps the community stay safer.
+                    Enter where the situation happened. This may be different from where you are now. You can type an area or choose to use your current location.
                   </Text>
 
                   {selectedType && (
@@ -432,12 +456,12 @@ export default function ReportSafetyScreen() {
 
                   <View style={styles.fieldWrap}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <Text style={[styles.fieldLabel, { color: colors.foreground, marginBottom: 0 }]}>City / Area *</Text>
-                      {cityDetecting && <Text style={[styles.fieldHint, { color: colors.primary, marginBottom: 0 }]}>Detecting…</Text>}
+                      <Text style={[styles.fieldLabel, { color: colors.foreground, marginBottom: 0 }]}>Incident City / Area *</Text>
+                      {cityDetecting && <Text style={[styles.fieldHint, { color: colors.primary, marginBottom: 0 }]}>Locating…</Text>}
                     </View>
                     <TextInput
                       value={form.city}
-                      onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
+                      onChangeText={(v) => setForm((f) => ({ ...f, city: v, locationSource: "manual_area" }))}
                       placeholder="e.g. Atlanta, GA"
                       placeholderTextColor={colors.mutedForeground}
                       onFocus={() => setCityFocused(true)}
@@ -450,23 +474,37 @@ export default function ReportSafetyScreen() {
                     />
                   </View>
 
-                  <View style={styles.fieldWrap}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood / Street</Text>
-                    <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Optional — helps narrow the location</Text>
-                    <TextInput
-                      value={form.neighborhood}
-                      onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))}
-                      placeholder="e.g. Old Fourth Ward, MLK Dr"
-                      placeholderTextColor={colors.mutedForeground}
-                      onFocus={() => setNeighFocused(true)}
-                      onBlur={() => setNeighFocused(false)}
-                      style={[styles.input, {
-                        backgroundColor: colors.card,
-                        borderColor: neighFocused ? colors.primary : colors.border,
-                        color: colors.foreground,
-                      }]}
-                    />
-                  </View>
+                  {form.reportType !== "discrimination" && (
+                    <View style={styles.fieldWrap}>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood / General Area</Text>
+                      <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Optional — do not enter a street address</Text>
+                      <TextInput
+                        value={form.neighborhood}
+                        onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v, locationSource: "manual_area" }))}
+                        placeholder="e.g. Old Fourth Ward"
+                        placeholderTextColor={colors.mutedForeground}
+                        onFocus={() => setNeighFocused(true)}
+                        onBlur={() => setNeighFocused(false)}
+                        style={[styles.input, {
+                          backgroundColor: colors.card,
+                          borderColor: neighFocused ? colors.primary : colors.border,
+                          color: colors.foreground,
+                        }]}
+                      />
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => void handleUseCurrentLocation()}
+                    disabled={cityDetecting}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use my current location as the incident location"
+                    style={[styles.locationButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                  >
+                    {cityDetecting
+                      ? <ActivityIndicator size="small" color={colors.primary} />
+                      : <Feather name="navigation" size={15} color={colors.primary} />}
+                    <Text style={[styles.locationButtonText, { color: colors.foreground }]}>Use current location for this incident</Text>
+                  </TouchableOpacity>
 
                   <View style={styles.fieldWrap}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description</Text>
@@ -488,23 +526,28 @@ export default function ReportSafetyScreen() {
                         color: colors.foreground,
                       }]}
                     />
-                    <Text style={[styles.charCount, { color: form.description.length > 10 ? colors.mutedForeground : colors.destructive }]}>
-                      {form.description.length} chars {form.description.length <= 10 ? "(min 10)" : ""}
+                    <Text style={[styles.charCount, { color: colors.mutedForeground }]}>
+                      {form.description.length} characters
                     </Text>
                   </View>
 
                   <Toggle
                     label="Submit Anonymously"
-                    sub="Your name won't be shown on the alert. Recommended."
-                    value={form.isAnonymous}
+                    sub={form.reportType === "discrimination"
+                      ? "Required for discrimination reports; your account identity is not stored with the report."
+                      : "Your name won't be shown publicly. Recommended."}
+                    value={form.reportType === "discrimination" ? true : form.isAnonymous}
                     onToggle={() => setForm((f) => ({ ...f, isAnonymous: !f.isAnonymous }))}
                     colors={colors}
+                    disabled={form.reportType === "discrimination"}
                   />
 
                   <View style={[styles.disclaimer, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                     <Feather name="lock" size={14} color={colors.mutedForeground} />
                     <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
-                      All reports are reviewed before publication. False or malicious reports will not be posted and may result in account restrictions.
+                      Current location is requested only if you choose the button above. {form.reportType === "discrimination"
+                        ? "Discrimination reports store only the incident city, not neighborhood, street, or exact GPS."
+                        : "This report sends the incident city and optional neighborhood, not exact GPS coordinates."}
                     </Text>
                   </View>
                 </View>
@@ -593,6 +636,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14,
     paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 15,
   },
+  locationButton: {
+    minHeight: 44, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+  },
+  locationButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   textarea: { height: 120, textAlignVertical: "top", paddingTop: 12 },
   charCount: { fontFamily: "Inter_400Regular", fontSize: 11, textAlign: "right" },
   disclaimer: {
