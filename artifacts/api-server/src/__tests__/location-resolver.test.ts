@@ -38,6 +38,46 @@ describe("location resolver", () => {
     expect(pool.query).toHaveBeenCalledWith(expect.stringContaining("community_location_aliases"), ["philadelphia", "PA"]);
   });
 
+  it.each(["Richmond VA", "Richmond, Virginia"])("resolves %s from published indexed inventory", async (input) => {
+    const richmond: ResolvedArea = {
+      id: "22222222-2222-4222-8222-222222222222",
+      label: "Richmond, VA",
+      cityName: "Richmond",
+      stateCode: "VA",
+      neighborhoodName: null,
+      latitude: 37.5407,
+      longitude: -77.436,
+    };
+    const pool = {
+      query: vi.fn()
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [richmond] }),
+    };
+
+    await expect(resolveLocationText(pool, input)).resolves.toEqual({
+      kind: "resolved",
+      source: "published_inventory",
+      area: richmond,
+    });
+    expect(pool.query).toHaveBeenNthCalledWith(2, expect.stringContaining("canonical_record_locations"), ["richmond", "VA"]);
+  });
+
+  it("parses multi-word state names without changing the city", () => {
+    expect(parseLocationQuery("Richmond, Virginia")).toMatchObject({ cityOrNeighborhood: "richmond", stateCode: "VA" });
+    expect(parseLocationQuery("Washington, District of Columbia")).toMatchObject({ cityOrNeighborhood: "washington", stateCode: "DC" });
+    expect(parseLocationQuery("Washington, D.C.")).toMatchObject({ cityOrNeighborhood: "washington", stateCode: "DC" });
+  });
+
+  it("requires indexed inventory to still have a discoverable source record", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    await expect(resolveLocationText(pool, "Richmond VA")).resolves.toEqual({ kind: "not_found" });
+    const inventorySql = pool.query.mock.calls[1]?.[0] as string;
+    expect(inventorySql).toContain("public.public_businesses");
+    expect(inventorySql).toContain("tc.is_active = TRUE");
+    expect(inventorySql).toContain("re.is_active = TRUE");
+    expect(inventorySql).toContain("co.is_active = TRUE");
+  });
+
   it("preserves ambiguity for same-name cities without a state", async () => {
     const candidates: ResolvedArea[] = [
       { id: "1", label: "Springfield, IL", cityName: "Springfield", stateCode: "IL", neighborhoodName: null, latitude: 1, longitude: 1 },

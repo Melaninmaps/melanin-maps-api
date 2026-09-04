@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import express from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
@@ -11,6 +12,12 @@ function createApp(rows: unknown[]) {
 }
 
 describe("GET /api/locations/resolve", () => {
+  it("registers the public resolver before the aggregate authenticated API router", () => {
+    const appSource = readFileSync(new URL("../app.ts", import.meta.url), "utf8");
+    expect(appSource.indexOf("registerLocationResolutionRoutes(app, pool);")).toBeGreaterThan(-1);
+    expect(appSource.indexOf("registerLocationResolutionRoutes(app, pool);")).toBeLessThan(appSource.indexOf('app.use("/api", router);'));
+  });
+
   it("returns canonical Philadelphia when the table and aliases are not yet seeded", async () => {
     const { app } = createApp([]);
     const response = await request(app).get("/api/locations/resolve").query({ q: "Philadelphia, Pennsylvania" });
@@ -33,6 +40,25 @@ describe("GET /api/locations/resolve", () => {
     const response = await request(app).get("/api/locations/resolve").query({ q: "Springfield" });
     expect(response.status).toBe(409);
     expect(response.body).toEqual({ code: "AREA_AMBIGUOUS", candidates });
+  });
+
+  it("returns Richmond from published indexed inventory when no resolver seed exists", async () => {
+    const richmond = {
+      id: "22222222-2222-4222-8222-222222222222",
+      label: "Richmond, VA",
+      cityName: "Richmond",
+      stateCode: "VA",
+      neighborhoodName: null,
+      latitude: 37.5407,
+      longitude: -77.436,
+    };
+    const { app, pool } = createApp([]);
+    pool.query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [richmond] });
+    const response = await request(app).get("/api/locations/resolve").query({ q: "Richmond VA" });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(richmond);
   });
 
   it("returns AREA_NOT_FOUND without a national substitute", async () => {

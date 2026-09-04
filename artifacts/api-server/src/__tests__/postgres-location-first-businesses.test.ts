@@ -82,4 +82,57 @@ describe("location-first business repository", () => {
     expect(sql).toContain("coalesce(b.subcategory, '')");
     expect(pool.query.mock.calls[0][1]).toContainEqual(["food", "food drink", "restaurant", "restaurants"]);
   });
+
+  it("returns Richmond cultural inventory with valid Explore destinations", async () => {
+    const richmondExplore: LocationFirstQuery = {
+      surface: "explore",
+      location: { city: "Richmond", stateCode: "VA", neighborhood: null, latitude: null, longitude: null, source: "explicit" },
+      locationMode: "exact",
+      radiusMiles: null,
+      filters: { recordTypes: ["cultural_site", "event", "community_place"], category: null, specialty: null, ownership: [], tagSlugs: [], dateRange: null },
+      searchText: null,
+    };
+    const pool = {
+      query: vi.fn()
+        .mockResolvedValueOnce({ rows: [{
+          id: "11111111-1111-4111-8111-111111111111",
+          name: "Black History Museum and Cultural Center of Virginia",
+          site_type: "museum",
+          city: "richmond",
+          state_code: "VA",
+          neighborhood: null,
+          lat: null,
+          lng: null,
+        }] })
+        .mockResolvedValueOnce({ rows: [{
+          id: "22222222-2222-4222-8222-222222222222",
+          name: "Richmond Community Festival",
+          category: "Culture",
+          city: "richmond",
+          state_code: "VA",
+          neighborhood: null,
+          lat: null,
+          lng: null,
+        }] })
+        .mockResolvedValueOnce({ rows: [{
+          id: "33333333-3333-4333-8333-333333333333",
+          name: "Richmond Community Resource Center",
+          mission: "Business support",
+          city: "richmond",
+          state_code: "VA",
+          neighborhood: null,
+          lat: null,
+          lng: null,
+        }] }),
+    };
+
+    const records = await findExactRecords(pool, richmondExplore);
+    expect(records.map((record) => record.detailUrl)).toEqual([
+      "/tour-cultural-sites/11111111-1111-4111-8111-111111111111",
+      "/events",
+      "/resources",
+    ]);
+    expect(pool.query.mock.calls[0][1]).toEqual(["richmond", "VA"]);
+    expect(pool.query.mock.calls[2][0]).toContain("co.is_active = TRUE");
+  });
 });

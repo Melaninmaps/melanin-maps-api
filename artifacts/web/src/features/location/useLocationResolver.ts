@@ -6,14 +6,14 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 export type ResolvedArea = {
   id: string;
   label: string;
-  /** City name as stored in community_locations.city_name */
+  /** Canonical city name from an approved location or published inventory index. */
   cityName: string;
   /** State code (e.g. "NC") or null for locations outside the US or without a state */
   stateCode: string | null;
   /** Neighborhood name or null if this is a city-level match */
   neighborhoodName: string | null;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type ResolutionState = "idle" | "locating" | "resolving" | "ready" | "error";

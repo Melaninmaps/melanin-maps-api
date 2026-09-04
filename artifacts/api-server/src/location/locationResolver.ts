@@ -4,8 +4,8 @@ export type ResolvedArea = {
   cityName: string;
   stateCode: string | null;
   neighborhoodName: string | null;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type Queryable = {
@@ -23,7 +23,7 @@ type ParsedLocationQuery = {
 };
 
 export type LocationResolution =
-  | { kind: "resolved"; area: ResolvedArea; source: "community" | "approved_canonical" }
+  | { kind: "resolved"; area: ResolvedArea; source: "community" | "approved_canonical" | "published_inventory" }
   | { kind: "ambiguous"; candidates: ResolvedArea[] }
   | { kind: "not_found" };
 
@@ -38,7 +38,18 @@ const PHILADELPHIA_AREA: ResolvedArea = Object.freeze({
 });
 
 const STATE_NAME_TO_CODE: Readonly<Record<string, string>> = Object.freeze({
+  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",
+  colorado: "CO", connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA",
+  hawaii: "HI", idaho: "ID", illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS",
+  kentucky: "KY", louisiana: "LA", maine: "ME", maryland: "MD", massachusetts: "MA",
+  michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO", montana: "MT",
+  nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ",
+  "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND",
+  ohio: "OH", oklahoma: "OK", oregon: "OR",
   pennsylvania: "PA",
+  "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN",
+  texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA",
+  "west virginia": "WV", wisconsin: "WI", wyoming: "WY", "district of columbia": "DC", "d c": "DC",
 });
 
 const PHILADELPHIA_APPROVED_KEYS = new Set([
@@ -77,9 +88,14 @@ export function parseLocationQuery(value: string): ParsedLocationQuery {
   if (/^[a-z]{2}$/.test(finalToken)) {
     stateCode = finalToken.toUpperCase();
     tokens.pop();
-  } else if (STATE_NAME_TO_CODE[finalToken]) {
-    stateCode = STATE_NAME_TO_CODE[finalToken];
-    tokens.pop();
+  } else {
+    const stateName = [3, 2, 1]
+      .map((length) => tokens.slice(-length).join(" "))
+      .find((candidate) => STATE_NAME_TO_CODE[candidate]);
+    if (stateName) {
+      stateCode = STATE_NAME_TO_CODE[stateName];
+      tokens.splice(-stateName.split(" ").length);
+    }
   }
 
   return {
@@ -155,6 +171,57 @@ export async function resolveLocationText(
   // table from breaking a launched city. It never expands to national results.
   if (parsed.approvedArea) {
     return { kind: "resolved", area: parsed.approvedArea, source: "approved_canonical" };
+  }
+
+  // Any city with already-published, indexed inventory is a supported area,
+  // even if it does not yet have a separately hand-authored resolver row.
+  const inventoryResult = await pool.query<ResolvedArea>(
+    `SELECT
+       MIN(l.id::text) AS id,
+       INITCAP(MIN(l.city_name)) AS "cityName",
+       UPPER(NULLIF(MIN(COALESCE(l.state_code, '')), '')) AS "stateCode",
+       NULL::text AS "neighborhoodName",
+       (AVG(l.latitude) FILTER (
+         WHERE l.latitude BETWEEN -90 AND 90 AND l.longitude BETWEEN -180 AND 180
+       ))::float AS latitude,
+       (AVG(l.longitude) FILTER (
+         WHERE l.latitude BETWEEN -90 AND 90 AND l.longitude BETWEEN -180 AND 180
+       ))::float AS longitude,
+       INITCAP(MIN(l.city_name))
+         || COALESCE(', ' || UPPER(NULLIF(MIN(COALESCE(l.state_code, '')), '')), '') AS label
+     FROM canonical_record_locations l
+     WHERE LOWER(BTRIM(l.city_name)) = $1
+       AND ($2::text IS NULL OR UPPER(l.state_code) = $2)
+       AND (
+         (l.record_type = 'business' AND EXISTS (
+           SELECT 1 FROM public.public_businesses b WHERE b.id::text = l.record_id::text
+         ))
+         OR (l.record_type = 'cultural_site' AND EXISTS (
+           SELECT 1 FROM tour_cultural_sites tc
+           WHERE tc.id::text = l.record_id::text AND tc.is_active = TRUE
+         ))
+         OR (l.record_type = 'event' AND EXISTS (
+           SELECT 1 FROM recurring_events re
+           WHERE re.id::text = l.record_id::text
+             AND re.is_active = TRUE
+             AND (re.active_until IS NULL OR re.active_until >= CURRENT_DATE)
+         ))
+         OR (l.record_type = 'community_place' AND EXISTS (
+           SELECT 1 FROM community_organizations co
+           WHERE co.id::text = l.record_id::text AND co.is_active = TRUE
+         ))
+       )
+     GROUP BY LOWER(BTRIM(l.city_name)), UPPER(COALESCE(l.state_code, ''))
+     ORDER BY UPPER(COALESCE(l.state_code, ''))
+     LIMIT 25`,
+    [parsed.cityOrNeighborhood, parsed.stateCode],
+  );
+  const inventoryCandidates = uniqueAreas(inventoryResult.rows);
+  if (inventoryCandidates.length === 1) {
+    return { kind: "resolved", area: inventoryCandidates[0], source: "published_inventory" };
+  }
+  if (inventoryCandidates.length > 1) {
+    return { kind: "ambiguous", candidates: inventoryCandidates };
   }
 
   return { kind: "not_found" };

@@ -48,6 +48,7 @@ import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
 import CulturalSiteDetail from "@/pages/cultural-site-detail";
+import TourCulturalSiteDetail from "@/pages/tour-cultural-site-detail";
 import UniversalPlaceDetailPage, { LegacyPlaceRedirect } from "@/pages/universal-place-detail";
 import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
@@ -322,6 +323,9 @@ function Router() {
       {/* Cultural site living pages — member only */}
       <Route path="/sites/:id">
         <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/tour-cultural-sites/:id">
+        <Layout><PreLaunchRoute><TourCulturalSiteDetail /></PreLaunchRoute></Layout>
       </Route>
       {/* Published non-business map entities resolve through one canonical detail route. */}
       <Route path="/places/:id/:slug">
