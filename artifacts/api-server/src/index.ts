@@ -18,6 +18,7 @@ import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogge
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
+const host = process.env["HOST"]?.trim() || undefined;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
@@ -121,7 +122,7 @@ try {
   process.exit(1);
 }
 
-const server = app.listen(port, (err) => {
+const onListening = (err?: Error) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
@@ -182,7 +183,11 @@ const server = app.listen(port, (err) => {
 
   // Flush per-city request metrics to city_request_log every 5 minutes.
   startCityRequestFlush();
-});
+};
+
+const server = host
+  ? app.listen(port, host, onListening)
+  : app.listen(port, onListening);
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
 // Railway sends SIGTERM before replacing a deployment. Without this handler,
