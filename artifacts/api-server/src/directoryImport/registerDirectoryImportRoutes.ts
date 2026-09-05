@@ -1561,9 +1561,9 @@ export function registerDirectoryImportRoutes(
                 review_note = $4,
                 review_evidence = $5::jsonb,
                 review_revision = review_revision + 1,
-                published_record_type = $6,
-                published_record_id = $7,
-                matched_business_id = CASE WHEN $6 = 'business' THEN $7 ELSE matched_business_id END,
+                published_record_type = $6::text,
+                published_record_id = $7::text,
+                matched_business_id = CASE WHEN $6::text = 'business' THEN $7::varchar ELSE matched_business_id END,
                 updated_at = NOW()
           WHERE id = $1 AND review_revision = $8
           RETURNING ${CANDIDATE_COLUMNS}`,
