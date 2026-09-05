@@ -229,5 +229,7 @@ describe("founder inventory remains review-only", () => {
     expect(publication).toContain("hostname: address");
     expect(publication).toContain("servername: secure ? url.hostname : undefined");
     expect(publication).toContain("areDirectoryEvidenceAddressesPublic(addresses.map((item) => item.address))");
+    const database = source("../../../../lib/db/src/index.ts");
+    expect(database).toContain('typeof value === "function" ? value.bind(instance) : value');
   });
 });

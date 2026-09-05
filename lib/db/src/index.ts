@@ -185,7 +185,9 @@ export { getPool };
 
 export const pool: pg.Pool = new Proxy({} as pg.Pool, {
   get(_target, prop) {
-    return (getPool() as any)[prop];
+    const instance = getPool() as any;
+    const value = instance[prop];
+    return typeof value === "function" ? value.bind(instance) : value;
   },
 });
 
