@@ -219,6 +219,12 @@ describe("founder inventory remains review-only", () => {
     expect(migrations.indexOf("await pool.query(listingStatusMigration.sql)")).toBeLessThan(
       migrations.indexOf("await ensureBetaSafetyColumns(log, strictWarn)"),
     );
+    const requiredPublicationSection = migrations.slice(
+      migrations.indexOf("export async function ensureRequiredPublicationSchema"),
+      migrations.indexOf("export async function runStartupMigrations"),
+    );
+    expect(requiredPublicationSection).toContain("await ensureCanonicalRecordLocations(log, strictWarn)");
+    expect(requiredPublicationSection).not.toContain("await ensureLocationFirstDiscovery(log, strictWarn)");
     const publication = source("../directoryImport/registerDirectoryImportRoutes.ts");
     expect(publication).toContain("hostname: address");
     expect(publication).toContain("servername: secure ? url.hostname : undefined");

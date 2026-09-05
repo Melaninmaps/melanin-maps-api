@@ -4832,7 +4832,7 @@ export async function ensureRequiredPublicationSchema(
   await ensureVisibilityAndDedupeHardening(log, strictWarn);
   await ensureSocialFirstIngestionSchema(log, strictWarn);
   await ensureHotelStayIngestionSchema(log, strictWarn);
-  await ensureLocationFirstDiscovery(log, strictWarn);
+  await ensureCanonicalRecordLocations(log, strictWarn);
   await ensureMediaAndClaimsSchema(log, strictWarn);
 
   const requiredTables = [
@@ -11396,6 +11396,46 @@ async function ensureKinfolkRetrievalEvents(
     log("ensureKinfolkRetrievalEvents: table and index ready");
   } catch (err: unknown) {
     warn(`ensureKinfolkRetrievalEvents failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function ensureCanonicalRecordLocations(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS canonical_record_locations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','cultural_site','event','community_place','resource')),
+        record_id UUID NOT NULL,
+        city_name TEXT NOT NULL,
+        state_code TEXT,
+        neighborhood_name TEXT,
+        latitude NUMERIC(9,6),
+        longitude NUMERIC(9,6),
+        is_primary BOOLEAN NOT NULL DEFAULT TRUE,
+        verified_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS canonical_record_locations_unique_idx
+        ON canonical_record_locations (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS canonical_record_locations_city_idx
+        ON canonical_record_locations (record_type, LOWER(city_name))
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS canonical_record_locations_coord_idx
+        ON canonical_record_locations (latitude, longitude)
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    `);
+    log("ensureCanonicalRecordLocations: table and indexes ready");
+  } catch (err: unknown) {
+    warn(`ensureCanonicalRecordLocations failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
