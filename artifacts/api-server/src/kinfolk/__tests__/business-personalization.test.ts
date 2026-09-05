@@ -107,6 +107,7 @@ describe("Kinfolk business personalization", () => {
     ["things to do in Philadelphia", "activity"],
     ["game cafe in Philadelphia", "gaming"],
     ["fragrance experience in Philadelphia", "fragrance"],
+    ["Southern and West African inspired food in Philadelphia", "restaurant"],
     ["art gallery near me", "gallery"],
     ["bakery in Atlanta", "dessert"],
   ])("classifies %s as %s", (query, expected) => {

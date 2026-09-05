@@ -54,8 +54,8 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "restaurant",
     label: "restaurants",
-    match: /\b(?:restaurants?|dining|dinner|lunch|breakfast|food spots?|places to eat)\b/i,
-    searchTerms: ["restaurant", "restaurants", "dining", "food"],
+    match: /\b(?:restaurants?|dining|dinner|lunch|breakfast|food(?: spots?)?|cuisine|places to eat)\b/i,
+    searchTerms: ["restaurant", "restaurants", "dining", "food", "cuisine"],
   },
   {
     key: "cafe",
