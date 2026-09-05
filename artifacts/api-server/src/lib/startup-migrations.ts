@@ -5483,6 +5483,17 @@ async function ensureTourBusinesses(
     let skipped = 0;
 
     for (const b of TOUR_BUSINESSES_SEED) {
+      // Explicit founder policy: no demo businesses. This exact legacy tour
+      // fixture previously reappeared after the reversible containment
+      // migration because tour seeding runs later in startup.
+      if (
+        b.name.trim().toLowerCase() === "duke's cafe"
+        && b.city.trim().toLowerCase() === "willow grove"
+        && b.state.trim().toLowerCase() === "pa"
+      ) {
+        skipped++;
+        continue;
+      }
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
       if (existing.has(key)) { skipped++; continue; }
       try {

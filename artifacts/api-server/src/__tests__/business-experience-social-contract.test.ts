@@ -64,6 +64,8 @@ describe("category-aware business experience contract", () => {
     expect(migrationsSource).toContain("COALESCE(verified, false) = false");
     expect(migrationsSource).toContain("BTRIM(COALESCE(data_source, '')) = ''");
     expect(migrationsSource).toContain("SET status = 'permanently_hidden'");
+    expect(migrationsSource).toContain("b.name.trim().toLowerCase() === \"duke's cafe\"");
+    expect(migrationsSource).toContain("b.city.trim().toLowerCase() === \"willow grove\"");
     expect(migrationsSource).not.toContain("DELETE FROM businesses WHERE");
   });
 
