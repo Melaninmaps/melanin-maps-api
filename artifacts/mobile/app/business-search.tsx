@@ -97,9 +97,11 @@ export default function BusinessSearchScreen() {
 
       const allParams = new URLSearchParams();
       if (nameParam) allParams.set("search", nameParam);
+      if (cityParam) allParams.set("city", cityParam);
       if (stateParam) allParams.set("state", stateParam);
       if (handleParam) allParams.set("handle", handleParam);
       if (category) allParams.set("category", category);
+      allParams.set("limit", "200");
 
       const token = await SecureStore.getItemAsync("auth_session_token");
       const controller = new AbortController();
@@ -116,13 +118,7 @@ export default function BusinessSearchScreen() {
       } finally {
         clearTimeout(timeout);
       }
-      let list = data.businesses as Business[];
-
-      if (cityParam) {
-        list = list.filter((b) =>
-          b.city.toLowerCase().includes(cityParam.toLowerCase())
-        );
-      }
+      const list = data.businesses as Business[];
 
       if (requestId !== searchRequestIdRef.current) return;
       setResults(list);

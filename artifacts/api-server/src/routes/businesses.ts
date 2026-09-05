@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable, BUSINESS_CATEGORY_TAXONOMY, ALL_VALID_CATEGORY_NAMES } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, sql, gt, count, inArray, ne } from "drizzle-orm";
 import { withDbRetry } from "../lib/db-retry";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
@@ -13,7 +13,11 @@ import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
-import { detectSocialVideoPlatform } from "@workspace/constants";
+import {
+  detectSocialVideoPlatform,
+  OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationFilterId,
+} from "@workspace/constants";
 
 const communitySubmissionRepository = new SubmissionRepository();
 
@@ -65,6 +69,26 @@ function normalizeCityAlias(city: string): string {
     "bmore md":        "Baltimore",
   };
   return ALIASES[lower] ?? c;
+}
+
+const LEGACY_OWNERSHIP_FILTER_VALUES: Record<string, string[]> = {
+  "black-african-american": ["black-owned", "Black-Owned"],
+  woman: ["woman-owned", "women-owned", "Woman-Owned", "Women-Owned"],
+  lgbtqia: ["lgbtq-owned", "lgbtqia-owned", "LGBTQ-Owned", "LGBTQIA-Owned"],
+  "latino-hispanic": ["latino-owned", "hispanic-owned", "Latino-Owned", "Hispanic-Owned"],
+  "indigenous-native": ["indigenous-owned", "native-owned", "Indigenous-Owned", "Native-Owned"],
+  veteran: ["veteran-owned", "Veteran-Owned"],
+};
+
+function ownershipFilterStorageValues(raw: string): { id: string; values: string[] } {
+  const id = ownershipDesignationFilterId(raw);
+  const canonical = OWNERSHIP_FILTER_OPTIONS
+    .filter((option) => option.id === id)
+    .map((option) => option.label);
+  return {
+    id,
+    values: [...new Set([raw, ...canonical, ...(LEGACY_OWNERSHIP_FILTER_VALUES[id] ?? [])])],
+  };
 }
 router.use(requireAuth);
 
@@ -164,29 +188,27 @@ router.get("/businesses", async (req: Request, res: Response) => {
       sql`COALESCE(${businessesTable}.description, '') NOT ILIKE '%[demo]%'`
     );
 
-    // ── listing_status gate — real users only see live listings ──────────────
-    // Tester accounts see everything; regular users see only live_unclaimed + live_claimed.
-    const isTester = (req as any).user?.isTester === true;
-    if (!isTester) {
-      conditions.push(
-        sql`${businessesTable}.listing_status IN ('live_unclaimed', 'live_claimed')`
-      );
-    }
+    // ── listing_status gate — public search reads published inventory only ───
+    // Tester privileges never expose pending/review rows through member search.
+    conditions.push(
+      sql`${businessesTable}.listing_status IN ('live_unclaimed', 'live_claimed')`
+    );
 
     if (category && typeof category === "string" && category !== "All") {
       conditions.push(eq(businessesTable.category, category));
     }
 
-    // ownership filter: "black-owned" maps to the blackOwned boolean column;
-    // other designations filter against the ownershipDesignations jsonb array.
+    // Ownership is self-identified and historically stored as both canonical labels
+    // and a small set of legacy aliases. Match the stable designation ID without
+    // inferring identity from any other business field.
     if (ownership && typeof ownership === "string") {
-      if (ownership === "black-owned") {
-        conditions.push(eq(businessesTable.blackOwned, true));
-      } else {
-        conditions.push(
-          sql`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
-        );
-      }
+      const filter = ownershipFilterStorageValues(ownership);
+      const designationMatches = filter.values.map((value) =>
+        sql<boolean>`${businessesTable.ownershipDesignations} @> ${JSON.stringify([value])}::jsonb`
+      );
+      conditions.push(filter.id === "black-african-american"
+        ? or(eq(businessesTable.blackOwned, true), ...designationMatches)!
+        : or(...designationMatches)!);
     }
 
     if (search && typeof search === "string") {
@@ -216,8 +238,19 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const allInName = tokens.map(t => ilike(businessesTable.name, `%${t}%`));
         const allInDesc = tokens.map(t => ilike(businessesTable.description, `%${t}%`));
         const allInTags = tokens.map(t => sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${t}%`}`);
+        const allInRecord = tokens.map(t => sql<boolean>`CONCAT_WS(' ',
+          COALESCE(${businessesTable.name}, ''),
+          COALESCE(${businessesTable.city}, ''),
+          COALESCE(${businessesTable.state}, ''),
+          COALESCE(${businessesTable.country}, ''),
+          COALESCE(${businessesTable.category}, ''),
+          COALESCE(${businessesTable.subcategory}, ''),
+          COALESCE(${businessesTable.description}, ''),
+          COALESCE(${businessesTable.tags}, '[]'::jsonb)::text
+        ) ILIKE ${`%${t}%`}`);
         conditions.push(
           or(
+            and(...allInRecord),                                        // tokens may span name + city + specialty
             and(...allInName),                                          // all tokens in name
             and(...allInDesc),                                          // all tokens in description
             and(...allInTags),                                          // all tokens in reviewed factual tags
@@ -231,11 +264,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
     }
 
     if (city && typeof city === "string") {
-      conditions.push(ilike(businessesTable.city, `%${normalizeCityAlias(city)}%`));
+      const canonicalCity = normalizeCityAlias(city);
+      conditions.push(sql`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${canonicalCity}))`);
     }
 
     if (state && typeof state === "string") {
-      conditions.push(ilike(businessesTable.state, `%${state}%`));
+      conditions.push(sql`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state}))`);
     }
 
     if (country && typeof country === "string") {
@@ -286,6 +320,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
       .orderBy(
         desc(businessesTable.foundingBusiness),
         desc(businessesTable.confidenceScore),
+        asc(businessesTable.name),
+        asc(businessesTable.id),
       )
       .limit(pageLimit)
       .offset(offset);
@@ -381,7 +417,19 @@ router.get("/businesses", async (req: Request, res: Response) => {
     // city-constrained request never leaks cross-city results.
     let finalResults = withCaptions;
     let usedFuzzyFallback = false;
-    if (search && typeof search === "string" && withCaptions.length === 0) {
+    const fuzzyWouldEscapeRestrictiveFilter = Boolean(
+      hasGeoFilter
+      || (category && typeof category === "string" && category !== "All")
+      || (ownership && typeof ownership === "string")
+      || (subcategory && typeof subcategory === "string")
+      || (handle && typeof handle === "string")
+    );
+    if (
+      search
+      && typeof search === "string"
+      && withCaptions.length === 0
+      && !fuzzyWouldEscapeRestrictiveFilter
+    ) {
       try {
         const cleanSearch = search.replace(/[^\w\s'-]/gi, " ").trim();
         const STOP = ["a","an","the","and","or","of","in","at","on","for","to","with","is","by","near","best","good","great"];
@@ -401,16 +449,14 @@ router.get("/businesses", async (req: Request, res: Response) => {
           "COALESCE(b.description, '') NOT ILIKE '%[demo]%'",
         ];
         const fuzzyScopeParams: unknown[] = [];
-        if (!isTester) {
-          fuzzyScope.push("b.listing_status IN ('live_unclaimed', 'live_claimed')");
-        }
+        fuzzyScope.push("b.listing_status IN ('live_unclaimed', 'live_claimed')");
         if (city && typeof city === "string" && city.trim()) {
-          fuzzyScopeParams.push(`%${city.trim()}%`);
-          fuzzyScope.push(`LOWER(b.city) LIKE LOWER($${fuzzyScopeParams.length})`);
+          fuzzyScopeParams.push(normalizeCityAlias(city));
+          fuzzyScope.push(`LOWER(BTRIM(COALESCE(b.city, ''))) = LOWER(BTRIM($${fuzzyScopeParams.length}))`);
         }
         if (state && typeof state === "string" && state.trim()) {
-          fuzzyScopeParams.push(`%${state.trim()}%`);
-          fuzzyScope.push(`LOWER(b.state) LIKE LOWER($${fuzzyScopeParams.length})`);
+          fuzzyScopeParams.push(state.trim());
+          fuzzyScope.push(`UPPER(BTRIM(COALESCE(b.state, ''))) = UPPER(BTRIM($${fuzzyScopeParams.length}))`);
         }
         if (country && typeof country === "string" && country.trim()) {
           fuzzyScopeParams.push(`%${country.trim()}%`);

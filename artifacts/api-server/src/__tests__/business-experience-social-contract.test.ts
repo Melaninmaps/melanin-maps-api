@@ -55,6 +55,27 @@ describe("category-aware business experience contract", () => {
     expect(businessesSource).not.toContain("u.display_name AS contributor_name");
     expect(businessesSource).toContain("const allInTags = tokens.map");
     expect(businessesSource).toContain("all tokens in reviewed factual tags");
+    expect(businessesSource).toContain("const allInRecord = tokens.map");
+    expect(businessesSource).toContain("COALESCE(${businessesTable.city}, '')");
+    expect(businessesSource).toContain("tokens may span name + city + specialty");
+    expect(businessesSource).toContain("ownershipFilterStorageValues");
+    expect(businessesSource).toContain('woman: ["woman-owned", "women-owned"');
+    expect(businessesSource).toContain('filter.id === "black-african-american"');
+    expect(businessesSource).toContain("fuzzyWouldEscapeRestrictiveFilter");
+    expect(businessesSource).toContain("&& !fuzzyWouldEscapeRestrictiveFilter");
+    expect(businessesSource).toContain("Tester privileges never expose pending/review rows");
+    expect(businessesSource).toContain("LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) =");
+    expect(businessesSource).toContain("UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) =");
+    expect(businessesSource).toContain("asc(businessesTable.name)");
+    expect(businessesSource).toContain("asc(businessesTable.id)");
+  });
+
+  it("treats practical specialties as content while extracting a requested city", () => {
+    const mapsSource = source("../routes/maps.ts");
+    expect(mapsSource).toContain('"bookstore","bookstores","bookshop","bookshops"');
+    expect(mapsSource).toContain('"hvac","heating","cooling","airconditioning"');
+    expect(mapsSource).toContain('"accountant","accountants","accounting","cpa"');
+    expect(mapsSource).toContain('"boardgame","boardgames","gaming","games"');
   });
 
   it("soft-hides only source-less unreviewed Duke's Cafe seed rows", () => {

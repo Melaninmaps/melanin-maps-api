@@ -45,6 +45,15 @@ describe("business discovery data contract", () => {
     expect(searchSource).toContain("headers: token ? { Authorization: `Bearer ${token}` } : {}");
   });
 
+  it("sends name, city, state, category, and a bounded limit to canonical search", () => {
+    expect(searchSource).toContain('allParams.set("search", nameParam)');
+    expect(searchSource).toContain('allParams.set("city", cityParam)');
+    expect(searchSource).toContain('allParams.set("state", stateParam)');
+    expect(searchSource).toContain('allParams.set("category", category)');
+    expect(searchSource).toContain('allParams.set("limit", "200")');
+    expect(searchSource).not.toContain("list = list.filter((b)");
+  });
+
   it("does not present authentication or transport failures as a missing business", () => {
     expect(searchSource).toContain("if (!res.ok) throw new Error(`HTTP ${res.status}`)");
     expect(searchSource).toContain('setSearchError("Unable to search businesses right now. Check your connection and try again.")');
