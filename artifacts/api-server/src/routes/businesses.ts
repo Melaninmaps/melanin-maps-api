@@ -2817,10 +2817,10 @@ router.patch("/admin/contributions/:id", async (req: Request, res: Response): Pr
   try {
     const r = await pool.query(
       `UPDATE business_contributions
-       SET status=$1, rejected_reason=$2, moderated_by=$3,
-           approved_at=CASE WHEN $1='approved' THEN NOW() ELSE NULL END,
+       SET status=$1::text, rejected_reason=$2::text, moderated_by=$3::varchar,
+           approved_at=CASE WHEN $1::text='approved' THEN NOW() ELSE NULL END,
            updated_at=NOW()
-       WHERE id=$4 RETURNING id, status`,
+       WHERE id=$4::varchar RETURNING id, status`,
       [status, rejectedReason ?? null, (req as any).user?.id ?? null, id],
     );
     if (r.rows.length === 0) { res.status(404).json({ error: "Contribution not found" }); return; }

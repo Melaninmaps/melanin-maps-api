@@ -47,6 +47,9 @@ describe("category-aware business experience contract", () => {
     expect(businessesSource).toContain("bc.status = 'approved' AND bc.is_public = TRUE");
     expect(businessesSource).toContain("const detectedType = detectSocialVideoPlatform(sourceUrl.trim())");
     expect(businessesSource).not.toContain("let detectedType = sourceType");
+    expect(businessesSource).toContain("status=$1::text");
+    expect(businessesSource).toContain("approved_at=CASE WHEN $1::text='approved'");
+    expect(businessesSource).toContain("WHERE id=$4::varchar RETURNING id, status");
     expect(businessesSource).toContain("const allInTags = tokens.map");
     expect(businessesSource).toContain("all tokens in reviewed factual tags");
   });
