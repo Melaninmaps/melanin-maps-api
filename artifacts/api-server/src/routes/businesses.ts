@@ -90,6 +90,19 @@ function ownershipFilterStorageValues(raw: string): { id: string; values: string
     values: [...new Set([raw, ...canonical, ...(LEGACY_OWNERSHIP_FILTER_VALUES[id] ?? [])])],
   };
 }
+
+const CATEGORY_FILTER_ALIASES: Record<string, string[]> = {
+  "food & drink": ["Food", "Food & Drink", "Food Trucks"],
+  "arts & culture": ["Arts & Culture", "Arts, Culture & Entertainment", "Entertainment & Recreation"],
+  "retail & shopping": ["Retail", "Retail & Shopping"],
+  "faith & community": ["Faith & Spirituality", "Faith & Community", "Community Organizations", "Community Organization", "Community & Organizations"],
+  "home & trades": ["Home & Trades", "Home Services", "Home & Property", "Home & Property Services"],
+  "childcare & education": ["Childcare & Early Education", "Children & Family", "Education", "Education & Learning"],
+};
+
+function categoryFilterStorageValues(raw: string): string[] {
+  return CATEGORY_FILTER_ALIASES[raw.trim().toLocaleLowerCase("en-US")] ?? [raw.trim()];
+}
 router.use(requireAuth);
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
@@ -195,7 +208,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
     );
 
     if (category && typeof category === "string" && category !== "All") {
-      conditions.push(eq(businessesTable.category, category));
+      const categoryValues = categoryFilterStorageValues(category);
+      conditions.push(or(...categoryValues.map((value) => eq(businessesTable.category, value)))!);
     }
 
     // Ownership is self-identified and historically stored as both canonical labels

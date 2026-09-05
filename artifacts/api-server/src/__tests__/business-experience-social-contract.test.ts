@@ -68,6 +68,9 @@ describe("category-aware business experience contract", () => {
     expect(businessesSource).toContain("UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) =");
     expect(businessesSource).toContain("asc(businessesTable.name)");
     expect(businessesSource).toContain("asc(businessesTable.id)");
+    expect(businessesSource).toContain("CATEGORY_FILTER_ALIASES");
+    expect(businessesSource).toContain('["Food", "Food & Drink", "Food Trucks"]');
+    expect(businessesSource).toContain("categoryFilterStorageValues(category)");
   });
 
   it("treats practical specialties as content while extracting a requested city", () => {
