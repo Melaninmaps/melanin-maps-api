@@ -1,7 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable, userBlocksTable } from "@workspace/db";
+import { db, pool, usersTable, userPreferencesTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable, userBlocksTable } from "@workspace/db";
+import { SOCIAL_VIDEO_PLATFORMS, sanitizeSocialVideoPreferences } from "@workspace/constants";
 import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
@@ -24,6 +25,52 @@ function isReservedUsername(username: string): boolean {
 }
 
 const router: IRouter = Router();
+
+router.get("/users/me/content-preferences", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  try {
+    const [preferences] = await db
+      .select({ socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    res.json({
+      socialVideoPlatforms: preferences?.socialVideoPlatforms ?? [...SOCIAL_VIDEO_PLATFORMS],
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch content preferences");
+    res.status(500).json({ error: "Failed to fetch content preferences" });
+  }
+});
+
+router.patch("/users/me/content-preferences", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const socialVideoPlatforms = sanitizeSocialVideoPreferences(req.body?.socialVideoPlatforms);
+  if (socialVideoPlatforms === null) {
+    res.status(400).json({ error: "socialVideoPlatforms must be an array of supported platform IDs" });
+    return;
+  }
+  try {
+    const [preferences] = await db
+      .insert(userPreferencesTable)
+      .values({ userId: req.user.id, socialVideoPlatforms, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: userPreferencesTable.userId,
+        set: { socialVideoPlatforms, updatedAt: new Date() },
+      })
+      .returning({ socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms });
+    res.json({ socialVideoPlatforms: preferences?.socialVideoPlatforms ?? socialVideoPlatforms });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save content preferences");
+    res.status(500).json({ error: "Failed to save content preferences" });
+  }
+});
 
 router.get("/users/me", async (req: Request, res: Response) => {
   if (!req.user?.id) {

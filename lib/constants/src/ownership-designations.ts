@@ -113,6 +113,45 @@ export const OWNERSHIP_DESIGNATIONS = [
 
 export type OwnershipDesignation = (typeof OWNERSHIP_DESIGNATIONS)[number];
 
+const OWNERSHIP_FILTER_ALIASES: Record<string, string> = {
+  black: "black-african-american",
+  "black-african-american": "black-african-american",
+  woman: "woman",
+  women: "woman",
+  lgbtq: "lgbtqia",
+  lgbtqia: "lgbtqia",
+  hispanic: "latino-hispanic",
+  latino: "latino-hispanic",
+  "hispanic-latino": "latino-hispanic",
+  "latino-hispanic": "latino-hispanic",
+  indigenous: "indigenous-native",
+  native: "indigenous-native",
+  "native-american-indigenous": "indigenous-native",
+  "indigenous-native": "indigenous-native",
+  minority: "minority-general-legacy",
+  "melanated-diaspora": "minority-general-legacy",
+  multiracial: "multicultural-multiethnic",
+  "middle-eastern-north-african": "arab-mena",
+};
+
+/** Stable comparison key for owner-provided and verified designation values. */
+export function ownershipDesignationFilterId(value: string): string {
+  const normalized = value
+    .normalize("NFKC")
+    .toLocaleLowerCase("en-US")
+    .replace(/&/g, " and ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\bowned\b/g, " ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return OWNERSHIP_FILTER_ALIASES[normalized] ?? normalized;
+}
+
+export const OWNERSHIP_FILTER_OPTIONS = OWNERSHIP_DESIGNATIONS.map((label) => ({
+  id: ownershipDesignationFilterId(label),
+  label,
+}));
+
 /**
  * Designations that imply blackOwned = true on the business record.
  * Used during import and business submission to auto-set the boolean index.

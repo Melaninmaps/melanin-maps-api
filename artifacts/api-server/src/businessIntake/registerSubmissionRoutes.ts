@@ -214,7 +214,7 @@ async function publishFromSubmission(
         $19,$20,$21,$22,$23::jsonb,$24::jsonb,
         $25::jsonb,'[]'::jsonb,$26,false,
         false,false,false,'active','live_unclaimed',
-        'community','community_listed','unclaimed',$27,
+        'community','community_listed','unclaimed',NULL,
         $27,'community_submission','community_submission',$28,
         $29,$30,'community_submission',$31,NOW(),
         NOW(),NOW())

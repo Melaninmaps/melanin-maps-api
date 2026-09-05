@@ -21,6 +21,9 @@ export const userPreferencesTable = pgTable("user_preferences", {
   kinfolkVoice: varchar("kinfolk_voice", { length: 20 }).notNull().default("onyx"),
   autoSpeak: boolean("auto_speak").notNull().default(false),
   preferredOwnershipTypes: jsonb("preferred_ownership_types").$type<string[]>().default([]),
+  socialVideoPlatforms: jsonb("social_video_platforms").$type<string[]>().default([
+    "youtube", "tiktok", "instagram", "facebook", "twitch", "snapchat", "vimeo",
+  ]),
   diasporaCountries: jsonb("diaspora_countries").$type<string[]>().default([]),
   lifestyleServices: jsonb("lifestyle_services").$type<string[]>().default([]),
   searchHistory: jsonb("search_history").$type<Array<{ query: string; type: string; categories: string[]; ts: number }>>().default([]),

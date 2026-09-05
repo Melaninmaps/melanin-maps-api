@@ -205,9 +205,8 @@ export default function DiscoverScreen() {
       filters.ownershipTypes.length === 0 ||
       filters.ownershipTypes.some(
         (t) =>
-          (t === "black-owned" && b.blackOwned) ||
-          (t === "minority-owned" && b.blackOwned) ||
-          b.ownershipDesignations.includes(t)
+          (t === "black-african-american" && b.blackOwned) ||
+          b.ownershipFilterIds?.includes(t)
       );
     const activeVibeObj = VIBES.find((v) => v.label === activeVibe);
     const matchesVibe = !activeVibe
@@ -228,8 +227,8 @@ export default function DiscoverScreen() {
     savedOwnershipPrefs.length === 0 ||
     savedOwnershipPrefs.some(
       (t) =>
-        (t === "minority-owned" && b.blackOwned) ||
-        b.ownershipDesignations?.includes(t)
+        (t === "black-african-american" && b.blackOwned) ||
+        b.ownershipFilterIds?.includes(t)
     );
 
   const sortByPref = (list: typeof filtered) => {

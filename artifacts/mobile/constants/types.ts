@@ -38,9 +38,12 @@ export interface Business {
   twitter?: string;
   facebook?: string;
   youtube?: string;
+  twitch?: string;
+  snapchat?: string;
   confidenceScore: number;
   blackOwned: boolean;
   ownershipDesignations: string[];
+  ownershipFilterIds?: string[];
   verifiedDesignations: string[];
   safetyRating?: number;
   wouldReturnAlone?: number;

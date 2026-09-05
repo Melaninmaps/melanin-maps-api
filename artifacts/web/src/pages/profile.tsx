@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import KinfolkTonePreference from "@/components/kinfolk/KinfolkTonePreference";
+import { SocialVideoPreferences } from "@/features/profile/SocialVideoPreferences";
+import { BusinessSupportPreferences } from "@/features/profile/BusinessSupportPreferences";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1519,6 +1521,14 @@ export default function Profile() {
             </a>
 
           </div>
+        </div>
+
+        <div className="mt-8">
+          <SocialVideoPreferences />
+        </div>
+
+        <div className="mt-8">
+          <BusinessSupportPreferences />
         </div>
 
         {/* ── What Kinfolk Knows About You ────────────────────────────── */}

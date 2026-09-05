@@ -55,6 +55,77 @@ import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoCo
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "user_preferences_social_video_platforms_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS social_video_platforms JSONB DEFAULT '["youtube","tiktok","instagram","facebook","twitch","snapchat","vimeo"]'::jsonb`,
+  },
+  {
+    name: "create_governed_directory_import_staging_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS directory_import_batches (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_name TEXT NOT NULL,
+        source_sha256 TEXT NOT NULL UNIQUE,
+        source_row_count INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'staged'
+          CHECK (status IN ('staged','in_review','completed','cancelled')),
+        created_by VARCHAR,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS directory_import_candidates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id) ON DELETE RESTRICT,
+        source_row INTEGER NOT NULL,
+        target_kind TEXT NOT NULL
+          CHECK (target_kind IN ('business','community_resource','regulated_review','manual_review','internal_only')),
+        status TEXT NOT NULL DEFAULT 'pending_review'
+          CHECK (status IN ('pending_review','needs_research','declined','approved','published')),
+        dedupe_key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
+        category TEXT NOT NULL,
+        subcategory TEXT,
+        cultural_specialty TEXT,
+        address TEXT,
+        phone TEXT,
+        website TEXT,
+        source_url TEXT,
+        source_name TEXT,
+        source_status TEXT,
+        ownership_designations JSONB NOT NULL DEFAULT '[]'::jsonb,
+        ownership_evidence TEXT,
+        regulated_profession BOOLEAN NOT NULL DEFAULT FALSE,
+        public_display_recommendation TEXT,
+        instagram_url TEXT,
+        facebook_url TEXT,
+        tiktok_url TEXT,
+        social_source_url TEXT,
+        price_range TEXT,
+        price_basis TEXT,
+        suggested_experience_keys JSONB NOT NULL DEFAULT '{}'::jsonb,
+        link_validation JSONB NOT NULL DEFAULT '{}'::jsonb,
+        notes TEXT,
+        raw_record JSONB NOT NULL,
+        matched_business_id VARCHAR,
+        published_record_type TEXT,
+        published_record_id TEXT,
+        reviewed_by VARCHAR,
+        reviewed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (batch_id, source_row)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_candidates_review_idx
+        ON directory_import_candidates(batch_id, status, target_kind, source_row);
+      CREATE INDEX IF NOT EXISTS directory_import_candidates_dedupe_idx
+        ON directory_import_candidates(dedupe_key, status);
+    `,
+  },
+  {
     // Universal Search + Demand Flywheel — Checkpoint 1
     // Canonical search event log: one row per search across all surfaces.
     // Privacy: user_id nullable; demand signals use aggregated counts only.

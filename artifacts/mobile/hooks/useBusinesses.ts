@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import type { Business } from "@/constants/types";
+import { ownershipDesignationFilterId } from "@workspace/constants";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 const BUSINESS_LOAD_ERROR = "Unable to load businesses. Check your connection and try again.";
@@ -31,6 +32,14 @@ function getApiBaseUrl(): string {
 }
 
 function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
+  const socialProfiles = b.socialProfiles && typeof b.socialProfiles === "object" && !Array.isArray(b.socialProfiles)
+    ? b.socialProfiles as Record<string, unknown>
+    : {};
+  const ownershipDesignations = Array.isArray(b.ownershipDesignations)
+    ? b.ownershipDesignations.filter((value): value is string => typeof value === "string")
+    : [];
+  const ownershipFilterIds = ownershipDesignations.map(ownershipDesignationFilterId);
+  if (b.blackOwned === true) ownershipFilterIds.push("black-african-american");
   return {
     id: b.id as string,
     name: b.name as string,
@@ -45,9 +54,8 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     verified: b.verified as boolean,
     featured: b.featured as boolean,
     blackOwned: b.blackOwned as boolean,
-    ownershipDesignations: b.blackOwned
-      ? ["black-owned", ...((b.ownershipDesignations as string[]) ?? []).filter((d) => d !== "black-owned")]
-      : ((b.ownershipDesignations as string[]) ?? []),
+    ownershipDesignations,
+    ownershipFilterIds: [...new Set(ownershipFilterIds)],
     verifiedDesignations: (b.verifiedDesignations as string[]) ?? [],
     confidenceScore: b.confidenceScore as number,
     safetyRating: b.safetyRating != null
@@ -67,11 +75,13 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     imageUrl: b.imageUrl as string | undefined,
     profileStatus: b.profileStatus as string | null | undefined,
     listingStatus: b.listingStatus as string | null | undefined,
-    instagram: b.instagram as string | undefined,
-    tiktok: b.tiktok as string | undefined,
+    instagram: (b.instagram ?? socialProfiles.instagram) as string | undefined,
+    tiktok: (b.tiktok ?? socialProfiles.tiktok) as string | undefined,
     twitter: b.twitter as string | undefined,
-    facebook: b.facebook as string | undefined,
-    youtube: b.youtube as string | undefined,
+    facebook: (b.facebook ?? socialProfiles.facebook) as string | undefined,
+    youtube: (b.youtube ?? socialProfiles.youtube) as string | undefined,
+    twitch: socialProfiles.twitch as string | undefined,
+    snapchat: socialProfiles.snapchat as string | undefined,
     foundingBusiness: b.foundingBusiness as boolean | undefined,
     foundingNumber: b.foundingNumber as number | undefined,
     introVideoUrl: b.introVideoUrl as string | undefined,

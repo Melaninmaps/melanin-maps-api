@@ -368,6 +368,7 @@ describe("founder atomic publication", () => {
     const businessInsert = query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
     expect(String(businessInsert?.[0])).toContain("'active','live_unclaimed'");
     expect(String(businessInsert?.[0])).toContain("'community','community_listed','unclaimed'");
+    expect(String(businessInsert?.[0])).toContain("'community','community_listed','unclaimed',NULL");
     expect(String(businessInsert?.[0])).toContain("normalized_name, dedupe_key");
     expect(String(businessInsert?.[0])).toContain("false");
     expect(String(businessInsert?.[0])).toContain("'[]'::jsonb,'[]'::jsonb,'[]'::jsonb");

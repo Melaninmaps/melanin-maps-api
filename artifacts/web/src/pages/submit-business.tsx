@@ -63,6 +63,8 @@ export default function SubmitBusiness() {
     facebook: "",
     tiktok: "",
     youtube: "",
+    twitch: "",
+    snapchat: "",
     ownershipDesignations: [] as string[],
     submitterNote: "",
   });
@@ -104,6 +106,8 @@ export default function SubmitBusiness() {
           facebook: socials.facebook ?? "",
           tiktok: socials.tiktok ?? "",
           youtube: socials.youtube ?? "",
+          twitch: socials.twitch ?? "",
+          snapchat: socials.snapchat ?? "",
           ownershipDesignations: Array.isArray(item.ownership_designations)
             ? item.ownership_designations.map(String).map((value) => OWNERSHIP_TO_FORM[value] ?? value)
             : [],
@@ -158,6 +162,8 @@ export default function SubmitBusiness() {
             ...(form.facebook ? { facebook: form.facebook } : {}),
             ...(form.tiktok ? { tiktok: form.tiktok } : {}),
             ...(form.youtube ? { youtube: form.youtube } : {}),
+            ...(form.twitch ? { twitch: form.twitch } : {}),
+            ...(form.snapchat ? { snapchat: form.snapchat } : {}),
           },
           ownershipDesignations: form.ownershipDesignations,
           submitterNote: form.submitterNote,
@@ -220,7 +226,7 @@ export default function SubmitBusiness() {
             <div className="flex gap-3 justify-center">
               {!amendId && (
                 <button
-                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedUrls([]); setSubmissionId(""); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", ownershipDesignations: [], submitterNote: "" }); }}
+                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedUrls([]); setSubmissionId(""); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", ownershipDesignations: [], submitterNote: "" }); }}
                   className="px-6 py-3 border border-[#CA922B]/30 text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm"
                 >
                   Submit another
@@ -410,6 +416,8 @@ export default function SubmitBusiness() {
                 ["facebook", "Facebook", "facebook.com/yourbusiness"],
                 ["tiktok", "TikTok", "@yourbusiness"],
                 ["youtube", "YouTube", "@yourbusiness"],
+                ["twitch", "Twitch", "@yourbusiness"],
+                ["snapchat", "Snapchat", "@yourbusiness"],
               ] as const).map(([field, label, placeholder]) => (
                 <div key={field} className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#3A1F0E]/70">{label}</label>

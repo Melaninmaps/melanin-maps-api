@@ -17,6 +17,10 @@ import {
   fetchCommunityFeedRows,
   type CommunityFeedMode,
 } from "../community/communityFeed";
+import {
+  normalizeCommunityMediaUrls,
+  validateCommunityMediaUrls,
+} from "../community/communityMediaValidation";
 
 const router: IRouter = Router();
 
@@ -37,28 +41,6 @@ const VIDEO_TIER_TABLE = [
   { tier: "community_builder", label: "Creator",         videoMonthly: 75  },
   { tier: "legacy_member",     label: "Premium Creator", videoMonthly: 200 },
 ];
-
-function normalizeCommunityMediaUrls(value: unknown): string[] {
-  let current = value;
-  for (let depth = 0; depth < 3; depth += 1) {
-    if (Array.isArray(current)) {
-      const unique = new Set<string>();
-      for (const item of current) {
-        if (typeof item !== "string") continue;
-        const url = item.trim();
-        if (url) unique.add(url);
-      }
-      return Array.from(unique).slice(0, 5);
-    }
-    if (typeof current !== "string" || !current.trim()) return [];
-    try {
-      current = JSON.parse(current);
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}
 
 // Split long content into thread segments at natural sentence boundaries
 // 300 words per segment — a full, complete thought per post
@@ -403,7 +385,15 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       return;
     }
 
-    const normalizedMediaUrls = normalizeCommunityMediaUrls(mediaUrls);
+    const mediaValidation = await validateCommunityMediaUrls(mediaUrls, req.user.id);
+    if (mediaValidation.rejected.length > 0) {
+      res.status(400).json({
+        error: "Media must be your completed upload or a public link from a supported social video platform.",
+        code: "INVALID_MEDIA_URL",
+      });
+      return;
+    }
+    const normalizedMediaUrls = mediaValidation.urls;
 
     // Extract hashtags from content
     const extractedHashtags = extractHashtags(content.trim());

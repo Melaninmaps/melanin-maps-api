@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
+import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
 import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, incrementVoiceChars, getVoiceUsage, TIER_LIMITS, hasActiveTesterEntitlement } from "../constants/membershipTiers";
 import crypto from "crypto";
 import {
@@ -2268,8 +2269,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     autoSpeak, aaveLevel,
   } = body;
   // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
-  const resolvedOwnershipTypes = Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[]
-    : Array.isArray(ownershipTypes) ? ownershipTypes as string[] : undefined;
+  const rawOwnershipTypes = Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes
+    : Array.isArray(ownershipTypes) ? ownershipTypes : undefined;
+  const allowedOwnershipIds = new Set(OWNERSHIP_FILTER_OPTIONS.map((option) => option.id));
+  const resolvedOwnershipTypes = rawOwnershipTypes
+    ? [...new Set(rawOwnershipTypes
+      .filter((value): value is string => typeof value === "string")
+      .map(ownershipDesignationFilterId)
+      .filter((value) => allowedOwnershipIds.has(value)))].slice(0, 100)
+    : undefined;
   try {
     const [prefs] = await db
       .insert(userPreferencesTable)

@@ -11,6 +11,8 @@ export const SOCIAL_PLATFORMS = [
   "facebook",
   "tiktok",
   "youtube",
+  "twitch",
+  "snapchat",
 ] as const;
 
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
@@ -74,6 +76,8 @@ const SOCIAL_HOSTS: Record<SocialPlatform, readonly string[]> = {
   facebook: ["facebook.com", "fb.com"],
   tiktok: ["tiktok.com"],
   youtube: ["youtube.com", "youtu.be"],
+  twitch: ["twitch.tv"],
+  snapchat: ["snapchat.com"],
 };
 
 const SOCIAL_ORIGIN: Record<SocialPlatform, string> = {
@@ -81,6 +85,8 @@ const SOCIAL_ORIGIN: Record<SocialPlatform, string> = {
   facebook: "https://www.facebook.com/",
   tiktok: "https://www.tiktok.com/@",
   youtube: "https://www.youtube.com/@",
+  twitch: "https://www.twitch.tv/",
+  snapchat: "https://www.snapchat.com/add/",
 };
 
 function objectBody(input: unknown): Record<string, unknown> {

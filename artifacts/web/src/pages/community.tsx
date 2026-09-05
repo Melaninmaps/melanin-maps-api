@@ -507,7 +507,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
               {/* URL paste — kept for YouTube / social embeds */}
               <button onClick={() => setShowMediaInput(v => !v)}
                 className={`p-2 rounded-xl hover:bg-[#FAF6EF] transition-colors ${showMediaInput ? "text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#CA922B]"}`}
-                title="Add media link (YouTube, Instagram, TikTok)">
+                title="Add public media link (YouTube, Instagram, TikTok, Facebook, Twitch, Snapchat)">
                 <Link2 className="w-5 h-5" />
               </button>
               <button onClick={() => {

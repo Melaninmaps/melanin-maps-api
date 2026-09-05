@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Platform,
@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import DiasporaFlagPicker from "@/components/DiasporaFlagPicker";
+import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -29,10 +30,6 @@ async function getToken(): Promise<string | null> {
 }
 
 // ─── Option sets ────────────────────────────────────────────────
-const OWNERSHIP_BADGES = [
-  "Black-Owned", "Minority-Owned", "Woman-Owned", "Veteran-Owned", "Family-Owned",
-  "LGBTQ+-Owned", "Nonprofit", "Social Enterprise", "Melanated Diaspora-Owned",
-];
 const COMMUNITY_VALUES = [
   "Community", "Family", "Culture", "Education", "Health",
   "Wellness", "Sustainability", "Creativity", "Entrepreneurship", "Youth Development",
@@ -218,6 +215,13 @@ export default function BusinessIdentityScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Identity>(EMPTY);
+  const [ownershipQuery, setOwnershipQuery] = useState("");
+
+  const visibleOwnershipBadges = useMemo(() => {
+    const query = ownershipQuery.trim().toLocaleLowerCase();
+    if (!query) return [...OWNERSHIP_DESIGNATIONS];
+    return OWNERSHIP_DESIGNATIONS.filter((designation) => designation.toLocaleLowerCase().includes(query));
+  }, [ownershipQuery]);
 
   const set = <K extends keyof Identity>(key: K, val: Identity[K]) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -336,10 +340,19 @@ export default function BusinessIdentityScreen() {
         />
 
         {/* Section 2: Ownership */}
-        <SectionHeader title="2. Ownership" subtitle="Share the badges that apply to your business. You choose what to disclose." />
-        <ChipGrid options={OWNERSHIP_BADGES} selected={form.ownershipBadges} onToggle={v => toggle("ownershipBadges", v)} />
+        <SectionHeader title="2. Ownership" subtitle="Optional self-identification. These profile labels are separate from MWM verification." />
+        <TextInput
+          style={[styles.searchInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
+          value={ownershipQuery}
+          onChangeText={setOwnershipQuery}
+          placeholder="Search ownership labels"
+          placeholderTextColor={colors.mutedForeground}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <ChipGrid options={visibleOwnershipBadges} selected={form.ownershipBadges} onToggle={v => toggle("ownershipBadges", v)} max={10} />
 
-        {form.ownershipBadges.includes("Melanated Diaspora-Owned") && (
+        {form.ownershipBadges.some((designation) => /African|Caribbean|Latino|Hispanic|Asian|Arab|MENA|Indigenous|Multicultural/i.test(designation)) && (
           <View style={styles.diasporaWrap}>
             <Text style={[styles.diasporaLabel, { color: colors.foreground }]}>🌍 Countries of Origin</Text>
             <Text style={[styles.diasporaSub, { color: colors.mutedForeground }]}>
@@ -450,6 +463,14 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
     fontSize: 14,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    fontSize: 14,
+    marginBottom: 10,
   },
 
   chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },

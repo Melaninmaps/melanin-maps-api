@@ -48,6 +48,9 @@ interface FormData {
   instagram: string;
   facebook: string;
   tiktok: string;
+  youtube: string;
+  twitch: string;
+  snapchat: string;
   priceRange: string;
   hours: string;
   customHours: string;
@@ -69,6 +72,9 @@ const INITIAL_FORM: FormData = {
   instagram: "",
   facebook: "",
   tiktok: "",
+  youtube: "",
+  twitch: "",
+  snapchat: "",
   priceRange: "",
   hours: "",
   customHours: "",
@@ -384,6 +390,9 @@ export default function ListBusinessScreen() {
             ...(form.instagram ? { instagram: form.instagram } : {}),
             ...(form.facebook ? { facebook: form.facebook } : {}),
             ...(form.tiktok ? { tiktok: form.tiktok } : {}),
+            ...(form.youtube ? { youtube: form.youtube } : {}),
+            ...(form.twitch ? { twitch: form.twitch } : {}),
+            ...(form.snapchat ? { snapchat: form.snapchat } : {}),
           },
           priceRange: form.priceRange,
           hours: form.hours === "Custom" ? form.customHours : form.hours,
@@ -800,6 +809,30 @@ export default function ListBusinessScreen() {
                     label="TikTok (optional)"
                     value={form.tiktok}
                     onChangeText={update("tiktok")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="YouTube (optional)"
+                    value={form.youtube}
+                    onChangeText={update("youtube")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="Twitch (optional)"
+                    value={form.twitch}
+                    onChangeText={update("twitch")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="Snapchat (optional)"
+                    value={form.snapchat}
+                    onChangeText={update("snapchat")}
                     placeholder="@yourbusiness"
                     colors={colors}
                   />

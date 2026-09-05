@@ -23,6 +23,7 @@ export interface VibeLabel {
 export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
   "Food & Drink": [
     { label: "Date Night", helperText: "Worth getting cute for" },
+    { label: "Pop Out Pics", helperText: "Photo-ready lighting, decor, and presentation" },
     { label: "Hood Classic", helperText: "Been here forever, still hits" },
     { label: "Bougie Treat", helperText: "Payday / splurge spot" },
     { label: "Family Reunion Energy", helperText: "Loud, warm, everybody's welcome" },
@@ -77,6 +78,7 @@ export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
     { label: "The One We Go To", helperText: "The default beauty supply in the community" },
     { label: "Don't Need Another Store", helperText: "Broad enough selection that one stop usually does it" },
     { label: "Worth The Beauty Run", helperText: "Worth going out of your way for" },
+    { label: "Pop Out Pics", helperText: "You leave photo-ready" },
   ],
   "Health & Wellness": [
     { label: "Chill & Restore", helperText: "Recovery and reset energy" },
@@ -110,6 +112,7 @@ export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
     { label: "Culture First", helperText: "Prioritizes local culture and meaningful experiences" },
     { label: "First Passport Friendly", helperText: "Comfortable for inexperienced international travelers" },
     { label: "Come Back Rested", helperText: "Understands that vacation should actually feel like vacation" },
+    { label: "Pop Out Pics", helperText: "A photo-ready stay or getaway" },
   ],
   "Arts, Culture & Entertainment": [
     { label: "Date Night", helperText: "Worth getting dressed up for" },
@@ -120,6 +123,7 @@ export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
     { label: "Family Reunion Energy", helperText: "All generations welcome" },
     { label: "Soft Life", helperText: "Peaceful, contemplative, healing" },
     { label: "Take Somebody From Out of Town", helperText: "The cultural experience you show off" },
+    { label: "Pop Out Pics", helperText: "A photo-ready cultural or entertainment setting" },
   ],
   "Events & Celebrations": [
     { label: "Sunday Best", helperText: "Everybody comes dressed" },
@@ -135,6 +139,7 @@ export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
     { label: "For The Culture", helperText: "Honors who we are and where we come from" },
     { label: "Bring Your People", helperText: "The kind of event you invite everyone to" },
     { label: "Soft Life Celebration", helperText: "Ease, elegance, and comfort — the celebration you deserved" },
+    { label: "Pop Out Pics", helperText: "The setting and presentation are camera-ready" },
   ],
   "Education & Learning": [
     { label: "Teach The Kids", helperText: "Identity-affirming and culturally grounded" },

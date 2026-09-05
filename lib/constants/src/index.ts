@@ -33,7 +33,9 @@ export {
 // ── Ownership designations ─────────────────────────────────────────────────
 export {
   OWNERSHIP_DESIGNATIONS,
+  OWNERSHIP_FILTER_OPTIONS,
   BLACK_OWNED_DESIGNATIONS,
+  ownershipDesignationFilterId,
   isBlackOwned,
 } from "./ownership-designations";
 export type { OwnershipDesignation } from "./ownership-designations";
@@ -62,6 +64,33 @@ export {
   COMMUNITY_CODES,
 } from "./endorsement-tag-variants";
 export type { EndorsementTagVariantDef, CommunityCode } from "./endorsement-tag-variants";
+
+// ── Unified business experience choices ─────────────────────────────────────
+export {
+  EXPERIENCE_COMMUNITY_OPTIONS,
+  getBusinessExperiencePolicy,
+  normalizeBusinessExperiencePriceKey,
+  resolveExperienceChoiceLabel,
+  isExperienceChoiceAllowed,
+  normalizeOwnerExperienceKey,
+  getOwnerProfileExperienceChoices,
+} from "./business-experience";
+export type {
+  BusinessExperienceKind,
+  BusinessExperienceVariant,
+  BusinessExperienceChoice,
+  BusinessExperiencePolicy,
+} from "./business-experience";
+
+// ── Social video providers and member display preferences ───────────────────
+export {
+  SOCIAL_VIDEO_PLATFORMS,
+  SOCIAL_VIDEO_PLATFORM_OPTIONS,
+  detectSocialVideoPlatform,
+  getSocialVideoPlatformLabel,
+  sanitizeSocialVideoPreferences,
+} from "./social-video-platforms";
+export type { SocialVideoPlatform } from "./social-video-platforms";
 
 // ── THE REAL tags ──────────────────────────────────────────────────────────
 export {

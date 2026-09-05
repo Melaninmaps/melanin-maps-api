@@ -108,7 +108,7 @@ function storageKey(bizId: string) {
 type Phase = "loading" | "kinfolk_intro" | "return_choice" | "ready";
 
 const URL_RE = /^https?:\/\/.+\..+/i;
-const SUPPORTED = ["YouTube", "TikTok", "Instagram", "Facebook", "Vimeo"];
+const SUPPORTED = ["YouTube", "TikTok", "Instagram", "Facebook", "Twitch", "Snapchat", "Vimeo"];
 
 export default function FeaturedVideoScreen() {
   const colors = useColors();
@@ -299,7 +299,7 @@ export default function FeaturedVideoScreen() {
     if (!businessId) return;
     const url = videoUrl.trim();
     if (url && !urlValid) {
-      setError("Please enter a valid YouTube, TikTok, Instagram, Facebook, or Vimeo link.");
+      setError("Please enter a public YouTube, TikTok, Instagram, Facebook, Twitch, Snapchat, or Vimeo link.");
       return;
     }
     setError("");
@@ -605,7 +605,7 @@ export default function FeaturedVideoScreen() {
               <View style={[s.explainer, { backgroundColor: colors.primary + "0C", borderColor: colors.primary + "25" }]}>
                 <Text style={[s.explainerTitle, { color: colors.foreground }]}>Link to Social</Text>
                 <Text style={[s.explainerSub, { color: colors.mutedForeground }]}>
-                  Pin one video from YouTube, TikTok, Instagram, Facebook, or Vimeo. Every tap sends viewers to your channel.
+                  Pin one public video from YouTube, TikTok, Instagram, Facebook, Twitch, Snapchat, or Vimeo. Every tap sends viewers to the provider.
                 </Text>
               </View>
 
@@ -636,7 +636,7 @@ export default function FeaturedVideoScreen() {
                   </View>
                 )}
               </View>
-              {!urlValid && videoUrl ? <Text style={s.urlError}>Only YouTube, TikTok, Instagram, Facebook, and Vimeo links are supported.</Text> : null}
+              {!urlValid && videoUrl ? <Text style={s.urlError}>Only public YouTube, TikTok, Instagram, Facebook, Twitch, Snapchat, and Vimeo links are supported.</Text> : null}
 
               <Text style={[s.label, { color: colors.foreground }]}>What does this video showcase?</Text>
               <View style={s.purposeGrid}>

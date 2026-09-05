@@ -78,6 +78,17 @@ function isAdmin(req: Request): boolean {
   return ADMIN_EMAILS.includes(user.email);
 }
 
+function approvedOwnerPredicate(userId: string) {
+  return sql<boolean>`EXISTS (
+    SELECT 1 FROM business_owner_links bol
+     WHERE bol.business_id = ${businessesTable.id}
+       AND bol.user_id = ${userId}
+       AND bol.role = 'owner'
+       AND bol.status = 'approved'
+       AND bol.revoked_at IS NULL
+  )`;
+}
+
 // ── GET /businesses/categories ── master taxonomy (single source of truth) ────
 // Returns the full 22-category taxonomy with subcategories.
 // Used by web dropdowns, mobile filters, business onboarding, and Excel sheets.
@@ -577,7 +588,7 @@ router.get("/businesses/mine", async (req: any, res: Response) => {
     const [business] = await db
       .select()
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, userId))
+      .where(approvedOwnerPredicate(String(userId)))
       .limit(1);
     res.json({ business: business ?? null });
   } catch (err) {
@@ -629,7 +640,7 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     const [updated] = await db
       .update(businessesTable)
       .set(updates)
-      .where(eq(businessesTable.submittedById, String(userId)))
+      .where(approvedOwnerPredicate(String(userId)))
       .returning();
     if (!updated) { res.status(404).json({ error: "Business not found" }); return; }
     res.json({ business: updated });
@@ -648,7 +659,7 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
     const [business] = await db
       .select({ id: businessesTable.id, photos: businessesTable.photos, pendingPhotos: businessesTable.pendingPhotos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
@@ -832,7 +843,7 @@ router.delete("/businesses/mine/photos", async (req: any, res: Response) => {
     const [business] = await db
       .select({ id: businessesTable.id, photos: businessesTable.photos, imageUrl: businessesTable.imageUrl })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
@@ -871,7 +882,7 @@ router.patch("/businesses/mine/photos/cover", async (req: any, res: Response) =>
     const [business] = await db
       .select({ id: businessesTable.id, photos: businessesTable.photos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
@@ -901,7 +912,7 @@ router.post("/businesses/mine/videos", videoUpload.single("video"), async (req: 
     const [business] = await db
       .select({ id: businessesTable.id, videos: businessesTable.videos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentVideos = (business.videos as string[]) ?? [];
@@ -959,7 +970,7 @@ router.post("/businesses/mine/videos/link", async (req: any, res: Response) => {
     const [business] = await db
       .select({ id: businessesTable.id, videos: businessesTable.videos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentVideos = (business.videos as string[]) ?? [];
@@ -994,7 +1005,7 @@ router.delete("/businesses/mine/videos", async (req: any, res: Response) => {
     const [business] = await db
       .select({ id: businessesTable.id, videos: businessesTable.videos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const updatedVideos = ((business.videos as string[]) ?? []).filter((v) => v !== url);
@@ -1031,7 +1042,7 @@ router.post("/businesses/mine/intro-video", introVideoUpload.single("video"), as
   if (!req.file) { res.status(400).json({ error: "Video file is required" }); return; }
 
   try {
-    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1062,7 +1073,7 @@ router.delete("/businesses/mine/intro-video", async (req: any, res: Response) =>
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   try {
-    const [business] = await db.select({ id: businessesTable.id, introVideoUrl: businessesTable.introVideoUrl }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    const [business] = await db.select({ id: businessesTable.id, introVideoUrl: businessesTable.introVideoUrl }).from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1093,7 +1104,7 @@ router.post("/businesses/mine/featured-video/upload", featuredVideoUpload.single
 
   try {
     const [business] = await db.select({ id: businessesTable.id, featuredVideoTitle: businessesTable.featuredVideoTitle, featuredVideoPurpose: businessesTable.featuredVideoPurpose })
-      .from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+      .from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1125,7 +1136,7 @@ router.delete("/businesses/mine/featured-video/hosted", async (req: any, res: Re
 
   try {
     const [business] = await db.select({ id: businessesTable.id, featuredVideoUrl: businessesTable.featuredVideoUrl })
-      .from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+      .from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1155,7 +1166,7 @@ router.patch("/businesses/mine/weekly-schedule", async (req: any, res: Response)
   };
 
   try {
-    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };

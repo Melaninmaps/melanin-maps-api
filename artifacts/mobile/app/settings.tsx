@@ -57,6 +57,7 @@ export default function SettingsScreen() {
       title: "App Settings",
       rows: [
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
+        { id: "video-sources", icon: "play-circle", label: "Video Sources", sub: "Choose YouTube, TikTok, Twitch, Snapchat & more", route: "/social-video-preferences" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },
         { id: "safetyhub", icon: "shield", label: "Safety Hub", sub: "Check-ins, location sharing & meetup verification", route: "/safety-hub" },
         { id: "trusted-safety", icon: "users", label: "Trusted Safety Share", sub: "Share safety alerts with family — nothing else", route: "/trusted-safety-share" },

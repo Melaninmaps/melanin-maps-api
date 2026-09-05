@@ -13,6 +13,8 @@ import AudienceRatingBadge from "@/components/AudienceRatingBadge";
 import type { CommunityPost } from "@/constants/types";
 import { openExternalUrl } from "@/lib/safeLinking";
 import { getApiBase } from "@/lib/api";
+import { detectSocialVideoPlatform, getSocialVideoPlatformLabel } from "@workspace/constants";
+import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
 interface Props {
   post: CommunityPost;
@@ -107,6 +109,9 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
 }) {
   const [revealed, setRevealed] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const { allows } = useSocialVideoPreferences();
+  const visibleUrls = mediaUrls.filter((url) => allows(detectSocialVideoPlatform(url)));
+  if (visibleUrls.length === 0) return null;
   if (hasContentWarning && !revealed) {
     return (
       <TouchableOpacity
@@ -142,9 +147,24 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
           <Text style={s.warningBadgeText}>{WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}</Text>
         </TouchableOpacity>
       )}
-      {mediaUrls.map((url, i) => {
+      {visibleUrls.map((url, i) => {
+        const socialPlatform = detectSocialVideoPlatform(url);
         const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
-        return isVideo ? (
+        return socialPlatform ? (
+          <TouchableOpacity
+            key={i}
+            style={[s.mediaThumb, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
+            onPress={() => { void openExternalUrl(url, { unavailableMessage: "This public social video is unavailable." }); }}
+            activeOpacity={0.8}
+            accessibilityRole="link"
+            accessibilityLabel={`Open ${getSocialVideoPlatformLabel(socialPlatform)} video`}
+          >
+            <Feather name="external-link" size={28} color="#CA922B" />
+            <Text style={{ color: "#FFFFFF", fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 7, textAlign: "center" }}>
+              Watch on {getSocialVideoPlatformLabel(socialPlatform)}
+            </Text>
+          </TouchableOpacity>
+        ) : isVideo ? (
           <TouchableOpacity
             key={i}
             style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}

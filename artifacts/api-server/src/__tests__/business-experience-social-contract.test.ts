@@ -1,0 +1,200 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import {
+  detectSocialVideoPlatform,
+  getBusinessExperiencePolicy,
+  normalizeBusinessExperiencePriceKey,
+  OWNERSHIP_DESIGNATIONS,
+  OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationFilterId,
+  resolveExperienceChoiceLabel,
+  sanitizeSocialVideoPreferences,
+} from "@workspace/constants";
+import { validateCommunityMediaUrls } from "../community/communityMediaValidation";
+
+const source = (relativePath: string) => readFileSync(
+  fileURLToPath(new URL(relativePath, import.meta.url)),
+  "utf8",
+);
+
+describe("category-aware business experience contract", () => {
+  it("offers atmosphere, quick reviews, price, and Pop Out Pics for restaurants", () => {
+    const policy = getBusinessExperiencePolicy("Food & Drink", "restaurant");
+    expect(policy.atmosphereLabel).toBe("What it feels like here");
+    expect(policy.reactionLabel).toBe("Community Says");
+    expect(policy.vibeChoices.map((choice) => choice.key)).toContain("pop_out_pics");
+    expect(policy.reactionChoices.length).toBeGreaterThan(0);
+    expect(policy.priceChoices.map((choice) => choice.key)).toEqual([
+      "price_1",
+      "price_2",
+      "price_3",
+      "price_4",
+    ]);
+  });
+
+  it("does not attach restaurant atmosphere tags to lawyers or other professional services", () => {
+    const legal = getBusinessExperiencePolicy("Legal & Government Services", "attorney");
+    const professional = getBusinessExperiencePolicy("Professional Services", "consultant");
+    expect(legal.reactionLabel).toBe("Community Intelligence");
+    expect(legal.vibeChoices).toEqual([]);
+    expect(professional.vibeChoices).toEqual([]);
+    expect(legal.reactionChoices.length).toBeGreaterThan(0);
+  });
+
+  it("maps the stored owner price label to the canonical client-facing key", () => {
+    const policy = getBusinessExperiencePolicy("Food & Drink", "restaurant");
+    expect(normalizeBusinessExperiencePriceKey(policy, "$$")).toBe("price_2");
+    expect(normalizeBusinessExperiencePriceKey(policy, "price_3")).toBe("price_3");
+    expect(normalizeBusinessExperiencePriceKey(policy, "unknown")).toBeNull();
+
+    const route = source("../routes/community-feedback.ts");
+    expect(route).toContain("normalizeBusinessExperiencePriceKey(policy, business.price_range)");
+  });
+
+  it("uses reviewed diaspora wording only when a member explicitly selects it", () => {
+    const policy = getBusinessExperiencePolicy("Food & Drink", "restaurant");
+    const localizedChoice = policy.reactionChoices.find((choice) => choice.variants.length > 0);
+    expect(localizedChoice).toBeDefined();
+    if (!localizedChoice) return;
+
+    expect(resolveExperienceChoiceLabel(localizedChoice, "default")).toBe(localizedChoice.label);
+    const variant = localizedChoice.variants[0]!;
+    expect(resolveExperienceChoiceLabel(localizedChoice, variant.communityCode)).toBe(variant.label);
+  });
+});
+
+describe("immediate positive-feedback governance", () => {
+  it("limits allowlisted member selections without changing verification", () => {
+    const route = source("../routes/community-feedback.ts");
+    expect(route).toContain('vibe: 2');
+    expect(route).toContain('reaction: 2');
+    expect(route).toContain('price: 1');
+    expect(route).toContain('status: "published_immediately"');
+    expect(route).toContain('verificationEffect: "none"');
+    expect(route).toContain("isExperienceChoiceAllowed");
+    expect(route).not.toMatch(/UPDATE\s+businesses[\s\S]{0,300}(verified|verified_designations)/i);
+  });
+
+  it("keeps community-published listings unclaimed until a real owner claim succeeds", () => {
+    const publication = source("../businessIntake/registerSubmissionRoutes.ts");
+    expect(publication).toContain("'community','community_listed','unclaimed',NULL");
+    expect(publication).toContain("added_by_member_id");
+  });
+
+  it("lets claimed owners set only category-aware tags and a valid price point", () => {
+    const route = source("../routes/vibes.ts");
+    expect(route).toContain("validVibes.length > 2");
+    expect(route).toContain("policy.priceChoices.find");
+    expect(route).toContain("price_range = CASE WHEN");
+    expect(route).toContain("Choose a valid price point.");
+  });
+});
+
+describe("public social-video provider contract", () => {
+  it("recognizes only HTTPS public links from supported providers", () => {
+    expect(detectSocialVideoPlatform("https://www.twitch.tv/example/clip/abc")).toBe("twitch");
+    expect(detectSocialVideoPlatform("https://www.snapchat.com/spotlight/example")).toBe("snapchat");
+    expect(detectSocialVideoPlatform("https://youtu.be/example")).toBe("youtube");
+    expect(detectSocialVideoPlatform("http://twitch.tv/example")).toBeNull();
+    expect(detectSocialVideoPlatform("https://twitch.tv.evil.example/video")).toBeNull();
+  });
+
+  it("sanitizes stored member platform choices", () => {
+    expect(sanitizeSocialVideoPreferences(["twitch", "snapchat", "twitch", "unknown"])).toEqual([
+      "twitch",
+      "snapchat",
+    ]);
+    expect(sanitizeSocialVideoPreferences("twitch")).toBeNull();
+  });
+
+  it("retains Twitch and Snapchat in governed business submissions", () => {
+    const intake = source("../businessIntake/types.ts");
+    expect(intake).toContain('"twitch"');
+    expect(intake).toContain('"snapchat"');
+    expect(intake).toContain('"twitch.tv"');
+    expect(intake).toContain('"snapchat.com"');
+  });
+
+  it("enforces provider hosts or owned ready uploads at the community post server boundary", async () => {
+    const ownedUrl = "https://storage.example.test/member-upload.jpg";
+    const lookup = async (_userId: string, urls: string[]) => new Set(
+      urls.filter((url) => url === ownedUrl),
+    );
+    const accepted = await validateCommunityMediaUrls([
+      "https://www.twitch.tv/example/clip/abc",
+      "https://www.snapchat.com/spotlight/example",
+      ownedUrl,
+    ], "member-1", lookup);
+    const rejected = await validateCommunityMediaUrls([
+      "http://twitch.tv/example",
+      "https://user:pass@twitch.tv/example",
+      "https://twitch.tv.evil.example/video",
+      "https://127.0.0.1/video",
+      "https://example.com/arbitrary-video",
+    ], "member-1", lookup);
+
+    expect(accepted.urls).toEqual([
+      "https://www.twitch.tv/example/clip/abc",
+      "https://www.snapchat.com/spotlight/example",
+      ownedUrl,
+    ]);
+    expect(accepted.rejected).toEqual([]);
+    expect(rejected.urls).toEqual([]);
+    expect(rejected.rejected).toHaveLength(5);
+  });
+});
+
+describe("owner-provided support designations", () => {
+  it("offers an inclusive governed taxonomy with stable filter IDs", () => {
+    expect(OWNERSHIP_DESIGNATIONS.length).toBeGreaterThan(20);
+    expect(ownershipDesignationFilterId("Woman-Owned")).toBe("woman");
+    expect(ownershipDesignationFilterId("LGBTQIA+-Owned")).toBe("lgbtqia");
+    expect(ownershipDesignationFilterId("Veteran-Owned")).toBe("veteran");
+    expect(ownershipDesignationFilterId("Disability-Owned")).toBe("disability");
+    const governedLabels: readonly string[] = OWNERSHIP_FILTER_OPTIONS.map((item) => item.label);
+    expect(governedLabels).not.toContain("Not a governed label");
+  });
+
+  it("keeps owner self-identification searchable but separate from verification", () => {
+    const route = source("../routes/business-identity.ts");
+    expect(route).toContain("OWNERSHIP_DESIGNATIONS");
+    expect(route).toContain("ownershipDesignations: data.ownershipBadges");
+    expect(route).toContain("business_owner_links");
+    expect(route).not.toMatch(/verified_designations\s*=/);
+  });
+
+  it("requires an approved unrevoked owner link for identity, price, tags, and featured videos", () => {
+    const identity = source("../routes/business-identity.ts");
+    const vibes = source("../routes/vibes.ts");
+    const featuredVideo = source("../routes/featured-video.ts");
+    for (const route of [identity, vibes, featuredVideo]) {
+      expect(route).toContain("business_owner_links");
+      expect(route).toContain("bol.role = 'owner'");
+      expect(route).toContain("bol.status = 'approved'");
+      expect(route).toContain("bol.revoked_at IS NULL");
+    }
+    expect(identity).not.toContain("submittedById");
+    expect(vibes).not.toContain("b.submitted_by_id = $2");
+    expect(featuredVideo).not.toContain("submittedById");
+  });
+});
+
+describe("founder inventory remains review-only", () => {
+  it("stages every candidate without a business or resource publication statement", () => {
+    const importer = source("../../../../scripts/src/stage-directory-import.ts");
+    expect(importer).toContain("const EXPECTED_ROWS = 18_051");
+    expect(importer).toContain("const EXPECTED_LINK_ROWS = 7_455");
+    expect(importer).toContain("publicationWrites: 0");
+    expect(importer).toContain("directory_import_candidates");
+    expect(importer).toContain("REVIEW_REQUIRED_LINK_RESULTS");
+    expect(importer).toContain('reasons.push("regulated_profession")');
+    expect(importer).toContain('reasons.push("ownership_evidence_review")');
+    expect(importer).toContain('reasons.push("duplicate_within_batch")');
+    expect(importer).toContain('candidate.offlineProductionNameMatch === "YES"');
+    expect(importer).toContain('candidate.requestedAction === "RECONCILE_EXISTING_RECORD"');
+    expect(importer).toContain('status = \'needs_research\'');
+    expect(importer).toContain('"existing_record_match"');
+    expect(importer).not.toMatch(/INSERT\s+INTO\s+(businesses|resources|community_resources)/i);
+  });
+});

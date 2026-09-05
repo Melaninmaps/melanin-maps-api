@@ -8,12 +8,15 @@ import {
   Award, Plus, Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BusinessOwnershipEditor } from "@/features/businesses/BusinessOwnershipEditor";
+import { BusinessExperienceEditor } from "@/features/businesses/BusinessExperienceEditor";
 
 const BASE = import.meta.env.BASE_URL;
 
 type BusinessSummary = {
   id: string; name: string; category: string; city: string; state: string;
   verified: boolean; status: string;
+  subcategory?: string | null; vibes?: string[] | null; priceRange?: string | null;
 };
 type Review = { id: string; rating: number; text: string | null; wouldReturnAlone: boolean | null; createdAt: string };
 type PromotionType = "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured";
@@ -315,6 +318,9 @@ export default function BusinessDashboard() {
                         )}
                       </div>
                     </div>
+
+                    <BusinessOwnershipEditor businessId={selected.id} />
+                    <BusinessExperienceEditor business={selected} />
 
                     <div>
                       <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Recent Reviews</p>
