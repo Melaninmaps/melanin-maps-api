@@ -59,9 +59,12 @@ const PHILADELPHIA_ACTIVITIES = [
   business("bobbies", "Uncle Bobbie's Coffee & Books", "Food & Drink", "Cafés & Coffee", [
     "Independent bookstore", "Coffee and espresso bar", "Author events and workshops",
   ]),
-  business("queen", "Queen & Rook Game Cafe", "Arts, Culture & Entertainment", "Gaming & Recreation", [
-    "Board-game play", "Retro video-game arcade", "Arcade pricing available for children under 13", "Food and full bar",
-  ]),
+  {
+    ...business("queen", "Queen & Rook Game Cafe", "Arts, Culture & Entertainment", "Gaming & Recreation", [
+      "Board-game play", "Retro video-game arcade", "Food and full bar",
+    ]),
+    audiencesServed: ["all ages"],
+  },
   business("night", "Adults Only Night Club", "Arts, Culture & Entertainment", "Nightlife", [
     "Adult nightlife", "Cocktails", "21+",
   ]),
@@ -97,6 +100,30 @@ describe("Kinfolk business personalization", () => {
       "family-owned", "adults only", "21+",
     ]);
     expect(rankGovernedBusinessesForMember([misleading], { ageBand: "13_17" })).toEqual([]);
+  });
+
+  it("holds bars, taverns, lounges, and social clubs from minor results without explicit youth evidence", () => {
+    const adultLeaning = [
+      business("bar", "L&I Bar", "Food & Drink", "Bar", []),
+      business("tavern", "Point Breeze Tavern", "Food & Drink", "Restaurant", []),
+      business("lounge", "Night Lounge", "Entertainment", "Live Music", []),
+      business("club", "Broad Street Social Club", "Entertainment", "Events", []),
+    ];
+    expect(rankGovernedBusinessesForMember(adultLeaning, { ageBand: "13_17" })).toEqual([]);
+  });
+
+  it("accepts only structured audience evidence—not family-owned or student-night wording—as a minor exception", () => {
+    const incidental = business("incidental", "Family-Owned Student Night Bar", "Food & Drink", "Bar", [
+      "family-owned", "student night",
+    ]);
+    const structured = {
+      ...business("structured", "Community Lounge", "Entertainment", "Lounge", []),
+      audiencesServed: ["all ages"],
+    };
+    expect(rankGovernedBusinessesForMember([incidental], { ageBand: "13_17" })).toEqual([]);
+    expect(rankGovernedBusinessesForMember([structured], { ageBand: "13_17" }).map((entry) => entry.name)).toEqual([
+      "Community Lounge",
+    ]);
   });
 
   it.each([

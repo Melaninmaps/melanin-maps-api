@@ -13,8 +13,8 @@ export type RankedKinfolkBusiness = GovernedKinfolkBusiness & Readonly<{
 
 const MINOR_BANDS = new Set(["under_13", "13_17"]);
 const MINOR_HARD_EXCLUDED = /\b(?:night\s*club|nightclub|adult nightlife|21\+|adults? only|age[- ]restricted)\b/i;
-const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|full bar|beer|wine)\b/i;
-const MINOR_POSITIVE = /\b(?:teen|youth|children|child|family|all ages|under 13|student)\b/i;
+const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
+const MINOR_POSITIVE = /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
 const STOP_WORDS = new Set([
   "and", "the", "for", "with", "this", "that", "from", "into", "near", "local",
   "place", "places", "business", "businesses", "services", "service", "something",
@@ -56,7 +56,11 @@ function scoredBusiness(
   personalization: KinfolkBusinessPersonalization,
 ): { business: GovernedKinfolkBusiness; index: number; score: number; reasons: string[] } | null {
   const text = searchableText(business);
-  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(text);
+  const publishedAudienceEvidence = [
+    ...business.audiencesServed,
+    business.audienceType,
+  ].filter((value): value is string => typeof value === "string" && value.trim().length > 0).join(" ");
+  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(publishedAudienceEvidence);
   const isMinor = MINOR_BANDS.has(personalization.ageBand ?? "");
   if (isMinor && MINOR_HARD_EXCLUDED.test(text)) return null;
   if (
