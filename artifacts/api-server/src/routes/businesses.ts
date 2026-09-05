@@ -2837,7 +2837,9 @@ router.get("/admin/contributions", async (req: Request, res: Response): Promise<
   const status = (req.query.status as string) ?? "pending";
   try {
     const r = await pool.query(
-      `SELECT bc.*, b.name AS business_name, u.display_name AS contributor_name, u.email AS contributor_email
+      `SELECT bc.*, b.name AS business_name,
+              NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), '') AS contributor_name,
+              u.email AS contributor_email
        FROM business_contributions bc
        LEFT JOIN businesses b ON b.id = bc.business_id
        LEFT JOIN users u ON u.id = bc.user_id
