@@ -57,6 +57,16 @@ describe("category-aware business experience contract", () => {
     expect(businessesSource).toContain("all tokens in reviewed factual tags");
   });
 
+  it("soft-hides only source-less unreviewed Duke's Cafe seed rows", () => {
+    const migrationsSource = source("../lib/startup-migrations.ts");
+    expect(migrationsSource).toContain("hide_unreviewed_dukes_cafe_seed_rows_v1");
+    expect(migrationsSource).toContain("= 'dukescafe'");
+    expect(migrationsSource).toContain("COALESCE(verified, false) = false");
+    expect(migrationsSource).toContain("BTRIM(COALESCE(data_source, '')) = ''");
+    expect(migrationsSource).toContain("SET status = 'permanently_hidden'");
+    expect(migrationsSource).not.toContain("DELETE FROM businesses WHERE");
+  });
+
   it("maps the stored owner price label to the canonical client-facing key", () => {
     const policy = getBusinessExperiencePolicy("Food & Drink", "restaurant");
     expect(normalizeBusinessExperiencePriceKey(policy, "$$")).toBe("price_2");

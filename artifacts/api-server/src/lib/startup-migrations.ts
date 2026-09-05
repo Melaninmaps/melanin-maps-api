@@ -4479,6 +4479,24 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
              )
     `,
   },
+  {
+    // Duke's Cafe is a legacy tour/demo seed that has been inserted under more
+    // than one city. Contain only source-less, unverified, unclaimed seed-shaped
+    // rows. Reviewed founder/community records carry a data_source and are not
+    // affected. This is a reversible soft hide; no row is deleted.
+    name: "hide_unreviewed_dukes_cafe_seed_rows_v1",
+    sql: `
+      UPDATE businesses
+      SET status = 'permanently_hidden', updated_at = NOW()
+      WHERE status = 'active'
+        AND REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = 'dukescafe'
+        AND COALESCE(verified, false) = false
+        AND LOWER(BTRIM(COALESCE(listing_status, ''))) = 'live_unclaimed'
+        AND BTRIM(COALESCE(data_source, '')) = ''
+        AND BTRIM(COALESCE(website, '')) = ''
+        AND BTRIM(COALESCE(phone, '')) = ''
+    `,
+  },
   // ── Living Library schema (Aug 2026) ──────────────────────────────────────
   {
     name: "living_library_topics_table_v1",
