@@ -464,6 +464,27 @@ function stableValue(value: unknown): unknown {
   return value;
 }
 
+const NON_FACTUAL_PUBLIC_TAG = /\b(?:black|african[ -]?american|minority|women?|female|male|lgbtq\+?|queer|trans(?:gender)?|veteran|disabled|disability|children?|kids?|teens?|youth|under[ -]?13|adult(?:s)?[ -]?only|21\+|safe(?:ty)?|verified|trusted|approved|best|excellent|affordable|budget|luxury|free|pricing|price)\b/i;
+
+export function sourceBackedPublicSearchTags(candidate: Pick<DirectoryImportCandidate, "raw_record">): string[] {
+  if (candidate.raw_record.publicSearchTagEvidence !== "workbook_category_services_and_reviewed_offerings_only") return [];
+  const rawTags = candidate.raw_record.searchTags;
+  if (!Array.isArray(rawTags)) return [];
+  const tags: string[] = [];
+  const seen = new Set<string>();
+  for (const rawTag of rawTags) {
+    if (typeof rawTag !== "string") continue;
+    const tag = rawTag.replace(/\s+/g, " ").trim();
+    if (tag.length < 2 || tag.length > 90 || NON_FACTUAL_PUBLIC_TAG.test(tag)) continue;
+    const key = tag.normalize("NFKD").toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tags.push(tag);
+    if (tags.length >= 24) break;
+  }
+  return tags;
+}
+
 function decisionPayloadHash(body: DecisionBody): string {
   return createHash("sha256").update(JSON.stringify(stableValue(body))).digest("hex");
 }
@@ -991,6 +1012,7 @@ async function publishBusiness(
     ? candidate.ownership_designations ?? []
     : [];
   const regulatedEvidence = parseRegulatedEvidence(body.regulatedEvidence, candidate.id, signingSecret);
+  const publicSearchTags = sourceBackedPublicSearchTags(candidate);
   const sourceEvidence = [{
     sourceType: "founder_directory_import",
     sourceName: candidate.source_name,
@@ -1004,6 +1026,7 @@ async function publishBusiness(
     linkValidation: candidate.link_validation,
     ownershipEvidence: body.ownershipEvidenceConfirmed === true ? candidate.ownership_evidence : null,
     regulatedEvidence,
+    publicSearchTags,
     excerpt: "Founder-curated external source reviewed for an unclaimed directory listing; this is not Mapping With Melanin ownership or business verification.",
   }];
   const description = `Founder-curated, unclaimed ${candidate.subcategory ?? canonicalCategory} listing in ${candidate.city}. Not verified by Mapping With Melanin.`;
@@ -1023,20 +1046,20 @@ async function publishBusiness(
      VALUES
        ($1,$2,$3,$4,$5,$6,$7,$8,'USA',
         NULL,$9,$10,$11,$12,$13,NULL,
-        $14,'[]'::jsonb,NULL,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
-        $15,$16,$17,NULL,$18::jsonb,$19::jsonb,
-        $20::jsonb,'[]'::jsonb,$21,false,
+        $14,$15::jsonb,NULL,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+        $16,$17,$18,NULL,$19::jsonb,$20::jsonb,
+        $21::jsonb,'[]'::jsonb,$22,false,
         false,false,false,'active','live_unclaimed',
         'community','community_listed','unclaimed',NULL,
-        $22,'founder_directory_import','founder_directory_import',NULL,
-        $23,$24,'founder_directory_import',$25,NOW(),
+        $23,'founder_directory_import','founder_directory_import',NULL,
+        $24,$25,'founder_directory_import',$26,NOW(),
         NOW(),NOW())`,
     [
       businessId, candidate.name, canonicalCategory, candidate.subcategory ?? canonicalCategory,
       description, candidate.address ?? candidate.city, candidate.city, candidate.state,
       String(coordinates.latitude), String(coordinates.longitude), candidate.phone,
       website, websiteHost(website), candidate.price_basis ? candidate.price_range : null,
-      instagram, tiktok, facebook, JSON.stringify(socialProfiles), JSON.stringify(sourceEvidence),
+      JSON.stringify(publicSearchTags), instagram, tiktok, facebook, JSON.stringify(socialProfiles), JSON.stringify(sourceEvidence),
       JSON.stringify(ownershipDesignations), hasBlackOwnedDesignation(ownershipDesignations),
       reviewerId, normalizeText(candidate.name), canonicalDedupeKey, candidate.id,
     ],

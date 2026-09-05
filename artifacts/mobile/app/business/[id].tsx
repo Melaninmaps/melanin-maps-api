@@ -56,6 +56,7 @@ const SOCIAL_PROFILE_HOSTS: Record<string, readonly string[]> = {
   tiktok: ["tiktok.com"],
   instagram: ["instagram.com"],
   youtube: ["youtube.com", "youtu.be"],
+  vimeo: ["vimeo.com"],
   facebook: ["facebook.com", "fb.watch"],
   twitch: ["twitch.tv"],
   snapchat: ["snapchat.com"],
@@ -74,6 +75,20 @@ function providerProfileUrl(raw: string, baseUrl: string, provider: string): str
     if (url.protocol !== "https:" || url.username || url.password) return null;
     if (!allowed.some((domain) => host === domain || host.endsWith(`.${domain}`))) return null;
     return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function approvedContributionUrl(raw: unknown, provider: unknown): string | null {
+  try {
+    if (typeof raw !== "string" || typeof provider !== "string") return null;
+    const url = new URL(raw.trim());
+    const host = url.hostname.toLowerCase().replace(/\.$/, "");
+    const allowed = SOCIAL_PROFILE_HOSTS[provider.toLowerCase()] ?? [];
+    if (url.protocol !== "https:" || url.username || url.password || allowed.length === 0) return null;
+    if (!allowed.some((domain) => host === domain || host.endsWith(`.${domain}`))) return null;
+    return url.href;
   } catch {
     return null;
   }
@@ -178,6 +193,16 @@ export default function BusinessDetailScreen() {
     videoUrl: string | null; videoTitle: string | null; pinnedAt: string; expiresAt: string;
   }
   const [pinnedItems, setPinnedItems] = useState<PinnedItem[]>([]);
+  interface ApprovedContribution {
+    id: string;
+    media_type: string;
+    source_type: string;
+    source_url: string;
+    caption: string | null;
+    attribution: string | null;
+    contributor_name: string | null;
+  }
+  const [approvedContributions, setApprovedContributions] = useState<ApprovedContribution[]>([]);
 
   const { business, isLoading } = useBusinessById(id ?? "");
 
@@ -221,6 +246,24 @@ export default function BusinessDetailScreen() {
           setPinnedItems(data.pinned ?? []);
         }
       } catch {}
+    })();
+  }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/businesses/${id}/contributions`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json() as { contributions?: ApprovedContribution[] };
+        setApprovedContributions(Array.isArray(data.contributions) ? data.contributions : []);
+      } catch {
+        setApprovedContributions([]);
+      }
     })();
   }, [id]);
   useEffect(() => {
@@ -1087,6 +1130,44 @@ export default function BusinessDetailScreen() {
               );
             })()}
           </View>
+
+          {approvedContributions.some((item) => approvedContributionUrl(item.source_url, item.source_type)) && (
+            <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.communityMediaHeader}>
+                <Feather name="play-circle" size={17} color={colors.primary} />
+                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community creator videos</Text>
+              </View>
+              <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved public links shared by community members. They open on the original creator platform.</Text>
+              {approvedContributions.map((item) => {
+                const href = approvedContributionUrl(item.source_url, item.source_type);
+                if (!href) return null;
+                const platform = item.source_type.charAt(0).toUpperCase() + item.source_type.slice(1);
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.85}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${platform} creator link about ${business.name}`}
+                    style={[styles.communityMediaLink, { borderColor: colors.border }]}
+                    onPress={() => void WebBrowser.openBrowserAsync(href)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.communityMediaPlatform, { color: colors.primary }]}>{platform}</Text>
+                      <Text style={[styles.communityMediaCaption, { color: colors.foreground }]} numberOfLines={2}>
+                        {item.caption || `View this community-shared ${platform} post`}
+                      </Text>
+                      {(item.attribution || item.contributor_name) && (
+                        <Text style={[styles.communityMediaAttribution, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          Shared by {item.attribution || item.contributor_name}
+                        </Text>
+                      )}
+                    </View>
+                    <Feather name="external-link" size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About</Text>
           <Text style={[styles.description, { color: colors.foreground }]}>{business.description}</Text>
@@ -2201,6 +2282,13 @@ const styles = StyleSheet.create({
   socialBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   primarySocialCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, marginBottom: 10 },
   primarySocialIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  communityMediaCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
+  communityMediaHeader: { flexDirection: "row", alignItems: "center", gap: 7 },
+  communityMediaIntro: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  communityMediaLink: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
+  communityMediaPlatform: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "capitalize", marginBottom: 2 },
+  communityMediaCaption: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
+  communityMediaAttribution: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 },
   taglineLine: { fontFamily: "Inter_500Medium", fontSize: 13, fontStyle: "italic", marginTop: 2, marginBottom: 2 },
   ownerCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginTop: 16, marginBottom: 4, gap: 10 },
   ownerCardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },

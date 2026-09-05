@@ -62,4 +62,12 @@ describe("website social video choices", () => {
     const community = source("../pages/community.tsx");
     expect(community).toContain("Twitch, Snapchat");
   });
+
+  it("opens only allowlisted HTTPS creator links from business details", () => {
+    const detail = source("../pages/business-detail.tsx");
+    expect(detail).toContain("detectSocialVideoPlatform(c.source_url");
+    expect(detail).toContain("safeExternalProfileUrl(c.source_url, detected)");
+    expect(detail).toContain('target="_blank"');
+    expect(detail).toContain('rel="noopener noreferrer"');
+  });
 });

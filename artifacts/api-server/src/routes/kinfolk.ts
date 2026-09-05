@@ -103,6 +103,10 @@ import { searchAllQueries } from "../kinfolk/web-search";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
+import {
+  businessDiscoveryClarification,
+  temporaryBusinessAudienceBand,
+} from "../kinfolk/business-discovery-clarification";
 import { createPostgresDiscoverySignalRepository } from "../discovery/postgresFlywheelRepository";
 import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
@@ -112,6 +116,7 @@ import {
   updateOwnedAnswerPlanDepth,
 } from "../kinfolk/answer-plan-persistence";
 import { eligibleForDefaultLearning } from "../kinfolk/adaptive-delivery";
+import { loadAdaptiveDeliveryProfile } from "../kinfolk/adaptive-tone-and-audience-filter";
 import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
@@ -2706,12 +2711,66 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   } catch {
     return false;
   }
-
+  const [prefs, deliveryProfile] = await Promise.all([
+    getCachedPrefs(input.req.user!.id),
+    loadAdaptiveDeliveryProfile(input.req.user!.id),
+  ]);
+  const ageBand = temporaryBusinessAudienceBand(input.message) ?? deliveryProfile.ageBand;
+  const clarificationSteps = businessDiscoveryClarification({
+    message: input.message,
+    subjectKey: subject.key,
+    ageBand,
+    city: scope.city,
+  });
+  if (clarificationSteps.length > 0) {
+    const reply = clarificationSteps[0]?.id === "business-hair-service"
+      ? `I can search MWM’s public listings and the current web for hair options in ${scope.city}. One detail will make the results much better.`
+      : `I can narrow the things to do in ${scope.city} without guessing who the activity is for.`;
+    const clarificationSessionId = await persistDeterministicDiscoveryTurn({
+      userId: input.req.user!.id,
+      sessionId: input.sessionId,
+      message: input.message,
+      reply,
+      recommendations: null,
+      sources: [],
+      destination: `${scope.city}, ${scope.stateCode}`,
+      vibes: input.vibes,
+    });
+    input.res.status(200).json({
+      sessionId: clarificationSessionId,
+      reply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: clarificationSteps[0]!.options.map((option) => option.label),
+      clarificationSteps,
+      intentClass: "business_discovery",
+      sources: [],
+      sourceNote: "No business result was selected before the optional clarification.",
+      educationalStatus: "limited",
+      needsClarification: true,
+      originalQuery: input.message,
+      location: { city: location.city, state: location.state, source: location.source },
+      locationSource: location.source,
+      degraded: false,
+    });
+    return true;
+  }
   const discoveryResult = await discoverLocalBusinesses({
     scope,
     subject,
     repository: governedBusinessRepository,
     signalRepository: discoverySignalRepository,
+    personalization: {
+      ageBand,
+      preferenceTerms: [
+        ...(prefs?.favoriteCategories ?? []),
+        ...(prefs?.tripStyle ?? []),
+        ...(prefs?.culturalInterests ?? []),
+        ...(prefs?.lifestyleServices ?? []),
+      ],
+      avoidTerms: prefs?.avoidCategories ?? [],
+      currentRequest: input.message,
+    },
   });
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,

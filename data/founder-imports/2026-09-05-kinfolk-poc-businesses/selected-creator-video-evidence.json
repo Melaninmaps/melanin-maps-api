@@ -1,0 +1,52 @@
+[
+  {
+    "sourceRecordId": "PHL015",
+    "businessName": "Loomen Labs",
+    "platform": "tiktok",
+    "url": "https://www.tiktok.com/@mamusu_daexplorer/video/7475190776650009902",
+    "creator": "mamusu_daexplorer",
+    "captionOrTitle": "Fragrance making at Loomen Labs!",
+    "relationship": "independent_creator",
+    "exactMatchEvidence": "The public caption explicitly names Loomen Labs and uses #thingstodoinphilly; the exact business name and Philadelphia context match the reviewed official Loomen Labs identity."
+  },
+  {
+    "sourceRecordId": "PHL014",
+    "businessName": "Sistah Scents Fragrance Bar",
+    "platform": "facebook",
+    "url": "https://www.facebook.com/reel/2760602284380470/",
+    "creator": "Fiona Golden (Fiona Flagler)",
+    "captionOrTitle": "Creator visit to Sistah Scents, LLC",
+    "relationship": "independent_creator",
+    "exactMatchEvidence": "The public caption identifies Sistah Scents, LLC and the visit experience; the reviewed official site establishes the exact Philadelphia business identity."
+  },
+  {
+    "sourceRecordId": "PHL049",
+    "businessName": "Urban Art Gallery",
+    "platform": "tiktok",
+    "url": "https://www.tiktok.com/@wooder_ice/video/7676548979160648991",
+    "creator": "Wooder Ice",
+    "captionOrTitle": "Urban Art Fest 52 — West Philly Open-Air Art & Concerts Aug 22",
+    "relationship": "independent_local_media_creator",
+    "exactMatchEvidence": "The public caption identifies Urban Art Gallery at 262 S. 52nd Street in West Philadelphia, matching the reviewed official identity. Publication remains held for business/resource destination review."
+  },
+  {
+    "sourceRecordId": "PHL058",
+    "businessName": "Queen & Rook Game Cafe",
+    "platform": "instagram",
+    "url": "https://www.instagram.com/reel/DIU3I-ipjSv/",
+    "creator": "kidfriendlyphilly",
+    "captionOrTitle": "QUEEN AND ROOK GAME CAFE",
+    "relationship": "independent_creator",
+    "exactMatchEvidence": "The public caption names Queen & Rook Game Cafe, tags the business, and gives 123 South Street, Philadelphia, matching the reviewed official address."
+  },
+  {
+    "sourceRecordId": "PHL028",
+    "businessName": "Amina",
+    "platform": "tiktok",
+    "url": "https://www.tiktok.com/@phillygirlfoodie/video/7501104964836658474",
+    "creator": "phillygirlfoodie",
+    "captionOrTitle": "Amina's Restaurant Review: Flavorful Delights in Philly",
+    "relationship": "independent_creator",
+    "exactMatchEvidence": "The public caption identifies Amina Philly and the restaurant visit; the reviewed official site establishes the exact Philadelphia business identity and current address."
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "sourceRecordId": "PHL015",
+    "businessName": "Loomen Labs",
+    "platform": "tiktok",
+    "inputUrl": "https://www.tiktok.com/@mamusu_daexplorer/video/7475190776650009902",
+    "url": "https://www.tiktok.com/@mamusu_daexplorer/video/7475190776650009902",
+    "finalHost": "tiktok.com",
+    "status": 200,
+    "result": "working",
+    "checkedAt": "2026-09-05T17:00:49.601Z"
+  },
+  {
+    "sourceRecordId": "PHL014",
+    "businessName": "Sistah Scents Fragrance Bar",
+    "platform": "facebook",
+    "inputUrl": "https://www.facebook.com/reel/2760602284380470/",
+    "url": "https://www.facebook.com/reel/2760602284380470/",
+    "finalHost": "facebook.com",
+    "status": 200,
+    "result": "working",
+    "checkedAt": "2026-09-05T17:00:49.889Z"
+  },
+  {
+    "sourceRecordId": "PHL049",
+    "businessName": "Urban Art Gallery",
+    "platform": "tiktok",
+    "inputUrl": "https://www.tiktok.com/@wooder_ice/video/7676548979160648991",
+    "url": "https://www.tiktok.com/@wooder_ice/video/7676548979160648991",
+    "finalHost": "tiktok.com",
+    "status": 200,
+    "result": "working",
+    "checkedAt": "2026-09-05T17:00:50.569Z"
+  },
+  {
+    "sourceRecordId": "PHL058",
+    "businessName": "Queen & Rook Game Cafe",
+    "platform": "instagram",
+    "inputUrl": "https://www.instagram.com/reel/DIU3I-ipjSv/",
+    "url": "https://www.instagram.com/reel/DIU3I-ipjSv/",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "result": "working",
+    "checkedAt": "2026-09-05T17:00:50.763Z"
+  },
+  {
+    "sourceRecordId": "PHL028",
+    "businessName": "Amina",
+    "platform": "tiktok",
+    "inputUrl": "https://www.tiktok.com/@phillygirlfoodie/video/7501104964836658474",
+    "url": "https://www.tiktok.com/@phillygirlfoodie/video/7501104964836658474",
+    "finalHost": "tiktok.com",
+    "status": 200,
+    "result": "working",
+    "checkedAt": "2026-09-05T17:00:51.552Z"
+  }
+]

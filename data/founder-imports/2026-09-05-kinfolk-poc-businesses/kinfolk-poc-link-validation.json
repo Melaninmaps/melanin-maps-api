@@ -1,0 +1,1370 @@
+[
+  {
+    "inputUrl": "https://48thstreetgrille.com/",
+    "result": "working",
+    "finalUrl": "https://48thstreetgrille.com/",
+    "finalHost": "48thstreetgrille.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:01.208Z"
+  },
+  {
+    "inputUrl": "https://adifferentbooklist.com/",
+    "result": "working",
+    "finalUrl": "https://adifferentbooklist.com/",
+    "finalHost": "adifferentbooklist.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:01.861Z"
+  },
+  {
+    "inputUrl": "https://aksumcafe.com/",
+    "result": "working",
+    "finalUrl": "https://www.hejiabakery.com/",
+    "finalHost": "hejiabakery.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:10.165Z"
+  },
+  {
+    "inputUrl": "https://amazulucollections.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://animerevolution.ca/toronto/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://atomiccitycomics.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://beatthebomb.com/philadelphia",
+    "result": "working",
+    "finalUrl": "https://www.beatthebomb.com/locations/philadelphia",
+    "finalHost": "beatthebomb.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:07.641Z"
+  },
+  {
+    "inputUrl": "https://benedicttigers.com/",
+    "result": "working",
+    "finalUrl": "https://benedicttigers.com/",
+    "finalHost": "benedicttigers.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:01.601Z"
+  },
+  {
+    "inputUrl": "https://bigbullsbangnbbq.com/",
+    "result": "reachable_restricted",
+    "finalUrl": "https://bigbullsbangnbbq.com/",
+    "finalHost": "bigbullsbangnbbq.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:40:59.823Z"
+  },
+  {
+    "inputUrl": "https://billetterie.psg.fr/en/stadium-tour",
+    "result": "reachable_restricted",
+    "finalUrl": "https://billetterie.psg.fr/en/stadium-tour",
+    "finalHost": "billetterie.psg.fr",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:00.613Z"
+  },
+  {
+    "inputUrl": "https://blackculturalarchives.org/",
+    "result": "working",
+    "finalUrl": "https://blackculturalarchives.org/",
+    "finalHost": "blackculturalarchives.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:40:59.808Z"
+  },
+  {
+    "inputUrl": "https://blackfemaletherapist.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://bookersrestaurantandbar.com/",
+    "result": "working",
+    "finalUrl": "https://bookersrestaurantandbar.com/",
+    "finalHost": "bookersrestaurantandbar.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:00.239Z"
+  },
+  {
+    "inputUrl": "https://bookshop.org/shop/harriettsbookshop",
+    "result": "reachable_restricted",
+    "finalUrl": "https://bookshop.org/shop/harriettsbookshop",
+    "finalHost": "bookshop.org",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:40:59.802Z"
+  },
+  {
+    "inputUrl": "https://buffalosoldiermuseum.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://candaceabroad.com/black-owned-businesses-in-london/",
+    "result": "reachable_restricted",
+    "finalUrl": "https://candaceabroad.com/black-owned-businesses-in-london/",
+    "finalHost": "candaceabroad.com",
+    "status": 401,
+    "checkedAt": "2026-09-05T16:41:03.253Z"
+  },
+  {
+    "inputUrl": "https://coffeecreamanddreams.com/",
+    "result": "working",
+    "finalUrl": "https://coffeecreamanddreams.com/",
+    "finalHost": "coffeecreamanddreams.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:03.100Z"
+  },
+  {
+    "inputUrl": "https://columbiamom.com/age-appropriate-activities-for-teens-and-tweens-in-columbia-sc/",
+    "result": "reachable_restricted",
+    "finalUrl": "https://columbiamom.com/age-appropriate-activities-for-teens-and-tweens-in-columbia-sc/",
+    "finalHost": "columbiamom.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:03.114Z"
+  },
+  {
+    "inputUrl": "https://columbiasc.gov/vibez-coffee-grand-opening/",
+    "result": "reachable_restricted",
+    "finalUrl": "https://columbiasc.gov/vibez-coffee-grand-opening/",
+    "finalHost": "columbiasc.gov",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:03.104Z"
+  },
+  {
+    "inputUrl": "https://conaltdelete.com/",
+    "result": "working",
+    "finalUrl": "https://conaltdelete.com/",
+    "finalHost": "conaltdelete.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:04.224Z"
+  },
+  {
+    "inputUrl": "https://dabookjoint.com/",
+    "result": "working",
+    "finalUrl": "https://www.dabookjoint.com/",
+    "finalHost": "dabookjoint.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:08.162Z"
+  },
+  {
+    "inputUrl": "https://darksugars.co.uk/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://eatofeden.co.uk/",
+    "result": "reachable_restricted",
+    "finalUrl": "https://eatofeden.co.uk/",
+    "finalHost": "eatofeden.co.uk",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:05.326Z"
+  },
+  {
+    "inputUrl": "https://expectlace.com/",
+    "result": "working",
+    "finalUrl": "https://expectlace.com/",
+    "finalHost": "expectlace.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:05.456Z"
+  },
+  {
+    "inputUrl": "https://f1arcade.com/us/philadelphia",
+    "result": "working",
+    "finalUrl": "https://f1arcade.com/us/philadelphia",
+    "finalHost": "f1arcade.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:05.905Z"
+  },
+  {
+    "inputUrl": "https://farmerjawn.co/",
+    "result": "working",
+    "finalUrl": "https://www.farmerjawn.co/",
+    "finalHost": "farmerjawn.co",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:10.003Z"
+  },
+  {
+    "inputUrl": "https://goneagaintravel.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://greatbiggameshow.com/houston",
+    "result": "working",
+    "finalUrl": "https://greatbiggameshow.com/houston/",
+    "finalHost": "greatbiggameshow.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:09.021Z"
+  },
+  {
+    "inputUrl": "https://hakimsbookstore.com/",
+    "result": "working",
+    "finalUrl": "https://www.hakimsbookstore.com/",
+    "finalHost": "hakimsbookstore.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:11.186Z"
+  },
+  {
+    "inputUrl": "https://helloyowie.com/",
+    "result": "working",
+    "finalUrl": "https://helloyowie.com/",
+    "finalHost": "helloyowie.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:09.239Z"
+  },
+  {
+    "inputUrl": "https://maggiedaleypark.com/",
+    "result": "working",
+    "finalUrl": "https://www.maggiedaleypark.com/",
+    "finalHost": "maggiedaleypark.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:12.835Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=48th+Street+Grille+Philadelphia",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=48th+Street+Grille+Philadelphia",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:11.823Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=African+Queens+Hair+Philly",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=African+Queens+Hair+Philly",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:12.257Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Amina+Philadelphia",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Amina+Philadelphia",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:12.074Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Bettye+O+Day+Spa+Chicago",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Bettye+O+Day+Spa+Chicago",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:13.448Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Big+Bull's+Bang'n+BBQ+Columbia+SC",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Big+Bull%27s+Bang%27n+BBQ+Columbia+SC",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:14.027Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Call+and+Response+Books+Chicago",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Call+and+Response+Books+Chicago",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:15.617Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Carte+Noire+Atelier+Philadelphia",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Carte+Noire+Atelier+Philadelphia",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:14.274Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=ChopnBlok+Houston",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=ChopnBlok+Houston",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:15.942Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Da+Book+Joint+Chicago",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Da+Book+Joint+Chicago",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:16.688Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Divine+Textures+Holistic+Columbia+SC",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Divine+Textures+Holistic+Columbia+SC",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:16.139Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Honeysuckle+Restaurant+Philadelphia",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Honeysuckle+Restaurant+Philadelphia",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:18.084Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Kustombyqueen+Houston",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Kustombyqueen+Houston",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:18.085Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=LadyofLocs+Columbia+SC",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=LadyofLocs+Columbia+SC",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:17.537Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Nobody's+Darling+Chicago",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Nobody%27s+Darling+Chicago",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:19.273Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Noire+Hair+Wax+Salon+Philadelphia",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Noire+Hair+Wax+Salon+Philadelphia",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:19.361Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Sacred+Paradise+Spa+Philly",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Sacred+Paradise+Spa+Philly",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:18.944Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=Styles+By+Lenee+Hair+Studio+Philadelphia",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=Styles+By+Lenee+Hair+Studio+Philadelphia",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:20.279Z"
+  },
+  {
+    "inputUrl": "https://maps.google.com/?q=The+Loc+Haven+Houston",
+    "result": "working",
+    "finalUrl": "https://maps.google.com/maps?q=The+Loc+Haven+Houston",
+    "finalHost": "maps.google.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:19.951Z"
+  },
+  {
+    "inputUrl": "https://marshandmane.com/",
+    "result": "working",
+    "finalUrl": "https://marshandmane.com/",
+    "finalHost": "marshandmane.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:18.682Z"
+  },
+  {
+    "inputUrl": "https://melanatedwomenshealth.com/",
+    "result": "working",
+    "finalUrl": "https://melanatedwomenshealth.com/",
+    "finalHost": "melanatedwomenshealth.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:19.002Z"
+  },
+  {
+    "inputUrl": "https://mydopebotanicals.com/",
+    "result": "working",
+    "finalUrl": "https://mydopebotanicals.com/",
+    "finalHost": "mydopebotanicals.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:19.367Z"
+  },
+  {
+    "inputUrl": "https://navypier.org/",
+    "result": "working",
+    "finalUrl": "https://navypier.org/",
+    "finalHost": "navypier.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:21.381Z"
+  },
+  {
+    "inputUrl": "https://newbeaconbooks.com/",
+    "result": "working",
+    "finalUrl": "https://www.newbeaconbooks.com/",
+    "finalHost": "newbeaconbooks.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:23.323Z"
+  },
+  {
+    "inputUrl": "https://parisjetaime.com/eng/article/10-activities-for-teens-in-paris-a1073",
+    "result": "reachable_restricted",
+    "finalUrl": "https://parisjetaime.com/eng/article/10-activities-for-teens-in-paris-a1073",
+    "finalHost": "parisjetaime.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:20.459Z"
+  },
+  {
+    "inputUrl": "https://parisjetaime.com/eng/article/esport-in-paris-a773",
+    "result": "reachable_restricted",
+    "finalUrl": "https://parisjetaime.com/eng/article/esport-in-paris-a773",
+    "finalHost": "parisjetaime.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:20.449Z"
+  },
+  {
+    "inputUrl": "https://parisjetaime.com/eng/convention/event/paris-games-week-e1908",
+    "result": "reachable_restricted",
+    "finalUrl": "https://parisjetaime.com/eng/convention/event/paris-games-week-e1908",
+    "finalHost": "parisjetaime.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:21.007Z"
+  },
+  {
+    "inputUrl": "https://philadelphiadiamondco.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://philadelphiaprintworks.com/",
+    "result": "working",
+    "finalUrl": "https://philadelphiaprintworks.com/",
+    "finalHost": "philadelphiaprintworks.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:22.285Z"
+  },
+  {
+    "inputUrl": "https://plantandpeople.com/",
+    "result": "working",
+    "finalUrl": "https://plantandpeople.com/",
+    "finalHost": "plantandpeople.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:22.183Z"
+  },
+  {
+    "inputUrl": "https://plantandpeople.com/pages/about-us",
+    "result": "working",
+    "finalUrl": "https://plantandpeople.com/pages/about-us",
+    "finalHost": "plantandpeople.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:22.992Z"
+  },
+  {
+    "inputUrl": "https://projectrowhouses.org/",
+    "result": "working",
+    "finalUrl": "https://projectrowhouses.org/",
+    "finalHost": "projectrowhouses.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:23.599Z"
+  },
+  {
+    "inputUrl": "https://queenandrookcafe.com/",
+    "result": "working",
+    "finalUrl": "https://www.queenandrookcafe.com/",
+    "finalHost": "queenandrookcafe.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:27.201Z"
+  },
+  {
+    "inputUrl": "https://roywoods.ca/",
+    "result": "working",
+    "finalUrl": "https://roywoods.ca/",
+    "finalHost": "roywoods.ca",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:23.839Z"
+  },
+  {
+    "inputUrl": "https://sacredparadisespa.com/",
+    "result": "working",
+    "finalUrl": "https://sacredparadisespa.com/",
+    "finalHost": "sacredparadisespa.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:22.787Z"
+  },
+  {
+    "inputUrl": "https://spacecenter.org/",
+    "result": "working",
+    "finalUrl": "https://spacecenter.org/",
+    "finalHost": "spacecenter.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:22.744Z"
+  },
+  {
+    "inputUrl": "https://theblackjourney.com/",
+    "result": "working",
+    "finalUrl": "https://theblackjourney.com/",
+    "finalHost": "theblackjourney.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:24.673Z"
+  },
+  {
+    "inputUrl": "https://theblackreserve.com/",
+    "result": "working",
+    "finalUrl": "https://theblackreserve-com.l.ink/",
+    "finalHost": "theblackreserve-com.l.ink",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:29.195Z"
+  },
+  {
+    "inputUrl": "https://thenakedpeach.com/",
+    "result": "working",
+    "finalUrl": "https://thenakedpeach.com/",
+    "finalHost": "thenakedpeach.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:26.480Z"
+  },
+  {
+    "inputUrl": "https://thenakedpeach.com/locations/",
+    "result": "working",
+    "finalUrl": "https://thenakedpeach.com/locations/",
+    "finalHost": "thenakedpeach.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:26.573Z"
+  },
+  {
+    "inputUrl": "https://thesablecollective.com/",
+    "result": "working",
+    "finalUrl": "https://www.thesablecollective.com/",
+    "finalHost": "thesablecollective.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:28.452Z"
+  },
+  {
+    "inputUrl": "https://thetoastyhotspot.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://tokyoxfest.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://travelnoire.com/black-owned-restaurants-columbia-south-carolina",
+    "result": "working",
+    "finalUrl": "https://travelnoire.com/black-owned-restaurants-columbia-south-carolina",
+    "finalHost": "travelnoire.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:26.373Z"
+  },
+  {
+    "inputUrl": "https://trippin.world/guide/black-owned-businesses-in-london",
+    "result": "working",
+    "finalUrl": "https://trippin.world/guide/black-owned-businesses-in-london",
+    "finalHost": "trippin.world",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:27.568Z"
+  },
+  {
+    "inputUrl": "https://vampboutique.com/",
+    "result": "working",
+    "finalUrl": "https://vampboutique.com/",
+    "finalHost": "vampboutique.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:26.605Z"
+  },
+  {
+    "inputUrl": "https://www.aminaphilly.com/",
+    "result": "working",
+    "finalUrl": "https://www.aminaphilly.com/",
+    "finalHost": "aminaphilly.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:26.526Z"
+  },
+  {
+    "inputUrl": "https://www.beautifitstrong.com/",
+    "result": "working",
+    "finalUrl": "https://www.beautifitstrong.com/",
+    "finalHost": "beautifitstrong.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:26.463Z"
+  },
+  {
+    "inputUrl": "https://www.bettyeoday.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.blackandnobel.com/",
+    "result": "working",
+    "finalUrl": "https://www.blackandnobel.com/",
+    "finalHost": "blackandnobel.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:27.890Z"
+  },
+  {
+    "inputUrl": "https://www.blackownedlondon.com/",
+    "result": "working",
+    "finalUrl": "https://www.blackownedlondon.com/",
+    "finalHost": "blackownedlondon.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:29.849Z"
+  },
+  {
+    "inputUrl": "https://www.callandresponsebooks.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.chicagosportsmuseum.com/",
+    "result": "working",
+    "finalUrl": "https://www.chicagosportsmuseum.com/",
+    "finalHost": "chicagosportsmuseum.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:28.850Z"
+  },
+  {
+    "inputUrl": "https://www.choosechicago.com/articles/families/top-10-chicago-must-dos-with-teens-or-tweens/",
+    "result": "working",
+    "finalUrl": "https://www.choosechicago.com/articles/families/top-10-chicago-must-dos-with-teens-or-tweens/",
+    "finalHost": "choosechicago.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:29.972Z"
+  },
+  {
+    "inputUrl": "https://www.choosechicago.com/event/escape-the-museum-at-griffin-museum-of-science-and-industry/2026-08-29/",
+    "result": "working",
+    "finalUrl": "https://www.choosechicago.com/event/escape-the-museum-at-griffin-museum-of-science-and-industry/2026-08-29/",
+    "finalHost": "choosechicago.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:30.288Z"
+  },
+  {
+    "inputUrl": "https://www.choosechicago.com/listing/chicago-sports-museum/",
+    "result": "working",
+    "finalUrl": "https://www.choosechicago.com/listing/chicago-sports-museum/",
+    "finalHost": "choosechicago.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:30.437Z"
+  },
+  {
+    "inputUrl": "https://www.choosechicago.com/listing/gone-again-travel-tours/",
+    "result": "working",
+    "finalUrl": "https://www.choosechicago.com/listing/gone-again-travel-tours/",
+    "finalHost": "choosechicago.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:30.811Z"
+  },
+  {
+    "inputUrl": "https://www.chopnblok.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.cite-sciences.fr/",
+    "result": "working",
+    "finalUrl": "https://www.cite-sciences.fr/fr/accueil",
+    "finalHost": "cite-sciences.fr",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:37.154Z"
+  },
+  {
+    "inputUrl": "https://www.curiosasociety.com/",
+    "result": "working",
+    "finalUrl": "https://www.curiosasociety.com/",
+    "finalHost": "curiosasociety.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:30.289Z"
+  },
+  {
+    "inputUrl": "https://www.dancefitex.com/",
+    "result": "working",
+    "finalUrl": "https://www.dancefitex.com/",
+    "finalHost": "dancefitex.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:30.525Z"
+  },
+  {
+    "inputUrl": "https://www.destinationtoronto.com/explore-toronto-tech-gaming-esports-scene/",
+    "result": "working",
+    "finalUrl": "https://www.destinationtoronto.com/explore-toronto-tech-gaming-esports-scene/",
+    "finalHost": "destinationtoronto.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:31.344Z"
+  },
+  {
+    "inputUrl": "https://www.destinationtoronto.com/leisure-blog/post/black-owned-businesses-toronto/",
+    "result": "working",
+    "finalUrl": "https://www.destinationtoronto.com/leisure-blog/post/black-owned-businesses-toronto/",
+    "finalHost": "destinationtoronto.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:31.322Z"
+  },
+  {
+    "inputUrl": "https://www.destinationtoronto.com/leisure-blog/post/nerdy-things-to-do-toronto/",
+    "result": "working",
+    "finalUrl": "https://www.destinationtoronto.com/leisure-blog/post/nerdy-things-to-do-toronto/",
+    "finalHost": "destinationtoronto.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:31.594Z"
+  },
+  {
+    "inputUrl": "https://www.discoverphl.com/partners/sistah-scents-fragrance-bar/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.discoverremedy.com/",
+    "result": "working",
+    "finalUrl": "https://www.discoverremedy.com/",
+    "finalHost": "discoverremedy.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:39.593Z"
+  },
+  {
+    "inputUrl": "https://www.dossobeauty.com/",
+    "result": "working",
+    "finalUrl": "https://www.dossobeauty.com/",
+    "finalHost": "dossobeauty.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:33.105Z"
+  },
+  {
+    "inputUrl": "https://www.dossobeauty.com/pages/contact-us",
+    "result": "working",
+    "finalUrl": "https://www.dossobeauty.com/pages/contact-us",
+    "finalHost": "dossobeauty.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.903Z"
+  },
+  {
+    "inputUrl": "https://www.dreamconvention.com/",
+    "result": "working",
+    "finalUrl": "https://www.dreamconvention.com/",
+    "finalHost": "dreamconvention.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:33.058Z"
+  },
+  {
+    "inputUrl": "https://www.duafeholistichaircare.com/",
+    "result": "working",
+    "finalUrl": "https://www.duafeholistichaircare.com/",
+    "finalHost": "duafeholistichaircare.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:32.990Z"
+  },
+  {
+    "inputUrl": "https://www.duafeholistichaircare.com/about",
+    "result": "working",
+    "finalUrl": "https://www.duafeholistichaircare.com/about",
+    "finalHost": "duafeholistichaircare.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:33.632Z"
+  },
+  {
+    "inputUrl": "https://www.experiencecolumbiasc.com/blog/post/traveling-with-teens-in-columbia-sc/",
+    "result": "working",
+    "finalUrl": "https://www.experiencecolumbiasc.com/blog/post/traveling-with-teens-in-columbia-sc/",
+    "finalHost": "experiencecolumbiasc.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:34.523Z"
+  },
+  {
+    "inputUrl": "https://www.experiencecolumbiasc.com/things-to-do/sports/game-days/",
+    "result": "working",
+    "finalUrl": "https://www.experiencecolumbiasc.com/things-to-do/sports/game-days/",
+    "finalHost": "experiencecolumbiasc.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.630Z"
+  },
+  {
+    "inputUrl": "https://www.france.fr/en/article/supporting-black-travel-france/",
+    "result": "working",
+    "finalUrl": "https://www.france.fr/en/article/supporting-black-travel-france/",
+    "finalHost": "france.fr",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:36.145Z"
+  },
+  {
+    "inputUrl": "https://www.girlsautoclinic.com/",
+    "result": "working",
+    "finalUrl": "https://www.girlsautoclinic.com/",
+    "finalHost": "girlsautoclinic.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.594Z"
+  },
+  {
+    "inputUrl": "https://www.girlsautoclinic.com/aboutgac/",
+    "result": "working",
+    "finalUrl": "https://www.girlsautoclinic.com/aboutgac/",
+    "finalHost": "girlsautoclinic.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:37.277Z"
+  },
+  {
+    "inputUrl": "https://www.honeysuckleprovisions.com/",
+    "result": "working",
+    "finalUrl": "https://www.honeysuckleprovisions.com/",
+    "finalHost": "honeysuckleprovisions.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:37.205Z"
+  },
+  {
+    "inputUrl": "https://www.houstonchronicle.com/entertainment/special_events/article/houston-labor-day-weekend-2026-things-to-do-22385406.php",
+    "result": "working",
+    "finalUrl": "https://www.houstonchronicle.com/entertainment/special_events/article/houston-labor-day-weekend-2026-things-to-do-22385406.php",
+    "finalHost": "houstonchronicle.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:38.999Z"
+  },
+  {
+    "inputUrl": "https://www.illucity.fr/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.immersivegamebox.com/en-GB/locations/london",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/africanqueenshairphilly/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fafricanqueenshairphilly%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:34.749Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/cartenoireatelier/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcartenoireatelier%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:34.997Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/divinetexturesholistic/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdivinetexturesholistic%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.238Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/kinkynaturalsdreadlocks/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkinkynaturalsdreadlocks%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.463Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/kustombyqueen/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkustombyqueen%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.678Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/ladyoflocs/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fladyoflocs%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.829Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/levelupphl/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flevelupphl%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:36.087Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/raskingstudio/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fraskingstudio%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:35.880Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/thelochavenhtx/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthelochavenhtx%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:36.056Z"
+  },
+  {
+    "inputUrl": "https://www.instagram.com/vibez.coffee.sc/",
+    "result": "working",
+    "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fvibez.coffee.sc%2F&is_from_rle",
+    "finalHost": "instagram.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:36.076Z"
+  },
+  {
+    "inputUrl": "https://www.jeffersonhealth.org/find-a-doctor/d/davis-selina",
+    "result": "working",
+    "finalUrl": "https://www.jeffersonhealth.org/find-a-doctor/d/davis-selina",
+    "finalHost": "jeffersonhealth.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:39.623Z"
+  },
+  {
+    "inputUrl": "https://www.loomenlabs.com/",
+    "result": "working",
+    "finalUrl": "https://www.loomenlabs.com/",
+    "finalHost": "loomenlabs.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:38.673Z"
+  },
+  {
+    "inputUrl": "https://www.mangacafe.fr/",
+    "result": "working",
+    "finalUrl": "https://www.mangacafe.fr/",
+    "finalHost": "mangacafe.fr",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:40.587Z"
+  },
+  {
+    "inputUrl": "https://www.mavariatlas.com/columbia-sc/hair-salons",
+    "result": "working",
+    "finalUrl": "https://www.mavariatlas.com/columbia-sc/hair-salons",
+    "finalHost": "mavariatlas.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:39.355Z"
+  },
+  {
+    "inputUrl": "https://www.milb.com/columbia",
+    "result": "working",
+    "finalUrl": "https://www.mlb.com/milb/columbia",
+    "finalHost": "mlb.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:42.310Z"
+  },
+  {
+    "inputUrl": "https://www.mlb.com/astros",
+    "result": "working",
+    "finalUrl": "https://www.mlb.com/astros",
+    "finalHost": "mlb.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:41.482Z"
+  },
+  {
+    "inputUrl": "https://www.msichicago.org/",
+    "result": "working",
+    "finalUrl": "https://www.griffinmsi.org/",
+    "finalHost": "griffinmsi.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:42.321Z"
+  },
+  {
+    "inputUrl": "https://www.mtccc.com/single-event/anime-revolution-toronto-2026/",
+    "result": "working",
+    "finalUrl": "https://www.mtccc.com/single-event/anime-revolution-toronto-2026/",
+    "finalHost": "mtccc.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:40.610Z"
+  },
+  {
+    "inputUrl": "https://www.nobodysdarlingbar.com/",
+    "result": "working",
+    "finalUrl": "https://www.nobodysdarlingbar.com/",
+    "finalHost": "nobodysdarlingbar.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:41.137Z"
+  },
+  {
+    "inputUrl": "https://www.noirehairwax.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.nps.gov/cong/index.htm",
+    "result": "working",
+    "finalUrl": "https://www.nps.gov/cong/index.htm",
+    "finalHost": "nps.gov",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:42.006Z"
+  },
+  {
+    "inputUrl": "https://www.odetoronto.ca/",
+    "result": "working",
+    "finalUrl": "https://www.odetoronto.ca/",
+    "finalHost": "odetoronto.ca",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:42.148Z"
+  },
+  {
+    "inputUrl": "https://www.ose-african-cuisine.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.parisgamesweek.com/en",
+    "result": "working",
+    "finalUrl": "https://www.parisgamesweek.com/en",
+    "finalHost": "parisgamesweek.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:42.186Z"
+  },
+  {
+    "inputUrl": "https://www.phillyotakufest.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.phillyvoice.com/philly-otaku-fest-cherry-street-pier-cosplay-anime-gaming/",
+    "result": "working",
+    "finalUrl": "https://www.phillyvoice.com/philly-otaku-fest-cherry-street-pier-cosplay-anime-gaming/",
+    "finalHost": "phillyvoice.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:43.475Z"
+  },
+  {
+    "inputUrl": "https://www.phl.org/harrietts-books",
+    "result": "working",
+    "finalUrl": "https://www.phl.org/harrietts-books",
+    "finalHost": "phl.org",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:45.308Z"
+  },
+  {
+    "inputUrl": "https://www.presenceafricaine.com/",
+    "result": "working",
+    "finalUrl": "https://www.presenceafricaine.com/",
+    "finalHost": "presenceafricaine.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:45.172Z"
+  },
+  {
+    "inputUrl": "https://www.psychologytoday.com/us/therapists/black-female-therapist-llc-philadelphia-pa/902493",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.psychologytoday.com/us/therapists/black-female-therapist-llc-philadelphia-pa/902493",
+    "finalHost": "psychologytoday.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:43.931Z"
+  },
+  {
+    "inputUrl": "https://www.razer.com/razerstores/london",
+    "result": "working",
+    "finalUrl": "https://www.razer.com/razerstores/london",
+    "finalHost": "razer.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:46.914Z"
+  },
+  {
+    "inputUrl": "https://www.richlandlibrary.com/teen-center",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.richlandlibrary.com/teen-center",
+    "finalHost": "richlandlibrary.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:46.891Z"
+  },
+  {
+    "inputUrl": "https://www.riseandritual.com/",
+    "result": "working",
+    "finalUrl": "https://www.riseandritual.com/",
+    "finalHost": "riseandritual.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:44.963Z"
+  },
+  {
+    "inputUrl": "https://www.riseandritual.com/about",
+    "result": "working",
+    "finalUrl": "https://www.riseandritual.com/about",
+    "finalHost": "riseandritual.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:45.645Z"
+  },
+  {
+    "inputUrl": "https://www.safiskinsentials.com/",
+    "result": "working",
+    "finalUrl": "https://www.safiskinsentials.com/",
+    "finalHost": "safiskinsentials.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:47.819Z"
+  },
+  {
+    "inputUrl": "https://www.safiskinsentials.com/contact",
+    "result": "working",
+    "finalUrl": "https://www.safiskinsentials.com/contact",
+    "finalHost": "safiskinsentials.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:48.212Z"
+  },
+  {
+    "inputUrl": "https://www.salonqma.com/",
+    "result": "working",
+    "finalUrl": "https://www.salonqma.com/",
+    "finalHost": "salonqma.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:46.269Z"
+  },
+  {
+    "inputUrl": "https://www.sciencemuseum.org.uk/see-and-do/power",
+    "result": "working",
+    "finalUrl": "https://www.sciencemuseum.org.uk/see-and-do/power",
+    "finalHost": "sciencemuseum.org.uk",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:47.427Z"
+  },
+  {
+    "inputUrl": "https://www.shopyowie.com/",
+    "result": "working",
+    "finalUrl": "https://www.shopyowie.com/",
+    "finalHost": "shopyowie.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:47.992Z"
+  },
+  {
+    "inputUrl": "https://www.sistahscents.com/",
+    "result": "working",
+    "finalUrl": "https://www.sistahscents.com/",
+    "finalHost": "sistahscents.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:47.795Z"
+  },
+  {
+    "inputUrl": "https://www.therecroom.com/toronto-roundhouse",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.therecroom.com/toronto-roundhouse",
+    "finalHost": "therecroom.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:49.205Z"
+  },
+  {
+    "inputUrl": "https://www.thesweetlifebakeshop.com/",
+    "result": "working",
+    "finalUrl": "https://www.thesweetlifebakeshop.com/",
+    "finalHost": "thesweetlifebakeshop.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:49.177Z"
+  },
+  {
+    "inputUrl": "https://www.torontogameexpo.ca/",
+    "result": "working",
+    "finalUrl": "https://www.torontogameexpo.ca/",
+    "finalHost": "torontogameexpo.ca",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:49.785Z"
+  },
+  {
+    "inputUrl": "https://www.tottenhamhotspur.com/the-stadium/visitor-attractions/stadium-tours/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.treetopquest.com/philly/",
+    "result": "working",
+    "finalUrl": "https://www.treetopquest.com/philly/",
+    "finalHost": "treetopquest.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:51.119Z"
+  },
+  {
+    "inputUrl": "https://www.unclebobbies.com/",
+    "result": "working",
+    "finalUrl": "https://www.unclebobbies.com/",
+    "finalHost": "unclebobbies.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:50.300Z"
+  },
+  {
+    "inputUrl": "https://www.urban-artgallery.com/",
+    "result": "working",
+    "finalUrl": "https://www.urban-artgallery.com/",
+    "finalHost": "urban-artgallery.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:51.019Z"
+  },
+  {
+    "inputUrl": "https://www.viator.com/blog/Founder-of-Melanin-Travel-Vivienne-Dovis-Guide-to-Black-Owned-London/l98991",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.viator.com/blog/Founder-of-Melanin-Travel-Vivienne-Dovis-Guide-to-Black-Owned-London/l98991",
+    "finalHost": "viator.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:50.812Z"
+  },
+  {
+    "inputUrl": "https://www.visithoustontexas.com/blog/post/a-guide-to-dream-con/",
+    "result": "working",
+    "finalUrl": "https://www.visithoustontexas.com/blog/post/a-guide-to-dream-con/",
+    "finalHost": "visithoustontexas.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:52.255Z"
+  },
+  {
+    "inputUrl": "https://www.visithoustontexas.com/blog/post/family-friendly-things-to-do-around-houston/",
+    "result": "working",
+    "finalUrl": "https://www.visithoustontexas.com/blog/post/family-friendly-things-to-do-around-houston/",
+    "finalHost": "visithoustontexas.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:51.753Z"
+  },
+  {
+    "inputUrl": "https://www.visithoustontexas.com/blog/post/indoor-entertainment-experiences-in-houston/",
+    "result": "working",
+    "finalUrl": "https://www.visithoustontexas.com/blog/post/indoor-entertainment-experiences-in-houston/",
+    "finalHost": "visithoustontexas.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:52.251Z"
+  },
+  {
+    "inputUrl": "https://www.visithoustontexas.com/event/tokyo-x-2026/114545/",
+    "result": "working",
+    "finalUrl": "https://www.visithoustontexas.com/event/tokyo-x-2026/114545/",
+    "finalHost": "visithoustontexas.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:51.757Z"
+  },
+  {
+    "inputUrl": "https://www.visitlondon.com/things-to-do/experiences/immersive-experiences",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.visitlondon.com/things-to-do/experiences/immersive-experiences",
+    "finalHost": "visitlondon.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:51.784Z"
+  },
+  {
+    "inputUrl": "https://www.visitlondon.com/things-to-do/family-activities/things-to-do-in-london-for-teenagers",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.visitlondon.com/things-to-do/family-activities/things-to-do-in-london-for-teenagers",
+    "finalHost": "visitlondon.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:51.233Z"
+  },
+  {
+    "inputUrl": "https://www.visitlondon.com/things-to-do/whats-on/sport/esports-in-london",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.visitlondon.com/things-to-do/whats-on/sport/esports-in-london",
+    "finalHost": "visitlondon.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:52.099Z"
+  },
+  {
+    "inputUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/",
+    "result": "working",
+    "finalUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/",
+    "finalHost": "visitphilly.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:52.972Z"
+  },
+  {
+    "inputUrl": "https://www.visitphilly.com/articles/philadelphia/teen-friendly-activities/",
+    "result": "working",
+    "finalUrl": "https://www.visitphilly.com/articles/philadelphia/teen-friendly-activities/",
+    "finalHost": "visitphilly.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:53.228Z"
+  },
+  {
+    "inputUrl": "https://www.visitphilly.com/features/black-journey-tour/",
+    "result": "working",
+    "finalUrl": "https://www.visitphilly.com/features/black-journey-tour/",
+    "finalHost": "visitphilly.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:55.293Z"
+  },
+  {
+    "inputUrl": "https://www.visitphilly.com/media-center/press-releases/black-owned-businesses-thrive-in-philadelphia-2/",
+    "result": "working",
+    "finalUrl": "https://www.visitphilly.com/media-center/press-releases/black-owned-businesses-thrive-in-philadelphia-2/",
+    "finalHost": "visitphilly.com",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:54.321Z"
+  },
+  {
+    "inputUrl": "https://www.walyfay.com/",
+    "result": "unresolved",
+    "finalUrl": null,
+    "finalHost": null,
+    "status": null,
+    "checkedAt": "2026-09-05T16:40:56.316Z"
+  },
+  {
+    "inputUrl": "https://www.wbstudiotour.co.uk/",
+    "result": "working",
+    "finalUrl": "https://www.wbstudiotour.co.uk/",
+    "finalHost": "wbstudiotour.co.uk",
+    "status": 200,
+    "checkedAt": "2026-09-05T16:41:55.068Z"
+  },
+  {
+    "inputUrl": "https://www.womenwisehealthcare.com/",
+    "result": "reachable_restricted",
+    "finalUrl": "https://www.womenwisehealthcare.com/",
+    "finalHost": "womenwisehealthcare.com",
+    "status": 403,
+    "checkedAt": "2026-09-05T16:41:55.165Z"
+  }
+]

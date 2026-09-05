@@ -1439,11 +1439,15 @@ export default function BusinessDetail() {
                             <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Community Vibes</span>
                           </div>
                           {communityVibes.slice(0, 5).map((c: any) => {
-                            const platform = detectPlatformFromUrl(c.source_url ?? "");
+                            const detected = detectSocialVideoPlatform(c.source_url ?? "");
+                            if (!detected) return null;
+                            const href = safeExternalProfileUrl(c.source_url, detected);
+                            if (!href) return null;
+                            const platform = detectPlatformFromUrl(href);
                             return (
                               <a
                                 key={c.id}
-                                href={c.source_url}
+                                href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#241810] border border-white/10 hover:border-[#CA922B]/40 transition-colors group"
@@ -1478,11 +1482,15 @@ export default function BusinessDetail() {
                       {linkedPosts.length > 0 && (
                         <div className="space-y-2">
                           {linkedPosts.map(url => {
-                            const platform = detectPlatform(url);
+                            const detected = detectSocialVideoPlatform(url);
+                            if (!detected) return null;
+                            const href = safeExternalProfileUrl(url, detected);
+                            if (!href) return null;
+                            const platform = detectPlatform(href);
                             return (
                               <a
                                 key={url}
-                                href={url}
+                                href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#241810] border border-white/10 hover:border-[#CA922B]/40 transition-colors group"

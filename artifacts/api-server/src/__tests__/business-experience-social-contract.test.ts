@@ -42,6 +42,15 @@ describe("category-aware business experience contract", () => {
     expect(legal.reactionChoices.length).toBeGreaterThan(0);
   });
 
+  it("returns only approved and explicitly public creator contributions on business details", () => {
+    const businessesSource = source("../routes/businesses.ts");
+    expect(businessesSource).toContain("bc.status = 'approved' AND bc.is_public = TRUE");
+    expect(businessesSource).toContain("const detectedType = detectSocialVideoPlatform(sourceUrl.trim())");
+    expect(businessesSource).not.toContain("let detectedType = sourceType");
+    expect(businessesSource).toContain("const allInTags = tokens.map");
+    expect(businessesSource).toContain("all tokens in reviewed factual tags");
+  });
+
   it("maps the stored owner price label to the canonical client-facing key", () => {
     const policy = getBusinessExperiencePolicy("Food & Drink", "restaurant");
     expect(normalizeBusinessExperiencePriceKey(policy, "$$")).toBe("price_2");

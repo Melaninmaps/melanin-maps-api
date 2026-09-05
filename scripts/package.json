@@ -11,6 +11,7 @@
     "seed-events": "tsx ./src/seed-events.ts",
     "seed-revenuecat": "tsx ./src/seedRevenueCat.ts",
     "stage-directory-import": "tsx ./src/stage-directory-import.ts",
+    "stage-kinfolk-poc-businesses": "tsx ./src/stage-kinfolk-poc-businesses.ts",
     "send-welcome-blast": "tsx ./src/send-welcome-blast.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

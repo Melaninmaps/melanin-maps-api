@@ -9,6 +9,7 @@ import {
   registerDirectoryImportRoutes,
   signDirectoryLocationSuggestion,
   signDirectoryUrlValidation,
+  sourceBackedPublicSearchTags,
   validateDirectoryEvidenceUrl,
   type DirectoryImportCandidate,
 } from "../directoryImport/registerDirectoryImportRoutes";
@@ -162,6 +163,26 @@ function decisionDatabase(record: DirectoryImportCandidate, failureSql?: string)
 }
 
 describe("directory import publication gates", () => {
+  it("publishes only factual service tags from an explicitly marked workbook source", () => {
+    expect(sourceBackedPublicSearchTags({ raw_record: {
+      publicSearchTagEvidence: "workbook_category_services_and_reviewed_offerings_only",
+      searchTags: [
+        "Loc maintenance",
+        "Custom hair color",
+        "Black-owned",
+        "budget-friendly",
+        "Community trusted",
+        "Children's books",
+        "Books by Black authors",
+        "Arcade pricing available for children under 13",
+        "Loc maintenance",
+      ],
+    } })).toEqual(["Loc maintenance", "Custom hair color"]);
+    expect(sourceBackedPublicSearchTags({ raw_record: {
+      searchTags: ["Loc maintenance"],
+    } })).toEqual([]);
+  });
+
   it.each([
     "0.0.0.1", "10.0.0.1", "100.64.0.1", "127.0.0.1", "169.254.1.1", "172.16.0.1",
     "192.0.0.1", "192.0.2.1", "192.88.99.2", "192.168.1.1", "198.18.0.1",

@@ -15,6 +15,7 @@ import {
   safeExternalSourceHref,
   safeLibraryHref,
 } from "../components/kinfolk/KinfolkChatPresentation";
+import { businessClarificationContinuation } from "../features/kinfolk/businessClarificationContinuation";
 
 const travelPageSource = readFileSync(
   fileURLToPath(new URL("../pages/travel.tsx", import.meta.url)),
@@ -22,6 +23,16 @@ const travelPageSource = readFileSync(
 );
 
 describe("Kinfolk chat presentation", () => {
+  it("continues the original local search for both a clarification answer and Skip", () => {
+    expect(businessClarificationContinuation(
+      "Find hair in Philadelphia",
+      "Loc and natural-hair care in Philadelphia",
+    )).toBe("Find hair in Philadelphia — Loc and natural-hair care in Philadelphia");
+    expect(businessClarificationContinuation("Find hair in Philadelphia")).toBe(
+      "Find hair in Philadelphia — keep this search broad",
+    );
+  });
+
   it("preserves assistant paragraph and list line breaks as safe plain text", () => {
     const content = "A first paragraph.\n\n- First detail\n- Second detail";
     const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
@@ -54,6 +65,15 @@ describe("Kinfolk chat presentation", () => {
   it("does not render a resolved-location Searching pill", () => {
     expect(travelPageSource).not.toContain("Searching ");
     expect(travelPageSource).not.toContain("Searching Black");
+  });
+
+  it("renders deterministic business recommendations with active detail and website links", () => {
+    expect(travelPageSource).toContain("biz.detailUrl");
+    expect(travelPageSource).toContain("View details");
+    expect(travelPageSource).toContain("Visit website");
+    expect(travelPageSource).toContain('target="_blank" rel="noopener noreferrer"');
+    expect(travelPageSource).toContain("Founder-listed · Unclaimed · Not MWM verified");
+    expect(travelPageSource).toContain("Why it surfaced:");
   });
 
   it("renders a three-day itinerary naturally, without recommendation cards or raw JSON syntax", () => {

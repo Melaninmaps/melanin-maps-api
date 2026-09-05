@@ -13,6 +13,7 @@ import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
+import { detectSocialVideoPlatform } from "@workspace/constants";
 
 const communitySubmissionRepository = new SubmissionRepository();
 
@@ -205,6 +206,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             ilike(businessesTable.category, `%${q}%`),
             ilike(businessesTable.subcategory, `%${q}%`),
             ilike(businessesTable.description, `%${q}%`),
+            sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${q}%`}`,
           ),
         );
       } else {
@@ -213,10 +215,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
         // present in the name. Falls through to fuzzy if still zero results.
         const allInName = tokens.map(t => ilike(businessesTable.name, `%${t}%`));
         const allInDesc = tokens.map(t => ilike(businessesTable.description, `%${t}%`));
+        const allInTags = tokens.map(t => sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${t}%`}`);
         conditions.push(
           or(
             and(...allInName),                                          // all tokens in name
             and(...allInDesc),                                          // all tokens in description
+            and(...allInTags),                                          // all tokens in reviewed factual tags
             ilike(businessesTable.name, `%${q}%`),                     // full phrase in name
             ilike(businessesTable.description, `%${q}%`),              // full phrase in description
             ilike(businessesTable.category, `%${q}%`),                 // full phrase in category
@@ -2752,7 +2756,7 @@ router.get("/businesses/:id/contributions", async (req: Request, res: Response):
               u.profile_image_url AS contributor_avatar
        FROM business_contributions bc
        LEFT JOIN users u ON u.id = bc.user_id
-       WHERE bc.business_id = $1 AND bc.status = 'approved'
+       WHERE bc.business_id = $1 AND bc.status = 'approved' AND bc.is_public = TRUE
        ORDER BY bc.created_at DESC
        LIMIT 50`,
       [businessId],
@@ -2770,29 +2774,15 @@ router.post("/businesses/:id/contributions", requireAuth, async (req: Request, r
   const userId = (req as any).user?.id;
   if (!userId) { res.status(401).json({ error: "Authentication required" }); return; }
 
-  const { mediaType = "social_url", sourceType, sourceUrl, caption, attribution } = req.body ?? {};
+  const { mediaType = "social_url", sourceUrl, caption, attribution } = req.body ?? {};
 
   if (!sourceUrl || typeof sourceUrl !== "string") {
     res.status(400).json({ error: "sourceUrl is required" }); return;
   }
 
-  // Validate URL
-  try { new URL(sourceUrl); } catch {
-    res.status(400).json({ error: "sourceUrl must be a valid URL (e.g. https://www.instagram.com/...)" }); return;
-  }
-
-  // Detect source type from URL if not provided
-  let detectedType = sourceType ?? "other";
-  if (!sourceType) {
-    try {
-      const host = new URL(sourceUrl).hostname.replace("www.", "");
-      if (host.includes("instagram")) detectedType = "instagram";
-      else if (host.includes("tiktok")) detectedType = "tiktok";
-      else if (host.includes("youtube") || host.includes("youtu.be")) detectedType = "youtube";
-      else if (host.includes("vimeo")) detectedType = "vimeo";
-      else if (host.includes("facebook") || host.includes("fb.watch")) detectedType = "facebook";
-      else if (host.includes("twitter") || host.includes("x.com")) detectedType = "twitter";
-    } catch { /* ignore */ }
+  const detectedType = detectSocialVideoPlatform(sourceUrl.trim());
+  if (!detectedType) {
+    res.status(400).json({ error: "sourceUrl must be a public HTTPS link from an approved video platform" }); return;
   }
 
   // Check business exists
