@@ -215,6 +215,10 @@ describe("founder inventory remains review-only", () => {
     expect(index.indexOf("await ensureRequiredPublicationSchema(")).toBeLessThan(index.indexOf("app.listen(port"));
     expect(migrations).toContain("Directory publication schema verification failed");
     expect(migrations).toContain("business_publication_identities");
+    expect(migrations).toContain('migration.name === "businesses_listing_status_col"');
+    expect(migrations.indexOf("await pool.query(listingStatusMigration.sql)")).toBeLessThan(
+      migrations.indexOf("await ensureBetaSafetyColumns(log, strictWarn)"),
+    );
     const publication = source("../directoryImport/registerDirectoryImportRoutes.ts");
     expect(publication).toContain("hostname: address");
     expect(publication).toContain("servername: secure ? url.hostname : undefined");

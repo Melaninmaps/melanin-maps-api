@@ -4815,11 +4815,16 @@ export async function ensureRequiredPublicationSchema(
 
   const stagingMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_import_staging_v1");
   const publicationMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_publication_v2");
-  if (!stagingMigration || !publicationMigration) {
+  const listingStatusMigration = MIGRATIONS.find((migration) => migration.name === "businesses_listing_status_col");
+  if (!stagingMigration || !publicationMigration || !listingStatusMigration) {
     throw new Error("Required directory publication migrations are missing from source.");
   }
   await pool.query(stagingMigration.sql);
   await pool.query(publicationMigration.sql);
+  // The visibility view's proven-demo predicate reads data_source. A blank
+  // Drizzle-created database does not have that operational column yet, so the
+  // prerequisite must run before ensureBetaSafetyColumns creates the view.
+  await pool.query(listingStatusMigration.sql);
 
   const strictWarn = (message: string) => fail(message);
   await ensureBusinessDedupSchema(log, strictWarn);
