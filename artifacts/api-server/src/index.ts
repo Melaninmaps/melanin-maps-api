@@ -6,7 +6,8 @@ import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/h
 import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
-import { runStartupMigrations } from "./lib/startup-migrations";
+import { ensureRequiredPublicationSchema, runStartupMigrations } from "./lib/startup-migrations";
+import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
 
 // Route pool events through the structured pino logger so they appear in
@@ -100,6 +101,22 @@ try {
   logger.info("Required safety report schema ready");
 } catch (error) {
   logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
+  await pool.end().catch(() => undefined);
+  process.exit(1);
+}
+
+try {
+  const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
+  if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+    throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+  }
+  await ensureRequiredPublicationSchema(
+    directoryReviewEnabled,
+    logger,
+  );
+  logger.info("Required publication schema ready before traffic acceptance");
+} catch (error) {
+  logger.fatal({ error }, "Required publication schema failed — server will not accept traffic");
   await pool.end().catch(() => undefined);
   process.exit(1);
 }

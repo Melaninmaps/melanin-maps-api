@@ -50,8 +50,9 @@ export function isAdmin(req: Request): boolean {
 
   // Paths 1 & 2: session-based
   const user = (req as any).user;
+  if (user?.role === "admin") return true;
   if (!user?.email) return false;
   const userEmail = (user.email as string).trim().toLowerCase();
   if (NORMALIZED_ADMIN_EMAILS.size > 0 && NORMALIZED_ADMIN_EMAILS.has(userEmail)) return true;
-  return user.role === "admin";
+  return false;
 }

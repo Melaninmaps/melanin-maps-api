@@ -4,7 +4,9 @@ import { createInterface } from "node:readline";
 import { basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { pool } from "@workspace/db";
+import type { PoolClient } from "pg";
 import { getBusinessExperiencePolicy } from "@workspace/constants";
+import { assertLocalDirectoryStagingFromProcess } from "./lib/local-directory-staging";
 
 const DEFAULT_MANIFEST = fileURLToPath(new URL(
   "../../data/founder-imports/2026-09-04/directory-import-candidates.jsonl",
@@ -18,6 +20,7 @@ const EXPECTED_ROWS = 18_051;
 const EXPECTED_SHA256 = "e4c5921ed460535cdc5355a40799b01017a3cd77fca40c78fd03e3ffc852db34";
 const EXPECTED_LINK_ROWS = 7_455;
 const EXPECTED_LINK_SHA256 = "bdeb98fb8044863d550c7cc9f6feae9c54f2d23fe4ab090fcd2814b3e47eb31d";
+const PINNED_LINK_CHECKED_AT = "2026-09-04T00:00:00.000Z";
 const ALLOWED_TARGETS = new Set([
   "business",
   "community_resource",
@@ -119,9 +122,16 @@ function linkSummary(candidate: Candidate, links: Map<string, LinkResult>) {
   return Object.fromEntries(fields.flatMap(([field, url]) => {
     if (!url) return [];
     const result = links.get(url);
+    const finalUrl = result?.finalUrl ?? result?.url ?? url;
+    let finalHost: string | null = null;
+    try {
+      finalHost = new URL(finalUrl).hostname.toLowerCase().replace(/^www\./, "");
+    } catch {
+      finalHost = null;
+    }
     return [[field, result
-      ? { url, result: result.result, status: result.status, finalUrl: result.finalUrl ?? null }
-      : { url, result: "not_checked", status: null, finalUrl: null }]];
+      ? { url, result: result.result, status: result.status, finalUrl, finalHost, checkedAt: PINNED_LINK_CHECKED_AT }
+      : { url, result: "not_checked", status: null, finalUrl: null, finalHost: null, checkedAt: null }]];
   }));
 }
 
@@ -205,8 +215,8 @@ function stagedRecord(candidate: Candidate, links: Map<string, LinkResult>, dupl
   };
 }
 
-async function insertChunk(batchId: string, rows: ReturnType<typeof stagedRecord>[]): Promise<number> {
-  const result = await pool.query(
+async function insertChunk(client: PoolClient, batchId: string, rows: ReturnType<typeof stagedRecord>[]): Promise<number> {
+  const result = await client.query(
     `INSERT INTO directory_import_candidates (
        batch_id, source_row, target_kind, status, dedupe_key, name, city, state, category,
        subcategory, cultural_specialty, address, phone, website, source_url,
@@ -303,64 +313,87 @@ async function main() {
   }, null, 2));
 
   if (!apply) return;
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required with --apply");
+  assertLocalDirectoryStagingFromProcess();
 
   const client = await pool.connect();
-  let batchId: string;
   try {
     await client.query("BEGIN");
-    const batch = await client.query<{ id: string }>(
+    const batch = await client.query<{ id: string; status: string }>(
       `INSERT INTO directory_import_batches
          (source_name, source_sha256, source_row_count, status, created_by)
        VALUES ($1,$2,$3,'staged',$4)
        ON CONFLICT (source_sha256) DO UPDATE SET updated_at = NOW()
-       RETURNING id`,
+       RETURNING id, status`,
       [basename(manifest), manifestHash, candidates.length, createdBy],
     );
-    batchId = batch.rows[0]!.id;
+    const batchId = batch.rows[0]!.id;
+    if (batch.rows[0]!.status === "cancelled") {
+      throw new Error("The matching directory import batch is cancelled and cannot be restaged.");
+    }
+
+    let inserted = 0;
+    const chunkSize = 250;
+    for (let index = 0; index < candidates.length; index += chunkSize) {
+      const chunk = candidates.slice(index, index + chunkSize).map((candidate) => stagedRecord(
+        candidate,
+        linkResults,
+        (dedupeCounts.get(candidate.dedupeKey) ?? 0) > 1,
+      ));
+      inserted += await insertChunk(client, batchId, chunk);
+      if ((index + chunk.length) % 2_500 === 0 || index + chunk.length === candidates.length) {
+        console.log(`staged ${index + chunk.length}/${candidates.length}`);
+      }
+    }
+
+    await client.query(
+      `UPDATE directory_import_candidates c
+          SET matched_business_id = b.id,
+              status = 'needs_research',
+              link_validation = jsonb_set(
+                COALESCE(c.link_validation, '{}'::jsonb),
+                '{reviewGates}',
+                COALESCE(c.link_validation->'reviewGates', '[]'::jsonb) || '["existing_record_match"]'::jsonb,
+                true
+              ),
+              updated_at = NOW()
+         FROM businesses b
+        WHERE c.batch_id = $1
+          AND c.target_kind IN ('business', 'regulated_review')
+          AND c.status IN ('pending_review', 'needs_research')
+          AND c.matched_business_id IS NULL
+          AND b.dedupe_key = c.dedupe_key
+          AND COALESCE(b.is_duplicate, false) = false
+          AND COALESCE(b.status, '') NOT IN ('duplicate','permanently_hidden','removed','deleted')`,
+      [batchId],
+    );
+
+    const stagedCount = await client.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+         FROM directory_import_candidates
+        WHERE batch_id = $1`,
+      [batchId],
+    );
+    if (Number(stagedCount.rows[0]?.count ?? 0) !== EXPECTED_ROWS) {
+      throw new Error(`Atomic staging count mismatch: expected ${EXPECTED_ROWS}, received ${stagedCount.rows[0]?.count ?? 0}`);
+    }
+    const readyBatch = await client.query<{ status: string }>(
+      `UPDATE directory_import_batches
+          SET status = CASE WHEN status = 'completed' THEN status ELSE 'in_review' END,
+              source_row_count = $2,
+              updated_at = NOW()
+        WHERE id = $1
+        RETURNING status`,
+      [batchId, EXPECTED_ROWS],
+    );
     await client.query("COMMIT");
+
+    console.log(JSON.stringify({ batchId, inserted, stagedRows: EXPECTED_ROWS, batchStatus: readyBatch.rows[0]?.status ?? "unknown", publicationWrites: 0 }, null, 2));
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client.query("ROLLBACK").catch(() => undefined);
     throw error;
   } finally {
     client.release();
   }
-
-  let inserted = 0;
-  const chunkSize = 250;
-  for (let index = 0; index < candidates.length; index += chunkSize) {
-    const chunk = candidates.slice(index, index + chunkSize).map((candidate) => stagedRecord(
-      candidate,
-      linkResults,
-      (dedupeCounts.get(candidate.dedupeKey) ?? 0) > 1,
-    ));
-    inserted += await insertChunk(batchId, chunk);
-    if ((index + chunk.length) % 2_500 === 0 || index + chunk.length === candidates.length) {
-      console.log(`staged ${index + chunk.length}/${candidates.length}`);
-    }
-  }
-
-  await pool.query(
-    `UPDATE directory_import_candidates c
-        SET matched_business_id = b.id,
-            status = 'needs_research',
-            link_validation = jsonb_set(
-              COALESCE(c.link_validation, '{}'::jsonb),
-              '{reviewGates}',
-              COALESCE(c.link_validation->'reviewGates', '[]'::jsonb) || '["existing_record_match"]'::jsonb,
-              true
-            ),
-            updated_at = NOW()
-       FROM businesses b
-      WHERE c.batch_id = $1
-        AND c.matched_business_id IS NULL
-        AND b.dedupe_key = c.dedupe_key
-        AND COALESCE(b.is_duplicate, false) = false
-        AND COALESCE(b.status, '') NOT IN ('duplicate','permanently_hidden','removed','deleted')`,
-    [batchId],
-  );
-
-  console.log(JSON.stringify({ batchId, inserted, publicationWrites: 0 }, null, 2));
 }
 
 main()

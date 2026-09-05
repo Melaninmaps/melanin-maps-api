@@ -83,6 +83,7 @@ import Guides from "@/pages/guides";
 import SubmitBusiness from "@/pages/submit-business";
 import MyBusinessSubmissions from "@/pages/my-business-submissions";
 import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
+import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
 import SubmitEvent from "@/pages/submit-event";
@@ -436,6 +437,11 @@ function Router() {
       <Route path="/founder/business-submissions">
         <FounderBusinessSubmissions />
       </Route>
+      {import.meta.env.VITE_DIRECTORY_IMPORT_REVIEW_ENABLED === "true" && (
+        <Route path="/founder/directory-imports">
+          <FounderDirectoryImports />
+        </Route>
+      )}
 
       {/* ── Founder direct-publish — Task #362 ───────────────────────── */}
       <Route path="/founder/businesses/new">

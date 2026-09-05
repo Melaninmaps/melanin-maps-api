@@ -126,6 +126,100 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     `,
   },
   {
+    name: "create_governed_directory_publication_v2",
+    sql: `
+      ALTER TABLE directory_import_candidates
+        ADD COLUMN IF NOT EXISTS review_note TEXT,
+        ADD COLUMN IF NOT EXISTS review_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+        ADD COLUMN IF NOT EXISTS review_revision INTEGER NOT NULL DEFAULT 0;
+
+      CREATE TABLE IF NOT EXISTS business_publication_identities (
+        identity_key TEXT PRIMARY KEY,
+        business_id VARCHAR NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS business_publication_identities_business_idx
+        ON business_publication_identities (business_id);
+
+      CREATE TABLE IF NOT EXISTS directory_import_decision_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        candidate_id UUID NOT NULL REFERENCES directory_import_candidates(id),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id),
+        actor_id TEXT NOT NULL,
+        action TEXT NOT NULL CHECK (action IN ('publish','link_existing','needs_research','decline')),
+        previous_status TEXT NOT NULL,
+        new_status TEXT NOT NULL,
+        review_note TEXT,
+        review_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+        idempotency_key TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        published_record_type TEXT CHECK (published_record_type IN ('business','resource')),
+        published_record_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (idempotency_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_decision_events_candidate_idx
+        ON directory_import_decision_events (candidate_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS directory_import_decision_events_batch_idx
+        ON directory_import_decision_events (batch_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS directory_import_publications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        candidate_id UUID NOT NULL REFERENCES directory_import_candidates(id),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id),
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','resource')),
+        record_id TEXT NOT NULL,
+        publication_action TEXT NOT NULL CHECK (publication_action IN ('create','link_existing')),
+        actor_id TEXT NOT NULL,
+        idempotency_key TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (candidate_id),
+        UNIQUE (idempotency_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_publications_record_idx
+        ON directory_import_publications (record_type, record_id);
+
+      ALTER TABLE resources
+        ADD COLUMN IF NOT EXISTS canonical_key TEXT,
+        ADD COLUMN IF NOT EXISTS normalized_title TEXT,
+        ADD COLUMN IF NOT EXISTS source_category TEXT,
+        ADD COLUMN IF NOT EXISTS source_subcategory TEXT,
+        ADD COLUMN IF NOT EXISTS source_address TEXT,
+        ADD COLUMN IF NOT EXISTS published_by TEXT,
+        ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS resources_canonical_key_unique_idx
+        ON resources (canonical_key)
+        WHERE canonical_key IS NOT NULL AND btrim(canonical_key) <> '';
+
+      CREATE TABLE IF NOT EXISTS directory_import_resource_provenance (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        candidate_id UUID NOT NULL REFERENCES directory_import_candidates(id),
+        resource_id UUID NOT NULL REFERENCES resources(id),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id),
+        source_name TEXT,
+        source_url TEXT,
+        source_status TEXT,
+        source_row INTEGER NOT NULL,
+        source_category TEXT,
+        source_subcategory TEXT,
+        raw_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+        link_validation JSONB NOT NULL DEFAULT '{}'::jsonb,
+        reviewed_by TEXT NOT NULL,
+        reviewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        review_note TEXT,
+        UNIQUE (candidate_id, resource_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_resource_provenance_resource_idx
+        ON directory_import_resource_provenance (resource_id, reviewed_at DESC);
+    `,
+  },
+  {
     // Universal Search + Demand Flywheel — Checkpoint 1
     // Canonical search event log: one row per search across all surfaces.
     // Privacy: user_id nullable; demand signals use aggregated counts only.
@@ -4697,6 +4791,99 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     )`,
   },
 ];
+
+export async function ensureRequiredPublicationSchema(
+  directoryImportEnabled: boolean,
+  logger?: Logger,
+): Promise<void> {
+  const log = (msg: string) => logger ? logger.info(msg) : console.log(`[required-publication-schema] ${msg}`);
+  const fail = (msg: string): never => { throw new Error(msg); };
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_publication_identities (
+      identity_key TEXT PRIMARY KEY,
+      business_id VARCHAR NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_publication_identities_business_idx
+      ON business_publication_identities (business_id);
+  `);
+  if (!directoryImportEnabled) {
+    log("shared business publication identity schema ready");
+    return;
+  }
+
+  const stagingMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_import_staging_v1");
+  const publicationMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_publication_v2");
+  if (!stagingMigration || !publicationMigration) {
+    throw new Error("Required directory publication migrations are missing from source.");
+  }
+  await pool.query(stagingMigration.sql);
+  await pool.query(publicationMigration.sql);
+
+  const strictWarn = (message: string) => fail(message);
+  await ensureBusinessDedupSchema(log, strictWarn);
+  await ensureBetaSafetyColumns(log, strictWarn);
+  await ensureVisibilityAndDedupeHardening(log, strictWarn);
+  await ensureSocialFirstIngestionSchema(log, strictWarn);
+  await ensureHotelStayIngestionSchema(log, strictWarn);
+  await ensureLocationFirstDiscovery(log, strictWarn);
+  await ensureMediaAndClaimsSchema(log, strictWarn);
+
+  const requiredTables = [
+    "directory_import_batches",
+    "directory_import_candidates",
+    "directory_import_decision_events",
+    "directory_import_publications",
+    "directory_import_resource_provenance",
+    "business_publication_identities",
+    "business_review_items",
+    "canonical_record_locations",
+    "businesses",
+    "resources",
+  ];
+  const tableCheck = await pool.query<{ table_name: string }>(
+    `SELECT table_name
+       FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [requiredTables],
+  );
+  const presentTables = new Set(tableCheck.rows.map((row) => row.table_name));
+  const missingTables = requiredTables.filter((table) => !presentTables.has(table));
+
+  const requiredColumns: Record<string, string[]> = {
+    directory_import_candidates: ["review_note", "review_evidence", "review_revision", "published_record_type", "published_record_id"],
+    businesses: ["dedupe_key", "listing_status", "social_profiles", "source_evidence", "owner_claim_status", "added_via", "published_at"],
+    resources: ["canonical_key", "normalized_title", "source_category", "source_subcategory", "source_address", "published_by", "published_at"],
+  };
+  const columnCheck = await pool.query<{ table_name: string; column_name: string }>(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [Object.keys(requiredColumns)],
+  );
+  const columns = new Set(columnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`));
+  const missingColumns = Object.entries(requiredColumns).flatMap(([table, names]) =>
+    names.filter((name) => !columns.has(`${table}.${name}`)).map((name) => `${table}.${name}`),
+  );
+
+  const requiredIndexes = [
+    "businesses_canonical_dedupe_key_unique",
+    "canonical_record_locations_unique_idx",
+    "resources_canonical_key_unique_idx",
+  ];
+  const indexCheck = await pool.query<{ indexname: string }>(
+    `SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname = ANY($1::text[])`,
+    [requiredIndexes],
+  );
+  const presentIndexes = new Set(indexCheck.rows.map((row) => row.indexname));
+  const missingIndexes = requiredIndexes.filter((index) => !presentIndexes.has(index));
+
+  if (missingTables.length || missingColumns.length || missingIndexes.length) {
+    fail(`Directory publication schema verification failed: missing tables [${missingTables.join(", ")}], columns [${missingColumns.join(", ")}], indexes [${missingIndexes.join(", ")}].`);
+  }
+  log("directory publication schema and indexes verified before traffic acceptance");
+}
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>

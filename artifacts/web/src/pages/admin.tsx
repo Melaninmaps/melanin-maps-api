@@ -8,6 +8,7 @@ import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import AdminBusinessReview from "@/pages/admin-business-review";
+import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from "recharts";
@@ -175,7 +176,7 @@ type MetricsData = {
   };
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib" | "library-growth" | "biz-review";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib" | "library-growth" | "biz-review" | "directory-imports";
 
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
@@ -1111,6 +1112,9 @@ export default function Admin() {
     { id: "library-growth", label: "Library Growth", icon: <TrendingUp className="w-4 h-4" /> },
     { id: "biz-review", label: "Business Review Queue", icon: <Store className="w-4 h-4" /> },
   ];
+  if (import.meta.env.VITE_DIRECTORY_IMPORT_REVIEW_ENABLED === "true") {
+    tabs.push({ id: "directory-imports", label: "Founder Directory Review", icon: <BookOpen className="w-4 h-4" /> });
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -3567,6 +3571,12 @@ export default function Admin() {
       {tab === "biz-review" && (
         <div className="p-6">
           <AdminBusinessReview embedded />
+        </div>
+      )}
+
+      {tab === "directory-imports" && (
+        <div className="p-6">
+          <FounderDirectoryImports embedded />
         </div>
       )}
 

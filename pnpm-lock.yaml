@@ -1148,6 +1148,9 @@ importers:
       '@replit/revenuecat-sdk':
         specifier: ^4.2.0
         version: 4.2.0(typescript@5.9.3)
+      '@workspace/constants':
+        specifier: workspace:*
+        version: link:../lib/constants
       '@workspace/db':
         specifier: workspace:*
         version: link:../lib/db

@@ -195,6 +195,29 @@ describe("founder inventory remains review-only", () => {
     expect(importer).toContain('candidate.requestedAction === "RECONCILE_EXISTING_RECORD"');
     expect(importer).toContain('status = \'needs_research\'');
     expect(importer).toContain('"existing_record_match"');
+    expect(importer).toContain('await client.query("BEGIN")');
+    expect(importer.indexOf("assertLocalDirectoryStagingFromProcess()")).toBeLessThan(importer.indexOf("pool.connect()"));
+    expect(importer).toContain('await insertChunk(client, batchId, chunk)');
+    expect(importer).toContain('Number(stagedCount.rows[0]?.count ?? 0) !== EXPECTED_ROWS');
+    expect(importer).toContain("SET status = CASE WHEN status = 'completed' THEN status ELSE 'in_review' END");
+    expect(importer).toContain('await client.query("COMMIT")');
+    expect(importer).toContain('await client.query("ROLLBACK")');
     expect(importer).not.toMatch(/INSERT\s+INTO\s+(businesses|resources|community_resources)/i);
+  });
+
+  it("enables review routes only in staging and verifies required schema before listen", () => {
+    const app = source("../app.ts");
+    const index = source("../index.ts");
+    const migrations = source("../lib/startup-migrations.ts");
+    expect(app).toContain("assertDirectoryReviewLocalStaging(process.env)");
+    expect(index).toContain("const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env)");
+    expect(index).toContain("await ensureRequiredPublicationSchema(");
+    expect(index.indexOf("await ensureRequiredPublicationSchema(")).toBeLessThan(index.indexOf("app.listen(port"));
+    expect(migrations).toContain("Directory publication schema verification failed");
+    expect(migrations).toContain("business_publication_identities");
+    const publication = source("../directoryImport/registerDirectoryImportRoutes.ts");
+    expect(publication).toContain("hostname: address");
+    expect(publication).toContain("servername: secure ? url.hostname : undefined");
+    expect(publication).toContain("areDirectoryEvidenceAddressesPublic(addresses.map((item) => item.address))");
   });
 });

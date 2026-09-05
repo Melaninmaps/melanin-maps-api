@@ -334,6 +334,7 @@ describe("founder atomic publication", () => {
   it("publishes one active community-listed unclaimed record and commits status together", async () => {
     const repository = repositoryMock();
     const query = vi.fn(async (sql: string) => {
+      if (sql.includes("INSERT INTO business_publication_identities")) return { rows: [{ business_id: "published-business" }] };
       if (sql.includes("INSERT INTO businesses")) return { rows: [{ id: "published-business" }] };
       return { rows: [] };
     });
@@ -388,6 +389,7 @@ describe("founder atomic publication", () => {
   it("rolls back and does not advance submission status when canonical insert fails", async () => {
     const repository = repositoryMock();
     const query = vi.fn(async (sql: string) => {
+      if (sql.includes("INSERT INTO business_publication_identities")) return { rows: [{ business_id: "published-business" }] };
       if (sql.includes("INSERT INTO businesses")) throw new Error("insert failed");
       return { rows: [] };
     });

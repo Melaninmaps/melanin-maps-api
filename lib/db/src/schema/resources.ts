@@ -37,6 +37,13 @@ export const resourcesTable = pgTable("resources", {
   lastConfirmedAt: timestamp("last_confirmed_at"),
   isActive: boolean("is_active").notNull().default(true),
   reportCount: integer("report_count").notNull().default(0),
+  canonicalKey: text("canonical_key"),
+  normalizedTitle: text("normalized_title"),
+  sourceCategory: text("source_category"),
+  sourceSubcategory: text("source_subcategory"),
+  sourceAddress: text("source_address"),
+  publishedBy: text("published_by"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

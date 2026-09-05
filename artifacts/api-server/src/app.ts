@@ -54,6 +54,8 @@ import { findExactRecords, findNearestAvailableLocation } from "./discovery/post
 import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRoutes";
 import { registerMediaRoutes } from "./media/registerMediaRoutes";
 import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
+import { registerDirectoryImportRoutes } from "./directoryImport/registerDirectoryImportRoutes";
+import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -368,6 +370,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
+if (assertDirectoryReviewLocalStaging(process.env)) {
+  registerDirectoryImportRoutes(app);
+}
 
 // ── Living Library public read routes ──────────────────────────────────────
 // Register before the aggregate /api router: its global requireAuth middleware

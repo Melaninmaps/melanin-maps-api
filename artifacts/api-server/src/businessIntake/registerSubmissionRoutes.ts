@@ -195,6 +195,26 @@ async function publishFromSubmission(
     );
   }
 
+  const identityClaim = await client.query<{ business_id: string }>(
+    `INSERT INTO business_publication_identities (identity_key, business_id, created_at)
+     VALUES ($1,$2,NOW())
+     ON CONFLICT (identity_key) DO NOTHING
+     RETURNING business_id`,
+    [publicationLockKey, businessId],
+  );
+  if (!identityClaim.rows[0]) {
+    const winner = await client.query<{ business_id: string }>(
+      `SELECT business_id FROM business_publication_identities WHERE identity_key = $1`,
+      [publicationLockKey],
+    );
+    throw new RouteError(
+      409,
+      "BUSINESS_ALREADY_LISTED",
+      "A matching business was published concurrently. This submission was not published.",
+      { businessId: winner.rows[0]?.business_id },
+    );
+  }
+
   const result = await client.query<{ id: string }>(
     `INSERT INTO businesses
        (id, name, category, subcategory, description, address, city, state, country,
