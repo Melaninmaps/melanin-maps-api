@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  canonicalCandidateLocation,
   canonicalPriceRange,
   canonicalStreetIdentity,
   communityMinorityClaim,
@@ -33,11 +34,28 @@ describe("founder business inventory publication policy", () => {
       .toBe(normalizedIdentity({ name: "Amina", city: "Philadelphia", state: "pa" }));
     expect(normalizedIdentity({ name: "Amina", city: "Philadelphia", state: "PA" }))
       .not.toBe(normalizedIdentity({ name: "Amina", city: "Atlanta", state: "GA" }));
+    expect(normalizedIdentity({ name: "Amina", city: "Richmond", state: "VA", raw_record: { country: "United States" } }))
+      .not.toBe(normalizedIdentity({ name: "Amina", city: "Richmond", state: "VA", raw_record: { country: "Canada" } }));
   });
 
   it("reconciles equivalent full and short street addresses", () => {
     expect(canonicalStreetIdentity("1102 Germantown Ave, Philadelphia, PA 19123", "Philadelphia", "PA"))
       .toBe(canonicalStreetIdentity("1102 Germantown Ave", "Philadelphia", "PA"));
+  });
+
+  it("canonicalizes City, ST workbook fields before identity and street reconciliation", () => {
+    const location = canonicalCandidateLocation({
+      city: "Los Angeles, CA",
+      state: "United States",
+      raw_record: { country: "United States" },
+    });
+    expect(location).toEqual({ city: "Los Angeles", state: "CA", country: "United States" });
+    expect(normalizedIdentity({ name: "Harold & Belle's", city: "Los Angeles, CA", state: "United States", raw_record: { country: "United States" } }))
+      .toBe(normalizedIdentity({ name: "Harold & Belle's", city: "Los Angeles", state: "CA", raw_record: { country: "United States" } }));
+    expect(canonicalStreetIdentity("2920 W Jefferson Blvd", location.city, location.state))
+      .toBe(canonicalStreetIdentity("2920 W Jefferson Blvd, Los Angeles, CA", "Los Angeles", "CA"));
+    expect(canonicalCandidateLocation({ city: "Toronto", state: "Ontario", raw_record: {} }).country).toBe("");
+    expect(canonicalCandidateLocation({ city: "Toronto", state: "ON", raw_record: {} }).country).toBe("");
   });
 
   it("creates stable valid UUIDs from canonical identity", () => {
@@ -103,7 +121,7 @@ describe("founder publication database safeguards", () => {
   });
 
   it("builds the apply plan only after transaction locks and revalidates candidate state before writes", () => {
-    const begin = source.indexOf('client.query("BEGIN")');
+    const begin = source.indexOf('client.query("BEGIN ISOLATION LEVEL SERIALIZABLE")');
     const advisoryLock = source.indexOf("pg_advisory_xact_lock", begin);
     const lockedPlan = source.indexOf("createPlans(client, true)", advisoryLock);
     const businessInsert = source.indexOf("INSERT INTO businesses", lockedPlan);
@@ -115,5 +133,17 @@ describe("founder publication database safeguards", () => {
     expect(source).toContain('lock ? "FOR UPDATE" : ""');
     expect(source).toContain("BULK_PUBLICATION_STALE_OR_INELIGIBLE_PLAN");
     expect(source).toContain("c.matched_business_id IS DISTINCT FROM p.original_matched_business_id");
+    expect(source).toContain("const location = canonicalCandidateLocation(row)");
+  });
+
+  it("preflights both installed dedupe indexes and refuses cross-country fallback rewiring", () => {
+    expect(source).toContain("businesses_active_dedupe_key_unique");
+    expect(source).toContain("businesses_canonical_dedupe_key_unique");
+    expect(source).toContain("i.indisunique,i.indisvalid,i.indisready");
+    expect(source).toContain("predicate_md5");
+    expect(source).toContain("BULK_PUBLICATION_DEDUPE_INDEX_DEFINITION_MISMATCH");
+    expect(source).toContain("BULK_PUBLICATION_DUAL_INDEX_PREFLIGHT_CONFLICT");
+    expect(source).toContain("normalizeCountry(business.country) !== candidateCountry");
+    expect(source).toContain("btrim(COALESCE(b.country,''))<>''");
   });
 });

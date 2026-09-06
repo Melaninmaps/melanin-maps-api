@@ -8,6 +8,7 @@ import {
   OWNERSHIP_DESIGNATIONS,
 } from "@workspace/constants";
 import { assertLocalDirectoryStagingFromProcess } from "./lib/local-directory-staging";
+import { canonicalCountryCode } from "./lib/country-normalization";
 
 type Candidate = {
   id: string;
@@ -47,7 +48,10 @@ type ExistingBusiness = {
   name: string;
   city: string;
   state: string | null;
+  country: string | null;
   address: string | null;
+  dedupe_key: string | null;
+  status: string | null;
   listing_status: string | null;
   permanently_hidden: boolean | null;
 };
@@ -114,6 +118,9 @@ const AUTHORIZED_SOURCES = [
   },
 ] as const;
 const ownershipSet = new Set<string>(OWNERSHIP_DESIGNATIONS);
+const US_STATE_CODES = new Set(
+  "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY AS GU MP PR VI".split(" "),
+);
 
 // Kept byte-for-byte equivalent to artifacts/api-server/src/lib/business-dedup.ts.
 function normalizeText(value: unknown): string {
@@ -123,6 +130,10 @@ function normalizeText(value: unknown): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function normalizeCountry(value: unknown): string {
+  return canonicalCountryCode(value) ?? "";
 }
 
 function dedupeKey(business: {
@@ -194,8 +205,9 @@ function firstValue<T>(rows: Candidate[], read: (row: Candidate) => T | null): T
   return null;
 }
 
-function normalizedIdentity(candidate: Pick<Candidate, "name" | "city" | "state">): string {
-  return [normalizeText(candidate.name), normalizeText(candidate.city), normalizeText(candidate.state)].join("|");
+function normalizedIdentity(candidate: Pick<Candidate, "name" | "city" | "state"> & { raw_record?: unknown }): string {
+  const location = canonicalCandidateLocation(candidate);
+  return [normalizeText(candidate.name), normalizeText(location.city), normalizeText(location.state), normalizeCountry(location.country)].join("|");
 }
 
 function canonicalStreetIdentity(address: string | null, city: string, state: string | null): string | null {
@@ -262,11 +274,29 @@ function communityMinorityClaim(designations: string[]): string | null {
   return onlyGeneralOwnership ? null : "community_reported_minority_owned";
 }
 
-function countryFor(candidate: Candidate): string {
+function countryFor(candidate: Pick<Candidate, "state"> & { raw_record?: unknown }): string {
   const raw = asRecord(candidate.raw_record);
   const supplied = typeof raw.country === "string" ? raw.country.trim() : "";
   if (supplied) return supplied;
-  return /^[A-Za-z]{2}$/.test(candidate.state ?? "") ? "USA" : (candidate.state?.trim() || "USA");
+  return US_STATE_CODES.has(candidate.state?.trim().toUpperCase() ?? "") ? "USA" : "";
+}
+
+function canonicalCandidateLocation(candidate: Pick<Candidate, "city" | "state"> & { raw_record?: unknown }): {
+  city: string;
+  state: string | null;
+  country: string;
+} {
+  const country = countryFor(candidate);
+  let city = candidate.city.trim();
+  let state = candidate.state?.trim() || null;
+  const cityRegion = city.match(/^(.+?),\s*([A-Za-z]{2})$/);
+  if (cityRegion) {
+    city = cityRegion[1].trim();
+    state = cityRegion[2].toUpperCase();
+  } else if (state && normalizeText(state) === normalizeText(country)) {
+    state = null;
+  }
+  return { city, state, country };
 }
 
 function deterministicUuid(identity: string): string {
@@ -317,16 +347,25 @@ function publicTags(rows: Candidate[], category: string, subcategory: string): s
 function publicationIdentityKey(rows: Candidate[]): string {
   const ordered = sortCandidates(rows);
   const winner = ordered[0];
+  const location = canonicalCandidateLocation(winner);
   const address = firstValue(ordered, (row) => row.address?.trim() || null);
-  return dedupeKey({ name: winner.name, city: winner.city, state: winner.state, address });
+  return `${dedupeKey({ name: winner.name, city: location.city, state: location.state, address })}|country:${normalizeCountry(location.country)}`;
 }
 
 function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRow[] {
   const ordered = sortCandidates(rows);
   const winner = ordered[0];
+  const location = canonicalCandidateLocation(winner);
   const identity = normalizedIdentity(winner);
+  const countries = new Set(ordered.map((row) => normalizeCountry(canonicalCandidateLocation(row).country)).filter(Boolean));
+  if (countries.size !== 1 || !normalizeCountry(location.country)) {
+    throw new Error(`Ambiguous or missing country identity requires a hold: ${identity}`);
+  }
   const addresses = new Set(
-    ordered.map((row) => canonicalStreetIdentity(row.address, row.city, row.state)).filter(Boolean),
+    ordered.map((row) => {
+      const rowLocation = canonicalCandidateLocation(row);
+      return canonicalStreetIdentity(row.address, rowLocation.city, rowLocation.state);
+    }).filter(Boolean),
   );
   if (addresses.size > 1) {
     throw new Error(`Ambiguous multi-location identity requires a hold: ${identity}`);
@@ -343,7 +382,7 @@ function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRo
   const policy = getBusinessExperiencePolicy(winner.category, winner.subcategory);
   const category = policy.category;
   const subcategory = winner.subcategory?.trim() || category;
-  const country = countryFor(winner);
+  const country = location.country;
   const designations = explicitOwnershipDesignations(ordered);
   const ownershipClaim = communityMinorityClaim(designations);
   const socialProfiles = [
@@ -366,7 +405,8 @@ function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRo
     excerpt: "Founder-supplied directory evidence for an unclaimed searchable listing. This is not Mapping With Melanin verification.",
   }));
   const description = `Founder-listed, unclaimed ${subcategory} in ${winner.city}. Not verified by Mapping With Melanin.${address ? " The supplied address is shown; a map pin appears only after precise geocoding." : " Exact street location has not yet been supplied, so this listing is searchable but not pinned."}`;
-  const canonicalDedupeKey = publicationIdentityKey(ordered);
+  const canonicalDedupeKey = dedupeKey({ name: winner.name, city: location.city, state: location.state, address });
+  const identityKey = publicationIdentityKey(ordered);
   const primaryCandidateId = winner.id;
 
   return ordered.map((candidate) => {
@@ -380,7 +420,7 @@ function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRo
       source_row: candidate.source_row,
       previous_status: candidate.status,
       original_matched_business_id: candidate.matched_business_id,
-      identity_key: canonicalDedupeKey,
+      identity_key: identityKey,
       record_id: recordId,
       is_new: isNew,
       is_primary: primary,
@@ -389,8 +429,8 @@ function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRo
       subcategory,
       description,
       address,
-      city: winner.city.trim(),
-      state: winner.state?.trim() || null,
+      city: location.city,
+      state: location.state,
       country,
       postal_code: postalCode(address),
       phone,
@@ -484,25 +524,66 @@ async function loadCandidates(client: PoolClient, authorizedBatchIds: string[], 
 async function loadExisting(client: PoolClient, lock: boolean): Promise<{
   byIdentity: Map<string, ExistingBusiness[]>;
   byId: Map<string, ExistingBusiness>;
+  byDedupeKey: Map<string, ExistingBusiness[]>;
 }> {
   const { rows } = await client.query<ExistingBusiness>(`
-    SELECT id, name, city, state, address, listing_status, permanently_hidden
+    SELECT id, name, city, state, country, address, dedupe_key, listing_status, permanently_hidden,
+           status, is_duplicate
       FROM businesses
      WHERE COALESCE(is_duplicate, false) = false
        AND COALESCE(permanently_hidden, false) = false
-       AND COALESCE(status, 'active') NOT IN ('duplicate','permanently_hidden','removed','deleted')
+       AND COALESCE(status, 'active') NOT IN ('duplicate','permanently_hidden')
      ${lock ? "FOR UPDATE" : ""}
   `);
   const byIdentity = new Map<string, ExistingBusiness[]>();
   const byId = new Map<string, ExistingBusiness>();
+  const byDedupeKey = new Map<string, ExistingBusiness[]>();
   for (const row of rows) {
     byId.set(row.id, row);
-    const identity = normalizedIdentity({ name: row.name, city: row.city, state: row.state });
+    const identity = [normalizeText(row.name), normalizeText(row.city), normalizeText(row.state), normalizeCountry(row.country)].join("|");
     const list = byIdentity.get(identity) ?? [];
     list.push(row);
     byIdentity.set(identity, list);
+    if (row.dedupe_key?.trim()) {
+      const dedupeRows = byDedupeKey.get(row.dedupe_key) ?? [];
+      dedupeRows.push(row);
+      byDedupeKey.set(row.dedupe_key, dedupeRows);
+    }
   }
-  return { byIdentity, byId };
+  return { byIdentity, byId, byDedupeKey };
+}
+
+async function verifyDedupeIndexDefinitions(client: PoolClient): Promise<void> {
+  const { rows } = await client.query<{
+    indexname: string; indisunique: boolean; indisvalid: boolean; indisready: boolean;
+    key_count: number; key_columns: string[]; predicate_md5: string;
+  }>(`
+    SELECT index_class.relname indexname,i.indisunique,i.indisvalid,i.indisready,
+           i.indnkeyatts::integer key_count,
+           ARRAY(SELECT a.attname FROM unnest(i.indkey) WITH ORDINALITY k(attnum,ord)
+             JOIN pg_attribute a ON a.attrelid=i.indrelid AND a.attnum=k.attnum
+             WHERE ord<=i.indnkeyatts ORDER BY ord) key_columns,
+           md5(pg_get_expr(i.indpred,i.indrelid)) predicate_md5
+    FROM pg_index i
+    JOIN pg_class index_class ON index_class.oid=i.indexrelid
+    JOIN pg_class table_class ON table_class.oid=i.indrelid
+    JOIN pg_namespace n ON n.oid=table_class.relnamespace
+    WHERE n.nspname='public' AND table_class.relname='businesses'
+      AND index_class.relname IN ('businesses_active_dedupe_key_unique','businesses_canonical_dedupe_key_unique')
+    ORDER BY index_class.relname
+  `);
+  const expectedPredicates = new Map([
+    ["businesses_active_dedupe_key_unique", "b6c7b82a358f47453d8dd3b8eb783dbf"],
+    ["businesses_canonical_dedupe_key_unique", "a35be5564d3fd29ddd97c96989ec00fb"],
+  ]);
+  const valid = rows.length === expectedPredicates.size && rows.every((row) =>
+    row.indisunique && row.indisvalid && row.indisready && row.key_count === 1
+    && row.key_columns.length === 1 && row.key_columns[0] === "dedupe_key"
+    && row.predicate_md5 === expectedPredicates.get(row.indexname),
+  );
+  if (!valid) {
+    throw new Error("BULK_PUBLICATION_DEDUPE_INDEX_DEFINITION_MISMATCH");
+  }
 }
 
 async function loadPublicationIdentityClaims(client: PoolClient, identityKeys: string[], lock: boolean): Promise<Map<string, string>> {
@@ -516,6 +597,7 @@ async function loadPublicationIdentityClaims(client: PoolClient, identityKeys: s
 }
 
 async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: PlanRow[]; summary: Record<string, number> }> {
+  await verifyDedupeIndexDefinitions(client);
   const authorizedBatchIds = await verifyAuthorizedBatches(client, lock);
   const candidates = await loadCandidates(client, authorizedBatchIds, lock);
   const existing = await loadExisting(client, lock);
@@ -531,6 +613,20 @@ async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: 
     [...groups.values()].map((rows) => publicationIdentityKey(rows)),
     lock,
   );
+  const candidateCountriesByDedupeKey = new Map<string, Set<string>>();
+  for (const rows of groups.values()) {
+    const ordered = sortCandidates(rows);
+    const location = canonicalCandidateLocation(ordered[0]);
+    const key = dedupeKey({
+      name: ordered[0].name,
+      city: location.city,
+      state: location.state,
+      address: firstValue(ordered, (row) => row.address?.trim() || null),
+    });
+    const countries = candidateCountriesByDedupeKey.get(key) ?? new Set<string>();
+    countries.add(normalizeCountry(location.country));
+    candidateCountriesByDedupeKey.set(key, countries);
+  }
 
   const plans: PlanRow[] = [];
   let existingIdentities = 0;
@@ -538,20 +634,53 @@ async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: 
   let ambiguousExisting = 0;
   let unsafeAuthoritativeMatchesHeld = 0;
   let identityClaimConflictsHeld = 0;
+  let countryConflictsHeld = 0;
+  let dualIndexConflictsHeld = 0;
   for (const [identity, rows] of groups) {
+    const countries = new Set(rows.map((row) => normalizeCountry(canonicalCandidateLocation(row).country)).filter(Boolean));
+    if (countries.size !== 1) {
+      countryConflictsHeld += 1;
+      continue;
+    }
+    const candidateCountry = [...countries][0];
     const identityKey = publicationIdentityKey(rows);
+    const candidateDedupeKey = dedupeKey({
+      name: rows[0].name,
+      city: canonicalCandidateLocation(rows[0]).city,
+      state: canonicalCandidateLocation(rows[0]).state,
+      address: firstValue(sortCandidates(rows), (row) => row.address?.trim() || null),
+    });
+    if ((candidateCountriesByDedupeKey.get(candidateDedupeKey)?.size ?? 0) !== 1) {
+      countryConflictsHeld += 1;
+      continue;
+    }
+    const dedupeMatches = existing.byDedupeKey.get(candidateDedupeKey) ?? [];
+    if (dedupeMatches.some((business) =>
+      !normalizeCountry(business.country)
+      || normalizeCountry(business.country) !== candidateCountry
+      || ["removed", "deleted"].includes(business.status ?? "")
+    )) {
+      dualIndexConflictsHeld += 1;
+      continue;
+    }
     const claimedBusinessId = identityClaims.get(identityKey) ?? null;
     const authoritativeIds = [...new Set(rows.map((row) => row.matched_business_id).filter((value): value is string => Boolean(value)))];
     if (authoritativeIds.length > 1) {
       ambiguousExisting += 1;
       continue;
     }
-    const candidateStreet = firstValue(sortCandidates(rows), (row) => canonicalStreetIdentity(row.address, row.city, row.state));
+    const candidateStreet = firstValue(sortCandidates(rows), (row) => {
+      const location = canonicalCandidateLocation(row);
+      return canonicalStreetIdentity(row.address, location.city, location.state);
+    });
     const identityMatches = (existing.byIdentity.get(identity) ?? []).filter((business) => {
       if (!candidateStreet || !business.address) return true;
       return canonicalStreetIdentity(business.address, business.city, business.state) === candidateStreet;
     });
-    const publicExisting = identityMatches.filter((business) => ["live_unclaimed", "live_claimed"].includes(business.listing_status ?? ""));
+    const publicExisting = identityMatches.filter((business) =>
+      ["live_unclaimed", "live_claimed"].includes(business.listing_status ?? "")
+      && !["duplicate", "permanently_hidden", "removed", "deleted"].includes(business.status ?? ""),
+    );
     if (authoritativeIds.length === 0 && publicExisting.length > 1) {
       ambiguousExisting += 1;
       continue;
@@ -573,8 +702,15 @@ async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: 
       identityClaimConflictsHeld += 1;
       continue;
     }
-    if (match && !["live_unclaimed", "live_claimed"].includes(match.listing_status ?? "")) {
+    if (match && (
+      !["live_unclaimed", "live_claimed"].includes(match.listing_status ?? "")
+      || ["duplicate", "permanently_hidden", "removed", "deleted"].includes(match.status ?? "")
+    )) {
       unsafeAuthoritativeMatchesHeld += 1;
+      continue;
+    }
+    if (match && (!normalizeCountry(match.country) || normalizeCountry(match.country) !== candidateCountry)) {
+      countryConflictsHeld += 1;
       continue;
     }
     if (authoritativeIds.length === 1 && !match) {
@@ -598,6 +734,8 @@ async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: 
       ambiguousExistingIdentitiesHeld: ambiguousExisting,
       unsafeAuthoritativeMatchesHeld,
       identityClaimConflictsHeld,
+      countryConflictsHeld,
+      dualIndexConflictsHeld,
       publicationRows: plans.length,
       newSearchableListings: primaryPlans.filter((plan) => plan.is_new).length,
       suppliedStreetLikeAddresses: primaryPlans.filter((plan) => plan.address && /\d.*[A-Za-z]/.test(plan.address)).length,
@@ -646,13 +784,26 @@ async function installPlan(client: PoolClient, plans: PlanRow[]): Promise<void> 
 }
 
 async function applyPlans(client: PoolClient): Promise<Record<string, number>> {
-  await client.query("BEGIN");
+  await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
   try {
     await client.query("SET LOCAL lock_timeout = '10s'");
     await client.query("SET LOCAL statement_timeout = '180s'");
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [PUBLICATION_VERSION]);
     const { plans, summary } = await createPlans(client, true);
     await installPlan(client, plans);
+
+    const dualIndexConflicts = await client.query<{ count: string }>(`
+      SELECT count(*)::text count
+      FROM mwm_founder_publication_plan p
+      JOIN businesses b ON b.dedupe_key=p.dedupe_key AND b.id<>p.record_id
+      WHERE p.is_new=true AND p.is_primary=true
+        AND b.dedupe_key IS NOT NULL
+        AND COALESCE(b.is_duplicate,false)=false
+        AND COALESCE(b.status,'active') NOT IN ('duplicate','permanently_hidden')
+    `);
+    if (Number(dualIndexConflicts.rows[0]?.count ?? 0) !== 0) {
+      throw new Error("BULK_PUBLICATION_DUAL_INDEX_PREFLIGHT_CONFLICT");
+    }
 
     const stalePlan = await client.query<{ count: string }>(`
       SELECT COUNT(*)::text AS count
@@ -720,6 +871,17 @@ async function applyPlans(client: PoolClient): Promise<Record<string, number>> {
          AND COALESCE(b.is_duplicate, false) = false
          AND COALESCE(b.status, 'active') NOT IN ('duplicate','permanently_hidden','removed','deleted')
          AND b.listing_status IN ('live_unclaimed','live_claimed')
+         AND btrim(COALESCE(b.country,''))<>''
+         AND CASE lower(regexp_replace(btrim(b.country),'[^a-z0-9]+',' ','g'))
+               WHEN 'usa' THEN 'united states' WHEN 'us' THEN 'united states' WHEN 'u s' THEN 'united states'
+               WHEN 'united states of america' THEN 'united states'
+               WHEN 'uk' THEN 'united kingdom' WHEN 'u k' THEN 'united kingdom' WHEN 'great britain' THEN 'united kingdom'
+               ELSE lower(regexp_replace(btrim(b.country),'[^a-z0-9]+',' ','g')) END
+             = CASE lower(regexp_replace(btrim(p.country),'[^a-z0-9]+',' ','g'))
+               WHEN 'usa' THEN 'united states' WHEN 'us' THEN 'united states' WHEN 'u s' THEN 'united states'
+               WHEN 'united states of america' THEN 'united states'
+               WHEN 'uk' THEN 'united kingdom' WHEN 'u k' THEN 'united kingdom' WHEN 'great britain' THEN 'united kingdom'
+               ELSE lower(regexp_replace(btrim(p.country),'[^a-z0-9]+',' ','g')) END
     `);
 
     const missing = await client.query<{ count: string }>(`
@@ -869,6 +1031,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
 }
 
 export {
+  canonicalCandidateLocation,
   canonicalPriceRange,
   canonicalStreetIdentity,
   communityMinorityClaim,

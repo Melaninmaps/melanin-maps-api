@@ -15,6 +15,7 @@
     "stage-kinfolk-poc-businesses": "tsx ./src/stage-kinfolk-poc-businesses.ts",
     "publish-founder-business-inventory": "tsx ./src/publish-founder-business-inventory.ts",
     "publish-founder-global-destinations": "tsx ./src/publish-founder-global-destinations.ts",
+    "canonicalize-founder-global-locations": "tsx ./src/canonicalize-founder-global-locations.ts",
     "send-welcome-blast": "tsx ./src/send-welcome-blast.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
