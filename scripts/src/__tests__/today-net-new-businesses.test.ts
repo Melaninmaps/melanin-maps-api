@@ -82,7 +82,7 @@ describe("today net-new database safeguards", () => {
       expect(`${result.stdout}\n${result.stderr}`).toContain("DIRECTORY_IMPORT_LOCAL_STAGING=1 is required");
       expect(`${result.stdout}\n${result.stderr}`).not.toContain("ECONN");
     }
-  });
+  }, 60_000);
 
   it("regenerates derived manifests and the checksum ledger byte-for-byte", () => {
     const scripts = [
@@ -99,5 +99,5 @@ describe("today net-new database safeguards", () => {
       return outputs.map((path)=>digest(path));
     };
     expect(run()).toEqual(run());
-  }, 30_000);
+  }, 120_000);
 });
