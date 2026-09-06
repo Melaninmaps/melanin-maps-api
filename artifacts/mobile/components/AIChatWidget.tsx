@@ -334,22 +334,18 @@ export function AIChatWidget() {
 
       const base = getApiBase();
       const token = await getToken();
-      const ext = uri.split(".").pop() ?? "m4a";
-      let fileContent: string;
-      try {
-        fileContent = await new FileSystem.File(uri).base64();
-      } catch {
-        Alert.alert("Voice Input", "Couldn't read the recording — please try again.");
-        return;
-      }
+      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
+      const mimeType = ext === "wav" ? "audio/wav" : ext === "mp3" ? "audio/mpeg" : "audio/mp4";
+      const form = new FormData();
+      form.append("audio", { uri, name: `kinfolk-recording.${ext}`, type: mimeType } as unknown as Blob);
+      form.append("mimeType", mimeType);
 
       const r = await fetch(`${base}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ audio: fileContent, format: ext }),
+        body: form,
       });
 
       if (r.ok) {

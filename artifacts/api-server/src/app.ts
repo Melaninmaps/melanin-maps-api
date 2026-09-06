@@ -26,6 +26,7 @@ import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
 import { createResearchProviderChain } from "./library/researchProviderChain";
 import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
 import { createExtractiveLibraryWriter } from "./library/extractiveLibraryWriter";
+import { kinfolkModel } from "./kinfolk/model-config";
 import { registerExploreRoutes } from "./explore/registerExploreRoutes";
 import {
   createPostgresLocalContextRepository,
@@ -396,7 +397,7 @@ registerLivingLibraryRoutes(app, {
     ? createOpenAiLibraryWriter({
         apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
         baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
-        model: "gpt-4o-mini",
+        model: kinfolkModel("libraryResearch"),
       })
     : createExtractiveLibraryWriter(),
   researchLimiter: libraryResearchLimiter,

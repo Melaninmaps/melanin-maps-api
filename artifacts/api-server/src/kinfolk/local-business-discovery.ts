@@ -48,6 +48,7 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   description: string;
   city: string;
   stateCode: string | null;
+  detailUrl: string;
   website: string | null;
   phone: string | null;
   verified: boolean;
@@ -135,7 +136,7 @@ type WebSearch = (
 function safeWebUrl(value: string): string | null {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
+    return url.protocol === "https:" ? url.toString() : null;
   } catch {
     return null;
   }
@@ -189,7 +190,8 @@ function platformBusiness(business: GovernedKinfolkBusiness): BusinessDiscoveryP
     description: business.description,
     city: business.city,
     stateCode: business.stateCode,
-    website: business.website,
+    detailUrl: `/businesses/${encodeURIComponent(business.id)}`,
+    website: business.website ? safeWebUrl(business.website) : null,
     phone: business.phone,
     verified: business.verified,
     matchReasons: "matchReasons" in business && Array.isArray(business.matchReasons)
@@ -393,12 +395,17 @@ export async function discoverLocalBusinesses(input: {
   });
 
   const sources: SafeSource[] = [
-    ...businesses.flatMap((business) => business.website ? [{
-      id: business.website,
+    ...businesses.flatMap((business) => [{
+      id: business.detailUrl,
       title: business.name,
+      url: business.detailUrl,
+      label: "mwM_database" as const,
+    }, ...(business.website ? [{
+      id: business.website,
+      title: `${business.name} website`,
       url: business.website,
       label: "mwM_database" as const,
-    }] : []),
+    }] : [])]),
     ...mapPlaces.map((place) => ({
       id: place.detailUrl,
       title: place.title,
@@ -430,11 +437,11 @@ export async function discoverLocalBusinesses(input: {
         id: business.id,
         name: business.name,
         category: business.category || input.subject.label,
-        description: business.description || "Public business listing in the Mapping With Melanin directory.",
+        description: business.description,
         neighborhood: `${business.city}, ${business.stateCode ?? input.scope.stateCode}`,
-        mustTry: "Check the business source for current offerings, hours, and availability.",
+        mustTry: "",
         website: business.website,
-        detailUrl: `/businesses/${business.id}`,
+        detailUrl: business.detailUrl,
         verified: business.verified,
         matchReasons: business.matchReasons,
       })),

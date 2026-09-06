@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { routeEvidence } from "../evidence-route";
-import { planSemanticTurn } from "../semantic-turn-planner";
+import { deterministicArithmeticAnswer, planSemanticTurn } from "../semantic-turn-planner";
 
 describe("semantic turn planner", () => {
   it.each([
@@ -112,5 +112,21 @@ describe("semantic turn planner", () => {
       taskMode: "entity_explorer",
       evidenceNeeds: ["approved_internal", "primary_cultural"],
     });
+  });
+
+  it("keeps a contextual follow-up after arithmetic out of the clarification/Library path", async () => {
+    expect(deterministicArithmeticAnswer("10 + 10")).toBe("20");
+    const classify = vi.fn();
+    const plan = await planSemanticTurn({
+      message: "Should I have known that?",
+      evidenceRoute: routeEvidence("Should I have known that?"),
+      history: [
+        { role: "user", content: "10 + 10" },
+        { role: "assistant", content: "20" },
+      ],
+      classify,
+    });
+    expect(plan).toMatchObject({ taskMode: "direct_answer", needsClarification: false });
+    expect(classify).not.toHaveBeenCalled();
   });
 });

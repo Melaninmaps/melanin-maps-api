@@ -9,12 +9,16 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import type { SearchQuery } from "./lens-planner.js";
 import { enforceDiasporaFirstProviderQuery } from "./diasporaFirstResearchPolicy.js";
+import { kinfolkModel } from "./model-config.js";
 
 export type WebResult = {
   title: string;
   url: string;
   content: string;
   providerScore: number;
+  /** Citation metadata returned by the provider; never guessed. */
+  publisher?: string;
+  sourceDate?: string;
   favicon?: string;
   sourceQuery: SearchQuery;
 };
@@ -64,7 +68,7 @@ function normalizedQueries(queries: SearchQuery[]): SearchQuery[] {
 function cleanCitationUrl(value: string): string | null {
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    if (url.protocol !== "https:") return null;
     url.searchParams.delete("utm_source");
     url.hash = "";
     return url.toString();
@@ -81,12 +85,15 @@ function openAiConfigured(): boolean {
 }
 
 function openAiWebSearchModel(): string {
-  return process.env.KINFOLK_WEB_SEARCH_MODEL?.trim()
-    || process.env.KINFOLK_STAFF_DEMO_MODEL?.trim()
-    || "gpt-5";
+  return kinfolkModel("webSearch");
 }
 
-function responseCitations(response: unknown, queries: SearchQuery[]): WebResult[] {
+function citationPublisher(url: string): string {
+  return new URL(url).hostname.replace(/^www\./, "");
+}
+
+/** Parse only provider-returned citation fields into clickable HTTPS objects. */
+export function parseOpenAiResponseCitations(response: unknown, queries: SearchQuery[]): WebResult[] {
   const record = response && typeof response === "object" ? response as Record<string, unknown> : {};
   const output = Array.isArray(record.output) ? record.output : [];
   const outputText = typeof record.output_text === "string" ? record.output_text : "";
@@ -119,6 +126,10 @@ function responseCitations(response: unknown, queries: SearchQuery[]): WebResult
           url,
           content: outputText,
           providerScore: 0.8,
+          publisher: typeof citation.publisher === "string" && citation.publisher.trim()
+            ? citation.publisher.trim() : citationPublisher(url),
+          sourceDate: typeof citation.published_at === "string" && citation.published_at.trim()
+            ? citation.published_at.trim() : undefined,
           sourceQuery,
         });
       }
@@ -144,8 +155,9 @@ async function searchWithOpenAi(
   } : undefined;
 
   try {
+    const model = openAiWebSearchModel();
     const response = await openai.responses.create({
-      model: openAiWebSearchModel(),
+      model,
       tools: [{
         type: "web_search",
         search_context_size: "medium",
@@ -165,7 +177,7 @@ async function searchWithOpenAi(
       state: "completed",
       attempted: true,
       provider: "openai",
-      results: responseCitations(response, safeQueries),
+       results: parseOpenAiResponseCitations(response, safeQueries),
     };
   } catch {
     return { state: "degraded", attempted: true, provider: "openai", results: [] };
@@ -274,9 +286,8 @@ export async function searchLocalBusinessQueriesWithState(
 }
 
 /**
- * Existing general/current-information research retains the established Tavily
- * adapter. This avoids silently changing evidence semantics for high-stakes
- * routes while local-business discovery is repaired.
+ * Current-information research uses the OpenAI Responses web_search tool first.
+ * Tavily remains an optional fallback only when that research attempt fails.
  */
 export async function searchAllQueriesWithState(
   queries: SearchQuery[],
@@ -285,7 +296,13 @@ export async function searchAllQueriesWithState(
   if (queries.length === 0) {
     return { state: "completed", attempted: false, provider: null, results: [] };
   }
-  return searchWithTavily(queries, imageRequested);
+  const openAiOutcome = await searchWithOpenAi(queries);
+  if (openAiOutcome.state === "completed") return openAiOutcome;
+  const tavilyOutcome = await searchWithTavily(queries, imageRequested);
+  if (tavilyOutcome.state !== "unavailable") return tavilyOutcome;
+  return openAiOutcome.state === "unavailable"
+    ? { state: "unavailable", attempted: false, provider: null, results: [] }
+    : openAiOutcome;
 }
 
 /** Compatibility API for callers that only consume result rows. */

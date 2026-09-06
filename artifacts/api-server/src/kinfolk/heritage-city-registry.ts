@@ -29,6 +29,9 @@ export type TurnGeographyResolution = Readonly<{
  * who they are. Add new cities here instead of creating route-local alias maps.
  */
 export const HERITAGE_CITIES: readonly HeritageCity[] = [
+  // International city/province pairs are canonical inventory scopes too. This
+  // prevents an explicit city-only request from becoming an unscoped fallback.
+  { city: "Toronto", state: "ON", stateName: "Ontario", aliases: ["Toronto, Ontario", "Toronto ON"] },
   {
     city: "Philadelphia",
     state: "PA",
