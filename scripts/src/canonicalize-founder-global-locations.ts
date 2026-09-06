@@ -289,8 +289,17 @@ async function installPlan(client: PoolClient, batchId: string, repairs: RepairR
 
 async function applyLockedPlan(client: PoolClient, batchId: string, repairs: RepairRow[]): Promise<void> {
   await installPlan(client, batchId, repairs);
-  const badTargets = await client.query<{ count: string }>(`
-    SELECT count(*)::text count FROM mwm_global_location_repair r
+  const badTargets = await client.query<{
+    count: string; not_public: string; name_mismatch: string; city_mismatch: string;
+    state_mismatch: string; country_snapshot_mismatch: string;
+  }>(`
+    SELECT count(*)::text count,
+      count(*) FILTER (WHERE NOT public.business_record_is_public(b.status,b.listing_status,b.is_duplicate,b.permanently_hidden,b.name,b.description,b.data_source,b.phone))::text not_public,
+      count(*) FILTER (WHERE regexp_replace(lower(b.name),'[^a-z0-9]+','','g') <> regexp_replace(lower(s.name),'[^a-z0-9]+','','g'))::text name_mismatch,
+      count(*) FILTER (WHERE lower(btrim(b.city)) <> lower(r.canonical_city))::text city_mismatch,
+      count(*) FILTER (WHERE upper(btrim(COALESCE(b.state,''))) <> r.canonical_state)::text state_mismatch,
+      count(*) FILTER (WHERE b.country IS DISTINCT FROM r.target_country)::text country_snapshot_mismatch
+    FROM mwm_global_location_repair r
     JOIN businesses b ON b.id=r.target_id
     JOIN businesses s ON s.id=r.new_id
     WHERE r.target_id IS NOT NULL AND (
@@ -301,7 +310,12 @@ async function applyLockedPlan(client: PoolClient, batchId: string, repairs: Rep
       OR b.country IS DISTINCT FROM r.target_country
     )
   `);
-  if (Number(badTargets.rows[0]?.count ?? 0) !== 0) throw new Error("LOCATION_REPAIR_TARGET_CHANGED");
+  if (process.argv.includes("--diagnose-targets")) {
+    throw new Error(`LOCATION_REPAIR_TARGET_DIAGNOSTIC:${JSON.stringify(badTargets.rows[0] ?? {})}`);
+  }
+  if (Number(badTargets.rows[0]?.count ?? 0) !== 0) {
+    throw new Error(`LOCATION_REPAIR_TARGET_CHANGED:${JSON.stringify(badTargets.rows[0] ?? {})}`);
+  }
   const dualIndexConflicts = await client.query<{ count: string }>(`
     SELECT count(*)::text count FROM mwm_global_location_repair r
     JOIN businesses b ON b.dedupe_key=r.canonical_dedupe_key AND b.id<>r.new_id
