@@ -302,17 +302,17 @@ export declare const wishlistItemsTable: import("drizzle-orm/pg-core").PgTableWi
 }>;
 export declare const insertWishlistItemSchema: z.ZodObject<{
     userId: z.ZodString;
-    city: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    city: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     neighborhood: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     category: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     location: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    country: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     website: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     nonMinorityOwned: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
     businessName: z.ZodString;
     sessionId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    country: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     destinationType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     mustTry: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, {

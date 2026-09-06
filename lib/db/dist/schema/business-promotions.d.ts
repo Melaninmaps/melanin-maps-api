@@ -64,7 +64,7 @@ export declare const businessPromotionsTable: import("drizzle-orm/pg-core").PgTa
             tableName: "business_promotions";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "pending" | "active" | "expired" | "cancelled";
+            data: "active" | "pending" | "expired" | "cancelled";
             driverParam: string;
             notNull: true;
             hasDefault: true;

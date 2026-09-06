@@ -282,9 +282,9 @@ export declare const insertCommunityPlaceSchema: z.ZodObject<{
     city: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     state: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     category: z.ZodOptional<z.ZodString>;
+    country: z.ZodOptional<z.ZodString>;
     isVerified: z.ZodOptional<z.ZodBoolean>;
     communityRating: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    country: z.ZodOptional<z.ZodString>;
     lat: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     lng: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     addedByUserId: z.ZodOptional<z.ZodNullable<z.ZodString>>;

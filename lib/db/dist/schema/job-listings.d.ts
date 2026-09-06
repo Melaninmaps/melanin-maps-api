@@ -517,11 +517,11 @@ export declare const jobListingsTable: import("drizzle-orm/pg-core").PgTableWith
 export declare const insertJobListingSchema: z.ZodObject<{
     industry: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     updatedAt: z.ZodOptional<z.ZodDate>;
+    description: z.ZodString;
+    type: z.ZodOptional<z.ZodString>;
+    status: z.ZodOptional<z.ZodString>;
     city: z.ZodString;
     state: z.ZodString;
-    description: z.ZodString;
-    status: z.ZodOptional<z.ZodString>;
-    type: z.ZodOptional<z.ZodString>;
     title: z.ZodString;
     businessId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     latitude: z.ZodOptional<z.ZodNullable<z.ZodString>>;

@@ -4,6 +4,10 @@ export type SessionMessage = {
     content: string;
     recommendations?: Record<string, unknown> | null;
     followUpSuggestions?: string[];
+    sources?: Array<{
+        title: string;
+        url: string;
+    }>;
     timestamp: string;
 };
 export declare const kinfolkSessionsTable: import("drizzle-orm/pg-core").PgTableWithColumns<{

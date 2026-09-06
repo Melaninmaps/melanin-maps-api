@@ -631,7 +631,7 @@ export declare const healthPostsTable: import("drizzle-orm/pg-core").PgTableWith
             tableName: "health_posts";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "removed" | "active";
+            data: "active" | "removed";
             driverParam: string;
             notNull: true;
             hasDefault: true;

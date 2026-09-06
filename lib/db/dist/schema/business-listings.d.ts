@@ -264,11 +264,11 @@ export declare const businessListingsTable: import("drizzle-orm/pg-core").PgTabl
 export declare const insertBusinessListingSchema: import("zod/v4").ZodObject<{
     name: import("zod/v4").ZodString;
     id: import("zod/v4").ZodOptional<import("zod/v4").ZodString>;
+    active: import("zod/v4").ZodOptional<import("zod/v4").ZodBoolean>;
     description: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     businessId: import("zod/v4").ZodString;
     category: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     imageUrl: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
-    active: import("zod/v4").ZodOptional<import("zod/v4").ZodBoolean>;
     stripeProductId: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     stripePriceId: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     priceInCents: import("zod/v4").ZodInt;

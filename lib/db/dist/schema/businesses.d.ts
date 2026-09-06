@@ -193,6 +193,25 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             length: 30;
         }>;
+        ownerClaimStatus: import("drizzle-orm/pg-core").PgColumn<{
+            name: "owner_claim_status";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 30;
+        }>;
         rating: import("drizzle-orm/pg-core").PgColumn<{
             name: "rating";
             tableName: "businesses";
@@ -316,6 +335,23 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             $type: string[];
         }>;
+        ownershipClaim: import("drizzle-orm/pg-core").PgColumn<{
+            name: "ownership_claim";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         diasporaCountries: import("drizzle-orm/pg-core").PgColumn<{
             name: "diaspora_countries";
             tableName: "businesses";
@@ -549,6 +585,23 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             length: 255;
         }>;
+        sourceUrl: import("drizzle-orm/pg-core").PgColumn<{
+            name: "source_url";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         hours: import("drizzle-orm/pg-core").PgColumn<{
             name: "hours";
             tableName: "businesses";
@@ -1778,6 +1831,7 @@ export declare const insertBusinessSchema: z.ZodObject<{
     status: z.ZodOptional<z.ZodString>;
     city: z.ZodString;
     state: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    sourceUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     verified: z.ZodOptional<z.ZodBoolean>;
     latitude: z.ZodString;
     longitude: z.ZodString;
@@ -1786,15 +1840,17 @@ export declare const insertBusinessSchema: z.ZodObject<{
     tags: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;
     imageUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     featured: z.ZodOptional<z.ZodBoolean>;
-    address: z.ZodString;
     country: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    address: z.ZodString;
     province: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     listingStatus: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    ownerClaimStatus: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     rating: z.ZodOptional<z.ZodString>;
     reviewCount: z.ZodOptional<z.ZodInt>;
     blackOwned: z.ZodOptional<z.ZodBoolean>;
     ownershipDesignations: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;
     verifiedDesignations: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;
+    ownershipClaim: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     diasporaCountries: z.ZodOptional<z.ZodNullable<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>>;
     confidenceScore: z.ZodOptional<z.ZodInt>;
     safetyRating: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -2102,6 +2158,25 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
     }, {}, {
         length: 30;
     }>;
+    ownerClaimStatus: import("drizzle-orm/pg-core").PgColumn<{
+        name: "owner_claim_status";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 30;
+    }>;
     rating: import("drizzle-orm/pg-core").PgColumn<{
         name: "rating";
         tableName: "businesses";
@@ -2225,6 +2300,23 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
     }, {}, {
         $type: string[];
     }>;
+    ownershipClaim: import("drizzle-orm/pg-core").PgColumn<{
+        name: "ownership_claim";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     diasporaCountries: import("drizzle-orm/pg-core").PgColumn<{
         name: "diaspora_countries";
         tableName: "businesses";
@@ -2458,6 +2550,23 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
     }, {}, {
         length: 255;
     }>;
+    sourceUrl: import("drizzle-orm/pg-core").PgColumn<{
+        name: "source_url";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     hours: import("drizzle-orm/pg-core").PgColumn<{
         name: "hours";
         tableName: "businesses";
