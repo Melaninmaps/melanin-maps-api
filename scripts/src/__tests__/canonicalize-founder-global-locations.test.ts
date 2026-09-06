@@ -7,6 +7,7 @@ import {
   isUuid,
   normalizeCountry,
   parseCityRegion,
+  targetCountryIsCompatible,
 } from "../canonicalize-founder-global-locations";
 
 const base = {
@@ -51,6 +52,11 @@ describe("founder global location canonicalization", () => {
     expect(normalizeCountry("Canada")).toBe("CA");
     expect(normalizeCountry("Unknown")).toBe("");
     expect(normalizeCountry("Zimbabwe / Zambia / Botswana")).toBe("");
+    expect(targetCountryIsCompatible("US", null)).toBe(true);
+    expect(targetCountryIsCompatible("US", "  ")).toBe(true);
+    expect(targetCountryIsCompatible("US", "USA")).toBe(true);
+    expect(targetCountryIsCompatible("US", "Unknown")).toBe(false);
+    expect(targetCountryIsCompatible("US", "Canada")).toBe(false);
     expect(isUuid("00000000-0000-4000-8000-000000000001")).toBe(true);
     expect(isUuid("legacy-business-id")).toBe(false);
   });

@@ -62,6 +62,11 @@ function normalizeCountry(value: unknown): string {
   return canonicalCountryCode(value) ?? "";
 }
 
+function targetCountryIsCompatible(sourceCountryCode: string, targetCountry: unknown): boolean {
+  const rawTarget = typeof targetCountry === "string" ? targetCountry.trim() : "";
+  return rawTarget === "" || normalizeCountry(rawTarget) === sourceCountryCode;
+}
+
 function dedupeKey(business: Pick<BusinessRow, "name" | "address"> & { city: string; state: string }): string {
   const name = normalizeText(business.name);
   const address = normalizeText(business.address);
@@ -187,8 +192,7 @@ async function buildLockedPlan(client: PoolClient): Promise<{ batchId: string; r
     if (!sourceCountry) throw new Error(`LOCATION_REPAIR_SOURCE_COUNTRY_MISSING:${row.id}`);
     const matches = (publicByIdentity.get(key) ?? []).filter((candidate) =>
       candidate.id !== row.id
-      && Boolean(normalizeCountry(candidate.country))
-      && normalizeCountry(candidate.country) === sourceCountry
+      && targetCountryIsCompatible(sourceCountry, candidate.country)
     );
     if (matches.length) collisions += 1;
     if (matches.length > 1) multiMatchRows += 1;
@@ -349,7 +353,8 @@ async function applyLockedPlan(client: PoolClient, batchId: string, repairs: Rep
     ), target_inputs AS (
       SELECT DISTINCT ON (r.target_id) r.target_id,b.id,b.address,NULLIF(btrim(b.website),'') website,
              NULLIF(btrim(b.source_url),'') source_url,b.created_at,true is_target,
-             r.target_country canonical_country,r.canonical_country_code
+             COALESCE(NULLIF(btrim(r.target_country),''),r.canonical_country) canonical_country,
+             r.canonical_country_code
       FROM mwm_global_location_repair r JOIN businesses b ON b.id=r.target_id
       WHERE r.target_id IS NOT NULL
       ORDER BY r.target_id,r.new_id
@@ -404,7 +409,7 @@ async function applyLockedPlan(client: PoolClient, batchId: string, repairs: Rep
   const targetsUpdated = await client.query(`
     UPDATE businesses target
        SET website=a.website,source_url=a.source_url,
-           source_evidence=a.merged_source_evidence,updated_at=NOW()
+           country=a.canonical_country,source_evidence=a.merged_source_evidence,updated_at=NOW()
       FROM mwm_global_location_merge_aggregate a
      WHERE target.id=a.target_id
   `);
@@ -477,7 +482,7 @@ async function applyLockedPlan(client: PoolClient, batchId: string, repairs: Rep
       (SELECT count(*)::text FROM mwm_global_location_repair r JOIN businesses b ON b.id=r.target_id
         WHERE r.target_id IS NOT NULL
           AND public.business_record_is_public(b.status,b.listing_status,b.is_duplicate,b.permanently_hidden,b.name,b.description,b.data_source,b.phone)
-          AND b.country IS NOT DISTINCT FROM r.target_country) targets
+          AND b.country IS NOT DISTINCT FROM COALESCE(NULLIF(btrim(r.target_country),''),r.canonical_country)) targets
   `, [POLICY_VERSION]);
   const result = post.rows[0];
   if (!result
@@ -543,4 +548,4 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   });
 }
 
-export { chooseWinner, dedupeKey, isUuid, normalizeCountry, normalizeText, parseCityRegion };
+export { chooseWinner, dedupeKey, isUuid, normalizeCountry, normalizeText, parseCityRegion, targetCountryIsCompatible };
