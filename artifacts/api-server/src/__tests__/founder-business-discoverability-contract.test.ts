@@ -84,6 +84,10 @@ describe("founder business discoverability correction", () => {
 
   it("geocodes only supplied street addresses under the local-staging guard and never marks a listing verified", () => {
     expect(geocoder).toContain("assertDirectoryReviewLocalStaging(process.env)");
+    expect(geocoder).toContain("const pool = new Pool({");
+    expect(geocoder).toContain("query_timeout: 120_000");
+    expect(geocoder).toContain("statement_timeout: 90_000");
+    expect(geocoder).not.toContain("if (apply && !assertDirectoryReviewLocalStaging");
     expect(geocoder).toContain("resolvePreciseBusinessLocation");
     expect(geocoder.match(/[0-9a-f]{64}/g)).toHaveLength(3);
     expect(geocoder).toContain("p.publication_action = 'create'");

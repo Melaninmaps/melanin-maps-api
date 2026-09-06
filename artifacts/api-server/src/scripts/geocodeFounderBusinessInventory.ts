@@ -1,4 +1,4 @@
-import { pool } from "@workspace/db";
+import { Pool } from "pg";
 import { assertDirectoryReviewLocalStaging } from "../directoryImport/localStagingGuard";
 import {
   isValidPinCoordinates,
@@ -13,6 +13,13 @@ const AUTHORIZED_SOURCES = [
   { source_name: "cumulative-content-global-candidates.jsonl", source_sha256: "6f1e686856eb79e45add03f2208ac836167cde7d5ca69ea99f4464eeae9169a8", source_row_count: 7_315 },
 ];
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 2,
+  connectionTimeoutMillis: 10_000,
+  query_timeout: 120_000,
+  statement_timeout: 90_000,
+});
 
 type BusinessRow = {
   id: string;
@@ -215,7 +222,7 @@ async function persistPin(business: BusinessRow, location: Awaited<ReturnType<ty
 async function main(): Promise<void> {
   const apply = process.argv.includes("--apply");
   const limit = positiveInteger(option("--limit"), 5_000);
-  if (apply && !assertDirectoryReviewLocalStaging(process.env)) {
+  if (!assertDirectoryReviewLocalStaging(process.env)) {
     throw new Error("Founder pin geocoding requires the guarded local staging environment.");
   }
   const rows = await loadPending(limit);
