@@ -22,6 +22,9 @@ import {
 
 const communitySubmissionRepository = new SubmissionRepository();
 
+// Tester privileges never expose pending/review rows. Anonymous and member
+// discovery both consume only records accepted by the canonical public lifecycle.
+
 const photoUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
