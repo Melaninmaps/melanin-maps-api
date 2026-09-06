@@ -281,6 +281,13 @@ function FilterRow({
 
 function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
   const unclaimed = record.listingStatus === "live_unclaimed";
+  const latitude = Number(record.latitude);
+  const longitude = Number(record.longitude);
+  const hasPin = record.latitude != null
+    && record.longitude != null
+    && Number.isFinite(latitude)
+    && Number.isFinite(longitude)
+    && !(latitude === 0 && longitude === 0);
   const communityOwnership = record.ownershipClaim === "community_reported_minority_owned"
     ? "Community-reported minority-owned · Not verified"
     : record.ownershipClaim === "community_reported_non_minority_owned"
@@ -305,9 +312,16 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
       <p className="mt-4 text-xs font-semibold text-[#8D5C17]">
         {unclaimed ? "Community/founder-listed · Unclaimed · Not verified" : record.verified ? "Verified listing" : "Not verified"}
       </p>
+      {unclaimed && (
+        <p className="mt-1 text-xs text-[#3A1F0E]/65">
+          {hasPin ? "Precise map pin available" : "Searchable by city · Precise map pin pending"}
+        </p>
+      )}
       {communityOwnership && <p className="mt-1 text-xs font-semibold text-[#6B4A2F]">{communityOwnership}</p>}
       {record.priceRange && <p className="mt-1 text-xs text-[#3A1F0E]/60">Price: {record.priceRange}</p>}
-      <p className="mt-3 text-xs font-bold text-[#CA922B]">View details, Community Says, website, and media →</p>
+      <p className="mt-3 text-xs font-bold text-[#CA922B]">
+        View details, Community Says, and {record.website ? "website" : record.sourceUrl ? "supplied source" : "available links"} →
+      </p>
     </Link>
   );
 }

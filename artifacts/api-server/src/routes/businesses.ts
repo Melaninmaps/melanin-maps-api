@@ -1,4 +1,4 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type NextFunction, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable, BUSINESS_CATEGORY_TAXONOMY, ALL_VALID_CATEGORY_NAMES } from "@workspace/db";
@@ -11,6 +11,7 @@ import { objectStorageClient } from "../lib/objectStorage";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
+import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -106,7 +107,44 @@ const CATEGORY_FILTER_ALIASES: Record<string, string[]> = {
 function categoryFilterStorageValues(raw: string): string[] {
   return CATEGORY_FILTER_ALIASES[raw.trim().toLocaleLowerCase("en-US")] ?? [raw.trim()];
 }
-router.use(requireAuth);
+function toPublicBusinessRecord<T extends Record<string, unknown>>(business: T) {
+  const {
+    dataSource: _dataSource,
+    isDuplicate: _isDuplicate,
+    permanentlyHidden: _permanentlyHidden,
+    submittedById: _submittedById,
+    stripeConnectAccountId: _stripeConnectAccountId,
+    sellerAgreementAcceptedAt: _sellerAgreementAcceptedAt,
+    businessTrialStartedAt: _businessTrialStartedAt,
+    marketplaceFeeLocked: _marketplaceFeeLocked,
+    lockedFee: _lockedFee,
+    lockedUntil: _lockedUntil,
+    feeSource: _feeSource,
+    membershipRenewalDate: _membershipRenewalDate,
+    referredByCode: _referredByCode,
+    targetAudience: _targetAudience,
+    pendingPhotos: _pendingPhotos,
+    flagCount: _flagCount,
+    flagStatus: _flagStatus,
+    _sim_score,
+    ...publicRecord
+  } = business;
+  return publicRecord;
+}
+
+function publicBusinessVisibilityCondition() {
+  return sql<boolean>`EXISTS (
+    SELECT 1
+      FROM public.public_businesses visible_business
+     WHERE visible_business.id = ${businessesTable.id}
+  )`;
+}
+
+router.use((req: Request, res: Response, next: NextFunction) => {
+  if (!req.path.startsWith("/businesses")) return next();
+  if (isPublicBusinessDiscoveryRead(req)) return next();
+  return requireAuth(req, res, next);
+});
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -187,27 +225,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
     const conditions = [];
 
-    // ── Visibility gate — always exclude duplicates and hidden records ────────
-    // is_duplicate rows exist only for admin/audit queries, never public results.
-    // status IN (...) catches rows that were hidden via the admin panel.
-    conditions.push(
-      sql`COALESCE(${businessesTable}.is_duplicate, false) = false`
-    );
-    conditions.push(
-      sql`COALESCE(${businessesTable}.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')`
-    );
-    conditions.push(
-      sql`COALESCE(${businessesTable}.name, '') NOT ILIKE '%[demo]%'`
-    );
-    conditions.push(
-      sql`COALESCE(${businessesTable}.description, '') NOT ILIKE '%[demo]%'`
-    );
-
-    // ── listing_status gate — public search reads published inventory only ───
-    // Tester privileges never expose pending/review rows through member search.
-    conditions.push(
-      sql`${businessesTable}.listing_status IN ('live_unclaimed', 'live_claimed')`
-    );
+    // One canonical database function enforces active/live lifecycle, duplicate,
+    // permanent-hide, demo-source/name/description, and reserved test-phone rules.
+    conditions.push(publicBusinessVisibilityCondition());
 
     if (category && typeof category === "string" && category !== "All") {
       const categoryValues = categoryFilterStorageValues(category);
@@ -460,80 +480,44 @@ router.get("/businesses", async (req: Request, res: Response) => {
           .map(t => t.replace(/[^a-z0-9'&-]/g, ""))
           .filter(t => t.length >= 3 && !STOP.includes(t));
 
-        // Build scope: carry all restrictive filters from the caller into fuzzy SQL.
-        // Parameterized — no user input ever interpolated into SQL text.
-        // Fuzzy fallback must mirror the same visibility rules as the main query.
-        const fuzzyScope: string[] = [
-          "COALESCE(b.is_duplicate, false) = false",
-          "COALESCE(b.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')",
-          "COALESCE(b.name, '') NOT ILIKE '%[demo]%'",
-          "COALESCE(b.description, '') NOT ILIKE '%[demo]%'",
+        const fuzzyConditions = [
+          publicBusinessVisibilityCondition(),
         ];
-        const fuzzyScopeParams: unknown[] = [];
-        fuzzyScope.push("b.listing_status IN ('live_unclaimed', 'live_claimed')");
         if (city && typeof city === "string" && city.trim()) {
-          fuzzyScopeParams.push(normalizeCityAlias(city));
-          fuzzyScope.push(`LOWER(BTRIM(COALESCE(b.city, ''))) = LOWER(BTRIM($${fuzzyScopeParams.length}))`);
+          fuzzyConditions.push(sql<boolean>`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`);
         }
         if (state && typeof state === "string" && state.trim()) {
-          fuzzyScopeParams.push(state.trim());
-          fuzzyScope.push(`UPPER(BTRIM(COALESCE(b.state, ''))) = UPPER(BTRIM($${fuzzyScopeParams.length}))`);
+          fuzzyConditions.push(sql<boolean>`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state.trim()}))`);
         }
         if (country && typeof country === "string" && country.trim()) {
-          fuzzyScopeParams.push(`%${country.trim()}%`);
-          fuzzyScope.push(`LOWER(b.country) LIKE LOWER($${fuzzyScopeParams.length})`);
+          fuzzyConditions.push(sql<boolean>`${businessesTable.country} ILIKE ${`%${country.trim()}%`}`);
         }
-        const fuzzyScopeWhere = fuzzyScope.join(" AND ");
-        // Number of scope params before the search-term params
-        const N = fuzzyScopeParams.length;
-
-        let fuzzyRes: { rows: Array<typeof businessesTable.$inferSelect & { _sim_score: number }> } = { rows: [] };
+        let fuzzyRows: Array<typeof businessesTable.$inferSelect> = [];
 
         if (tokens.length > 1) {
-          // Multi-token fuzzy: any significant token matches by ILIKE or trigram,
-          // scoped to all caller filters.
-          const T = tokens.length;
-          const orClauses = tokens.flatMap((_, i) => [
-            `b.name ILIKE $${N + 1 + i}`,
-            `similarity(LOWER(b.name), LOWER($${N + 1 + T + i})) > 0.18`,
-          ]).join(" OR ");
-          const simCols = tokens.map((_, i) =>
-            `similarity(LOWER(b.name), LOWER($${N + 1 + T + i}))`
-          ).join(", ");
-          const multiParams: unknown[] = [
-            ...fuzzyScopeParams,
-            ...tokens.map(t => `%${t}%`),
-            ...tokens,
-          ];
-          const r = await pool.query<typeof businessesTable.$inferSelect & { _sim_score: number }>(
-            `SELECT b.*, GREATEST(${simCols}) AS _sim_score
-             FROM businesses b
-             WHERE ${fuzzyScopeWhere} AND (${orClauses})
-             ORDER BY _sim_score DESC, b.confidence_score DESC
-             LIMIT 20`,
-            multiParams,
-          );
-          fuzzyRes = r;
+          const tokenMatches = tokens.flatMap((token) => [
+            ilike(businessesTable.name, `%${token}%`),
+            sql<boolean>`similarity(LOWER(${businessesTable.name}), LOWER(${token})) > 0.18`,
+          ]);
+          const score = sql<number>`GREATEST(${sql.join(tokens.map((token) => sql`similarity(LOWER(${businessesTable.name}), LOWER(${token}))`), sql`, `)})`;
+          fuzzyRows = await db.select().from(businessesTable)
+            .where(and(...fuzzyConditions, or(...tokenMatches)!))
+            .orderBy(desc(score), desc(businessesTable.confidenceScore))
+            .limit(20);
         }
 
         // Always try full-phrase similarity too (catches misspellings),
         // also scoped to all caller filters.
-        if (fuzzyRes.rows.length === 0) {
-          const phraseParams: unknown[] = [...fuzzyScopeParams, cleanSearch];
-          const phraseIdx = N + 1; // position of cleanSearch in params
-          fuzzyRes = await pool.query<typeof businessesTable.$inferSelect & { _sim_score: number }>(
-            `SELECT b.*, similarity(LOWER(b.name), LOWER($${phraseIdx})) AS _sim_score
-             FROM businesses b
-             WHERE ${fuzzyScopeWhere}
-               AND similarity(LOWER(b.name), LOWER($${phraseIdx})) > 0.22
-             ORDER BY _sim_score DESC
-             LIMIT 15`,
-            phraseParams,
-          );
+        if (fuzzyRows.length === 0) {
+          const phraseScore = sql<number>`similarity(LOWER(${businessesTable.name}), LOWER(${cleanSearch}))`;
+          fuzzyRows = await db.select().from(businessesTable)
+            .where(and(...fuzzyConditions, sql<boolean>`${phraseScore} > 0.22`))
+            .orderBy(desc(phraseScore))
+            .limit(15);
         }
 
-        if (fuzzyRes.rows.length > 0) {
-          finalResults = fuzzyRes.rows.map((r) => ({
+        if (fuzzyRows.length > 0) {
+          finalResults = fuzzyRows.map((r) => ({
             ...r,
             topCaptions: [],
             featured: false,
@@ -565,7 +549,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
     // Truthful total: when fuzzy fallback produced the results, total = those results;
     // standard pagination may have total > returned list (both are valid, explained by limit).
     const responseTotal = usedFuzzyFallback ? finalResults.length : Number(totalCount);
-    sendDynamicJson(res, { businesses: withDistance, total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
+    sendDynamicJson(res, { businesses: withDistance.map((business) => toPublicBusinessRecord(business)), total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
@@ -579,9 +563,8 @@ router.get("/businesses/mention-search", async (req: Request, res: Response) => 
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     if (!q) { res.json({ businesses: [] }); return; }
     const result = await pool.query<{ id: string; name: string; category: string | null; city: string | null }>(
-      `SELECT id, name, category, city FROM businesses
+      `SELECT id, name, category, city FROM public.public_businesses
        WHERE name ILIKE $1
-         AND listing_status IN ('live_unclaimed', 'live_claimed')
        ORDER BY name
        LIMIT 8`,
       [`%${q}%`]
@@ -1319,12 +1302,11 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
 
     sendDynamicJson(res, {
       business: {
-        ...business,
+        ...toPublicBusinessRecord(business),
         // Normalize array fields so the web/mobile clients always receive [] not null.
         // photos and pendingPhotos are jsonb columns that default to [] but can be null
         // in older rows that pre-date the column addition.
         photos: Array.isArray(business.photos) ? business.photos : [],
-        pendingPhotos: Array.isArray(business.pendingPhotos) ? business.pendingPhotos : [],
         audienceType: identity?.audienceType ?? "unknown",
         ageRestrictionReasons: identity?.ageRestrictionReasons ?? [],
         environmentTags: identity?.environmentTags ?? [],

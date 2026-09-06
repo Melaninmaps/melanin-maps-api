@@ -13,6 +13,7 @@
     "stage-directory-import": "tsx ./src/stage-directory-import.ts",
     "stage-cumulative-content-global": "tsx ./src/stage-cumulative-content-global.ts",
     "stage-kinfolk-poc-businesses": "tsx ./src/stage-kinfolk-poc-businesses.ts",
+    "publish-founder-business-inventory": "tsx ./src/publish-founder-business-inventory.ts",
     "send-welcome-blast": "tsx ./src/send-welcome-blast.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

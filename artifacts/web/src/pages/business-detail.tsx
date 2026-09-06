@@ -30,6 +30,17 @@ function safeExternalProfileUrl(value: unknown, expectedPlatform: SocialVideoPla
   }
 }
 
+function safePublicReferenceUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 // Parse a Google Places JSON hours array (["Monday: 9 AM–5 PM", ...]) or a plain string.
 function parseHoursArray(hours: string | null | undefined): string[] | null {
   if (!hours) return null;
@@ -1268,6 +1279,19 @@ export default function BusinessDetail() {
                     <a href={business.website} target="_blank" rel="noreferrer" className="hover:text-[#CA922B] truncate">{business.website.replace(/^https?:\/\//, '')}</a>
                   </div>
                 )}
+
+                {(() => {
+                  const sourceUrl = safePublicReferenceUrl((business as any).sourceUrl);
+                  if (!sourceUrl || sourceUrl === business.website) return null;
+                  return (
+                    <div className="flex items-center gap-4 text-white/80 text-sm">
+                      <BookOpen className="w-5 h-5 text-[#CA922B] shrink-0" />
+                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-[#CA922B] truncate">
+                        View supplied listing source
+                      </a>
+                    </div>
+                  );
+                })()}
 
                 {(() => {
                   const record = business as any;

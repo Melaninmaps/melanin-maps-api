@@ -37,6 +37,7 @@ export const businessesTable = pgTable("businesses", {
   reviews: jsonb("reviews").$type<Review[]>().notNull().default([]),
   phone: varchar("phone", { length: 30 }),
   website: varchar("website", { length: 255 }),
+  sourceUrl: text("source_url"),
   hours: varchar("hours", { length: 255 }),
   priceRange: varchar("price_range", { length: 10 }),
   imageUrl: varchar("image_url", { length: 512 }),

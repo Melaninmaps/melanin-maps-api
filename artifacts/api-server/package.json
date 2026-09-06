@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "release-db:verify": "tsx src/scripts/verifyReleaseDatabase.ts",
+    "geocode:founder-business-inventory": "tsx src/scripts/geocodeFounderBusinessInventory.ts",
     "library:seed": "tsx scripts/seedLivingLibrary.ts",
     "library:verify": "tsx scripts/seedLivingLibrary.ts --verify"
   },

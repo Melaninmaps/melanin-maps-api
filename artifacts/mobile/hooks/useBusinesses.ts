@@ -70,6 +70,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     reviews: (b.reviews as Business["reviews"]) ?? [],
     phone: b.phone as string | undefined,
     website: b.website as string | undefined,
+    sourceUrl: b.sourceUrl as string | undefined,
     hours: b.hours as string | undefined,
     priceRange: b.priceRange as string | undefined,
     imageUrl: b.imageUrl as string | undefined,

@@ -307,6 +307,46 @@ describe("objective publication policy", () => {
     vi.unstubAllEnvs();
   });
 
+  it("rejects wrong roads that share only a directional, common word, or part of a multiword name", async () => {
+    vi.stubEnv("GOOGLE_MAPS_API_KEY", "");
+    const cases = [
+      { submitted: "123 North Main Street", returned: "North Avenue", house: "123" },
+      { submitted: "124 Market Street", returned: "Market Avenue", house: "124" },
+      { submitted: "125 Martin Luther King Boulevard", returned: "Martin Avenue", house: "125" },
+    ];
+    const fetchMock = vi.fn();
+    for (const item of cases) {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{
+          lat: "39.9511",
+          lon: "-75.1702",
+          display_name: `${item.house} ${item.returned}, Philadelphia, Pennsylvania, United States`,
+          address: {
+            house_number: item.house,
+            road: item.returned,
+            city: "Philadelphia",
+            state: "Pennsylvania",
+            postcode: "19106",
+            "ISO3166-2-lvl4": "US-PA",
+            country: "United States",
+            country_code: "us",
+          },
+        }],
+      });
+    }
+    vi.stubGlobal("fetch", fetchMock);
+    for (const item of cases) {
+      await expect(resolvePreciseBusinessLocation({
+        ...completeBody({ address: item.submitted, postalCode: "19106" }),
+        socialProfiles: {},
+      } as any)).resolves.toBeNull();
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(cases.length);
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
   it("coalesces concurrent Google resolutions for the same normalized address", async () => {
     vi.stubEnv("GOOGLE_MAPS_API_KEY", "test-key");
     const fetchMock = vi.fn().mockResolvedValue({

@@ -28,6 +28,7 @@ export interface Business {
   tags: string[];
   phone?: string;
   website?: string;
+  sourceUrl?: string;
   hours?: string;
   priceRange?: string;
   imageUrl?: string;

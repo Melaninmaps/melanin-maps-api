@@ -440,9 +440,10 @@ export default function BusinessDetailScreen() {
   };
 
   const handleWebsite = async () => {
-    if (business.website) {
-      trackClick("website_visit");
-      const raw = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
+    const externalUrl = business.website ?? business.sourceUrl;
+    if (externalUrl) {
+      trackClick(business.website ? "website_visit" : "source_visit");
+      const raw = /^https?:\/\//i.test(externalUrl) ? externalUrl : `https://${externalUrl}`;
 
       // For Community References: append UTM params and fire attribution tracking
       if ((business as any).isReferenceOnly) {
@@ -1033,11 +1034,13 @@ export default function BusinessDetailScreen() {
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.phone}</Text>
               </TouchableOpacity>
             )}
-            {business.website && (
+            {(business.website || business.sourceUrl) && (
               <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleWebsite}>
                 <Feather name="globe" size={16} color={(business as any).isReferenceOnly ? "#0369A1" : colors.primary} />
                 <Text style={[styles.infoText, { color: (business as any).isReferenceOnly ? "#0369A1" : colors.primary }]}>
-                  {(business as any).isReferenceOnly ? "Visit Resource" : business.website}
+                  {(business as any).isReferenceOnly
+                    ? "Visit Resource"
+                    : business.website ?? "View supplied listing source"}
                 </Text>
                 {(business as any).isReferenceOnly && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#E0F2FE", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>

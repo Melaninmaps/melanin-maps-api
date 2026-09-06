@@ -202,6 +202,12 @@ router.use(communityFeedbackRouter); // GET public (counts); PUT self-authentica
 router.use(locationSharesRouter);
 router.use(trustedSafetyShareRouter);
 
+// Canonical business discovery is public so any visitor can search the founder-
+// and community-fed directory. The business router itself authenticates every
+// mutation and every member/owner-only read; safety and private community data
+// remain behind the global wall below.
+router.use(businessesRouter);
+
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
 // checks) and the mobile app before showing the KinfolkAI chat UI.
@@ -216,10 +222,10 @@ router.get("/kinfolk/health", async (_req, res) => {
   res.json({ ok: true });
 });
 
-// ── Member wall — ALL platform data requires an authenticated session ───────
-// MWM serves communities that face real harm. Business locations, HBCU records,
-// sundown-town data, and safety intelligence must never be readable by
-// unauthenticated callers. Returns 401 — never an empty result set.
+// ── Member wall — private platform and safety data require authentication ────
+// MWM serves communities that face real harm. Private member locations, HBCU records,
+// sundown-town data, and safety intelligence remain protected. Canonical public
+// directory reads are the narrow exception mounted immediately above.
 // Established: 2026-08-10. Supersedes previous public-discovery architecture.
 router.use(requireAuth);
 
@@ -236,8 +242,6 @@ router.use(referralsRouter);
 router.use(revenuecatRouter);
 router.use(membershipFamilyRouter);
 
-// Businesses
-router.use(businessesRouter);
 router.use(travelRouter);
 router.use(surveysRouter);
 router.use(savedPlacesRouter);

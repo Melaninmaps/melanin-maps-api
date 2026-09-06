@@ -268,14 +268,17 @@ function postalCodeMatches(value: string | null | undefined, expected: string | 
 function streetIdentity(address: string | null | undefined): { house: string; tokens: string[] } {
   const firstLine = normalized(address?.split(",")[0]);
   const house = firstLine.match(/^\d+[a-z]?/)?.[0] ?? "";
-  const excluded = new Set([
-    "street", "st", "road", "rd", "avenue", "ave", "drive", "dr", "lane", "ln",
-    "boulevard", "blvd", "highway", "hwy", "way", "court", "ct", "place", "pl",
-    "suite", "unit", "floor",
-  ]);
-  const tokens = firstLine
-    .split(" ")
-    .filter((token) => token !== house && token.length >= 2 && !excluded.has(token));
+  const aliases: Record<string, string> = {
+    n: "north", s: "south", e: "east", w: "west",
+    ne: "northeast", nw: "northwest", se: "southeast", sw: "southwest",
+    st: "street", rd: "road", ave: "avenue", av: "avenue", dr: "drive",
+    ln: "lane", blvd: "boulevard", hwy: "highway", ct: "court", pl: "place",
+    pkwy: "parkway", cir: "circle", ter: "terrace", trl: "trail",
+  };
+  const rawTokens = firstLine.split(" ").filter((token) => token && token !== house);
+  const unitIndex = rawTokens.findIndex((token) => ["suite", "ste", "unit", "floor", "fl", "apt", "apartment"].includes(token));
+  const routeTokens = unitIndex >= 0 ? rawTokens.slice(0, unitIndex) : rawTokens;
+  const tokens = routeTokens.map((token) => aliases[token] ?? token);
   return { house, tokens };
 }
 
@@ -286,13 +289,14 @@ function roadMatches(
 ): boolean {
   const expected = streetIdentity(submittedAddress);
   const actualHouse = normalized(returnedHouse);
-  const actualRoad = normalized(returnedRoad);
+  const actual = streetIdentity(returnedRoad);
   return Boolean(
     expected.house
     && actualHouse
     && expected.house === actualHouse
     && expected.tokens.length > 0
-    && expected.tokens.some((token) => actualRoad.includes(token)),
+    && expected.tokens.length === actual.tokens.length
+    && expected.tokens.every((token, index) => token === actual.tokens[index]),
   );
 }
 
