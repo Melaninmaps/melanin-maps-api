@@ -97,8 +97,9 @@ describe("founder business inventory publication policy", () => {
 describe("founder publication database safeguards", () => {
   const source = readFileSync(resolve(import.meta.dirname, "../publish-founder-business-inventory.ts"), "utf8");
 
-  it("selects only the three immutable founder-authorized source checksums", () => {
-    expect(source.match(/sha256: "[0-9a-f]{64}"/g)).toHaveLength(3);
+  it("selects only the four immutable founder-authorized source checksums", () => {
+    expect(source.match(/sha256: "[0-9a-f]{64}"/g)).toHaveLength(4);
+    expect(source).toContain("today-net-new-business-candidates.jsonl");
     expect(source).toContain("verifyAuthorizedBatches(client, lock)");
     expect(source).toContain("batch_id = ANY($1::uuid[])");
     expect(source).toContain("status IN ('pending_review', 'needs_research', 'published')");

@@ -116,6 +116,11 @@ const AUTHORIZED_SOURCES = [
     sha256: "6f1e686856eb79e45add03f2208ac836167cde7d5ca69ea99f4464eeae9169a8",
     rowCount: 7_315,
   },
+  {
+    sourceName: "today-net-new-business-candidates.jsonl",
+    sha256: "144ca9d90ca9ea40445e957a62d6bf786d765657411fc40ee3c0b5433260bc49",
+    rowCount: 3_367,
+  },
 ] as const;
 const ownershipSet = new Set<string>(OWNERSHIP_DESIGNATIONS);
 const US_STATE_CODES = new Set(
@@ -1004,7 +1009,7 @@ async function applyPlans(client: PoolClient): Promise<Record<string, number>> {
 
 async function main(): Promise<void> {
   const apply = hasFlag("--apply");
-  if (apply) assertLocalDirectoryStagingFromProcess();
+  assertLocalDirectoryStagingFromProcess();
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is required.");
   const pool = new Pool({ connectionString: databaseUrl, max: 1, connectionTimeoutMillis: 10_000, query_timeout: 240_000 });

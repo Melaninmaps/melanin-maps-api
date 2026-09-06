@@ -1,0 +1,25 @@
+{
+  "candidateLinkOutcomes": {
+    "no_reachable_link": 58,
+    "reachable_direct_link": 314,
+    "reachable_evidence_link_only": 2995
+  },
+  "manifestRows": 3367,
+  "output": "link-validation.json",
+  "outputSha256": "02bf3d8022fe5b46db8f23a230adc796e83b0f649702c2dca85d5ebaa543128a",
+  "reachableUrls": 807,
+  "statusCounts": {
+    "200": 763,
+    "202": 1,
+    "403": 41,
+    "404": 26,
+    "429": 2,
+    "500": 1,
+    "502": 1,
+    "RemoteDisconnected": 1,
+    "TimeoutError": 1,
+    "URLError": 62
+  },
+  "uniqueUrlsChecked": 899,
+  "unreachableUrls": 92
+}
