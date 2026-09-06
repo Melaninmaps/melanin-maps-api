@@ -30,6 +30,19 @@ const culturalConflict = (message: string) => /\b(diss|feud|rap battle)\b/i.test
 const travelPlan = (message: string) => /\b(plan|build|create|suggest|help with)\b.{0,40}\b(trip|itinerary|vacation|visit|weekend|getaway)\b|\b(trip|itinerary|vacation|getaway)\b.{0,40}\b(to|in|for)\b/i.test(message);
 const high = (route: EvidenceRoute) => route.risk === "high";
 
+/** Deliberately small grammar: arithmetic is answered locally, never retrieved. */
+export function deterministicArithmeticAnswer(message: string): string | null {
+  const match = message.trim().match(/^(?:what(?:'s| is)\s+)?(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)\s*\??$/i);
+  if (!match) return null;
+  const left = Number(match[1]);
+  const right = Number(match[3]);
+  if (!Number.isFinite(left) || !Number.isFinite(right) || (match[2] === "/" && right === 0)) return null;
+  const result = match[2] === "+" ? left + right
+    : match[2] === "-" ? left - right
+    : match[2] === "*" ? left * right : left / right;
+  return Number.isFinite(result) ? String(result) : null;
+}
+
 function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
   const message = input.message.trim();
   const namedConflictParticipants = (message.match(/\b[A-Z][\p{L}'’-]+\b/gu) ?? [])
@@ -70,7 +83,7 @@ function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
   };
 }
 
-function ambiguous(message: string, plan: SemanticTurnPlan): boolean {
+function ambiguous(message: string, plan: SemanticTurnPlan, history?: SemanticPlannerInput["history"]): boolean {
   if (plan.taskMode === "high_consequence" || plan.taskMode === "recipe_options" || plan.taskMode === "recipe_instructions") return false;
   const words = message.trim().split(/\s+/);
   // A short referential question ("Who won that conflict?", "Which one?") has
@@ -81,7 +94,11 @@ function ambiguous(message: string, plan: SemanticTurnPlan): boolean {
     && words.length <= 8
     && !/[A-Z][\p{L}'’-]+.*[A-Z][\p{L}'’-]+/u.test(message)
     && !/[\d][\d\s+*/().-]*[\d]/.test(message);
-  return referential || underspecifiedQuestion;
+  // A follow-up to deterministic arithmetic has an unambiguous local antecedent
+  // in bounded conversation history; let the normal answer path use that context.
+  const arithmeticInHistory = (plan.taskMode === "direct_answer")
+    && /\b-?\d+(?:\.\d+)?\s*[+\-*/]\s*-?\d+(?:\.\d+)?\b/.test(history?.map((entry) => entry.content).join("\n") ?? "");
+  return (referential && !arithmeticInHistory) || underspecifiedQuestion;
 }
 
 function parsedPlan(base: SemanticTurnPlan, raw: unknown): SemanticTurnPlan {
@@ -108,7 +125,7 @@ function parsedPlan(base: SemanticTurnPlan, raw: unknown): SemanticTurnPlan {
 /** A bounded planner: deterministic for clear turns and at most one injected model call for ambiguity. */
 export async function planSemanticTurn(input: SemanticPlannerInput): Promise<SemanticTurnPlan> {
   const base = basePlan(input);
-  if (!ambiguous(input.message, base) || !input.classify) return base;
+  if (!ambiguous(input.message, base, input.history) || !input.classify) return base;
   const history = (input.history ?? []).slice(-12).map(x => ({ role: x.role, content: cap(x.content, 1200) }));
   try { return parsedPlan(base, await input.classify({ message: cap(input.message, 2000), history })); }
   catch { return base; }

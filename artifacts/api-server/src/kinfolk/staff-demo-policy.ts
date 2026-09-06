@@ -38,13 +38,14 @@ export type CompatibilityFallbackClassification = {
   providerStatus: number | null;
 };
 
+import { kinfolkModel } from "./model-config";
+
 export type KinfolkEnvironment = Partial<Record<
   "KINFOLK_STAFF_DEMO_MODEL" | "KINFOLK_FALLBACK_MODEL",
   string | undefined
 >>;
 
 const STANDARD_MODEL = "gpt-4o-mini";
-const DEFAULT_STAFF_MODEL = "gpt-5";
 const STANDARD_MAX_OUTPUT_TOKENS = 600;
 const STAFF_MAX_OUTPUT_TOKENS = 900;
 
@@ -60,11 +61,6 @@ Use only the context supplied in this request, including recent conversation his
 
 export const STAFF_DEMO_STYLE_BLOCK = `STAFF DEMO RESPONSE STYLE — SUBORDINATE TO ALL GOVERNING RULES:
 Answer directly and naturally. Prefer short paragraphs or compact bullets when they improve clarity. Ask at most one optional clarifying question, and only when it would materially improve the answer. If a name or term has multiple plausible referents and the request provides no identifying context, respond only with one concise clarifying question; do not provide background or survey possible matches until the member clarifies. Never tailor culturally specific examples from a member's name alone; until the member explicitly states an identity, community, or cultural preference, offer neutral varied choices and ask about their interests. When a member says they are overwhelmed, reduce the immediate response to no more than three manageable next steps and one optional question; do not give a comprehensive plan until they request it. When a plan depends on venue hours, tickets, schedules, or live availability that were not supplied by verified current sources, remind the member to confirm those current details before going. Never invent a citation or URL; use only sources supplied in the request. Safety, privacy, source and citation requirements, server-resolved geography, and response-enforcement rules always override this style guidance.`;
-
-function configuredModel(value: string | undefined, fallback: string): string {
-  const configured = value?.trim();
-  return configured || fallback;
-}
 
 export function isStaffDemoEligible(input: KinfolkStaffDemoEligibility): boolean {
   return input.authenticated && (input.administrator || input.activeTester);
@@ -87,8 +83,8 @@ export function resolveKinfolkModelPolicy(
 
   return {
     mode: "staff_demo",
-    primaryModel: configuredModel(env.KINFOLK_STAFF_DEMO_MODEL, DEFAULT_STAFF_MODEL),
-    fallbackModel: configuredModel(env.KINFOLK_FALLBACK_MODEL, STANDARD_MODEL),
+    primaryModel: kinfolkModel("staffDemo", env),
+    fallbackModel: kinfolkModel("fallback", env),
     maxOutputTokens: STAFF_MAX_OUTPUT_TOKENS,
     historyMessageLimit: 12,
     historyCharacterLimit: 1200,
@@ -97,7 +93,7 @@ export function resolveKinfolkModelPolicy(
 
 /** The health/canary model is the configured compatibility model, never the staff quality model. */
 export function resolveKinfolkProbeModel(env: KinfolkEnvironment): string {
-  return configuredModel(env.KINFOLK_FALLBACK_MODEL, STANDARD_MODEL);
+  return kinfolkModel("fallback", env);
 }
 
 export function isGpt5Family(model: string): boolean {

@@ -81,6 +81,19 @@ describe("turn geography and enabled-session continuity", () => {
     }
   });
 
+  it("keeps the Toronto ON canonical inventory scope for the exact MWM-only prompt", () => {
+    expect(resolveTurnGeography(
+      "Find an MWM-listed bookstore in Toronto. Use MWM inventory only.",
+      null,
+    )).toEqual({
+      city: "Toronto",
+      state: "ON",
+      source: "explicit",
+      currentTurn: true,
+      matchedText: "Toronto",
+    });
+  });
+
   it("continues Philadelphia on a follow-up only through an existing enabled session destination", () => {
     expect(
       resolveTurnGeography(

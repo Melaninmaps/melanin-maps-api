@@ -82,7 +82,7 @@ function getLivingLibraryDeps() {
   if (!_libraryWriter) _libraryWriter = createOpenAiLibraryWriter({
     apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
     baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
-    model: process.env.LIBRARY_RESEARCH_MODEL ?? "gpt-4o-mini",
+    model: kinfolkModel("libraryResearch"),
   });
   return { repository: _libraryRepo, researchProvider: _researchProvider, writer: _libraryWriter };
 }
@@ -100,6 +100,7 @@ import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveCon
 import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../kinfolk/four-purpose-enforcement";
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
 import { searchAllQueries } from "../kinfolk/web-search";
+import { kinfolkModel } from "../kinfolk/model-config";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
@@ -141,6 +142,7 @@ import {
   resolveContextualIntelligenceMode,
 } from "../kinfolk/contextual-intelligence-mode";
 import {
+  deterministicArithmeticAnswer,
   planSemanticTurn,
   type KinfolkTaskMode,
   type SemanticTurnPlan,
@@ -2855,6 +2857,32 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  // Arithmetic is deterministic and must not trigger Library, web, or model work.
+  // Subsequent conversational turns still load normal session history below.
+  const arithmetic = deterministicArithmeticAnswer(message);
+  if (arithmetic !== null) {
+    // Persist the exact deterministic turn so a later "Should I have known
+    // that?" has a bounded, explicit antecedent rather than a guessed one.
+    const arithmeticSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      sessionId,
+      message,
+      reply: arithmetic,
+      recommendations: null,
+      sources: [],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: arithmeticSessionId, reply: arithmetic, recommendations: null, itinerary: null,
+      followUpSuggestions: [], smartPromotion: null, taskAction: null,
+      libraryAction: null, intentClass: "general_knowledge", sources: [],
+      needsClarification: false, originalQuery: message, answerMode: "direct_answer",
+      structuredContent: null, mediaLinks: [], relatedConnections: [],
+      researchStatus: { usedInternal: false, usedLiveWeb: false, degraded: false, asOf: new Date().toISOString() },
+    });
+  }
+
   const requestedImageUrls = normalizeKinfolkImageUrls(imageUrls);
   if (Array.isArray(imageUrls) && imageUrls.length > 2) {
     res.status(400).json({ error: "Kinfolk can review up to two images at a time." });
@@ -3244,7 +3272,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // identity context, memories, location history, or business data.
         classify: async ({ message: plannerMessage, history }) => {
           const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: kinfolkModel("fallback"),
             response_format: { type: "json_object" },
             max_tokens: 220,
             temperature: 0,
@@ -3577,8 +3605,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             : []),
         ].filter((card, idx, arr) => arr.findIndex((c) => c.id === card.id) === idx);
 
-        // Live Tavily web search — degrades to [] when key absent
-        if (searchPlan.queries.length > 0 && process.env.TAVILY_API_KEY) {
+        // Current-information search uses Responses web_search; optional Tavily
+        // fallback is selected inside the adapter only after a provider failure.
+        if (searchPlan.queries.length > 0) {
           const liveResults = await searchAllQueries(searchPlan.queries, searchPlan.imageRequested);
           const ranked = rankResults(liveResults, memberProfile, searchPlan.activeLenses);
 
@@ -5689,7 +5718,7 @@ function runMulter(req: Request, res: Response): Promise<void> {
 
 router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription is temporarily unavailable." });
+    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription is temporarily unavailable.", audioRetained: false });
   }
 
   // 1. Authentication required
@@ -5753,7 +5782,10 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     buffer = req.file.buffer;
     const rawMime = ((req.body as Record<string, string>).mimeType ?? req.file.mimetype ?? "audio/webm")
       .split(";")[0].replace("audio/", "").toLowerCase();
-    safeFormat = (rawMime === "mp4" || rawMime === "x-m4a" ? "m4a" : (rawMime || "webm")).replace(/[^a-z0-9]/g, "");
+    safeFormat = ({
+      mp4: "m4a", "x-m4a": "m4a", mpeg: "mp3", "x-mp3": "mp3",
+      "x-wav": "wav", wave: "wav",
+    }[rawMime] ?? (rawMime || "webm")).replace(/[^a-z0-9]/g, "");
 
   } else {
     // Legacy JSON path (base64 audio) — kept for backwards compatibility
@@ -5805,6 +5837,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15_000);
   const startMs = Date.now();
+  const transcriptionModel = kinfolkModel("transcription");
 
   try {
     const audioBytes = new Uint8Array(buffer);
@@ -5812,12 +5845,15 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     const file = new File([blob], `voice.${safeFormat}`, { type: `audio/${safeFormat}` });
 
     const transcription = await openai.audio.transcriptions.create(
-      { file, model: "whisper-1" },
+      { file, model: transcriptionModel },
       { signal: controller.signal },
     );
 
     // Log outcome + latency only — never log audio content, transcript text, or user context
-    req.log.info({ userId: req.user.id, latencyMs: Date.now() - startMs, format: safeFormat }, "kinfolk-transcribe: success");
+    req.log.info({
+      route: "kinfolk.transcribe", model: transcriptionModel,
+      latencyMs: Date.now() - startMs, audioBytes: buffer.length, status: 200,
+    }, "kinfolk provider");
 
     // Empty transcript — provider returned no text (silence, background noise, etc.)
     const transcriptText = normalizeTranscript(transcription.text);
@@ -5829,11 +5865,15 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       });
     }
 
-    return void res.json({ text: transcriptText, audioRetained: false });
+    // `text` is the mobile contract and `transcript` is the web contract.
+    return void res.json({ text: transcriptText, transcript: transcriptText, audioRetained: false });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "";
     const isAbort = msg.includes("abort") || msg.includes("timeout");
-    req.log.error({ latencyMs: Date.now() - startMs, format: safeFormat, aborted: isAbort }, "kinfolk-transcribe: failed");
+    req.log.warn({
+      route: "kinfolk.transcribe", model: transcriptionModel,
+      latencyMs: Date.now() - startMs, audioBytes: buffer.length, status: 503, aborted: isAbort,
+    }, "kinfolk provider");
 
     if (isAbort) {
       return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription timed out. Please try again or type your question.", audioRetained: false });

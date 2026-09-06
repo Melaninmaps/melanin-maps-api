@@ -113,6 +113,66 @@ describe("local business subject classification", () => {
 });
 
 describe("deterministic local business discovery", () => {
+  it.each([
+    ["Philadelphia", "PA", "restaurant", "restaurant"],
+    ["Philadelphia", "PA", "bookstore", "bookstore"],
+    ["Phoenix", "AZ", "HVAC contractors", "hvac"],
+    ["Brooklyn", "NY", "bookstores", "bookstore"],
+    ["Houston", "TX", "restaurants", "restaurant"],
+    ["Toronto", "ON", "bookstores", "bookstore"],
+  ])("uses canonical fixture data first for %s %s", async (city, stateCode, request, expectedSubject) => {
+    const subject = deriveBusinessSubject(`Find ${request} in ${city} ${stateCode}`)!;
+    expect(subject.key).toBe(expectedSubject);
+    const record = { ...governedBusiness, id: `${city}-fixture`, city, stateCode, description: "" };
+    const result = await discoverLocalBusinesses({
+      scope: { city, stateCode },
+      subject,
+      repository: repository({ businesses: [record] }),
+      webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+    });
+    const listing = result.discovery.platformBusinesses[0]!;
+    expect(listing).toMatchObject({ id: `${city}-fixture`, city, detailUrl: `/businesses/${city}-fixture` });
+    expect(listing).not.toHaveProperty("hours");
+    expect(listing).not.toHaveProperty("address");
+    expect(result.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ url: `/businesses/${city}-fixture` }),
+    ]));
+    expect(result.reply).toContain("MWM public business listing");
+  });
+
+  it("returns the Toronto CA canonical shopping/Bookstore fixture for the MWM-only canary prompt", async () => {
+    const prompt = "Find an MWM-listed bookstore in Toronto. Use MWM inventory only.";
+    const subject = deriveBusinessSubject(prompt)!;
+    const torontoFixture = {
+      ...governedBusiness,
+      id: "toronto-live-unclaimed",
+      name: "Toronto Fixture Books",
+      city: "Toronto",
+      stateCode: "ON",
+      country: "CA",
+      category: "shopping",
+      subcategory: "Bookstore",
+      profileStatus: "live_unclaimed",
+    };
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Toronto", stateCode: "ON" },
+      subject,
+      repository: repository({ businesses: [torontoFixture] }),
+      // “inventory only” must not need a web provider to return the canonical row.
+      webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+    });
+    expect(subject.key).toBe("bookstore");
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({
+        id: "toronto-live-unclaimed", city: "Toronto", stateCode: "ON",
+        category: "shopping", subcategory: "Bookstore", provenance: "mwm_public_business",
+      }),
+    ]);
+    expect(result.recommendations?.businesses[0]).toMatchObject({
+      id: "toronto-live-unclaimed", detailUrl: "/businesses/toronto-live-unclaimed",
+    });
+  });
+
   it("merges focused platform businesses, MWM map records, and supplemental web findings", async () => {
     const db = repository({ businesses: [governedBusiness], places: [forKeepsPlace] });
     const webSearch = vi.fn().mockResolvedValue({
