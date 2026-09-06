@@ -754,7 +754,7 @@ async function applyPlans(client: PoolClient): Promise<Record<string, number>> {
         (candidate_id, batch_id, record_type, record_id, publication_action,
          actor_id, idempotency_key, payload_hash, created_at)
       SELECT candidate_id, batch_id, 'business', record_id::text, publication_action,
-             $1, idempotency_key, payload_hash, NOW()
+             $1::text, idempotency_key, payload_hash, NOW()
         FROM mwm_founder_publication_plan
       ON CONFLICT (candidate_id) DO NOTHING
     `, [ACTOR_ID]);
@@ -764,12 +764,12 @@ async function applyPlans(client: PoolClient): Promise<Record<string, number>> {
         (candidate_id, batch_id, actor_id, action, previous_status, new_status,
          review_note, review_evidence, idempotency_key, payload_hash,
          published_record_type, published_record_id, created_at)
-      SELECT candidate_id, batch_id, $1, decision_action, previous_status, 'published',
+      SELECT candidate_id, batch_id, $1::text, decision_action, previous_status, 'published',
              CASE WHEN is_new AND is_primary
                THEN 'Founder-authorized searchable publication: unclaimed, not verified; map pin only after precise geocoding.'
                ELSE 'Founder-authorized reconciliation to an existing canonical searchable business.' END,
              jsonb_build_object(
-               'policyVersion', $2,
+               'policyVersion', $2::text,
                'founderAuthorized', true,
                'verified', false,
                'ownerClaimStatus', 'unclaimed',
@@ -788,13 +788,13 @@ async function applyPlans(client: PoolClient): Promise<Record<string, number>> {
              matched_business_id = p.record_id,
              published_record_type = 'business',
              published_record_id = p.record_id::text,
-             reviewed_by = $1,
+             reviewed_by = $1::text,
              reviewed_at = NOW(),
              review_note = CASE WHEN p.address IS NULL
                THEN 'Founder authorized searchable listing; exact street location not supplied, so no map pin.'
                ELSE 'Founder authorized searchable listing; supplied address preserved and precise pin geocoding pending.' END,
              review_evidence = COALESCE(c.review_evidence, '{}'::jsonb) || jsonb_build_object(
-               'policyVersion', $2,
+               'policyVersion', $2::text,
                'founderAuthorized', true,
                'listingStatus', 'live_unclaimed',
                'verified', false,
