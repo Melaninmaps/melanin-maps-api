@@ -104,9 +104,9 @@ async function verifyDedupeIndexDefinitions(client: PoolClient): Promise<void> {
   }>(`
     SELECT index_class.relname indexname,i.indisunique,i.indisvalid,i.indisready,
            i.indnkeyatts::integer key_count,
-           ARRAY(SELECT a.attname FROM unnest(i.indkey) WITH ORDINALITY k(attnum,ord)
+           ARRAY(SELECT a.attname::text FROM unnest(i.indkey) WITH ORDINALITY k(attnum,ord)
              JOIN pg_attribute a ON a.attrelid=i.indrelid AND a.attnum=k.attnum
-             WHERE ord<=i.indnkeyatts ORDER BY ord) key_columns,
+             WHERE ord<=i.indnkeyatts ORDER BY ord)::text[] key_columns,
            md5(pg_get_expr(i.indpred,i.indrelid)) predicate_md5
     FROM pg_index i
     JOIN pg_class index_class ON index_class.oid=i.indexrelid

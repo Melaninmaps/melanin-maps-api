@@ -140,6 +140,7 @@ describe("founder publication database safeguards", () => {
     expect(source).toContain("businesses_active_dedupe_key_unique");
     expect(source).toContain("businesses_canonical_dedupe_key_unique");
     expect(source).toContain("i.indisunique,i.indisvalid,i.indisready");
+    expect(source).toContain(")::text[] key_columns");
     expect(source).toContain("predicate_md5");
     expect(source).toContain("BULK_PUBLICATION_DEDUPE_INDEX_DEFINITION_MISMATCH");
     expect(source).toContain("BULK_PUBLICATION_DUAL_INDEX_PREFLIGHT_CONFLICT");

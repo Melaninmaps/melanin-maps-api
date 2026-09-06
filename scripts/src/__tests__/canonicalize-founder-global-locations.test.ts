@@ -98,6 +98,7 @@ describe("founder global location canonicalization", () => {
     expect(source).toContain("businesses_active_dedupe_key_unique");
     expect(source).toContain("businesses_canonical_dedupe_key_unique");
     expect(source).toContain("i.indisunique,i.indisvalid,i.indisready");
+    expect(source).toContain(")::text[] key_columns");
     expect(source).toContain("predicate_md5");
     expect(source).toContain("b6c7b82a358f47453d8dd3b8eb783dbf");
     expect(source).toContain("a35be5564d3fd29ddd97c96989ec00fb");
