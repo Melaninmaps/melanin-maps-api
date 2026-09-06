@@ -17,7 +17,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { getCaptionsForBusiness } from "@/constants/captions";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessTimeBadges } from "@/components/BusinessTimeBadges";
 import { OwnershipBadges } from "@/components/OwnershipBadges";
@@ -48,19 +47,66 @@ import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
+import BusinessExperienceCard from "@/components/BusinessExperienceCard";
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
+const SOCIAL_PROFILE_HOSTS: Record<string, readonly string[]> = {
+  tiktok: ["tiktok.com"],
+  instagram: ["instagram.com"],
+  youtube: ["youtube.com", "youtu.be"],
+  vimeo: ["vimeo.com"],
+  facebook: ["facebook.com", "fb.watch"],
+  twitch: ["twitch.tv"],
+  snapchat: ["snapchat.com"],
+  pinterest: ["pinterest.com", "pin.it"],
+  twitter: ["x.com", "twitter.com"],
 };
+
+function providerProfileUrl(raw: string, baseUrl: string, provider: string): string | null {
+  try {
+    const value = raw.trim();
+    const url = /^https:\/\//i.test(value)
+      ? new URL(value)
+      : new URL(`${baseUrl}${value.replace(/^@/, "")}`);
+    const host = url.hostname.toLowerCase().replace(/\.$/, "");
+    const allowed = SOCIAL_PROFILE_HOSTS[provider] ?? [];
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    if (!allowed.some((domain) => host === domain || host.endsWith(`.${domain}`))) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function approvedContributionUrl(raw: unknown, provider: unknown): string | null {
+  try {
+    if (typeof raw !== "string" || typeof provider !== "string") return null;
+    const url = new URL(raw.trim());
+    const host = url.hostname.toLowerCase().replace(/\.$/, "");
+    const allowed = SOCIAL_PROFILE_HOSTS[provider.toLowerCase()] ?? [];
+    if (url.protocol !== "https:" || url.username || url.password || allowed.length === 0) return null;
+    if (!allowed.some((domain) => host === domain || host.endsWith(`.${domain}`))) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function businessHeroIcon(category: string): React.ComponentProps<typeof Feather>["name"] {
+  const value = category.toLowerCase();
+  if (/barber|hair|salon|beauty/.test(value)) return "scissors";
+  if (/food|restaurant|bakery|cafe|coffee/.test(value)) return "coffee";
+  if (/retail|shop|store/.test(value)) return "shopping-bag";
+  if (/health|wellness|medical/.test(value)) return "heart";
+  if (/tech|software/.test(value)) return "cpu";
+  if (/entertainment|music|arts|culture/.test(value)) return "music";
+  if (/nonprofit|community/.test(value)) return "users";
+  if (/legal|finance|professional/.test(value)) return "briefcase";
+  return "map-pin";
+}
 
 const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
@@ -87,14 +133,12 @@ export default function BusinessDetailScreen() {
   const [checkInDone, setCheckInDone] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
-  const [topCaptions, setTopCaptions] = useState<{ caption: string; count: number }[]>([]);
-  const [captionSheetOpen, setCaptionSheetOpen] = useState(false);
-  const [pendingCaptions, setPendingCaptions] = useState<string[]>([]);
-  const [captionSubmitting, setCaptionSubmitting] = useState(false);
   const [toastOpacity] = useState(() => new Animated.Value(0));
   const [passThePlateOpen, setPassThePlateOpen] = useState(false);
   const [platePassCount, setPlatePassCount] = useState(0);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
+  const mainScrollRef = useRef<ScrollView>(null);
+  const experienceYRef = useRef(0);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
@@ -123,13 +167,6 @@ export default function BusinessDetailScreen() {
     hasNominated: boolean; totalNominations: number; isActive: boolean;
     label: string | null; tagline: string | null; nextThreshold: number;
   } | null>(null);
-  const [vibeData, setVibeData] = useState<{
-    ownerVibes: string[];
-    communityTags: { vibe: string; count: number }[];
-    myTags: string[];
-  } | null>(null);
-  const [vibePickerOpen, setVibePickerOpen] = useState(false);
-  const [vibeTagging, setVibeTagging] = useState(false);
 
   // ── Community Reference analytics ──────────────────────────────────────────
   const [refAnalytics, setRefAnalytics] = useState<{
@@ -157,6 +194,16 @@ export default function BusinessDetailScreen() {
     videoUrl: string | null; videoTitle: string | null; pinnedAt: string; expiresAt: string;
   }
   const [pinnedItems, setPinnedItems] = useState<PinnedItem[]>([]);
+  interface ApprovedContribution {
+    id: string;
+    media_type: string;
+    source_type: string;
+    source_url: string;
+    caption: string | null;
+    attribution: string | null;
+    contributor_name: string | null;
+  }
+  const [approvedContributions, setApprovedContributions] = useState<ApprovedContribution[]>([]);
 
   const { business, isLoading } = useBusinessById(id ?? "");
 
@@ -166,7 +213,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         await fetch(`${base}/api/businesses/${id}/view`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -179,7 +226,7 @@ export default function BusinessDetailScreen() {
     if (!id || !(business as any)?.isReferenceOnly) return;
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/businesses/${id}/reference-analytics`);
         if (res.ok) {
           const data = await res.json() as { totalViews: number; totalLinkClicks: number; clicksBySource: { source: string; total: number }[] };
@@ -193,7 +240,7 @@ export default function BusinessDetailScreen() {
     if (!id) return;
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/businesses/${id}/pinned`);
         if (res.ok) {
           const data = await res.json() as { pinned: PinnedItem[] };
@@ -202,16 +249,49 @@ export default function BusinessDetailScreen() {
       } catch {}
     })();
   }, [id]);
-  const fetchCaptions = () => {
+  useEffect(() => {
     if (!id) return;
-    const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-    fetch(`${base}/api/captions/${id}`)
-      .then(r => r.ok ? r.json() : { captions: [] })
-      .then((d: { captions?: { caption: string; count: number }[] }) => {
-        if (d?.captions) setTopCaptions(d.captions);
-      })
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = getApiBase();
+        const res = await fetch(`${base}/api/businesses/${id}/contributions`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json() as { contributions?: ApprovedContribution[] };
+        setApprovedContributions(Array.isArray(data.contributions) ? data.contributions : []);
+      } catch {
+        setApprovedContributions([]);
+      }
+    })();
+  }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    fetch(`${getApiBase()}/api/plate-passes/${id}/count`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { thisWeek?: number } | null) => { if (d?.thisWeek) setPlatePassCount(d.thisWeek); })
       .catch(() => {});
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = getApiBase();
+        const res = await fetch(`${base}/api/hidden-gems/${id}/status`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json() as { hasNominated: boolean; totalNominations: number; isActive: boolean; label: string | null; tagline: string | null; nextThreshold: number };
+          setGemStatus(data);
+        }
+      } catch {}
+    })();
+  }, [id]);
 
   const handleSafetySubmit = async (data: import("@/components/SafetyExperienceSurvey").SafetySurveyData) => {
     if (!id) return;
@@ -219,21 +299,21 @@ export default function BusinessDetailScreen() {
       const { getItemAsync } = await import("expo-secure-store");
       const token = await getItemAsync("auth_session_token");
       if (!token) return;
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/businesses/${id}/safety-experience`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          overallSafety:      data.overallSafety,
-          returnAlone:        data.returnAlone,
-          wouldRecommend:     data.wouldRecommend,
-          belongingRating:    data.belongingRating,
-          timeOfDay:          data.timeOfDay,
-          groupType:          data.groupType,
-          incidentOccurred:   data.incidentOccurred,
+          overallSafety: data.overallSafety,
+          returnAlone: data.returnAlone,
+          wouldRecommend: data.wouldRecommend,
+          belongingRating: data.belongingRating,
+          timeOfDay: data.timeOfDay,
+          groupType: data.groupType,
+          incidentOccurred: data.incidentOccurred,
           incidentCategories: data.incidentCategories,
-          incidentSeverity:   data.incidentSeverity,
-          comments:           data.comments,
+          incidentSeverity: data.incidentSeverity,
+          comments: data.comments,
         }),
       });
       if (!res.ok) {
@@ -247,115 +327,13 @@ export default function BusinessDetailScreen() {
     }
   };
 
-  const submitCaptionVotes = async () => {
-    if (!id || pendingCaptions.length === 0) return;
-    setCaptionSubmitting(true);
-    try {
-      const { getItemAsync } = await import("expo-secure-store");
-      const token = await getItemAsync("auth_session_token");
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-      await fetch(`${base}/api/captions/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ captions: pendingCaptions }),
-      });
-      setCaptionSheetOpen(false);
-      setPendingCaptions([]);
-      fetchCaptions();
-    } catch {} finally {
-      setCaptionSubmitting(false);
-    }
-  };
-
-  useEffect(() => { fetchCaptions(); }, [id]);
-
-  useEffect(() => {
-    if (!id) return;
-    void (async () => {
-      try {
-        const { getItemAsync } = await import("expo-secure-store");
-        const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-        const res = await fetch(`${base}/api/vibes/businesses/${id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const data = await res.json() as { ownerVibes: string[]; communityTags: { vibe: string; count: number }[]; myTags: string[] };
-          setVibeData(data);
-        }
-      } catch {}
-    })();
-  }, [id]);
-
-  const toggleVibeTag = async (vibe: string) => {
-    if (!id) return;
-    const isMyTag = vibeData?.myTags.includes(vibe) ?? false;
-    setVibeTagging(true);
-    try {
-      const { getItemAsync } = await import("expo-secure-store");
-      const token = await getItemAsync("auth_session_token");
-      if (!token) return;
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-      const res = await fetch(`${base}/api/vibes/tag`, {
-        method: isMyTag ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ businessId: id, vibe }),
-      });
-      if (res.ok) {
-        setVibeData((prev) => {
-          if (!prev) return prev;
-          const myTags = isMyTag ? prev.myTags.filter((t) => t !== vibe) : [...prev.myTags, vibe];
-          let communityTags = [...prev.communityTags];
-          const existing = communityTags.find((t) => t.vibe === vibe);
-          if (isMyTag) {
-            if (existing) {
-              existing.count = Math.max(0, existing.count - 1);
-              if (existing.count === 0) communityTags = communityTags.filter((t) => t.vibe !== vibe);
-            }
-          } else {
-            if (existing) { existing.count++; }
-            else { communityTags.push({ vibe, count: 1 }); }
-          }
-          return { ...prev, myTags, communityTags };
-        });
-      }
-    } catch {}
-    setVibeTagging(false);
-  };
-
-  useEffect(() => {
-    if (!id) return;
-    fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/plate-passes/${id}/count`)
-      .then(r => r.ok ? r.json() : null)
-      .then((d: { thisWeek?: number } | null) => { if (d?.thisWeek) setPlatePassCount(d.thisWeek); })
-      .catch(() => {});
-  }, [id]);
-
-  useEffect(() => {
-    if (!id) return;
-    void (async () => {
-      try {
-        const { getItemAsync } = await import("expo-secure-store");
-        const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-        const res = await fetch(`${base}/api/hidden-gems/${id}/status`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const data = await res.json() as { hasNominated: boolean; totalNominations: number; isActive: boolean; label: string | null; tagline: string | null; nextThreshold: number };
-          setGemStatus(data);
-        }
-      } catch {}
-    })();
-  }, [id]);
-
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   if (isLoading && !business) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
             <Feather name="arrow-left" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -376,14 +354,16 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Business not found</Text>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  const ownerManaged = new Set(["claimed", "verified_claimed", "owner_verified"]).has(business.profileStatus ?? "")
+    || business.listingStatus === "live_claimed";
+  const claimedCover = ownerManaged && business.imageUrl ? business.imageUrl : null;
   const saved = isSaved(business.id);
   const alreadyCheckedIn = hasCheckedIn(business.id) || checkInDone;
 
@@ -442,7 +422,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = Platform.OS !== "web" ? await getItemAsync("auth_session_token") : null;
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
         await fetch(`${base}/api/businesses/${business.id}/click`, {
@@ -460,9 +440,10 @@ export default function BusinessDetailScreen() {
   };
 
   const handleWebsite = async () => {
-    if (business.website) {
-      trackClick("website_visit");
-      const raw = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
+    const externalUrl = business.website ?? business.sourceUrl;
+    if (externalUrl) {
+      trackClick(business.website ? "website_visit" : "source_visit");
+      const raw = /^https?:\/\//i.test(externalUrl) ? externalUrl : `https://${externalUrl}`;
 
       // For Community References: append UTM params and fire attribution tracking
       if ((business as any).isReferenceOnly) {
@@ -477,7 +458,7 @@ export default function BusinessDetailScreen() {
         try {
           const { getItemAsync: getToken } = await import("expo-secure-store");
           const token = Platform.OS !== "web" ? await getToken("auth_session_token") : null;
-          fetch(`/api/businesses/${business.id}/reference-link-click`, {
+          fetch(`${getApiBase()}/api/businesses/${business.id}/reference-link-click`, {
             method: "POST",
             headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify({ source: source ?? "business_profile", sourceId: sourceId ?? null, referrerUserId: referrerId ?? null }),
@@ -490,14 +471,14 @@ export default function BusinessDetailScreen() {
     }
   };
 
-  const handleSocialLink = (raw: string, baseUrl?: string, clickType?: string) => {
+  const handleSocialLink = (raw: string, baseUrl: string, provider: string, clickType?: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = providerProfileUrl(raw, baseUrl, provider);
+    if (!url) {
+      Alert.alert("Link unavailable", `This ${provider} profile link needs to be corrected by the business owner.`);
+      return;
+    }
     if (clickType) trackClick(clickType);
-    const url = /^https?:\/\//i.test(raw)
-      ? raw
-      : baseUrl
-      ? `${baseUrl}${raw.replace(/^@/, "")}`
-      : `https://${raw}`;
     WebBrowser.openBrowserAsync(url);
   };
 
@@ -526,7 +507,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync: getItem } = await import("expo-secure-store");
         const token = Platform.OS !== "web" ? await getItem("auth_session_token") : null;
-        await fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/reviews/${editingReviewId}`, {
+        await fetch(`${getApiBase()}/api/reviews/${editingReviewId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
           body: JSON.stringify({ rating, text }),
@@ -564,7 +545,7 @@ export default function BusinessDetailScreen() {
         Alert.alert("Sign in required", "Please sign in to save businesses to your circles.");
         return;
       }
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/circles`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json() as { circles: { id: number; name: string; city: string | null; state: string | null; memberCount: number }[] };
       setUserCircles(data.circles ?? []);
@@ -578,7 +559,7 @@ export default function BusinessDetailScreen() {
     try {
       const { getItemAsync } = await import("expo-secure-store");
       const token = await getItemAsync("auth_session_token");
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/circles/${circleId}/suggestions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
@@ -633,7 +614,7 @@ export default function BusinessDetailScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
         <TouchableOpacity activeOpacity={0.85}
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
@@ -683,8 +664,18 @@ export default function BusinessDetailScreen() {
       </View>
 
       <ScrollView
+        ref={mainScrollRef}
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
-        <Image source={img} style={styles.hero} contentFit="cover" />
+        {claimedCover ? (
+          <Image source={{ uri: claimedCover }} style={styles.hero} contentFit="cover" />
+        ) : (
+          <View style={styles.heroPlaceholder} accessibilityLabel={`${business.category} business placeholder`}>
+            <View style={styles.heroIconPlate}>
+              <Feather name={businessHeroIcon(business.category)} size={104} color="#D7A62A" />
+            </View>
+            <Text style={styles.heroPlaceholderLabel}>{business.category || "Local business"}</Text>
+          </View>
+        )}
 
         <View style={styles.body}>
           {/* Community Disputed banner */}
@@ -736,9 +727,20 @@ export default function BusinessDetailScreen() {
                   size="md"
                 />
               </View>
+              {business.listingStatus === "live_unclaimed" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community/founder-listed · Unclaimed · Not verified</Text>
+              )}
+              {business.ownershipClaim === "community_reported_minority_owned" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
+              )}
+              {business.ownershipClaim === "community_reported_non_minority_owned" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported non-minority-owned · Not verified</Text>
+              )}
               {business.ownershipDesignations?.length > 0 && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>
-                  * Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status.
+                  {business.ownershipClaim?.startsWith("community_reported_")
+                    ? "* These ownership designations were reported by a community member and are not verified owner identity."
+                    : "* Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status."}
                 </Text>
               )}
               <BusinessTimeBadges
@@ -899,158 +901,9 @@ export default function BusinessDetailScreen() {
             </TouchableOpacity>
           ) : null}
 
-          {/* Vibe Check Section */}
-          {(() => {
-            const BIZ_VIBES = [
-              { id: "date-night", label: "Date Night", icon: "heart" as const },
-              { id: "group-hangout", label: "Group Hangout", icon: "users" as const },
-              { id: "solo-vibes", label: "Solo Vibes", icon: "user" as const },
-              { id: "bougie-treat", label: "Bougie Treat", icon: "award" as const },
-              { id: "hood-classic", label: "Hood Classic", icon: "home" as const },
-              { id: "soul-food", label: "Soul Food", icon: "coffee" as const },
-              { id: "late-night", label: "Late Night", icon: "moon" as const },
-              { id: "family-time", label: "Family Time", icon: "smile" as const },
-              { id: "creative-scene", label: "Creative Scene", icon: "music" as const },
-              { id: "wellness", label: "Wellness", icon: "activity" as const },
-              { id: "work-and-study", label: "Work & Study", icon: "book-open" as const },
-              { id: "adventure", label: "Adventure Ready", icon: "compass" as const },
-            ];
-            const allTaggedVibes = [
-              ...(vibeData?.ownerVibes ?? []).map((v) => ({ id: v, source: "owner" as const })),
-              ...(vibeData?.communityTags ?? [])
-                .filter((t) => !vibeData?.ownerVibes.includes(t.vibe))
-                .map((t) => ({ id: t.vibe, source: "community" as const, count: t.count })),
-            ];
-            const hasVibes = allTaggedVibes.length > 0;
-
-            return (
-              <View style={{ marginTop: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14, gap: 10 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Feather name="zap" size={14} color={colors.primary} />
-                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: colors.foreground }}>Vibe Check</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => setVibePickerOpen(true)}
-                    style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary + "15", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}
-                    activeOpacity={0.8}
-                  >
-                    <Feather name="plus" size={12} color={colors.primary} />
-                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.primary }}>Add Vibe</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {hasVibes ? (
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                    {allTaggedVibes.map((v) => {
-                      const meta = BIZ_VIBES.find((x) => x.id === v.id);
-                      const isMine = vibeData?.myTags.includes(v.id);
-                      const communityCount = vibeData?.communityTags.find((t) => t.vibe === v.id)?.count ?? 0;
-                      return (
-                        <TouchableOpacity
-                          key={v.id}
-                          onPress={() => { void toggleVibeTag(v.id); }}
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 5,
-                            paddingHorizontal: 10,
-                            paddingVertical: 6,
-                            borderRadius: 10,
-                            backgroundColor: isMine ? colors.primary + "18" : colors.card,
-                            borderWidth: 1,
-                            borderColor: isMine ? colors.primary + "50" : colors.border,
-                          }}
-                          activeOpacity={0.8}
-                          disabled={vibeTagging}
-                        >
-                          {meta && <Feather name={meta.icon} size={12} color={isMine ? colors.primary : colors.mutedForeground} />}
-                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: isMine ? colors.primary : colors.foreground }}>
-                            {meta?.label ?? v.id}
-                          </Text>
-                          {v.source === "owner" && (
-                            <View style={{ backgroundColor: "#CA922B20", borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 }}>
-                              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 9, color: "#CA922B" }}>Owner</Text>
-                            </View>
-                          )}
-                          {communityCount > 0 && (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground }}>{communityCount}</Text>
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                ) : (
-                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 18 }}>
-                    No vibes tagged yet. Be the first to describe this spot&apos;s energy.
-                  </Text>
-                )}
-              </View>
-            );
-          })()}
-
-          {/* Vibe Picker Modal */}
-          <Modal visible={vibePickerOpen} transparent animationType="slide" onRequestClose={() => setVibePickerOpen(false)}>
-            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" }}>
-              <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setVibePickerOpen(false)} />
-              <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground }}>What&apos;s the vibe?</Text>
-                  <TouchableOpacity onPress={() => setVibePickerOpen(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Feather name="x" size={20} color={colors.mutedForeground} />
-                  </TouchableOpacity>
-                </View>
-                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
-                  Tag what this spot feels like — helps others find their scene
-                </Text>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: 10, padding: 16 }}>
-                  {[
-                    { id: "date-night", label: "Date Night", icon: "heart" as const },
-                    { id: "group-hangout", label: "Group Hangout", icon: "users" as const },
-                    { id: "solo-vibes", label: "Solo Vibes", icon: "user" as const },
-                    { id: "bougie-treat", label: "Bougie Treat", icon: "award" as const },
-                    { id: "hood-classic", label: "Hood Classic", icon: "home" as const },
-                    { id: "soul-food", label: "Soul Food", icon: "coffee" as const },
-                    { id: "late-night", label: "Late Night", icon: "moon" as const },
-                    { id: "family-time", label: "Family Time", icon: "smile" as const },
-                    { id: "creative-scene", label: "Creative Scene", icon: "music" as const },
-                    { id: "wellness", label: "Wellness", icon: "activity" as const },
-                    { id: "work-and-study", label: "Work & Study", icon: "book-open" as const },
-                    { id: "adventure", label: "Adventure Ready", icon: "compass" as const },
-                  ].map((v) => {
-                    const isMine = vibeData?.myTags.includes(v.id) ?? false;
-                    return (
-                      <TouchableOpacity
-                        key={v.id}
-                        onPress={async () => { await toggleVibeTag(v.id); }}
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 7,
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                          borderRadius: 12,
-                          backgroundColor: isMine ? colors.primary : colors.background,
-                          borderWidth: 1.5,
-                          borderColor: isMine ? colors.primary : colors.border,
-                          minWidth: "44%",
-                          flex: 0,
-                        }}
-                        activeOpacity={0.8}
-                        disabled={vibeTagging}
-                      >
-                        <Feather name={v.icon} size={14} color={isMine ? "#FFF" : colors.primary} />
-                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: isMine ? "#FFF" : colors.foreground }}>
-                          {v.label}
-                        </Text>
-                        {isMine && <Feather name="check" size={12} color="#FFF" style={{ marginLeft: "auto" }} />}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            </View>
-          </Modal>
+          <View onLayout={(event) => { experienceYRef.current = event.nativeEvent.layout.y; }}>
+            <BusinessExperienceCard businessId={id ?? ""} />
+          </View>
 
           {/* Safety stats */}
           {(business.wouldReturnAlone != null || business.safetyRating != null) && (
@@ -1079,6 +932,13 @@ export default function BusinessDetailScreen() {
                   </View>
                 )}
               </View>
+              <TouchableOpacity
+                onPress={() => setShowSafetySurvey(true)}
+                activeOpacity={0.8}
+                style={{ alignSelf: "flex-start", marginTop: 12, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 9, borderWidth: 1, borderColor: "#2D7A4F40" }}
+              >
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#2D7A4F" }}>Share detailed safety & welcome feedback</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -1100,7 +960,7 @@ export default function BusinessDetailScreen() {
             style={[styles.rateSafetyBanner, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowSafetySurvey(true);
+              mainScrollRef.current?.scrollTo({ y: Math.max(0, experienceYRef.current - 16), animated: true });
             }}
             activeOpacity={0.8}
           >
@@ -1141,45 +1001,6 @@ export default function BusinessDetailScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Community Captions */}
-          {(topCaptions.length > 0 || business) && (
-            <View style={[styles.captionSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.captionHeader}>
-                <Text style={[styles.captionTitle, { color: colors.foreground }]}>🤎 Community Says</Text>
-                <TouchableOpacity
-                  style={[styles.addCaptionBtn, { borderColor: colors.primary, backgroundColor: colors.primary + "10" }]}
-                  onPress={() => { setPendingCaptions([]); setCaptionSheetOpen(true); }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.addCaptionBtnText, { color: colors.primary }]}>+ Add Yours</Text>
-                </TouchableOpacity>
-              </View>
-              {topCaptions.length === 0 ? (
-                <Text style={[styles.captionEmpty, { color: colors.mutedForeground }]}>
-                  Be the first to add a community caption for this business.
-                </Text>
-              ) : (
-                <View style={styles.captionBadgeWrap}>
-                  {topCaptions.slice(0, 12).map((c) => (
-                    <TouchableOpacity
-                      key={c.caption}
-                      style={[styles.captionBadge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25" }]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setCaptionSheetOpen(true);
-                        setPendingCaptions([c.caption]);
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.captionBadgeCount, { color: colors.primary }]}>{c.count}</Text>
-                      <Text style={[styles.captionBadgeText, { color: colors.foreground }]}>said &quot;{c.caption}&quot;</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-
           {/* Featured Video */}
           {!!(business as any).featuredVideoUrl && (
             <FeaturedVideoCard
@@ -1213,11 +1034,13 @@ export default function BusinessDetailScreen() {
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.phone}</Text>
               </TouchableOpacity>
             )}
-            {business.website && (
+            {(business.website || business.sourceUrl) && (
               <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleWebsite}>
                 <Feather name="globe" size={16} color={(business as any).isReferenceOnly ? "#0369A1" : colors.primary} />
                 <Text style={[styles.infoText, { color: (business as any).isReferenceOnly ? "#0369A1" : colors.primary }]}>
-                  {(business as any).isReferenceOnly ? "Visit Resource" : business.website}
+                  {(business as any).isReferenceOnly
+                    ? "Visit Resource"
+                    : business.website ?? "View supplied listing source"}
                 </Text>
                 {(business as any).isReferenceOnly && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#E0F2FE", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
@@ -1260,13 +1083,15 @@ export default function BusinessDetailScreen() {
                 </Text>
               </View>
             )}
-            {(business.instagram || business.tiktok || business.twitter || business.facebook || business.youtube || (business as any).pinterest) && (() => {
+            {(business.instagram || business.tiktok || business.twitter || business.facebook || business.youtube || business.twitch || business.snapchat || (business as any).pinterest) && (() => {
               type SocialDef = { key: string; label: string; icon: keyof typeof Feather.glyphMap; color: string; bg: string; baseUrl: string; clickType: string };
               const ALL: SocialDef[] = [
                 { key: "tiktok", label: "TikTok", icon: "music", color: colors.foreground, bg: "#00000015", baseUrl: "https://tiktok.com/@", clickType: "tiktok_visit" },
                 { key: "instagram", label: "Instagram", icon: "instagram", color: "#E1306C", bg: "#E1306C18", baseUrl: "https://instagram.com/", clickType: "instagram_visit" },
                 { key: "youtube", label: "YouTube", icon: "youtube", color: "#FF0000", bg: "#FF000015", baseUrl: "https://youtube.com/@", clickType: "youtube_visit" },
                 { key: "facebook", label: "Facebook", icon: "facebook", color: "#1877F2", bg: "#1877F218", baseUrl: "https://facebook.com/", clickType: "facebook_visit" },
+                { key: "twitch", label: "Twitch", icon: "twitch", color: "#9146FF", bg: "#9146FF18", baseUrl: "https://twitch.tv/", clickType: "twitch_visit" },
+                { key: "snapchat", label: "Snapchat", icon: "camera", color: "#7A6500", bg: "#FFFC001A", baseUrl: "https://snapchat.com/add/", clickType: "snapchat_visit" },
                 { key: "pinterest", label: "Pinterest", icon: "bookmark", color: "#E60023", bg: "#E6002315", baseUrl: "https://pinterest.com/", clickType: "pinterest_visit" },
                 { key: "twitter", label: "X / Twitter", icon: "twitter", color: "#1DA1F2", bg: "#1DA1F218", baseUrl: "https://x.com/", clickType: "" },
               ];
@@ -1284,7 +1109,7 @@ export default function BusinessDetailScreen() {
                   {primaryDef && (
                     <TouchableOpacity
                       style={[styles.primarySocialCard, { backgroundColor: primaryDef.bg, borderColor: primaryDef.color + "40" }]}
-                      onPress={() => handleSocialLink(biz[primaryDef.key], primaryDef.baseUrl, primaryDef.clickType)}
+                      onPress={() => handleSocialLink(biz[primaryDef.key], primaryDef.baseUrl, primaryDef.key, primaryDef.clickType)}
                       accessibilityRole="link"
                       activeOpacity={0.8}
                     >
@@ -1306,7 +1131,7 @@ export default function BusinessDetailScreen() {
                         <TouchableOpacity activeOpacity={0.85}
                           key={s.key}
                           style={[styles.socialBtn, { backgroundColor: s.bg, borderColor: s.color + "30" }]}
-                          onPress={() => handleSocialLink(biz[s.key], s.baseUrl, s.clickType || undefined)}
+                          onPress={() => handleSocialLink(biz[s.key], s.baseUrl, s.key, s.clickType || undefined)}
                           accessibilityLabel={`View ${business.name} on ${s.label}`}
                           accessibilityRole="link"
                         >
@@ -1320,6 +1145,44 @@ export default function BusinessDetailScreen() {
               );
             })()}
           </View>
+
+          {approvedContributions.some((item) => approvedContributionUrl(item.source_url, item.source_type)) && (
+            <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.communityMediaHeader}>
+                <Feather name="play-circle" size={17} color={colors.primary} />
+                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community creator videos</Text>
+              </View>
+              <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved public links shared by community members. They open on the original creator platform.</Text>
+              {approvedContributions.map((item) => {
+                const href = approvedContributionUrl(item.source_url, item.source_type);
+                if (!href) return null;
+                const platform = item.source_type.charAt(0).toUpperCase() + item.source_type.slice(1);
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.85}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${platform} creator link about ${business.name}`}
+                    style={[styles.communityMediaLink, { borderColor: colors.border }]}
+                    onPress={() => void WebBrowser.openBrowserAsync(href)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.communityMediaPlatform, { color: colors.primary }]}>{platform}</Text>
+                      <Text style={[styles.communityMediaCaption, { color: colors.foreground }]} numberOfLines={2}>
+                        {item.caption || `View this community-shared ${platform} post`}
+                      </Text>
+                      {(item.attribution || item.contributor_name) && (
+                        <Text style={[styles.communityMediaAttribution, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          Shared by {item.attribution || item.contributor_name}
+                        </Text>
+                      )}
+                    </View>
+                    <Feather name="external-link" size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About</Text>
           <Text style={[styles.description, { color: colors.foreground }]}>{business.description}</Text>
@@ -1481,7 +1344,7 @@ export default function BusinessDetailScreen() {
                     destName: business.name ?? "", mode: travelMode,
                   });
 
-                  const resp = await fetch(`/api/directions?${params.toString()}`, {
+                  const resp = await fetch(`${getApiBase()}/api/directions?${params.toString()}`, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                   });
                   if (resp.ok) {
@@ -1495,7 +1358,7 @@ export default function BusinessDetailScreen() {
                     if (data.waypoints?.length) {
                       setSafetyLoading(true);
                       try {
-                        const safetyResp = await fetch("/api/directions/safety-context", {
+                        const safetyResp = await fetch(`${getApiBase()}/api/directions/safety-context`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
                           body: JSON.stringify({ waypoints: data.waypoints }),
@@ -1828,7 +1691,7 @@ export default function BusinessDetailScreen() {
                     destLat: String(business.latitude), destLng: String(business.longitude),
                     destName: business.name ?? "", mode: travelMode,
                   });
-                  const resp = await fetch(`/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                  const resp = await fetch(`${getApiBase()}/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
                   if (resp.ok) {
                     const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: { index: number; instruction: string; distance: string; maneuver: string | null }[]; waypoints: { lat: number; lng: number }[] };
                     setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
@@ -1836,7 +1699,7 @@ export default function BusinessDetailScreen() {
                     if (data.waypoints?.length) {
                       setSafetyLoading(true);
                       try {
-                        const sResp = await fetch("/api/directions/safety-context", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ waypoints: data.waypoints }) });
+                        const sResp = await fetch(`${getApiBase()}/api/directions/safety-context`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ waypoints: data.waypoints }) });
                         if (sResp.ok) setSafetyContext(await sResp.json());
                       } catch { } finally { setSafetyLoading(false); }
                     }
@@ -2136,7 +1999,7 @@ export default function BusinessDetailScreen() {
                     const { getItemAsync } = await import("expo-secure-store");
                     const token = await getItemAsync("auth_session_token");
                     if (!token) { Alert.alert("Sign in required", "Sign in to nominate a Hidden Gem."); setNomSheetOpen(false); setNomSubmitting(false); return; }
-                    const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+                    const base = getApiBase();
                     const res = await fetch(`${base}/api/hidden-gems/${id}/nominate`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -2166,55 +2029,6 @@ export default function BusinessDetailScreen() {
         </View>
       </Modal>
 
-      {/* Caption Voting Sheet */}
-      <Modal visible={captionSheetOpen} transparent animationType="slide" onRequestClose={() => setCaptionSheetOpen(false)}>
-        <View style={styles.captionOverlay}>
-          <TouchableOpacity style={styles.captionBackdrop} activeOpacity={1} onPress={() => setCaptionSheetOpen(false)} />
-          <View style={[styles.captionSheet, { backgroundColor: colors.background }]}>
-            <View style={[styles.captionHandle, { backgroundColor: colors.border }]} />
-            <Text style={[styles.captionSheetTitle, { color: colors.foreground }]}>What stands out?</Text>
-            <Text style={[styles.captionSheetSub, { color: colors.mutedForeground }]}>Tap all that apply — your picks show up on this profile</Text>
-            <ScrollView
-        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
-              <View style={styles.captionChipWrap}>
-                {getCaptionsForBusiness(business.category ?? "").map((caption) => {
-                  const active = pendingCaptions.includes(caption);
-                  return (
-                    <TouchableOpacity
-                      key={caption}
-                      style={[styles.captionVoteChip, {
-                        borderColor: active ? colors.primary : colors.border,
-                        backgroundColor: active ? colors.primary + "15" : colors.card,
-                      }]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setPendingCaptions(prev => prev.includes(caption) ? prev.filter(c => c !== caption) : [...prev, caption]);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      {active && <Feather name="check" size={12} color={colors.primary} />}
-                      <Text style={[styles.captionVoteChipText, { color: active ? colors.primary : colors.foreground }]}>{caption}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            <TouchableOpacity
-              style={[styles.captionSubmitBtn, {
-                backgroundColor: pendingCaptions.length > 0 ? colors.primary : colors.muted,
-                opacity: captionSubmitting ? 0.7 : 1,
-              }]}
-              onPress={() => { void submitCaptionVotes(); }}
-              disabled={pendingCaptions.length === 0 || captionSubmitting}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.captionSubmitText, { color: pendingCaptions.length > 0 ? "#FBF7F0" : colors.mutedForeground }]}>
-                {pendingCaptions.length === 0 ? "Select at least one" : `Add ${pendingCaptions.length} Caption${pendingCaptions.length > 1 ? "s" : ""}`}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
       <ClaimBusinessModal
         visible={claimModalOpen}
         businessId={id ?? ""}
@@ -2336,6 +2150,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   hero: { width: "100%", height: 260 },
+  heroPlaceholder: {
+    width: "100%",
+    height: 260,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#241006",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(215,166,42,0.45)",
+  },
+  heroIconPlate: {
+    width: 174,
+    height: 174,
+    borderRadius: 87,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#D7A62A",
+    backgroundColor: "rgba(215,166,42,0.08)",
+  },
+  heroPlaceholderLabel: {
+    marginTop: 12,
+    color: "#E8C66E",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
   body: { padding: 20, gap: 16 },
   titleSection: {
     flexDirection: "row",
@@ -2456,6 +2297,13 @@ const styles = StyleSheet.create({
   socialBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   primarySocialCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, marginBottom: 10 },
   primarySocialIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  communityMediaCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
+  communityMediaHeader: { flexDirection: "row", alignItems: "center", gap: 7 },
+  communityMediaIntro: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  communityMediaLink: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
+  communityMediaPlatform: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "capitalize", marginBottom: 2 },
+  communityMediaCaption: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
+  communityMediaAttribution: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 },
   taglineLine: { fontFamily: "Inter_500Medium", fontSize: 13, fontStyle: "italic", marginTop: 2, marginBottom: 2 },
   ownerCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginTop: 16, marginBottom: 4, gap: 10 },
   ownerCardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },

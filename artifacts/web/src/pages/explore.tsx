@@ -3,34 +3,22 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Search, Grid, Map as MapIcon, X, LoaderCircle, BadgeCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
 
-const OWNERSHIP_OPTIONS = [
-  { id: "black-owned", label: "Black-Owned", emoji: "✊🏾", color: "#CA922B" },
-  { id: "minority-owned", label: "Minority-Owned", emoji: "🏅", color: "#3A1F0E" },
-  { id: "women-owned", label: "Women-Owned", emoji: "👩🏾‍💼", color: "#7B2D8B" },
-  { id: "veteran-owned", label: "Veteran-Owned", emoji: "🎖️", color: "#1D4ED8" },
-  { id: "lgbtq-owned", label: "LGBTQIA+-Owned", emoji: "🏳️‍🌈", color: "#DC2626" },
-  { id: "hispanic-owned", label: "Hispanic/Latino-Owned", emoji: "🤝🏾", color: "#2D7A4F" },
-  { id: "indigenous-owned", label: "Indigenous-Owned", emoji: "🌿", color: "#5E4B1A" },
-  { id: "disability-owned", label: "Disability-Owned", emoji: "♿", color: "#4B5563" },
-  { id: "immigrant-owned", label: "Melanated Diaspora-Owned", emoji: "🌍", color: "#6D28D9" },
-  { id: "d9-affiliated", label: "D9 Affiliated", emoji: "🐾", color: "#7B1E1E" },
-];
-
-const normaliseDesignation = (value: string) =>
-  value.trim().toLowerCase().replace(/[_\s]+/g, "-");
+const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({ ...option, emoji: "🤎", color: "#CA922B" }));
 
 type BusinessWithVerifiedDesignations = Business & {
+  ownershipDesignations?: string[] | null;
   verifiedDesignations?: string[] | null;
   verified?: boolean | null;
 };
 
 function documentedOwnershipTags(business: BusinessWithVerifiedDesignations): string[] {
-  const verified = Array.isArray(business.verifiedDesignations)
-    ? business.verifiedDesignations.map((value: string) => normaliseDesignation(value))
+  const ownerProvided = Array.isArray(business.ownershipDesignations)
+    ? business.ownershipDesignations.map(ownershipDesignationFilterId)
     : [];
-  if (business.verified === true && business.blackOwned === true) verified.push("black-owned");
-  return [...new Set(verified)].filter((tag) =>
+  if (business.blackOwned === true) ownerProvided.push("black-african-american");
+  return [...new Set(ownerProvided)].filter((tag) =>
     OWNERSHIP_OPTIONS.some((option) => option.id === tag),
   );
 }
@@ -144,7 +132,7 @@ export default function Explore() {
       <div className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]/80">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Ownership</span>
+            <span className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Support by owner-provided identity</span>
             {selectedOwnership.length > 0 && (
               <button
                 onClick={() => setSelectedOwnership([])}
@@ -174,6 +162,7 @@ export default function Explore() {
               );
             })}
           </div>
+          <p className="mt-2 text-[11px] text-[#3A1F0E]/55">These labels are optional and owner-provided. Use Verified Only separately when you need documented verification.</p>
         </div>
       </div>
 

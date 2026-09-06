@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useListBusinesses } from "@workspace/api-client-react";
 import { Link, useSearch } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Star, ShieldCheck, Grid, Map as MapIcon, Compass, Clock, PlusCircle, X, Building2, CheckCircle } from "lucide-react";
+import { Search, MapPin, Star, Grid, Map as MapIcon, Compass, Clock, PlusCircle, X, Building2, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   Select,
   SelectContent,
@@ -49,6 +50,24 @@ function isOpenNow(hours: string | null | undefined): boolean {
   return current >= open && current <= close;
 }
 
+function BusinessProvenanceLabels({ business }: { business: Record<string, unknown> }) {
+  const listingStatus = String(business.listingStatus ?? business.listing_status ?? "");
+  const ownershipClaim = String(business.ownershipClaim ?? business.ownership_claim ?? "");
+  return (
+    <div className="space-y-1" aria-label="Listing status">
+      {listingStatus === "live_unclaimed" && (
+        <p className="text-[11px] font-semibold text-[#704611]">Community/founder-listed · Unclaimed · Not verified</p>
+      )}
+      {ownershipClaim === "community_reported_minority_owned" && (
+        <p className="text-[11px] font-semibold text-[#704611]">Community-reported minority-owned · Not verified</p>
+      )}
+      {ownershipClaim === "community_reported_non_minority_owned" && (
+        <p className="text-[11px] font-semibold text-[#704611]">Community-reported non-minority-owned · Not verified</p>
+      )}
+    </div>
+  );
+}
+
 // ─── Submit a Business Modal ─────────────────────────────────────────────────
 
 const BUSINESS_CATEGORIES = [
@@ -77,23 +96,53 @@ const BUSINESS_CATEGORIES = [
 ];
 
 function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ name: "", category: "", city: "", state: "", website: "", phone: "", description: "", submitterEmail: "" });
+  const [form, setForm] = useState({ name: "", category: "", address: "", city: "", state: "", country: "", website: "", instagram: "", facebook: "", tiktok: "", phone: "", description: "", communityReportedOwnership: "not_sure" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [outcome, setOutcome] = useState<{ status?: string; message?: string; businessId?: string } | null>(null);
+  const clientRequestId = useRef(crypto.randomUUID());
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.city.trim() || !form.state.trim()) return;
+    if (!form.name.trim() || !form.category || !form.address.trim() || !form.city.trim() || (!form.state.trim() && !form.country.trim())) {
+      setOutcome({ message: "Add the business name, category, street address, city, and a state/region or country." });
+      setStatus("error");
+      return;
+    }
+    if (![form.website, form.instagram, form.facebook, form.tiktok].some((value) => value.trim())) {
+      setOutcome({ message: "Add the business website or at least one public social profile." });
+      setStatus("error");
+      return;
+    }
     setStatus("loading");
     try {
-      const r = await fetch(`${BASE}api/submit-business`, {
+      const r = await authenticatedFetch(`${BASE}api/community/business-submissions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-        credentials: "include",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": clientRequestId.current },
+        body: JSON.stringify({
+          name: form.name,
+          category: form.category,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          country: form.country,
+          website: form.website || undefined,
+          phone: form.phone,
+          description: form.description,
+          communityReportedOwnership: form.communityReportedOwnership,
+          socialProfiles: {
+            ...(form.instagram ? { instagram: form.instagram } : {}),
+            ...(form.facebook ? { facebook: form.facebook } : {}),
+            ...(form.tiktok ? { tiktok: form.tiktok } : {}),
+          },
+          clientRequestId: clientRequestId.current,
+        }),
       });
+      const data = await r.json() as { status?: string; message?: string; error?: string; businessId?: string };
+      if (!r.ok && !data.message) data.message = data.error;
+      setOutcome(data);
       setStatus(r.ok ? "success" : "error");
     } catch {
       setStatus("error");
@@ -112,9 +161,9 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 <span className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase">Submit a Business</span>
               </div>
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">Know a great spot?</h2>
-              <p className="text-sm text-[#3A1F0E]/60 mt-1">Help grow the directory. We review every submission within 48 hours.</p>
+              <p className="text-sm text-[#3A1F0E]/60 mt-1">Complete ordinary businesses publish immediately as community-listed, unclaimed, and not verified.</p>
             </div>
-            <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#FAF6EF] flex items-center justify-center hover:bg-[#3A1F0E]/10 transition-colors shrink-0">
+            <button onClick={onClose} aria-label="Close add business form" className="w-9 h-9 rounded-full bg-[#FAF6EF] flex items-center justify-center hover:bg-[#3A1F0E]/10 transition-colors shrink-0">
               <X className="w-4 h-4 text-[#3A1F0E]/60" />
             </button>
           </div>
@@ -123,26 +172,28 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
         {/* Body */}
         <div className="px-8 py-6">
           {status === "success" ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+            <div role="status" className="flex flex-col items-center justify-center py-12 text-center gap-4">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-[#3A1F0E]">Submission received!</h3>
-              <p className="text-[#3A1F0E]/60 max-w-sm">Thank you for helping grow the community. We'll review the listing and add it within 48 hours.</p>
-              <Button onClick={onClose} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11 mt-2">Done</Button>
+              <h3 className="text-xl font-serif font-bold text-[#3A1F0E]">{outcome?.status === "published" ? "This business is live!" : "Submission saved"}</h3>
+              <p className="text-[#3A1F0E]/60 max-w-sm">{outcome?.message ?? "Your community business submission was saved."}</p>
+              {outcome?.status === "published" && outcome.businessId && <Link href={`/business/${encodeURIComponent(outcome.businessId)}`}><Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-8 h-11">View Listing</Button></Link>}
+              <Link href="/my-business-submissions"><Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11 mt-2">View My Submissions</Button></Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Business name */}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Business Name <span className="text-red-500">*</span></label>
-                <Input required value={form.name} onChange={set("name")} placeholder="e.g. Soul Kitchen ATL" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B]" />
+                <Input required value={form.name} onChange={set("name")} placeholder="e.g. Soul Kitchen ATL" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
               </div>
 
               {/* Category */}
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Category</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Category <span className="text-red-500">*</span></label>
                 <select
+                  required
                   value={form.category}
                   onChange={set("category")}
                   className="w-full h-12 bg-[#FAF6EF] border-0 rounded-xl px-4 text-sm text-[#3A1F0E] focus:outline-none focus:ring-2 focus:ring-[#CA922B]"
@@ -152,27 +203,58 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 </select>
               </div>
 
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Street Address <span className="text-red-500">*</span></label>
+                <Input required value={form.address} onChange={set("address")} placeholder="123 Main Street" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
+                <p className="mt-1 text-xs text-[#3A1F0E]/50">Required for a truthful precise pin; we never use 0,0 or a city-center fallback.</p>
+              </div>
+
               {/* City + State */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">City <span className="text-red-500">*</span></label>
-                  <Input required value={form.city} onChange={set("city")} placeholder="Atlanta" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B]" />
+                  <Input required value={form.city} onChange={set("city")} placeholder="Atlanta" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">State <span className="text-red-500">*</span></label>
-                  <Input required value={form.state} onChange={set("state")} placeholder="GA" maxLength={2} className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B] uppercase" />
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">State / Region</label>
+                  <Input value={form.state} onChange={set("state")} placeholder="GA or Greater Accra" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
                 </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Country</label>
+                  <Input value={form.country} onChange={set("country")} placeholder="United States" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
+                </div>
+              </div>
+              <p className="-mt-3 text-xs text-[#3A1F0E]/50">Add a state/region, a country, or both.</p>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Community-reported ownership</label>
+                <select value={form.communityReportedOwnership} onChange={set("communityReportedOwnership")} className="w-full h-12 bg-[#FAF6EF] border-0 rounded-xl px-4 text-sm text-[#3A1F0E] focus:outline-none focus:ring-2 focus:ring-[#CA922B]">
+                  <option value="not_sure">Not sure</option>
+                  <option value="minority_owned">Minority-owned</option>
+                  <option value="non_minority_owned">Non-minority-owned</option>
+                </select>
+                <p className="mt-1 text-xs text-[#3A1F0E]/50">This is a community report, not verified owner identity.</p>
               </div>
 
               {/* Website + Phone */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Website</label>
-                  <Input value={form.website} onChange={set("website")} type="url" placeholder="https://..." className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B]" />
+                  <Input value={form.website} onChange={set("website")} type="url" placeholder="https://..." className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Phone</label>
-                  <Input value={form.phone} onChange={set("phone")} type="tel" placeholder="(404) 555-0100" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B]" />
+                  <Input value={form.phone} onChange={set("phone")} type="tel" placeholder="(404) 555-0100" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Public social profile</label>
+                <p className="text-xs text-[#3A1F0E]/50 mb-2">A website or at least one public social profile is required. Handles or full links are accepted.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input value={form.instagram} onChange={set("instagram")} placeholder="Instagram" aria-label="Instagram profile" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
+                  <Input value={form.facebook} onChange={set("facebook")} placeholder="Facebook" aria-label="Facebook profile" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
+                  <Input value={form.tiktok} onChange={set("tiktok")} placeholder="TikTok" aria-label="TikTok profile" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]" />
                 </div>
               </div>
 
@@ -188,20 +270,14 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 />
               </div>
 
-              {/* Submitter email */}
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Your Email (optional — for updates)</label>
-                <Input value={form.submitterEmail} onChange={set("submitterEmail")} type="email" placeholder="you@example.com" className="bg-[#FAF6EF] border-transparent h-12 rounded-xl focus-visible:ring-[#CA922B]" />
-              </div>
-
               {status === "error" && (
-                <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">Something went wrong. Please try again.</p>
+                <p role="alert" className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{outcome?.message ?? "Something went wrong. Please try again."}</p>
               )}
 
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={onClose} className="rounded-full flex-1 h-12 border-[#3A1F0E]/15">Cancel</Button>
                 <Button type="submit" disabled={status === "loading"} className="rounded-full flex-1 h-12 bg-[#CA922B] hover:bg-[#B38024] text-white font-bold">
-                  {status === "loading" ? "Submitting..." : "Submit Business"}
+                  {status === "loading" ? "Adding..." : "Add Community Business"}
                 </Button>
               </div>
             </form>
@@ -499,14 +575,14 @@ export default function Discover() {
                             </div>
                           </div>
                           <div className="flex-1 p-5 flex flex-col justify-between">
+                            <BusinessProvenanceLabels business={business as unknown as Record<string, unknown>} />
                             <p className="text-[#3A1F0E]/70 text-sm line-clamp-3 leading-relaxed">
                               {business.description || "Discover this highly-rated business. Visit their profile to learn more."}
                             </p>
                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2B1507]/10">
                               {business.confidenceScore && (
                                 <div className="flex items-center gap-1.5">
-                                  <ShieldCheck size={14} className="text-[#CA922B]" />
-                                  <span className="text-xs font-bold text-[#CA922B]">{business.confidenceScore}/100</span>
+                                  <span className="text-xs font-bold text-[#CA922B]">Confidence score {business.confidenceScore}/100</span>
                                 </div>
                               )}
                               <span className="text-xs font-semibold text-[#CA922B] ml-auto">View profile →</span>
@@ -563,6 +639,7 @@ export default function Discover() {
                   </div>
 
                   <div className="flex-1 p-5 flex flex-col justify-between">
+                    <BusinessProvenanceLabels business={business as unknown as Record<string, unknown>} />
                     <p className="text-[#3A1F0E]/70 text-sm line-clamp-3 leading-relaxed">
                       {business.description || "Discover this highly-rated business. Visit their profile to learn more about their offerings, location, and community reviews."}
                     </p>
@@ -580,10 +657,9 @@ export default function Discover() {
                       ) : (
                         <span className="text-xs text-[#3A1F0E]/50">No reviews yet</span>
                       )}
-                      {business.blackOwned && (
+                      {business.blackOwned && !(business as any).ownershipClaim?.startsWith("community_reported_") && (
                         <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#2B1507]">
-                          <ShieldCheck size={14} className="text-[#CA922B]" />
-                          Minority Owned
+                          Listed as minority-owned
                         </div>
                       )}
                     </div>
@@ -604,7 +680,7 @@ export default function Discover() {
             </div>
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-3">Know a business we're missing?</h2>
             <p className="text-[#F5EBD8]/70 text-base md:text-lg max-w-xl">
-              Help build the most comprehensive guide to minority-owned businesses. Every submission is reviewed and credited.
+              Complete ordinary businesses publish immediately after automated address, evidence, and duplicate checks. Objective holds stay private for follow-up.
             </p>
           </div>
           <div className="relative z-10 shrink-0">

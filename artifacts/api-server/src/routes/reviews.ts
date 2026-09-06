@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
-import { db, pool, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
+import { db, pool, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, userPreferencesTable, mentorshipProfilesTable } from "@workspace/db";
+import { detectSocialVideoPlatform, SOCIAL_VIDEO_PLATFORMS } from "@workspace/constants";
 import { computeTrustLevel, getReviewWeight, computeWeightedRating } from "@workspace/db/trust";
 import { eq, desc, and, ne, gte, sql, inArray } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, sendBuzzAlert, sendNegativeReviewAlertIfThreshold } from "../lib/pushNotifications";
@@ -23,6 +24,19 @@ const PLATFORM_LABELS: Record<string, string> = {
   twitter: "Twitter/X",
   tiktok: "TikTok",
   facebook: "Facebook",
+  youtube: "YouTube",
+  twitch: "Twitch",
+  snapchat: "Snapchat",
+};
+
+const SOCIAL_PROFILE_PREFIXES: Record<string, string> = {
+  instagram: "https://www.instagram.com/",
+  twitter: "https://x.com/",
+  tiktok: "https://www.tiktok.com/@",
+  facebook: "https://www.facebook.com/",
+  youtube: "https://www.youtube.com/@",
+  twitch: "https://www.twitch.tv/",
+  snapchat: "https://www.snapchat.com/add/",
 };
 
 async function sendVideoReviewNotification(opts: {
@@ -101,7 +115,7 @@ async function sendInviteNotification(opts: {
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #3B1F0E;">🎉 New Business Tagged by Community Member</h2>
           <p>A reviewer just tagged a business on <strong>Mapping With Melanin</strong> and it's ready for an invite!</p>
-          
+
           <div style="background: #FBF7F0; border: 1px solid #E8D5B7; border-radius: 12px; padding: 20px; margin: 20px 0;">
             <p style="margin: 0 0 8px;"><strong>Business Handle:</strong> @${opts.socialHandle}</p>
             <p style="margin: 0 0 8px;"><strong>Platform:</strong> ${platform}</p>
@@ -112,7 +126,7 @@ async function sendInviteNotification(opts: {
 
           <p>Reach out to this business on ${platform} to let them know they've been featured and offer their 60-day free trial on Mapping With Melanin.</p>
 
-          <a href="https://${opts.socialPlatform === "twitter" ? "x.com" : opts.socialPlatform + ".com"}/${opts.socialHandle}" 
+          <a href="${SOCIAL_PROFILE_PREFIXES[opts.socialPlatform] ?? SOCIAL_PROFILE_PREFIXES.instagram}${encodeURIComponent(opts.socialHandle)}"
              style="display: inline-block; background: #3B1F0E; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 8px;">
             View @${opts.socialHandle} on ${platform}
           </a>
@@ -199,10 +213,22 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const bizState = businessRow[0]?.state?.toLowerCase().trim() ?? null;
 
     const currentUserId = req.user?.id ?? null;
+    const [viewerPreferences] = currentUserId
+      ? await db
+          .select({ socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms })
+          .from(userPreferencesTable)
+          .where(eq(userPreferencesTable.userId, currentUserId))
+          .limit(1)
+      : [];
+    const allowedVideoPlatforms = new Set(viewerPreferences?.socialVideoPlatforms ?? SOCIAL_VIDEO_PLATFORMS);
     const enriched = reviews.map((r) => {
       const td = r.userId ? trustMap.get(r.userId) : null;
+      const videoPlatform = r.videoUrl ? detectSocialVideoPlatform(r.videoUrl) : null;
+      const videoHiddenByPreference = videoPlatform !== null && !allowedVideoPlatforms.has(videoPlatform);
       return {
         ...r,
+        videoUrl: videoHiddenByPreference ? null : r.videoUrl,
+        videoHiddenByPreference,
         isOwnReview: currentUserId !== null && r.userId === currentUserId,
         authorTrustLevel: td?.level ?? 1,
         authorIsInfluencer: td?.isInfluencer ?? false,
@@ -316,7 +342,9 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
   const cleanHandle = typeof socialHandle === "string"
     ? socialHandle.trim().replace(/^@/, "")
     : null;
-  const cleanPlatform = typeof socialPlatform === "string" ? socialPlatform : null;
+  const cleanPlatform = typeof socialPlatform === "string" && socialPlatform in SOCIAL_PROFILE_PREFIXES
+    ? socialPlatform
+    : null;
 
   const [userRow] = await db
     .select({
@@ -343,7 +371,16 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
     .limit(1);
 
   const isMinorityOwned = bizRow?.blackOwned === true;
-  const hasVideo = typeof videoUrl === "string" && videoUrl.trim().length > 0;
+  const requestedVideoUrl = typeof videoUrl === "string" ? videoUrl.trim() : "";
+  const videoPlatform = requestedVideoUrl ? detectSocialVideoPlatform(requestedVideoUrl) : null;
+  if (requestedVideoUrl && !videoPlatform) {
+    res.status(400).json({
+      error: "Use a public YouTube, TikTok, Instagram, Facebook, Twitch, Snapchat, or Vimeo link.",
+      code: "UNSUPPORTED_VIDEO_PROVIDER",
+    });
+    return;
+  }
+  const hasVideo = Boolean(requestedVideoUrl && videoPlatform);
   const isNegative = effectiveRating <= 3;
 
   // ── Risk scoring (minority-owned businesses only) ────────────────────────
@@ -396,7 +433,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         wouldReturnAlone: typeof wouldReturnAlone === "boolean" ? wouldReturnAlone : null,
         socialHandle: cleanHandle,
         socialPlatform: cleanHandle ? cleanPlatform : null,
-        videoUrl: hasVideo ? (videoUrl as string).trim() : null,
+        videoUrl: hasVideo ? requestedVideoUrl : null,
         status: resolvedStatus,
         riskScore: riskResult.score,
         moderationLevel: riskResult.level,
@@ -766,4 +803,3 @@ router.get("/reviews/mine", async (req: Request, res: Response) => {
 });
 
 export default router;
-

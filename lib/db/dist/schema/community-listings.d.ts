@@ -405,7 +405,7 @@ export declare const communityListingsTable: import("drizzle-orm/pg-core").PgTab
             tableName: "community_listings";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "removed" | "active" | "sold" | "traded" | "reserved";
+            data: "active" | "removed" | "sold" | "traded" | "reserved";
             driverParam: string;
             notNull: true;
             hasDefault: true;

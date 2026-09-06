@@ -1,0 +1,17 @@
+{
+  "reviewedCodeSha": null,
+  "databaseMigrations": false,
+  "responsiveWeb": false,
+  "iosPhysicalDevice": false,
+  "androidPhysicalDevice": false,
+  "kinfolkEvidence": false,
+  "businessPublication": false,
+  "safetyLocation": false,
+  "voice": false,
+  "deepLinks": false,
+  "eventsCirclesMarketplaceResources": false,
+  "independentReview": false,
+  "completedAt": null,
+  "reviewedBy": null,
+  "notes": "Release-blocking template. Replit must record the independently reviewed code commit, complete each acceptance gate on the target backend and real devices, set only genuinely completed fields true, add timestamp and reviewer identity, and commit only this evidence file plus Build 105 provenance after the reviewed code commit. The release gate verifies ancestry and rejects any intervening application/source change."
+}

@@ -1,0 +1,22 @@
+{
+  "canonicalRows": 3367,
+  "canonicalSheet": "MANUS_TODAY_NET_NEW",
+  "manifest": "today-net-new-business-candidates.jsonl",
+  "manifestSha256": "144ca9d90ca9ea40445e957a62d6bf786d765657411fc40ee3c0b5433260bc49",
+  "missingSafeLinkRows": 51,
+  "nycSubsetRows": 170,
+  "ordinaryBusinessRows": 2857,
+  "regulatedReviewRows": 459,
+  "rowsWithSafeSourceUrl": 3330,
+  "rowsWithSocialLink": 2,
+  "rowsWithStreetAddress": 3367,
+  "rowsWithSuppliedCoordinates": 0,
+  "rowsWithWebsite": 394,
+  "targetCounts": {
+    "business": 2857,
+    "manual_review": 51,
+    "regulated_review": 459
+  },
+  "workbook": "MWM_TODAY_NET_NEW_BUSINESSES_BUILD022_NYC_LARGE_CUMULATIVE_2026-09-06.xlsx",
+  "workbookSha256": "e52dedfc5fb6236ccfd20ace6820c8f63ed6a6f4754597cdee4dc097f04c2dd4"
+}

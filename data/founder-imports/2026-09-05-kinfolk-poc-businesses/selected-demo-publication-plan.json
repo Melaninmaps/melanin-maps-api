@@ -1,0 +1,48 @@
+[
+  {
+    "sourceRecordId": "PHL015",
+    "name": "Loomen Labs",
+    "destination": "business",
+    "searchDemonstrations": [
+      "fragrance experience in Philadelphia",
+      "candle making in Philadelphia"
+    ],
+    "officialWebsite": "https://www.loomenlabs.com/",
+    "creatorVideoSourceRecordId": "PHL015",
+    "publicationDecision": "eligible_after_live_founder_review"
+  },
+  {
+    "sourceRecordId": "PHL020",
+    "name": "Uncle Bobbie's Coffee & Books",
+    "destination": "business",
+    "searchDemonstrations": [
+      "bookstore in Philadelphia",
+      "coffee and books in Philadelphia"
+    ],
+    "officialWebsite": "https://www.unclebobbies.com/",
+    "publicationDecision": "eligible_after_live_founder_review"
+  },
+  {
+    "sourceRecordId": "PHL028",
+    "name": "Amina",
+    "destination": "business",
+    "searchDemonstrations": [
+      "restaurant in Philadelphia",
+      "Southern and West African inspired food in Philadelphia"
+    ],
+    "officialWebsite": "https://www.aminaphilly.com/",
+    "publicationDecision": "eligible_after_live_founder_review"
+  },
+  {
+    "sourceRecordId": "PHL058",
+    "name": "Queen & Rook Game Cafe",
+    "destination": "business",
+    "searchDemonstrations": [
+      "game cafe in Philadelphia",
+      "board games in Philadelphia"
+    ],
+    "officialWebsite": "https://queenandrookcafe.com/",
+    "creatorVideoSourceRecordId": "PHL058",
+    "publicationDecision": "eligible_after_live_founder_review"
+  }
+]

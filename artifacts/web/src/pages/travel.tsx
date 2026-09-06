@@ -17,17 +17,24 @@ import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
 import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
+import { businessClarificationContinuation } from "@/features/kinfolk/businessClarificationContinuation";
 import {
   hasItineraryDays,
   isSerializedItineraryContent,
   KinfolkAssistantText,
+  KinfolkContextualContent,
   KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
+  safeExternalSourceHref,
   KINFOLK_RESPONSE_STATUS_DELAYS_MS,
   KINFOLK_RESPONSE_STATUS_STAGES,
   type KinfolkItinerary as KinfolkItineraryResponse,
+  type KinfolkMediaLink,
+  type KinfolkRelatedConnection,
+  type KinfolkResearchStatus,
   type KinfolkStaffDemoExperience,
+  type KinfolkStructuredContent,
 } from "@/components/kinfolk/KinfolkChatPresentation";
 import {
   AAVE_LEVEL_OPTIONS,
@@ -51,7 +58,18 @@ function kinfolkAuthHeaders(extra?: HeadersInit): HeadersInit {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface Business { name: string; category: string; description: string; neighborhood: string; mustTry: string }
+interface Business {
+  id?: string;
+  name: string;
+  category: string;
+  description: string;
+  neighborhood: string;
+  mustTry: string;
+  website?: string | null;
+  detailUrl?: string;
+  verified?: boolean;
+  matchReasons?: string[];
+}
 interface Neighborhood { name: string; vibe: string; highlights: string[]; safetyNote: string }
 interface Event { name: string; type: string; description: string; timing: string }
 interface Recommendations {
@@ -93,6 +111,10 @@ interface Message {
   content: string; recommendations?: Recommendations | null;
   /** Optional structured API payload; old free-text messages remain valid. */
   itinerary?: KinfolkItineraryResponse | null;
+  structuredContent?: KinfolkStructuredContent | null;
+  mediaLinks?: KinfolkMediaLink[];
+  relatedConnections?: KinfolkRelatedConnection[];
+  researchStatus?: KinfolkResearchStatus | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -115,6 +137,8 @@ interface Message {
   locationSource?: string | null;
   // Optional personalization offer — rendered after general answer, never a gate.
   clarificationSteps?: ClarificationStep[];
+  needsClarification?: boolean;
+  originalQuery?: string;
   imageUrls?: string[];
   experience?: KinfolkExperience | null;
 }
@@ -550,14 +574,26 @@ function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback
         <div className="w-1 self-stretch bg-[#CA922B] rounded-full shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <span className="font-bold text-[#3A1F0E] text-sm leading-tight">{biz.name}</span>
+            {biz.detailUrl ? (
+              <Link href={biz.detailUrl} className="font-bold text-[#3A1F0E] text-sm leading-tight hover:text-[#9A6818] hover:underline">{biz.name}</Link>
+            ) : (
+              <span className="font-bold text-[#3A1F0E] text-sm leading-tight">{biz.name}</span>
+            )}
             <span className="bg-[#2B1507] text-[#F5EBD8] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0">{biz.category}</span>
           </div>
           <div className="flex items-center gap-1 text-[10px] text-[#3A1F0E]/40 uppercase tracking-wider font-bold mb-2"><MapPin size={9} />{biz.neighborhood}</div>
           <p className="text-xs text-[#3A1F0E]/70 leading-relaxed mb-3">{biz.description}</p>
+          {biz.verified === false && <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#7A4B16]">Founder-listed · Unclaimed · Not MWM verified</p>}
+          {biz.matchReasons && biz.matchReasons.length > 0 && (
+            <p className="mb-3 text-[11px] leading-relaxed text-[#3A1F0E]/65"><strong>Why it surfaced:</strong> {biz.matchReasons.join(" · ")}</p>
+          )}
           <div className="bg-[#FAF6EF] rounded-xl p-2.5 text-xs text-[#3A1F0E]/80 flex items-start gap-1.5 mb-3">
             <Sparkles size={12} className="text-[#CA922B] shrink-0 mt-0.5" />
             <span><strong>Try:</strong> {biz.mustTry}</span>
+          </div>
+          <div className="mb-3 flex flex-wrap gap-2">
+            {biz.detailUrl && <Link href={biz.detailUrl} className="inline-flex items-center gap-1 rounded-full bg-[#2B1507] px-3 py-1 text-xs font-semibold text-white">View details <ChevronRight size={11} /></Link>}
+            {biz.website && safeExternalSourceHref(biz.website) && <a href={safeExternalSourceHref(biz.website)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full border border-[#CA922B]/40 bg-[#CA922B]/10 px-3 py-1 text-xs font-semibold text-[#7A4B16]">Visit website <ChevronRight size={11} /></a>}
           </div>
           <div className="flex gap-2">
             <button onClick={() => onFeedback(biz.name, biz.category, "like")}
@@ -1170,6 +1206,10 @@ function TravelPage() {
         recommendations?: Recommendations | null;
         /** Structured itinerary payload is additive to legacy recommendations. */
         itinerary?: KinfolkItineraryResponse | null;
+        structuredContent?: KinfolkStructuredContent | null;
+        mediaLinks?: KinfolkMediaLink[];
+        relatedConnections?: KinfolkRelatedConnection[];
+        researchStatus?: KinfolkResearchStatus | null;
         followUpSuggestions?: string[];
         cultureAction?: CultureAction | null;
         libraryAction?: LibraryAction | null;
@@ -1183,6 +1223,8 @@ function TravelPage() {
         hairLossCarePlan?: HairLossCarePlan | null;
         // Optional personalization clarifier steps
         clarificationSteps?: ClarificationStep[] | null;
+        needsClarification?: boolean;
+        originalQuery?: string;
         // Adaptive depth (Show more / Show less)
         answerPlanId?: string | null;
         depth?: "brief" | "standard" | "deep";
@@ -1219,6 +1261,10 @@ function TravelPage() {
         id: assistantMsgId, role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
         itinerary: data.itinerary ?? null,
+        structuredContent: data.structuredContent ?? null,
+        mediaLinks: data.mediaLinks ?? [],
+        relatedConnections: data.relatedConnections ?? [],
+        researchStatus: data.researchStatus ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -1235,6 +1281,8 @@ function TravelPage() {
         location: data.location ?? null,
         locationSource: data.locationSource ?? null,
         clarificationSteps: data.clarificationSteps ?? undefined,
+        needsClarification: data.needsClarification === true,
+        originalQuery: data.originalQuery ?? trimmed,
         experience: data.experience ?? null,
       }]);
       if (shouldAutoSpeakNewReply({
@@ -1616,6 +1664,14 @@ function TravelPage() {
                       {hasItineraryDays(msg.itinerary) && (
                         <KinfolkItineraryRenderer itinerary={msg.itinerary!} />
                       )}
+                      {msg.role === "assistant" && (
+                        <KinfolkContextualContent
+                          structuredContent={msg.structuredContent}
+                          mediaLinks={msg.mediaLinks}
+                          relatedConnections={msg.relatedConnections}
+                          researchStatus={msg.researchStatus}
+                        />
+                      )}
                       {msg.recommendations && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
                       )}
@@ -1715,11 +1771,8 @@ function TravelPage() {
                                   return chosen?.label ?? answers[s.id];
                                 })
                                 .join(" · ");
-                              // Only send a follow-up when the member chose something.
-                              // Pure skips just close the clarifier silently.
-                              if (contextParts) {
-                                void send(`For my last question — ${contextParts}`);
-                              }
+                              const originalQuery = msg.originalQuery?.trim() || "Keep my last local business search broad";
+                              void send(businessClarificationContinuation(originalQuery, contextParts));
                             }}
                           />
                         </div>

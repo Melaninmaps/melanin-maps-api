@@ -1,0 +1,7 @@
+{
+  "benchmark": "Public_AR_Current",
+  "countryScope": "United States, Puerto Rico, and U.S. Island Areas only",
+  "inputRows": 3367,
+  "missingPostalCodes": 633,
+  "output": "census-address-batch-input.csv"
+}

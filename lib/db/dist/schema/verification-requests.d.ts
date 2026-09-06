@@ -21,6 +21,25 @@ export declare const verificationRequestsTable: import("drizzle-orm/pg-core").Pg
         }, {}, {
             length: number | undefined;
         }>;
+        idempotencyKey: import("drizzle-orm/pg-core").PgColumn<{
+            name: "idempotency_key";
+            tableName: "verification_requests";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 200;
+        }>;
         submitterId: import("drizzle-orm/pg-core").PgColumn<{
             name: "submitter_id";
             tableName: "verification_requests";
@@ -444,6 +463,25 @@ export declare const verificationRequestsTable: import("drizzle-orm/pg-core").Pg
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        notificationStatus: import("drizzle-orm/pg-core").PgColumn<{
+            name: "notification_status";
+            tableName: "verification_requests";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: "pending" | "sent" | "failed";
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: ["pending", "sent", "failed"];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "verification_requests";

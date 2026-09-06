@@ -6,6 +6,10 @@ import type {
   ValidatedKinfolkCityScope,
 } from "./governedBusinessRepository";
 import type { NormalizedBusinessSubject } from "./business-subject";
+import {
+  rankGovernedBusinessesForMember,
+  type KinfolkBusinessPersonalization,
+} from "./business-personalization";
 import { rankLocalBusinessResults } from "./web-ranker";
 import {
   searchLocalBusinessQueriesWithState,
@@ -47,6 +51,7 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   website: string | null;
   phone: string | null;
   verified: boolean;
+  matchReasons: string[];
   provenance: "mwm_public_business";
 }>;
 
@@ -81,10 +86,15 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
     summary: string;
     businesses: Array<{
       name: string;
+      id: string;
       category: string;
       description: string;
       neighborhood: string;
       mustTry: string;
+      website: string | null;
+      detailUrl: string;
+      verified: boolean;
+      matchReasons: string[];
     }>;
     neighborhoods: [];
     events: [];
@@ -182,6 +192,9 @@ function platformBusiness(business: GovernedKinfolkBusiness): BusinessDiscoveryP
     website: business.website,
     phone: business.phone,
     verified: business.verified,
+    matchReasons: "matchReasons" in business && Array.isArray(business.matchReasons)
+      ? business.matchReasons.filter((reason): reason is string => typeof reason === "string")
+      : [],
     provenance: "mwm_public_business",
   };
 }
@@ -249,6 +262,7 @@ function buildReply(input: {
       const status = business.verified ? "MWM-verified public business listing" : "MWM public business listing";
       const detail = business.description ? ` — ${concise(business.description, 140)}` : "";
       lines.push(`• ${name} — ${status}${detail}`);
+      if (business.matchReasons.length > 0) lines.push(`  Why it surfaced: ${business.matchReasons.join("; ")}`);
     }
   }
 
@@ -331,6 +345,7 @@ export async function discoverLocalBusinesses(input: {
   repository: DiscoveryRepository;
   signalRepository?: BusinessDiscoverySignalRepository;
   webSearch?: WebSearch;
+  personalization?: KinfolkBusinessPersonalization;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
   let platformStatus: "completed" | "degraded" = "completed";
   let businessRows: GovernedKinfolkBusiness[] = [];
@@ -338,7 +353,7 @@ export async function discoverLocalBusinesses(input: {
 
   // Database first: both sources are exact-city/state and subject-focused.
   const platformResults = await Promise.allSettled([
-    input.repository.findBySubject(input.scope, input.subject, 12),
+    input.repository.findBySubject(input.scope, input.subject, input.personalization ? 50 : 12),
     input.repository.findPublishedMapEntities(input.scope, input.subject, 8),
   ]);
   if (platformResults[0].status === "fulfilled") businessRows = platformResults[0].value;
@@ -362,7 +377,9 @@ export async function discoverLocalBusinesses(input: {
     .slice(0, 8)
     .map(webFinding)
     .filter((value): value is BusinessDiscoveryWebFinding => value !== null);
-  const businesses = businessRows.map(platformBusiness);
+  const businesses = rankGovernedBusinessesForMember(businessRows, input.personalization)
+    .slice(0, 12)
+    .map(platformBusiness);
   const mapPlaces = mapRows.map(mapPlace);
 
   await recordSignals({
@@ -410,11 +427,16 @@ export async function discoverLocalBusinesses(input: {
       destination: `${input.scope.city}, ${input.scope.stateCode}`,
       summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${input.subject.label}.`,
       businesses: businesses.slice(0, 6).map((business) => ({
+        id: business.id,
         name: business.name,
         category: business.category || input.subject.label,
         description: business.description || "Public business listing in the Mapping With Melanin directory.",
         neighborhood: `${business.city}, ${business.stateCode ?? input.scope.stateCode}`,
         mustTry: "Check the business source for current offerings, hours, and availability.",
+        website: business.website,
+        detailUrl: `/businesses/${business.id}`,
+        verified: business.verified,
+        matchReasons: business.matchReasons,
       })),
       neighborhoods: [],
       events: [],

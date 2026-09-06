@@ -5,10 +5,27 @@ import crypto from "node:crypto";
 import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
+const ALLOWED_DURATION_MINUTES = new Set([30, 60, 120, 240, 480, 1440]);
 
 function requireAuth(req: Request, res: Response): string | null {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return null; }
   return req.user.id;
+}
+
+export function publicLocationShare(share: {
+  label: string;
+  currentLat: number | null;
+  currentLng: number | null;
+  lastUpdatedAt: Date | null;
+  expiresAt: Date;
+}) {
+  return {
+    label: share.label,
+    currentLat: share.currentLat,
+    currentLng: share.currentLng,
+    lastUpdatedAt: share.lastUpdatedAt,
+    expiresAt: share.expiresAt,
+  };
 }
 
 router.get("/safety/location-shares", async (req: Request, res: Response) => {
@@ -28,6 +45,10 @@ router.post("/safety/location-shares", requireFamilySafety, async (req: Request,
   try {
     const { recipientEmail, label, durationMinutes = 60 } =
       req.body as { recipientEmail?: string; label?: string; durationMinutes?: number };
+    if (!Number.isInteger(durationMinutes) || !ALLOWED_DURATION_MINUTES.has(durationMinutes)) {
+      res.status(400).json({ error: "Invalid location share duration" });
+      return;
+    }
     const token = crypto.randomBytes(24).toString("hex");
     const expiresAt = new Date(Date.now() + (durationMinutes) * 60 * 1000);
     const [share] = await db.insert(locationSharesTable).values({
@@ -70,6 +91,10 @@ router.patch("/safety/location-shares/:token/update", async (req: Request, res: 
 });
 
 router.get("/safety/location-shares/:token/view", async (req: Request, res: Response) => {
+  // A location URL is deliberately bearer-style. Do not allow browsers,
+  // intermediary caches, or shared devices to retain a coordinate response.
+  res.set("Cache-Control", "no-store, private, max-age=0");
+  res.set("Pragma", "no-cache");
   try {
     const [share] = await db.select({
       label: locationSharesTable.label,
@@ -85,7 +110,9 @@ router.get("/safety/location-shares/:token/view", async (req: Request, res: Resp
     if (!share.isActive || new Date() > share.expiresAt) {
       res.status(410).json({ error: "This location share has expired" }); return;
     }
-    res.json({ share });
+    // Do not expose the sharer's identity, recipient, token, or internal ID
+    // to a person holding a location link.
+    res.json({ share: publicLocationShare(share) });
   } catch (err) {
     req.log.error({ err }, "GET /safety/location-shares/:token/view error");
     res.status(500).json({ error: "Failed to load share" });

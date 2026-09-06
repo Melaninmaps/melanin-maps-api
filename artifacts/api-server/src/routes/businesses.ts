@@ -1,16 +1,29 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type NextFunction, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable, BUSINESS_CATEGORY_TAXONOMY, ALL_VALID_CATEGORY_NAMES } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, sql, gt, count, inArray, ne } from "drizzle-orm";
 import { withDbRetry } from "../lib/db-retry";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
 import { objectStorageClient } from "../lib/objectStorage";
 import { reportLimiter } from "../middleware/rateLimiter";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
+import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
+import { validateSubmission } from "../businessIntake/types";
+import { SubmissionRepository } from "../businessIntake/submissionRepository";
+import {
+  detectSocialVideoPlatform,
+  OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationFilterId,
+} from "@workspace/constants";
+
+const communitySubmissionRepository = new SubmissionRepository();
+
+// Tester privileges never expose pending/review rows. Anonymous and member
+// discovery both consume only records accepted by the canonical public lifecycle.
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -61,7 +74,85 @@ function normalizeCityAlias(city: string): string {
   };
   return ALIASES[lower] ?? c;
 }
-router.use(requireAuth);
+
+const LEGACY_OWNERSHIP_FILTER_VALUES: Record<string, string[]> = {
+  "black-african-american": ["black-owned", "Black-Owned"],
+  woman: ["woman-owned", "women-owned", "Woman-Owned", "Women-Owned"],
+  lgbtqia: ["lgbtq-owned", "lgbtqia-owned", "LGBTQ-Owned", "LGBTQIA-Owned"],
+  "latino-hispanic": ["latino-owned", "hispanic-owned", "Latino-Owned", "Hispanic-Owned"],
+  "indigenous-native": ["indigenous-owned", "native-owned", "Indigenous-Owned", "Native-Owned"],
+  veteran: ["veteran-owned", "Veteran-Owned"],
+};
+
+function ownershipFilterStorageValues(raw: string): { id: string; values: string[] } {
+  const id = ownershipDesignationFilterId(raw);
+  const canonical = OWNERSHIP_FILTER_OPTIONS
+    .filter((option) => option.id === id)
+    .map((option) => option.label);
+  return {
+    id,
+    values: [...new Set([raw, ...canonical, ...(LEGACY_OWNERSHIP_FILTER_VALUES[id] ?? [])])],
+  };
+}
+
+const CATEGORY_FILTER_ALIASES: Record<string, string[]> = {
+  "food & drink": ["Food", "Food & Drink", "Food & Beverage", "Food Trucks", "Food Truck", "Restaurant", "Café / Coffee", "Bar / Lounge", "Bakery", "Grocery / Market"],
+  "beauty & personal care": ["Beauty & Personal Care", "Beauty & Hair", "Barbershop", "Nail Salon", "Spa & Wellness"],
+  "health & wellness": ["Health & Wellness", "Health & Medical", "Fitness"],
+  "professional services": ["Professional Services", "Legal Services", "Financial Services", "Real Estate", "Cleaning & Home Services", "Auto Services", "Tech & Digital"],
+  "arts & culture": ["Arts & Culture", "Arts, Culture & Entertainment", "Entertainment & Recreation", "Music & Entertainment", "Photography", "Event Venue"],
+  "retail & shopping": ["Retail", "Retail & Shopping", "Shopping & Retail", "Clothing & Fashion", "Books & Media"],
+  "faith & community": ["Faith & Spirituality", "Faith & Community", "Community Organizations", "Community Organization", "Community & Organizations"],
+  "home & trades": ["Home & Trades", "Home Services", "Home & Property", "Home & Property Services"],
+  "childcare & education": ["Childcare & Early Education", "Children & Family", "Education", "Education & Learning"],
+};
+
+function categoryFilterStorageValues(raw: string): string[] {
+  return CATEGORY_FILTER_ALIASES[raw.trim().toLocaleLowerCase("en-US")] ?? [raw.trim()];
+}
+function toPublicBusinessRecord<T extends Record<string, unknown>>(business: T) {
+  const {
+    dataSource: _dataSource,
+    isDuplicate: _isDuplicate,
+    permanentlyHidden: _permanentlyHidden,
+    submittedById: _submittedById,
+    stripeConnectAccountId: _stripeConnectAccountId,
+    sellerAgreementAcceptedAt: _sellerAgreementAcceptedAt,
+    businessTrialStartedAt: _businessTrialStartedAt,
+    marketplaceFeeLocked: _marketplaceFeeLocked,
+    lockedFee: _lockedFee,
+    lockedUntil: _lockedUntil,
+    feeSource: _feeSource,
+    membershipRenewalDate: _membershipRenewalDate,
+    referredByCode: _referredByCode,
+    targetAudience: _targetAudience,
+    pendingPhotos: _pendingPhotos,
+    flagCount: _flagCount,
+    flagStatus: _flagStatus,
+    _sim_score,
+    ...publicRecord
+  } = business;
+  return publicRecord;
+}
+
+function publicBusinessVisibilityCondition() {
+  return sql<boolean>`public.business_record_is_public(
+    ${businessesTable.status},
+    ${businessesTable.listingStatus},
+    ${sql.raw('"businesses"."is_duplicate"')},
+    ${sql.raw('"businesses"."permanently_hidden"')},
+    ${businessesTable.name},
+    ${businessesTable.description},
+    ${sql.raw('"businesses"."data_source"')},
+    ${businessesTable.phone}
+  )`;
+}
+
+router.use((req: Request, res: Response, next: NextFunction) => {
+  if (!req.path.startsWith("/businesses")) return next();
+  if (isPublicBusinessDiscoveryRead(req)) return next();
+  return requireAuth(req, res, next);
+});
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -72,6 +163,17 @@ function isAdmin(req: Request): boolean {
   const user = (req as any).user;
   if (!user?.email) return false;
   return ADMIN_EMAILS.includes(user.email);
+}
+
+function approvedOwnerPredicate(userId: string) {
+  return sql<boolean>`EXISTS (
+    SELECT 1 FROM business_owner_links bol
+     WHERE bol.business_id = ${businessesTable.id}
+       AND bol.user_id = ${userId}
+       AND bol.role = 'owner'
+       AND bol.status = 'approved'
+       AND bol.revoked_at IS NULL
+  )`;
 }
 
 // ── GET /businesses/categories ── master taxonomy (single source of truth) ────
@@ -103,8 +205,7 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
       FROM public.public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND latitude::numeric != 0
-        AND longitude::numeric != 0
+        AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
@@ -132,45 +233,31 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
     const conditions = [];
 
-    // ── Visibility gate — always exclude duplicates and hidden records ────────
-    // is_duplicate rows exist only for admin/audit queries, never public results.
-    // status IN (...) catches rows that were hidden via the admin panel.
-    conditions.push(
-      sql`COALESCE(${businessesTable}.is_duplicate, false) = false`
-    );
-    conditions.push(
-      sql`COALESCE(${businessesTable}.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')`
-    );
-    conditions.push(
-      sql`COALESCE(${businessesTable}.name, '') NOT ILIKE '%[demo]%'`
-    );
-    conditions.push(
-      sql`COALESCE(${businessesTable}.description, '') NOT ILIKE '%[demo]%'`
-    );
-
-    // ── listing_status gate — real users only see live listings ──────────────
-    // Tester accounts see everything; regular users see only live_unclaimed + live_claimed.
-    const isTester = (req as any).user?.isTester === true;
-    if (!isTester) {
-      conditions.push(
-        sql`${businessesTable}.listing_status IN ('live_unclaimed', 'live_claimed')`
-      );
-    }
+    // One canonical database function enforces active/live lifecycle, duplicate,
+    // permanent-hide, demo-source/name/description, and reserved test-phone rules.
+    conditions.push(publicBusinessVisibilityCondition());
 
     if (category && typeof category === "string" && category !== "All") {
-      conditions.push(eq(businessesTable.category, category));
+      const categoryValues = categoryFilterStorageValues(category);
+      conditions.push(or(...categoryValues.map((value) => eq(businessesTable.category, value)))!);
     }
 
-    // ownership filter: "black-owned" maps to the blackOwned boolean column;
-    // other designations filter against the ownershipDesignations jsonb array.
+    // Ownership is self-identified and historically stored as both canonical labels
+    // and a small set of legacy aliases. Match the stable designation ID without
+    // inferring identity from any other business field.
     if (ownership && typeof ownership === "string") {
-      if (ownership === "black-owned") {
-        conditions.push(eq(businessesTable.blackOwned, true));
-      } else {
-        conditions.push(
-          sql`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
-        );
-      }
+      const filter = ownershipFilterStorageValues(ownership);
+      const designationMatches = filter.values.map((value) =>
+        sql<boolean>`${businessesTable.ownershipDesignations} @> ${JSON.stringify([value])}::jsonb`
+      );
+      conditions.push(filter.id === "black-african-american"
+        ? or(eq(businessesTable.blackOwned, true), ...designationMatches)!
+        : filter.id === "minority-general-legacy"
+          ? or(
+              eq(businessesTable.ownershipClaim, "community_reported_minority_owned"),
+              ...designationMatches,
+            )!
+          : or(...designationMatches)!);
     }
 
     if (search && typeof search === "string") {
@@ -190,6 +277,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             ilike(businessesTable.category, `%${q}%`),
             ilike(businessesTable.subcategory, `%${q}%`),
             ilike(businessesTable.description, `%${q}%`),
+            sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${q}%`}`,
           ),
         );
       } else {
@@ -198,10 +286,23 @@ router.get("/businesses", async (req: Request, res: Response) => {
         // present in the name. Falls through to fuzzy if still zero results.
         const allInName = tokens.map(t => ilike(businessesTable.name, `%${t}%`));
         const allInDesc = tokens.map(t => ilike(businessesTable.description, `%${t}%`));
+        const allInTags = tokens.map(t => sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${t}%`}`);
+        const allInRecord = tokens.map(t => sql<boolean>`CONCAT_WS(' ',
+          COALESCE(${businessesTable.name}, ''),
+          COALESCE(${businessesTable.city}, ''),
+          COALESCE(${businessesTable.state}, ''),
+          COALESCE(${businessesTable.country}, ''),
+          COALESCE(${businessesTable.category}, ''),
+          COALESCE(${businessesTable.subcategory}, ''),
+          COALESCE(${businessesTable.description}, ''),
+          COALESCE(${businessesTable.tags}, '[]'::jsonb)::text
+        ) ILIKE ${`%${t}%`}`);
         conditions.push(
           or(
+            and(...allInRecord),                                        // tokens may span name + city + specialty
             and(...allInName),                                          // all tokens in name
             and(...allInDesc),                                          // all tokens in description
+            and(...allInTags),                                          // all tokens in reviewed factual tags
             ilike(businessesTable.name, `%${q}%`),                     // full phrase in name
             ilike(businessesTable.description, `%${q}%`),              // full phrase in description
             ilike(businessesTable.category, `%${q}%`),                 // full phrase in category
@@ -212,11 +313,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
     }
 
     if (city && typeof city === "string") {
-      conditions.push(ilike(businessesTable.city, `%${normalizeCityAlias(city)}%`));
+      const canonicalCity = normalizeCityAlias(city);
+      conditions.push(sql`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${canonicalCity}))`);
     }
 
     if (state && typeof state === "string") {
-      conditions.push(ilike(businessesTable.state, `%${state}%`));
+      conditions.push(sql`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state}))`);
     }
 
     if (country && typeof country === "string") {
@@ -267,6 +369,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
       .orderBy(
         desc(businessesTable.foundingBusiness),
         desc(businessesTable.confidenceScore),
+        asc(businessesTable.name),
+        asc(businessesTable.id),
       )
       .limit(pageLimit)
       .offset(offset);
@@ -362,7 +466,19 @@ router.get("/businesses", async (req: Request, res: Response) => {
     // city-constrained request never leaks cross-city results.
     let finalResults = withCaptions;
     let usedFuzzyFallback = false;
-    if (search && typeof search === "string" && withCaptions.length === 0) {
+    const fuzzyWouldEscapeRestrictiveFilter = Boolean(
+      hasGeoFilter
+      || (category && typeof category === "string" && category !== "All")
+      || (ownership && typeof ownership === "string")
+      || (subcategory && typeof subcategory === "string")
+      || (handle && typeof handle === "string")
+    );
+    if (
+      search
+      && typeof search === "string"
+      && withCaptions.length === 0
+      && !fuzzyWouldEscapeRestrictiveFilter
+    ) {
       try {
         const cleanSearch = search.replace(/[^\w\s'-]/gi, " ").trim();
         const STOP = ["a","an","the","and","or","of","in","at","on","for","to","with","is","by","near","best","good","great"];
@@ -372,82 +488,44 @@ router.get("/businesses", async (req: Request, res: Response) => {
           .map(t => t.replace(/[^a-z0-9'&-]/g, ""))
           .filter(t => t.length >= 3 && !STOP.includes(t));
 
-        // Build scope: carry all restrictive filters from the caller into fuzzy SQL.
-        // Parameterized — no user input ever interpolated into SQL text.
-        // Fuzzy fallback must mirror the same visibility rules as the main query.
-        const fuzzyScope: string[] = [
-          "COALESCE(b.is_duplicate, false) = false",
-          "COALESCE(b.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')",
-          "COALESCE(b.name, '') NOT ILIKE '%[demo]%'",
-          "COALESCE(b.description, '') NOT ILIKE '%[demo]%'",
+        const fuzzyConditions = [
+          publicBusinessVisibilityCondition(),
         ];
-        const fuzzyScopeParams: unknown[] = [];
-        if (!isTester) {
-          fuzzyScope.push("b.listing_status IN ('live_unclaimed', 'live_claimed')");
-        }
         if (city && typeof city === "string" && city.trim()) {
-          fuzzyScopeParams.push(`%${city.trim()}%`);
-          fuzzyScope.push(`LOWER(b.city) LIKE LOWER($${fuzzyScopeParams.length})`);
+          fuzzyConditions.push(sql<boolean>`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`);
         }
         if (state && typeof state === "string" && state.trim()) {
-          fuzzyScopeParams.push(`%${state.trim()}%`);
-          fuzzyScope.push(`LOWER(b.state) LIKE LOWER($${fuzzyScopeParams.length})`);
+          fuzzyConditions.push(sql<boolean>`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state.trim()}))`);
         }
         if (country && typeof country === "string" && country.trim()) {
-          fuzzyScopeParams.push(`%${country.trim()}%`);
-          fuzzyScope.push(`LOWER(b.country) LIKE LOWER($${fuzzyScopeParams.length})`);
+          fuzzyConditions.push(sql<boolean>`${businessesTable.country} ILIKE ${`%${country.trim()}%`}`);
         }
-        const fuzzyScopeWhere = fuzzyScope.join(" AND ");
-        // Number of scope params before the search-term params
-        const N = fuzzyScopeParams.length;
-
-        let fuzzyRes: { rows: Array<typeof businessesTable.$inferSelect & { _sim_score: number }> } = { rows: [] };
+        let fuzzyRows: Array<typeof businessesTable.$inferSelect> = [];
 
         if (tokens.length > 1) {
-          // Multi-token fuzzy: any significant token matches by ILIKE or trigram,
-          // scoped to all caller filters.
-          const T = tokens.length;
-          const orClauses = tokens.flatMap((_, i) => [
-            `b.name ILIKE $${N + 1 + i}`,
-            `similarity(LOWER(b.name), LOWER($${N + 1 + T + i})) > 0.18`,
-          ]).join(" OR ");
-          const simCols = tokens.map((_, i) =>
-            `similarity(LOWER(b.name), LOWER($${N + 1 + T + i}))`
-          ).join(", ");
-          const multiParams: unknown[] = [
-            ...fuzzyScopeParams,
-            ...tokens.map(t => `%${t}%`),
-            ...tokens,
-          ];
-          const r = await pool.query<typeof businessesTable.$inferSelect & { _sim_score: number }>(
-            `SELECT b.*, GREATEST(${simCols}) AS _sim_score
-             FROM businesses b
-             WHERE ${fuzzyScopeWhere} AND (${orClauses})
-             ORDER BY _sim_score DESC, b.confidence_score DESC
-             LIMIT 20`,
-            multiParams,
-          );
-          fuzzyRes = r;
+          const tokenMatches = tokens.flatMap((token) => [
+            ilike(businessesTable.name, `%${token}%`),
+            sql<boolean>`similarity(LOWER(${businessesTable.name}), LOWER(${token})) > 0.18`,
+          ]);
+          const score = sql<number>`GREATEST(${sql.join(tokens.map((token) => sql`similarity(LOWER(${businessesTable.name}), LOWER(${token}))`), sql`, `)})`;
+          fuzzyRows = await db.select().from(businessesTable)
+            .where(and(...fuzzyConditions, or(...tokenMatches)!))
+            .orderBy(desc(score), desc(businessesTable.confidenceScore))
+            .limit(20);
         }
 
         // Always try full-phrase similarity too (catches misspellings),
         // also scoped to all caller filters.
-        if (fuzzyRes.rows.length === 0) {
-          const phraseParams: unknown[] = [...fuzzyScopeParams, cleanSearch];
-          const phraseIdx = N + 1; // position of cleanSearch in params
-          fuzzyRes = await pool.query<typeof businessesTable.$inferSelect & { _sim_score: number }>(
-            `SELECT b.*, similarity(LOWER(b.name), LOWER($${phraseIdx})) AS _sim_score
-             FROM businesses b
-             WHERE ${fuzzyScopeWhere}
-               AND similarity(LOWER(b.name), LOWER($${phraseIdx})) > 0.22
-             ORDER BY _sim_score DESC
-             LIMIT 15`,
-            phraseParams,
-          );
+        if (fuzzyRows.length === 0) {
+          const phraseScore = sql<number>`similarity(LOWER(${businessesTable.name}), LOWER(${cleanSearch}))`;
+          fuzzyRows = await db.select().from(businessesTable)
+            .where(and(...fuzzyConditions, sql<boolean>`${phraseScore} > 0.22`))
+            .orderBy(desc(phraseScore))
+            .limit(15);
         }
 
-        if (fuzzyRes.rows.length > 0) {
-          finalResults = fuzzyRes.rows.map((r) => ({
+        if (fuzzyRows.length > 0) {
+          finalResults = fuzzyRows.map((r) => ({
             ...r,
             topCaptions: [],
             featured: false,
@@ -479,7 +557,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
     // Truthful total: when fuzzy fallback produced the results, total = those results;
     // standard pagination may have total > returned list (both are valid, explained by limit).
     const responseTotal = usedFuzzyFallback ? finalResults.length : Number(totalCount);
-    sendDynamicJson(res, { businesses: withDistance, total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
+    sendDynamicJson(res, { businesses: withDistance.map((business) => toPublicBusinessRecord(business)), total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
@@ -493,9 +571,8 @@ router.get("/businesses/mention-search", async (req: Request, res: Response) => 
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     if (!q) { res.json({ businesses: [] }); return; }
     const result = await pool.query<{ id: string; name: string; category: string | null; city: string | null }>(
-      `SELECT id, name, category, city FROM businesses
+      `SELECT id, name, category, city FROM public.public_businesses
        WHERE name ILIKE $1
-         AND listing_status IN ('live_unclaimed', 'live_claimed')
        ORDER BY name
        LIMIT 8`,
       [`%${q}%`]
@@ -573,7 +650,7 @@ router.get("/businesses/mine", async (req: any, res: Response) => {
     const [business] = await db
       .select()
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, userId))
+      .where(approvedOwnerPredicate(String(userId)))
       .limit(1);
     res.json({ business: business ?? null });
   } catch (err) {
@@ -625,7 +702,7 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     const [updated] = await db
       .update(businessesTable)
       .set(updates)
-      .where(eq(businessesTable.submittedById, String(userId)))
+      .where(approvedOwnerPredicate(String(userId)))
       .returning();
     if (!updated) { res.status(404).json({ error: "Business not found" }); return; }
     res.json({ business: updated });
@@ -644,7 +721,7 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
     const [business] = await db
       .select({ id: businessesTable.id, photos: businessesTable.photos, pendingPhotos: businessesTable.pendingPhotos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
@@ -828,7 +905,7 @@ router.delete("/businesses/mine/photos", async (req: any, res: Response) => {
     const [business] = await db
       .select({ id: businessesTable.id, photos: businessesTable.photos, imageUrl: businessesTable.imageUrl })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
@@ -867,7 +944,7 @@ router.patch("/businesses/mine/photos/cover", async (req: any, res: Response) =>
     const [business] = await db
       .select({ id: businessesTable.id, photos: businessesTable.photos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
@@ -897,7 +974,7 @@ router.post("/businesses/mine/videos", videoUpload.single("video"), async (req: 
     const [business] = await db
       .select({ id: businessesTable.id, videos: businessesTable.videos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentVideos = (business.videos as string[]) ?? [];
@@ -955,7 +1032,7 @@ router.post("/businesses/mine/videos/link", async (req: any, res: Response) => {
     const [business] = await db
       .select({ id: businessesTable.id, videos: businessesTable.videos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentVideos = (business.videos as string[]) ?? [];
@@ -990,7 +1067,7 @@ router.delete("/businesses/mine/videos", async (req: any, res: Response) => {
     const [business] = await db
       .select({ id: businessesTable.id, videos: businessesTable.videos })
       .from(businessesTable)
-      .where(eq(businessesTable.submittedById, String(userId)));
+      .where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const updatedVideos = ((business.videos as string[]) ?? []).filter((v) => v !== url);
@@ -1027,7 +1104,7 @@ router.post("/businesses/mine/intro-video", introVideoUpload.single("video"), as
   if (!req.file) { res.status(400).json({ error: "Video file is required" }); return; }
 
   try {
-    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1058,7 +1135,7 @@ router.delete("/businesses/mine/intro-video", async (req: any, res: Response) =>
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   try {
-    const [business] = await db.select({ id: businessesTable.id, introVideoUrl: businessesTable.introVideoUrl }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    const [business] = await db.select({ id: businessesTable.id, introVideoUrl: businessesTable.introVideoUrl }).from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1089,7 +1166,7 @@ router.post("/businesses/mine/featured-video/upload", featuredVideoUpload.single
 
   try {
     const [business] = await db.select({ id: businessesTable.id, featuredVideoTitle: businessesTable.featuredVideoTitle, featuredVideoPurpose: businessesTable.featuredVideoPurpose })
-      .from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+      .from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1121,7 +1198,7 @@ router.delete("/businesses/mine/featured-video/hosted", async (req: any, res: Re
 
   try {
     const [business] = await db.select({ id: businessesTable.id, featuredVideoUrl: businessesTable.featuredVideoUrl })
-      .from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+      .from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -1151,7 +1228,7 @@ router.patch("/businesses/mine/weekly-schedule", async (req: any, res: Response)
   };
 
   try {
-    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(approvedOwnerPredicate(String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -1188,16 +1265,14 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    // Visibility guard: is_duplicate and permanently_hidden rows return 404.
-    // The businesses Drizzle schema may not include is_duplicate (added via raw migration),
-    // so we do a targeted pool.query check rather than trusting the typed result.
-    const { rows: visRows } = await pool.query<{ is_duplicate: boolean | null; status: string | null }>(
-      `SELECT is_duplicate, status FROM businesses WHERE id = $1 LIMIT 1`,
+    // The canonical public view applies every shared visibility rule: active status,
+    // live listing lifecycle, permanent-hidden flag, duplicate suppression, and
+    // proven-demo containment. A known base-table ID must not bypass those rules.
+    const { rows: visRows } = await pool.query<{ id: string }>(
+      `SELECT id FROM public.public_businesses WHERE id = $1 LIMIT 1`,
       [id],
     );
-    const vis = visRows[0];
-    if (!vis || vis.is_duplicate === true ||
-        ["duplicate", "permanently_hidden", "removed", "deleted"].includes(vis.status ?? "")) {
+    if (!visRows[0]) {
       res.status(404).json({ error: "Business not found" });
       return;
     }
@@ -1235,12 +1310,11 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
 
     sendDynamicJson(res, {
       business: {
-        ...business,
+        ...toPublicBusinessRecord(business),
         // Normalize array fields so the web/mobile clients always receive [] not null.
         // photos and pendingPhotos are jsonb columns that default to [] but can be null
         // in older rows that pre-date the column addition.
         photos: Array.isArray(business.photos) ? business.photos : [],
-        pendingPhotos: Array.isArray(business.pendingPhotos) ? business.pendingPhotos : [],
         audienceType: identity?.audienceType ?? "unknown",
         ageRestrictionReasons: identity?.ageRestrictionReasons ?? [],
         environmentTags: identity?.environmentTags ?? [],
@@ -1531,124 +1605,48 @@ router.get("/businesses/duplicate-check", async (req: Request, res: Response) =>
   }
 });
 
-router.post("/businesses", async (req: Request, res: Response) => {
+// Backward-compatible adapter for older mobile builds. Member-created businesses
+// must enter the canonical moderation queue; trusted admin publication uses the
+// separate POST /api/admin/businesses route below.
+router.post("/businesses", requireApprovedMember, async (req: Request, res: Response) => {
   try {
-    const {
-      name, category, description, address, city, state,
-      phone, website, priceRange, hours, customHours, tags, isBlackOwned,
-    } = req.body as Record<string, unknown>;
+    const body = req.body as Record<string, unknown>;
+    const input = validateSubmission({
+      ...body,
+      hours: body.hours === "Custom" ? body.customHours : body.hours,
+      // Build 105 sent isBlackOwned=true by default, so that legacy boolean
+      // cannot safely represent an intentional demographic assertion.
+      ownershipDesignations: body.ownershipDesignations ?? [],
+      clientRequestId: body.clientRequestId ?? req.header("idempotency-key"),
+      sourceChannel: body.sourceChannel ?? "legacy_mobile_list_business",
+    });
 
-    if (!name || !category || !address || !city || !state) {
-      res.status(400).json({ error: "name, category, address, city, and state are required" });
-      return;
-    }
-
-    // ── 4-step duplicate detection ────────────────────────────────────────────
-    // Step 1: hard reject on exact (name + address + city + state) match
-    const exactDup = await pool.query(
-      `SELECT id, name FROM businesses
-       WHERE LOWER(name)=LOWER($1) AND LOWER(address)=LOWER($2)
-         AND LOWER(city)=LOWER($3) AND LOWER(state)=LOWER($4) LIMIT 1`,
-      [String(name).trim(), String(address).trim(), String(city).trim(), String(state).trim()]
-    );
-    if (exactDup.rows.length > 0) {
+    const existing = await communitySubmissionRepository.findPublishedDuplicate(input);
+    if (existing) {
       res.status(409).json({
-        error: "This listing already exists.",
-        duplicate: exactDup.rows[0],
-        step: 1,
+        error: "This business is already listed in the directory.",
+        code: "BUSINESS_ALREADY_LISTED",
+        businessId: existing.id,
       });
       return;
     }
 
-    // Step 2: same address, different name → flag for admin review (allow but mark)
-    const addrDup = await pool.query(
-      `SELECT id, name FROM businesses
-       WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 3`,
-      [String(address).trim(), String(city).trim(), String(state).trim()]
-    );
-    const needsAddressReview = addrDup.rows.length > 0;
-
-    // Step 3: same name, same city, different address → ALLOW (separate location)
-    // Step 4: fuzzy name at same address → flag (best-effort, non-blocking)
-    const fuzzyFlag = await pool.query(
-      `SELECT id, name FROM businesses
-       WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3)
-         AND LOWER(name) != LOWER($4)
-         AND (similarity(LOWER(name), LOWER($4)) > 0.85)
-       LIMIT 3`,
-      [String(address).trim(), String(city).trim(), String(state).trim(), String(name).trim()]
-    ).catch(() => ({ rows: [] }));
-    const needsFuzzyReview = fuzzyFlag.rows.length > 0;
-
-    const finalHours =
-      hours === "Custom"
-        ? (customHours as string | undefined) ?? null
-        : (hours as string | undefined) ?? null;
-    const tagArray =
-      Array.isArray(tags)
-        ? (tags as string[])
-        : typeof tags === "string"
-          ? tags.split(",").map((t) => t.trim()).filter(Boolean)
-          : [];
-    const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-
-    let referredByCode: string | null = null;
-    if (req.user?.id) {
-      const [submitter] = await db.select({ referredByCode: usersTable.referredByCode }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
-      referredByCode = submitter?.referredByCode ?? null;
-    }
-
-    // Determine listing_status: live_unclaimed if the city is already launched, else staged
-    const cityLaunchRow = await pool.query(
-      `SELECT status FROM city_launches WHERE LOWER(city)=LOWER($1) AND LOWER(state)=LOWER($2) LIMIT 1`,
-      [String(city).trim(), String(state).trim()]
-    );
-    const cityIsLive = ["live", "soft_launch"].includes(cityLaunchRow.rows[0]?.status ?? "");
-    const listingStatus = cityIsLive ? "live_unclaimed" : "staged";
-
-    const [business] = await db
-      .insert(businessesTable)
-      .values({
-        id,
-        name: name as string,
-        category: category as string,
-        subcategory: category as string,
-        description: (description as string | undefined) ?? "",
-        address: address as string,
-        city: city as string,
-        state: state as string,
-        latitude: "0",
-        longitude: "0",
-        tags: tagArray,
-        phone: (phone as string | undefined) ?? null,
-        website: (website as string | undefined) ?? null,
-        hours: finalHours,
-        priceRange: (priceRange as string | undefined) ?? null,
-        blackOwned: isBlackOwned === true || isBlackOwned === "true",
-        status: "pending",
-        submittedById: req.user?.id ?? null,
-        referredByCode,
-      })
-      .returning();
-
-    // Set listing_status and data_source (columns added via migration, not in Drizzle schema)
-    await pool.query(
-      `UPDATE businesses SET listing_status=$1, data_source='community_submission' WHERE id=$2`,
-      [listingStatus, business.id]
-    );
-
-    res.status(201).json({
-      business: { ...business, listingStatus },
-      warnings: {
-        needsAddressReview,
-        needsFuzzyReview,
-        sameAddressBusinesses: addrDup.rows,
-        fuzzyMatches: fuzzyFlag.rows,
-      },
+    const result = await communitySubmissionRepository.create(input, req.user!.id);
+    res.status(result.created ? 202 : 200).json({
+      ok: true,
+      submissionId: result.submission.id,
+      status: result.submission.status,
+      duplicateRetry: !result.created,
+      message: "Your business was submitted for review. It is not public yet.",
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to submit business listing");
-    res.status(500).json({ error: "Failed to submit listing" });
+    const message = err instanceof Error ? err.message : "Invalid submission";
+    if (/required|must be|invalid|unsupported|accepts at most|too long/i.test(message)) {
+      res.status(400).json({ error: message, code: "INVALID_SUBMISSION" });
+      return;
+    }
+    req.log.error({ err }, "Failed to queue legacy business submission");
+    res.status(500).json({ error: "Failed to submit business for review" });
   }
 });
 
@@ -2813,7 +2811,7 @@ router.get("/businesses/:id/contributions", async (req: Request, res: Response):
               u.profile_image_url AS contributor_avatar
        FROM business_contributions bc
        LEFT JOIN users u ON u.id = bc.user_id
-       WHERE bc.business_id = $1 AND bc.status = 'approved'
+       WHERE bc.business_id = $1 AND bc.status = 'approved' AND bc.is_public = TRUE
        ORDER BY bc.created_at DESC
        LIMIT 50`,
       [businessId],
@@ -2831,29 +2829,15 @@ router.post("/businesses/:id/contributions", requireAuth, async (req: Request, r
   const userId = (req as any).user?.id;
   if (!userId) { res.status(401).json({ error: "Authentication required" }); return; }
 
-  const { mediaType = "social_url", sourceType, sourceUrl, caption, attribution } = req.body ?? {};
+  const { mediaType = "social_url", sourceUrl, caption, attribution } = req.body ?? {};
 
   if (!sourceUrl || typeof sourceUrl !== "string") {
     res.status(400).json({ error: "sourceUrl is required" }); return;
   }
 
-  // Validate URL
-  try { new URL(sourceUrl); } catch {
-    res.status(400).json({ error: "sourceUrl must be a valid URL (e.g. https://www.instagram.com/...)" }); return;
-  }
-
-  // Detect source type from URL if not provided
-  let detectedType = sourceType ?? "other";
-  if (!sourceType) {
-    try {
-      const host = new URL(sourceUrl).hostname.replace("www.", "");
-      if (host.includes("instagram")) detectedType = "instagram";
-      else if (host.includes("tiktok")) detectedType = "tiktok";
-      else if (host.includes("youtube") || host.includes("youtu.be")) detectedType = "youtube";
-      else if (host.includes("vimeo")) detectedType = "vimeo";
-      else if (host.includes("facebook") || host.includes("fb.watch")) detectedType = "facebook";
-      else if (host.includes("twitter") || host.includes("x.com")) detectedType = "twitter";
-    } catch { /* ignore */ }
+  const detectedType = detectSocialVideoPlatform(sourceUrl.trim());
+  if (!detectedType) {
+    res.status(400).json({ error: "sourceUrl must be a public HTTPS link from an approved video platform" }); return;
   }
 
   // Check business exists
@@ -2888,10 +2872,10 @@ router.patch("/admin/contributions/:id", async (req: Request, res: Response): Pr
   try {
     const r = await pool.query(
       `UPDATE business_contributions
-       SET status=$1, rejected_reason=$2, moderated_by=$3,
-           approved_at=CASE WHEN $1='approved' THEN NOW() ELSE NULL END,
+       SET status=$1::text, rejected_reason=$2::text, moderated_by=$3::varchar,
+           approved_at=CASE WHEN $1::text='approved' THEN NOW() ELSE NULL END,
            updated_at=NOW()
-       WHERE id=$4 RETURNING id, status`,
+       WHERE id=$4::varchar RETURNING id, status`,
       [status, rejectedReason ?? null, (req as any).user?.id ?? null, id],
     );
     if (r.rows.length === 0) { res.status(404).json({ error: "Contribution not found" }); return; }
@@ -2908,7 +2892,9 @@ router.get("/admin/contributions", async (req: Request, res: Response): Promise<
   const status = (req.query.status as string) ?? "pending";
   try {
     const r = await pool.query(
-      `SELECT bc.*, b.name AS business_name, u.display_name AS contributor_name, u.email AS contributor_email
+      `SELECT bc.*, b.name AS business_name,
+              NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), '') AS contributor_name,
+              u.email AS contributor_email
        FROM business_contributions bc
        LEFT JOIN businesses b ON b.id = bc.business_id
        LEFT JOIN users u ON u.id = bc.user_id

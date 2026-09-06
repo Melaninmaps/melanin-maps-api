@@ -29,6 +29,7 @@ import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 import { usePoints } from "@/hooks/usePoints";
 import { useMembership } from "@/hooks/useMembership";
 import { useCheckins } from "@/hooks/useCheckins";
@@ -57,8 +58,9 @@ const SETTINGS = [
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
   { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },
   { icon: "briefcase" as const, label: "Business Admin", sub: "Manage your listing, category & profile", route: "/business-owner" as const },
+  { icon: "clock" as const, label: "My Business Submissions", sub: "Track pending, published, or needs-info reviews", route: "/my-business-submissions" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
-  { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Know a business making a positive impact? Add it to the map.", route: "/nominate-business" as const },
+  { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Share a business with our review team", route: "/nominate-business" as const },
   { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
   { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
 ];
@@ -113,7 +115,7 @@ function PrivacyToggleCard({
     setSaving(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const apiBase = getApiBase();
       await fetch(`${apiBase}/api/users/me/privacy`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -163,7 +165,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
     (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
-        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const apiBase = getApiBase();
         const res = await fetch(`${apiBase}/api/users/settings`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -182,7 +184,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
     setSaving(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const apiBase = getApiBase();
       await fetch(`${apiBase}/api/users/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -317,7 +319,7 @@ function RecommendedSpotsSection() {
     void (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
-        const r = await fetch("/api/users/me/recommended-spots", {
+        const r = await fetch(`${getApiBase()}/api/users/me/recommended-spots`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (r.ok) {
@@ -331,7 +333,7 @@ function RecommendedSpotsSection() {
   const removeSpot = async (businessId: string) => {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      await fetch(`/api/users/me/recommended-spots/${businessId}`, {
+      await fetch(`${getApiBase()}/api/users/me/recommended-spots/${businessId}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -344,7 +346,7 @@ function RecommendedSpotsSection() {
     setSaving(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const r = await fetch("/api/users/me/recommended-spots", {
+      const r = await fetch(`${getApiBase()}/api/users/me/recommended-spots`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ businessId: selectedBiz.id, stance: addStance, blurb: addBlurb.trim() || undefined }),
@@ -571,8 +573,6 @@ export default function ProfileScreen() {
     };
   } | null>(null);
 
-  const getApiBase = () =>
-    process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
   const closeEditModal = () => {
     setShowEditModal(false);
@@ -1566,9 +1566,7 @@ export default function ProfileScreen() {
                     try {
                       const token = await SecureStore.getItemAsync("auth_session_token");
                       if (!token) { logout(); return; }
-                      const apiBase = process.env.EXPO_PUBLIC_DOMAIN
-                        ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-                        : "";
+                      const apiBase = getApiBase();
                       const res = await fetch(`${apiBase}/api/auth/logout-all`, {
                         method: "POST",
                         headers: { Authorization: `Bearer ${token}` },

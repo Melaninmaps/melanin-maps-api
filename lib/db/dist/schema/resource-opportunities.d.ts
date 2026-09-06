@@ -508,7 +508,7 @@ export declare const resourceOpportunitiesTable: import("drizzle-orm/pg-core").P
             tableName: "resource_opportunities";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "removed" | "active" | "expired" | "filled";
+            data: "active" | "removed" | "expired" | "filled";
             driverParam: string;
             notNull: true;
             hasDefault: true;

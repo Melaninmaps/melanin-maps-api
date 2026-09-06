@@ -772,7 +772,10 @@ export default function ResourcesScreen() {
       const params = new URLSearchParams({ limit: "30" });
       if (activeCategory !== "all") params.set("category", activeCategory);
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
-      const res = await fetch(`${getApiBase()}/api/resources?${params.toString()}`);
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/resources?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json() as { resources: Resource[] };
         setResources(data.resources ?? []);
@@ -785,7 +788,10 @@ export default function ResourcesScreen() {
       const params = new URLSearchParams({ limit: "30" });
       if (activeOppType !== "all") params.set("type", activeOppType);
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
-      const res = await fetch(`${getApiBase()}/api/resources/opportunities?${params.toString()}`);
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/resources/opportunities?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json() as { opportunities: Opportunity[] };
         setOpportunities(data.opportunities ?? []);

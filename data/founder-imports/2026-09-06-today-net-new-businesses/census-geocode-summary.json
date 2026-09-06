@@ -1,0 +1,25 @@
+{
+  "acceptedByTargetKind": {
+    "business": 2170,
+    "manual_review": 24,
+    "regulated_review": 348
+  },
+  "acceptedExactAddressMatches": 2542,
+  "coordinatePrecision": "interpolated_address_range",
+  "heldOrUnmatched": 825,
+  "inputRows": 3367,
+  "policyVersion": "founder-census-exact-address-v1",
+  "rawOutputSha256": "3e4df57df2196b2aad4bf3f49aad9fc97a6dfecdc15cfeda4dc3896aad73d2a5",
+  "rejectionReasons": {
+    "city_mismatch_without_postal": 22,
+    "house_number_mismatch": 189,
+    "invalid_coordinates": 168,
+    "not_exact": 817,
+    "not_matched": 168,
+    "postal_mismatch": 430,
+    "state_mismatch": 168
+  },
+  "results": "census-geocode-results.jsonl",
+  "resultsSha256": "2dc4e1752853821fc61575f8f574d93b2fbef8453d96e3de3335769623a30a6b",
+  "verifiedBusinessLocation": false
+}

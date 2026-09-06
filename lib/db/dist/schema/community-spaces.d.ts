@@ -396,9 +396,9 @@ export declare const communitySpaceListingsTable: import("drizzle-orm/pg-core").
     dialect: "pg";
 }>;
 export declare const insertCommunitySpaceSchema: z.ZodObject<{
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     city: z.ZodString;
     state: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     title: z.ZodString;
     neighborhood: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     address: z.ZodOptional<z.ZodNullable<z.ZodString>>;

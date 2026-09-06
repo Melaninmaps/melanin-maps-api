@@ -16,10 +16,21 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 
-interface Business { id: string; name: string; category: string; city: string; verified: boolean; description?: string }
+interface Business {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  verified: boolean;
+  description?: string;
+  listing_status?: string;
+  ownership_claim?: string | null;
+}
 interface Event { id: string; title: string; category: string; city: string; event_date: string }
 interface Article { id: string; title: string; category: string; excerpt?: string }
 interface JourneySuggestion { type: string; message: string }
@@ -66,14 +77,18 @@ export default function SmartSearchScreen() {
   const [nominateStateField, setNominateStateField] = useState("");
   const [nominateLoading, setNominateLoading] = useState(false);
   const [nominateDone, setNominateDone] = useState(false);
+  const [nominateMessage, setNominateMessage] = useState("");
   const [nominateError, setNominateError] = useState<string | null>(null);
+  const [nominationRequestId, setNominationRequestId] = useState(() => Crypto.randomUUID());
 
   const openNominate = () => {
     setNominateName("");
     setNominateCity("");
     setNominateStateField("");
     setNominateDone(false);
+    setNominateMessage("");
     setNominateError(null);
+    setNominationRequestId(Crypto.randomUUID());
     setShowNominate(true);
   };
 
@@ -85,23 +100,38 @@ export default function SmartSearchScreen() {
     setNominateLoading(true);
     setNominateError(null);
     try {
-      const res = await fetch(`${getApiBase()}/api/business-nominations`, {
+      const token = Platform.OS === "web"
+        ? null
+        : await SecureStore.getItemAsync("auth_session_token");
+      if (!token) {
+        setNominateError("Sign in with your approved community account to submit a business.");
+        return;
+      }
+      const res = await fetch(`${getApiBase()}/api/community/business-submissions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "Idempotency-Key": nominationRequestId,
+        },
         body: JSON.stringify({
-          businessName: nominateName.trim(),
+          name: nominateName.trim(),
+          category: "General",
           city: nominateCity.trim(),
           state: nominateStateField.trim(),
-          blackOwned: true,
+          locationSource: "member_entered",
+          sourceChannel: "expo_smart_search_nomination",
+          clientRequestId: nominationRequestId,
         }),
       });
-      if (res.status === 403) {
+      if (res.status === 401 || res.status === 403) {
         const data = await res.json() as { error?: string };
-        setNominateError(data.error ?? "Membership required to nominate.");
+        setNominateError(data.error ?? "An approved community account is required.");
       } else if (!res.ok) {
         setNominateError("Something went wrong. Please try again.");
       } else {
+        const data = await res.json() as { message?: string };
+        setNominateMessage(data.message ?? "Saved privately until a complete street address and public link are added.");
         setNominateDone(true);
       }
     } catch {
@@ -282,6 +312,15 @@ export default function SmartSearchScreen() {
                         )}
                       </View>
                       <Text style={[styles.resultMeta, { color: colors.mutedForeground }]}>{biz.category} · {biz.city}</Text>
+                      {biz.listing_status === "live_unclaimed" && (
+                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community/founder-listed · Unclaimed · Not verified</Text>
+                      )}
+                      {biz.ownership_claim === "community_reported_minority_owned" && (
+                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
+                      )}
+                      {biz.ownership_claim === "community_reported_non_minority_owned" && (
+                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community-reported non-minority-owned · Not verified</Text>
+                      )}
                       {biz.description && <Text style={[styles.resultDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{biz.description}</Text>}
                     </View>
                     <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
@@ -362,16 +401,22 @@ export default function SmartSearchScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
           <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setShowNominate(false)} />
           <View style={[styles.nominateModal, { backgroundColor: "#fff" }]}>
-            <Text style={styles.nominateTitle}>Nominate a Business</Text>
-            <Text style={styles.nominateSub}>Know a great spot that should be on the map? Tell us about it.</Text>
+            <Text style={styles.nominateTitle}>Save a Business Tip</Text>
+            <Text style={styles.nominateSub}>Save the name and city now, or use the complete form for immediate publication with a precise pin.</Text>
 
             {nominateDone ? (
               <View style={{ alignItems: "center", paddingVertical: 24 }}>
                 <Text style={{ fontSize: 40, marginBottom: 12 }}>✓</Text>
-                <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8, color: "#2B1507" }}>Nomination received!</Text>
+                <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8, color: "#2B1507" }}>Business tip saved</Text>
                 <Text style={{ fontSize: 14, color: "#6B5240", textAlign: "center", lineHeight: 20 }}>
-                  Our team will review it and reach out to the business. Thank you for helping build the map.
+                  {nominateMessage}
                 </Text>
+                <TouchableOpacity
+                  style={[styles.nominateSubmit, { backgroundColor: "#2B1507", marginTop: 20 }]}
+                  onPress={() => { setShowNominate(false); router.push("/list-business" as never); }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Add details for an immediate pin</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.nominateSubmit, { backgroundColor: "#CA922B", marginTop: 20 }]}
                   onPress={() => setShowNominate(false)}
@@ -419,7 +464,7 @@ export default function SmartSearchScreen() {
                 >
                   {nominateLoading
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Submit Nomination</Text>
+                    : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Save Business Tip</Text>
                   }
                 </TouchableOpacity>
               </>

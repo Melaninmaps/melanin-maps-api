@@ -128,6 +128,20 @@ export function classifyKinfolkRequest(
     };
   }
 
+  // Nightlife is a more specific discovery intent than a generic business
+  // subject and must be resolved before the broad business-subject matcher.
+  if (NIGHTLIFE_RE.test(lower) && location) {
+    return {
+      route: "business_discovery",
+      discoveryKind: "nightlife",
+      location,
+      ownershipPreference,
+      culturalContext,
+      clarification: null,
+      reason: "nightlife_with_location_routes_to_discovery",
+    };
+  }
+
   // Food/travel/business phrases outrank general knowledge and pop culture.
   if ((FOOD_RE.test(lower) || BUSINESS_RE.test(lower) || normalizedBusinessSubject) && location) {
     return {
@@ -138,18 +152,6 @@ export function classifyKinfolkRequest(
       culturalContext,
       clarification: null,
       reason: "food_or_business_with_location_routes_to_catalog_search",
-    };
-  }
-
-  if (NIGHTLIFE_RE.test(lower) && location) {
-    return {
-      route: "business_discovery",
-      discoveryKind: "nightlife",
-      location,
-      ownershipPreference,
-      culturalContext,
-      clarification: null,
-      reason: "nightlife_with_location_routes_to_discovery",
     };
   }
 

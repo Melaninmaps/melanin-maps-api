@@ -41,9 +41,15 @@ export const safetyReportsTable = pgTable("safety_reports", {
   reporterId: varchar("reporter_id"),
   reporterName: varchar("reporter_name", { length: 255 }).notNull().default("Anonymous"),
   category: varchar("category", { length: 100 }).notNull(),
+  encounterType: varchar("encounter_type", { length: 50 }),
   targetType: varchar("target_type", { length: 50 }).notNull().default("business"),
   targetId: varchar("target_id"),
   targetName: varchar("target_name", { length: 255 }).notNull(),
+  incidentCity: varchar("incident_city", { length: 100 }),
+  incidentRegion: varchar("incident_region", { length: 100 }),
+  incidentArea: varchar("incident_area", { length: 255 }),
+  incidentLocationSource: varchar("incident_location_source", { length: 30 }).notNull().default("manual_area"),
+  incidentLocationPrecision: varchar("incident_location_precision", { length: 30 }).notNull().default("city"),
   description: text("description"),
   severity: varchar("severity", { length: 20 }).notNull().default("medium"),
   routingType: varchar("routing_type", { length: 20 }).notNull().default("moderation"),
@@ -81,6 +87,7 @@ export const SAFETY_REPORT_CATEGORIES = [
   "business",
   "resource",
   "positive",
+  "police",
 ] as const;
 
 export const SAFETY_REPORT_SEVERITIES = ["low", "medium", "high", "critical"] as const;
@@ -107,6 +114,7 @@ export const selectSafetyReportSchema = createSelectSchema(safetyReportsTable);
 export const safetyIncidentsTable = pgTable("safety_incidents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   city: varchar("city", { length: 100 }).notNull(),
+  region: varchar("region", { length: 100 }),
   neighborhood: varchar("neighborhood", { length: 255 }),
   category: varchar("category", { length: 100 }).notNull(),
   severity: varchar("severity", { length: 20 }).notNull().default("medium"),

@@ -10,11 +10,23 @@
     "archive-old-products": "tsx ./src/archive-old-products.ts",
     "seed-events": "tsx ./src/seed-events.ts",
     "seed-revenuecat": "tsx ./src/seedRevenueCat.ts",
+    "stage-directory-import": "tsx ./src/stage-directory-import.ts",
+    "stage-cumulative-content-global": "tsx ./src/stage-cumulative-content-global.ts",
+    "stage-today-net-new-businesses": "tsx ./src/stage-today-net-new-businesses.ts",
+    "stage-kinfolk-poc-businesses": "tsx ./src/stage-kinfolk-poc-businesses.ts",
+    "publish-founder-business-inventory": "tsx ./src/publish-founder-business-inventory.ts",
+    "publish-today-net-new-census-pins": "tsx ./src/publish-today-net-new-census-pins.ts",
+    "recover-international-source-evidence": "python3 ./src/recover-international-source-evidence.py",
+    "recover-international-detail-evidence": "python3 ./src/recover-international-detail-evidence.py",
+    "publish-source-backed-international-pins": "tsx ./src/publish-source-backed-international-pins.ts",
+    "publish-founder-global-destinations": "tsx ./src/publish-founder-global-destinations.ts",
+    "canonicalize-founder-global-locations": "tsx ./src/canonicalize-founder-global-locations.ts",
     "send-welcome-blast": "tsx ./src/send-welcome-blast.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@replit/revenuecat-sdk": "^4.2.0",
+    "@workspace/constants": "workspace:*",
     "@workspace/db": "workspace:*",
     "resend": "^4.8.0",
     "stripe": "^22.2.1"

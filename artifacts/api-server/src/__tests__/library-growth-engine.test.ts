@@ -281,15 +281,22 @@ it("9 — draft with 2+ verified sources can publish", async () => {
 // Test 10: Invalid hierarchy — non-existent parent fails safely
 it("10 — materialize with non-existent parent fails safely", async () => {
   // Seed a new candidate pointing to a non-existent parent
-  await pool.query(
-    `INSERT INTO library_growth_candidates (
-       canonical_subject, canonical_subject_key, category, desired_node_type,
-       parent_topic_id, distinct_user_count, signal_count, first_seen_at, last_seen_at,
-       sensitivity_tier, proposed_status, rationale
-     ) VALUES ($1,$2,'health','chapter','nonexistent-parent-id-xyz',10,10,NOW(),NOW(),'standard','approved','{}')
-     ON CONFLICT (canonical_subject_key) DO UPDATE SET proposed_status = 'approved'`,
-    ["Hierarchy Test Chapter", `${TEST_PREFIX}hierarchy_test`],
-  );
+  try {
+    await pool.query(
+      `INSERT INTO library_growth_candidates (
+         canonical_subject, canonical_subject_key, category, desired_node_type,
+         parent_topic_id, distinct_user_count, signal_count, first_seen_at, last_seen_at,
+         sensitivity_tier, proposed_status, rationale
+       ) VALUES ($1,$2,'health','chapter','nonexistent-parent-id-xyz',10,10,NOW(),NOW(),'standard','approved','{}')
+       ON CONFLICT (canonical_subject_key) DO UPDATE SET proposed_status = 'approved'`,
+      ["Hierarchy Test Chapter", `${TEST_PREFIX}hierarchy_test`],
+    );
+  } catch (err) {
+    // A current schema rejects the invalid parent at the candidate boundary.
+    // That is stricter—and equally safe—than deferring rejection to materialization.
+    expect((err as { code?: string }).code).toBe("23503");
+    return;
+  }
 
   const { rows: [badCandidate] } = await pool.query(
     `SELECT id FROM library_growth_candidates WHERE canonical_subject_key = $1`,
@@ -298,14 +305,11 @@ it("10 — materialize with non-existent parent fails safely", async () => {
 
   if (!badCandidate) return;
 
-  // Should fail because the FK reference in topic_relationships would fail for nonexistent parent
-  // The cycle check itself is safe, but the FK insert will throw
-  try {
-    await materializeApprovedLibraryCandidate(badCandidate.id, "test-curator-id");
-    // If it succeeds without error, the parent was silently ignored — acceptable
-  } catch (err) {
-    expect(err).toBeTruthy(); // expected to fail with FK or cycle error
-  }
+  // If an older schema permits the candidate row, materialization must still
+  // reject the invalid hierarchy rather than silently marking it complete.
+  await expect(
+    materializeApprovedLibraryCandidate(badCandidate.id, "test-curator-id"),
+  ).rejects.toThrow();
 });
 
 // Test 11: Published node appears in Library — query confirms enabled=TRUE status='published'

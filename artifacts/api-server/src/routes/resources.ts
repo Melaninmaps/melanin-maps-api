@@ -1,15 +1,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, resourcesTable, resourceOpportunitiesTable, resourceAlertsTable } from "@workspace/db";
-import { eq, and, or, ilike, sql, desc, inArray } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, inArray, isNull, gt } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { isAdmin } from "../lib/adminAuth";
 
 const router: IRouter = Router();
-
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
-function isAdmin(req: Request): boolean {
-  const user = (req as any).user;
-  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
-}
 
 // ── Curated source list ───────────────────────────────────────────────────────
 
@@ -62,7 +57,10 @@ router.get("/resources", async (req: Request, res: Response) => {
   const offset = parseInt(offsetStr ?? "0", 10);
 
   try {
-    const conditions = [eq(resourcesTable.isActive, true)];
+    const conditions = [
+      eq(resourcesTable.isActive, true),
+      or(isNull(resourcesTable.expiresAt), gt(resourcesTable.expiresAt, new Date()))!,
+    ];
     if (category) conditions.push(eq(resourcesTable.category, category as any));
     if (sourceTier) conditions.push(eq(resourcesTable.sourceTier, sourceTier as any));
     if (state) conditions.push(or(eq(resourcesTable.isNational, true), ilike(resourcesTable.state, `%${state}%`))!);
@@ -90,20 +88,6 @@ router.get("/resources", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch resources");
     res.status(500).json({ error: "Failed to fetch resources" });
-  }
-});
-
-// ── GET /resources/:id ────────────────────────────────────────────────────────
-
-router.get("/resources/:id", async (req: Request, res: Response) => {
-  const id = String(req.params.id);
-  try {
-    const [resource] = await db.select().from(resourcesTable).where(eq(resourcesTable.id, id)).limit(1);
-    if (!resource) { res.status(404).json({ error: "Resource not found" }); return; }
-    res.json({ resource });
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch resource");
-    res.status(500).json({ error: "Failed to fetch resource" });
   }
 });
 
@@ -371,7 +355,12 @@ Return ONLY valid JSON with these fields:
     const keywords = parsed.keywords ?? [];
 
     // Step 2: Query the DB for matching resources
-    const dbConditions = [eq(resourcesTable.isActive, true)];
+    const dbConditions = [
+      eq(resourcesTable.isActive, true),
+      or(isNull(resourcesTable.expiresAt), gt(resourcesTable.expiresAt, new Date()))!,
+    ];
+    if (state) dbConditions.push(or(eq(resourcesTable.isNational, true), ilike(resourcesTable.state, `%${state}%`))!);
+    if (city) dbConditions.push(or(eq(resourcesTable.isNational, true), ilike(resourcesTable.city, `%${city}%`))!);
     if (categories.length > 0) {
       dbConditions.push(inArray(resourcesTable.category, categories as any));
     }
@@ -447,6 +436,25 @@ router.post("/resources/admin/seed-curated", async (req: Request, res: Response)
   } catch (err) {
     req.log.error({ err }, "Failed to seed curated resources");
     res.status(500).json({ error: "Failed to seed resources" });
+  }
+});
+
+// Keep this parameter route after every literal /resources/* GET route so
+// requests such as /resources/opportunities and /resources/alerts cannot be
+// captured as a resource ID.
+router.get("/resources/:id", async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  try {
+    const [resource] = await db.select().from(resourcesTable).where(and(
+      eq(resourcesTable.id, id),
+      eq(resourcesTable.isActive, true),
+      or(isNull(resourcesTable.expiresAt), gt(resourcesTable.expiresAt, new Date()))!,
+    )).limit(1);
+    if (!resource) { res.status(404).json({ error: "Resource not found" }); return; }
+    res.json({ resource });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch resource");
+    res.status(500).json({ error: "Failed to fetch resource" });
   }
 });
 

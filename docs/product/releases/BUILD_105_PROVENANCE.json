@@ -1,0 +1,20 @@
+{
+  "platform": "ios",
+  "appVersion": "1.1.5",
+  "buildNumber": 105,
+  "sourceCommit": "4af512bc70e030beafd4f256aa8034be0c833bc8",
+  "easBuildId": "7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
+  "easBuildUrl": "https://expo.dev/accounts/tlindsay428/projects/mobile/builds/7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
+  "easBuildStatus": "FINISHED",
+  "appStoreConnectSubmissionId": "c5193c56-2e49-450f-ab43-194a4baf52e8",
+  "recordedSubmissionStatus": "UPLOADED_TO_APP_STORE_CONNECT_TESTFLIGHT",
+  "bundleIdentifier": "com.melaninmaps.app",
+  "certificateSerial": "3A2C6C169EE7CC2244437E6B79E23C3D",
+  "provisioningProfileId": "c87f4dd1-846a-4b2e-b6cf-e6744b44a662",
+  "appStoreReviewStarted": false,
+  "easBuildReconciled": false,
+  "testFlightReconciled": false,
+  "reconciledAt": null,
+  "reconciledBy": null,
+  "notes": "Recorded from the completed Build 105 handoff. Before Build 106, Replit must independently verify this EAS build ID and the TestFlight build number, set both reconciliation booleans true, record timestamp/operator, commit the evidence update, and obtain independent review."
+}

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "@workspace/db";
+import { getBusinessExperiencePolicy, getOwnerProfileExperienceChoices } from "@workspace/constants";
 
 const router = Router();
 
@@ -481,21 +482,26 @@ router.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    const { vibes } = req.body as { vibes?: string[] };
+    const { vibes, priceKey } = req.body as { vibes?: string[]; priceKey?: string | null };
 
     if (!Array.isArray(vibes)) {
       res.status(400).json({ error: "vibes must be an array" });
       return;
     }
 
-    const validVibes = vibes.filter((v) => VIBE_LIST.some((vl) => vl.id === v));
-    if (validVibes.length > 6) {
-      res.status(400).json({ error: "Maximum 6 vibes allowed" });
-      return;
-    }
-
-    const ownerCheck = await pool.query(
-      "SELECT id FROM businesses WHERE id = $1 AND submitted_by_id = $2 AND status = 'active'",
+    const ownerCheck = await pool.query<{ id: string; category: string; subcategory: string | null }>(
+      `SELECT b.id, b.category, b.subcategory
+         FROM businesses b
+        WHERE b.id = $1
+          AND b.status = 'active'
+          AND EXISTS (
+            SELECT 1 FROM business_owner_links bol
+             WHERE bol.business_id = b.id
+               AND bol.user_id = $2
+               AND bol.role = 'owner'
+               AND bol.status = 'approved'
+               AND bol.revoked_at IS NULL
+          )`,
       [id, userId],
     );
     if (ownerCheck.rows.length === 0) {
@@ -503,12 +509,34 @@ router.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
       return;
     }
 
-    await pool.query("UPDATE businesses SET vibes = $1::jsonb WHERE id = $2", [
+    const policy = getBusinessExperiencePolicy(ownerCheck.rows[0].category, ownerCheck.rows[0].subcategory);
+    const allowed = new Set(getOwnerProfileExperienceChoices(policy).map((choice) => choice.key));
+    const validVibes = [...new Set(vibes.filter((value): value is string => typeof value === "string" && allowed.has(value)))];
+    if (validVibes.length !== vibes.length) {
+      res.status(400).json({ error: "One or more profile tags do not fit this business type." });
+      return;
+    }
+    if (validVibes.length > 2) {
+      res.status(400).json({ error: "Choose up to 2 owner profile tags." });
+      return;
+    }
+
+    const selectedPrice = priceKey === null
+      ? null
+      : policy.priceChoices.find((choice) => choice.key === priceKey)?.label;
+    if (priceKey !== undefined && priceKey !== null && !selectedPrice) {
+      res.status(400).json({ error: "Choose a valid price point." });
+      return;
+    }
+
+    await pool.query("UPDATE businesses SET vibes = $1::jsonb, price_range = CASE WHEN $2::boolean THEN $3 ELSE price_range END WHERE id = $4", [
       JSON.stringify(validVibes),
+      priceKey !== undefined,
+      selectedPrice ?? null,
       id,
     ]);
 
-    res.json({ ok: true, vibes: validVibes });
+    res.json({ ok: true, vibes: validVibes, priceRange: priceKey === undefined ? undefined : selectedPrice ?? null });
   } catch (err) {
     req.log.error({ err }, "update owner vibes error");
     res.status(500).json({ error: "Failed to update vibes" });

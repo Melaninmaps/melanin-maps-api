@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Upload, X, Image as ImageIcon, FileText, Film, AlertCircle, CheckCircle2 } from "lucide-react";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -43,9 +44,8 @@ export function MediaUploader({
     const formData = new FormData();
     formData.append("file", file);
 
-    const resp = await fetch(`${BASE}api/media/upload?purpose=${encodeURIComponent(purpose)}`, {
+    const resp = await authenticatedFetch(`${BASE}api/media/upload?purpose=${encodeURIComponent(purpose)}`, {
       method: "POST",
-      credentials: "include",
       body: formData,
     });
 
@@ -202,4 +202,8 @@ export function MediaUploader({
 // Returns just the URLs from the uploaded files — convenient for form submission
 export function getMediaUrls(files: UploadedFile[]): string[] {
   return files.map((f) => f.url);
+}
+
+export function getMediaAssetIds(files: UploadedFile[]): string[] {
+  return files.map((f) => f.assetId);
 }

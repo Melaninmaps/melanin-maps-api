@@ -51,7 +51,7 @@ describe("private social-space authorization", () => {
     expect(reports).toContain("function publicSafetyReport");
     expect(reports).toContain("report: publicSafetyReport(report)");
     expect(reports).toContain("reports: reports.map(publicSafetyReport)");
-    const publicProjection = reports.slice(reports.indexOf("function publicSafetyReport"), reports.indexOf("// Short-lived coordinate-keyed cache"));
+    const publicProjection = reports.slice(reports.indexOf("function publicSafetyReport"), reports.indexOf('router.post("/reports"'));
     expect(publicProjection).not.toContain("reporterId");
     expect(publicProjection).not.toContain("moderatorNotes");
     expect(publicProjection).not.toContain("evidenceLinks");

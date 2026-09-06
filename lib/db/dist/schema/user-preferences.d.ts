@@ -284,8 +284,63 @@ export declare const userPreferencesTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             length: 30;
         }>;
+        kinfolkVoice: import("drizzle-orm/pg-core").PgColumn<{
+            name: "kinfolk_voice";
+            tableName: "user_preferences";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 20;
+        }>;
+        autoSpeak: import("drizzle-orm/pg-core").PgColumn<{
+            name: "auto_speak";
+            tableName: "user_preferences";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         preferredOwnershipTypes: import("drizzle-orm/pg-core").PgColumn<{
             name: "preferred_ownership_types";
+            tableName: "user_preferences";
+            dataType: "json";
+            columnType: "PgJsonb";
+            data: string[];
+            driverParam: unknown;
+            notNull: false;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            $type: string[];
+        }>;
+        socialVideoPlatforms: import("drizzle-orm/pg-core").PgColumn<{
+            name: "social_video_platforms";
             tableName: "user_preferences";
             dataType: "json";
             columnType: "PgJsonb";
@@ -689,8 +744,63 @@ export declare const insertUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         length: 30;
     }>;
+    kinfolkVoice: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_voice";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
+    }>;
+    autoSpeak: import("drizzle-orm/pg-core").PgColumn<{
+        name: "auto_speak";
+        tableName: "user_preferences";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     preferredOwnershipTypes: import("drizzle-orm/pg-core").PgColumn<{
         name: "preferred_ownership_types";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    socialVideoPlatforms: import("drizzle-orm/pg-core").PgColumn<{
+        name: "social_video_platforms";
         tableName: "user_preferences";
         dataType: "json";
         columnType: "PgJsonb";
@@ -1092,8 +1202,63 @@ export declare const selectUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         length: 30;
     }>;
+    kinfolkVoice: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_voice";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
+    }>;
+    autoSpeak: import("drizzle-orm/pg-core").PgColumn<{
+        name: "auto_speak";
+        tableName: "user_preferences";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     preferredOwnershipTypes: import("drizzle-orm/pg-core").PgColumn<{
         name: "preferred_ownership_types";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    socialVideoPlatforms: import("drizzle-orm/pg-core").PgColumn<{
+        name: "social_video_platforms";
         tableName: "user_preferences";
         dataType: "json";
         columnType: "PgJsonb";

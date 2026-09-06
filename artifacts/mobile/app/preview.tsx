@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Stats = { businesses: number; cities: number; members: number; reviews: number };
@@ -258,9 +259,9 @@ export default function PreviewScreen() {
     void (async () => {
       try {
         const [sRes, bRes, pRes] = await Promise.all([
-          fetch("/api/preview/stats"),
-          fetch("/api/preview/spotlight"),
-          fetch("/api/preview/posts"),
+          fetch(`${getApiBase()}/api/preview/stats`),
+          fetch(`${getApiBase()}/api/preview/spotlight`),
+          fetch(`${getApiBase()}/api/preview/posts`),
         ]);
         if (sRes.ok) setStats(await sRes.json() as Stats);
         if (bRes.ok) { const d = await bRes.json() as { businesses: SpotBiz[] }; setSpotlight(d.businesses); }

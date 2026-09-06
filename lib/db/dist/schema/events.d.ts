@@ -430,10 +430,10 @@ export declare const eventsTable: import("drizzle-orm/pg-core").PgTableWithColum
 export declare const insertEventSchema: z.ZodObject<{
     date: z.ZodString;
     id: z.ZodString;
-    city: z.ZodString;
-    state: z.ZodString;
     description: z.ZodOptional<z.ZodString>;
     status: z.ZodOptional<z.ZodString>;
+    city: z.ZodString;
+    state: z.ZodString;
     title: z.ZodString;
     latitude: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     longitude: z.ZodOptional<z.ZodNullable<z.ZodString>>;

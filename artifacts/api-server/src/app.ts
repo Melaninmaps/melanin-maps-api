@@ -54,6 +54,8 @@ import { findExactRecords, findNearestAvailableLocation } from "./discovery/post
 import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRoutes";
 import { registerMediaRoutes } from "./media/registerMediaRoutes";
 import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
+import { registerDirectoryImportRoutes } from "./directoryImport/registerDirectoryImportRoutes";
+import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -355,11 +357,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ── Intake, media, and claim routes (registered BEFORE aggregate router) ──────
 // IMPORTANT: These must come before app.use("/api", router) because the aggregate
-// router has router.use(requireAuth) at line ~220 of routes/index.ts which returns
-// HTTP 401 for any unauthenticated request — including the PUBLIC community
-// submission endpoint. Registering here ensures Express matches these routes first.
+// router has router.use(requireAuth) at line ~220 of routes/index.ts. Registering
+// here preserves these dedicated contracts while authMiddleware has already
+// attached cookie or bearer sessions above.
 //
-// POST /api/community/business-submissions — public (no auth required)
+// POST|GET /api/community/business-submissions[/mine|/:id] — approved members/testers
 // GET|POST /api/founder/business-submissions[/:id/decision] — admin only (auth checked in handler)
 // POST /api/media/upload — authenticated (auth checked in handler)
 // POST /api/admin/businesses — admin only (auth checked in handler)
@@ -368,6 +370,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
+if (assertDirectoryReviewLocalStaging(process.env)) {
+  registerDirectoryImportRoutes(app);
+}
 
 // ── Living Library public read routes ──────────────────────────────────────
 // Register before the aggregate /api router: its global requireAuth middleware
@@ -404,6 +409,11 @@ registerFoundationTopicRoutes(app, new FoundationTopicRepository(pool));
 // Public read-only routes are registered before the aggregate /api router so a
 // map pin's list record and canonical detail URL remain directly resolvable.
 registerUniversalMapEntityRoutes(app, pool);
+
+// ── Location resolution — public city/area lookup for all discovery surfaces ─
+// Register before the aggregate /api router, whose global requireAuth middleware
+// would otherwise turn this intentionally public resolver into a cookie-only 401.
+registerLocationResolutionRoutes(app, pool);
 
 app.use("/api", router);
 app.use(webSsrRouter);
@@ -451,12 +461,6 @@ registerLocationFirstDiscoveryRoutes(
 // GET /api/map/local-business-search?q=&lat=&lng=&radius=5&expand=0
 // Constrained by Haversine radius server-side; pins == results (no independent source).
 registerLocalBusinessSearchRoute(app, new LocalBusinessSearch(pool));
-
-// ── Location resolution — backs LocationSearchBar on Businesses, Explore, Events ──
-// GET /api/locations/resolve?q=  — text → nearest community_locations row
-// GET /api/locations/reverse?lat=&lng=  — coords → nearest area within 80 km
-// Both are public; neither reveals individual user location data.
-registerLocationResolutionRoutes(app, pool);
 
 // ── Community Vibes — evidence-backed member signals ─────────────────────────
 // Public GET returns aggregate approved vibes (never contributor identity).

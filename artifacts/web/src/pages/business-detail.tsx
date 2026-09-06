@@ -1,6 +1,5 @@
 import { useRoute, Link, useSearch } from "wouter";
 import { CommunityVibes } from "@/features/businesses/CommunityVibes";
-import { VIBES_BY_CATEGORY } from "@workspace/constants";
 import { 
   useGetBusiness, 
   useListReviews, 
@@ -19,6 +18,28 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
+import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
+
+function safeExternalProfileUrl(value: unknown, expectedPlatform: SocialVideoPlatform): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    return detectSocialVideoPlatform(url.toString()) === expectedPlatform ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function safePublicReferenceUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
 
 // Parse a Google Places JSON hours array (["Monday: 9 AM–5 PM", ...]) or a plain string.
 function parseHoursArray(hours: string | null | undefined): string[] | null {
@@ -191,15 +212,6 @@ export default function BusinessDetail() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
-  const [vibeLoading, setVibeLoading] = useState<string | null>(null);
-  // ── Community Feedback — real member-backed vibes + captions ─────────────
-  const [vibeCounts, setVibeCounts] = useState<Record<string, number>>({});
-  const [captionCounts, setCaptionCounts] = useState<Record<string, number>>({});
-  const [viewerVibeSelections, setViewerVibeSelections] = useState<Set<string>>(new Set());
-  const [viewerCaptionSelections, setViewerCaptionSelections] = useState<Set<string>>(new Set());
-  const [captionLoading, setCaptionLoading] = useState<string | null>(null);
-  // ── Endorsement tags ("The Real") — trust-signal tags with community counts ──
-  const [endorsementTags, setEndorsementTags] = useState<Array<{ tagKey: string; label: string; count: number; userTapped: boolean }>>([]);
 
   // ── Community photo upload state ─────────────────────────────────────────────
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -320,279 +332,6 @@ export default function BusinessDetail() {
   // Community Says caption chips — category-specific so a hair salon never shows
   // food tags like "Portions With Love" or "Seasoned Right."
   // Keys must be stable DB identifiers (snake_case); labels are display text.
-  type CaptionDef = { key: string; label: string };
-
-  const CAPTIONS_BY_CATEGORY: Record<string, CaptionDef[]> = {
-    // Food & dining
-    "Food & Dining": [
-      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-      { key: "cooks_like_home",     label: "Cooks Like Home" },
-      { key: "worth_the_drive",     label: "Worth the Drive" },
-      { key: "portions_with_love",  label: "Portions With Love" },
-      { key: "grandma_approved",    label: "Grandma Approved" },
-      { key: "seasoned_right",      label: "Seasoned Right" },
-    ],
-    "Food & Restaurants": [
-      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-      { key: "cooks_like_home",     label: "Cooks Like Home" },
-      { key: "worth_the_drive",     label: "Worth the Drive" },
-      { key: "portions_with_love",  label: "Portions With Love" },
-      { key: "grandma_approved",    label: "Grandma Approved" },
-      { key: "seasoned_right",      label: "Seasoned Right" },
-    ],
-    // Beauty, salons, barbers
-    "Beauty & Personal Care": [
-      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-      { key: "they_knew_my_hair",   label: "They Knew My Hair" },
-      { key: "worth_the_drive",     label: "Worth the Drive" },
-      { key: "felt_like_family",    label: "Felt Like Family" },
-      { key: "my_go_to",           label: "My Go-To" },
-      { key: "left_looking_right",  label: "Left Looking Right" },
-    ],
-    // Health & wellness
-    "Health & Wellness": [
-      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-      { key: "left_feeling_better", label: "Left Feeling Better" },
-      { key: "worth_the_drive",     label: "Worth the Drive" },
-      { key: "they_really_listen",  label: "They Really Listen" },
-      { key: "felt_respected",      label: "Felt Respected" },
-      { key: "came_back_again",     label: "Came Back Again" },
-    ],
-    // Professional / business services
-    "Professional Services": [
-      { key: "sent_the_group_chat",     label: "Sent the Group Chat" },
-      { key: "solved_my_problem",       label: "Solved My Problem" },
-      { key: "worth_the_drive",         label: "Worth the Drive" },
-      { key: "came_through",            label: "Came Through" },
-      { key: "handled_their_business",  label: "Handled Their Business" },
-      { key: "they_came_correct",       label: "They Came Correct" },
-    ],
-    "Financial & Business Services": [
-      { key: "sent_the_group_chat",     label: "Sent the Group Chat" },
-      { key: "solved_my_problem",       label: "Solved My Problem" },
-      { key: "worth_the_drive",         label: "Worth the Drive" },
-      { key: "came_through",            label: "Came Through" },
-      { key: "they_came_correct",       label: "They Came Correct" },
-      { key: "felt_respected",          label: "Felt Respected" },
-    ],
-    "Legal & Government Services": [
-      { key: "sent_the_group_chat",     label: "Sent the Group Chat" },
-      { key: "solved_my_problem",       label: "Solved My Problem" },
-      { key: "worth_the_drive",         label: "Worth the Drive" },
-      { key: "came_through",            label: "Came Through" },
-      { key: "they_came_correct",       label: "They Came Correct" },
-      { key: "felt_respected",          label: "Felt Respected" },
-    ],
-    // Retail & shopping
-    "Retail & Shopping": [
-      { key: "sent_the_group_chat",  label: "Sent the Group Chat" },
-      { key: "found_what_i_needed",  label: "Found What I Needed" },
-      { key: "worth_the_drive",      label: "Worth the Drive" },
-      { key: "they_had_it",          label: "They Had It" },
-      { key: "supporting_real_ones", label: "Supporting Real Ones" },
-      { key: "came_back_again",      label: "Came Back Again" },
-    ],
-    // Education & childcare
-    "Education & Childcare": [
-      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-      { key: "treated_like_family", label: "Treated Like Family" },
-      { key: "worth_the_drive",     label: "Worth the Drive" },
-      { key: "community_backed",    label: "Community Backed" },
-      { key: "felt_welcomed",       label: "Felt Welcomed" },
-      { key: "came_back_again",     label: "Came Back Again" },
-    ],
-    // Home services, auto, tech, trades
-    "Home & Property Services": [
-      { key: "sent_the_group_chat",    label: "Sent the Group Chat" },
-      { key: "solved_my_problem",      label: "Solved My Problem" },
-      { key: "worth_the_drive",        label: "Worth the Drive" },
-      { key: "came_through",           label: "Came Through" },
-      { key: "handled_their_business", label: "Handled Their Business" },
-      { key: "they_came_correct",      label: "They Came Correct" },
-    ],
-  };
-
-  const UNIVERSAL_CAPTIONS: CaptionDef[] = [
-    { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-    { key: "worth_the_drive",     label: "Worth the Drive" },
-    { key: "felt_like_family",    label: "Felt Like Family" },
-    { key: "community_backed",    label: "Community Backed" },
-    { key: "came_correct",        label: "Came Correct" },
-    { key: "real_ones_here",      label: "Real Ones Here" },
-  ];
-
-  // Derive captions from the current business category.
-  // Falls back to universal tags if the category isn't mapped.
-  const COMMUNITY_CAPTIONS: CaptionDef[] =
-    CAPTIONS_BY_CATEGORY[business?.category ?? ""] ?? UNIVERSAL_CAPTIONS;
-
-  // Categories that use THE REAL (professional trust tags) instead of Community Vibes.
-  // Per the Master Directory and Three-Layer Architecture spec.
-  const NO_VIBE_CATEGORIES = new Set([
-    "Professional Services",
-    "Home & Property Services",
-    "Automotive & Transportation",
-    "Pets & Animal Services",
-    "Technology & Digital Services",
-    "Financial & Business Services",
-    "Legal & Government Services",
-    "Other Services",
-  ]);
-
-  // Converts a canonical vibe label to a DB-safe id key.
-  // "Hood Classic" → "hood_classic", "Grown & Sexy" → "grown_sexy"
-  const toVibeId = (label: string) =>
-    label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-
-  // Pull vibes for a given business category from the master canonical source (@workspace/db).
-  // Falls back to a curated cross-category set so every eligible business has vibes.
-  const FALLBACK_VIBES = [
-    "Locals Know", "Auntie Energy", "Hood Classic", "Soft Life",
-    "Neighborhood Love", "History Lives Here", "Sunday Best", "Take Somebody From Out of Town",
-  ];
-  const getVibesForCat = (cat: string): { id: string; label: string; helperText: string }[] => {
-    const canonical = VIBES_BY_CATEGORY[cat];
-    if (canonical && canonical.length > 0) {
-      return canonical.map((v) => ({ id: toVibeId(v.label), label: v.label, helperText: v.helperText }));
-    }
-    return FALLBACK_VIBES.map((label) => {
-      const found = Object.values(VIBES_BY_CATEGORY).flat().find((v) => v.label === label);
-      return { id: toVibeId(label), label, helperText: found?.helperText ?? "" };
-    });
-  };
-
-  // Load community feedback: counts + viewer selections from business_member_feedback
-  useEffect(() => {
-    if (!id) return;
-    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/businesses/${id}/community-feedback`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (!d) return;
-        setVibeCounts(d.vibeCounts ?? {});
-        setCaptionCounts(d.captionCounts ?? {});
-        if (Array.isArray(d.viewerFeedbackSelections)) {
-          const vibeKeys = new Set<string>();
-          const captionKeys = new Set<string>();
-          for (const s of d.viewerFeedbackSelections as { kind: string; key: string }[]) {
-            if (s.kind === "vibe") vibeKeys.add(s.key);
-            else if (s.kind === "caption") captionKeys.add(s.key);
-          }
-          setViewerVibeSelections(vibeKeys);
-          setViewerCaptionSelections(captionKeys);
-        }
-      })
-      .catch(() => {});
-  }, [auth?.user, id]);
-
-  // Load endorsement tags — separate from vibes, trust-signal backed
-  useEffect(() => {
-    if (!id) return;
-    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/vibes/endorsements/${id}`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (Array.isArray(d?.tags)) setEndorsementTags(d.tags); })
-      .catch(() => {});
-  }, [id]);
-
-  async function handleCommunityFeedback(kind: "vibe" | "caption", key: string) {
-    if (!auth?.user) {
-      toast({
-        title: "Sign in to interact",
-        description: "Create a free account to share your community experience.",
-      });
-      return;
-    }
-    const isVibe = kind === "vibe";
-    const isSelected = isVibe ? viewerVibeSelections.has(key) : viewerCaptionSelections.has(key);
-    const newSelected = !isSelected;
-
-    // Optimistic update — toggle the chip immediately
-    if (isVibe) {
-      if (vibeLoading) return;
-      setVibeLoading(key);
-      setViewerVibeSelections((prev) => {
-        const n = new Set(prev);
-        newSelected ? n.add(key) : n.delete(key);
-        return n;
-      });
-      setVibeCounts((prev) => ({
-        ...prev,
-        [key]: Math.max(0, (prev[key] ?? 0) + (newSelected ? 1 : -1)),
-      }));
-    } else {
-      if (captionLoading) return;
-      setCaptionLoading(key);
-      setViewerCaptionSelections((prev) => {
-        const n = new Set(prev);
-        newSelected ? n.add(key) : n.delete(key);
-        return n;
-      });
-      setCaptionCounts((prev) => ({
-        ...prev,
-        [key]: Math.max(0, (prev[key] ?? 0) + (newSelected ? 1 : -1)),
-      }));
-    }
-
-    const apiBase = (import.meta.env.BASE_URL as string).replace(/\/$/, "");
-    try {
-      const res = await fetch(`${apiBase}/api/businesses/${id}/community-feedback`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ kind, key, selected: newSelected }),
-      });
-      if (res.ok) {
-        const data = await res.json() as {
-          memberSelection: { kind: string; key: string; selected: boolean };
-          aggregates: { vibeCounts: Record<string, number>; captionCounts: Record<string, number> };
-        };
-        // Reconcile counts from server (authoritative)
-        setVibeCounts(data.aggregates?.vibeCounts ?? {});
-        setCaptionCounts(data.aggregates?.captionCounts ?? {});
-        // Reconcile the toggled key's selection state
-        const serverSelected = data.memberSelection?.selected;
-        if (isVibe) {
-          setViewerVibeSelections((prev) => {
-            const n = new Set(prev);
-            serverSelected ? n.add(key) : n.delete(key);
-            return n;
-          });
-        } else {
-          setViewerCaptionSelections((prev) => {
-            const n = new Set(prev);
-            serverSelected ? n.add(key) : n.delete(key);
-            return n;
-          });
-        }
-      } else {
-        // Rollback optimistic update
-        if (isVibe) {
-          setViewerVibeSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
-          setVibeCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
-        } else {
-          setViewerCaptionSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
-          setCaptionCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
-        }
-        toast({ title: "Something went wrong", description: "Your selection could not be saved." });
-      }
-    } catch {
-      // Rollback on network error
-      if (isVibe) {
-        setViewerVibeSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
-        setVibeCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
-      } else {
-        setViewerCaptionSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
-        setCaptionCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
-      }
-      toast({ title: "Connection error", description: "Check your connection and try again." });
-    } finally {
-      if (isVibe) setVibeLoading(null);
-      else setCaptionLoading(null);
-    }
-  }
-
-  async function handleHiddenGem() { return handleCommunityFeedback("vibe", "hidden_gem"); }
 
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimName, setClaimName] = useState("");
@@ -1050,6 +789,15 @@ export default function BusinessDetail() {
                 <MapPin size={18} />
                 <span>{business.city}, {business.state}</span>
               </div>
+              {(business as any).listingStatus === "live_unclaimed" && (
+                <p className="mt-3 text-sm font-semibold text-[#F5EBD8]">Community/founder-listed · Unclaimed · Not verified</p>
+              )}
+              {(business as any).ownershipClaim === "community_reported_minority_owned" && (
+                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported minority-owned · Not verified</p>
+              )}
+              {(business as any).ownershipClaim === "community_reported_non_minority_owned" && (
+                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported non-minority-owned · Not verified</p>
+              )}
             </div>
             
             <div className="flex gap-3">
@@ -1106,14 +854,15 @@ export default function BusinessDetail() {
           const badges = designations.length > 0 ? designations : (business.blackOwned ? ["Black / African American-Owned"] : []);
           const isTrusted = (business.reviewCount ?? 0) >= 5 && (business.averageRating ?? 0) >= 4.0;
           const isVerified = !!(business as any).verified;
+          const isCommunityReportedOwnership = String((business as any).ownershipClaim ?? "").startsWith("community_reported_");
           if (badges.length === 0 && !isTrusted && !isVerified) return null;
           return (
             <div className="mb-1">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {badges.map((d: string) => (
                   <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#CA922B]/10 border border-[#CA922B]/30 text-[#CA922B]">
-                    <ShieldCheck className="w-3 h-3" />
-                    {d}
+                    {isCommunityReportedOwnership ? <Users className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}
+                    {isCommunityReportedOwnership ? `Community-reported: ${d}` : d}
                   </span>
                 ))}
                 {isVerified && (
@@ -1137,7 +886,9 @@ export default function BusinessDetail() {
               </div>
               {badges.length > 0 && (
                 <p className="text-[10px] text-white/40 leading-relaxed mb-4">
-                  Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for verified status.
+                  {isCommunityReportedOwnership
+                    ? "These ownership designations were reported by a community member and are not verified owner identity."
+                    : "Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for verified status."}
                 </p>
               )}
             </div>
@@ -1206,7 +957,7 @@ export default function BusinessDetail() {
 
         {/* Share Your Experience — matches mobile label exactly. NOT "Rate Your Safety Experience" */}
         <button
-          onClick={() => document.querySelector<HTMLElement>('[data-value="reviews"]')?.click()}
+          onClick={() => document.getElementById("community-experience")?.scrollIntoView({ behavior: "smooth", block: "start" })}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border mb-8 transition-colors group"
           style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }}
         >
@@ -1296,76 +1047,24 @@ export default function BusinessDetail() {
                 
                 {/* Ownership designations shown above tabs in community intelligence header */}
 
-                {/* Community Vibes — dynamic, evidence-backed signals fetched from the API.
-                    Hidden for professional/service categories (THE REAL endorsement tags instead).
-                    Shows honest empty state when no approved evidence exists — never static defaults. */}
-                {!NO_VIBE_CATEGORIES.has(business.category ?? "") && (
-                  <CommunityVibes
-                    businessId={business.id}
-                    isAuthenticated={Boolean(auth?.user)}
-                  />
-                )}
-
-                {/* Community Says — 6 cultural caption chips backed by business_member_feedback */}
-                <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-[#CA922B]" />
-                      <h3 className="font-serif font-bold text-xl text-white">Community Says</h3>
-                    </div>
-                    <span className="text-xs text-white/40 font-medium">
-                      {auth?.user ? "Tap to add your voice" : "Sign in to add your voice"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-white/40 mb-4">Real words from people who've been here</p>
-                  <div className="flex flex-wrap gap-2">
-                    {COMMUNITY_CAPTIONS.map((caption) => {
-                      const active = viewerCaptionSelections.has(caption.key);
-                      const loading = captionLoading === caption.key;
-                      const count = captionCounts[caption.key];
-                      return (
-                        <button
-                          key={caption.key}
-                          data-testid={`business-caption-${caption.key.replace(/_/g, "-")}`}
-                          aria-pressed={active}
-                          onClick={() => handleCommunityFeedback("caption", caption.key)}
-                          disabled={loading}
-                          title={active ? `You said "${caption.label}" — tap to remove` : `Tap to say "${caption.label}"`}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
-                            active
-                              ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
-                              : "bg-[#241810] border-white/10 text-white/80 hover:border-[#CA922B] hover:text-[#CA922B]"
-                          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                        >
-                          {count && count > 0 ? (
-                            <span className={`font-bold text-xs ${active ? "text-white/80" : "text-[#CA922B]"}`}>{count}</span>
-                          ) : null}
-                          <span>{count && count > 0 ? `said "${caption.label}"` : caption.label}</span>
-                          {active && <CheckCircle2 className="w-3.5 h-3.5 text-white/80" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {Object.values(captionCounts).every((c) => !c || c === 0) && (
-                    <p className="text-sm text-white/40 italic mt-3">
-                      Be the first to add a community caption for this business.
-                    </p>
-                  )}
-                </div>
+                {/* One category-aware experience system for atmosphere, quick reviews, and price. */}
+                <CommunityVibes
+                  businessId={business.id}
+                  isAuthenticated={Boolean(auth?.user)}
+                />
 
                 {/* ── Community Safety & Trust (#240) ─────────────────────────────── */}
                 {(() => {
                   const safetyRating = (business as any).safetyRating as number | null;
                   const wouldReturnAlone = (business as any).wouldReturnAlone as number | null;
                   const recommendationRate = (business as any).recommendationRate as number | null;
-                  const activeEndorsements = endorsementTags.filter(t => t.count > 0);
                   const hasSafetyData = (safetyRating != null && safetyRating > 0) || wouldReturnAlone != null || recommendationRate != null;
-                  if (!hasSafetyData && activeEndorsements.length === 0) return null;
+                  if (!hasSafetyData) return null;
                   return (
                     <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10 space-y-5">
                       <div className="flex items-center gap-2 mb-1">
                         <ShieldCheck className="w-4 h-4 text-[#CA922B]" />
-                        <h3 className="font-serif font-bold text-xl text-white">Community Intelligence & Trust</h3>
+                        <h3 className="font-serif font-bold text-xl text-white">Community Safety & Trust</h3>
                       </div>
 
                       {/* Safety stats */}
@@ -1389,33 +1088,6 @@ export default function BusinessDetail() {
                               <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mt-0.5">Would Recommend</p>
                             </div>
                           )}
-                        </div>
-                      )}
-
-                      {/* Endorsement tags */}
-                      {activeEndorsements.length > 0 && (
-                        <div>
-                          <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-3">Community Endorsements</p>
-                          <div className="flex flex-wrap gap-2">
-                            {activeEndorsements.map(tag => (
-                              <span
-                                key={tag.tagKey}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                  tag.userTapped
-                                    ? "bg-[#CA922B] border-[#CA922B] text-white"
-                                    : "bg-[#241810] border-white/10 text-white/80"
-                                }`}
-                              >
-                                <Award className="w-3 h-3" />
-                                {tag.label}
-                                {tag.count > 0 && (
-                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tag.userTapped ? "bg-white/20" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
-                                    {tag.count}
-                                  </span>
-                                )}
-                              </span>
-                            ))}
-                          </div>
                         </div>
                       )}
                     </div>
@@ -1608,6 +1280,46 @@ export default function BusinessDetail() {
                   </div>
                 )}
 
+                {(() => {
+                  const sourceUrl = safePublicReferenceUrl((business as any).sourceUrl);
+                  if (!sourceUrl || sourceUrl === business.website) return null;
+                  return (
+                    <div className="flex items-center gap-4 text-white/80 text-sm">
+                      <BookOpen className="w-5 h-5 text-[#CA922B] shrink-0" />
+                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-[#CA922B] truncate">
+                        View supplied listing source
+                      </a>
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const record = business as any;
+                  const socialProfiles = record.socialProfiles && typeof record.socialProfiles === "object"
+                    ? record.socialProfiles as Record<string, unknown>
+                    : {};
+                  const options = [
+                    ["instagram", "Instagram"], ["tiktok", "TikTok"], ["youtube", "YouTube"],
+                    ["facebook", "Facebook"], ["twitch", "Twitch"], ["snapchat", "Snapchat"],
+                  ] as const;
+                  const links = options.flatMap(([key, label]) => {
+                    const url = safeExternalProfileUrl(record[key] ?? socialProfiles[key], key);
+                    return url ? [{ key, label, url }] : [];
+                  });
+                  return links.length > 0 ? (
+                    <div className="flex items-start gap-4 text-white/80 text-sm">
+                      <Share2 className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
+                      <div className="flex flex-wrap gap-2">
+                        {links.map((link) => (
+                          <a key={link.key} href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2.5 py-1.5 hover:border-[#CA922B] hover:text-[#CA922B]">
+                            {link.label} <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
                 {business.priceRange && (
                   <div className="flex items-center gap-4 text-white/80 text-sm">
                     <div className="w-5 h-5 rounded-full bg-[#CA922B]/10 text-[#CA922B] flex items-center justify-center font-bold text-xs shrink-0">$</div>
@@ -1763,11 +1475,15 @@ export default function BusinessDetail() {
                             <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Community Vibes</span>
                           </div>
                           {communityVibes.slice(0, 5).map((c: any) => {
-                            const platform = detectPlatformFromUrl(c.source_url ?? "");
+                            const detected = detectSocialVideoPlatform(c.source_url ?? "");
+                            if (!detected) return null;
+                            const href = safeExternalProfileUrl(c.source_url, detected);
+                            if (!href) return null;
+                            const platform = detectPlatformFromUrl(href);
                             return (
                               <a
                                 key={c.id}
-                                href={c.source_url}
+                                href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#241810] border border-white/10 hover:border-[#CA922B]/40 transition-colors group"
@@ -1802,11 +1518,15 @@ export default function BusinessDetail() {
                       {linkedPosts.length > 0 && (
                         <div className="space-y-2">
                           {linkedPosts.map(url => {
-                            const platform = detectPlatform(url);
+                            const detected = detectSocialVideoPlatform(url);
+                            if (!detected) return null;
+                            const href = safeExternalProfileUrl(url, detected);
+                            if (!href) return null;
+                            const platform = detectPlatform(href);
                             return (
                               <a
                                 key={url}
-                                href={url}
+                                href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#241810] border border-white/10 hover:border-[#CA922B]/40 transition-colors group"

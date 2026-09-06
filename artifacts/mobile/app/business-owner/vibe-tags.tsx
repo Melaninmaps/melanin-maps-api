@@ -14,6 +14,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import {
+  getBusinessExperiencePolicy,
+  getOwnerProfileExperienceChoices,
+  normalizeOwnerExperienceKey,
+  type BusinessExperienceChoice,
+} from "@workspace/constants";
 
 import { getApiBase } from "@/lib/api";
 
@@ -25,21 +31,6 @@ async function getToken(): Promise<string | null> {
   }
 }
 
-const VIBE_LIST = [
-  { id: "date-night", label: "Date Night", icon: "heart" as const, desc: "Romantic, intimate, couples" },
-  { id: "group-hangout", label: "Group Hangout", icon: "users" as const, desc: "Lively, social, great for squads" },
-  { id: "solo-vibes", label: "Solo Vibes", icon: "user" as const, desc: "Quiet, chill, recharge energy" },
-  { id: "bougie-treat", label: "Bougie Treat", icon: "award" as const, desc: "Upscale, elevated, special occasion" },
-  { id: "hood-classic", label: "Hood Classic", icon: "home" as const, desc: "Authentic, local, community staple" },
-  { id: "soul-food", label: "Soul Food", icon: "coffee" as const, desc: "Southern comfort, home cooking" },
-  { id: "late-night", label: "Late Night", icon: "moon" as const, desc: "After dark, nightlife, good energy" },
-  { id: "family-time", label: "Family Time", icon: "smile" as const, desc: "Kid-friendly, wholesome, all ages" },
-  { id: "creative-scene", label: "Creative Scene", icon: "music" as const, desc: "Art, music, culture, expression" },
-  { id: "wellness", label: "Wellness", icon: "activity" as const, desc: "Health, spa, spiritual, balance" },
-  { id: "work-and-study", label: "Work & Study", icon: "book-open" as const, desc: "Productive, WiFi, focused energy" },
-  { id: "adventure", label: "Adventure Ready", icon: "compass" as const, desc: "Active, explorative, outdoors" },
-];
-
 export default function OwnerVibeTags() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -49,6 +40,9 @@ export default function OwnerVibeTags() {
 
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [choices, setChoices] = useState<BusinessExperienceChoice[]>([]);
+  const [priceChoices, setPriceChoices] = useState<BusinessExperienceChoice[]>([]);
+  const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -60,11 +54,16 @@ export default function OwnerVibeTags() {
 
       const mineRes = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
       if (!mineRes.ok) return;
-      const mineData = await mineRes.json() as { business: { id: string; vibes?: string[] } | null };
+      const mineData = await mineRes.json() as { business: { id: string; category?: string; subcategory?: string; vibes?: string[]; priceRange?: string | null } | null };
       if (!mineData.business) return;
 
       setBusinessId(mineData.business.id);
-      setSelected(mineData.business.vibes ?? []);
+      const policy = getBusinessExperiencePolicy(mineData.business.category, mineData.business.subcategory);
+      const profileChoices = getOwnerProfileExperienceChoices(policy);
+      setChoices(profileChoices);
+      setPriceChoices(policy.priceChoices);
+      setSelected((mineData.business.vibes ?? []).map(normalizeOwnerExperienceKey).filter((key) => profileChoices.some((choice) => choice.key === key)).slice(0, 2));
+      setSelectedPrice(policy.priceChoices.find((choice) => choice.label === mineData.business?.priceRange)?.key ?? null);
     } catch { /* silent */ } finally {
       setLoading(false);
     }
@@ -75,8 +74,8 @@ export default function OwnerVibeTags() {
   const toggle = (id: string) => {
     setSelected(prev => {
       if (prev.includes(id)) return prev.filter(v => v !== id);
-      if (prev.length >= 6) {
-        Alert.alert("Max 6 vibes", "Remove one before adding another.");
+      if (prev.length >= 2) {
+        Alert.alert("Choose up to 2", "Remove one before adding another profile tag.");
         return prev;
       }
       return [...prev, id];
@@ -95,11 +94,11 @@ export default function OwnerVibeTags() {
       const res = await fetch(`${getApiBase()}/api/vibes/businesses/${businessId}/owner-tags`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({ vibes: selected }),
+        body: JSON.stringify({ vibes: selected, priceKey: selectedPrice }),
       });
 
       if (res.ok) {
-        Alert.alert("Saved!", "Your vibe search tags have been updated. Customers can now find you in vibe searches.");
+        Alert.alert("Saved!", "Your experience tags and price point have been updated for search.");
       } else {
         const body = await res.json() as { error?: string };
         Alert.alert("Error", body.error ?? "Could not save. Please try again.");
@@ -121,7 +120,7 @@ export default function OwnerVibeTags() {
         >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Vibe Search Tags</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Experience Tags</Text>
         <View style={{ width: 38 }} />
       </View>
 
@@ -133,7 +132,7 @@ export default function OwnerVibeTags() {
         <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Feather name="zap" size={18} color="#5B6AF0" />
           <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-            Select up to 6 vibes that describe your atmosphere. These help customers find you when they search by mood and vibe.
+            Select up to 2 honest profile tags. Restaurants can describe atmosphere; professionals can describe service. Community members add their own view separately.
           </Text>
         </View>
 
@@ -150,16 +149,16 @@ export default function OwnerVibeTags() {
         ) : (
           <>
             <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-              {selected.length}/6 selected
+              {selected.length}/2 selected
             </Text>
             <View style={styles.grid}>
-              {VIBE_LIST.map((vibe) => {
-                const active = selected.includes(vibe.id);
+              {choices.map((vibe) => {
+                const active = selected.includes(vibe.key);
                 return (
                   <TouchableOpacity
-                    key={vibe.id}
+                    key={vibe.key}
                     activeOpacity={0.8}
-                    onPress={() => toggle(vibe.id)}
+                    onPress={() => toggle(vibe.key)}
                     style={[
                       styles.vibeCard,
                       {
@@ -169,13 +168,13 @@ export default function OwnerVibeTags() {
                     ]}
                   >
                     <View style={[styles.vibeIconWrap, { backgroundColor: active ? "#5B6AF020" : colors.background }]}>
-                      <Feather name={vibe.icon} size={20} color={active ? "#5B6AF0" : colors.mutedForeground} />
+                      <Feather name="star" size={20} color={active ? "#5B6AF0" : colors.mutedForeground} />
                     </View>
                     <Text style={[styles.vibeLabel, { color: active ? "#5B6AF0" : colors.foreground }]}>
                       {vibe.label}
                     </Text>
                     <Text style={[styles.vibeDesc, { color: colors.mutedForeground }]} numberOfLines={2}>
-                      {vibe.desc}
+                      {vibe.helperText}
                     </Text>
                     {active && (
                       <View style={styles.checkBadge}>
@@ -187,13 +186,35 @@ export default function OwnerVibeTags() {
               })}
             </View>
 
+            <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              <Feather name="dollar-sign" size={18} color="#5B6AF0" />
+              <Text style={[styles.infoText, { color: colors.mutedForeground }]}>Choose the usual price point customers should expect. Community members can also share their experience separately.</Text>
+            </View>
+            <View style={styles.grid}>
+              {priceChoices.map((choice) => {
+                const active = selectedPrice === choice.key;
+                return (
+                  <TouchableOpacity
+                    key={choice.key}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedPrice(active ? null : choice.key)}
+                    style={[styles.vibeCard, { backgroundColor: active ? "#5B6AF015" : colors.secondary, borderColor: active ? "#5B6AF0" : colors.border }]}
+                  >
+                    <Text style={[styles.vibeLabel, { color: active ? "#5B6AF0" : colors.foreground }]}>{choice.label}</Text>
+                    <Text style={[styles.vibeDesc, { color: colors.mutedForeground }]}>{choice.helperText}</Text>
+                    {active && <View style={styles.checkBadge}><Feather name="check" size={11} color="#fff" /></View>}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => void handleSave()}
               disabled={saving}
               style={[styles.saveBtn, { backgroundColor: saving ? colors.mutedForeground : "#5B6AF0" }]}
             >
-              <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save Vibe Tags"}</Text>
+              <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save Experience Details"}</Text>
             </TouchableOpacity>
           </>
         )}

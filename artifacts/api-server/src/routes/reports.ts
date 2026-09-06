@@ -2,14 +2,53 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, safetyReportsTable, safetyIncidentsTable, businessesTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
-import { sendPushToBusinessOwnersByCity } from "../lib/pushNotifications";
 import { sendAdminSafetyReportAlert } from "../lib/email";
-import { logger } from "../lib/logger";
+import { moderateSafetyReport } from "../safety/moderateSafetyReport";
+import {
+  getCachedProximityWarnings,
+  invalidateProximityWarningCache,
+  proximityCacheKey,
+  setCachedProximityWarnings,
+} from "../safety/proximityWarningCache";
+import {
+  normalizeIncidentLocation,
+  normalizePoliceEncounterType,
+  normalizeReportTarget,
+  reportMustBeAnonymous,
+} from "../safety/reportContract";
 
 const router: IRouter = Router();
 
 const VALID_CATEGORIES = ["safety", "sundown", "discrimination", "business", "resource", "positive", "police"] as const;
 const VALID_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+
+const REPORT_CATEGORY_ALIASES: Record<string, typeof VALID_CATEGORIES[number]> = {
+  "safety concern": "safety",
+  "sundown town warning": "sundown",
+  discrimination: "discrimination",
+  "business update": "business",
+  "community resource": "resource",
+  "positive safety tip": "positive",
+  "police stop/questioning": "police",
+  "ice activity": "police",
+  "racial profiling": "police",
+  "excessive force/misconduct": "police",
+  "checkpoint/roadblock": "police",
+  "other encounter": "police",
+};
+
+export function normalizeReportCategory(category: unknown): typeof VALID_CATEGORIES[number] | null {
+  if (typeof category !== "string") return null;
+  const normalized = category.trim().toLowerCase();
+  if ((VALID_CATEGORIES as readonly string[]).includes(normalized)) {
+    return normalized as typeof VALID_CATEGORIES[number];
+  }
+  return REPORT_CATEGORY_ALIASES[normalized] ?? null;
+}
+
+export function normalizeReportEncounterType(encounterType: unknown) {
+  return normalizePoliceEncounterType(encounterType);
+}
 
 // Spoken severity labels from the UI → internal severity values
 const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
@@ -29,22 +68,26 @@ const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
   "I felt targeted or unsafe here": "high",
   "There may be an immediate danger": "critical",
 };
-const VALID_TARGET_TYPES = ["neighborhood", "business", "area"] as const;
-
 const INCIDENT_THRESHOLD = 3;
-const INCIDENT_WINDOW_DAYS = 7;
-const SAFETY_RATING_THRESHOLD = 3;
-
-const SEVERITY_WEIGHTS: Record<string, number> = { low: 0.2, medium: 0.5, high: 1.0, critical: 2.0 };
 
 function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
+  const sensitive = reportMustBeAnonymous(report.category);
+  const cityRegion = report.incidentCity
+    ? [report.incidentCity, report.incidentRegion].filter(Boolean).join(", ")
+    : null;
+  const safeLocation = sensitive
+    ? (cityRegion || "Location withheld")
+    : (report.incidentArea && cityRegion
+      ? `${report.incidentArea}, ${cityRegion}`
+      : cityRegion || report.targetName);
   return {
     id: report.id,
     category: report.category,
-    targetType: report.targetType,
-    targetId: report.targetId,
-    targetName: report.targetName,
-    description: report.description,
+    encounterType: report.encounterType,
+    targetType: sensitive ? "neighborhood" : report.targetType,
+    targetId: sensitive ? null : report.targetId,
+    targetName: safeLocation,
+    description: sensitive ? null : report.description,
     severity: report.severity,
     status: report.status,
     businessResponseText: report.businessResponseText,
@@ -52,133 +95,12 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
   };
 }
 
-// Short-lived coordinate-keyed cache for proximity-warnings.
-// Rounds to 3 decimal places (~111 m) so nearby poll ticks share a cache entry.
-// Community safety data only — no user-specific fields in the cached payload.
-const PROXIMITY_CACHE_TTL_MS = 60_000;
-interface ProximityCacheEntry {
-  data: { warnings: unknown[]; areaIncidents: unknown[] };
-  expiresAt: number;
-}
-const proximityCache = new Map<string, ProximityCacheEntry>();
-
-function proximityCacheKey(lat: number, lng: number, radius: number): string {
-  return `${Math.round(lat * 1000) / 1000}:${Math.round(lng * 1000) / 1000}:${radius}`;
-}
-
-/**
- * Recomputes and saves a business's safetyRating.
- * countAllPending=true  → non-minority: every non-dismissed report counts immediately
- * countAllPending=false → minority: only admin-reviewed ("reviewed"|"actioned") reports count
- * In both cases the rating only changes once 3+ qualifying reports exist.
- */
-async function updateBusinessSafetyRating(businessId: string, countAllPending: boolean): Promise<void> {
-  try {
-    const statusFilter = countAllPending
-      ? `target_id = $1 AND target_type = 'business' AND status != 'dismissed'`
-      : `target_id = $1 AND target_type = 'business' AND status IN ('reviewed', 'actioned')`;
-
-    const result = await pool.query<{ severity: string; count: string }>(
-      `SELECT severity, COUNT(*)::text AS count FROM safety_reports WHERE ${statusFilter} GROUP BY severity`,
-      [businessId],
-    );
-
-    let totalReports = 0;
-    let totalWeight = 0;
-    for (const row of result.rows) {
-      const n = parseInt(row.count, 10);
-      totalReports += n;
-      totalWeight += (SEVERITY_WEIGHTS[row.severity] ?? 0.5) * n;
-    }
-
-    if (totalReports < SAFETY_RATING_THRESHOLD) return;
-
-    const safetyRating = Math.max(0, 5.0 - totalWeight).toFixed(1);
-    await pool.query(`UPDATE businesses SET safety_rating = $1 WHERE id = $2`, [safetyRating, businessId]);
-    logger.info({ businessId, safetyRating, totalReports, countAllPending }, "[safety] business safety rating updated");
-  } catch (err) {
-    logger.error({ err }, "[safety] failed to update business safety rating");
-  }
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  safety: "Safety Concern",
-  sundown: "Sundown Town Warning",
-  discrimination: "Discrimination Incident",
-  business: "Business Safety Update",
-  resource: "Community Resource",
-  positive: "Positive Safety Tip",
-};
-
-async function checkAndTriggerIncident(
-  city: string,
-  category: string,
-  severity: string,
-  neighborhood: string | null,
-): Promise<void> {
-  try {
-    const sinceDate = new Date(Date.now() - INCIDENT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-    const pattern = `%${city}%`;
-
-    const countResult = await pool.query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM safety_reports
-       WHERE target_name ILIKE $1 AND category = $2 AND created_at >= $3`,
-      [pattern, category, sinceDate],
-    );
-    const reportCount = parseInt(countResult.rows[0]?.count ?? "0", 10);
-
-    logger.info({ city, category, reportCount, threshold: INCIDENT_THRESHOLD }, "[safety] threshold check");
-
-    if (reportCount < INCIDENT_THRESHOLD) return;
-
-    const existingResult = await pool.query<{ id: string }>(
-      `SELECT id FROM safety_incidents
-       WHERE city ILIKE $1 AND category = $2 AND status = 'active' AND triggered_at >= $3
-       LIMIT 1`,
-      [pattern, category, sinceDate],
-    );
-
-    const categoryLabel = CATEGORY_LABELS[category] ?? category;
-
-    if (existingResult.rows.length > 0) {
-      const existingId = existingResult.rows[0].id;
-      await pool.query(
-        `UPDATE safety_incidents SET report_count = $1, severity = $2 WHERE id = $3`,
-        [reportCount, severity, existingId],
-      );
-      logger.info({ incidentId: existingId, reportCount }, "[safety] incident updated");
-      return;
-    }
-
-    const insertResult = await pool.query<{ id: string }>(
-      `INSERT INTO safety_incidents (city, neighborhood, category, severity, report_count, status, notifications_sent, triggered_at)
-       VALUES ($1, $2, $3, $4, $5, 'active', false, NOW()) RETURNING id`,
-      [city, neighborhood, category, severity, reportCount],
-    );
-    const incidentId = insertResult.rows[0]?.id;
-    if (!incidentId) return;
-
-    logger.info({ incidentId, city, category, reportCount }, "[safety] incident triggered — notifying business owners");
-
-    const locationLabel = neighborhood ? `${neighborhood}, ${city}` : city;
-    await sendPushToBusinessOwnersByCity(city, {
-      title: `⚠️ Safety Alert Near Your Business`,
-      body: `A ${categoryLabel} has been reported in ${locationLabel} by ${reportCount} community members. Review your safety status.`,
-      data: { screen: "safety", incidentId, city, category },
-    });
-
-    await pool.query(`UPDATE safety_incidents SET notifications_sent = true WHERE id = $1`, [incidentId]);
-  } catch (err: unknown) {
-    logger.error({ err }, "[safety] incident check failed");
-  }
-}
-
 router.post("/reports", reportLimiter, async (req: Request, res: Response): Promise<void> => {
+  const body = req.body as Record<string, unknown>;
   const {
     category,
     targetType,
     targetId,
-    targetName,
     description,
     severity,
     isAnonymous,
@@ -189,15 +111,30 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     incidentDescription,
     evidenceLinks,
     encounterType,  // police/ICE sub-type (e.g. "Excessive Force/Misconduct")
-  } = req.body as Record<string, unknown>;
+  } = body;
 
-  if (!category || !VALID_CATEGORIES.includes(category as typeof VALID_CATEGORIES[number])) {
+  // Build 105 sent the selected Police/ICE subtype in `category`. Accept it as
+  // a compatibility adapter, but persist the canonical category and subtype.
+  const legacyEncounterType = normalizePoliceEncounterType(category);
+  const resolvedCategory = normalizeReportCategory(legacyEncounterType ? "police" : category);
+
+  if (!resolvedCategory) {
     res.status(400).json({ error: "Invalid category" });
     return;
   }
 
-  if (!targetName || typeof targetName !== "string" || targetName.trim().length === 0) {
-    res.status(400).json({ error: "targetName (location) is required" });
+  const sensitiveReport = reportMustBeAnonymous(resolvedCategory as string);
+  const incidentLocation = normalizeIncidentLocation(body, { sensitive: sensitiveReport });
+  if (!incidentLocation) {
+    res.status(400).json({ error: "Incident city or area is required" });
+    return;
+  }
+
+  const resolvedEncounterType = resolvedCategory === "police"
+    ? (legacyEncounterType ?? normalizeReportEncounterType(encounterType))
+    : null;
+  if (resolvedCategory === "police" && !resolvedEncounterType) {
+    res.status(400).json({ error: "A valid Police/ICE encounter type is required" });
     return;
   }
 
@@ -209,12 +146,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         ? SPOKEN_SEVERITY_MAP[severity]
         : "medium";
 
-  const resolvedTargetType =
-    typeof targetType === "string" && VALID_TARGET_TYPES.includes(targetType as typeof VALID_TARGET_TYPES[number])
-      ? (targetType as typeof VALID_TARGET_TYPES[number])
-      : "neighborhood";
+  const {
+    targetType: resolvedTargetType,
+    targetId: resolvedTargetId,
+  } = normalizeReportTarget(targetType, targetId, sensitiveReport);
 
-  const isAnon = isAnonymous !== false;
+  const isAnon = sensitiveReport || isAnonymous !== false;
   let reporterName = "Anonymous";
   if (!isAnon && req.user) {
     reporterName = [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Community Member";
@@ -226,15 +163,21 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
       .values({
         reporterId: isAnon ? null : (req.user?.id ?? null),
         reporterName,
-        category: category as string,
+        category: resolvedCategory as string,
         targetType: resolvedTargetType,
-        targetId: typeof targetId === "string" ? targetId : null,
-        targetName: (targetName as string).trim(),
+        targetId: resolvedTargetId,
+        targetName: incidentLocation.label,
+        encounterType: resolvedEncounterType,
+        incidentCity: incidentLocation.city,
+        incidentRegion: incidentLocation.region,
+        incidentArea: incidentLocation.area,
+        incidentLocationSource: incidentLocation.source,
+        incidentLocationPrecision: incidentLocation.precision,
         description: typeof description === "string" ? description.slice(0, 2000) : null,
         severity: resolvedSeverity,
         routingType:
           // Always priority: safety concern, discrimination, sundown, and police/ICE encounters
-          (category === "safety" || category === "discrimination" || category === "sundown" || category === "police")
+          (resolvedCategory === "safety" || resolvedCategory === "discrimination" || resolvedCategory === "sundown" || resolvedCategory === "police")
             ? "priority"
             // Excessive force is doubly prioritized — already covered by police category above
             : businessResponseRequested === true ? "private" : "moderation",
@@ -251,15 +194,8 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
       })
       .returning();
 
-    const nameParts = (targetName as string).trim().split(",");
-    const city = nameParts[nameParts.length - 1]?.trim() ?? (targetName as string).trim();
-    const neighborhood = nameParts.length > 1 ? nameParts[0].trim() : null;
-
-    await checkAndTriggerIncident(city, category as string, resolvedSeverity, neighborhood);
-
     // Look up the targeted business (if any) to determine ownership for rating + email
     let isMinorityOwned: boolean | null = null;
-    const resolvedTargetId = typeof targetId === "string" ? targetId : null;
     if (resolvedTargetType === "business" && resolvedTargetId) {
       const [biz] = await db
         .select({ blackOwned: businessesTable.blackOwned })
@@ -268,19 +204,14 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         .limit(1);
       if (biz) {
         isMinorityOwned = biz.blackOwned;
-        // Non-minority-owned: all reports count immediately — update rating if 3+ reached
-        if (!biz.blackOwned) {
-          await updateBusinessSafetyRating(resolvedTargetId, true);
-        }
-        // Minority-owned: rating only updated after admin review — no auto-update here
       }
     }
 
     // Always email admin on every report
     sendAdminSafetyReportAlert({
-      category: category as string,
+      category: resolvedCategory as string,
       targetType: resolvedTargetType,
-      targetName: (targetName as string).trim(),
+      targetName: incidentLocation.label,
       severity: resolvedSeverity,
       description: typeof description === "string" ? description.slice(0, 500) : null,
       reporterName,
@@ -300,20 +231,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
 
 router.get("/reports", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { city, category, status } = req.query;
-
-    let query = db
+    const reports = await db
       .select()
       .from(safetyReportsTable)
+      .where(eq(safetyReportsTable.status, "approved"))
       .orderBy(desc(safetyReportsTable.createdAt))
-      .limit(100)
-      .$dynamic();
-
-    if (typeof status === "string") {
-      query = query.where(eq(safetyReportsTable.status, status));
-    }
-
-    const reports = await query;
+      .limit(100);
     res.json({ reports: reports.map(publicSafetyReport) });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch safety reports");
@@ -323,14 +246,30 @@ router.get("/reports", async (req: Request, res: Response): Promise<void> => {
 
 router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
   try {
-    const incidents = await db
-      .select()
-      .from(safetyIncidentsTable)
-      .where(eq(safetyIncidentsTable.status, "active"))
-      .orderBy(desc(safetyIncidentsTable.triggeredAt))
-      .limit(50);
+    const incidents = await pool.query(
+      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
+              approved.report_count::int AS "reportCount",
+              si.status, si.notifications_sent AS "notificationsSent",
+              si.triggered_at AS "triggeredAt"
+       FROM safety_incidents si
+       JOIN LATERAL (
+         SELECT COUNT(*) AS report_count
+         FROM safety_reports sr
+         WHERE LOWER(sr.incident_city) = LOWER(si.city)
+           AND LOWER(sr.incident_region) = LOWER(si.region)
+           AND sr.category = si.category
+           AND sr.status = 'approved'
+           AND sr.created_at > NOW() - INTERVAL '7 days'
+       ) approved ON approved.report_count >= $1
+       WHERE si.status = 'active'
+         AND si.region IS NOT NULL
+         AND si.triggered_at > NOW() - INTERVAL '7 days'
+       ORDER BY si.triggered_at DESC
+       LIMIT 50`,
+      [INCIDENT_THRESHOLD],
+    );
 
-    res.json({ incidents });
+    res.json({ incidents: incidents.rows });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch safety incidents");
     res.status(500).json({ error: "Failed to fetch incidents" });
@@ -364,43 +303,25 @@ router.patch("/admin/safety-reports/:id", async (req: any, res: Response): Promi
   }
 
   const { status, moderatorNotes } = req.body as { status?: string; moderatorNotes?: string };
-  const allowed = ["pending", "reviewed", "dismissed", "actioned"];
+  const allowed = ["pending", "approved", "rejected"];
   if (!status || !allowed.includes(status)) {
     res.status(400).json({ error: "Invalid status" });
     return;
   }
 
   try {
-    const [updated] = await db
-      .update(safetyReportsTable)
-      .set({
-        status: status as string,
-        moderatorNotes: moderatorNotes ?? null,
-        reviewedAt: new Date(),
-        reviewedBy: req.user.id,
-      })
-      .where(eq(safetyReportsTable.id, req.params.id))
-      .returning();
+    const result = await moderateSafetyReport({
+      id: req.params.id,
+      status: status as "pending" | "approved" | "rejected",
+      moderatorNotes,
+      reviewedBy: req.user.id,
+    });
 
-    if (!updated) {
+    if (!result) {
       res.status(404).json({ error: "Report not found" });
       return;
     }
-
-    // When a report targeting a minority-owned business is reviewed or actioned,
-    // recalculate their safety rating using only reviewed reports.
-    if ((status === "reviewed" || status === "actioned") && updated.targetType === "business" && updated.targetId) {
-      const [biz] = await db
-        .select({ blackOwned: businessesTable.blackOwned })
-        .from(businessesTable)
-        .where(eq(businessesTable.id, updated.targetId))
-        .limit(1);
-      if (biz?.blackOwned) {
-        await updateBusinessSafetyRating(updated.targetId, false);
-      }
-    }
-
-    res.json({ report: updated });
+    res.json({ report: result.report });
   } catch (err) {
     req.log.error({ err }, "Failed to update safety report");
     res.status(500).json({ error: "Failed to update report" });
@@ -443,15 +364,15 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
 
   // Return cached response for identical (or very nearby) coordinates within TTL
   const cacheKey = proximityCacheKey(lat, lng, radius);
-  const cached = proximityCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    res.json(cached.data);
+  const cached = getCachedProximityWarnings(cacheKey);
+  if (cached) {
+    res.json(cached);
     return;
   }
 
   try {
     // Business-linked danger reports: join safety_reports → businesses for real coordinates.
-    // Groups by business, only surfaces those with 3+ non-dismissed reports in the last 7 days.
+    // Groups by business, only surfaces those with 3+ approved reports in the last 7 days.
     const businessWarnings = await pool.query<{
       target_id: string;
       business_name: string;
@@ -466,7 +387,19 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
         sr.target_id,
         b.name AS business_name,
         sr.category,
-        MAX(sr.severity) AS severity,
+        CASE MAX(CASE sr.severity
+          WHEN 'critical' THEN 4
+          WHEN 'high' THEN 3
+          WHEN 'medium' THEN 2
+          WHEN 'low' THEN 1
+          ELSE 0
+        END)
+          WHEN 4 THEN 'critical'
+          WHEN 3 THEN 'high'
+          WHEN 2 THEN 'medium'
+          WHEN 1 THEN 'low'
+          ELSE 'medium'
+        END AS severity,
         COUNT(*) AS report_count,
         b.latitude::text,
         b.longitude::text,
@@ -483,7 +416,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
       JOIN businesses b ON sr.target_id = b.id::text
       WHERE
         sr.target_type = 'business'
-        AND sr.status != 'dismissed'
+        AND sr.status = 'approved'
         AND sr.created_at > NOW() - INTERVAL '7 days'
       GROUP BY sr.target_id, b.name, sr.category, b.latitude, b.longitude
       HAVING COUNT(*) >= $3
@@ -506,17 +439,28 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
     const areaIncidents = await pool.query<{
       id: string;
       city: string;
+      region: string;
       neighborhood: string | null;
       category: string;
       severity: string;
       report_count: string;
     }>(
-      `SELECT id, city, neighborhood, category, severity, report_count::text
-       FROM safety_incidents
-       WHERE status = 'active'
-         AND report_count >= $1
-         AND triggered_at > NOW() - INTERVAL '7 days'
-       ORDER BY report_count DESC
+      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
+              approved.report_count::text
+       FROM safety_incidents si
+       JOIN LATERAL (
+         SELECT COUNT(*) AS report_count
+         FROM safety_reports sr
+         WHERE LOWER(sr.incident_city) = LOWER(si.city)
+           AND LOWER(sr.incident_region) = LOWER(si.region)
+           AND sr.category = si.category
+           AND sr.status = 'approved'
+           AND sr.created_at > NOW() - INTERVAL '7 days'
+       ) approved ON approved.report_count >= $1
+       WHERE si.status = 'active'
+         AND si.region IS NOT NULL
+         AND si.triggered_at > NOW() - INTERVAL '7 days'
+       ORDER BY approved.report_count DESC
        LIMIT 10`,
       [INCIDENT_THRESHOLD]
     );
@@ -538,6 +482,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
       areaIncidents: areaIncidents.rows.map((r) => ({
         id: r.id,
         city: r.city,
+        region: r.region,
         neighborhood: r.neighborhood,
         category: r.category,
         severity: r.severity,
@@ -546,7 +491,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
     };
 
     // Cache the result — community data only, no user-specific fields
-    proximityCache.set(cacheKey, { data: responseData, expiresAt: Date.now() + PROXIMITY_CACHE_TTL_MS });
+    setCachedProximityWarnings(cacheKey, responseData);
 
     res.json(responseData);
   } catch (err) {
@@ -572,6 +517,7 @@ router.patch("/admin/safety-incidents/:id/resolve", async (req: any, res: Respon
       res.status(404).json({ error: "Incident not found" });
       return;
     }
+    invalidateProximityWarningCache();
     res.json({ incident: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to resolve safety incident");

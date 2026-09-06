@@ -197,6 +197,16 @@ router.use(monitorBuild97Router); // internal health monitoring endpoint
 router.use(feedbackRouter);       // in-app feedback (submitted before session check)
 router.use(impactRouter);         // public platform stats (homepage "Growing Every Day" section)
 router.use(communityFeedbackRouter); // GET public (counts); PUT self-authenticates (returns 401 if no session)
+// Both routers enforce auth on member-only operations themselves. Their
+// bearer-link views stay public without opening any platform intelligence.
+router.use(locationSharesRouter);
+router.use(trustedSafetyShareRouter);
+
+// Canonical business discovery is public so any visitor can search the founder-
+// and community-fed directory. The business router itself authenticates every
+// mutation and every member/owner-only read; safety and private community data
+// remain behind the global wall below.
+router.use(businessesRouter);
 
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
@@ -212,10 +222,10 @@ router.get("/kinfolk/health", async (_req, res) => {
   res.json({ ok: true });
 });
 
-// ── Member wall — ALL platform data requires an authenticated session ───────
-// MWM serves communities that face real harm. Business locations, HBCU records,
-// sundown-town data, and safety intelligence must never be readable by
-// unauthenticated callers. Returns 401 — never an empty result set.
+// ── Member wall — private platform and safety data require authentication ────
+// MWM serves communities that face real harm. Private member locations, HBCU records,
+// sundown-town data, and safety intelligence remain protected. Canonical public
+// directory reads are the narrow exception mounted immediately above.
 // Established: 2026-08-10. Supersedes previous public-discovery architecture.
 router.use(requireAuth);
 
@@ -232,8 +242,6 @@ router.use(referralsRouter);
 router.use(revenuecatRouter);
 router.use(membershipFamilyRouter);
 
-// Businesses
-router.use(businessesRouter);
 router.use(travelRouter);
 router.use(surveysRouter);
 router.use(savedPlacesRouter);
@@ -276,7 +284,6 @@ router.use(travelFlightsRouter);
 router.use(connectionsRouter);
 router.use(familyRouter);
 router.use(safetyCheckinsRouter);
-router.use(locationSharesRouter);
 router.use(meetupVerificationsRouter);
 router.use(safetyTipsRouter);
 router.use(skipFeedbackRouter);
@@ -386,7 +393,6 @@ router.use(safetyHeatmapRouter);
 router.use(canonicalCulturalSitesRouter);
 router.use(culturalSitesRouter);
 router.use(sundownTownsRouter);
-router.use(trustedSafetyShareRouter);
 router.use(safetyExperienceRouter);
 router.use(whatshappeningRouter);
 router.use(ageAssuranceRouter);

@@ -5,6 +5,7 @@ import * as Linking from "expo-linking";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -22,10 +23,18 @@ function getApiBase(): string {
   return "";
 }
 
-function openSocial(raw: string, baseUrl: string) {
+function openSocial(raw: string, baseUrl: string, allowedDomains: readonly string[]) {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  const url = /^https?:\/\//i.test(raw) ? raw : `${baseUrl}${raw.replace(/^@/, "")}`;
-  Linking.openURL(url);
+  try {
+    const url = new URL(/^https:\/\//i.test(raw.trim()) ? raw.trim() : `${baseUrl}${raw.trim().replace(/^@/, "")}`);
+    const host = url.hostname.toLowerCase().replace(/\.$/, "");
+    if (url.protocol !== "https:" || url.username || url.password || !allowedDomains.some((domain) => host === domain || host.endsWith(`.${domain}`))) {
+      throw new Error("provider mismatch");
+    }
+    void Linking.openURL(url.toString());
+  } catch {
+    Alert.alert("Link unavailable", "This social profile link needs to be corrected by the business owner.");
+  }
 }
 
 function getComplimentChips(business: Business): { label: string; color: string; bg: string }[] {
@@ -39,11 +48,13 @@ function getComplimentChips(business: Business): { label: string; color: string;
 }
 
 const SOCIAL_PLATFORMS = [
-  { key: "tiktok", label: "TikTok", icon: "music" as const, color: "#000000", bg: "#00000015", baseUrl: "https://tiktok.com/@" },
-  { key: "instagram", label: "Instagram", icon: "instagram" as const, color: "#E1306C", bg: "#E1306C18", baseUrl: "https://instagram.com/" },
-  { key: "youtube", label: "YouTube", icon: "youtube" as const, color: "#FF0000", bg: "#FF000015", baseUrl: "https://youtube.com/@" },
-  { key: "facebook", label: "Facebook", icon: "facebook" as const, color: "#1877F2", bg: "#1877F218", baseUrl: "https://facebook.com/" },
-  { key: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#1DA1F2", bg: "#1DA1F218", baseUrl: "https://x.com/" },
+  { key: "tiktok", label: "TikTok", icon: "music" as const, color: "#000000", bg: "#00000015", baseUrl: "https://tiktok.com/@", allowedDomains: ["tiktok.com"] },
+  { key: "instagram", label: "Instagram", icon: "instagram" as const, color: "#E1306C", bg: "#E1306C18", baseUrl: "https://instagram.com/", allowedDomains: ["instagram.com"] },
+  { key: "youtube", label: "YouTube", icon: "youtube" as const, color: "#FF0000", bg: "#FF000015", baseUrl: "https://youtube.com/@", allowedDomains: ["youtube.com", "youtu.be"] },
+  { key: "facebook", label: "Facebook", icon: "facebook" as const, color: "#1877F2", bg: "#1877F218", baseUrl: "https://facebook.com/", allowedDomains: ["facebook.com", "fb.watch"] },
+  { key: "twitch", label: "Twitch", icon: "twitch" as const, color: "#9146FF", bg: "#9146FF18", baseUrl: "https://twitch.tv/", allowedDomains: ["twitch.tv"] },
+  { key: "snapchat", label: "Snapchat", icon: "camera" as const, color: "#7A6500", bg: "#FFFC001A", baseUrl: "https://snapchat.com/add/", allowedDomains: ["snapchat.com"] },
+  { key: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#1DA1F2", bg: "#1DA1F218", baseUrl: "https://x.com/", allowedDomains: ["x.com", "twitter.com"] },
 ];
 
 const CATEGORY_IMAGES: Record<string, any> = {
@@ -188,7 +199,7 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
                     <TouchableOpacity
                       key={platform.key}
                       style={[s.socialBtn, { backgroundColor: platform.bg, borderColor: platform.color + "40" }]}
-                      onPress={() => openSocial(biz[platform.key], platform.baseUrl)}
+                      onPress={() => openSocial(biz[platform.key], platform.baseUrl, platform.allowedDomains)}
                       accessibilityRole="link"
                       accessibilityLabel={`Visit ${business.name} on ${platform.label}`}
                     >

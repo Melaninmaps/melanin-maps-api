@@ -6,6 +6,7 @@ type ReportCategory = (typeof SAFETY_REPORT_CATEGORIES)[number];
 type ReportSeverity = (typeof SAFETY_REPORT_SEVERITIES)[number];
 
 import { isAdmin } from "../lib/adminAuth";
+import { moderateSafetyReport } from "../safety/moderateSafetyReport";
 
 const router: IRouter = Router();
 
@@ -112,17 +113,12 @@ router.patch("/moderation/reports/:id", async (req: Request, res: Response) => {
       }
       res.json({ id: updated.id, status: updated.status });
     } else {
-      const [updated] = await db
-        .update(safetyReportsTable)
-        .set({ status, moderatorNotes: moderatorNotes ?? null, reviewedAt, reviewedBy })
-        .where(eq(safetyReportsTable.id, id))
-        .returning({ id: safetyReportsTable.id, status: safetyReportsTable.status });
-
-      if (!updated) {
+      const result = await moderateSafetyReport({ id, status, moderatorNotes, reviewedBy });
+      if (!result) {
         res.status(404).json({ error: "Report not found" });
         return;
       }
-      res.json({ id: updated.id, status: updated.status });
+      res.json({ id: result.report.id, status: result.report.status });
     }
   } catch (err) {
     req.log.error({ err }, "Failed to update report status");

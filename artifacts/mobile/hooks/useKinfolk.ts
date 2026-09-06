@@ -19,11 +19,16 @@ export type HeritageSitePin = {
 };
 
 export type TravelBusiness = {
+  id?: string;
   name: string;
   category: string;
   description: string;
   neighborhood: string;
   mustTry: string;
+  website?: string | null;
+  detailUrl?: string;
+  verified?: boolean;
+  matchReasons?: string[];
 };
 
 export type TravelNeighborhood = {
@@ -86,6 +91,15 @@ export type NearbyNudge = {
   quickReply: string;
 };
 
+export type KinfolkClarificationStep = {
+  id: string;
+  question: string;
+  explanation?: string;
+  options: Array<{ value: string; label: string }>;
+  skippable: boolean;
+  persistence: "temporary";
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -114,6 +128,9 @@ export type ChatMessage = {
   locationSource?: string | null;
   imageUrls?: string[];
   sources?: Array<{ title: string; url: string }> | null;
+  clarificationSteps?: KinfolkClarificationStep[];
+  needsClarification?: boolean;
+  originalQuery?: string;
 };
 
 export type SessionSummary = {
@@ -191,6 +208,9 @@ export function useKinfolk() {
           provenanceNote?: string | null;
           sourceNote?: string | null;
           sources?: Array<{ title: string; url: string }> | null;
+          clarificationSteps?: KinfolkClarificationStep[] | null;
+          needsClarification?: boolean;
+          originalQuery?: string;
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
         };
@@ -223,6 +243,9 @@ export function useKinfolk() {
           provenanceNote: data.provenanceNote ?? null,
           sourceNote: data.sourceNote ?? null,
           sources: data.sources ?? null,
+          clarificationSteps: data.clarificationSteps ?? undefined,
+          needsClarification: data.needsClarification === true,
+          originalQuery: data.originalQuery ?? text,
           location: data.location ?? null,
           locationSource: data.locationSource ?? null,
         };

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
 const CATEGORIES: { value: string; label: string; description: string }[] = [
   { value: "employer", label: "Employer", description: "A workplace known to treat minorities fairly" },
@@ -70,7 +71,7 @@ export default function CommunityReferenceScreen() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/businesses/community-reference", {
+      const res = await fetch(`${getApiBase()}/api/businesses/community-reference`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name, referenceCategory: category, city, state, website, description }),

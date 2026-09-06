@@ -13,6 +13,7 @@ export const businessesTable = pgTable("businesses", {
   country: varchar("country", { length: 100 }),
   province: varchar("province", { length: 100 }),
   listingStatus: varchar("listing_status", { length: 30 }),
+  ownerClaimStatus: varchar("owner_claim_status", { length: 30 }),
   rating: numeric("rating", { precision: 3, scale: 1 }).notNull().default("0"),
   reviewCount: integer("review_count").notNull().default(0),
   verified: boolean("verified").notNull().default(false),
@@ -20,6 +21,9 @@ export const businessesTable = pgTable("businesses", {
   blackOwned: boolean("black_owned").notNull().default(false),
   ownershipDesignations: jsonb("ownership_designations").$type<string[]>().notNull().default([]),
   verifiedDesignations: jsonb("verified_designations").$type<string[]>().notNull().default([]),
+  // Community submissions may report minority/non-minority ownership without
+  // verifying owner identity. Values are provenance labels, never badges.
+  ownershipClaim: text("ownership_claim"),
   diasporaCountries: jsonb("diaspora_countries").$type<string[]>().default([]),
   confidenceScore: integer("confidence_score").notNull().default(0),
   safetyRating: numeric("safety_rating", { precision: 3, scale: 1 }),
@@ -33,6 +37,7 @@ export const businessesTable = pgTable("businesses", {
   reviews: jsonb("reviews").$type<Review[]>().notNull().default([]),
   phone: varchar("phone", { length: 30 }),
   website: varchar("website", { length: 255 }),
+  sourceUrl: text("source_url"),
   hours: varchar("hours", { length: 255 }),
   priceRange: varchar("price_range", { length: 10 }),
   imageUrl: varchar("image_url", { length: 512 }),

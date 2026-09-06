@@ -1,0 +1,20 @@
+{
+  "manifest": "kinfolk-poc-business-candidates.jsonl",
+  "manifestSha256": "a1981d62915bad12ce076dea670f6d12eaa95aa39517aa8bdc89c02a2ded8502",
+  "rows": 115,
+  "targetCounts": {
+    "business": 60,
+    "community_resource": 2,
+    "manual_review": 40,
+    "regulated_review": 13
+  },
+  "countryCounts": {
+    "Canada": 8,
+    "France": 8,
+    "UK": 9,
+    "USA": 90
+  },
+  "uniqueDedupeKeys": 115,
+  "uniqueLinks": 171,
+  "personaDataIncluded": false
+}

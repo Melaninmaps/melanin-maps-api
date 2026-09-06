@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORIES } from "@/constants/data";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
@@ -49,6 +50,7 @@ export default function BusinessSearchScreen() {
   const cityRef = useRef<TextInput>(null);
   const stateRef = useRef<TextInput>(null);
   const handleRef = useRef<TextInput>(null);
+  const searchRequestIdRef = useRef(0);
 
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
@@ -60,6 +62,7 @@ export default function BusinessSearchScreen() {
   const [results, setResults] = useState<Business[]>([]);
   const [searched, setSearched] = useState(false);
   const [mode, setMode] = useState<Mode>("search");
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [inviteContact, setInviteContact] = useState("");
   const [inviteHandle, setInviteHandle] = useState("");
@@ -81,9 +84,11 @@ export default function BusinessSearchScreen() {
   const handleSearch = useCallback(async () => {
     const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category;
     if (!hasQuery) return;
+    const requestId = ++searchRequestIdRef.current;
     Keyboard.dismiss();
     setLoading(true);
     setSearched(false);
+    setSearchError(null);
     try {
       const nameParam = name.trim();
       const cityParam = city.trim();
@@ -92,20 +97,30 @@ export default function BusinessSearchScreen() {
 
       const allParams = new URLSearchParams();
       if (nameParam) allParams.set("search", nameParam);
+      if (cityParam) allParams.set("city", cityParam);
       if (stateParam) allParams.set("state", stateParam);
       if (handleParam) allParams.set("handle", handleParam);
       if (category) allParams.set("category", category);
+      allParams.set("limit", "200");
 
-      const res = await fetch(`${getApiBase()}/api/businesses?${allParams.toString()}`);
-      const data = await res.json();
-      let list: Business[] = data.businesses ?? [];
-
-      if (cityParam) {
-        list = list.filter((b) =>
-          b.city.toLowerCase().includes(cityParam.toLowerCase())
-        );
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      let data: { businesses?: unknown };
+      try {
+        const res = await fetch(`${getApiBase()}/api/businesses?${allParams.toString()}`, {
+          signal: controller.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        data = await res.json() as { businesses?: unknown };
+        if (!Array.isArray(data.businesses)) throw new Error("Invalid businesses response");
+      } finally {
+        clearTimeout(timeout);
       }
+      const list = data.businesses as Business[];
 
+      if (requestId !== searchRequestIdRef.current) return;
       setResults(list);
       setSearched(true);
       setMode(list.length > 0 ? "results" : "invite");
@@ -113,11 +128,14 @@ export default function BusinessSearchScreen() {
       const searchLabel = [nameParam, cityParam, stateParam].filter(Boolean).join(", ") || category;
       void addHistory(searchLabel, category ? [category] : []);
     } catch {
-      setResults([]);
-      setSearched(true);
-      setMode("invite");
+      if (requestId === searchRequestIdRef.current) {
+        setResults([]);
+        setSearched(true);
+        setMode("search");
+        setSearchError("Unable to search businesses right now. Check your connection and try again.");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestIdRef.current) setLoading(false);
     }
   }, [name, city, state, handle, category, addHistory]);
 
@@ -204,7 +222,13 @@ export default function BusinessSearchScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
-        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.backBtn}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Find a Business</Text>
@@ -376,7 +400,26 @@ export default function BusinessSearchScreen() {
           )}
         </TouchableOpacity>
 
-        {searched && mode === "results" && (
+        {searched && searchError && (
+          <View
+            style={[styles.inviteCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <View style={styles.inviteSent}>
+              <Feather name="wifi-off" size={28} color={colors.mutedForeground} />
+              <Text style={[styles.inviteSentTitle, { color: colors.foreground }]}>Search unavailable</Text>
+              <Text style={[styles.inviteSentBody, { color: colors.mutedForeground }]}>{searchError}</Text>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[styles.doneBtn, { borderColor: colors.border }]}
+                onPress={() => { void handleSearch(); }}
+              >
+                <Text style={[styles.doneBtnText, { color: colors.foreground }]}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {searched && !searchError && mode === "results" && (
           <View style={styles.resultsSection}>
             <Text style={[styles.resultsHeader, { color: colors.foreground }]}>
               {results.length} {results.length === 1 ? "result" : "results"} found
@@ -396,7 +439,7 @@ export default function BusinessSearchScreen() {
           </View>
         )}
 
-        {searched && mode === "invite" && (
+        {searched && !searchError && mode === "invite" && (
           <View style={[styles.inviteCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {inviteSent ? (
               <View style={styles.inviteSent}>

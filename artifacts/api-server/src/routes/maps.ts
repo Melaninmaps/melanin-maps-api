@@ -142,16 +142,19 @@ const CONTENT_TOKENS = new Set([
   "stay","accommodation","lodging",
   // Retail
   "shop","shops","store","stores","market","markets","mall","boutique","shopping",
+  "bookstore","bookstores","bookshop","bookshops","books","fragrance","perfume","candles",
   // Services
   "doctor","doctors","dentist","hospital","clinic","healthcare","medical","pharmacy",
   "obgyn","gyn","lawyer","attorney","law","legal","notary",
   "plumber","plumbing","electrician","contractor","roofer","painter","handyman",
+  "hvac","heating","cooling","airconditioning","mechanic","mechanics","automotive","autorepair",
+  "accountant","accountants","accounting","cpa","taxes","welding","welder","welders",
   "childcare","daycare","school","schools","tutoring","education",
   "gym","fitness","yoga","pilates","crossfit","wellness",
   "bank","banks","credit","union","financial","insurance",
   // Recreation
   "beach","beaches","pool","rooftop","outdoor","park","parks",
-  "museum","art","gallery","galleries",
+  "museum","art","gallery","galleries","boardgame","boardgames","gaming","games",
   // Qualifiers (non-geographic adjectives)
   "black","friendly","owned","minority","community","cultural",
   "best","good","top","great","nice","popular","local","authentic",

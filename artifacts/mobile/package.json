@@ -12,7 +12,7 @@
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prebuild:ios": "node scripts/pre-build-check.js ios",
+    "prebuild:ios": "node scripts/pre-build-check.js ios && node scripts/verify-ios-app-review-config.js",
     "build:ios": "eas build --platform ios --profile production",
     "prebuild:android": "node scripts/pre-build-check.js android",
     "build:android": "eas build --platform android --profile production",

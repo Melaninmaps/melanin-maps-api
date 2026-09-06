@@ -3,6 +3,8 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
+import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
 
 export type VideoPurpose =
   | "meet_the_owner" | "our_story" | "customer_experience"
@@ -22,16 +24,10 @@ export const VIDEO_PURPOSES: { id: VideoPurpose; label: string; emoji: string }[
   { id: "behind_the_scenes",    label: "Behind the Scenes",    emoji: "🎬" },
 ];
 
-type Platform2 = "youtube" | "tiktok" | "instagram" | "facebook" | "vimeo" | "unknown";
+type Platform2 = SocialVideoPlatform | "unknown";
 
 export function detectPlatform(url: string): Platform2 {
-  const u = url.toLowerCase();
-  if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
-  if (u.includes("tiktok.com")) return "tiktok";
-  if (u.includes("instagram.com")) return "instagram";
-  if (u.includes("facebook.com") || u.includes("fb.watch")) return "facebook";
-  if (u.includes("vimeo.com")) return "vimeo";
-  return "unknown";
+  return detectSocialVideoPlatform(url) ?? "unknown";
 }
 
 export function getYoutubeThumbnail(url: string): string | null {
@@ -44,6 +40,8 @@ const PLATFORM_META: Record<Platform2, { label: string; color: string; icon: str
   tiktok:    { label: "TikTok",    color: "#010101", icon: "♪" },
   instagram: { label: "Instagram", color: "#C13584", icon: "◈" },
   facebook:  { label: "Facebook",  color: "#1877F2", icon: "f" },
+  twitch:    { label: "Twitch",    color: "#9146FF", icon: "◉" },
+  snapchat:  { label: "Snapchat",  color: "#FFCC00", icon: "S" },
   vimeo:     { label: "Vimeo",     color: "#1AB7EA", icon: "v" },
   unknown:   { label: "Video",     color: "#666",    icon: "▶" },
 };
@@ -57,7 +55,9 @@ type Props = {
 
 export default function FeaturedVideoCard({ videoUrl, videoTitle, videoPurpose, businessName }: Props) {
   const colors = useColors();
+  const { allows } = useSocialVideoPreferences();
   const platform = detectPlatform(videoUrl);
+  if (platform !== "unknown" && !allows(platform)) return null;
   const meta = PLATFORM_META[platform];
   const thumbnail = platform === "youtube" ? getYoutubeThumbnail(videoUrl) : null;
   const purpose = VIDEO_PURPOSES.find(p => p.id === videoPurpose);

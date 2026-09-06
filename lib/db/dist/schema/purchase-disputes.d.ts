@@ -138,7 +138,7 @@ export declare const purchaseDisputesTable: import("drizzle-orm/pg-core").PgTabl
             tableName: "purchase_disputes";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "rejected" | "open" | "investigating" | "resolved";
+            data: "open" | "rejected" | "investigating" | "resolved";
             driverParam: string;
             notNull: true;
             hasDefault: true;

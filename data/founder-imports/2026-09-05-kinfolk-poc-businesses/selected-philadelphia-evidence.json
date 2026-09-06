@@ -1,0 +1,130 @@
+[
+  {
+    "sourceRecordId": "PHL015",
+    "name": "Loomen Labs",
+    "operatingStatus": "current",
+    "address": "322 South Street",
+    "city": "Philadelphia",
+    "state": "PA",
+    "postalCode": "19147",
+    "officialWebsite": "https://www.loomenlabs.com/",
+    "offerings": [
+      "Guided custom perfume and cologne experiences",
+      "Custom lip gloss and lip scrub experiences",
+      "Custom eco-friendly candle-making experiences",
+      "Private events"
+    ],
+    "evidenceUrls": [
+      "https://www.loomenlabs.com/",
+      "https://www.loomenlabs.com/reservations"
+    ],
+    "reviewedAt": "2026-09-05T15:57:58Z"
+  },
+  {
+    "sourceRecordId": "PHL014",
+    "name": "Sistah Scents Fragrance Bar",
+    "operatingStatus": "current",
+    "address": "1433 West Girard Avenue",
+    "city": "Philadelphia",
+    "state": "PA",
+    "postalCode": "19130",
+    "officialWebsite": "https://www.sistahscents.com/",
+    "offerings": [
+      "Custom-scented product experiences",
+      "Private scenting events",
+      "Date-night and group scenting bookings",
+      "Body care, candles, wax melts, beard care, and skincare retail"
+    ],
+    "evidenceUrls": [
+      "https://www.sistahscents.com/",
+      "https://www.discoverphl.com/partners/sistah-scents-fragrance-bar/"
+    ],
+    "reviewedAt": "2026-09-05T15:57:58Z"
+  },
+  {
+    "sourceRecordId": "PHL049",
+    "name": "Urban Art Gallery",
+    "operatingStatus": "current",
+    "address": "262 S. 52nd Street",
+    "city": "Philadelphia",
+    "state": "PA",
+    "postalCode": "19139",
+    "officialWebsite": "https://www.urban-artgallery.com/",
+    "offerings": [
+      "Monthly art exhibits featuring local artists",
+      "Artist showcase and sales venue",
+      "Poetry showcases and live performances",
+      "Private events"
+    ],
+    "evidenceUrls": [
+      "https://www.urban-artgallery.com/contact-10",
+      "https://www.urban-artgallery.com/about-1",
+      "https://www.urban-artgallery.com/art-exhibits",
+      "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/"
+    ],
+    "reviewedAt": "2026-09-05T15:57:58Z"
+  },
+  {
+    "sourceRecordId": "PHL020",
+    "name": "Uncle Bobbie's Coffee & Books",
+    "operatingStatus": "current",
+    "address": "5445 Germantown Ave",
+    "city": "Philadelphia",
+    "state": "PA",
+    "postalCode": "19144",
+    "officialWebsite": "https://www.unclebobbies.com/",
+    "offerings": [
+      "Independent bookstore",
+      "Coffee and espresso bar",
+      "Cafe food and non-alcoholic drinks",
+      "Author events and workshops"
+    ],
+    "evidenceUrls": [
+      "https://www.unclebobbies.com/",
+      "https://www.unclebobbies.com/events"
+    ],
+    "reviewedAt": "2026-09-05T16:39:33Z"
+  },
+  {
+    "sourceRecordId": "PHL028",
+    "name": "Amina",
+    "operatingStatus": "current",
+    "address": "1102 Germantown Ave",
+    "city": "Philadelphia",
+    "state": "PA",
+    "postalCode": "19123",
+    "officialWebsite": "https://www.aminaphilly.com/",
+    "offerings": [
+      "Restaurant dining",
+      "Southern-inspired dishes",
+      "West African-inspired dishes",
+      "Brunch and dinner"
+    ],
+    "evidenceUrls": [
+      "https://www.aminaphilly.com/",
+      "https://www.aminaphilly.com/menu",
+      "https://www.aminaphilly.com/contact"
+    ],
+    "reviewedAt": "2026-09-05T16:39:55Z"
+  },
+  {
+    "sourceRecordId": "PHL058",
+    "name": "Queen & Rook Game Cafe",
+    "operatingStatus": "current",
+    "address": "123 South Street",
+    "city": "Philadelphia",
+    "state": "PA",
+    "postalCode": "19147",
+    "officialWebsite": "https://queenandrookcafe.com/",
+    "offerings": [
+      "Board-game play with Gamekeeper assistance",
+      "Retro video-game arcade",
+      "Food and full bar",
+      "Private parties, events, and corporate gatherings"
+    ],
+    "evidenceUrls": [
+      "https://queenandrookcafe.com/"
+    ],
+    "reviewedAt": "2026-09-05T15:57:58Z"
+  }
+]

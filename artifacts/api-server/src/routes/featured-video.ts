@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { detectSocialVideoPlatform } from "@workspace/constants";
+import { and, eq, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -14,18 +15,6 @@ const ALLOWED_PURPOSES = [
   "community_story", "behind_the_scenes",
 ];
 
-const ALLOWED_DOMAINS = [
-  "youtube.com", "youtu.be", "tiktok.com", "instagram.com",
-  "facebook.com", "fb.watch", "vimeo.com",
-];
-
-function isAllowedUrl(url: string): boolean {
-  try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "");
-    return ALLOWED_DOMAINS.some(d => hostname === d || hostname.endsWith(`.${d}`));
-  } catch { return false; }
-}
-
 // ── PATCH /businesses/:id/featured-video ─────────────────────────────────────
 router.patch("/businesses/:id/featured-video", async (req: Request, res: Response) => {
   const user = uid(req);
@@ -35,13 +24,22 @@ router.patch("/businesses/:id/featured-video", async (req: Request, res: Respons
 
   // Verify ownership
   const [biz] = await db
-    .select({ id: businessesTable.id, submittedById: businessesTable.submittedById })
+    .select({ id: businessesTable.id })
     .from(businessesTable)
-    .where(eq(businessesTable.id, businessId))
+    .where(and(
+      eq(businessesTable.id, businessId),
+      sql<boolean>`EXISTS (
+        SELECT 1 FROM business_owner_links bol
+         WHERE bol.business_id = ${businessesTable.id}
+           AND bol.user_id = ${user}
+           AND bol.role = 'owner'
+           AND bol.status = 'approved'
+           AND bol.revoked_at IS NULL
+      )`,
+    ))
     .limit(1);
 
-  if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
-  if (biz.submittedById !== user) { res.status(403).json({ error: "Not the business owner" }); return; }
+  if (!biz) { res.status(403).json({ error: "Approved business owner access required" }); return; }
 
   const { videoUrl, videoTitle, videoPurpose } = req.body as {
     videoUrl?: string | null;
@@ -60,8 +58,8 @@ router.patch("/businesses/:id/featured-video", async (req: Request, res: Respons
 
   const cleanUrl = videoUrl?.trim();
   if (!cleanUrl) { res.status(400).json({ error: "Video URL is required" }); return; }
-  if (!isAllowedUrl(cleanUrl)) {
-    res.status(400).json({ error: "Only YouTube, TikTok, Instagram, Facebook, and Vimeo links are supported" });
+  if (!detectSocialVideoPlatform(cleanUrl)) {
+    res.status(400).json({ error: "Only public YouTube, TikTok, Instagram, Facebook, Twitch, Snapchat, and Vimeo links are supported" });
     return;
   }
   if (videoPurpose && !ALLOWED_PURPOSES.includes(videoPurpose)) {

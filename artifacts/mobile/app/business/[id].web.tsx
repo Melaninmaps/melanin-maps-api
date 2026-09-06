@@ -1,7 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -23,15 +22,18 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinessById } from "@/hooks/useBusinesses";
 import { useReviews } from "@/hooks/useReviews";
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
-};
+function categoryHeroIcon(category?: string): React.ComponentProps<typeof Feather>["name"] {
+  const normalized = (category ?? "").toLowerCase();
+  if (normalized.includes("barber") || normalized.includes("salon") || normalized.includes("beauty")) return "scissors";
+  if (normalized.includes("food") || normalized.includes("restaurant") || normalized.includes("cafe")) return "coffee";
+  if (normalized.includes("health") || normalized.includes("wellness")) return "heart";
+  if (normalized.includes("retail") || normalized.includes("shop")) return "shopping-bag";
+  if (normalized.includes("tech")) return "cpu";
+  if (normalized.includes("finance")) return "dollar-sign";
+  if (normalized.includes("entertainment") || normalized.includes("nightlife")) return "music";
+  if (normalized.includes("travel") || normalized.includes("hotel")) return "map-pin";
+  return "briefcase";
+}
 
 type ReviewRow = { id: string; authorName: string | null; rating: number; body: string; createdAt: string };
 
@@ -63,14 +65,22 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Business not found</Text>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  const ownerManaged = [business.profileStatus, business.listingStatus]
+    .some((status) => status === "claimed" || status === "verified" || status === "live_claimed");
+  const claimedCover = ownerManaged && business.imageUrl ? business.imageUrl : null;
+  const heroIcon = categoryHeroIcon(business.category);
   const saved = isSaved(business.id);
 
   const handleCall = () => {
@@ -88,7 +98,9 @@ export default function BusinessDetailScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
         <TouchableOpacity activeOpacity={0.85}
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
@@ -113,7 +125,20 @@ export default function BusinessDetailScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 30 }}>
-        <Image source={img} style={styles.hero} contentFit="cover" />
+        {claimedCover ? (
+          <Image source={{ uri: claimedCover }} style={styles.hero} contentFit="cover" />
+        ) : (
+          <View
+            style={styles.heroIconPlate}
+            accessibilityRole="image"
+            accessibilityLabel={`${business.category || "Business"} category placeholder`}
+          >
+            <View style={styles.heroIconHalo}>
+              <Feather name={heroIcon} size={96} color="#E4B84B" />
+            </View>
+            <Text style={styles.heroIconLabel}>{business.category || "Community business"}</Text>
+          </View>
+        )}
 
         <View style={styles.body}>
           <View style={styles.titleRow}>
@@ -270,6 +295,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   hero: { width: "100%", height: 260 },
+  heroIconPlate: {
+    width: "100%",
+    height: 260,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+    backgroundColor: "#241606",
+    borderBottomWidth: 1,
+    borderBottomColor: "#C9922B66",
+  },
+  heroIconHalo: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#E4B84B",
+    backgroundColor: "#C9922B24",
+  },
+  heroIconLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    color: "#E4B84B",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
   body: { padding: 20, gap: 16 },
   titleRow: { flexDirection: "row", alignItems: "flex-start" },
   name: { fontFamily: "Inter_700Bold", fontSize: 22 },

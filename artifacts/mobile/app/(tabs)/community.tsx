@@ -39,6 +39,7 @@ import { openExternalUrl } from "@/lib/safeLinking";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { RecommendationNudge } from "@/components/RecommendationNudge";
 import { parseMediaUrls } from "@/lib/mediaUrls";
+import { detectSocialVideoPlatform } from "@workspace/constants";
 
 const TABS = ["Feed", "What's Happening", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
 
@@ -507,6 +508,11 @@ export default function CommunityScreen() {
     const completedMediaUrls = mediaAttachments
       .map((attachment) => attachment.uploaded)
       .filter((url): url is string => typeof url === "string" && url.trim().length > 0);
+    const taggedSocialVideoUrl = newPostTagUrlIsSocialVideo ? newPostTagUrl.trim() : "";
+    const postMediaUrls = Array.from(new Set([
+      ...completedMediaUrls,
+      ...(taggedSocialVideoUrl ? [taggedSocialVideoUrl] : []),
+    ])).slice(0, 5);
 
     if (completedMediaUrls.length !== mediaAttachments.length) {
       Alert.alert("Attachment not ready", "Remove the failed attachment or retry its upload before posting.");
@@ -535,7 +541,7 @@ export default function CommunityScreen() {
               : undefined,
           visibility: newPostVisibility,
           commentPolicy: newPostCommentPolicy,
-          mediaUrls: completedMediaUrls,
+          mediaUrls: postMediaUrls,
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
           contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
           locationTag: newPostLocationTag.trim() || undefined,
@@ -2034,28 +2040,33 @@ export default function CommunityScreen() {
                     <Feather name="video" size={14} color="#7B2D8B" />
                     <TextInput
                       style={{ flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, paddingVertical: 10 }}
-                      placeholder="Paste a video link — TikTok, Instagram, YouTube…"
+                      placeholder="Paste a public video — TikTok, Instagram, YouTube, Twitch, Snapchat…"
                       placeholderTextColor={colors.mutedForeground}
                       value={newPostTagUrl}
-                      onChangeText={setNewPostTagUrl}
+                      onChangeText={(value) => {
+                        setNewPostTagUrl(value);
+                        setNewPostTagUrlIsSocialVideo(Boolean(detectSocialVideoPlatform(value)));
+                      }}
                       keyboardType="url"
                       autoCapitalize="none"
                       maxLength={300}
                     />
                     {newPostTagUrl.trim().length > 0 && (
-                      <TouchableOpacity onPress={() => setNewPostTagUrl("")} activeOpacity={0.7}>
+                      <TouchableOpacity onPress={() => { setNewPostTagUrl(""); setNewPostTagUrlIsSocialVideo(false); }} activeOpacity={0.7}>
                         <Feather name="x" size={14} color={colors.mutedForeground} />
                       </TouchableOpacity>
                     )}
                   </View>
-                  {/* Social video label — always shown when a URL is entered */}
+                  {/* Provider validation — only valid public social-video links become media. */}
                   {newPostTagUrl.trim().length > 0 && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: colors.border }}>
-                      <Feather name="check-circle" size={12} color="#2D7A4F" />
-                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1 }}>
-                        Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}&apos;s vibe page
+                      <Feather name={newPostTagUrlIsSocialVideo ? "check-circle" : "alert-circle"} size={12} color={newPostTagUrlIsSocialVideo ? "#2D7A4F" : "#B45309"} />
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: newPostTagUrlIsSocialVideo ? colors.mutedForeground : "#B45309", flex: 1 }}>
+                        {newPostTagUrlIsSocialVideo
+                          ? <>Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}&apos;s community page</>
+                          : "Use a public YouTube, TikTok, Instagram, Facebook, Twitch, Snapchat, or Vimeo link."}
                       </Text>
-                      {isPaidMember && (
+                      {newPostTagUrlIsSocialVideo && isPaidMember && (
                         <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: "#7B2D8B18", borderWidth: 1, borderColor: "#7B2D8B30" }}>
                           <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: "#7B2D8B" }}>FEATURED</Text>
                         </View>

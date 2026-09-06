@@ -182,7 +182,7 @@ export async function findExactRecords(
       city: r.city, stateCode: r.state_code, neighborhood: r.neighborhood,
       latitude: r.lat ? parseFloat(r.lat) : null,
       longitude: r.lng ? parseFloat(r.lng) : null,
-      distanceMiles: null, detailUrl: `/recurring-events/${r.id}`,
+      distanceMiles: null, detailUrl: "/events",
       isVerified: true, contextTags: [],
     })));
   }
@@ -203,7 +203,7 @@ export async function findExactRecords(
       FROM community_organizations co
       JOIN canonical_record_locations l
         ON l.record_type = 'community_place' AND l.record_id = co.id::uuid
-      WHERE LOWER(l.city_name) = $1 ${stateClause}
+      WHERE co.is_active = TRUE AND LOWER(l.city_name) = $1 ${stateClause}
       LIMIT 30
     `, params);
 
@@ -213,7 +213,7 @@ export async function findExactRecords(
       city: r.city, stateCode: r.state_code, neighborhood: r.neighborhood,
       latitude: r.lat ? parseFloat(r.lat) : null,
       longitude: r.lng ? parseFloat(r.lng) : null,
-      distanceMiles: null, detailUrl: `/community-orgs/${r.id}`,
+      distanceMiles: null, detailUrl: "/resources",
       isVerified: true, contextTags: [],
     })));
   }

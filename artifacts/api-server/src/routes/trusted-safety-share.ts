@@ -28,6 +28,22 @@ const router = Router();
 
 const MAX_SHARES = 5;
 
+/**
+ * Normalize an address before both comparison and storage. This keeps cosmetic
+ * differences (case, spaces, punctuation in a US phone number) from creating
+ * multiple alerts for the same person.
+ */
+export function normalizeTrustedContactEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function normalizeTrustedContactPhone(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  // Keep the country prefix when supplied. A leading 1 is normalized so
+  // +1 (555) 123-4567 and 555-123-4567 compare as the same US number.
+  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
+}
+
 function requireAuth(req: Request, res: Response): boolean {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Authentication required" });
@@ -77,37 +93,19 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
       res.status(400).json({ error: "contactEmail required for email type" });
       return;
     }
+    const normalizedPhone = contactPhone ? normalizeTrustedContactPhone(contactPhone) : null;
+    const normalizedEmail = contactEmail ? normalizeTrustedContactEmail(contactEmail) : null;
+    if (type === "phone" && !normalizedPhone?.match(/^\+\d{7,15}$/)) {
+      res.status(400).json({ error: "contactPhone must be a valid phone number" });
+      return;
+    }
+    if (type === "email" && !normalizedEmail?.includes("@")) {
+      res.status(400).json({ error: "contactEmail must be a valid email address" });
+      return;
+    }
     // Can't add yourself
     if (type === "mwm_user" && contactUserId === ownerId) {
       res.status(400).json({ error: "Cannot add yourself as a trusted contact" });
-      return;
-    }
-
-    // Enforce 5-contact cap
-    const countResult = await pool.query<{ count: string }>(
-      `SELECT COUNT(*) AS count FROM trusted_safety_shares
-       WHERE owner_id = $1 AND status != 'revoked' AND status != 'declined'`,
-      [ownerId]
-    );
-    if (parseInt(countResult.rows[0]?.count ?? "0", 10) >= MAX_SHARES) {
-      res.status(400).json({ error: `Maximum of ${MAX_SHARES} trusted contacts allowed` });
-      return;
-    }
-
-    // No duplicate contacts
-    const dupCheck = await pool.query(
-      `SELECT id FROM trusted_safety_shares
-       WHERE owner_id = $1
-         AND status NOT IN ('revoked','declined')
-         AND (
-           ($2 = 'mwm_user' AND contact_user_id = $3)
-           OR ($2 = 'phone'    AND contact_phone  = $4)
-           OR ($2 = 'email'    AND contact_email  = $5)
-         )`,
-      [ownerId, type, contactUserId ?? null, contactPhone ?? null, contactEmail ?? null]
-    );
-    if (dupCheck.rows.length > 0) {
-      res.status(409).json({ error: "This contact is already added" });
       return;
     }
 
@@ -119,8 +117,44 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
     const initialStatus = "pending";
     // MWM users: contact_accepted stays false until they respond.
 
-    const result = await pool.query(
-      `INSERT INTO trusted_safety_shares
+    // The lock makes the cap and duplicate checks atomic for an owner. It is
+    // intentionally transaction-scoped: a concurrent add cannot slip between
+    // the check and insert and cause duplicate emergency notifications.
+    const client = await pool.connect();
+    let share!: { id: string };
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [ownerId]);
+      const countResult = await client.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM trusted_safety_shares
+         WHERE owner_id = $1 AND status != 'revoked' AND status != 'declined'`,
+        [ownerId]
+      );
+      if (parseInt(countResult.rows[0]?.count ?? "0", 10) >= MAX_SHARES) {
+        await client.query("ROLLBACK");
+        res.status(400).json({ error: `Maximum of ${MAX_SHARES} trusted contacts allowed` });
+        return;
+      }
+
+      const dupCheck = await client.query(
+        `SELECT id FROM trusted_safety_shares
+         WHERE owner_id = $1
+           AND status NOT IN ('revoked','declined')
+           AND (
+             ($2 = 'mwm_user' AND contact_user_id = $3)
+             OR ($2 = 'phone' AND regexp_replace(contact_phone, '\\D', '', 'g') = regexp_replace($4, '\\D', '', 'g'))
+             OR ($2 = 'email' AND lower(trim(contact_email)) = lower(trim($5)))
+           )`,
+        [ownerId, type, contactUserId ?? null, normalizedPhone, normalizedEmail]
+      );
+      if (dupCheck.rows.length > 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "This contact is already added" });
+        return;
+      }
+
+      const result = await client.query(
+        `INSERT INTO trusted_safety_shares
          (id, owner_id, contact_type, contact_user_id, contact_name,
           contact_phone, contact_email, owner_enabled, contact_accepted,
           status, invite_token, invite_expires_at, created_at, updated_at)
@@ -132,15 +166,21 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
         type,
         contactUserId ?? null,
         contactName.trim(),
-        contactPhone?.trim() ?? null,
-        contactEmail?.trim() ?? null,
+        normalizedPhone,
+        normalizedEmail,
         initialStatus,
         inviteToken,
         inviteExpiresAt,
       ]
-    );
-
-    const share = result.rows[0];
+      );
+      share = result.rows[0];
+      await client.query("COMMIT");
+    } catch (transactionErr) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw transactionErr;
+    } finally {
+      client.release();
+    }
 
     // If MWM user: send them a push notification asking them to accept.
     if (type === "mwm_user" && contactUserId) {
@@ -283,17 +323,39 @@ router.patch("/safety/trusted-shares/:id/pause", async (req: Request, res: Respo
     if (existing.rows[0].owner_id !== ownerId) {
       res.status(403).json({ error: "Not your share" }); return;
     }
-    if (existing.rows[0].status === "revoked") {
-      res.status(400).json({ error: "Cannot pause a revoked share" }); return;
+    const current = existing.rows[0] as {
+      status: string;
+      contact_accepted: boolean;
+    };
+    if (pause && current.status === "paused_manual") {
+      res.json({ share: current });
+      return;
+    }
+    if (pause && current.status !== "active") {
+      res.status(409).json({ error: "Only an active accepted share can be paused" });
+      return;
+    }
+    if (!pause && (current.status !== "paused_manual" || current.contact_accepted !== true)) {
+      res.status(409).json({ error: "This contact must accept the share before it can be resumed" });
+      return;
     }
 
+    const currentStatus = pause ? "active" : "paused_manual";
     const newStatus = pause ? "paused_manual" : "active";
     const result = await pool.query(
       `UPDATE trusted_safety_shares
        SET status = $1, updated_at = NOW()
-       WHERE id = $2 RETURNING *`,
-      [newStatus, id]
+       WHERE id = $2
+         AND owner_id = $3
+         AND status = $4
+         AND ($1 != 'active' OR contact_accepted = true)
+       RETURNING *`,
+      [newStatus, id, ownerId, currentStatus]
     );
+    if (!result.rows[0]) {
+      res.status(409).json({ error: "The share changed before this request completed. Refresh and try again." });
+      return;
+    }
     res.json({ share: result.rows[0] });
   } catch (err) {
     req.log?.error({ err }, "PATCH /safety/trusted-shares/:id/pause error");
@@ -314,18 +376,6 @@ router.patch("/safety/trusted-shares/:id/respond", async (req: Request, res: Res
       return;
     }
 
-    const existing = await pool.query(
-      `SELECT * FROM trusted_safety_shares WHERE id = $1`,
-      [id]
-    );
-    if (!existing.rows[0]) { res.status(404).json({ error: "Share not found" }); return; }
-    if (existing.rows[0].contact_user_id !== userId) {
-      res.status(403).json({ error: "Not your share request to respond to" }); return;
-    }
-    if (existing.rows[0].status !== "pending") {
-      res.status(409).json({ error: "This share has already been resolved" }); return;
-    }
-
     const newStatus = accept ? "active" : "declined";
     const result = await pool.query(
       `UPDATE trusted_safety_shares
@@ -333,9 +383,18 @@ router.patch("/safety/trusted-shares/:id/respond", async (req: Request, res: Res
            contact_accepted = $2,
            activated_at = CASE WHEN $2 THEN NOW() ELSE NULL END,
            updated_at = NOW()
-       WHERE id = $3 RETURNING *`,
-      [newStatus, accept, id]
+       WHERE id = $3
+         AND contact_user_id = $4
+         AND status = 'pending'
+         AND contact_accepted = false
+         AND invite_expires_at > NOW()
+       RETURNING *`,
+      [newStatus, accept, id, userId]
     );
+    if (!result.rows[0]) {
+      res.status(409).json({ error: "This share request is no longer pending or has expired" });
+      return;
+    }
     res.json({ share: result.rows[0] });
   } catch (err) {
     req.log?.error({ err }, "PATCH /safety/trusted-shares/:id/respond error");
@@ -392,24 +451,6 @@ router.post("/safety/trusted-shares/accept-token", async (req: Request, res: Res
       return;
     }
 
-    const result = await pool.query(
-      `SELECT * FROM trusted_safety_shares WHERE invite_token = $1`,
-      [token]
-    );
-    if (!result.rows[0]) {
-      res.status(404).json({ error: "Invite not found" });
-      return;
-    }
-    const share = result.rows[0];
-    if (new Date(share.invite_expires_at) < new Date()) {
-      res.status(410).json({ error: "Invite has expired" });
-      return;
-    }
-    if (share.status !== "pending") {
-      res.status(409).json({ error: "This invite has already been responded to" });
-      return;
-    }
-
     const newStatus = accept ? "active" : "declined";
     const updated = await pool.query(
       `UPDATE trusted_safety_shares
@@ -417,9 +458,17 @@ router.post("/safety/trusted-shares/accept-token", async (req: Request, res: Res
            contact_accepted = $2,
            activated_at = CASE WHEN $2 THEN NOW() ELSE NULL END,
            updated_at = NOW()
-       WHERE invite_token = $3 RETURNING id, status, contact_name`,
+       WHERE invite_token = $3
+         AND status = 'pending'
+         AND contact_accepted = false
+         AND invite_expires_at > NOW()
+       RETURNING id, status, contact_name`,
       [newStatus, accept, token]
     );
+    if (!updated.rows[0]) {
+      res.status(409).json({ error: "This invite is no longer pending or has expired" });
+      return;
+    }
     res.json({ accepted: accept, share: updated.rows[0] });
   } catch (err) {
     req.log?.error({ err }, "POST /safety/trusted-shares/accept-token error");

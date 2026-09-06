@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { AlertCircle, ExternalLink, Link2, X } from "lucide-react";
+import { detectSocialVideoPlatform } from "@workspace/constants";
+import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
 export type CommunityMediaKind =
   | { type: "youtube"; embedUrl: string }
   | { type: "tiktok"; playerUrl: string }
-  | { type: "provider-link"; provider: "TikTok" | "Instagram" | "External media" }
+  | { type: "twitch"; playerUrl: string }
+  | { type: "provider-link"; provider: "TikTok" | "Instagram" | "Facebook" | "Twitch" | "Snapchat" | "Vimeo" | "External media" }
   | { type: "native-video" }
   | { type: "image" };
 
@@ -55,6 +58,26 @@ export function getTikTokPlayerUrl(rawUrl: string): string | null {
   return `https://www.tiktok.com/player/v1/${videoId}?controls=1&description=1&music_info=1&autoplay=0&rel=0`;
 }
 
+export function getTwitchPlayerUrl(rawUrl: string, parentHost?: string): string | null {
+  const url = safeHttpUrl(rawUrl);
+  if (!url || url.protocol !== "https:" || url.port) return null;
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  const parent = (parentHost ?? (typeof window !== "undefined" ? window.location.hostname : "")).trim();
+  if (!parent || !/^[a-z0-9.-]+$/i.test(parent)) return null;
+  const segments = url.pathname.split("/").filter(Boolean);
+  if (hostMatches(host, "clips.twitch.tv") && segments[0]) {
+    return `https://clips.twitch.tv/embed?clip=${encodeURIComponent(segments[0])}&parent=${encodeURIComponent(parent)}&autoplay=false`;
+  }
+  if (!hostMatches(host, "twitch.tv")) return null;
+  if (segments[0] === "videos" && /^\d+$/.test(segments[1] ?? "")) {
+    return `https://player.twitch.tv/?video=v${segments[1]}&parent=${encodeURIComponent(parent)}&autoplay=false`;
+  }
+  if (segments.length === 1 && /^[A-Za-z0-9_]{3,25}$/.test(segments[0])) {
+    return `https://player.twitch.tv/?channel=${encodeURIComponent(segments[0])}&parent=${encodeURIComponent(parent)}&autoplay=false`;
+  }
+  return null;
+}
+
 export function classifyCommunityMedia(rawUrl: string): CommunityMediaKind {
   const url = safeHttpUrl(rawUrl);
   if (!url) return { type: "provider-link", provider: "External media" };
@@ -63,8 +86,14 @@ export function classifyCommunityMedia(rawUrl: string): CommunityMediaKind {
   if (youtubeEmbed) return { type: "youtube", embedUrl: youtubeEmbed };
   const tiktokPlayer = getTikTokPlayerUrl(rawUrl);
   if (tiktokPlayer) return { type: "tiktok", playerUrl: tiktokPlayer };
+  const twitchPlayer = getTwitchPlayerUrl(rawUrl);
+  if (twitchPlayer) return { type: "twitch", playerUrl: twitchPlayer };
   if (hostMatches(url.hostname, "tiktok.com")) return { type: "provider-link", provider: "TikTok" };
   if (hostMatches(url.hostname, "instagram.com")) return { type: "provider-link", provider: "Instagram" };
+  if (hostMatches(url.hostname, "facebook.com") || hostMatches(url.hostname, "fb.watch")) return { type: "provider-link", provider: "Facebook" };
+  if (hostMatches(url.hostname, "twitch.tv")) return { type: "provider-link", provider: "Twitch" };
+  if (hostMatches(url.hostname, "snapchat.com")) return { type: "provider-link", provider: "Snapchat" };
+  if (hostMatches(url.hostname, "vimeo.com")) return { type: "provider-link", provider: "Vimeo" };
 
   const filename = url.pathname.split("/").pop() ?? "";
   const extension = filename.includes(".") ? filename.split(".").pop()?.toLowerCase() ?? "" : "";
@@ -122,8 +151,10 @@ export function CommunityMedia({
   compact?: boolean;
   onRemove?: () => void;
 }) {
+  const { allows } = useSocialVideoPreferences();
   const media = classifyCommunityMedia(url);
   const safeUrl = safeHttpUrl(url)?.toString();
+  if (!allows(detectSocialVideoPlatform(url))) return null;
   const removeButton = onRemove ? (
     <button
       type="button"
@@ -210,6 +241,35 @@ export function CommunityMedia({
           className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#CA922B]/35 bg-[#FAF6EF] px-4 py-2 text-sm font-bold text-[#3A1F0E] hover:border-[#CA922B]/70"
         >
           Open on TikTok <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </a>
+        {removeButton}
+      </div>
+    );
+  }
+
+  if (media.type === "twitch") {
+    return (
+      <div className={`relative ${compact ? "w-44" : "w-full"}`}>
+        <div className={`overflow-hidden rounded-xl bg-black ${compact ? "h-24 w-44" : "aspect-video w-full"}`}>
+          <iframe
+            data-testid="community-twitch-player"
+            src={media.playerUrl}
+            title={`Twitch attachment ${index + 1}`}
+            loading="lazy"
+            className="h-full w-full"
+            allow="autoplay; fullscreen; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+        <a
+          href={safeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#9146FF]/40 bg-white px-4 py-2 text-sm font-bold text-[#3A1F0E]"
+        >
+          Open on Twitch <ExternalLink className="h-4 w-4" aria-hidden="true" />
         </a>
         {removeButton}
       </div>

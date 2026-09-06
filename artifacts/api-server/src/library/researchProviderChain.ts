@@ -16,6 +16,7 @@ export function createResearchProviderChain(
     async search(input): Promise<ResearchProviderResult> {
       const errors: unknown[] = [];
       for (let index = 0; index < providers.length; index += 1) {
+        if (input.signal?.aborted) throw new Error("Library research was cancelled.");
         try {
           const result = await providers[index].search(input);
           const documents = validResearchDocuments(result.documents, input.allowedDomains);
@@ -29,6 +30,7 @@ export function createResearchProviderChain(
             status: index === 0 ? result.status : "degraded",
           };
         } catch (error) {
+          if (input.signal?.aborted) throw error;
           errors.push(error);
         }
       }

@@ -48,6 +48,7 @@ import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
 import CulturalSiteDetail from "@/pages/cultural-site-detail";
+import TourCulturalSiteDetail from "@/pages/tour-cultural-site-detail";
 import UniversalPlaceDetailPage, { LegacyPlaceRedirect } from "@/pages/universal-place-detail";
 import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
@@ -80,10 +81,13 @@ import Wellness from "@/pages/wellness";
 import Connections from "@/pages/connections";
 import Guides from "@/pages/guides";
 import SubmitBusiness from "@/pages/submit-business";
+import MyBusinessSubmissions from "@/pages/my-business-submissions";
 import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
+import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
 import SubmitEvent from "@/pages/submit-event";
+import LocationShareView from "@/pages/location-share-view";
 
 const BASE = import.meta.env.BASE_URL;
 const ROUTER_BASE = (() => {
@@ -279,6 +283,9 @@ function Router() {
       <Route path="/referral-redirect" component={MyReferral} />
       <Route path="/business-response/:token" component={BusinessResponse} />
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
+      {/* Mobile location links open without account access; the opaque token is
+          the only capability and the viewer returns no identity information. */}
+      <Route path="/safety/location/:token" component={LocationShareView} />
       <Route path="/admin">
         <ProtectedRoute><Admin /></ProtectedRoute>
       </Route>
@@ -321,6 +328,9 @@ function Router() {
       {/* Cultural site living pages — member only */}
       <Route path="/sites/:id">
         <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/tour-cultural-sites/:id">
+        <Layout><PreLaunchRoute><TourCulturalSiteDetail /></PreLaunchRoute></Layout>
       </Route>
       {/* Published non-business map entities resolve through one canonical detail route. */}
       <Route path="/places/:id/:slug">
@@ -417,13 +427,21 @@ function Router() {
 
       {/* ── Community business submission — Task #360 ─────────────────── */}
       <Route path="/submit-business">
-        <SubmitBusiness />
+        <ProtectedRoute><SubmitBusiness /></ProtectedRoute>
+      </Route>
+      <Route path="/my-business-submissions">
+        <ProtectedRoute><MyBusinessSubmissions /></ProtectedRoute>
       </Route>
 
       {/* ── Founder review queue — Task #360 ─────────────────────────── */}
       <Route path="/founder/business-submissions">
         <FounderBusinessSubmissions />
       </Route>
+      {import.meta.env.VITE_DIRECTORY_IMPORT_REVIEW_ENABLED === "true" && (
+        <Route path="/founder/directory-imports">
+          <FounderDirectoryImports />
+        </Route>
+      )}
 
       {/* ── Founder direct-publish — Task #362 ───────────────────────── */}
       <Route path="/founder/businesses/new">

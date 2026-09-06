@@ -19,22 +19,23 @@ import { useColors } from "@/hooks/useColors";
 import { COMMUNITY_RATINGS } from "@/components/RatingStars";
 import { getCaptionsForBusiness } from "@/constants/captions";
 import { CommunityAppreciationFlow } from "@/components/CommunityAppreciationFlow";
+import { detectSocialVideoPlatform } from "@workspace/constants";
 
 const PLATFORMS = [
   { id: "instagram", label: "Instagram", icon: "logo-instagram" },
   { id: "twitter", label: "X / Twitter", icon: "logo-twitter" },
   { id: "tiktok", label: "TikTok", icon: "musical-notes" },
   { id: "facebook", label: "Facebook", icon: "logo-facebook" },
+  { id: "youtube", label: "YouTube", icon: "logo-youtube" },
+  { id: "twitch", label: "Twitch", icon: "logo-twitch" },
+  { id: "snapchat", label: "Snapchat", icon: "logo-snapchat" },
 ] as const;
 
-const VIDEO_PATTERNS: { platform: string; regex: RegExp }[] = [
-  { platform: "YouTube", regex: /^https?:\/\/(www\.)?(youtube\.com\/(watch|shorts)|youtu\.be\/)/i },
-  { platform: "TikTok", regex: /^https?:\/\/(www\.)?tiktok\.com\//i },
-  { platform: "Instagram", regex: /^https?:\/\/(www\.)?instagram\.com\/(reel|p|tv)\//i },
-  { platform: "Facebook", regex: /^https?:\/\/(www\.)?(facebook\.com|fb\.watch)\//i },
-];
-function isValidVideoUrl(url: string) { return VIDEO_PATTERNS.some(({ regex }) => regex.test(url.trim())); }
-function detectVideoPlatform(url: string) { return VIDEO_PATTERNS.find(({ regex }) => regex.test(url.trim()))?.platform ?? "Video"; }
+function isValidVideoUrl(url: string) { return detectSocialVideoPlatform(url.trim()) !== null; }
+function detectVideoPlatform(url: string) {
+  const platform = detectSocialVideoPlatform(url.trim());
+  return platform ? platform[0]!.toUpperCase() + platform.slice(1) : "Video";
+}
 
 type SocialPlatform = (typeof PLATFORMS)[number]["id"];
 
@@ -440,7 +441,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                   </View>
                 </View>
                 <Text style={[styles.inviteDesc, { color: colors.mutedForeground }]}>
-                  Share a link to your Instagram, TikTok, Facebook, or YouTube post about this business. It&apos;ll appear on your profile and link back to your page.
+                  Share a public Instagram, TikTok, Facebook, YouTube, Twitch, or Snapchat post about this business. It&apos;ll appear on your profile and link back to the provider.
                 </Text>
                 <TextInput
                   style={[styles.videoInput, { backgroundColor: colors.background, borderColor: videoLink && !isValidVideoUrl(videoLink) ? "#DC2626" : videoLink && isValidVideoUrl(videoLink) ? "#2D7A4F" : colors.border, color: colors.foreground }]}
@@ -454,7 +455,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                 />
                 {videoLink.length > 0 && (
                   <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: isValidVideoUrl(videoLink) ? "#2D7A4F" : "#DC2626" }}>
-                    {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} post linked` : "Paste a link from Instagram, TikTok, Facebook, or YouTube"}
+                    {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} post linked` : "Paste a public Instagram, TikTok, Facebook, YouTube, Twitch, or Snapchat link"}
                   </Text>
                 )}
               </View>

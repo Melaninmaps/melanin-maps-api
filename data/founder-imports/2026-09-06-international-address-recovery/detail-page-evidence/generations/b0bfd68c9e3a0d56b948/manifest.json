@@ -1,0 +1,11 @@
+{
+  "generation": "b0bfd68c9e3a0d56b948",
+  "results": {
+    "path": "generations/b0bfd68c9e3a0d56b948/results.jsonl",
+    "sha256": "bc5348d45c6d40fe63de29369aa63bc6a161ccfa7dd4b206684d013853216ccb"
+  },
+  "summary": {
+    "path": "generations/b0bfd68c9e3a0d56b948/summary.json",
+    "sha256": "3a11efb89d115739523d9abaed078df2641711f40c18b3abd6f34ed9133c5432"
+  }
+}

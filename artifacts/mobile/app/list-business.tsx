@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory, type CategoryGroup } from "@/constants/categories";
+import { OWNERSHIP_CHIPS } from "@/config/chips";
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
 
@@ -33,6 +34,15 @@ const HOURS_OPTIONS = [
 ];
 
 const TOTAL_STEPS = 4;
+type CommunityReportedOwnership = "minority_owned" | "non_minority_owned" | "not_sure";
+
+interface SubmissionOutcome {
+  status: string;
+  publicationOutcome: string;
+  message: string;
+  businessId?: string;
+  mapPin: boolean;
+}
 
 interface FormData {
   name: string;
@@ -48,12 +58,15 @@ interface FormData {
   instagram: string;
   facebook: string;
   tiktok: string;
+  youtube: string;
+  twitch: string;
+  snapchat: string;
   priceRange: string;
   hours: string;
   customHours: string;
   tags: string;
-  isBlackOwned: boolean;
-  isVerified: boolean;
+  communityReportedOwnership: CommunityReportedOwnership;
+  ownershipDesignations: string[];
 }
 
 const INITIAL_FORM: FormData = {
@@ -70,12 +83,15 @@ const INITIAL_FORM: FormData = {
   instagram: "",
   facebook: "",
   tiktok: "",
+  youtube: "",
+  twitch: "",
+  snapchat: "",
   priceRange: "",
   hours: "",
   customHours: "",
   tags: "",
-  isBlackOwned: true,
-  isVerified: false,
+  communityReportedOwnership: "not_sure",
+  ownershipDesignations: [],
 };
 
 function ProgressBar({ step, total, colors }: { step: number; total: number; colors: any }) {
@@ -266,6 +282,9 @@ export default function ListBusinessScreen() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [submissionId, setSubmissionId] = useState("");
+  const [submissionOutcome, setSubmissionOutcome] = useState<SubmissionOutcome | null>(null);
+  const clientRequestId = useRef(Crypto.randomUUID()).current;
   const [waitlistCat, setWaitlistCat] = useState<CategoryGroup | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistCity, setWaitlistCity] = useState("");
@@ -279,7 +298,7 @@ export default function ListBusinessScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const update = (field: keyof FormData) => (value: string | boolean) =>
+  const update = (field: keyof FormData) => (value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
 
   const animateToStep = (nextStep: number) => {
@@ -361,11 +380,13 @@ export default function ListBusinessScreen() {
     try {
       const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${apiBase}/api/businesses`, {
+      if (!token) throw new Error("Sign in with your approved community account to submit a business.");
+      const res = await fetch(`${apiBase}/api/community/business-submissions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
+          "Idempotency-Key": clientRequestId,
         },
         body: JSON.stringify({
           name: form.name,
@@ -375,30 +396,47 @@ export default function ListBusinessScreen() {
           address: form.address,
           city: form.city,
           state: form.state,
-          zip: form.zip,
+          postalCode: form.zip,
           phone: form.phone,
           website: form.website || null,
-          instagram: form.instagram || null,
-          facebook: form.facebook || null,
-          tiktok: form.tiktok || null,
+          socialProfiles: {
+            ...(form.instagram ? { instagram: form.instagram } : {}),
+            ...(form.facebook ? { facebook: form.facebook } : {}),
+            ...(form.tiktok ? { tiktok: form.tiktok } : {}),
+            ...(form.youtube ? { youtube: form.youtube } : {}),
+            ...(form.twitch ? { twitch: form.twitch } : {}),
+            ...(form.snapchat ? { snapchat: form.snapchat } : {}),
+          },
           priceRange: form.priceRange,
-          hours: form.hours,
-          customHours: form.customHours,
+          hours: form.hours === "Custom" ? form.customHours : form.hours,
           tags: form.tags,
-          isBlackOwned: form.isBlackOwned,
+          communityReportedOwnership: form.communityReportedOwnership,
+          ownershipDesignations: form.ownershipDesignations,
+          locationSource: "member_entered",
+          sourceChannel: "expo_list_business",
+          clientRequestId,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(err.error ?? "Submission failed");
       }
-      if (token) {
-        await fetch(`${apiBase}/api/auth/user/setup`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ isBusinessOwner: true }),
-        }).catch(() => {});
-      }
+      const data = await res.json() as {
+        submissionId?: string;
+        businessId?: string;
+        status?: string;
+        publicationOutcome?: string;
+        mapPin?: boolean;
+        message?: string;
+      };
+      setSubmissionId(data.submissionId ?? "");
+      setSubmissionOutcome({
+        status: data.status ?? "pending_review",
+        publicationOutcome: data.publicationOutcome ?? "pending_review",
+        message: data.message ?? "Your business submission was saved.",
+        businessId: data.businessId,
+        mapPin: data.mapPin === true,
+      });
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       animateToStep(TOTAL_STEPS);
     } catch (err) {
@@ -425,7 +463,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? "Submitted!" : "List Your Business"}
+          {isSuccess ? (submissionOutcome?.status === "published" ? "Live on the Map" : "Submission Saved") : "Add a Community Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -444,28 +482,29 @@ export default function ListBusinessScreen() {
         {isSuccess ? (
           <View style={styles.successContainer}>
             <View style={[styles.successIconWrap, { backgroundColor: colors.primary + "15" }]}>
-              <Image
-                source={require("@/assets/images/bento-businesses.jpg")}
-                style={styles.successImage}
-                contentFit="cover"
-              />
+              <Feather name="briefcase" size={56} color={colors.primary} />
               <View style={[styles.successBadge, { backgroundColor: "#22C55E" }]}>
                 <Feather name="check" size={22} color="#FFFFFF" />
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              You&apos;re on the Map!
+              {submissionOutcome?.status === "published" ? "This business is live" : "This submission is saved"}
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
-              {" "}has been submitted for review. Our team will verify your listing within 1–3 business days. You&apos;ll receive a confirmation once it goes live.
+              {" "}{submissionOutcome?.message ?? "was saved."}
             </Text>
+
+            {submissionId ? (
+              <Text selectable style={[styles.successLink, { color: colors.mutedForeground }]}>Submission ID: {submissionId}</Text>
+            ) : null}
 
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {[
-                { icon: "check-circle", label: "Submitted", value: "Under review", color: "#22C55E" },
-                { icon: "clock", label: "Review time", value: "1–3 business days", color: colors.primary },
-                { icon: "shield", label: "Verification", value: "Pending", color: colors.accent },
+                { icon: "check-circle", label: "Status", value: submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
+                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye-off", label: "Directory", value: submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Not public yet", color: colors.primary },
+                { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
+                { icon: "user-x", label: "Owner", value: "Unclaimed", color: colors.primary },
               ].map((item) => (
                 <View key={item.label} style={styles.successRow}>
                   <Feather name={item.icon as any} size={16} color={item.color} />
@@ -477,14 +516,23 @@ export default function ListBusinessScreen() {
 
             <TouchableOpacity
               style={[styles.successBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.replace("/business-owner" as any)}
+              onPress={() => router.replace("/my-business-submissions" as any)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>Manage Your Business</Text>
+              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>View My Submissions</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => router.replace("/(tabs)")} activeOpacity={0.7}>
+            {submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
+              <TouchableOpacity
+                style={[styles.successBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.primary }]}
+                onPress={() => router.push({ pathname: "/business/[id]", params: { id: submissionOutcome.businessId } } as never)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.successBtnText, { color: colors.primary }]}>View Community Listing</Text>
+                <Feather name="map-pin" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity onPress={() => router.replace("/(tabs)" as any)} activeOpacity={0.7}>
               <Text style={[styles.successLink, { color: colors.primary }]}>Back to Discover</Text>
             </TouchableOpacity>
           </View>
@@ -697,12 +745,41 @@ export default function ListBusinessScreen() {
                     />
                   </View>
 
-                  <Toggle
-                    label="This is a minority-owned business"
-                    value={form.isBlackOwned}
-                    onToggle={() => update("isBlackOwned")(!form.isBlackOwned)}
-                    colors={colors}
-                  />
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 6 }]}>Community-reported ownership</Text>
+                    <Text style={[fieldStyles.hint, { color: colors.mutedForeground, marginBottom: 10 }]}>Tell us what you understand the business to be. This is never verified owner identity.</Text>
+                    <ChipGroup
+                      options={["Minority-owned", "Non-minority-owned", "Not sure"]}
+                      value={form.communityReportedOwnership === "minority_owned" ? "Minority-owned" : form.communityReportedOwnership === "non_minority_owned" ? "Non-minority-owned" : "Not sure"}
+                      onSelect={(label) => setForm((current) => ({
+                        ...current,
+                        communityReportedOwnership: label === "Minority-owned" ? "minority_owned" : label === "Non-minority-owned" ? "non_minority_owned" : "not_sure",
+                        ownershipDesignations: label === "Minority-owned" ? current.ownershipDesignations : [],
+                      }))}
+                      colors={colors}
+                    />
+                    {form.communityReportedOwnership === "minority_owned" ? (
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                        {OWNERSHIP_CHIPS.map((option) => {
+                          const selected = form.ownershipDesignations.includes(option.id);
+                          return (
+                            <TouchableOpacity
+                              key={option.id}
+                              onPress={() => setForm((current) => ({
+                                ...current,
+                                ownershipDesignations: selected
+                                  ? current.ownershipDesignations.filter((value) => value !== option.id)
+                                  : [...current.ownershipDesignations, option.id],
+                              }))}
+                              style={[chipStyles.chip, { backgroundColor: selected ? colors.primary : colors.card, borderColor: selected ? colors.primary : colors.border }]}
+                            >
+                              <Text style={[chipStyles.chipText, { color: selected ? colors.primaryForeground : colors.foreground }]}>{option.label}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
               )}
 
@@ -752,7 +829,7 @@ export default function ListBusinessScreen() {
                   <View style={[styles.mapHint, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                     <Feather name="map-pin" size={16} color={colors.primary} />
                     <Text style={[styles.mapHintText, { color: colors.foreground }]}>
-                      Your address will be used to place a pin on the Mapping With Melanin community map.
+                      A complete street address is required for an immediate precise pin. We never use 0,0 or a city-center fallback.
                     </Text>
                   </View>
                 </View>
@@ -772,12 +849,13 @@ export default function ListBusinessScreen() {
                   />
 
                   <Field
-                    label="Website (optional)"
+                    label="Website"
                     value={form.website}
                     onChangeText={update("website")}
                     placeholder="yourwebsite.com"
                     keyboardType="url"
                     colors={colors}
+                    hint="Add a website or one public social profile for immediate publication"
                   />
 
                   <Field
@@ -800,6 +878,30 @@ export default function ListBusinessScreen() {
                     label="TikTok (optional)"
                     value={form.tiktok}
                     onChangeText={update("tiktok")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="YouTube (optional)"
+                    value={form.youtube}
+                    onChangeText={update("youtube")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="Twitch (optional)"
+                    value={form.twitch}
+                    onChangeText={update("twitch")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="Snapchat (optional)"
+                    value={form.snapchat}
+                    onChangeText={update("snapchat")}
                     placeholder="@yourbusiness"
                     colors={colors}
                   />
@@ -838,9 +940,9 @@ export default function ListBusinessScreen() {
                   <View style={[styles.reviewNotice, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                     <Feather name="shield" size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Verification Process</Text>
+                      <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Community publication</Text>
                       <Text style={[styles.reviewNoticeText, { color: colors.mutedForeground }]}>
-                        Our team reviews every listing to ensure quality and authenticity. minority-owned businesses are eligible for our Verified badge after review.
+                        Complete ordinary businesses publish immediately after software checks for location, evidence, duplicates, regulated services, and resource routing. Published profiles are community-listed, unclaimed, and not verified.
                       </Text>
                     </View>
                   </View>
@@ -878,7 +980,7 @@ export default function ListBusinessScreen() {
               disabled={!canProceed()}
             >
               <Text style={[styles.nextBtnText, { color: canProceed() ? colors.primaryForeground : colors.mutedForeground }]}>
-                {isLastForm ? "Submit Listing" : "Continue"}
+                {isLastForm ? "Add Community Business" : "Continue"}
               </Text>
               <Feather
                 name={isLastForm ? "send" : "arrow-right"}

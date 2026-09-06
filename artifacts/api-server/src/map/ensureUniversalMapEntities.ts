@@ -10,6 +10,7 @@ export const UNIVERSAL_MAP_ENTITY_KINDS = [
   "market",
   "public_art",
   "heritage_marker",
+  "travel_destination",
 ] as const;
 
 export type UniversalMapEntityKind = (typeof UNIVERSAL_MAP_ENTITY_KINDS)[number];
@@ -84,7 +85,7 @@ function slugify(value: string): string {
 function validCoordinates(latitude: unknown, longitude: unknown): { latitude: number; longitude: number } | null {
   const lat = typeof latitude === "number" ? latitude : Number(latitude);
   const lng = typeof longitude === "number" ? longitude : Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return null;
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
   return { latitude: lat, longitude: lng };
 }
@@ -116,7 +117,7 @@ async function ensureSchema(pool: Pool): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS public.map_entities (
       id UUID PRIMARY KEY,
-      entity_kind TEXT NOT NULL CHECK (entity_kind IN ('cultural_site','hbcu','festival','community_event','market','public_art','heritage_marker')),
+      entity_kind TEXT NOT NULL CHECK (entity_kind IN ('cultural_site','hbcu','festival','community_event','market','public_art','heritage_marker','travel_destination')),
       title TEXT NOT NULL,
       slug TEXT NOT NULL,
       summary TEXT,
@@ -138,6 +139,22 @@ async function ensureSchema(pool: Pool): Promise<void> {
       UNIQUE (entity_kind, slug),
       CHECK ((latitude IS NULL AND longitude IS NULL) OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180))
     )
+  `);
+  await pool.query(`
+    DO $migration$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid='public.map_entities'::regclass
+          AND conname='map_entities_entity_kind_check'
+          AND pg_get_constraintdef(oid) LIKE '%travel_destination%'
+      ) THEN
+        ALTER TABLE public.map_entities DROP CONSTRAINT IF EXISTS map_entities_entity_kind_check;
+        ALTER TABLE public.map_entities ADD CONSTRAINT map_entities_entity_kind_check
+          CHECK (entity_kind IN ('cultural_site','hbcu','festival','community_event','market','public_art','heritage_marker','travel_destination'));
+      END IF;
+    END
+    $migration$;
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS public.map_entity_aliases (

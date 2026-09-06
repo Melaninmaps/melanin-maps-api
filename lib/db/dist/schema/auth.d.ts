@@ -727,6 +727,25 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
         }, {}, {
             length: 100;
         }>;
+        homeState: import("drizzle-orm/pg-core").PgColumn<{
+            name: "home_state";
+            tableName: "users";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 2;
+        }>;
         passwordHash: import("drizzle-orm/pg-core").PgColumn<{
             name: "password_hash";
             tableName: "users";

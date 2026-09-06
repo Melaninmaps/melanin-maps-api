@@ -1,7 +1,11 @@
 import { Router, type Request, type Response } from "express";
-import { db, businessNominationsTable, businessesTable } from "@workspace/db";
-import { eq, ilike, and, desc, gte, sql } from "drizzle-orm";
-import { getUserTier } from "../middleware/requireMembership";
+import { db, businessNominationsTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
+import { requireApprovedMember } from "../middlewares/requireAuth";
+import { SubmissionRepository } from "../businessIntake/submissionRepository";
+import { validateSubmission } from "../businessIntake/types";
+
+const communitySubmissionRepository = new SubmissionRepository();
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -17,160 +21,65 @@ function isAdmin(req: Request): boolean {
 
 const router = Router();
 
-router.post("/business-nominations", async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id as string | undefined;
-
-  // Tier gate — requires authenticated paid member
-  if (!userId) {
-    res.status(401).json({ error: "Sign in to nominate a business." });
-    return;
-  }
+router.post("/business-nominations", requireApprovedMember, async (req: Request, res: Response) => {
+  const userId = req.user!.id;
   try {
-    const tier = await getUserTier(userId);
-    if (tier === "free") {
-      res.status(403).json({
-        error: "Nominating businesses requires an Explorer+ or higher membership.",
-        code: "TIER_LIMIT_REACHED",
-        upgradeUrl: "/membership",
-      });
-      return;
-    }
-    if (tier === "navigator") {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      const [{ count }] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(businessNominationsTable)
-        .where(and(
-          eq(businessNominationsTable.nominatedByUserId, userId),
-          gte(businessNominationsTable.createdAt, startOfMonth),
-        ));
-      if (count >= 3) {
-        res.status(403).json({
-          error: "Explorer+ members can nominate up to 3 businesses per month. Upgrade to Navigator for unlimited nominations.",
-          code: "TIER_LIMIT_REACHED",
-          upgradeUrl: "/membership",
-        });
-        return;
-      }
-    }
-    // Trailblazer: unlimited
-  } catch {
-    // If tier check fails, allow through — don't block on infra error
-  }
+    const body = req.body as Record<string, unknown>;
+    const input = validateSubmission({
+      ...body,
+      name: body.businessName ?? body.name,
+      category: body.category ?? "General",
+      postalCode: body.postalCode ?? body.zip,
+      latitude: body.latitude ?? body.lat,
+      longitude: body.longitude ?? body.lng,
+      ownershipDesignations: body.ownershipDesignations ?? [],
+      locationSource: body.locationSource ?? "member_entered",
+      submitterNote: body.submitterNote ?? body.notes,
+      clientRequestId: body.clientRequestId ?? req.header("idempotency-key"),
+      sourceChannel: body.sourceChannel ?? "legacy_mobile_nomination",
+    });
 
-  const {
-    businessName, category, city, state, phone, website,
-    ownerName, ownerContact, notes, nominatorEmail, blackOwned,
-  } = req.body as {
-    businessName?: string; category?: string; city?: string; state?: string;
-    phone?: string; website?: string; ownerName?: string; ownerContact?: string;
-    notes?: string; nominatorEmail?: string; blackOwned?: boolean;
-  };
-
-  if (!businessName?.trim() || !city?.trim() || !state?.trim()) {
-    res.status(400).json({ error: "businessName, city, and state are required" });
-    return;
-  }
-
-  const isBlackOwned = blackOwned !== false;
-
-  try {
-    const [existing] = await db
-      .select({ id: businessesTable.id, name: businessesTable.name })
-      .from(businessesTable)
-      .where(and(
-        ilike(businessesTable.name, businessName.trim()),
-        ilike(businessesTable.city, city.trim()),
-      ))
-      .limit(1);
-
+    const existing = await communitySubmissionRepository.findPublishedDuplicate(input);
     if (existing) {
-      res.json({
+      res.status(409).json({
         isDuplicate: true,
         type: "already_listed",
         businessId: existing.id,
-        message: "This business is already in the Mapping With Melanin directory!",
+        code: "BUSINESS_ALREADY_LISTED",
+        message: "This business is already in the Mapping With Melanin directory.",
       });
       return;
     }
 
-    const [existingNom] = await db
-      .select({ id: businessNominationsTable.id })
-      .from(businessNominationsTable)
-      .where(and(
-        ilike(businessNominationsTable.businessName, businessName.trim()),
-        ilike(businessNominationsTable.city, city.trim()),
-      ))
-      .limit(1);
-
-    if (existingNom) {
+    const result = await communitySubmissionRepository.create(input, userId);
+    if (!result.created) {
       res.json({
         isDuplicate: true,
         type: "already_nominated",
-        message: "Someone already added this business — thanks for confirming the community demand!",
+        submissionId: result.submission.id,
+        status: result.submission.status,
+        message: "This business is already in your review queue. It was not submitted twice.",
       });
       return;
     }
 
-    const newBusinessId = crypto.randomUUID();
-    const resolvedCategory = category?.trim() || "General";
-
-    await db
-      .insert(businessesTable)
-      .values({
-        id: newBusinessId,
-        name: businessName.trim(),
-        category: resolvedCategory,
-        subcategory: resolvedCategory,
-        address: `${city.trim()}, ${state.trim()}`,
-        city: city.trim(),
-        state: state.trim(),
-        description: notes?.trim() || "",
-        latitude: "0",
-        longitude: "0",
-        blackOwned: isBlackOwned,
-        confidenceScore: 0,
-        verified: false,
-        featured: false,
-        phone: phone?.trim() || null,
-        website: website?.trim() || null,
-        tags: [],
-        reviews: [],
-        ownershipDesignations: isBlackOwned ? [] : ["non-minority-owned"],
-        verifiedDesignations: [],
-        photos: [],
-        trustBadges: [],
-        status: "active",
-        businessStatus: "community",
-        submittedById: userId ?? null,
-      });
-
-    const [nomination] = await db
-      .insert(businessNominationsTable)
-      .values({
-        nominatedByUserId: userId ?? null,
-        nominatorEmail: nominatorEmail?.trim() || null,
-        businessName: businessName.trim(),
-        category: category?.trim() || null,
-        city: city.trim(),
-        state: state.trim(),
-        phone: phone?.trim() || null,
-        website: website?.trim() || null,
-        ownerName: isBlackOwned ? (ownerName?.trim() || null) : null,
-        ownerContact: isBlackOwned ? (ownerContact?.trim() || null) : null,
-        notes: notes?.trim() || null,
-        blackOwned: isBlackOwned,
-        matchedBusinessId: newBusinessId,
-        status: "verified",
-      })
-      .returning();
-
-    res.status(201).json({ nomination, isDuplicate: false, businessId: newBusinessId });
+    await communitySubmissionRepository
+      .logAuditEvent(result.submission.id, userId, "submitted_via_nomination")
+      .catch(() => undefined);
+    res.status(201).json({
+      isDuplicate: false,
+      submissionId: result.submission.id,
+      status: result.submission.status,
+      message: "Business submitted for review. It is not public yet.",
+    });
   } catch (err) {
-    req.log.error({ err }, "Failed to submit business nomination");
-    res.status(500).json({ error: "Failed to submit nomination" });
+    const message = err instanceof Error ? err.message : "Invalid submission";
+    if (/required|must be|invalid|unsupported|accepts at most|too long/i.test(message)) {
+      res.status(400).json({ error: message, code: "INVALID_SUBMISSION" });
+      return;
+    }
+    req.log.error({ err }, "Failed to queue business nomination");
+    res.status(500).json({ error: "Failed to submit business for review" });
   }
 });
 
@@ -183,7 +92,17 @@ router.get("/business-nominations/mine", async (req: Request, res: Response) => 
       .from(businessNominationsTable)
       .where(eq(businessNominationsTable.nominatedByUserId, userId))
       .orderBy(desc(businessNominationsTable.createdAt));
-    res.json({ nominations });
+    const submissions = await communitySubmissionRepository.listBySubmitter(userId);
+    const safeSubmissions = submissions.map((submission) => {
+      const {
+        reviewed_by_id: _reviewedById,
+        submitted_by_id: _submittedById,
+        client_request_id: _clientRequestId,
+        ...safe
+      } = submission;
+      return safe;
+    });
+    res.json({ nominations, submissions: safeSubmissions });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch your nominations");
     res.status(500).json({ error: "Failed to fetch nominations" });

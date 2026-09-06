@@ -1,0 +1,43 @@
+{
+  "sourceChecksums": {
+    "Mapping-with-Melanin-CUMULATIVE-SOCIAL-NIGHTLIFE-ENRICHMENT-3392.xlsx": "56163070c7309ed03a2a4fd7344d401cd00e179c9f63a2fef9c798b8ab3840fb",
+    "Mapping-with-Melanin-GLOBAL-BUILD-36-CURATED-MINORITY-RECOMMENDED-CUMULATIVE-5086.xlsx": "db67c6290aa2407b26aabbadebca194c839160ad048dde8a7435f8002ddf5a7c"
+  },
+  "candidateRows": 7315,
+  "socialRows": 3392,
+  "travelDestinationRows": 545,
+  "globalNamedEntityRows": 3378,
+  "targetCounts": {
+    "business": 5005,
+    "community_resource": 699,
+    "manual_review": 1459,
+    "regulated_review": 152
+  },
+  "reviewGateCounts": {
+    "approximate_or_centroid_coordinate_review": 342,
+    "business_vs_resource_routing_required": 554,
+    "conflicting_target_routing": 22,
+    "country_or_area_only_location": 3378,
+    "current_operating_status_required": 3378,
+    "destination_coordinates_not_business_coordinates": 545,
+    "duplicate_within_workbook": 197,
+    "event_or_place_destination_required": 788,
+    "official_business_link_required": 3378,
+    "ownership_evidence_review": 18,
+    "precise_geocode_required_before_pin": 6770,
+    "primary_travel_source_required": 23,
+    "prior_founder_candidate_reconciliation": 1227,
+    "public_link_required_before_publication": 18,
+    "public_links_require_current_validation": 3374,
+    "regulated_or_licensed_service_evidence_required": 152,
+    "reviewed_non_business_or_metadata_routing": 100,
+    "reviewed_resource_identity_routing": 155,
+    "source_metadata_artifact": 12,
+    "street_address_required_before_publication": 6770,
+    "third_party_source_requires_current_validation": 3378,
+    "tour_operator_identity_required": 34,
+    "travel_destination_layer_required": 545
+  },
+  "manifestSha256": "6f1e686856eb79e45add03f2208ac836167cde7d5ca69ea99f4464eeae9169a8",
+  "publicationWrites": 0
+}

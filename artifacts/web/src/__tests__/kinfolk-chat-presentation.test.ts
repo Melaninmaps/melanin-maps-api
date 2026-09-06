@@ -13,7 +13,9 @@ import {
   KINFOLK_RESPONSE_STATUS_STAGES,
   responseStatusForElapsedTime,
   safeExternalSourceHref,
+  safeLibraryHref,
 } from "../components/kinfolk/KinfolkChatPresentation";
+import { businessClarificationContinuation } from "../features/kinfolk/businessClarificationContinuation";
 
 const travelPageSource = readFileSync(
   fileURLToPath(new URL("../pages/travel.tsx", import.meta.url)),
@@ -21,6 +23,16 @@ const travelPageSource = readFileSync(
 );
 
 describe("Kinfolk chat presentation", () => {
+  it("continues the original local search for both a clarification answer and Skip", () => {
+    expect(businessClarificationContinuation(
+      "Find hair in Philadelphia",
+      "Loc and natural-hair care in Philadelphia",
+    )).toBe("Find hair in Philadelphia — Loc and natural-hair care in Philadelphia");
+    expect(businessClarificationContinuation("Find hair in Philadelphia")).toBe(
+      "Find hair in Philadelphia — keep this search broad",
+    );
+  });
+
   it("preserves assistant paragraph and list line breaks as safe plain text", () => {
     const content = "A first paragraph.\n\n- First detail\n- Second detail";
     const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
@@ -53,6 +65,15 @@ describe("Kinfolk chat presentation", () => {
   it("does not render a resolved-location Searching pill", () => {
     expect(travelPageSource).not.toContain("Searching ");
     expect(travelPageSource).not.toContain("Searching Black");
+  });
+
+  it("renders deterministic business recommendations with active detail and website links", () => {
+    expect(travelPageSource).toContain("biz.detailUrl");
+    expect(travelPageSource).toContain("View details");
+    expect(travelPageSource).toContain("Visit website");
+    expect(travelPageSource).toContain('target="_blank" rel="noopener noreferrer"');
+    expect(travelPageSource).toContain("Founder-listed · Unclaimed · Not MWM verified");
+    expect(travelPageSource).toContain("Why it surfaced:");
   });
 
   it("renders a three-day itinerary naturally, without recommendation cards or raw JSON syntax", () => {
@@ -128,7 +149,7 @@ describe("Kinfolk chat presentation", () => {
     const markup = renderToStaticMarkup(React.createElement(KinfolkSourceLinks, {
       sources: [
         { title: "Trusted source", url: "https://example.com/research" },
-        { title: "MWM place", url: "/places/for-keeps-books" },
+        { title: "Unapproved internal path", url: "/places/for-keeps-books" },
         { title: "Unsafe source", url: "javascript:alert(1)" },
         { title: "Protocol-relative source", url: "//evil.example/path" },
       ],
@@ -138,11 +159,19 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).toContain('target="_blank"');
     expect(markup).toContain('rel="noopener noreferrer"');
     expect(markup).toContain("Trusted source");
-    expect(markup).toContain('href="/places/for-keeps-books"');
-    expect(markup).toContain("MWM place");
+    expect(markup).not.toContain('href="/places/for-keeps-books"');
+    expect(markup).not.toContain("Unapproved internal path");
     expect(markup).not.toContain("Unsafe source");
     expect(markup).not.toContain("Protocol-relative source");
     expect(safeExternalSourceHref("javascript:alert(1)")).toBeNull();
     expect(safeExternalSourceHref("//evil.example/path")).toBeNull();
+  });
+
+  it("accepts only canonical internal topic routes as Library actions", () => {
+    expect(safeLibraryHref("/library/topics/hip-hop")).toBe("/library/topics/hip-hop");
+    expect(safeLibraryHref("/library/topics/health#evidence")).toBe("/library/topics/health#evidence");
+    expect(safeLibraryHref("https://untrusted.example/library/topics/hip-hop")).toBeNull();
+    expect(safeLibraryHref("/places/not-a-library-topic")).toBeNull();
+    expect(safeLibraryHref("//evil.example/library/topics/hip-hop")).toBeNull();
   });
 });

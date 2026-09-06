@@ -361,7 +361,7 @@ export declare const journalInsightsTable: import("drizzle-orm/pg-core").PgTable
             tableName: "journal_insights";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "removed" | "active";
+            data: "active" | "removed";
             driverParam: string;
             notNull: true;
             hasDefault: true;

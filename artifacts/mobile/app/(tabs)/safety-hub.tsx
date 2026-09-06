@@ -19,13 +19,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 import { DisclaimerNote } from "@/components/DisclaimerNote";
 
 const WIDGET_ORDER_KEY = "@melanin_maps_safety_widget_order";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
+async function getRequiredSafetyToken(): Promise<string | null> {
+  const token = await SecureStore.getItemAsync("auth_session_token");
+  if (!token) Alert.alert("Sign in required", "Sign in before updating protected safety records.");
+  return token;
 }
 
 type SafetyCheckin = {
@@ -163,6 +165,8 @@ export default function SafetyHubTab() {
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
   const [intelAlerts, setIntelAlerts] = useState<IntelAlert[]>([]);
   const [intelLoading, setIntelLoading] = useState(false);
+  const [intelError, setIntelError] = useState<string | null>(null);
+  const [protectedDataError, setProtectedDataError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [features, setFeatures] = useState(ALL_FEATURES);
@@ -179,28 +183,36 @@ export default function SafetyHubTab() {
 
   const fetchIntel = useCallback(async () => {
     setIntelLoading(true);
+    setIntelError(null);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      if (status !== "granted") throw new Error("Location permission is off. Nearby intelligence was not checked.");
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) throw new Error("Sign in to load nearby community intelligence.");
       const base = getApiBase();
       const res = await fetch(
-        `${base}/api/community-alerts/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=16`
+        `${base}/api/community-alerts/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=16`,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (res.ok) {
-        const data = await res.json() as { alerts: IntelAlert[] };
-        setIntelAlerts(data.alerts ?? []);
-      }
-    } catch { /**/ } finally {
+      if (!res.ok) throw new Error(`Nearby intelligence is unavailable (${res.status}).`);
+      const data = await res.json() as { alerts: IntelAlert[] };
+      setIntelAlerts(data.alerts ?? []);
+    } catch (cause) {
+      setIntelAlerts([]);
+      setIntelError(cause instanceof Error ? cause.message : "Nearby intelligence is unavailable.");
+    } finally {
       setIntelLoading(false);
     }
   }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setProtectedDataError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      if (!token) throw new Error("Sign in to load check-ins, location shares, and meetup safety records.");
+      const headers = { Authorization: `Bearer ${token}` };
       const base = getApiBase();
       const safetyCtrl = new AbortController();
       const safetyTimeout = setTimeout(() => safetyCtrl.abort(), 8000);
@@ -209,9 +221,17 @@ export default function SafetyHubTab() {
         fetch(`${base}/api/safety/location-shares`, { headers, signal: safetyCtrl.signal }),
         fetch(`${base}/api/meetups`, { headers, signal: safetyCtrl.signal }),
       ]).finally(() => clearTimeout(safetyTimeout));
+      if (!ciRes.ok || !lsRes.ok || !mvRes.ok) {
+        throw new Error("Your protected safety records could not be verified right now.");
+      }
       if (ciRes.ok) { const d = await ciRes.json() as { checkins: SafetyCheckin[] }; setCheckins(d.checkins ?? []); }
       if (lsRes.ok) { const d = await lsRes.json() as { shares: LocationShare[] }; setShares(d.shares ?? []); }
       if (mvRes.ok) { const d = await mvRes.json() as { verifications: MeetupVerification[] }; setMeetups(d.verifications ?? []); }
+    } catch (cause) {
+      setCheckins([]);
+      setShares([]);
+      setMeetups([]);
+      setProtectedDataError(cause instanceof Error ? cause.message : "Your protected safety records are unavailable.");
     } finally { setLoading(false); }
   }, []);
 
@@ -239,7 +259,8 @@ export default function SafetyHubTab() {
 
   const handleConfirmCheckin = async (id: number) => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const token = await SecureStore.getItemAsync("auth_session_token");
+    const token = await getRequiredSafetyToken();
+    if (!token) return;
     const res = await fetch(`${getApiBase()}/api/safety/checkins/${id}/confirm`, {
       method: "PATCH", headers: { Authorization: `Bearer ${token}` },
     });
@@ -248,17 +269,20 @@ export default function SafetyHubTab() {
   };
 
   const handleStopShare = async (id: number) => {
-    const token = await SecureStore.getItemAsync("auth_session_token");
-    await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-    setShares((prev) => prev.filter((s) => s.id !== id));
+    const token = await getRequiredSafetyToken();
+    if (!token) return;
+    const res = await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) setShares((prev) => prev.filter((s) => s.id !== id));
+    else Alert.alert("Error", "Failed to stop location sharing.");
   };
 
   const handleConfirmAlert = async (alertId: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const token = await SecureStore.getItemAsync("auth_session_token");
+    const token = await getRequiredSafetyToken();
+    if (!token) return;
     const res = await fetch(`${getApiBase()}/api/community-alerts/${alertId}/confirm`, {
       method: "POST",
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
       const data = await res.json() as { confirmedCount: number; status: "possible" | "confirmed" };
@@ -274,10 +298,11 @@ export default function SafetyHubTab() {
 
   const handleClearAlert = async (alertId: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const token = await SecureStore.getItemAsync("auth_session_token");
+    const token = await getRequiredSafetyToken();
+    if (!token) return;
     const res = await fetch(`${getApiBase()}/api/community-alerts/${alertId}/clear`, {
       method: "POST",
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
       setIntelAlerts((prev) => prev.filter((a) => a.id !== alertId));
@@ -286,9 +311,10 @@ export default function SafetyHubTab() {
 
   const handleArrivalCheckin = async (id: number) => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const token = await SecureStore.getItemAsync("auth_session_token");
+    const token = await getRequiredSafetyToken();
+    if (!token) return;
     const res = await fetch(`${getApiBase()}/api/meetups/${id}/arrival-checkin`, {
-      method: "PATCH", headers: { Authorization: `Bearer ${token ?? ""}` },
+      method: "PATCH", headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
       setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, arrivalCheckStatus: "confirmed", arrivalCheckedAt: new Date().toISOString() } : m));
@@ -299,9 +325,10 @@ export default function SafetyHubTab() {
 
   const handleHomeCheckin = async (id: number) => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const token = await SecureStore.getItemAsync("auth_session_token");
+    const token = await getRequiredSafetyToken();
+    if (!token) return;
     const res = await fetch(`${getApiBase()}/api/meetups/${id}/home-checkin`, {
-      method: "PATCH", headers: { Authorization: `Bearer ${token ?? ""}` },
+      method: "PATCH", headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
       setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, homeCheckStatus: "confirmed", homeCheckedAt: new Date().toISOString() } : m));
@@ -366,6 +393,14 @@ export default function SafetyHubTab() {
               <Text style={[styles.editBannerText, { color: colors.foreground }]}>
                 Use the arrows to reorder your widgets. Tap <Text style={{ fontFamily: "Inter_700Bold" }}>Done</Text> to save.
               </Text>
+            </View>
+          )}
+
+          {!editMode && protectedDataError && (
+            <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: "#D97706" }]}>
+              <Text style={styles.intelEmptyEmoji}>⚠</Text>
+              <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Protected safety records unavailable</Text>
+              <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>{protectedDataError}</Text>
             </View>
           )}
 
@@ -470,7 +505,15 @@ export default function SafetyHubTab() {
                 </View>
               )}
 
-              {!intelLoading && intelAlerts.length === 0 && (
+              {!intelLoading && intelError && (
+                <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: "#D97706" }]}>
+                  <Text style={styles.intelEmptyEmoji}>⚠</Text>
+                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Could not verify nearby conditions</Text>
+                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>{intelError}</Text>
+                </View>
+              )}
+
+              {!intelLoading && !intelError && intelAlerts.length === 0 && (
                 <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Text style={styles.intelEmptyEmoji}>🟢</Text>
                   <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>All clear nearby</Text>

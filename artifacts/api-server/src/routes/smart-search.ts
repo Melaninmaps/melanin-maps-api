@@ -137,28 +137,28 @@ router.get("/search/intent", async (req: Request, res: Response) => {
   try {
     if (intent.includeTypes.includes("business")) {
       const params: unknown[] = [`%${q}%`];
-      let whereExtra = "";
+      let categoryMatch = "";
+      let cityScope = "";
 
       const boostCats = [...new Set([...recentCats, ...intent.categories])];
       if (boostCats.length > 0) {
         params.push(boostCats);
-        whereExtra += ` OR category = ANY($${params.length})`;
+        categoryMatch = ` OR category = ANY($${params.length})`;
       }
       if (city) {
         params.push(`%${city}%`);
-        whereExtra += ` AND (city ILIKE $${params.length})`;
+        cityScope = ` AND city ILIKE $${params.length}`;
       }
 
       const boostParam = boostCats.length > 0 ? boostCats : null;
       if (boostParam) params.push(boostParam);
       const boostIdx = boostParam ? params.length : null;
 
-      const bizRows = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean; description: string }>(
-        `SELECT id, name, category, city, verified, description
-         FROM businesses
-         WHERE status = 'active'
-           AND listing_status IN ('live_unclaimed', 'live_claimed')
-           AND (name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1${whereExtra})
+      const bizRows = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean; description: string; listing_status: string; ownership_claim: string | null }>(
+        `SELECT id, name, category, city, verified, description, listing_status, ownership_claim
+         FROM public.public_businesses
+         WHERE (name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1${categoryMatch})
+           ${cityScope}
          ORDER BY ${boostIdx ? `CASE WHEN category = ANY($${boostIdx}) THEN 0 ELSE 1 END,` : ""} verified DESC, name ASC
          LIMIT ${lim}`,
         params,

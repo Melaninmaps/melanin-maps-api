@@ -53,7 +53,222 @@ import {
 } from "./library-evidence-seed.js";
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 
+const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
+  SELECT COALESCE(p_status, '') = 'active'
+     AND COALESCE(p_is_duplicate, false) = false
+     AND COALESCE(p_listing_status, '') IN ('live_unclaimed', 'live_claimed')
+     AND COALESCE(p_permanently_hidden, false) = false
+     AND NOT (
+       COALESCE(p_name, '') ILIKE '%[DEMO]%'
+       OR COALESCE(p_description, '') ILIKE '%[DEMO]%'
+       OR LOWER(BTRIM(COALESCE(p_data_source, ''))) IN ('demo', 'demo_seed')
+       OR LOWER(BTRIM(COALESCE(p_status, ''))) IN ('demo', 'test')
+       OR LOWER(BTRIM(COALESCE(p_listing_status, ''))) = 'demo'
+       OR REGEXP_REPLACE(COALESCE(p_phone, ''), '[^0-9]', '', 'g') IN ('15555550100', '5555550100')
+     );
+`;
+
+const PUBLIC_BUSINESSES_VIEW_FILTER = "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)";
+
 const MIGRATIONS: { name: string; sql: string }[] = [
+  {
+    name: "user_preferences_social_video_platforms_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS social_video_platforms JSONB DEFAULT '["youtube","tiktok","instagram","facebook","twitch","snapchat","vimeo"]'::jsonb`,
+  },
+  {
+    name: "create_governed_directory_import_staging_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS directory_import_batches (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_name TEXT NOT NULL,
+        source_sha256 TEXT NOT NULL UNIQUE,
+        source_row_count INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'staged'
+          CHECK (status IN ('staged','in_review','completed','cancelled')),
+        created_by VARCHAR,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS directory_import_candidates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id) ON DELETE RESTRICT,
+        source_row INTEGER NOT NULL,
+        target_kind TEXT NOT NULL
+          CHECK (target_kind IN ('business','community_resource','regulated_review','manual_review','internal_only')),
+        status TEXT NOT NULL DEFAULT 'pending_review'
+          CHECK (status IN ('pending_review','needs_research','declined','approved','published')),
+        dedupe_key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
+        category TEXT NOT NULL,
+        subcategory TEXT,
+        cultural_specialty TEXT,
+        address TEXT,
+        phone TEXT,
+        website TEXT,
+        source_url TEXT,
+        source_name TEXT,
+        source_status TEXT,
+        ownership_designations JSONB NOT NULL DEFAULT '[]'::jsonb,
+        ownership_evidence TEXT,
+        regulated_profession BOOLEAN NOT NULL DEFAULT FALSE,
+        public_display_recommendation TEXT,
+        instagram_url TEXT,
+        facebook_url TEXT,
+        tiktok_url TEXT,
+        social_source_url TEXT,
+        price_range TEXT,
+        price_basis TEXT,
+        suggested_experience_keys JSONB NOT NULL DEFAULT '{}'::jsonb,
+        link_validation JSONB NOT NULL DEFAULT '{}'::jsonb,
+        notes TEXT,
+        raw_record JSONB NOT NULL,
+        matched_business_id VARCHAR,
+        published_record_type TEXT,
+        published_record_id TEXT,
+        reviewed_by VARCHAR,
+        reviewed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (batch_id, source_row)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_candidates_review_idx
+        ON directory_import_candidates(batch_id, status, target_kind, source_row);
+      CREATE INDEX IF NOT EXISTS directory_import_candidates_dedupe_idx
+        ON directory_import_candidates(dedupe_key, status);
+    `,
+  },
+  {
+    name: "create_governed_directory_publication_v2",
+    sql: `
+      ALTER TABLE directory_import_candidates
+        ADD COLUMN IF NOT EXISTS review_note TEXT,
+        ADD COLUMN IF NOT EXISTS review_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+        ADD COLUMN IF NOT EXISTS review_revision INTEGER NOT NULL DEFAULT 0;
+
+      CREATE TABLE IF NOT EXISTS business_publication_identities (
+        identity_key TEXT PRIMARY KEY,
+        business_id VARCHAR NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS business_publication_identities_business_idx
+        ON business_publication_identities (business_id);
+
+      CREATE TABLE IF NOT EXISTS directory_import_decision_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        candidate_id UUID NOT NULL REFERENCES directory_import_candidates(id),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id),
+        actor_id TEXT NOT NULL,
+        action TEXT NOT NULL CHECK (action IN ('publish','link_existing','needs_research','decline')),
+        previous_status TEXT NOT NULL,
+        new_status TEXT NOT NULL,
+        review_note TEXT,
+        review_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+        idempotency_key TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        published_record_type TEXT CHECK (published_record_type IN ('business','resource')),
+        published_record_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (idempotency_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_decision_events_candidate_idx
+        ON directory_import_decision_events (candidate_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS directory_import_decision_events_batch_idx
+        ON directory_import_decision_events (batch_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS directory_import_publications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        candidate_id UUID NOT NULL REFERENCES directory_import_candidates(id),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id),
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','resource')),
+        record_id TEXT NOT NULL,
+        publication_action TEXT NOT NULL CHECK (publication_action IN ('create','link_existing')),
+        actor_id TEXT NOT NULL,
+        idempotency_key TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (candidate_id),
+        UNIQUE (idempotency_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_publications_record_idx
+        ON directory_import_publications (record_type, record_id);
+
+      ALTER TABLE resources
+        ADD COLUMN IF NOT EXISTS canonical_key TEXT,
+        ADD COLUMN IF NOT EXISTS normalized_title TEXT,
+        ADD COLUMN IF NOT EXISTS source_category TEXT,
+        ADD COLUMN IF NOT EXISTS source_subcategory TEXT,
+        ADD COLUMN IF NOT EXISTS source_address TEXT,
+        ADD COLUMN IF NOT EXISTS published_by TEXT,
+        ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS resources_canonical_key_unique_idx
+        ON resources (canonical_key)
+        WHERE canonical_key IS NOT NULL AND btrim(canonical_key) <> '';
+
+      CREATE TABLE IF NOT EXISTS directory_import_resource_provenance (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        candidate_id UUID NOT NULL REFERENCES directory_import_candidates(id),
+        resource_id UUID NOT NULL REFERENCES resources(id),
+        batch_id UUID NOT NULL REFERENCES directory_import_batches(id),
+        source_name TEXT,
+        source_url TEXT,
+        source_status TEXT,
+        source_row INTEGER NOT NULL,
+        source_category TEXT,
+        source_subcategory TEXT,
+        raw_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+        link_validation JSONB NOT NULL DEFAULT '{}'::jsonb,
+        reviewed_by TEXT NOT NULL,
+        reviewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        review_note TEXT,
+        UNIQUE (candidate_id, resource_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS directory_import_resource_provenance_resource_idx
+        ON directory_import_resource_provenance (resource_id, reviewed_at DESC);
+    `,
+  },
+  {
+    name: "extend_directory_publication_types_for_map_entities_v1",
+    sql: `
+      DO $migration$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid='directory_import_decision_events'::regclass
+            AND conname='directory_import_decision_events_published_record_type_check'
+            AND pg_get_constraintdef(oid) LIKE '%map_entity%'
+        ) THEN
+          ALTER TABLE directory_import_decision_events
+            DROP CONSTRAINT IF EXISTS directory_import_decision_events_published_record_type_check;
+          ALTER TABLE directory_import_decision_events
+            ADD CONSTRAINT directory_import_decision_events_published_record_type_check
+            CHECK (published_record_type IN ('business','resource','map_entity'));
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid='directory_import_publications'::regclass
+            AND conname='directory_import_publications_record_type_check'
+            AND pg_get_constraintdef(oid) LIKE '%map_entity%'
+        ) THEN
+          ALTER TABLE directory_import_publications
+            DROP CONSTRAINT IF EXISTS directory_import_publications_record_type_check;
+          ALTER TABLE directory_import_publications
+            ADD CONSTRAINT directory_import_publications_record_type_check
+            CHECK (record_type IN ('business','resource','map_entity'));
+        END IF;
+      END
+      $migration$;
+    `,
+  },
   {
     // Universal Search + Demand Flywheel — Checkpoint 1
     // Canonical search event log: one row per search across all surfaces.
@@ -3679,6 +3894,34 @@ ON CONFLICT (city_slug) DO UPDATE SET
       ON age_delivery_audit_events(user_id, created_at DESC)`,
   },
 
+  // ── Safety report subtype preservation ──────────────────────────────────
+  {
+    name: "safety_reports_encounter_type_col",
+    sql: `ALTER TABLE safety_reports
+      ADD COLUMN IF NOT EXISTS encounter_type VARCHAR(50)`,
+  },
+  {
+    name: "verification_requests_delivery_state_cols",
+    sql: `ALTER TABLE verification_requests
+      ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(200),
+      ADD COLUMN IF NOT EXISTS notification_status VARCHAR(20) NOT NULL DEFAULT 'pending'`,
+  },
+  {
+    name: "verification_requests_idempotency_idx",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_requests_idempotency_key
+      ON verification_requests(idempotency_key)
+      WHERE idempotency_key IS NOT NULL`,
+  },
+  {
+    name: "verification_requests_idempotency_scope_v2",
+    sql: `DROP INDEX IF EXISTS idx_verification_requests_idempotency_key;
+      ALTER TABLE verification_requests
+        DROP CONSTRAINT IF EXISTS verification_requests_idempotency_key_unique;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_requests_submitter_idempotency
+        ON verification_requests(submitter_id, idempotency_key)
+        WHERE submitter_id IS NOT NULL AND idempotency_key IS NOT NULL`,
+  },
+
   // ── Kinfolk Depth Learning v1 ────────────────────────────────────────────
   {
     name: "kinfolk_delivery_profiles_adaptive_depth_cols",
@@ -4286,6 +4529,24 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
              )
     `,
   },
+  {
+    // Duke's Cafe is a legacy tour/demo seed that has been inserted under more
+    // than one city. Contain only source-less, unverified, unclaimed seed-shaped
+    // rows. Reviewed founder/community records carry a data_source and are not
+    // affected. This is a reversible soft hide; no row is deleted.
+    name: "hide_unreviewed_dukes_cafe_seed_rows_v1",
+    sql: `
+      UPDATE businesses
+      SET status = 'permanently_hidden', updated_at = NOW()
+      WHERE status = 'active'
+        AND REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = 'dukescafe'
+        AND COALESCE(verified, false) = false
+        AND LOWER(BTRIM(COALESCE(listing_status, ''))) = 'live_unclaimed'
+        AND BTRIM(COALESCE(data_source, '')) = ''
+        AND BTRIM(COALESCE(website, '')) = ''
+        AND BTRIM(COALESCE(phone, '')) = ''
+    `,
+  },
   // ── Living Library schema (Aug 2026) ──────────────────────────────────────
   {
     name: "living_library_topics_table_v1",
@@ -4599,6 +4860,329 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
   },
 ];
 
+export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
+  businesses: [
+    "id", "name", "category", "subcategory", "description", "address", "city", "state", "country",
+    "postal_code", "latitude", "longitude", "phone", "website", "website_domain", "hours",
+    "price_range", "tags", "image_url", "photos", "pending_photos", "videos", "instagram", "tiktok",
+    "facebook", "youtube", "social_profiles", "source_evidence", "ownership_designations",
+    "verified_designations", "ownership_claim", "black_owned", "verified", "featured",
+    "promotion_eligible", "feedback_opt_in", "status", "listing_status", "business_status",
+    "profile_status", "owner_claim_status", "submitted_by_id", "added_by_member_id", "added_via",
+    "data_source", "provider_place_id", "normalized_name", "dedupe_key", "source_provider",
+    "source_record_id", "published_at", "permanently_hidden", "is_duplicate", "created_at", "updated_at",
+  ],
+  community_business_submissions: [
+    "id", "name", "category", "subcategory", "description", "address", "city", "state", "postal_code",
+    "country", "website", "phone", "social_profiles", "media_urls", "media_asset_ids",
+    "ownership_designations", "community_reported_ownership", "price_range", "hours", "tags", "latitude",
+    "longitude", "provider_place_id", "location_source", "source_campaign", "source_channel",
+    "submitter_note", "client_request_id", "request_payload_hash", "identity_key", "submitted_by_id",
+    "status", "reviewed_by_id", "review_note", "matched_business_id", "created_at", "updated_at",
+  ],
+  business_publication_identities: ["identity_key", "business_id", "created_at"],
+  business_review_items: [
+    "id", "review_type", "status", "candidate_name", "candidate_address", "candidate_city",
+    "candidate_state", "candidate_website", "candidate_latitude", "candidate_longitude",
+    "candidate_category", "candidate_source_provider", "matched_business_id", "reason",
+    "created_at", "updated_at",
+  ],
+  canonical_record_locations: [
+    "id", "record_type", "record_id", "city_name", "state_code", "neighborhood_name", "latitude",
+    "longitude", "is_primary", "created_at", "updated_at",
+  ],
+  business_submission_audit_events: ["id", "submission_id", "actor_id", "event_type", "note", "created_at"],
+  media_assets: [
+    "id", "uploader_id", "purpose", "mime_type", "byte_size", "object_key", "public_url", "status", "created_at",
+  ],
+};
+
+export function missingCommunityPublicationColumns(presentColumns: Iterable<string>): string[] {
+  const present = new Set(presentColumns);
+  return Object.entries(COMMUNITY_PUBLICATION_REQUIRED_COLUMNS).flatMap(([table, names]) =>
+    names.filter((name) => !present.has(`${table}.${name}`)).map((name) => `${table}.${name}`),
+  );
+}
+
+export type CommunityPublicationIndexDefinition = Readonly<{
+  indexname: string;
+  table_name: string;
+  is_unique: boolean;
+  is_valid: boolean;
+  is_ready: boolean;
+  key_expressions: string[];
+  predicate: string | null;
+}>;
+
+function normalizeCatalogSql(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/::(?:text|character varying|bpchar)(?:\[\])?/g, "")
+    .replace(/[()]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeStoredFunctionBody(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function malformedCommunityPublicationIndexes(
+  definitions: readonly CommunityPublicationIndexDefinition[],
+): string[] {
+  const byName = new Map(definitions.map((definition) => [definition.indexname, definition]));
+  const expected: Record<string, { table: string; keys: string[]; predicate: string }> = {
+    businesses_canonical_dedupe_key_unique: {
+      table: "businesses",
+      keys: ["dedupe_key"],
+      predicate: "dedupe_key is not null and btrimdedupe_key <> '' and coalesceis_duplicate, false = false and coalescestatus, '' <> all array['duplicate', 'permanently_hidden', 'removed', 'deleted']",
+    },
+    canonical_record_locations_unique_idx: {
+      table: "canonical_record_locations",
+      keys: ["record_type", "record_id", "city_name", "coalescestate_code, ''", "coalesceneighborhood_name, ''"],
+      predicate: "",
+    },
+    idx_community_business_submissions_owner_request: {
+      table: "community_business_submissions",
+      keys: ["submitted_by_id", "client_request_id"],
+      predicate: "submitted_by_id is not null and client_request_id is not null",
+    },
+  };
+  return Object.entries(expected).flatMap(([name, required]) => {
+    const actual = byName.get(name);
+    const keys = (actual?.key_expressions ?? []).map(normalizeCatalogSql);
+    const exactKeys = keys.length === required.keys.length
+      && keys.every((key, index) => key === required.keys[index]);
+    const exactPredicate = normalizeCatalogSql(actual?.predicate) === required.predicate;
+    return actual
+      && actual.table_name === required.table
+      && actual.is_unique
+      && actual.is_valid
+      && actual.is_ready
+      && exactKeys
+      && exactPredicate
+      ? []
+      : [name];
+  });
+}
+
+export function communityPublicViewDefinitionIsSafe(definition: string | null | undefined): boolean {
+  const sql = normalizeCatalogSql(definition);
+  const whereAt = sql.lastIndexOf(" where ");
+  if (whereAt < 0) return false;
+  const actualFilter = sql.slice(whereAt + " where ".length).replace(/;$/, "").replace(/^public\./, "");
+  const expectedFilter = normalizeCatalogSql(PUBLIC_BUSINESSES_VIEW_FILTER).replace(/^public\./, "");
+  return actualFilter === expectedFilter;
+}
+
+export function communityBusinessIsPublicFunctionIsSafe(definition: string | null | undefined): boolean {
+  return normalizeStoredFunctionBody(definition) === normalizeStoredFunctionBody(PUBLIC_BUSINESS_RECORD_FUNCTION_BODY);
+}
+
+export async function ensureRequiredPublicationSchema(
+  directoryImportEnabled: boolean,
+  logger?: Logger,
+): Promise<void> {
+  const log = (msg: string) => logger ? logger.info(msg) : console.log(`[required-publication-schema] ${msg}`);
+  const fail = (msg: string): never => { throw new Error(msg); };
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_publication_identities (
+      identity_key TEXT PRIMARY KEY,
+      business_id VARCHAR NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_publication_identities_business_idx
+      ON business_publication_identities (business_id);
+  `);
+  const listingStatusMigration = MIGRATIONS.find((migration) => migration.name === "businesses_listing_status_col");
+  if (!listingStatusMigration) {
+    throw new Error("Required business listing-status migration is missing from source.");
+  }
+  // The visibility view's proven-demo predicate reads data_source. A blank
+  // Drizzle-created database does not have that operational column yet, so the
+  // prerequisite must run before ensureBetaSafetyColumns creates the view.
+  await pool.query(listingStatusMigration.sql);
+
+  if (directoryImportEnabled) {
+    const stagingMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_import_staging_v1");
+    const publicationMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_publication_v2");
+    if (!stagingMigration || !publicationMigration) {
+      throw new Error("Required directory publication migrations are missing from source.");
+    }
+    await pool.query(stagingMigration.sql);
+    await pool.query(publicationMigration.sql);
+  }
+
+  const strictWarn = (message: string) => fail(message);
+  await ensureBusinessDedupSchema(log, strictWarn);
+  await ensureSocialFirstIngestionSchema(log, strictWarn);
+  await ensureBetaSafetyColumns(log, strictWarn);
+  await ensureVisibilityAndDedupeHardening(log, strictWarn);
+  await ensureHotelStayIngestionSchema(log, strictWarn);
+  await ensureCanonicalRecordLocations(log, strictWarn);
+  await ensureMediaAndClaimsSchema(log, strictWarn);
+  await ensureCommunityBusinessSubmissionsSchema(log, strictWarn);
+
+  const sharedTables = [
+    "business_publication_identities",
+    "business_review_items",
+    "canonical_record_locations",
+    "community_business_submissions",
+    "business_submission_audit_events",
+    "media_assets",
+    "businesses",
+  ];
+  const sharedTableCheck = await pool.query<{ table_name: string }>(
+    `SELECT table_name
+       FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [sharedTables],
+  );
+  const sharedPresentTables = new Set(sharedTableCheck.rows.map((row) => row.table_name));
+  const missingSharedTables = sharedTables.filter((table) => !sharedPresentTables.has(table));
+
+  const sharedColumnCheck = await pool.query<{ table_name: string; column_name: string }>(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [Object.keys(COMMUNITY_PUBLICATION_REQUIRED_COLUMNS)],
+  );
+  const sharedColumns = new Set(sharedColumnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`));
+  const missingSharedColumns = missingCommunityPublicationColumns(sharedColumns);
+  const sharedIndexCheck = await pool.query<CommunityPublicationIndexDefinition>(
+    `SELECT index_class.relname AS indexname,
+            table_class.relname AS table_name,
+            index_meta.indisunique AS is_unique,
+            index_meta.indisvalid AS is_valid,
+            index_meta.indisready AS is_ready,
+            ARRAY(
+              SELECT pg_get_indexdef(index_meta.indexrelid, key_position, true)
+                FROM generate_series(1, index_meta.indnkeyatts) AS key_position
+               ORDER BY key_position
+            ) AS key_expressions,
+            pg_get_expr(index_meta.indpred, index_meta.indrelid) AS predicate
+       FROM pg_index index_meta
+       JOIN pg_class index_class ON index_class.oid = index_meta.indexrelid
+       JOIN pg_class table_class ON table_class.oid = index_meta.indrelid
+       JOIN pg_namespace table_namespace ON table_namespace.oid = table_class.relnamespace
+      WHERE table_namespace.nspname = 'public'
+        AND index_class.relname = ANY($1::text[])`,
+    [[
+      "businesses_canonical_dedupe_key_unique",
+      "canonical_record_locations_unique_idx",
+      "idx_community_business_submissions_owner_request",
+    ]],
+  );
+  const sharedRequiredIndexes = [
+    "businesses_canonical_dedupe_key_unique",
+    "canonical_record_locations_unique_idx",
+    "idx_community_business_submissions_owner_request",
+  ];
+  const sharedPresentIndexes = new Set(sharedIndexCheck.rows.map((row) => row.indexname));
+  const missingSharedIndexes = sharedRequiredIndexes.filter((index) => !sharedPresentIndexes.has(index));
+  const malformedSharedIndexes = malformedCommunityPublicationIndexes(sharedIndexCheck.rows);
+  const sharedShapeCheck = await pool.query<{
+    public_view: string | null;
+    public_view_definition: string | null;
+    public_function_definition: string | null;
+    public_function_immutable: boolean | null;
+    public_function_security_definer: boolean | null;
+    public_function_returns_boolean: boolean | null;
+    media_url_nullable: string | null;
+  }>(`
+    SELECT to_regclass('public.public_businesses')::text AS public_view,
+           pg_get_viewdef(to_regclass('public.public_businesses'), true) AS public_view_definition,
+           (SELECT procedure.prosrc FROM pg_proc procedure
+             WHERE procedure.oid = to_regprocedure('public.business_record_is_public(text,text,boolean,boolean,text,text,text,text)')) AS public_function_definition,
+           (SELECT procedure.provolatile = 'i' FROM pg_proc procedure
+             WHERE procedure.oid = to_regprocedure('public.business_record_is_public(text,text,boolean,boolean,text,text,text,text)')) AS public_function_immutable,
+           (SELECT procedure.prosecdef FROM pg_proc procedure
+             WHERE procedure.oid = to_regprocedure('public.business_record_is_public(text,text,boolean,boolean,text,text,text,text)')) AS public_function_security_definer,
+           (SELECT pg_get_function_result(procedure.oid) = 'boolean' FROM pg_proc procedure
+             WHERE procedure.oid = to_regprocedure('public.business_record_is_public(text,text,boolean,boolean,text,text,text,text)')) AS public_function_returns_boolean,
+           (SELECT is_nullable FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='media_assets' AND column_name='public_url') AS media_url_nullable
+  `);
+  const sharedShape = sharedShapeCheck.rows[0];
+  if (
+    missingSharedTables.length
+    || missingSharedColumns.length
+    || missingSharedIndexes.length
+    || malformedSharedIndexes.length
+    || !sharedShape?.public_view
+    || !communityBusinessIsPublicFunctionIsSafe(sharedShape?.public_function_definition)
+    || sharedShape?.public_function_immutable !== true
+    || sharedShape?.public_function_security_definer !== false
+    || sharedShape?.public_function_returns_boolean !== true
+    || !communityPublicViewDefinitionIsSafe(sharedShape?.public_view_definition)
+    || sharedShape.media_url_nullable !== "YES"
+  ) {
+    fail(`Community publication schema verification failed: missing tables [${missingSharedTables.join(", ")}], columns [${missingSharedColumns.join(", ")}], indexes [${missingSharedIndexes.join(", ")}], malformed indexes [${malformedSharedIndexes.join(", ")}], public view [${sharedShape?.public_view ?? "missing"}], safe public function [${communityBusinessIsPublicFunctionIsSafe(sharedShape?.public_function_definition) ? "yes" : "no"}], safe public view [${communityPublicViewDefinitionIsSafe(sharedShape?.public_view_definition) ? "yes" : "no"}], media public_url nullable [${sharedShape?.media_url_nullable ?? "unknown"}].`);
+  }
+  if (!directoryImportEnabled) {
+    log("community publication schema and indexes verified before traffic acceptance");
+    return;
+  }
+
+  const requiredTables = [
+    "directory_import_batches",
+    "directory_import_candidates",
+    "directory_import_decision_events",
+    "directory_import_publications",
+    "directory_import_resource_provenance",
+    "business_publication_identities",
+    "business_review_items",
+    "canonical_record_locations",
+    "businesses",
+    "resources",
+  ];
+  const tableCheck = await pool.query<{ table_name: string }>(
+    `SELECT table_name
+       FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [requiredTables],
+  );
+  const presentTables = new Set(tableCheck.rows.map((row) => row.table_name));
+  const missingTables = requiredTables.filter((table) => !presentTables.has(table));
+
+  const requiredColumns: Record<string, string[]> = {
+    directory_import_candidates: ["review_note", "review_evidence", "review_revision", "published_record_type", "published_record_id"],
+    businesses: ["dedupe_key", "listing_status", "social_profiles", "source_evidence", "owner_claim_status", "added_via", "published_at"],
+    resources: ["canonical_key", "normalized_title", "source_category", "source_subcategory", "source_address", "published_by", "published_at"],
+  };
+  const columnCheck = await pool.query<{ table_name: string; column_name: string }>(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [Object.keys(requiredColumns)],
+  );
+  const columns = new Set(columnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`));
+  const missingColumns = Object.entries(requiredColumns).flatMap(([table, names]) =>
+    names.filter((name) => !columns.has(`${table}.${name}`)).map((name) => `${table}.${name}`),
+  );
+
+  const requiredIndexes = [
+    "businesses_canonical_dedupe_key_unique",
+    "canonical_record_locations_unique_idx",
+    "resources_canonical_key_unique_idx",
+  ];
+  const indexCheck = await pool.query<{ indexname: string }>(
+    `SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname = ANY($1::text[])`,
+    [requiredIndexes],
+  );
+  const presentIndexes = new Set(indexCheck.rows.map((row) => row.indexname));
+  const missingIndexes = requiredIndexes.filter((index) => !presentIndexes.has(index));
+
+  if (missingTables.length || missingColumns.length || missingIndexes.length) {
+    fail(`Directory publication schema verification failed: missing tables [${missingTables.join(", ")}], columns [${missingColumns.join(", ")}], indexes [${missingIndexes.join(", ")}].`);
+  }
+  log("directory publication schema and indexes verified before traffic acceptance");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
@@ -4734,6 +5318,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["canonical places v1", () => ensureCanonicalPlacesV1(log, warn)],
     // ── Business dedup schema — adds dedupe_key, normalized_name, is_duplicate cols ─
     ["business dedup schema v1", () => ensureBusinessDedupSchema(log, warn)],
+    // ── Social-first ingestion schema — adds social_profiles, source_evidence,
+    //    ownership_claim, website_domain columns before the public view expands b.* ─
+    ["social first ingestion schema v1", () => ensureSocialFirstIngestionSchema(log, warn)],
     // ── Business dedup marking — soft-marks 17 known duplicate groups by audit ID ─
     ["business dedup marking v1", () => ensureBusinessDeduplication(log, warn)],
     // ── Business review items — seeds 8 manual-review records + creates table ──────
@@ -4753,9 +5340,6 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["beta safety columns v1", () => ensureBetaSafetyColumns(log, warn)],
     // ── Dedicated monitoring account — health-check user; no-op until secrets set ─
     ["monitoring account v1", () => ensureMonitoringAccount(log, warn)],
-    // ── Social-first ingestion schema — adds social_profiles, source_evidence,
-    //    ownership_claim, website_domain columns to businesses table ────────────
-    ["social first ingestion schema v1", () => ensureSocialFirstIngestionSchema(log, warn)],
     // ── Hotel-stay ingestion schema — adds provider_place_id, postal_code ─────
     ["hotel stay ingestion schema v1", () => ensureHotelStayIngestionSchema(log, warn)],
     // ── Tour hotel seed — 11 confirmed non-minority tour hotels ───────────────
@@ -4774,9 +5358,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     //    the Map, Businesses, Explore, and Events pages have a shared location index. ─
     ["location first discovery v1", () => ensureLocationFirstDiscovery(log, warn)],
     ["living library foundation topics v1", () => ensureLivingLibraryFoundationTopics(log, warn)],
-    // ── Community business intake queue — review-first submission pipeline ─
+    // ── Community business intake — immediate eligible publication + holds ─
     // community_business_submissions + business_submission_audit_events tables.
-    // All community tips enter pending_review; nothing goes live until approved.
+    // Complete ordinary businesses publish unclaimed/not verified; objective
+    // duplicate, location, evidence, resource, and regulated holds stay private.
     ["community business submissions schema v1", () => ensureCommunityBusinessSubmissionsSchema(log, warn)],
     // ── Media assets + business claims schema ──────────────────────────────
     // media_assets, entity_media_assets, business_claim_requests tables +
@@ -5174,6 +5759,17 @@ async function ensureTourBusinesses(
     let skipped = 0;
 
     for (const b of TOUR_BUSINESSES_SEED) {
+      // Explicit founder policy: no demo businesses. This exact legacy tour
+      // fixture previously reappeared after the reversible containment
+      // migration because tour seeding runs later in startup.
+      if (
+        b.name.trim().toLowerCase() === "duke's cafe"
+        && b.city.trim().toLowerCase() === "willow grove"
+        && b.state.trim().toLowerCase() === "pa"
+      ) {
+        skipped++;
+        continue;
+      }
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
       if (existing.has(key)) { skipped++; continue; }
       try {
@@ -10292,12 +10888,26 @@ async function ensureVisibilityAndDedupeHardening(
     `);
 
     await pool.query(`
+      CREATE OR REPLACE FUNCTION public.business_record_is_public(
+        p_status text,
+        p_listing_status text,
+        p_is_duplicate boolean,
+        p_permanently_hidden boolean,
+        p_name text,
+        p_description text,
+        p_data_source text,
+        p_phone text
+      ) RETURNS boolean
+      LANGUAGE sql
+      IMMUTABLE
+      AS $$${PUBLIC_BUSINESS_RECORD_FUNCTION_BODY}$$
+    `);
+
+    await pool.query(`
       CREATE OR REPLACE VIEW public.public_businesses AS
       SELECT b.*
       FROM public.businesses b
-      WHERE public.business_is_public(b.status, b.listing_status, b.is_duplicate)
-        AND COALESCE(b.permanently_hidden, false) = false
-        AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+      WHERE ${PUBLIC_BUSINESSES_VIEW_FILTER}
     `);
 
     await pool.query(`
@@ -11108,6 +11718,46 @@ async function ensureKinfolkRetrievalEvents(
   }
 }
 
+async function ensureCanonicalRecordLocations(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS canonical_record_locations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','cultural_site','event','community_place','resource')),
+        record_id UUID NOT NULL,
+        city_name TEXT NOT NULL,
+        state_code TEXT,
+        neighborhood_name TEXT,
+        latitude NUMERIC(9,6),
+        longitude NUMERIC(9,6),
+        is_primary BOOLEAN NOT NULL DEFAULT TRUE,
+        verified_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS canonical_record_locations_unique_idx
+        ON canonical_record_locations (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS canonical_record_locations_city_idx
+        ON canonical_record_locations (record_type, LOWER(city_name))
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS canonical_record_locations_coord_idx
+        ON canonical_record_locations (latitude, longitude)
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    `);
+    log("ensureCanonicalRecordLocations: table and indexes ready");
+  } catch (err: unknown) {
+    warn(`ensureCanonicalRecordLocations failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function ensureLocationFirstDiscovery(
   log: (msg: string) => void,
   warn: (msg: string) => void,
@@ -11346,6 +11996,62 @@ async function ensureCommunityBusinessSubmissionsSchema(
     `);
     log("ensureCommunityBusinessSubmissionsSchema: community_business_submissions OK");
 
+    // Additive fields preserve current web/mobile intake. Submission media stays
+    // in private storage for separate moderation and is never copied to an
+    // automatically published unclaimed profile. Existing rows remain intact.
+    await pool.query(`
+      ALTER TABLE community_business_submissions
+        ADD COLUMN IF NOT EXISTS postal_code TEXT,
+        ADD COLUMN IF NOT EXISTS social_profiles JSONB NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS media_urls JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS media_asset_ids JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS community_reported_ownership TEXT NOT NULL DEFAULT 'not_sure',
+        ADD COLUMN IF NOT EXISTS price_range TEXT,
+        ADD COLUMN IF NOT EXISTS hours TEXT,
+        ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS latitude NUMERIC(10,7),
+        ADD COLUMN IF NOT EXISTS longitude NUMERIC(10,7),
+        ADD COLUMN IF NOT EXISTS provider_place_id TEXT,
+        ADD COLUMN IF NOT EXISTS location_source TEXT,
+        ADD COLUMN IF NOT EXISTS client_request_id TEXT,
+        ADD COLUMN IF NOT EXISTS request_payload_hash TEXT,
+        ADD COLUMN IF NOT EXISTS identity_key TEXT
+    `);
+    await pool.query(`
+      ALTER TABLE community_business_submissions
+        DROP CONSTRAINT IF EXISTS community_business_submissions_community_reported_ownership_check;
+      ALTER TABLE community_business_submissions
+        ADD CONSTRAINT community_business_submissions_community_reported_ownership_check
+        CHECK (community_reported_ownership IN ('minority_owned','non_minority_owned','not_sure'));
+    `);
+    await pool.query(`
+      ALTER TABLE community_business_submissions
+        DROP CONSTRAINT IF EXISTS community_business_submissions_status_check;
+      UPDATE community_business_submissions
+        SET status = 'published'
+        WHERE status = 'approved';
+      ALTER TABLE community_business_submissions
+        ADD CONSTRAINT community_business_submissions_status_check
+        CHECK (status IN ('pending_review','published','declined','needs_info'));
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_community_business_submissions_owner_request
+        ON community_business_submissions(submitted_by_id, client_request_id)
+        WHERE submitted_by_id IS NOT NULL AND client_request_id IS NOT NULL
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_community_business_submissions_owner_created
+        ON community_business_submissions(submitted_by_id, created_at DESC)
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_community_business_submissions_pending_identity
+        ON community_business_submissions(submitted_by_id, identity_key)
+        WHERE submitted_by_id IS NOT NULL
+          AND identity_key IS NOT NULL
+          AND status IN ('pending_review','needs_info')
+    `);
+    log("ensureCommunityBusinessSubmissionsSchema: field-complete v2 columns and lifecycle OK");
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS business_submission_audit_events (
         id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -11380,12 +12086,13 @@ async function ensureMediaAndClaimsSchema(
         mime_type    TEXT NOT NULL,
         byte_size    BIGINT,
         object_key   TEXT NOT NULL,
-        public_url   TEXT NOT NULL,
+        public_url   TEXT,
         status       TEXT NOT NULL DEFAULT 'ready'
                      CHECK (status IN ('ready','processing','deleted')),
         created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    await pool.query(`ALTER TABLE media_assets ALTER COLUMN public_url DROP NOT NULL`);
     log("ensureMediaAndClaimsSchema: media_assets OK");
 
     await pool.query(`

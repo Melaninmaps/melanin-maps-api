@@ -35,6 +35,7 @@ import * as Speech from "expo-speech";
 import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
+import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -189,12 +190,42 @@ function BusinessCard({
       </View>
       <Text style={[bizStyles.name, { color: colors.text }]}>{biz.name}</Text>
       <Text style={[bizStyles.desc, { color: colors.mutedForeground }]}>{biz.description}</Text>
+      {biz.verified === false && (
+        <Text style={[bizStyles.unclaimed, { color: colors.primary }]}>Founder-listed · Unclaimed · Not MWM verified</Text>
+      )}
+      {biz.matchReasons && biz.matchReasons.length > 0 && (
+        <Text style={[bizStyles.matchReason, { color: colors.mutedForeground }]}>Why it surfaced: {biz.matchReasons.join(" · ")}</Text>
+      )}
       <View style={[bizStyles.mustTry, { backgroundColor: GOLD + "14", borderColor: GOLD + "33" }]}>
         <Ionicons name="star" size={12} color={GOLD} />
         <Text style={[bizStyles.mustTryText, { color: colors.text }]}>
           <Text style={{ fontFamily: "Inter_600SemiBold" }}>Must try: </Text>{biz.mustTry}
         </Text>
       </View>
+      {(biz.id || biz.website) && (
+        <View style={bizStyles.actionRow}>
+          {biz.id && (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[bizStyles.actionBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.push({ pathname: "/business/[id]", params: { id: biz.id! } })}
+            >
+              <Text style={bizStyles.actionPrimaryText}>View details</Text>
+              <Ionicons name="chevron-forward" size={13} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {biz.website && (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[bizStyles.actionBtn, { borderColor: colors.primary, borderWidth: 1 }]}
+              onPress={() => void openExternalUrl(biz.website!)}
+            >
+              <Text style={[bizStyles.actionSecondaryText, { color: colors.primary }]}>Visit website</Text>
+              <Ionicons name="open-outline" size={13} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
       <View style={bizStyles.feedbackRow}>
         <Text style={[bizStyles.feedbackLabel, { color: colors.mutedForeground }]}>Helpful?</Text>
         <TouchableOpacity activeOpacity={0.85}
@@ -226,8 +257,14 @@ const bizStyles = StyleSheet.create({
   wishlistBtn: { padding: 4, borderRadius: 8 },
   name: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
   desc: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 8 },
+  unclaimed: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", marginBottom: 6 },
+  matchReason: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginBottom: 8 },
   mustTry: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 8, borderWidth: 1, padding: 8, marginBottom: 8 },
   mustTryText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
+  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
+  actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 18, paddingHorizontal: 11, paddingVertical: 7 },
+  actionPrimaryText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  actionSecondaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   feedbackRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
   feedbackLabel: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
   feedbackBtn: { padding: 6, borderRadius: 8 },
@@ -547,6 +584,7 @@ function AiMessageBubble({
   const city = recs?.destination ?? "";
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [dismissedPromo, setDismissedPromo] = useState(false);
+  const [clarificationAnswered, setClarificationAnswered] = useState(false);
 
   const toggleSection = (s: string) => setExpandedSection((p) => (p === s ? null : s));
 
@@ -751,8 +789,45 @@ function AiMessageBubble({
           />
         )}
 
+        {msg.clarificationSteps && msg.clarificationSteps.length > 0 && !clarificationAnswered && (
+          <View style={[aiStyles.clarificationCard, { backgroundColor: colors.card, borderColor: GOLD + "4D" }]}>
+            {msg.clarificationSteps.map((step) => (
+              <View key={step.id} style={{ gap: 8 }}>
+                <Text style={[aiStyles.clarificationQuestion, { color: colors.text }]}>{step.question}</Text>
+                {step.explanation ? <Text style={[aiStyles.clarificationExplanation, { color: colors.mutedForeground }]}>{step.explanation}</Text> : null}
+                <View style={aiStyles.clarificationOptions}>
+                  {step.options.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[aiStyles.clarificationOption, { borderColor: colors.border }]}
+                      activeOpacity={0.75}
+                      onPress={() => {
+                        setClarificationAnswered(true);
+                        onQuickReply(businessClarificationContinuation(msg.originalQuery, option.label));
+                      }}
+                    >
+                      <Text style={[aiStyles.clarificationOptionText, { color: colors.text }]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {step.skippable && (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setClarificationAnswered(true);
+                      onQuickReply(businessClarificationContinuation(msg.originalQuery));
+                    }}
+                  >
+                    <Text style={[aiStyles.clarificationSkip, { color: colors.mutedForeground }]}>Skip and keep it broad</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Quick reply chips */}
-        {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
+        {(!msg.clarificationSteps || msg.clarificationSteps.length === 0) && msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
           <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={aiStyles.chipsScroll}>
             {msg.followUpSuggestions.map((s, i) => (
@@ -826,6 +901,13 @@ const aiStyles = StyleSheet.create({
   safetyText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, flex: 1 },
   insightRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 6 },
   insightText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, flex: 1 },
+  clarificationCard: { borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 8 },
+  clarificationQuestion: { fontFamily: "Inter_700Bold", fontSize: 13, lineHeight: 18 },
+  clarificationExplanation: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  clarificationOptions: { gap: 7 },
+  clarificationOption: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9 },
+  clarificationOptionText: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 16 },
+  clarificationSkip: { fontFamily: "Inter_600SemiBold", fontSize: 11, textAlign: "center", paddingVertical: 5 },
   chipsScroll: { marginBottom: 8 },
   chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
   chipText: { fontFamily: "Inter_400Regular", fontSize: 12 },

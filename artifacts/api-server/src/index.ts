@@ -6,7 +6,9 @@ import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/h
 import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
-import { runStartupMigrations } from "./lib/startup-migrations";
+import { ensureRequiredPublicationSchema, runStartupMigrations } from "./lib/startup-migrations";
+import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
+import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
@@ -16,6 +18,7 @@ import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogge
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
+const host = process.env["HOST"]?.trim() || undefined;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
@@ -94,7 +97,32 @@ async function initStripe() {
   }
 })();
 
-const server = app.listen(port, (err) => {
+try {
+  await ensureRequiredSafetyReportSchema(pool);
+  logger.info("Required safety report schema ready");
+} catch (error) {
+  logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
+  await pool.end().catch(() => undefined);
+  process.exit(1);
+}
+
+try {
+  const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
+  if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+    throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+  }
+  await ensureRequiredPublicationSchema(
+    directoryReviewEnabled,
+    logger,
+  );
+  logger.info("Required publication schema ready before traffic acceptance");
+} catch (error) {
+  logger.fatal({ error }, "Required publication schema failed — server will not accept traffic");
+  await pool.end().catch(() => undefined);
+  process.exit(1);
+}
+
+const onListening = (err?: Error) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
@@ -125,9 +153,8 @@ const server = app.listen(port, (err) => {
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 
-  // Apply any schema columns that exist in the Drizzle model but are missing
-  // from older Railway deployments.  Runs after the port opens so the server
-  // is never delayed, but completes in <1 s — before any auth request arrives.
+  // Apply optional and backfill migrations after the required request-path
+  // schema has already been verified above.
   //
   // startCityHealthAlertScheduler is called inside the resolved callback so the
   // alert_claim_token and alert_lease_expires_at columns are guaranteed present
@@ -156,7 +183,11 @@ const server = app.listen(port, (err) => {
 
   // Flush per-city request metrics to city_request_log every 5 minutes.
   startCityRequestFlush();
-});
+};
+
+const server = host
+  ? app.listen(port, host, onListening)
+  : app.listen(port, onListening);
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
 // Railway sends SIGTERM before replacing a deployment. Without this handler,

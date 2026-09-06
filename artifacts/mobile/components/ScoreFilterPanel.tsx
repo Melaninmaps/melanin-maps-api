@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
 
 const PRESET_CHIPS = [
   { label: "Any", min: 0 },
@@ -17,18 +18,11 @@ const PRESET_CHIPS = [
   { label: "90+", min: 90 },
 ];
 
-export const OWNERSHIP_OPTIONS = [
-  { id: "black-owned", label: "Black-Owned", emoji: "✊🏾", color: "#CA922B" },
-  { id: "minority-owned", label: "Minority-Owned", emoji: "🏅", color: "#3A1F0E" },
-  { id: "women-owned", label: "Women-Owned", emoji: "👩🏾‍💼", color: "#7B2D8B" },
-  { id: "veteran-owned", label: "Veteran-Owned", emoji: "🎖️", color: "#1D4ED8" },
-  { id: "lgbtq-owned", label: "LGBTQIA+-Owned", emoji: "🏳️‍🌈", color: "#DC2626" },
-  { id: "hispanic-owned", label: "Hispanic/Latino-Owned", emoji: "🤝🏾", color: "#2D7A4F" },
-  { id: "indigenous-owned", label: "Indigenous-Owned", emoji: "🌿", color: "#5E4B1A" },
-  { id: "disability-owned", label: "Disability-Owned", emoji: "♿", color: "#4B5563" },
-  { id: "immigrant-owned", label: "Melanated Diaspora-Owned", emoji: "🌍", color: "#6D28D9" },
-  { id: "d9-affiliated", label: "D9 Affiliated", emoji: "🐾", color: "#7B1E1E" },
-];
+export const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({
+  ...option,
+  emoji: "🤎",
+  color: "#CA922B",
+}));
 
 export interface FilterState {
   minScore: number;
@@ -145,7 +139,7 @@ export function ScoreFilterPanel({ filters, onChange }: Props) {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Ownership</Text>
-          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>Select one or more to filter</Text>
+          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>Select owner-provided labels to support. Verification remains a separate filter.</Text>
           <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ownershipRow}>
             {OWNERSHIP_OPTIONS.map((opt) => {

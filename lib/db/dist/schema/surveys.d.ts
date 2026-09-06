@@ -632,6 +632,25 @@ export declare const safetyReportsTable: import("drizzle-orm/pg-core").PgTableWi
         }, {}, {
             length: 100;
         }>;
+        encounterType: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encounter_type";
+            tableName: "safety_reports";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 50;
+        }>;
         targetType: import("drizzle-orm/pg-core").PgColumn<{
             name: "target_type";
             tableName: "safety_reports";
@@ -688,6 +707,101 @@ export declare const safetyReportsTable: import("drizzle-orm/pg-core").PgTableWi
             generated: undefined;
         }, {}, {
             length: 255;
+        }>;
+        incidentCity: import("drizzle-orm/pg-core").PgColumn<{
+            name: "incident_city";
+            tableName: "safety_reports";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        incidentRegion: import("drizzle-orm/pg-core").PgColumn<{
+            name: "incident_region";
+            tableName: "safety_reports";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        incidentArea: import("drizzle-orm/pg-core").PgColumn<{
+            name: "incident_area";
+            tableName: "safety_reports";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 255;
+        }>;
+        incidentLocationSource: import("drizzle-orm/pg-core").PgColumn<{
+            name: "incident_location_source";
+            tableName: "safety_reports";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 30;
+        }>;
+        incidentLocationPrecision: import("drizzle-orm/pg-core").PgColumn<{
+            name: "incident_location_precision";
+            tableName: "safety_reports";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 30;
         }>;
         description: import("drizzle-orm/pg-core").PgColumn<{
             name: "description";
@@ -1572,7 +1686,7 @@ export declare const selectSurveySchema: import("drizzle-zod").BuildSchema<"sele
         generated: undefined;
     }, {}, {}>;
 }, undefined, undefined>;
-export declare const SAFETY_REPORT_CATEGORIES: readonly ["safety", "sundown", "discrimination", "business", "resource", "positive"];
+export declare const SAFETY_REPORT_CATEGORIES: readonly ["safety", "sundown", "discrimination", "business", "resource", "positive", "police"];
 export declare const SAFETY_REPORT_SEVERITIES: readonly ["low", "medium", "high", "critical"];
 export declare const ROUTING_TYPES: readonly ["private", "moderation", "priority"];
 export declare const insertSafetyReportSchema: z.ZodObject<{
@@ -1587,9 +1701,16 @@ export declare const insertSafetyReportSchema: z.ZodObject<{
         discrimination: "discrimination";
         resource: "resource";
         positive: "positive";
+        police: "police";
     }>;
     reporterId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     reporterName: z.ZodOptional<z.ZodString>;
+    encounterType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    incidentCity: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    incidentRegion: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    incidentArea: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    incidentLocationSource: z.ZodOptional<z.ZodString>;
+    incidentLocationPrecision: z.ZodOptional<z.ZodString>;
     severity: z.ZodDefault<z.ZodEnum<{
         medium: "medium";
         low: "low";
@@ -1689,6 +1810,25 @@ export declare const selectSafetyReportSchema: import("drizzle-zod").BuildSchema
     }, {}, {
         length: 100;
     }>;
+    encounterType: import("drizzle-orm/pg-core").PgColumn<{
+        name: "encounter_type";
+        tableName: "safety_reports";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 50;
+    }>;
     targetType: import("drizzle-orm/pg-core").PgColumn<{
         name: "target_type";
         tableName: "safety_reports";
@@ -1745,6 +1885,101 @@ export declare const selectSafetyReportSchema: import("drizzle-zod").BuildSchema
         generated: undefined;
     }, {}, {
         length: 255;
+    }>;
+    incidentCity: import("drizzle-orm/pg-core").PgColumn<{
+        name: "incident_city";
+        tableName: "safety_reports";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    incidentRegion: import("drizzle-orm/pg-core").PgColumn<{
+        name: "incident_region";
+        tableName: "safety_reports";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    incidentArea: import("drizzle-orm/pg-core").PgColumn<{
+        name: "incident_area";
+        tableName: "safety_reports";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 255;
+    }>;
+    incidentLocationSource: import("drizzle-orm/pg-core").PgColumn<{
+        name: "incident_location_source";
+        tableName: "safety_reports";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 30;
+    }>;
+    incidentLocationPrecision: import("drizzle-orm/pg-core").PgColumn<{
+        name: "incident_location_precision";
+        tableName: "safety_reports";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 30;
     }>;
     description: import("drizzle-orm/pg-core").PgColumn<{
         name: "description";
@@ -2081,6 +2316,25 @@ export declare const safetyIncidentsTable: import("drizzle-orm/pg-core").PgTable
             data: string;
             driverParam: string;
             notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        region: import("drizzle-orm/pg-core").PgColumn<{
+            name: "region";
+            tableName: "safety_incidents";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;

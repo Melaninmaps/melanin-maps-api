@@ -91,6 +91,22 @@ export const mapsLimiter = rateLimit({
   message: { error: "Too many map requests. Please try again later." },
 });
 
+export const businessSubmissionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
+  keyGenerator: generalApiKey,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: "You can submit up to 20 community businesses per hour. Please try again later.",
+      code: "BUSINESS_SUBMISSION_RATE_LIMITED",
+      retryAfterSeconds: 60 * 60,
+    });
+  },
+});
+
 
 export const libraryResearchLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
