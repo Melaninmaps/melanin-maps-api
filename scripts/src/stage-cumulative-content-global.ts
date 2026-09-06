@@ -3,8 +3,7 @@ import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { PoolClient } from "pg";
-import { pool } from "@workspace/db";
+import { Pool, type PoolClient } from "pg";
 import { getBusinessExperiencePolicy } from "@workspace/constants";
 import { assertLocalDirectoryStagingFromProcess } from "./lib/local-directory-staging";
 
@@ -224,7 +223,17 @@ async function main() {
   if (!apply) return;
 
   assertLocalDirectoryStagingFromProcess();
-  const client = await pool.connect();
+  const stagingPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 1,
+    connectionTimeoutMillis: 10_000,
+    statement_timeout: 120_000,
+    query_timeout: 130_000,
+  });
+  const client = await stagingPool.connect().catch(async (error) => {
+    await stagingPool.end().catch(() => undefined);
+    throw error;
+  });
   try {
     await client.query("BEGIN");
     const batch = await client.query<{ id: string; status: string }>(
@@ -247,29 +256,44 @@ async function main() {
         console.log(`staged ${index + chunk.length}/${candidates.length}`);
       }
     }
-    await client.query(
-      `WITH candidate_matches AS (
-        SELECT c.id AS candidate_id,
-               COUNT(b.id)::integer AS match_count,
-               MIN(b.id) AS sole_business_id,
-               COALESCE(
-                 ARRAY_AGG(b.id ORDER BY b.id) FILTER (WHERE b.id IS NOT NULL),
-                 ARRAY[]::varchar[]
-               ) AS business_ids
+    await client.query("SET LOCAL statement_timeout='120s'");
+    await client.query({
+      text: `WITH candidate_scope AS MATERIALIZED (
+        SELECT c.id, c.dedupe_key, lower(trim(c.name)) AS normalized_name,
+               lower(trim(c.city)) AS normalized_city,
+               upper(trim(COALESCE(c.state,''))) AS normalized_state
           FROM directory_import_candidates c
-          LEFT JOIN businesses b
-            ON (
-              b.dedupe_key=c.dedupe_key
-              OR (
-                lower(trim(b.name))=lower(trim(c.name))
-                AND lower(trim(b.city))=lower(trim(c.city))
-                AND upper(trim(COALESCE(b.state,'')))=upper(trim(COALESCE(c.state,'')))
-              )
-            )
-           AND COALESCE(b.is_duplicate,false)=false
-           AND COALESCE(b.status,'active') NOT IN ('duplicate','permanently_hidden','removed','deleted')
          WHERE c.batch_id=$1
            AND c.target_kind IN ('business','regulated_review')
+      ), eligible_businesses AS MATERIALIZED (
+        SELECT b.id, b.dedupe_key, lower(trim(b.name)) AS normalized_name,
+               lower(trim(b.city)) AS normalized_city,
+               upper(trim(COALESCE(b.state,''))) AS normalized_state
+          FROM businesses b
+         WHERE COALESCE(b.is_duplicate,false)=false
+           AND COALESCE(b.permanently_hidden,false)=false
+           AND COALESCE(b.status,'active') NOT IN ('duplicate','permanently_hidden','removed','deleted')
+      ), possible_matches AS (
+        SELECT c.id AS candidate_id, b.id AS business_id
+          FROM candidate_scope c
+          JOIN eligible_businesses b ON b.dedupe_key=c.dedupe_key
+        UNION
+        SELECT c.id AS candidate_id, b.id AS business_id
+          FROM candidate_scope c
+          JOIN eligible_businesses b
+            ON b.normalized_name=c.normalized_name
+           AND b.normalized_city=c.normalized_city
+           AND b.normalized_state=c.normalized_state
+      ), candidate_matches AS (
+        SELECT c.id AS candidate_id,
+               COUNT(p.business_id)::integer AS match_count,
+               MIN(p.business_id) AS sole_business_id,
+               COALESCE(
+                 ARRAY_AGG(p.business_id ORDER BY p.business_id) FILTER (WHERE p.business_id IS NOT NULL),
+                 ARRAY[]::varchar[]
+               ) AS business_ids
+          FROM candidate_scope c
+          LEFT JOIN possible_matches p ON p.candidate_id=c.id
          GROUP BY c.id
       ), desired_match_state AS (
         SELECT c.id AS candidate_id,
@@ -320,8 +344,8 @@ async function main() {
             OR c.link_validation IS DISTINCT FROM d.link_validation
             OR c.review_evidence IS DISTINCT FROM d.review_evidence
           )`,
-      [batchId],
-    );
+      values: [batchId],
+    });
     const stagedCount = await client.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM directory_import_candidates WHERE batch_id=$1`,
       [batchId],
@@ -351,6 +375,7 @@ async function main() {
     throw error;
   } finally {
     client.release();
+    await stagingPool.end();
   }
 }
 
@@ -358,7 +383,4 @@ main()
   .catch((error) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
-  })
-  .finally(async () => {
-    if (process.argv.includes("--apply") && process.env.DATABASE_URL) await pool.end();
   });
