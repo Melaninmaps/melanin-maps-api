@@ -13,6 +13,7 @@ export const businessesTable = pgTable("businesses", {
   country: varchar("country", { length: 100 }),
   province: varchar("province", { length: 100 }),
   listingStatus: varchar("listing_status", { length: 30 }),
+  ownerClaimStatus: varchar("owner_claim_status", { length: 30 }),
   rating: numeric("rating", { precision: 3, scale: 1 }).notNull().default("0"),
   reviewCount: integer("review_count").notNull().default(0),
   verified: boolean("verified").notNull().default(false),

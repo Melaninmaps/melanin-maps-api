@@ -62,4 +62,9 @@ describe("routed canonical business directory", () => {
     expect(api).toContain('eq(businessesTable.ownershipClaim, "community_reported_minority_owned")');
     expect(api).toContain("NOT (latitude::numeric = 0 AND longitude::numeric = 0)");
   });
+
+  it("maps owner claim status so community listings can be labeled unclaimed", () => {
+    const schema = source("../../../../lib/db/src/schema/businesses.ts");
+    expect(schema).toContain('ownerClaimStatus: varchar("owner_claim_status"');
+  });
 });
