@@ -156,7 +156,7 @@ export function LocationFirstBusinessDirectory() {
         </p>
         <h1 className="mt-3 font-serif text-4xl font-bold">Find who you need, where you are.</h1>
         <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/75">
-          Search reviewed, community- and founder-listed businesses by name, specialty, category, and city.
+          Search published community- and founder-listed businesses by name, specialty, category, and city.
         </p>
       </section>
 
@@ -281,6 +281,11 @@ function FilterRow({
 
 function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
   const unclaimed = record.listingStatus === "live_unclaimed";
+  const communityOwnership = record.ownershipClaim === "community_reported_minority_owned"
+    ? "Community-reported minority-owned · Not verified"
+    : record.ownershipClaim === "community_reported_non_minority_owned"
+    ? "Community-reported non-minority-owned · Not verified"
+    : null;
   return (
     <Link
       href={`/businesses/${encodeURIComponent(record.id)}`}
@@ -300,6 +305,7 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
       <p className="mt-4 text-xs font-semibold text-[#8D5C17]">
         {unclaimed ? "Community/founder-listed · Unclaimed · Not verified" : record.verified ? "Verified listing" : "Not verified"}
       </p>
+      {communityOwnership && <p className="mt-1 text-xs font-semibold text-[#6B4A2F]">{communityOwnership}</p>}
       {record.priceRange && <p className="mt-1 text-xs text-[#3A1F0E]/60">Price: {record.priceRange}</p>}
       <p className="mt-3 text-xs font-bold text-[#CA922B]">View details, Community Says, website, and media →</p>
     </Link>
@@ -320,9 +326,9 @@ function LocationNeededState() {
 function DirectoryGapState() {
   return (
     <section className="mt-8 rounded-2xl border border-[#CA922B]/35 bg-[#CA922B]/[0.07] p-6">
-      <h2 className="font-serif text-2xl font-bold text-[#2B1507]">No reviewed local match yet.</h2>
+      <h2 className="font-serif text-2xl font-bold text-[#2B1507]">No published local match yet.</h2>
       <p className="mt-2 leading-7 text-[#3A1F0E]/70">
-        Try a broader specialty or category, or help add a listing for founder review.
+        Try a broader specialty or category, or add a complete community business so it can publish immediately after software checks.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <Link href="/submit-business" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">

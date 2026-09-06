@@ -42,6 +42,7 @@ export const MEDIA_UPLOAD_ERROR_CODES = {
   STORAGE_NOT_CONFIGURED: "MEDIA_STORAGE_NOT_CONFIGURED",
   STORAGE_AUTH_FAILED: "MEDIA_STORAGE_AUTH_FAILED",
   STORAGE_SAVE_FAILED: "MEDIA_STORAGE_SAVE_FAILED",
+  TRACKING_FAILED: "MEDIA_TRACKING_FAILED",
   PUBLICATION_FAILED: "MEDIA_PUBLICATION_FAILED",
 } as const;
 
@@ -228,7 +229,7 @@ export function getMediaUploadReadiness(): Record<string, unknown> {
   const blockers = [
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
     ...(delivery.blocker ? [delivery.blocker] : []),
-    ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private Kinfolk uploads."]),
+    ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
   ];
   return {
     ready: blockers.length === 0,
@@ -341,7 +342,7 @@ async function handleMediaUpload(
     return;
   }
 
-  const isPrivate = purpose === "kinfolk_question";
+  const isPrivate = purpose === "kinfolk_question" || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
   const bucketId = isPrivate ? process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim() || null : delivery.bucketId;
   const configurationBlocker = isPrivate && !bucketId ? "DEFAULT_OBJECT_STORAGE_BUCKET_ID is required." : delivery.blocker;
@@ -361,7 +362,9 @@ async function handleMediaUpload(
 
   const ext = extFromMime(mime);
   const folder = isPrivate
-    ? "media-uploads/kinfolk-private"
+    ? purpose === "business_submission"
+      ? "media-uploads/business-submission-private"
+      : "media-uploads/kinfolk-private"
     : isVideo
     ? "media-uploads/videos"
     : isDoc
@@ -414,14 +417,25 @@ async function handleMediaUpload(
     return;
   }
 
-  await recordAsset([assetId, user.id, purpose, mime, req.file.size, objectKey, url]).catch((error: unknown) => {
+  try {
+    await recordAsset([assetId, user.id, purpose, mime, req.file.size, objectKey, purpose === "business_submission" ? null : url]);
+  } catch (error: unknown) {
+    await bestEffortDelete(storageFile);
     logUploadFailure(req, "warn", {
       event: "media_asset_record_failed",
       requestId,
       purpose,
       ...providerErrorDetails(error),
     }, "Media asset tracking record failed");
-  });
+    respondWithError(
+      res,
+      502,
+      MEDIA_UPLOAD_ERROR_CODES.TRACKING_FAILED,
+      "The upload could not be recorded safely. Please try again.",
+      requestId,
+    );
+    return;
+  }
 
   const fileType = isVideo ? "video" : isImage ? "image" : "document";
   res.status(201).json({

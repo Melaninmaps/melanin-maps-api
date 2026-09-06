@@ -54,19 +54,23 @@ describe("external URL normalization", () => {
   });
 });
 
-describe("review-first business submission governance", () => {
-  it("routes List My Business to pending review with bearer auth and retained fields", () => {
+describe("community-fed business publication governance", () => {
+  it("routes List My Business to automatic publication with bearer auth, precise location fields, and explicit ownership provenance", () => {
     const listBusiness = source("../app/list-business.tsx");
     expect(listBusiness).toContain("/api/community/business-submissions");
     expect(listBusiness).toContain("Authorization: `Bearer ${token}`");
     expect(listBusiness).toContain('"Idempotency-Key": clientRequestId');
     expect(listBusiness).toContain("postalCode: form.zip");
     expect(listBusiness).toContain("socialProfiles:");
-    expect(listBusiness).toContain("Your submission is in review");
-    expect(listBusiness).toContain("Directory\", value: \"Not public");
+    expect(listBusiness).toContain("communityReportedOwnership: form.communityReportedOwnership");
+    expect(listBusiness).toContain("ownershipDesignations: form.ownershipDesignations");
+    expect(listBusiness).toContain("Published immediately");
+    expect(listBusiness).toContain("Searchable with a precise pin");
+    expect(listBusiness).toContain("Non-minority-owned");
+    expect(listBusiness).toContain("community-listed, unclaimed, and not verified");
+    expect(listBusiness).toContain("We never use 0,0 or a city-center fallback");
     expect(listBusiness).not.toContain("`${apiBase}/api/businesses`");
-    expect(listBusiness).not.toContain("You&apos;re on the Map!");
-    expect(listBusiness).not.toContain("isBlackOwned: true");
+    expect(listBusiness).not.toContain("isBlackOwned");
   });
 
   it("submits nominations once with rationale, provenance, and no fake Cookie header", () => {
@@ -76,7 +80,10 @@ describe("review-first business submission governance", () => {
     expect(nomination).toContain("submitterNote: why.trim() || undefined");
     expect(nomination).toContain("providerPlaceId: selectedPlace.id");
     expect(nomination).toContain('locationSource: "mwm_directory"');
-    expect(nomination).toContain("is pending review and is not public yet");
+    expect(nomination).toContain("communityReportedOwnership");
+    expect(nomination).toContain("Non-minority-owned");
+    expect(nomination).toContain("Can&apos;t find it? Add the complete business");
+    expect(nomination).toContain("View Community Listing");
     expect(nomination).not.toContain('headers["Cookie"]');
     expect(nomination).not.toContain('method: "PATCH"');
     expect(nomination).not.toContain("/api/business-nominations");
@@ -88,6 +95,11 @@ describe("review-first business submission governance", () => {
     expect(smartSearch).toContain("Authorization: `Bearer ${token}`");
     expect(smartSearch).toContain('"Idempotency-Key": nominationRequestId');
     expect(smartSearch).toContain('sourceChannel: "expo_smart_search_nomination"');
+    expect(smartSearch).toContain("Add details for an immediate pin");
+    expect(smartSearch).toContain('router.push("/list-business"');
+    expect(smartSearch).toContain("Community/founder-listed · Unclaimed · Not verified");
+    expect(smartSearch).toContain("Community-reported minority-owned · Not verified");
+    expect(smartSearch).toContain("Community-reported non-minority-owned · Not verified");
     expect(smartSearch).not.toContain("/api/business-nominations");
     expect(smartSearch).not.toContain("blackOwned: true");
   });

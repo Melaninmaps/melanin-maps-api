@@ -1,0 +1,2488 @@
+{
+  "generated_at": "2026-09-05",
+  "sources": {
+    "/home/ubuntu/upload/Mapping-with-Melanin-CUMULATIVE-SOCIAL-NIGHTLIFE-ENRICHMENT-3392.xlsx": {
+      "sha256": "56163070c7309ed03a2a4fd7344d401cd00e179c9f63a2fef9c798b8ab3840fb",
+      "bytes": 614992
+    },
+    "/home/ubuntu/upload/Mapping-with-Melanin-GLOBAL-BUILD-36-CURATED-MINORITY-RECOMMENDED-CUMULATIVE-5086.xlsx": {
+      "sha256": "db67c6290aa2407b26aabbadebca194c839160ad048dde8a7435f8002ddf5a7c",
+      "bytes": 689491
+    }
+  },
+  "existing_founder_candidate_exact_keys": 18136,
+  "social_nightlife_workbook": {
+    "sheet": "MWM Content Bible",
+    "header_row": 4,
+    "worksheet_rows_after_header": 3420,
+    "content_locations": 3392,
+    "unique_name_city_state": 3294,
+    "duplicate_rows_within_workbook": 98,
+    "exact_overlaps_with_existing_founder_bundles": 1139,
+    "overlap_target_counts": [
+      [
+        "business",
+        823
+      ],
+      [
+        "community_resource",
+        238
+      ],
+      [
+        "regulated_review",
+        86
+      ],
+      [
+        "manual_review",
+        2
+      ]
+    ],
+    "overlaps_with_existing_address": 244,
+    "overlaps_with_existing_public_link": 1109,
+    "overlaps_with_existing_regulated_flag": 107,
+    "address_or_coordinate_columns": [],
+    "rows_with_website": 204,
+    "rows_with_primary_source": 3374,
+    "rows_with_direct_social_url": 571,
+    "rows_with_any_public_evidence": 3374,
+    "rows_with_resource_cultural_or_mixed_signals": 884,
+    "top_categories": [
+      [
+        "Food & Drink",
+        292
+      ],
+      [
+        "Beauty & Hair",
+        256
+      ],
+      [
+        "Retail & Culture",
+        118
+      ],
+      [
+        "Health & Wellness",
+        102
+      ],
+      [
+        "Professional Services",
+        80
+      ],
+      [
+        "Education & Workforce",
+        67
+      ],
+      [
+        "Food",
+        67
+      ],
+      [
+        "Mexican Food",
+        65
+      ],
+      [
+        "Creative & Events",
+        59
+      ],
+      [
+        "Family & Community",
+        58
+      ],
+      [
+        "Food & Diaspora",
+        57
+      ],
+      [
+        "Retail & Fashion",
+        50
+      ],
+      [
+        "Beauty & Wellness",
+        49
+      ],
+      [
+        "Health",
+        46
+      ],
+      [
+        "Home & Trades",
+        40
+      ],
+      [
+        "Arts & Culture",
+        38
+      ],
+      [
+        "Restaurant",
+        37
+      ],
+      [
+        "Food & Nightlife",
+        34
+      ],
+      [
+        "Business & Community",
+        32
+      ],
+      [
+        "Community Resources",
+        25
+      ],
+      [
+        "Culture & Belonging",
+        25
+      ],
+      [
+        "Business & Wealth",
+        22
+      ],
+      [
+        "Soul Food",
+        22
+      ],
+      [
+        "Books & Culture",
+        21
+      ],
+      [
+        "Coffee",
+        21
+      ],
+      [
+        "Food & Catering",
+        19
+      ],
+      [
+        "Jamaican Food",
+        19
+      ],
+      [
+        "Events & Culture",
+        18
+      ],
+      [
+        "Culture & History",
+        18
+      ],
+      [
+        "Food & Wellness",
+        17
+      ]
+    ],
+    "master_statuses": [
+      [
+        "NEW DISCOVERY",
+        2225
+      ],
+      [
+        "IN MASTER",
+        433
+      ],
+      [
+        "ADD — SOCIAL-QUALIFIED REPLACEMENT",
+        347
+      ],
+      [
+        "ADD — SOCIAL VERIFIED",
+        246
+      ],
+      [
+        "NEW CLUSTER",
+        120
+      ],
+      [
+        "(blank)",
+        12
+      ],
+      [
+        "ADD — TIKTOK-FIRST VERIFIED",
+        9
+      ]
+    ],
+    "master_gap_flags": [
+      [
+        "MASTER GAP — CONSIDER ADDING TO DATABASE",
+        1337
+      ],
+      [
+        "MASTER GAP — CLOSE CITY TO 40",
+        711
+      ],
+      [
+        "(blank)",
+        445
+      ],
+      [
+        "SOCIAL-BACKFILL ADD — ORIGINAL MASTER PRESERVED",
+        246
+      ],
+      [
+        "REPLACEMENT ADD — ORIGINAL RETAINED",
+        233
+      ],
+      [
+        "NEW",
+        120
+      ],
+      [
+        "MASTER GAP / ENRICHMENT CANDIDATE",
+        120
+      ],
+      [
+        "REPLACEMENT ADD",
+        114
+      ],
+      [
+        "NEW DISCOVERY — ADD TO MWM MASTER",
+        28
+      ],
+      [
+        "SOCIAL + NIGHTLIFE ENRICHMENT",
+        23
+      ],
+      [
+        "TIKTOK-FIRST ADD — ORIGINAL MASTER PRESERVED",
+        9
+      ],
+      [
+        "SOCIAL ENRICHMENT",
+        6
+      ]
+    ],
+    "top_cities": [
+      [
+        "Durham, NC",
+        160
+      ],
+      [
+        "Greensboro, NC",
+        113
+      ],
+      [
+        "Tuskegee, AL",
+        88
+      ],
+      [
+        "Jacksonville, FL",
+        88
+      ],
+      [
+        "Orlando, FL",
+        88
+      ],
+      [
+        "Columbus, OH",
+        80
+      ],
+      [
+        "Winston-Salem, NC",
+        66
+      ],
+      [
+        "Phoenix, AZ",
+        56
+      ],
+      [
+        "Dallas, TX",
+        56
+      ],
+      [
+        "Raleigh, NC",
+        56
+      ],
+      [
+        "Tampa, FL",
+        55
+      ],
+      [
+        "Boston, MA",
+        54
+      ],
+      [
+        "Minneapolis, MN",
+        53
+      ],
+      [
+        "Charleston, SC",
+        51
+      ],
+      [
+        "Cincinnati, OH",
+        51
+      ],
+      [
+        "Tallahassee, FL",
+        51
+      ],
+      [
+        "Denver, CO",
+        50
+      ],
+      [
+        "Daytona Beach, FL",
+        50
+      ],
+      [
+        "Savannah, GA",
+        49
+      ],
+      [
+        "Portland, OR",
+        49
+      ]
+    ]
+  },
+  "global_curated_workbook": {
+    "worksheet_count": 74,
+    "profiles": [
+      {
+        "sheet": "Global Map Candidates",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "ID",
+          "Destination",
+          "Country/Territory",
+          "Region",
+          "Latitude",
+          "Longitude",
+          "Geocode Query",
+          "Evidence Scope",
+          "Evidence Precision",
+          "Diaspora / Cultural Value",
+          "Cost Tier",
+          "Affordability",
+          "Planning Daily Band (USD)",
+          "U.S. Advisory Screen",
+          "Safety Notes",
+          "MWM Map Status",
+          "Why It Belongs",
+          "Traveler Types",
+          "Minority-Travel Signal",
+          "Primary Travel Source",
+          "Safety Source",
+          "Research Date",
+          "Map QA Note"
+        ],
+        "data_rows": 120,
+        "has_destination": true,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Safety Watchlist",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Destination",
+          "Country",
+          "Region",
+          "Latitude",
+          "Longitude",
+          "Evidence Scope",
+          "Why It Still Matters",
+          "Current Safety Screen",
+          "MWM Status",
+          "Travel Source",
+          "Safety Source"
+        ],
+        "data_rows": 8,
+        "has_destination": true,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Methodology & Sources",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 02 - 222",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Destination",
+          "Country/Territory",
+          "Region",
+          "Map Point Type",
+          "Latitude",
+          "Longitude",
+          "Geocode Query",
+          "Evidence Scope",
+          "Cost Tier",
+          "Affordability",
+          "Planning Daily Band (USD)",
+          "U.S. Advisory Screen",
+          "Safety Notes",
+          "MWM Map Status",
+          "Why It Belongs",
+          "Traveler / Use Cases",
+          "Minority / Diaspora Relevance",
+          "Primary Research Source",
+          "Safety Source",
+          "Research Date",
+          "Map QA Note",
+          "Build"
+        ],
+        "data_rows": 222,
+        "has_destination": false,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 02 Safety Holds",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Place / Destination",
+          "Country/Territory",
+          "Region",
+          "Latitude",
+          "Longitude",
+          "Why It Matters",
+          "Current Safety Screen",
+          "MWM Status",
+          "Safety Source"
+        ],
+        "data_rows": 15,
+        "has_destination": false,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 03 - 180",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Destination",
+          "Country/Territory",
+          "Region",
+          "Map Point Type",
+          "Latitude",
+          "Longitude",
+          "Geocode Query",
+          "Cost Tier",
+          "Affordability",
+          "Planning Daily Band (USD)",
+          "Safety Screen",
+          "Safety Notes",
+          "MWM Map Status",
+          "Why It Belongs",
+          "Traveler / Use Cases",
+          "Minority / Diaspora Relevance",
+          "Primary Research Source",
+          "Safety Source",
+          "Research Date",
+          "Map QA Note",
+          "Build"
+        ],
+        "data_rows": 180,
+        "has_destination": false,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 03 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 04 - Experiences",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Experience / Property",
+          "Country/Territory",
+          "Region",
+          "Experience Type",
+          "Latitude",
+          "Longitude",
+          "Geocode Query",
+          "Budget Tier",
+          "Budget Class",
+          "Cost / Access Note",
+          "Price Status",
+          "Price QA",
+          "MWM Status",
+          "Why It Belongs",
+          "Traveler Types",
+          "Minority / Diaspora Relevance",
+          "Primary Source",
+          "Safety Source",
+          "Research Date",
+          "Map QA Note",
+          "Build"
+        ],
+        "data_rows": 180,
+        "has_destination": false,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 04 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 05 - Top Lists",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Experience",
+          "Country/Territory",
+          "Region",
+          "Experience Type",
+          "Latitude",
+          "Longitude",
+          "Geocode Query",
+          "Budget Tier",
+          "Budget Note",
+          "Discovery Basis",
+          "Primary Top-List Source",
+          "Safety Source",
+          "MWM Safety Status",
+          "Why It Belongs",
+          "Traveler Types",
+          "Minority / Diaspora Relevance",
+          "Research Date",
+          "Production QA",
+          "Build"
+        ],
+        "data_rows": 156,
+        "has_destination": false,
+        "has_coordinates": true,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 05 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 06 - Top Depth",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Experience",
+          "Country/Territory",
+          "Region",
+          "Top-List Cluster",
+          "Experience Type",
+          "Budget Tier",
+          "Budget Note",
+          "Discovery Basis",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Traveler Types",
+          "Minority / Diaspora Relevance",
+          "Budget Coverage",
+          "Research Date",
+          "Production QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 06 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 07 - Expansion",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Experience",
+          "Country/Territory",
+          "Region",
+          "Research Cluster",
+          "Experience Type",
+          "Budget Tier",
+          "Budget Class",
+          "Primary Research Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Traveler Types",
+          "Minority / Diaspora Relevance",
+          "Research Date",
+          "Production QA",
+          "Build"
+        ],
+        "data_rows": 166,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 07 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 08 - Social Signal",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Experience",
+          "Country/Territory",
+          "Region",
+          "Social Cluster",
+          "Experience Type",
+          "Budget Tier",
+          "Budget Class",
+          "Social Signal Type",
+          "Primary Social Signal Source",
+          "Instagram Ecosystem Source",
+          "Top-List Crosscheck",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Black Traveler Relevance",
+          "Research Date",
+          "Production / Social QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 08 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 09 - Social Toplist",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Place / Experience",
+          "Country/Territory",
+          "Region",
+          "Top-List/Social Cluster",
+          "Experience Type",
+          "Budget Tier",
+          "Budget Class",
+          "Discovery Basis",
+          "Primary Signal Source",
+          "Instagram Ecosystem",
+          "Awards Crosscheck",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Black Traveler Relevance",
+          "Research Date",
+          "Production / Social QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 09 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 10 - Business Shift",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Business / Verification Target",
+          "Country/Territory",
+          "Region",
+          "Business Cluster",
+          "Business Type",
+          "Budget Tier",
+          "Budget Class",
+          "Verification Stage",
+          "Primary Research Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Black Traveler / MWM Value",
+          "Research Date",
+          "Business QA Requirement",
+          "Build"
+        ],
+        "data_rows": 29,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 10 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Business / Named Entity",
+          "Country/Territory",
+          "Region",
+          "Verification Stage",
+          "Business Type",
+          "Budget Tier",
+          "Budget Class",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "MWM / Black Traveler Value",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 27,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 11 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 12 - Named Business",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Business / Target",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Verification Stage",
+          "Business Type",
+          "Budget Tier",
+          "Budget Class",
+          "Primary Source",
+          "Source Context",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "MWM / Black Traveler Value",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 50,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 12 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 13 - Economic Depth",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Business / Target",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Verification Stage",
+          "Business Type",
+          "Budget Tier",
+          "Budget Class",
+          "Ownership Context",
+          "Instagram / Social Handle",
+          "Primary Source",
+          "Source Context",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "MWM / Black Traveler Value",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 64,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 13 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 14 - Majority Named",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Cumulative ID",
+          "Business / Target",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Verification Stage",
+          "Business Type",
+          "Budget Tier",
+          "Budget Class",
+          "Primary Source",
+          "Source Context",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "MWM / Black Traveler Value",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 90,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 14 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 15 - Real Pins",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 160,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Clean Map Pin Status",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 16 - Real Pins",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 160,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 16 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 17 - Real Pins",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 160,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 17 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 18 - Real Pins",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 27,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 18 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 19 - Real Pins",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 33,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 19 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 20 - Real Pins",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 20 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 21 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 152,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 21 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 22 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 22 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 23 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 23 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 24 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 24 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 25 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 150,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 25 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 26 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 160,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 26 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 27 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 27 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 28 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 28 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 29 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 29 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 30 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 30 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 31 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 31 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 32 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 32 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 33 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 33 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 34 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 34 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 35 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 35 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      },
+      {
+        "sheet": "Global Build 36 - Curated",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": 1,
+        "headers": [
+          "Clean Pin ID",
+          "Name",
+          "Country/Territory",
+          "Region",
+          "City / Area",
+          "Pin Type",
+          "Category",
+          "Budget Tier",
+          "Ownership / Entity Context",
+          "Primary Source",
+          "Safety Source",
+          "MWM Status",
+          "Why It Belongs",
+          "Recurring / Timing",
+          "Research Date",
+          "Required QA",
+          "Build"
+        ],
+        "data_rows": 175,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": true,
+        "has_address": false
+      },
+      {
+        "sheet": "Build 36 Summary",
+        "max_rows": 0,
+        "max_columns": 0,
+        "header_row": null,
+        "headers": [],
+        "data_rows": 0,
+        "has_destination": false,
+        "has_coordinates": false,
+        "has_business_name": false,
+        "has_address": false
+      }
+    ],
+    "destination_rows_across_cumulative_sheets": 545,
+    "unique_destination_country_coordinate_records": 545,
+    "repeated_cumulative_destination_rows": 0,
+    "unique_records_with_valid_non_null_island_coordinates": 545,
+    "unique_records_explicitly_approximate_or_centroid": 342,
+    "unique_records_with_primary_travel_source": 120,
+    "unique_records_with_safety_source": 545,
+    "unique_statuses": [
+      [
+        "DISCOVERY CANDIDATE — INDIVIDUAL SAFETY GATE REQUIRED",
+        180
+      ],
+      [
+        "READY WITH CAUTION — Level 2 safety screen",
+        127
+      ],
+      [
+        "READY — Level 1 safety screen",
+        95
+      ],
+      [
+        "READY — safety-screened",
+        79
+      ],
+      [
+        "REVIEW — current country advisory not individually verified in this build",
+        41
+      ],
+      [
+        "(blank)",
+        23
+      ]
+    ],
+    "safety_or_hold_rows_outside_destination_sheets": 15,
+    "sheets_with_business_name_and_address_shape": [],
+    "named_entity_rows_across_build_sheets": 3379,
+    "unique_named_entity_country_city_type_records": 3378,
+    "repeated_named_entity_rows": 1,
+    "unique_named_entities_with_primary_source": 3378,
+    "unique_named_entities_with_required_qa_note": 3378,
+    "named_entity_pin_types": [
+      [
+        "Restaurant",
+        766
+      ],
+      [
+        "Hotel",
+        288
+      ],
+      [
+        "Restaurant / Bar",
+        81
+      ],
+      [
+        "Retail / Fashion",
+        81
+      ],
+      [
+        "Location",
+        78
+      ],
+      [
+        "Museum",
+        78
+      ],
+      [
+        "Resort",
+        70
+      ],
+      [
+        "Hair / Beauty",
+        58
+      ],
+      [
+        "Restaurant / Food",
+        57
+      ],
+      [
+        "Cafe",
+        55
+      ],
+      [
+        "Tour / Experience",
+        52
+      ],
+      [
+        "Festival",
+        50
+      ],
+      [
+        "Fashion / Retail",
+        41
+      ],
+      [
+        "Bakery",
+        34
+      ],
+      [
+        "Bed & Breakfast",
+        34
+      ],
+      [
+        "Gallery",
+        31
+      ],
+      [
+        "Boutique Hotel",
+        30
+      ],
+      [
+        "Historic Site",
+        26
+      ],
+      [
+        "Hotel / Resort / B&B",
+        26
+      ],
+      [
+        "Cultural Center",
+        25
+      ],
+      [
+        "Recurring Festival",
+        23
+      ],
+      [
+        "Beauty / Retail",
+        21
+      ],
+      [
+        "Market",
+        20
+      ],
+      [
+        "Guesthouse",
+        19
+      ],
+      [
+        "Bookstore",
+        18
+      ],
+      [
+        "Wellness",
+        16
+      ],
+      [
+        "Monument",
+        16
+      ],
+      [
+        "Airport Hotel",
+        16
+      ],
+      [
+        "Vacation Rental",
+        15
+      ],
+      [
+        "Cafe / Restaurant",
+        14
+      ]
+    ],
+    "named_entity_categories": [
+      [
+        "Black-Owned",
+        397
+      ],
+      [
+        "Black-Owned / Source-Listed",
+        146
+      ],
+      [
+        "Black-Owned / Guide-Listed",
+        67
+      ],
+      [
+        "Black-Owned Lodging",
+        54
+      ],
+      [
+        "Black-Owned Food / Beverage",
+        50
+      ],
+      [
+        "Caribbean Restaurant / Social Venue",
+        42
+      ],
+      [
+        "Black Hotel Guide-Listed",
+        31
+      ],
+      [
+        "Official Afro-Tourism Route",
+        27
+      ],
+      [
+        "Black Traveler Top Experience",
+        26
+      ],
+      [
+        "Black History",
+        25
+      ],
+      [
+        "Caribbean-Owned",
+        23
+      ],
+      [
+        "Eritrean / Ethiopian Restaurant",
+        20
+      ],
+      [
+        "Locally Owned",
+        20
+      ],
+      [
+        "Ethiopian Restaurant",
+        19
+      ],
+      [
+        "Black-Owned / Source-Listed Lodging",
+        19
+      ],
+      [
+        "Black Travel Directory",
+        19
+      ],
+      [
+        "Saint Lucian-Owned",
+        19
+      ],
+      [
+        "African Restaurant",
+        18
+      ],
+      [
+        "Black Woman-Owned",
+        17
+      ],
+      [
+        "Caribbean / Local",
+        17
+      ],
+      [
+        "Black-Owned Caribbean",
+        16
+      ],
+      [
+        "Black-Owned Boutique",
+        15
+      ],
+      [
+        "Caribbean",
+        14
+      ],
+      [
+        "Black-Owned African Safari Hospitality",
+        14
+      ],
+      [
+        "Barbadian-Owned",
+        14
+      ],
+      [
+        "BIPOC-Owned",
+        14
+      ],
+      [
+        "Black-Owned Vegan",
+        13
+      ],
+      [
+        "Black-Owned Fashion",
+        12
+      ],
+      [
+        "Black-Owned Winery",
+        12
+      ],
+      [
+        "Black-Owned Dining",
+        12
+      ]
+    ],
+    "named_entity_statuses": [
+      [
+        "CURATED BLACK/MINORITY RECOMMENDATION — QA REQUIRED",
+        2510
+      ],
+      [
+        "REAL NAMED MAP PIN — NO PLACEHOLDER",
+        536
+      ],
+      [
+        "CURATED BLACK/MINORITY TRAVEL RECOMMENDATION — QA REQUIRED",
+        152
+      ],
+      [
+        "REAL NAMED MAP PIN — CURRENT STATUS NEEDS QA",
+        149
+      ],
+      [
+        "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        24
+      ],
+      [
+        "REAL NAMED MAP PIN — NO PLACEHOLDER — SAFETY GATE",
+        4
+      ],
+      [
+        "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED — COUNTRY/AREA SAFETY REVIEW REQUIRED",
+        3
+      ]
+    ],
+    "representative_named_entities": [
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1625",
+        "name": "Travellers Beach Resort",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Stay / Black-Owned Resort",
+        "category": "Stay / Black-Owned Resort",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/black-owned-hotels-stays-jamaica",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1626",
+        "name": "The RunAway",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Stay / Black-Owned Villa",
+        "category": "Stay / Black-Owned Villa",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/black-owned-hotels-stays-jamaica",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1627",
+        "name": "Golden Castle Villas & Spa",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Stay / Black-Owned Villa & Spa",
+        "category": "Stay / Black-Owned Villa & Spa",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/black-owned-hotels-stays-jamaica",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1628",
+        "name": "Travel Buddy JA",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Black Woman-Owned Tour Company",
+        "category": "Black Woman-Owned Tour Company",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/rustic-jamaica-travel-buddy-ja-black-woman-owned-company",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1629",
+        "name": "My Irie Escape",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Black-Owned Villa Management / Stay",
+        "category": "Black-Owned Villa Management / Stay",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/black-owned-my-irie-escape-jamaica",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1630",
+        "name": "Two Sisters",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Farm-to-Table Culinary Experience",
+        "category": "Farm-to-Table Culinary Experience",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/travel-noire-awards-2026-restaurants-worth-the-trip",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1631",
+        "name": "Half Moon Resort",
+        "country": "Jamaica",
+        "city_area": "",
+        "pin_type": "Black-Owned Luxury Resort",
+        "category": "Black-Owned Luxury Resort",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/travel-noire-awards-2026-black-owned-stays",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1632",
+        "name": "La Maison Michelle",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Black-Owned Luxury Villa / Stay",
+        "category": "Black-Owned Luxury Villa / Stay",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/black-owned-hotels",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1633",
+        "name": "Sunset Lane",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Stay / Local Hospitality",
+        "category": "Stay / Local Hospitality",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1634",
+        "name": "Lancewell House",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Stay / Local Hospitality",
+        "category": "Stay / Local Hospitality",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1635",
+        "name": "The Seafood Shack",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Restaurant / Seafood",
+        "category": "Restaurant / Seafood",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1636",
+        "name": "Cuz's Fish Shack",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Restaurant / Local Food",
+        "category": "Restaurant / Local Food",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1637",
+        "name": "Chef Michael Hinds X West Bar",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Restaurant / Dining",
+        "category": "Restaurant / Dining",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1638",
+        "name": "Champers Restaurant",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Restaurant / Dining",
+        "category": "Restaurant / Dining",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1639",
+        "name": "Fisherman's Pub",
+        "country": "Barbados",
+        "city_area": "",
+        "pin_type": "Restaurant / Local Food",
+        "category": "Restaurant / Local Food",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/eat-stay-play-barbados-black-history",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1640",
+        "name": "Jnane Tamsna",
+        "country": "Morocco",
+        "city_area": "",
+        "pin_type": "Black Woman-Owned Boutique Hotel",
+        "category": "Black Woman-Owned Boutique Hotel",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://blacktravelalliance.org/10-best-black-owned-hotels-resorts-around-the-world/",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1641",
+        "name": "Hostelle Amsterdam",
+        "country": "Netherlands",
+        "city_area": "",
+        "pin_type": "Black-Owned Women-Centered Hostel",
+        "category": "Black-Owned Women-Centered Hostel",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/black-owned-hotels",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1642",
+        "name": "Hostelle Barcelona",
+        "country": "Spain",
+        "city_area": "",
+        "pin_type": "Black-Owned Women-Centered Hostel",
+        "category": "Black-Owned Women-Centered Hostel",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://www.cntraveler.com/story/black-owned-hotels",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1643",
+        "name": "Maison Château Rouge",
+        "country": "France",
+        "city_area": "",
+        "pin_type": "Black-Owned Fashion / Retail",
+        "category": "Black-Owned Fashion / Retail",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/black-owned-shops-europe",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      },
+      {
+        "sheet": "Archive Build 11 Named Only",
+        "id": "1644",
+        "name": "Round Table Books",
+        "country": "United Kingdom",
+        "city_area": "",
+        "pin_type": "Black-Owned Bookstore / Retail",
+        "category": "Black-Owned Bookstore / Retail",
+        "status": "NAMED DISCOVERY — CURRENT BUSINESS/OWNERSHIP/SOCIAL QA REQUIRED",
+        "source": "https://travelnoire.com/black-owned-shops-europe",
+        "required_qa": "Verify official website, exact address/geocode, current ownership claim, operating status, official Instagram/TikTok when public, current offering and price class before production."
+      }
+    ]
+  }
+}

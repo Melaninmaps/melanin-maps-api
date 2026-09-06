@@ -778,6 +778,15 @@ export default function BusinessDetail() {
                 <MapPin size={18} />
                 <span>{business.city}, {business.state}</span>
               </div>
+              {(business as any).listingStatus === "live_unclaimed" && (
+                <p className="mt-3 text-sm font-semibold text-[#F5EBD8]">Community/founder-listed · Unclaimed · Not verified</p>
+              )}
+              {(business as any).ownershipClaim === "community_reported_minority_owned" && (
+                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported minority-owned · Not verified</p>
+              )}
+              {(business as any).ownershipClaim === "community_reported_non_minority_owned" && (
+                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported non-minority-owned · Not verified</p>
+              )}
             </div>
             
             <div className="flex gap-3">
@@ -834,14 +843,15 @@ export default function BusinessDetail() {
           const badges = designations.length > 0 ? designations : (business.blackOwned ? ["Black / African American-Owned"] : []);
           const isTrusted = (business.reviewCount ?? 0) >= 5 && (business.averageRating ?? 0) >= 4.0;
           const isVerified = !!(business as any).verified;
+          const isCommunityReportedOwnership = String((business as any).ownershipClaim ?? "").startsWith("community_reported_");
           if (badges.length === 0 && !isTrusted && !isVerified) return null;
           return (
             <div className="mb-1">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {badges.map((d: string) => (
                   <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#CA922B]/10 border border-[#CA922B]/30 text-[#CA922B]">
-                    <ShieldCheck className="w-3 h-3" />
-                    {d}
+                    {isCommunityReportedOwnership ? <Users className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}
+                    {isCommunityReportedOwnership ? `Community-reported: ${d}` : d}
                   </span>
                 ))}
                 {isVerified && (
@@ -865,7 +875,9 @@ export default function BusinessDetail() {
               </div>
               {badges.length > 0 && (
                 <p className="text-[10px] text-white/40 leading-relaxed mb-4">
-                  Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for verified status.
+                  {isCommunityReportedOwnership
+                    ? "These ownership designations were reported by a community member and are not verified owner identity."
+                    : "Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for verified status."}
                 </p>
               )}
             </div>

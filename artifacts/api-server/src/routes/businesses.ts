@@ -92,9 +92,12 @@ function ownershipFilterStorageValues(raw: string): { id: string; values: string
 }
 
 const CATEGORY_FILTER_ALIASES: Record<string, string[]> = {
-  "food & drink": ["Food", "Food & Drink", "Food Trucks"],
-  "arts & culture": ["Arts & Culture", "Arts, Culture & Entertainment", "Entertainment & Recreation"],
-  "retail & shopping": ["Retail", "Retail & Shopping"],
+  "food & drink": ["Food", "Food & Drink", "Food & Beverage", "Food Trucks", "Food Truck", "Restaurant", "Café / Coffee", "Bar / Lounge", "Bakery", "Grocery / Market"],
+  "beauty & personal care": ["Beauty & Personal Care", "Beauty & Hair", "Barbershop", "Nail Salon", "Spa & Wellness"],
+  "health & wellness": ["Health & Wellness", "Health & Medical", "Fitness"],
+  "professional services": ["Professional Services", "Legal Services", "Financial Services", "Real Estate", "Cleaning & Home Services", "Auto Services", "Tech & Digital"],
+  "arts & culture": ["Arts & Culture", "Arts, Culture & Entertainment", "Entertainment & Recreation", "Music & Entertainment", "Photography", "Event Venue"],
+  "retail & shopping": ["Retail", "Retail & Shopping", "Shopping & Retail", "Clothing & Fashion", "Books & Media"],
   "faith & community": ["Faith & Spirituality", "Faith & Community", "Community Organizations", "Community Organization", "Community & Organizations"],
   "home & trades": ["Home & Trades", "Home Services", "Home & Property", "Home & Property Services"],
   "childcare & education": ["Childcare & Early Education", "Children & Family", "Education", "Education & Learning"],
@@ -156,8 +159,7 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
       FROM public.public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND latitude::numeric != 0
-        AND longitude::numeric != 0
+        AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
@@ -222,7 +224,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
       );
       conditions.push(filter.id === "black-african-american"
         ? or(eq(businessesTable.blackOwned, true), ...designationMatches)!
-        : or(...designationMatches)!);
+        : filter.id === "minority-general-legacy"
+          ? or(
+              eq(businessesTable.ownershipClaim, "community_reported_minority_owned"),
+              ...designationMatches,
+            )!
+          : or(...designationMatches)!);
     }
 
     if (search && typeof search === "string") {
@@ -1267,16 +1274,14 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    // Visibility guard: is_duplicate and permanently_hidden rows return 404.
-    // The businesses Drizzle schema may not include is_duplicate (added via raw migration),
-    // so we do a targeted pool.query check rather than trusting the typed result.
-    const { rows: visRows } = await pool.query<{ is_duplicate: boolean | null; status: string | null }>(
-      `SELECT is_duplicate, status FROM businesses WHERE id = $1 LIMIT 1`,
+    // The canonical public view applies every shared visibility rule: active status,
+    // live listing lifecycle, permanent-hidden flag, duplicate suppression, and
+    // proven-demo containment. A known base-table ID must not bypass those rules.
+    const { rows: visRows } = await pool.query<{ id: string }>(
+      `SELECT id FROM public.public_businesses WHERE id = $1 LIMIT 1`,
       [id],
     );
-    const vis = visRows[0];
-    if (!vis || vis.is_duplicate === true ||
-        ["duplicate", "permanently_hidden", "removed", "deleted"].includes(vis.status ?? "")) {
+    if (!visRows[0]) {
       res.status(404).json({ error: "Business not found" });
       return;
     }

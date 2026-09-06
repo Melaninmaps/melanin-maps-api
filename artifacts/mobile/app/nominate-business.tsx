@@ -42,8 +42,10 @@ async function getToken(): Promise<string | null> {
   } catch { return null; }
 }
 
+type CommunityReportedOwnership = "minority_owned" | "non_minority_owned" | "not_sure";
+
 type ResultState =
-  | { isDuplicate: false; submissionId: string; status: "pending_review" }
+  | { isDuplicate: false; submissionId: string; status: string; message: string; businessId?: string; mapPin: boolean }
   | { isDuplicate: true; type: "already_listed"; businessId: string; message: string }
   | { isDuplicate: true; type: "already_nominated"; submissionId?: string; message: string };
 
@@ -57,6 +59,7 @@ export default function NominateBusinessScreen() {
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const [why, setWhy] = useState("");
   const [ownershipDesignations, setOwnershipDesignations] = useState<string[]>([]);
+  const [communityReportedOwnership, setCommunityReportedOwnership] = useState<CommunityReportedOwnership>("not_sure");
   const [stage, setStage] = useState<Stage>("main");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
@@ -91,6 +94,7 @@ export default function NominateBusinessScreen() {
           latitude: selectedPlace.lat ?? undefined,
           longitude: selectedPlace.lng ?? undefined,
           category: selectedPlace.category ?? "General",
+          communityReportedOwnership,
           ownershipDesignations: ownershipDesignations.length ? ownershipDesignations : undefined,
           submitterNote: why.trim() || undefined,
           providerPlaceId: selectedPlace.id,
@@ -127,7 +131,10 @@ export default function NominateBusinessScreen() {
         setResult({
           isDuplicate: false,
           submissionId: data.submissionId ?? "",
-          status: "pending_review",
+          status: data.status ?? "pending_review",
+          message: (data as { message?: string }).message ?? "Your business submission was saved.",
+          businessId: data.businessId,
+          mapPin: (data as { mapPin?: boolean }).mapPin === true,
         });
         setStage("done");
       }
@@ -146,14 +153,14 @@ export default function NominateBusinessScreen() {
             <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Nomination Sent</Text>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>{result?.status === "published" ? "Live on the Map" : "Submission Saved"}</Text>
             <View style={{ width: 22 }} />
           </View>
           <View style={styles.centerWrap}>
             <Feather name="check-circle" size={56} color={colors.success} />
-            <Text style={[styles.successTitle, { color: colors.foreground }]}>Thank you for the nomination!</Text>
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>{result?.status === "published" ? "This business is live" : "Thank you for adding it"}</Text>
             <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-              {selectedPlace?.name ?? "This business"} is pending review and is not public yet. Publication creates a community-listed, unclaimed profile; it does not verify ownership.
+              {result?.message ?? `${selectedPlace?.name ?? "This business"} was saved.`}
             </Text>
             {!result?.isDuplicate && result?.submissionId ? (
               <Text selectable style={[styles.successBody, { color: colors.mutedForeground }]}>Submission ID: {result.submissionId}</Text>
@@ -164,7 +171,12 @@ export default function NominateBusinessScreen() {
             >
               <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>View My Submissions</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setSelectedPlace(null); setWhy(""); setOwnershipDesignations([]); setResult(null); setClientRequestId(Crypto.randomUUID()); setStage("main"); }} style={styles.ghostBtn}>
+            {!result?.isDuplicate && result?.status === "published" && result.businessId ? (
+              <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: result.businessId } } as never)} style={styles.ghostBtn}>
+                <Text style={[styles.ghostBtnLabel, { color: colors.primary }]}>View Community Listing</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity onPress={() => { setSelectedPlace(null); setWhy(""); setCommunityReportedOwnership("not_sure"); setOwnershipDesignations([]); setResult(null); setClientRequestId(Crypto.randomUUID()); setStage("main"); }} style={styles.ghostBtn}>
               <Text style={[styles.ghostBtnLabel, { color: colors.foreground }]}>Nominate Another</Text>
             </TouchableOpacity>
           </View>
@@ -225,7 +237,7 @@ export default function NominateBusinessScreen() {
             <View style={styles.confirmBanner}>
               <Feather name="info" size={18} color={colors.primary} />
               <Text style={[styles.confirmBannerText, { color: colors.primary }]}>
-                Add optional context before submitting {selectedPlace?.name} for review.
+                Add optional context before adding {selectedPlace?.name}. Complete ordinary businesses can publish immediately as unclaimed and not verified.
               </Text>
             </View>
 
@@ -244,14 +256,34 @@ export default function NominateBusinessScreen() {
             />
 
             <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>
-              Ownership designation
+              Community-reported ownership
             </Text>
-            <ChipGrid
-              chips={OWNERSHIP_CHIPS}
-              selectedIds={ownershipDesignations}
-              onSelect={setOwnershipDesignations}
-              multiSelect
-            />
+            <Text style={[styles.hint, { color: colors.mutedForeground }]}>This is a community report, never verified owner identity.</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+              {([
+                ["minority_owned", "Minority-owned"],
+                ["non_minority_owned", "Non-minority-owned"],
+                ["not_sure", "Not sure"],
+              ] as const).map(([value, label]) => (
+                <TouchableOpacity
+                  key={value}
+                  onPress={() => { setCommunityReportedOwnership(value); if (value !== "minority_owned") setOwnershipDesignations([]); }}
+                  style={[styles.ownershipChoice, { backgroundColor: communityReportedOwnership === value ? colors.primary : colors.card, borderColor: communityReportedOwnership === value ? colors.primary : colors.border }]}
+                >
+                  <Text style={{ color: communityReportedOwnership === value ? colors.primaryForeground : colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 13 }}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {communityReportedOwnership === "minority_owned" ? (
+              <View style={{ marginTop: 14 }}>
+                <ChipGrid
+                  chips={OWNERSHIP_CHIPS}
+                  selectedIds={ownershipDesignations}
+                  onSelect={(values) => { setOwnershipDesignations(values); setCommunityReportedOwnership("minority_owned"); }}
+                  multiSelect
+                />
+              </View>
+            ) : null}
 
             <View style={styles.equalRow}>
               <TouchableOpacity
@@ -260,7 +292,7 @@ export default function NominateBusinessScreen() {
               >
                 {submitting
                   ? <ActivityIndicator color={colors.primaryForeground} size="small" />
-                  : <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>Submit for Review</Text>}
+                  : <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>Add Community Business</Text>}
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setStage("main")}
@@ -294,7 +326,7 @@ export default function NominateBusinessScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.bodyText, { color: colors.mutedForeground }]}>
-            Search for the business. One tap to nominate.
+            Search our current directory first. If the business is missing, use the complete form so we can confirm its public link and precise map pin.
           </Text>
 
           <PlacesAutocompleteInput
@@ -335,6 +367,9 @@ export default function NominateBusinessScreen() {
 
           <TouchableOpacity onPress={() => setStage("expanding1")} style={styles.expandLink}>
             <Text style={[styles.expandLinkText, { color: colors.primary }]}>Want to tell us why?</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/list-business" as never)} style={styles.expandLink}>
+            <Text style={[styles.expandLinkText, { color: colors.primary }]}>Can&apos;t find it? Add the complete business</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -382,6 +417,7 @@ const styles = StyleSheet.create({
   expandLink: { alignItems: "center", paddingVertical: 10, marginTop: 4 },
   expandLinkText: { fontSize: 15, fontFamily: "Inter_500Medium", textDecorationLine: "underline" },
   equalRow: { flexDirection: "row", gap: 10, marginTop: 20 },
+  ownershipChoice: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9 },
   confirmBanner: {
     flexDirection: "row",
     alignItems: "center",

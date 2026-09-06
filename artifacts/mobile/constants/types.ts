@@ -33,6 +33,7 @@ export interface Business {
   imageUrl?: string;
   profileStatus?: string | null;
   listingStatus?: string | null;
+  ownershipClaim?: string | null;
   instagram?: string;
   tiktok?: string;
   twitter?: string;

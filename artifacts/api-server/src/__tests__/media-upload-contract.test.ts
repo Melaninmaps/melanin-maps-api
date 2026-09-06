@@ -14,7 +14,11 @@ type FakeFile = {
   delete: ReturnType<typeof vi.fn>;
 };
 
-function createTestApp(file: FakeFile, authenticated = true): Express {
+function createTestApp(
+  file: FakeFile,
+  authenticated = true,
+  recordAsset: (values: readonly unknown[]) => Promise<unknown> = async () => undefined,
+): Express {
   const app = express();
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (authenticated) (req as any).user = { id: "media-contract-user" };
@@ -29,7 +33,7 @@ function createTestApp(file: FakeFile, authenticated = true): Express {
     storageClient: {
       bucket: () => ({ file: () => file as any }),
     } as any,
-    recordAsset: vi.fn().mockResolvedValue(undefined),
+    recordAsset,
   });
   return app;
 }
@@ -88,6 +92,43 @@ describe("POST /api/media/upload error contract", () => {
     expect(response.body.url).toMatch(/^https:\/\/cdn\.example\.test\/community\/media-uploads\/images\//);
     expect(file.save).toHaveBeenCalledWith(expect.any(Buffer), { contentType: "image/pjpeg" });
     expect(file.makePublic).not.toHaveBeenCalled();
+  });
+
+  it("keeps business-submission media private and persists no public URL", async () => {
+    const file = workingFile();
+    const recordAsset = vi.fn<(values: readonly unknown[]) => Promise<unknown>>().mockResolvedValue(undefined);
+    const response = await request(createTestApp(file, true, recordAsset))
+      .post("/api/media/upload?purpose=business_submission")
+      .attach("file", Buffer.from("jpeg bytes"), { filename: "business.jpg", contentType: "image/jpeg" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.url).toBe("https://signed.example.test/private");
+    expect(response.body.expiresAt).toEqual(expect.any(String));
+    expect(file.getSignedUrl).toHaveBeenCalledOnce();
+    expect(file.makePublic).not.toHaveBeenCalled();
+    expect(recordAsset).toHaveBeenCalledWith([
+      response.body.assetId,
+      "media-contract-user",
+      "business_submission",
+      "image/jpeg",
+      expect.any(Number),
+      expect.stringContaining("media-uploads/business-submission-private/"),
+      null,
+    ]);
+  });
+
+  it("deletes the object and fails closed when asset tracking cannot be persisted", async () => {
+    const file = workingFile();
+    const recordAsset = vi.fn<(values: readonly unknown[]) => Promise<unknown>>()
+      .mockRejectedValue(new Error("database unavailable"));
+    const response = await request(createTestApp(file, true, recordAsset))
+      .post("/api/media/upload?purpose=business_submission")
+      .attach("file", Buffer.from("jpeg bytes"), { filename: "business.jpg", contentType: "image/jpeg" });
+
+    expect(response.status).toBe(502);
+    expect(response.body.code).toBe(MEDIA_UPLOAD_ERROR_CODES.TRACKING_FAILED);
+    expect(file.delete).toHaveBeenCalledWith({ ignoreNotFound: true });
+    expect(JSON.stringify(response.body)).not.toContain("database unavailable");
   });
 
   it("returns a stable request-correlated missing-configuration error", async () => {

@@ -47,6 +47,7 @@ describe("routed canonical business directory", () => {
   it("routes the member Businesses page to canonical searchable inventory", () => {
     const app = source("../App.tsx");
     const directory = source("../features/businesses/LocationFirstBusinessDirectory.tsx");
+    const api = source("../../../api-server/src/routes/businesses.ts");
     expect(app).toContain("<LocationFirstBusinessDirectory />");
     expect(directory).toContain("api/businesses?");
     expect(directory).not.toContain("api/discovery/query");
@@ -54,6 +55,11 @@ describe("routed canonical business directory", () => {
     expect(directory).toContain("queryKeyRef.current");
     expect(directory).toContain("Load more (");
     expect(directory).toContain("Community/founder-listed · Unclaimed · Not verified");
+    expect(directory).toContain("Community-reported minority-owned · Not verified");
+    expect(directory).toContain("Community-reported non-minority-owned · Not verified");
+    expect(directory).toContain("publish immediately after software checks");
     expect(directory).not.toContain("verified businesses in");
+    expect(api).toContain('eq(businessesTable.ownershipClaim, "community_reported_minority_owned")');
+    expect(api).toContain("NOT (latitude::numeric = 0 AND longitude::numeric = 0)");
   });
 });

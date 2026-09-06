@@ -203,3 +203,7 @@ export function MediaUploader({
 export function getMediaUrls(files: UploadedFile[]): string[] {
   return files.map((f) => f.url);
 }
+
+export function getMediaAssetIds(files: UploadedFile[]): string[] {
+  return files.map((f) => f.assetId);
+}

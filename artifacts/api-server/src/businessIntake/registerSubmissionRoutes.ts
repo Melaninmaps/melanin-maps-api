@@ -8,12 +8,25 @@ import { isBlackOwned as hasBlackOwnedDesignation, pool } from "@workspace/db";
 import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 import { requireApprovedMember } from "../middlewares/requireAuth";
+import { businessSubmissionLimiter } from "../middleware/rateLimiter";
 import { dedupeKey, normalizeText } from "../lib/business-dedup";
 import { validateSubmission } from "./types";
 import {
   SubmissionRepository,
+  submissionPayloadHash,
   type Submission,
 } from "./submissionRepository";
+import {
+  assessCommunityPublication,
+  automaticPublicationReviewNote,
+  isValidPinCoordinates,
+  locationNeedsInformationAssessment,
+  ownershipClaimValue,
+  publicationCandidateFromInput,
+  publicationCandidateFromSubmission,
+  resolvePreciseBusinessLocation,
+  type ResolvedBusinessLocation,
+} from "./communityPublicationPolicy";
 
 interface TransactionPool {
   connect(): Promise<PoolClient>;
@@ -23,7 +36,7 @@ interface RouteDependencies {
   repository?: SubmissionRepository;
   transactionPool?: TransactionPool;
   approvedMemberMiddleware?: RequestHandler;
-  geocode?: typeof geocodeBusiness;
+  resolveLocation?: typeof resolvePreciseBusinessLocation;
 }
 
 class RouteError extends Error {
@@ -57,43 +70,54 @@ function adminOnly(req: Request, res: Response): { id: string; role?: string } |
 
 function invalidSubmissionMessage(error: unknown): string | null {
   const message = error instanceof Error ? error.message : "";
-  return /required|must be|invalid|unsupported|accepts at most|too long|completed business submission uploads/i.test(message)
+  return /required|must be|invalid|unsupported|accepts at most|too long|completed business submission uploads|completed private uploads/i.test(message)
     ? message
     : null;
 }
 
-function memberSubmission(submission: Submission): Omit<Submission, "reviewed_by_id" | "submitted_by_id" | "client_request_id"> {
+function memberSubmission(submission: Submission): Omit<Submission, "reviewed_by_id" | "submitted_by_id" | "client_request_id" | "request_payload_hash"> {
   const {
     reviewed_by_id: _reviewedById,
     submitted_by_id: _submittedById,
     client_request_id: _clientRequestId,
+    request_payload_hash: _requestPayloadHash,
     ...safe
   } = submission;
   return safe;
 }
 
-// ── Geocode a location string via Google Maps ─────────────────────────────
-async function geocodeBusiness(
-  parts: (string | null | undefined)[],
-): Promise<{ lat: string; lng: string }> {
-  const query = parts.filter(Boolean).join(", ");
-  const gmKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!gmKey || !query) return { lat: "0", lng: "0" };
-  try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${gmKey}`;
-    const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
-    const data = (await response.json()) as {
-      status?: string;
-      results?: Array<{ geometry?: { location?: { lat?: number; lng?: number } } }>;
-    };
-    const location = data.results?.[0]?.geometry?.location;
-    if (data.status === "OK" && typeof location?.lat === "number" && typeof location.lng === "number") {
-      return { lat: String(location.lat), lng: String(location.lng) };
-    }
-  } catch {
-    // Geocoding failure is non-fatal. The review queue retains the address.
+function sendIdempotentSubmission(
+  res: Response,
+  submission: Submission,
+  expectedPayloadHash: string,
+): void {
+  if (!submission.request_payload_hash) {
+    res.status(409).json({
+      error: "This older idempotency key cannot be replayed safely. Start a new submission.",
+      code: "IDEMPOTENCY_PAYLOAD_UNVERIFIABLE",
+    });
+    return;
   }
-  return { lat: "0", lng: "0" };
+  if (submission.request_payload_hash !== expectedPayloadHash) {
+    res.status(409).json({
+      error: "This idempotency key was already used for different business information.",
+      code: "IDEMPOTENCY_PAYLOAD_MISMATCH",
+    });
+    return;
+  }
+  const published = submission.status === "published";
+  res.status(200).json({
+    ok: true,
+    submissionId: submission.id,
+    businessId: submission.matched_business_id ?? undefined,
+    status: submission.status,
+    publicationOutcome: published ? "published" : submission.status,
+    mapPin: published,
+    duplicateRetry: true,
+    message: published
+      ? "This submission already published as a community-listed, unclaimed, not verified map listing."
+      : submission.review_note ?? "This submission is already saved. It was not submitted twice.",
+  });
 }
 
 function websiteHost(website: string | null): string | null {
@@ -105,32 +129,19 @@ function websiteHost(website: string | null): string | null {
   }
 }
 
-async function resolveSubmissionCoordinates(
-  submission: Submission,
-  geocode: typeof geocodeBusiness,
-): Promise<{ lat: string; lng: string }> {
-  if (submission.latitude !== null && submission.longitude !== null) {
-    return { lat: submission.latitude, lng: submission.longitude };
-  }
-  return geocode([
-    submission.address,
-    submission.city,
-    submission.state,
-    submission.postal_code,
-    submission.country,
-  ]);
-}
-
-// Called only inside the founder decision transaction. The resulting record is
-// community-listed and unclaimed; approval to publish is not ownership or
-// business verification. Submission media remains in the private review record
-// so an unclaimed profile continues to use the truthful category icon plate.
+// Called only inside the same transaction that finalizes a submission. The
+// resulting record is community-listed and unclaimed; publication is neither
+// ownership authority nor business/identity verification. Submission media
+// remains private until its separate moderation path completes.
 async function publishFromSubmission(
   submission: Submission,
-  reviewerId: string,
+  actorId: string,
   client: PoolClient,
-  coordinates: { lat: string; lng: string },
+  coordinates: ResolvedBusinessLocation,
 ): Promise<string> {
+  if (!isValidPinCoordinates(coordinates.lat, coordinates.lng)) {
+    throw new RouteError(409, "PRECISE_LOCATION_REQUIRED", "A precise non-zero location is required before publication.");
+  }
   const resolvedCountry = submission.country
     ?? (submission.state && submission.state.length <= 2 ? "USA" : null);
   const socialProfiles = Object.entries(submission.social_profiles ?? {}).map(([platform, url]) => ({
@@ -139,13 +150,29 @@ async function publishFromSubmission(
     handle: null,
     suppliedByUser: true,
   }));
-  const sourceEvidence = [{
-    url: submission.website ?? null,
-    sourceType: "user_supplied",
-    field: "identity",
+  const sourceEvidence: Array<{
+    url: string | null;
+    sourceType: string;
+    field: string;
+    supports: boolean;
+    excerpt: string;
+  }> = [
+    submission.website,
+    ...Object.values(submission.social_profiles ?? {}),
+  ].filter((url): url is string => Boolean(url)).map((url) => ({
+    url,
+    sourceType: "community_supplied_public_link",
+    field: "business_identity",
     supports: true,
-    excerpt: "Community supplied and administrator reviewed for directory publication; not ownership verification.",
-  }];
+    excerpt: "Community supplied for directory publication; not ownership verification.",
+  }));
+  sourceEvidence.push({
+    url: null,
+    sourceType: coordinates.source,
+    field: "precise_location",
+    supports: true,
+    excerpt: coordinates.formattedAddress ?? "Server-confirmed precise street address.",
+  });
   const businessId = randomUUID();
   const canonicalDedupeKey = dedupeKey({
     name: submission.name,
@@ -221,7 +248,7 @@ async function publishFromSubmission(
         postal_code, latitude, longitude, phone, website, website_domain, hours,
         price_range, tags, image_url, photos, pending_photos, videos,
         instagram, tiktok, facebook, youtube, social_profiles, source_evidence,
-        ownership_designations, verified_designations, black_owned, verified,
+        ownership_designations, verified_designations, ownership_claim, black_owned, verified,
         featured, promotion_eligible, feedback_opt_in, status, listing_status,
         business_status, profile_status, owner_claim_status, submitted_by_id,
         added_by_member_id, added_via, data_source, provider_place_id,
@@ -232,11 +259,11 @@ async function publishFromSubmission(
         $10,$11,$12,$13,$14,$15,$16,
         $17,$18::jsonb,NULL,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
         $19,$20,$21,$22,$23::jsonb,$24::jsonb,
-        $25::jsonb,'[]'::jsonb,$26,false,
+        $25::jsonb,'[]'::jsonb,$26,$27,false,
         false,false,false,'active','live_unclaimed',
         'community','community_listed','unclaimed',NULL,
-        $27,'community_submission','community_submission',$28,
-        $29,$30,'community_submission',$31,NOW(),
+        $28,'community_submission','community_submission',$29,
+        $30,$31,'community_submission',$32,NOW(),
         NOW(),NOW())
      RETURNING id`,
     [
@@ -265,9 +292,10 @@ async function publishFromSubmission(
       JSON.stringify(socialProfiles),
       JSON.stringify(sourceEvidence),
       JSON.stringify(submission.ownership_designations ?? []),
+      ownershipClaimValue(submission),
       hasBlackOwnedDesignation(submission.ownership_designations ?? []),
-      submission.submitted_by_id ?? reviewerId,
-      submission.provider_place_id,
+      submission.submitted_by_id ?? actorId,
+      null,
       normalizeText(submission.name),
       canonicalDedupeKey,
       submission.id,
@@ -289,8 +317,8 @@ async function publishFromSubmission(
       result.rows[0].id,
       submission.city.trim().toLowerCase(),
       submission.state?.trim().toUpperCase() ?? "",
-      Number(coordinates.lat) || null,
-      Number(coordinates.lng) || null,
+      Number(coordinates.lat),
+      Number(coordinates.lng),
     ],
   );
 
@@ -308,12 +336,12 @@ async function publishFromSubmission(
       submission.city,
       submission.state ?? "",
       submission.website,
-      Number(coordinates.lat) || null,
-      Number(coordinates.lng) || null,
+      Number(coordinates.lat),
+      Number(coordinates.lng),
       submission.category,
-      submission.location_source ?? "community_intake",
+      coordinates.source,
       result.rows[0].id,
-      `Published from community submission ${submission.id} by admin ${reviewerId}`,
+      `Published from community submission ${submission.id} by objective automatic checks; actor ${actorId}; location source ${coordinates.source}`,
     ],
   );
 
@@ -327,14 +355,18 @@ export function registerSubmissionRoutes(
   const repository = dependencies.repository ?? new SubmissionRepository();
   const transactionPool = dependencies.transactionPool ?? pool;
   const approvedMember = dependencies.approvedMemberMiddleware ?? requireApprovedMember;
-  const geocode = dependencies.geocode ?? geocodeBusiness;
+  const resolveLocation = dependencies.resolveLocation ?? resolvePreciseBusinessLocation;
 
-  // Approved members and testers only. Every proposal begins pending_review;
-  // no canonical business is created by this route.
+  // Approved members and testers only. Ordinary submissions with complete
+  // evidence publish atomically as unclaimed/not verified. Objective holds
+  // stay private; no founder click is required for an eligible bakery, shop,
+  // restaurant, salon, or other ordinary business.
   app.post(
     "/api/community/business-submissions",
     approvedMember,
+    businessSubmissionLimiter,
     async (req: Request, res: Response) => {
+      let client: PoolClient | null = null;
       try {
         const body = req.body as Record<string, unknown>;
         const input = validateSubmission({
@@ -343,6 +375,23 @@ export function registerSubmissionRoutes(
           sourceChannel: body.sourceChannel ?? req.query["source"],
           sourceCampaign: body.sourceCampaign ?? req.query["campaign"],
         });
+        if (!input.clientRequestId) {
+          throw new RouteError(
+            400,
+            "IDEMPOTENCY_KEY_REQUIRED",
+            "A unique submission request ID is required. Please try again from the form.",
+          );
+        }
+
+        const user = requestUser(req)!;
+        const payloadHash = submissionPayloadHash(input);
+        if (input.clientRequestId) {
+          const retry = await repository.findByClientRequest(user.id, input.clientRequestId);
+          if (retry) {
+            sendIdempotentSubmission(res, retry, payloadHash);
+            return;
+          }
+        }
 
         const publishedDuplicate = await repository.findPublishedDuplicate(input);
         if (publishedDuplicate) {
@@ -354,22 +403,87 @@ export function registerSubmissionRoutes(
           return;
         }
 
-        const user = requestUser(req)!;
-        const result = await repository.create(input, user.id);
-        if (result.created) {
-          await repository.logAuditEvent(result.submission.id, user.id, "submitted").catch(() => undefined);
+        let assessment = assessCommunityPublication(publicationCandidateFromInput(input));
+        let preparedLocation: ResolvedBusinessLocation | null = null;
+        if (assessment.outcome === "eligible") {
+          preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
+          if (!preparedLocation) assessment = locationNeedsInformationAssessment();
         }
 
-        res.status(result.created ? 201 : 200).json({
+        client = await transactionPool.connect();
+        await client.query("BEGIN");
+        const result = await repository.create(
+          input,
+          user.id,
+          client,
+          assessment.submissionStatus,
+          assessment.auditNote,
+        );
+
+        if (!result.created) {
+          await client.query("COMMIT");
+          sendIdempotentSubmission(res, result.submission, payloadHash);
+          return;
+        }
+
+        await repository.logAuditEvent(result.submission.id, user.id, "submitted", undefined, client);
+
+        let status = result.submission.status;
+        let businessId: string | undefined;
+        let message = assessment.publicMessage;
+        let mapPin = false;
+        let publicationOutcome: string = assessment.outcome;
+
+        if (assessment.outcome === "eligible" && preparedLocation) {
+          const stored = await repository.getByIdForUpdate(result.submission.id, client)
+            ?? result.submission;
+          businessId = await publishFromSubmission(stored, user.id, client, preparedLocation);
+          const reviewNote = automaticPublicationReviewNote(preparedLocation);
+          const published = await repository.finalizeAutomaticPublication(
+            stored.id,
+            businessId,
+            reviewNote,
+            client,
+          );
+          if (!published) {
+            throw new RouteError(409, "SUBMISSION_STATE_CHANGED", "The submission changed before publication; no partial listing was created.");
+          }
+          await repository.logAuditEvent(stored.id, user.id, "automatic_published", reviewNote, client);
+          status = "published";
+          publicationOutcome = "published";
+          mapPin = true;
+          message = "Published on the map as community-listed, unclaimed, and not verified.";
+        } else {
+          await repository.logAuditEvent(
+            result.submission.id,
+            user.id,
+            `automatic_hold_${assessment.outcome}`,
+            assessment.auditNote,
+            client,
+          );
+        }
+
+        await client.query("COMMIT");
+        if (result.created) {
+          req.log?.info({ submissionId: result.submission.id, publicationOutcome }, "Community business submission processed");
+        }
+
+        res.status(201).json({
           ok: true,
           submissionId: result.submission.id,
-          status: result.submission.status,
-          duplicateRetry: !result.created,
-          message: result.created
-            ? "Your business was submitted for review. It is not public yet."
-            : "This submission is already in review. It was not submitted twice.",
+          businessId,
+          status,
+          publicationOutcome,
+          mapPin,
+          duplicateRetry: false,
+          message,
         });
       } catch (error: unknown) {
+        if (client) await client.query("ROLLBACK").catch(() => undefined);
+        if (error instanceof RouteError) {
+          res.status(error.statusCode).json({ error: error.message, code: error.code, ...error.details });
+          return;
+        }
         const validationMessage = invalidSubmissionMessage(error);
         if (validationMessage) {
           res.status(400).json({ error: validationMessage, code: "INVALID_SUBMISSION" });
@@ -377,6 +491,8 @@ export function registerSubmissionRoutes(
         }
         req.log?.error({ err: error }, "Failed to create community business submission");
         res.status(500).json({ error: "Failed to submit. Please try again." });
+      } finally {
+        client?.release();
       }
     },
   );
@@ -401,6 +517,7 @@ export function registerSubmissionRoutes(
     async (req: Request, res: Response) => {
       const user = requestUser(req)!;
       const submissionId = String(req.params.id);
+      let client: PoolClient | null = null;
       try {
         const body = req.body as Record<string, unknown>;
         const input = validateSubmission({
@@ -417,22 +534,80 @@ export function registerSubmissionRoutes(
           return;
         }
 
-        const amended = await repository.amendNeedsInfo(submissionId, user.id, input);
-        if (!amended) {
-          res.status(409).json({
-            error: "Only your own submission awaiting more information can be resubmitted.",
-            code: "SUBMISSION_NOT_AMENDABLE",
-          });
-          return;
+        let assessment = assessCommunityPublication(publicationCandidateFromInput(input));
+        let preparedLocation: ResolvedBusinessLocation | null = null;
+        if (assessment.outcome === "eligible") {
+          preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
+          if (!preparedLocation) assessment = locationNeedsInformationAssessment();
         }
-        await repository.logAuditEvent(submissionId, user.id, "member_resubmitted");
+
+        client = await transactionPool.connect();
+        await client.query("BEGIN");
+        const amended = await repository.amendNeedsInfo(
+          submissionId,
+          user.id,
+          input,
+          client,
+          assessment.submissionStatus,
+          assessment.auditNote,
+        );
+        if (!amended) {
+          throw new RouteError(
+            409,
+            "SUBMISSION_NOT_AMENDABLE",
+            "Only your own submission awaiting more information can be resubmitted.",
+          );
+        }
+        await repository.logAuditEvent(submissionId, user.id, "member_resubmitted", undefined, client);
+
+        let status = amended.status;
+        let businessId: string | undefined;
+        let publicationOutcome: string = assessment.outcome;
+        let mapPin = false;
+        let message = assessment.publicMessage;
+        if (assessment.outcome === "eligible" && preparedLocation) {
+          businessId = await publishFromSubmission(amended, user.id, client, preparedLocation);
+          const reviewNote = automaticPublicationReviewNote(preparedLocation);
+          const published = await repository.finalizeAutomaticPublication(
+            amended.id,
+            businessId,
+            reviewNote,
+            client,
+          );
+          if (!published) {
+            throw new RouteError(409, "SUBMISSION_STATE_CHANGED", "The submission changed before publication; no partial listing was created.");
+          }
+          await repository.logAuditEvent(amended.id, user.id, "automatic_published", reviewNote, client);
+          status = "published";
+          publicationOutcome = "published";
+          mapPin = true;
+          message = "Published on the map as community-listed, unclaimed, and not verified.";
+        } else {
+          await repository.logAuditEvent(
+            amended.id,
+            user.id,
+            `automatic_hold_${assessment.outcome}`,
+            assessment.auditNote,
+            client,
+          );
+        }
+
+        await client.query("COMMIT");
         res.json({
           ok: true,
           submissionId,
-          status: amended.status,
-          message: "Your updated submission is back in pending review and is not public.",
+          businessId,
+          status,
+          publicationOutcome,
+          mapPin,
+          message,
         });
       } catch (error: unknown) {
+        if (client) await client.query("ROLLBACK").catch(() => undefined);
+        if (error instanceof RouteError) {
+          res.status(error.statusCode).json({ error: error.message, code: error.code, ...error.details });
+          return;
+        }
         const validationMessage = invalidSubmissionMessage(error);
         if (validationMessage) {
           res.status(400).json({ error: validationMessage, code: "INVALID_SUBMISSION" });
@@ -447,6 +622,8 @@ export function registerSubmissionRoutes(
         }
         req.log?.error({ err: error }, "Failed to amend community business submission");
         res.status(500).json({ error: "Failed to update your submission." });
+      } finally {
+        client?.release();
       }
     },
   );
@@ -513,9 +690,27 @@ export function registerSubmissionRoutes(
         if (!preflightSubmission) {
           throw new RouteError(404, "SUBMISSION_NOT_FOUND", "Submission not found");
         }
-        const preparedCoordinates = status === "published"
-          ? await resolveSubmissionCoordinates(preflightSubmission, geocode)
+        const preflightAssessment = assessCommunityPublication(
+          publicationCandidateFromSubmission(preflightSubmission),
+        );
+        if (status === "published" && preflightAssessment.outcome !== "eligible") {
+          throw new RouteError(
+            409,
+            "PUBLICATION_HELD",
+            preflightAssessment.publicMessage,
+            { publicationOutcome: preflightAssessment.outcome },
+          );
+        }
+        const preparedLocation = status === "published"
+          ? await resolveLocation(publicationCandidateFromSubmission(preflightSubmission))
           : null;
+        if (status === "published" && !preparedLocation) {
+          throw new RouteError(
+            409,
+            "PRECISE_LOCATION_REQUIRED",
+            "A precise non-zero address location is required before publication; no fallback pin was created.",
+          );
+        }
 
         client = await transactionPool.connect();
         await client.query("BEGIN");
@@ -530,10 +725,21 @@ export function registerSubmissionRoutes(
             `Submission is already ${submission.status}`,
           );
         }
+        const lockedAssessment = assessCommunityPublication(
+          publicationCandidateFromSubmission(submission),
+        );
+        if (status === "published" && lockedAssessment.outcome !== "eligible") {
+          throw new RouteError(
+            409,
+            "PUBLICATION_HELD",
+            lockedAssessment.publicMessage,
+            { publicationOutcome: lockedAssessment.outcome },
+          );
+        }
 
         let businessId: string | undefined;
         if (status === "published") {
-          businessId = await publishFromSubmission(submission, admin.id, client, preparedCoordinates!);
+          businessId = await publishFromSubmission(submission, admin.id, client, preparedLocation!);
         }
 
         const updated = await repository.decide(

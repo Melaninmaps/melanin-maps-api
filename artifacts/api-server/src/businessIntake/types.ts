@@ -1,7 +1,7 @@
 // ── Community Business Submission — Input Types ────────────────────────────
-// PERMANENT RULE: community submissions always start as pending_review.
-// They are invisible on the map, in search, in Kinfolk results, and in
-// every public API until an administrator explicitly publishes them.
+// Ordinary, evidence-complete community submissions may publish immediately as
+// community-listed, unclaimed, and not verified. Regulated, resource,
+// duplicate, unsafe, or location-incomplete submissions remain non-public.
 
 import { OWNERSHIP_DESIGNATIONS } from "@workspace/db";
 import { isIP } from "node:net";
@@ -18,6 +18,7 @@ export const SOCIAL_PLATFORMS = [
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 export type SubmissionSocialProfiles = Partial<Record<SocialPlatform, string>>;
 export type SubmissionLocationSource = "member_entered" | "mwm_directory" | "google_places";
+export type CommunityReportedOwnership = "minority_owned" | "non_minority_owned" | "not_sure";
 
 export interface CommunityBusinessSubmissionInput {
   name: string;
@@ -33,7 +34,9 @@ export interface CommunityBusinessSubmissionInput {
   phone?: string;
   socialProfiles?: SubmissionSocialProfiles;
   mediaUrls?: string[];
+  mediaAssetIds?: string[];
   ownershipDesignations?: string[];
+  communityReportedOwnership?: CommunityReportedOwnership;
   priceRange?: string;
   hours?: string;
   tags?: string[];
@@ -236,6 +239,27 @@ function normalizeOwnership(value: unknown): string[] {
   return normalized.slice(0, 20);
 }
 
+function normalizeCommunityReportedOwnership(
+  body: Record<string, unknown>,
+  ownershipDesignations: string[],
+): CommunityReportedOwnership {
+  const value = body.communityReportedOwnership;
+  if (value === undefined || value === null || value === "") {
+    return ownershipDesignations.length > 0 ? "minority_owned" : "not_sure";
+  }
+  if (
+    value !== "minority_owned"
+    && value !== "non_minority_owned"
+    && value !== "not_sure"
+  ) {
+    throw new Error("communityReportedOwnership is invalid");
+  }
+  if (value === "non_minority_owned" && ownershipDesignations.length > 0) {
+    throw new Error("non-minority-owned cannot be combined with minority ownership designations");
+  }
+  return value;
+}
+
 function normalizeStringList(value: unknown, field: string, maximum: number, maximumLength: number): string[] {
   if (value === undefined || value === null || value === "") return [];
   const items = Array.isArray(value)
@@ -261,6 +285,16 @@ function normalizeMediaUrls(value: unknown): string[] {
   return urls.map((url) => normalizeHttpsUrl(url, "mediaUrls"));
 }
 
+function normalizeMediaAssetIds(value: unknown): string[] {
+  const ids = normalizeStringList(value, "mediaAssetIds", 3, 64);
+  for (const id of ids) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      throw new Error("mediaAssetIds must contain valid asset IDs");
+    }
+  }
+  return ids;
+}
+
 function optionalCoordinate(
   body: Record<string, unknown>,
   key: "latitude" | "longitude",
@@ -280,7 +314,9 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
   const body = objectBody(input);
   const website = optionalText(body, "website", 512);
   const mediaUrls = normalizeMediaUrls(body.mediaUrls);
+  const mediaAssetIds = normalizeMediaAssetIds(body.mediaAssetIds);
   const tags = normalizeStringList(body.tags, "tags", 20, 50);
+  const ownershipDesignations = normalizeOwnership(body.ownershipDesignations);
   const latitude = optionalCoordinate(body, "latitude", -90, 90);
   const longitude = optionalCoordinate(body, "longitude", -180, 180);
   if ((latitude === undefined) !== (longitude === undefined)) {
@@ -316,7 +352,9 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
     phone: optionalText(body, "phone", 40),
     socialProfiles: normalizeSocialProfiles(body),
     mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
-    ownershipDesignations: normalizeOwnership(body.ownershipDesignations),
+    mediaAssetIds: mediaAssetIds.length > 0 ? mediaAssetIds : undefined,
+    ownershipDesignations,
+    communityReportedOwnership: normalizeCommunityReportedOwnership(body, ownershipDesignations),
     priceRange: rawPriceRange,
     hours: optionalText(body, "hours", 255),
     tags: tags.length > 0 ? tags : undefined,

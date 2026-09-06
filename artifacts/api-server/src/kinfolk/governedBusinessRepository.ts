@@ -38,6 +38,7 @@ export type GovernedKinfolkBusiness = Readonly<{
   website: string | null;
   verified: boolean;
   blackOwned: boolean;
+  ownershipClaim?: string | null;
   tags: string[];
   profileStatus: string | null;
   story: string | null;
@@ -85,6 +86,7 @@ type BusinessRow = {
   website: unknown;
   verified: unknown;
   black_owned: unknown;
+  ownership_claim: unknown;
   tags: unknown;
   profile_status: unknown;
   business_story: unknown;
@@ -134,6 +136,7 @@ const CANONICAL_SELECT = `
   b.website,
   COALESCE(b.verified, false) AS verified,
   COALESCE(b.black_owned, false) AS black_owned,
+  b.ownership_claim,
   COALESCE(b.tags, '[]'::jsonb) AS tags,
   b.profile_status,
   bi.business_story,
@@ -197,6 +200,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     website: nullableText(row.website),
     verified: row.verified === true,
     blackOwned: row.black_owned === true,
+    ownershipClaim: nullableText(row.ownership_claim),
     tags: stringArray(row.tags),
     profileStatus: nullableText(row.profile_status),
     story: nullableText(row.business_story),

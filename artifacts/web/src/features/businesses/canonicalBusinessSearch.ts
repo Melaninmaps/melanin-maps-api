@@ -60,6 +60,7 @@ export interface CanonicalBusinessSearchRecord {
   description?: string | null;
   website?: string | null;
   listingStatus?: string | null;
+  ownershipClaim?: string | null;
   verified?: boolean | null;
   priceRange?: string | null;
   tags?: unknown;

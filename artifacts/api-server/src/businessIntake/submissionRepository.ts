@@ -1,7 +1,11 @@
 import { pool } from "@workspace/db";
 import { createHash, randomUUID } from "crypto";
 import type { QueryResult, QueryResultRow } from "pg";
-import type { CommunityBusinessSubmissionInput, SubmissionSocialProfiles } from "./types";
+import type {
+  CommunityBusinessSubmissionInput,
+  CommunityReportedOwnership,
+  SubmissionSocialProfiles,
+} from "./types";
 
 export type SubmissionStatus = "pending_review" | "published" | "declined" | "needs_info";
 
@@ -20,7 +24,9 @@ export interface Submission {
   phone: string | null;
   social_profiles: SubmissionSocialProfiles;
   media_urls: string[];
+  media_asset_ids: string[];
   ownership_designations: string[];
+  community_reported_ownership: CommunityReportedOwnership;
   price_range: string | null;
   hours: string | null;
   tags: string[];
@@ -32,6 +38,7 @@ export interface Submission {
   source_channel: string | null;
   submitter_note: string | null;
   client_request_id: string | null;
+  request_payload_hash: string | null;
   submitted_by_id: string | null;
   status: SubmissionStatus;
   reviewed_by_id: string | null;
@@ -66,16 +73,12 @@ export type Queryable = {
 
 const SUBMISSION_COLUMNS = `
   id, name, category, subcategory, description, address, city, state,
-  postal_code, country, website, phone, social_profiles, media_urls,
-  ownership_designations, price_range, hours, tags, latitude, longitude,
+  postal_code, country, website, phone, social_profiles, media_urls, media_asset_ids,
+  ownership_designations, community_reported_ownership, price_range, hours, tags, latitude, longitude,
   provider_place_id, location_source, source_campaign, source_channel,
-  submitter_note, client_request_id, submitted_by_id, status, reviewed_by_id,
+  submitter_note, client_request_id, request_payload_hash, submitted_by_id, status, reviewed_by_id,
   review_note, matched_business_id, created_at, updated_at
 `;
-
-function isUniqueViolation(error: unknown): boolean {
-  return Boolean(error && typeof error === "object" && (error as { code?: string }).code === "23505");
-}
 
 function submissionIdentityKey(input: CommunityBusinessSubmissionInput): string {
   const normalized = [input.name, input.city, input.state ?? "", input.address ?? ""]
@@ -84,8 +87,28 @@ function submissionIdentityKey(input: CommunityBusinessSubmissionInput): string 
   return createHash("sha256").update(normalized).digest("hex");
 }
 
+export function submissionPayloadHash(input: CommunityBusinessSubmissionInput): string {
+  const { clientRequestId: _clientRequestId, ...payload } = input;
+  return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+}
+
 export class SubmissionRepository {
   constructor(private readonly database: Queryable = pool) {}
+
+  async findByClientRequest(
+    submittedById: string,
+    clientRequestId: string,
+    database: Queryable = this.database,
+  ): Promise<Submission | null> {
+    const result = await database.query<Submission>(
+      `SELECT ${SUBMISSION_COLUMNS}
+       FROM community_business_submissions
+       WHERE submitted_by_id = $1 AND client_request_id = $2
+       LIMIT 1`,
+      [submittedById, clientRequestId],
+    );
+    return result.rows[0] ?? null;
+  }
 
   async findPublishedDuplicate(input: CommunityBusinessSubmissionInput): Promise<PublishedDuplicate | null> {
     const result = await this.database.query<PublishedDuplicate>(
@@ -108,29 +131,36 @@ export class SubmissionRepository {
   private async validateOwnedMedia(
     submittedById: string,
     mediaUrls: string[],
+    mediaAssetIds: string[],
+    database: Queryable = this.database,
   ): Promise<void> {
-    if (mediaUrls.length === 0) return;
-    const result = await this.database.query<{ public_url: string }>(
-      `SELECT public_url
+    if (mediaUrls.length === 0 && mediaAssetIds.length === 0) return;
+    const result = await database.query<{ id: string; public_url: string | null }>(
+      `SELECT id, public_url
        FROM media_assets
        WHERE uploader_id = $1
          AND purpose = 'business_submission'
          AND status = 'ready'
-         AND public_url = ANY($2::text[])`,
-      [submittedById, mediaUrls],
+         AND (id = ANY($2::uuid[]) OR public_url = ANY($3::text[]))`,
+      [submittedById, mediaAssetIds, mediaUrls],
     );
-    const owned = new Set(result.rows.map((row) => row.public_url));
-    if (mediaUrls.some((url) => !owned.has(url))) {
-      throw new Error("mediaUrls must reference your completed business submission uploads");
+    const ownedIds = new Set(result.rows.map((row) => row.id));
+    const ownedUrls = new Set(result.rows.map((row) => row.public_url).filter(Boolean));
+    if (
+      mediaAssetIds.some((id) => !ownedIds.has(id))
+      || mediaUrls.some((url) => !ownedUrls.has(url))
+    ) {
+      throw new Error("business submission media must reference your completed private uploads");
     }
   }
 
   private async findRetry(
     input: CommunityBusinessSubmissionInput,
     submittedById: string,
+    database: Queryable = this.database,
   ): Promise<Submission | null> {
     if (input.clientRequestId) {
-      const byRequest = await this.database.query<Submission>(
+      const byRequest = await database.query<Submission>(
         `SELECT ${SUBMISSION_COLUMNS}
          FROM community_business_submissions
          WHERE submitted_by_id = $1 AND client_request_id = $2
@@ -140,7 +170,7 @@ export class SubmissionRepository {
       if (byRequest.rows[0]) return byRequest.rows[0];
     }
 
-    const byIdentity = await this.database.query<Submission>(
+    const byIdentity = await database.query<Submission>(
       `SELECT ${SUBMISSION_COLUMNS}
        FROM community_business_submissions
        WHERE submitted_by_id = $1
@@ -159,29 +189,33 @@ export class SubmissionRepository {
   async create(
     input: CommunityBusinessSubmissionInput,
     submittedById: string,
+    database: Queryable = this.database,
+    initialStatus: "pending_review" | "needs_info" = "pending_review",
+    initialReviewNote?: string,
   ): Promise<CreateSubmissionResult> {
     if (!submittedById) throw new Error("Authentication required");
 
-    const retry = await this.findRetry(input, submittedById);
+    const retry = await this.findRetry(input, submittedById, database);
     if (retry) return { submission: retry, created: false };
 
     const mediaUrls = input.mediaUrls ?? [];
-    await this.validateOwnedMedia(submittedById, mediaUrls);
+    const mediaAssetIds = input.mediaAssetIds ?? [];
+    await this.validateOwnedMedia(submittedById, mediaUrls, mediaAssetIds, database);
 
     const id = randomUUID();
-    try {
-      const result = await this.database.query<Submission>(
+    const result = await database.query<Submission>(
         `INSERT INTO community_business_submissions
            (id, name, category, subcategory, description, address, city, state,
-            postal_code, country, website, phone, social_profiles, media_urls,
-            ownership_designations, price_range, hours, tags, latitude, longitude,
+            postal_code, country, website, phone, social_profiles, media_urls, media_asset_ids,
+            ownership_designations, community_reported_ownership, price_range, hours, tags, latitude, longitude,
             provider_place_id, location_source, source_campaign, source_channel,
-            submitter_note, client_request_id, identity_key, submitted_by_id,
-            status, created_at, updated_at)
+            submitter_note, client_request_id, request_payload_hash, identity_key, submitted_by_id,
+            status, review_note, created_at, updated_at)
          VALUES
-           ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,$15::jsonb,
-            $16,$17,$18::jsonb,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,
-            'pending_review',NOW(),NOW())
+           ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,$15::jsonb,$16::jsonb,
+            $17,$18,$19,$20::jsonb,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,
+            $31,$32,$33,NOW(),NOW())
+         ON CONFLICT DO NOTHING
          RETURNING ${SUBMISSION_COLUMNS}`,
         [
           id,
@@ -198,7 +232,9 @@ export class SubmissionRepository {
           input.phone ?? null,
           JSON.stringify(input.socialProfiles ?? {}),
           JSON.stringify(mediaUrls),
+          JSON.stringify(mediaAssetIds),
           JSON.stringify(input.ownershipDesignations ?? []),
+          input.communityReportedOwnership ?? "not_sure",
           input.priceRange ?? null,
           input.hours ?? null,
           JSON.stringify(input.tags ?? []),
@@ -210,18 +246,17 @@ export class SubmissionRepository {
           input.sourceChannel ?? null,
           input.submitterNote ?? null,
           input.clientRequestId ?? null,
+          submissionPayloadHash(input),
           submissionIdentityKey(input),
           submittedById,
+          initialStatus,
+          initialReviewNote ?? null,
         ],
-      );
-      return { submission: result.rows[0], created: true };
-    } catch (error: unknown) {
-      if (isUniqueViolation(error)) {
-        const retryAfterConflict = await this.findRetry(input, submittedById);
-        if (retryAfterConflict) return { submission: retryAfterConflict, created: false };
-      }
-      throw error;
-    }
+    );
+    if (result.rows[0]) return { submission: result.rows[0], created: true };
+    const retryAfterConflict = await this.findRetry(input, submittedById, database);
+    if (retryAfterConflict) return { submission: retryAfterConflict, created: false };
+    throw new Error("Submission could not be created because its identity is already reserved");
   }
 
   async list(status?: string): Promise<Submission[]> {
@@ -282,20 +317,25 @@ export class SubmissionRepository {
     id: string,
     submittedById: string,
     input: CommunityBusinessSubmissionInput,
+    database: Queryable = this.database,
+    nextStatus: "pending_review" | "needs_info" = "pending_review",
+    reviewNote?: string,
   ): Promise<Submission | null> {
     const mediaUrls = input.mediaUrls ?? [];
-    await this.validateOwnedMedia(submittedById, mediaUrls);
-    const result = await this.database.query<Submission>(
+    const mediaAssetIds = input.mediaAssetIds ?? [];
+    await this.validateOwnedMedia(submittedById, mediaUrls, mediaAssetIds, database);
+    const result = await database.query<Submission>(
       `UPDATE community_business_submissions
        SET name = $3, category = $4, subcategory = $5, description = $6,
            address = $7, city = $8, state = $9, postal_code = $10,
            country = $11, website = $12, phone = $13,
-           social_profiles = $14::jsonb, media_urls = $15::jsonb,
-           ownership_designations = $16::jsonb, price_range = $17,
-           hours = $18, tags = $19::jsonb, latitude = $20, longitude = $21,
-           provider_place_id = $22, location_source = $23,
-           source_campaign = $24, source_channel = $25, submitter_note = $26,
-           identity_key = $27, status = 'pending_review', reviewed_by_id = NULL,
+           social_profiles = $14::jsonb, media_urls = $15::jsonb, media_asset_ids = $16::jsonb,
+           ownership_designations = $17::jsonb, community_reported_ownership = $18,
+           price_range = $19, hours = $20, tags = $21::jsonb,
+           latitude = $22, longitude = $23, provider_place_id = $24,
+           location_source = $25, source_campaign = $26, source_channel = $27,
+           submitter_note = $28, identity_key = $29, status = $30, reviewed_by_id = NULL,
+           review_note = $31,
            matched_business_id = NULL, updated_at = NOW()
        WHERE id = $1 AND submitted_by_id = $2 AND status = 'needs_info'
        RETURNING ${SUBMISSION_COLUMNS}`,
@@ -315,7 +355,9 @@ export class SubmissionRepository {
         input.phone ?? null,
         JSON.stringify(input.socialProfiles ?? {}),
         JSON.stringify(mediaUrls),
+        JSON.stringify(mediaAssetIds),
         JSON.stringify(input.ownershipDesignations ?? []),
+        input.communityReportedOwnership ?? "not_sure",
         input.priceRange ?? null,
         input.hours ?? null,
         JSON.stringify(input.tags ?? []),
@@ -327,6 +369,8 @@ export class SubmissionRepository {
         input.sourceChannel ?? null,
         input.submitterNote ?? null,
         submissionIdentityKey(input),
+        nextStatus,
+        reviewNote ?? null,
       ],
     );
     return result.rows[0] ?? null;
@@ -351,6 +395,23 @@ export class SubmissionRepository {
         decision.reviewNote ?? null,
         decision.matchedBusinessId ?? null,
       ],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async finalizeAutomaticPublication(
+    id: string,
+    matchedBusinessId: string,
+    reviewNote: string,
+    database: Queryable,
+  ): Promise<Submission | null> {
+    const result = await database.query<Submission>(
+      `UPDATE community_business_submissions
+       SET status = 'published', reviewed_by_id = NULL, review_note = $3,
+           matched_business_id = $2, updated_at = NOW()
+       WHERE id = $1 AND status IN ('pending_review', 'needs_info')
+       RETURNING ${SUBMISSION_COLUMNS}`,
+      [id, matchedBusinessId, reviewNote],
     );
     return result.rows[0] ?? null;
   }

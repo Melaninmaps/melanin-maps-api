@@ -34,7 +34,7 @@ interface MemberSubmission {
 }
 
 const STATUS: Record<SubmissionStatus, { label: string; detail: string; icon: keyof typeof Feather.glyphMap; color: string }> = {
-  pending_review: { label: "Pending review", detail: "Not public", icon: "clock", color: "#B7791F" },
+  pending_review: { label: "Software hold", detail: "Not public · Check the reason below", icon: "clock", color: "#B7791F" },
   needs_info: { label: "More information needed", detail: "Not public", icon: "alert-circle", color: "#2563EB" },
   declined: { label: "Not published", detail: "Not public", icon: "x-circle", color: "#DC2626" },
   published: { label: "Published", detail: "Community-listed · Unclaimed · Not verified", icon: "check-circle", color: "#16803A" },
@@ -90,7 +90,7 @@ export default function MyBusinessSubmissionsScreen() {
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 36 }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
         >
-          <Text style={[styles.intro, { color: colors.mutedForeground }]}>A submission stays private until an administrator publishes it.</Text>
+          <Text style={[styles.intro, { color: colors.mutedForeground }]}>Complete ordinary businesses publish immediately. Only records needing location, evidence, duplicate, regulated-service, or resource-routing checks stay private.</Text>
           {error ? (
             <View style={[styles.notice, { borderColor: "#DC262655", backgroundColor: "#DC262610" }]}>
               <Text style={{ color: "#DC2626", flex: 1 }}>{error}</Text>

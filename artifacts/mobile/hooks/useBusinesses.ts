@@ -75,6 +75,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     imageUrl: b.imageUrl as string | undefined,
     profileStatus: b.profileStatus as string | null | undefined,
     listingStatus: b.listingStatus as string | null | undefined,
+    ownershipClaim: b.ownershipClaim as string | null | undefined,
     instagram: (b.instagram ?? socialProfiles.instagram) as string | undefined,
     tiktok: (b.tiktok ?? socialProfiles.tiktok) as string | undefined,
     twitter: b.twitter as string | undefined,

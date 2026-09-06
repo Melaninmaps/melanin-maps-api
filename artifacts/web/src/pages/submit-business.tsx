@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Layout } from "@/components/layout";
-import { MediaUploader, getMediaUrls } from "@/components/MediaUploader";
+import { MediaUploader, getMediaAssetIds } from "@/components/MediaUploader";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   MapPin, Store, Globe, Phone, Heart, ChevronDown, CheckCircle2, ArrowLeft,
@@ -10,6 +10,15 @@ import {
 const BASE = import.meta.env.BASE_URL;
 
 type Step = "form" | "success";
+type CommunityReportedOwnership = "minority_owned" | "non_minority_owned" | "not_sure";
+
+interface SubmissionOutcome {
+  status: string;
+  publicationOutcome: string;
+  message: string;
+  businessId?: string;
+  mapPin: boolean;
+}
 
 const OWNERSHIP_OPTIONS = [
   { value: "black-owned", label: "Black-owned" },
@@ -42,9 +51,10 @@ export default function SubmitBusiness() {
   const amendId = new URLSearchParams(window.location.search).get("amend");
   const [step, setStep] = useState<Step>("form");
   const [submissionId, setSubmissionId] = useState("");
+  const [outcome, setOutcome] = useState<SubmissionOutcome | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const [uploadedAssetIds, setUploadedAssetIds] = useState<string[]>([]);
   const clientRequestId = useRef(crypto.randomUUID());
 
   const [form, setForm] = useState({
@@ -65,6 +75,7 @@ export default function SubmitBusiness() {
     youtube: "",
     twitch: "",
     snapchat: "",
+    communityReportedOwnership: "not_sure" as CommunityReportedOwnership,
     ownershipDesignations: [] as string[],
     submitterNote: "",
   });
@@ -75,6 +86,7 @@ export default function SubmitBusiness() {
   const toggleOwnership = (val: string) =>
     setForm((f) => ({
       ...f,
+      communityReportedOwnership: "minority_owned",
       ownershipDesignations: f.ownershipDesignations.includes(val)
         ? f.ownershipDesignations.filter((v) => v !== val)
         : [...f.ownershipDesignations, val],
@@ -108,12 +120,16 @@ export default function SubmitBusiness() {
           youtube: socials.youtube ?? "",
           twitch: socials.twitch ?? "",
           snapchat: socials.snapchat ?? "",
+          communityReportedOwnership: (item.community_reported_ownership === "minority_owned"
+            || item.community_reported_ownership === "non_minority_owned")
+            ? item.community_reported_ownership
+            : "not_sure",
           ownershipDesignations: Array.isArray(item.ownership_designations)
             ? item.ownership_designations.map(String).map((value) => OWNERSHIP_TO_FORM[value] ?? value)
             : [],
           submitterNote: String(item.submitter_note ?? ""),
         });
-        setUploadedUrls(Array.isArray(item.media_urls) ? item.media_urls.map(String) : []);
+        setUploadedAssetIds(Array.isArray(item.media_asset_ids) ? item.media_asset_ids.map(String) : []);
       })
       .catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : "Unable to load submission");
@@ -165,17 +181,27 @@ export default function SubmitBusiness() {
             ...(form.twitch ? { twitch: form.twitch } : {}),
             ...(form.snapchat ? { snapchat: form.snapchat } : {}),
           },
+          communityReportedOwnership: form.communityReportedOwnership,
           ownershipDesignations: form.ownershipDesignations,
           submitterNote: form.submitterNote,
           sourceChannel,
           sourceCampaign,
-          mediaUrls: uploadedUrls,
+          mediaAssetIds: uploadedAssetIds,
           locationSource: "member_entered",
           ...(!amendId ? { clientRequestId: clientRequestId.current } : {}),
         }),
       });
 
-      const data = await resp.json() as { ok?: boolean; submissionId?: string; error?: string };
+      const data = await resp.json() as {
+        ok?: boolean;
+        submissionId?: string;
+        businessId?: string;
+        status?: string;
+        publicationOutcome?: string;
+        mapPin?: boolean;
+        message?: string;
+        error?: string;
+      };
 
       if (!resp.ok) {
         setError(data.error ?? "Something went wrong. Please try again.");
@@ -183,6 +209,13 @@ export default function SubmitBusiness() {
       }
 
       setSubmissionId(data.submissionId ?? "");
+      setOutcome({
+        status: data.status ?? "pending_review",
+        publicationOutcome: data.publicationOutcome ?? "pending_review",
+        message: data.message ?? "Your business submission was saved.",
+        businessId: data.businessId,
+        mapPin: data.mapPin === true,
+      });
       setStep("success");
     } catch {
       setError("Network error. Please check your connection and try again.");
@@ -201,11 +234,12 @@ export default function SubmitBusiness() {
             </div>
             <div>
               <h1 className="font-serif text-3xl font-bold text-[#3A1F0E] mb-3">
-                {amendId ? "Your update is back in review" : "Thank you for putting your people on!"}
+                {outcome?.status === "published"
+                  ? "This business is live on the map"
+                  : "Your business submission is saved"}
               </h1>
               <p className="text-[#3A1F0E]/70 leading-relaxed">
-                Your submission is pending review and is not public. If approved,
-                it will be published as community-listed and unclaimed—not verified.
+                {outcome?.message ?? "Your submission was saved."}
               </p>
             </div>
             {submissionId && (
@@ -217,16 +251,32 @@ export default function SubmitBusiness() {
               <p className="text-xs font-semibold text-[#CA922B] uppercase tracking-wide">
                 What happens next
               </p>
-              <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
-                <li>• Our team reviews the business details and possible duplicates</li>
-                <li>• Submitted ownership information remains a community claim</li>
-                <li>• Nothing appears in the directory unless an administrator publishes it</li>
-              </ul>
+              {outcome?.status === "published" ? (
+                <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
+                  <li>• It is searchable now and has a precise map pin</li>
+                  <li>• It is labeled community-listed, unclaimed, and not verified</li>
+                  <li>• Ownership information is community-reported, never identity verification</li>
+                  <li>• The business can claim the listing through the separate claim process</li>
+                </ul>
+              ) : (
+                <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
+                  <li>• This record is not public and has no map pin yet</li>
+                  <li>• The status explains whether location, evidence, regulated-service, or resource routing needs attention</li>
+                  <li>• Software integrity checks—not another person’s approval—control these holds</li>
+                </ul>
+              )}
             </div>
             <div className="flex gap-3 justify-center">
+              {outcome?.status === "published" && outcome.businessId && (
+                <Link href={`/business/${encodeURIComponent(outcome.businessId)}`}>
+                  <button className="px-6 py-3 border border-[#CA922B] text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm">
+                    View listing
+                  </button>
+                </Link>
+              )}
               {!amendId && (
                 <button
-                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedUrls([]); setSubmissionId(""); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", ownershipDesignations: [], submitterNote: "" }); }}
+                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedAssetIds([]); setSubmissionId(""); setOutcome(null); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", communityReportedOwnership: "not_sure", ownershipDesignations: [], submitterNote: "" }); }}
                   className="px-6 py-3 border border-[#CA922B]/30 text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm"
                 >
                   Submit another
@@ -268,8 +318,8 @@ export default function SubmitBusiness() {
           </h1>
           <p className="text-[#3A1F0E]/70 leading-relaxed text-lg">
             {amendId
-              ? "Add the requested information and send this business back for review."
-              : "Know a community business that deserves a spot on the map? Share it here — we'll review it before anything is published."}
+              ? "Add the missing information. If it now passes the location, evidence, duplicate, and safety checks, it will publish immediately."
+              : "Add a community business. Complete ordinary businesses publish immediately as community-listed, unclaimed, and not verified."}
           </p>
         </div>
 
@@ -367,7 +417,7 @@ export default function SubmitBusiness() {
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#CA922B]" />
-              Street address <span className="font-normal text-[#3A1F0E]/40">(optional but helps us place it on the map)</span>
+              Street address <span className="font-normal text-[#3A1F0E]/40">(required for an immediate map pin)</span>
             </label>
             <input
               value={form.address}
@@ -451,10 +501,34 @@ export default function SubmitBusiness() {
           <div className="space-y-2">
             <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
               <Heart className="w-3.5 h-3.5 text-[#CA922B]" />
-              Ownership <span className="font-normal text-[#3A1F0E]/40">(select all that apply)</span>
+              Community-reported ownership
             </label>
+            <p className="text-xs text-[#3A1F0E]/50">Tell us what you understand the business to be. This is never treated as verified owner identity.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {([
+                ["minority_owned", "Minority-owned"],
+                ["non_minority_owned", "Non-minority-owned"],
+                ["not_sure", "Not sure"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setForm((current) => ({
+                    ...current,
+                    communityReportedOwnership: value,
+                    ownershipDesignations: value === "minority_owned" ? current.ownershipDesignations : [],
+                  }))}
+                  className={`rounded-xl border px-3 py-3 text-sm font-semibold ${form.communityReportedOwnership === value ? "bg-[#3A1F0E] text-white border-[#3A1F0E]" : "bg-white text-[#3A1F0E] border-[#3A1F0E]/20"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {form.communityReportedOwnership === "minority_owned" && (
+              <p className="text-xs text-[#3A1F0E]/50 pt-1">Optional: select any community-reported designations that apply.</p>
+            )}
             <div className="flex flex-wrap gap-2">
-              {OWNERSHIP_OPTIONS.map((opt) => {
+              {form.communityReportedOwnership === "minority_owned" && OWNERSHIP_OPTIONS.map((opt) => {
                 const selected = form.ownershipDesignations.includes(opt.value);
                 return (
                   <button
@@ -484,10 +558,10 @@ export default function SubmitBusiness() {
               maxFiles={3}
               accept="images"
               label="Add photos of this business"
-              onFilesChange={(files) => setUploadedUrls((current) => Array.from(new Set([...current, ...getMediaUrls(files)])))}
+              onFilesChange={(files) => setUploadedAssetIds((current) => Array.from(new Set([...current, ...getMediaAssetIds(files)])))}
             />
-            {amendId && uploadedUrls.length > 0 && (
-              <p className="text-xs text-[#3A1F0E]/45">{uploadedUrls.length} previously submitted photo{uploadedUrls.length === 1 ? " is" : "s are"} retained for private review.</p>
+            {amendId && uploadedAssetIds.length > 0 && (
+              <p className="text-xs text-[#3A1F0E]/45">{uploadedAssetIds.length} previously submitted photo{uploadedAssetIds.length === 1 ? " is" : "s are"} retained privately for moderation.</p>
             )}
           </div>
 
@@ -524,12 +598,12 @@ export default function SubmitBusiness() {
                 Submitting…
               </span>
             ) : (
-              amendId ? "Update and resubmit →" : "Submit for review →"
+              amendId ? "Update business →" : "Add community business →"
             )}
           </button>
 
           <p className="text-center text-xs text-[#3A1F0E]/40">
-            Submissions are reviewed by our team. Nothing goes live until an administrator publishes it; publication does not mean verified ownership.
+            Complete ordinary businesses with a precise address and public website or social profile can publish immediately. Regulated, resource, duplicate, unsafe, or unlocatable records stay private. Publication never means verified ownership.
           </p>
         </form>
       </div>

@@ -24,8 +24,8 @@ interface MemberSubmission {
 
 const STATUS = {
   pending_review: {
-    label: "Pending review",
-    detail: "Not public",
+    label: "Software hold",
+    detail: "Not public · Check the reason below",
     className: "bg-amber-50 text-amber-800 border-amber-200",
     icon: Clock,
   },
@@ -83,7 +83,7 @@ export default function MyBusinessSubmissions() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#CA922B]">Your contributions</p>
             <h1 className="font-serif text-3xl font-bold text-[#3A1F0E] mt-1">My Business Submissions</h1>
-            <p className="text-sm text-[#3A1F0E]/65 mt-2">Track review status. A submission is never public before an administrator publishes it.</p>
+            <p className="text-sm text-[#3A1F0E]/65 mt-2">Complete ordinary businesses publish immediately. Only records needing location, evidence, duplicate, regulated-service, or resource-routing checks stay private.</p>
           </div>
           <Link href="/submit-business" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#CA922B] px-4 py-3 text-sm font-semibold text-white hover:bg-[#b68124]">
             <Plus className="w-4 h-4" /> Share a business

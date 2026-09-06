@@ -97,7 +97,7 @@ describe("bounded cross-platform website repairs", () => {
     expect(map).toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
   });
 
-  it("keeps community business proposals authenticated, field-complete, and review-first", () => {
+  it("keeps community business publication authenticated, field-complete, immediate when eligible, and honestly labeled", () => {
     const app = source("../App.tsx");
     const submit = source("../pages/submit-business.tsx");
     const founder = source("../pages/founder-business-submissions.tsx");
@@ -111,17 +111,29 @@ describe("bounded cross-platform website repairs", () => {
     expect(submit).toContain('method: amendId ? "PATCH" : "POST"');
     expect(submit).toContain('"Idempotency-Key": clientRequestId.current');
     expect(submit).toContain("socialProfiles:");
-    expect(submit).toContain("mediaUrls: uploadedUrls");
+    expect(submit).toContain("mediaAssetIds: uploadedAssetIds");
     expect(submit).toContain("postalCode: form.postalCode");
+    expect(submit).toContain("communityReportedOwnership: form.communityReportedOwnership");
+    expect(submit).toContain("Non-minority-owned");
     expect(submit).toContain("Submission ID:");
-    expect(submit).toContain("publication does not mean verified ownership");
+    expect(submit).toContain("searchable now and has a precise map pin");
+    expect(submit).toContain("community-listed, unclaimed, and not verified");
+    expect(submit).toContain("Software integrity checks—not another person’s approval—control these holds");
+    expect(submit).toContain("Publication never means verified ownership");
     expect(submit).not.toContain("Nothing goes live until verified");
     expect(mediaUploader).toContain("authenticatedFetch(`${BASE}api/media/upload");
+    expect(mediaUploader).toContain("getMediaAssetIds");
     expect(mine).toContain("api/community/business-submissions/mine");
     expect(mine).toContain("Update and resubmit");
     expect(mine).toContain("Community-listed · Unclaimed · Not verified");
-    expect(discover).toContain("authenticatedFetch(`${BASE}api/submit-business`");
+    expect(discover).toContain("authenticatedFetch(`${BASE}api/community/business-submissions`");
     expect(discover).toContain('"Idempotency-Key": clientRequestId.current');
+    expect(discover).toContain("communityReportedOwnership");
+    expect(discover).toContain("socialProfiles:");
+    expect(discover).toContain("A website or at least one public social profile is required");
+    expect(discover).toContain("Community-reported minority-owned · Not verified");
+    expect(discover).toContain("Complete ordinary businesses publish immediately");
+    expect(discover).toContain("we never use 0,0 or a city-center fallback");
     expect(discover).not.toContain("submitterEmail");
     expect(discover).not.toContain("within 48 hours");
     expect(founder).toContain('type Filter = "pending_review" | "published"');

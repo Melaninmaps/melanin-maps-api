@@ -27,7 +27,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
  *
  * This intentionally does not require a paid plan and does not apply the
  * anti-spam account-age cooldown from requireTrust. Approved testers and free
- * community members may submit review-queued contributions.
+ * community members may add businesses; objective software holds remain private.
  */
 export async function requireApprovedMember(
   req: Request,
@@ -37,7 +37,7 @@ export async function requireApprovedMember(
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({
-      error: "Sign in to submit a business for review.",
+      error: "Sign in to add a community business.",
       code: "AUTH_REQUIRED",
     });
     return;

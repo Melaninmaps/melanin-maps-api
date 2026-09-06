@@ -725,9 +725,20 @@ export default function BusinessDetailScreen() {
                   size="md"
                 />
               </View>
+              {business.listingStatus === "live_unclaimed" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community/founder-listed · Unclaimed · Not verified</Text>
+              )}
+              {business.ownershipClaim === "community_reported_minority_owned" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
+              )}
+              {business.ownershipClaim === "community_reported_non_minority_owned" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported non-minority-owned · Not verified</Text>
+              )}
               {business.ownershipDesignations?.length > 0 && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>
-                  * Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status.
+                  {business.ownershipClaim?.startsWith("community_reported_")
+                    ? "* These ownership designations were reported by a community member and are not verified owner identity."
+                    : "* Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status."}
                 </Text>
               )}
               <BusinessTimeBadges
