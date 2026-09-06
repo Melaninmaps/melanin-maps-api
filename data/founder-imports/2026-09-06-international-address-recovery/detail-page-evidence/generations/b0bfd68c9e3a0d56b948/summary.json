@@ -1,0 +1,26 @@
+{
+  "ambiguousStructuredCandidates": 2,
+  "businessEvidenceOutcomes": {
+    "ambiguous_structured_address_candidates": 2,
+    "no_strict_structured_address": 211,
+    "structured_address_candidate": 1
+  },
+  "databaseWrites": 0,
+  "detailPageOutcomes": {
+    "curl_error_7": 1,
+    "http_status": 1,
+    "ok": 131,
+    "response_too_large": 1,
+    "robots_rules": 1,
+    "robots_unavailable": 81
+  },
+  "embeddedCoordinateCandidates": 1,
+  "generation": "b0bfd68c9e3a0d56b948",
+  "mapPinWrites": 0,
+  "results": "generations/b0bfd68c9e3a0d56b948/results.jsonl",
+  "resultsSha256": "bc5348d45c6d40fe63de29369aa63bc6a161ccfa7dd4b206684d013853216ccb",
+  "sourceBusinessesWithDetailLinks": 214,
+  "structuredAddressCandidates": 1,
+  "uniqueDetailUrls": 216,
+  "verificationStatus": "candidate_unverified"
+}

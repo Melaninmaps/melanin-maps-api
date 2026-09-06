@@ -1,0 +1,30 @@
+{
+  "ambiguousStructuredCandidates": 1,
+  "businessEvidenceOutcomes": {
+    "ambiguous_structured_address_candidates": 1,
+    "detail_link_candidate": 214,
+    "name_found_no_associated_address": 183,
+    "name_not_found": 372,
+    "source_unavailable": 545,
+    "structured_address_candidate": 1
+  },
+  "databaseWrites": 0,
+  "detailLinkCandidates": 214,
+  "embeddedCoordinateCandidates": 1,
+  "generation": "f637555a382239e665b9",
+  "mapPinWrites": 0,
+  "pageOutcomes": {
+    "http_status": 13,
+    "ok": 63,
+    "response_too_large": 2,
+    "robots_forbidden": 11,
+    "robots_rules": 38,
+    "robots_unavailable": 19
+  },
+  "results": "source-page-evidence-generations/f637555a382239e665b9/results.jsonl",
+  "resultsSha256": "74f86635993a0056640bb1946d6cce735153efb5e411ec4a949c436e8bfcc4bf",
+  "sourceBusinesses": 1316,
+  "structuredAddressCandidates": 1,
+  "uniqueSourceUrls": 146,
+  "verificationStatus": "candidate_unverified"
+}

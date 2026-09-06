@@ -1,0 +1,2 @@
+protego==0.6.2
+pycountry==26.2.16
