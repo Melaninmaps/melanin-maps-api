@@ -50,20 +50,23 @@ describe("founder business discoverability correction", () => {
 
   it("uses the canonical visibility function for normal and fuzzy searches without raw b-star rows", () => {
     expect(businesses.match(/publicBusinessVisibilityCondition\(\)/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(businesses).toContain("FROM public.public_businesses visible_business");
-    expect(businesses).toContain("visible_business.id = ${businessesTable.id}");
+    expect(businesses).toContain("${sql.raw('\"businesses\".\"is_duplicate\"')}");
+    expect(businesses).toContain("${sql.raw('\"businesses\".\"data_source\"')}");
     expect(businesses).not.toContain("SELECT b.*");
     expect(businesses).toContain("fuzzyRows = await db.select().from(businessesTable)");
   });
 
-  it("compiles the canonical visibility predicate to public-view membership by business ID", () => {
-    const predicate = sql`EXISTS (
-      SELECT 1 FROM public.public_businesses visible_business
-      WHERE visible_business.id = ${businessesTable.id}
+  it("compiles the canonical visibility predicate to the installed eight-argument function", () => {
+    const predicate = sql`public.business_record_is_public(
+      ${businessesTable.status}, ${businessesTable.listingStatus},
+      ${sql.raw('"businesses"."is_duplicate"')}, ${sql.raw('"businesses"."permanently_hidden"')},
+      ${businessesTable.name}, ${businessesTable.description},
+      ${sql.raw('"businesses"."data_source"')}, ${businessesTable.phone}
     )`;
     const compiled = new PgDialect().sqlToQuery(predicate).sql.replace(/\s+/g, " ");
-    expect(compiled).toContain('FROM public.public_businesses visible_business');
-    expect(compiled).toContain('visible_business.id = "businesses"."id"');
+    expect(compiled).toMatch(/public\.business_record_is_public\(\s*"businesses"\."status", "businesses"\."listing_status"/);
+    expect(compiled).toContain('"businesses"."is_duplicate", "businesses"."permanently_hidden"');
+    expect(compiled).toContain('"businesses"."data_source", "businesses"."phone"');
     expect(compiled).not.toContain('business_record_is_public("businesses")');
   });
 

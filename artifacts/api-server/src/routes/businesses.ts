@@ -133,10 +133,15 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(business: T) 
 }
 
 function publicBusinessVisibilityCondition() {
-  return sql<boolean>`EXISTS (
-    SELECT 1
-      FROM public.public_businesses visible_business
-     WHERE visible_business.id = ${businessesTable.id}
+  return sql<boolean>`public.business_record_is_public(
+    ${businessesTable.status},
+    ${businessesTable.listingStatus},
+    ${sql.raw('"businesses"."is_duplicate"')},
+    ${sql.raw('"businesses"."permanently_hidden"')},
+    ${businessesTable.name},
+    ${businessesTable.description},
+    ${sql.raw('"businesses"."data_source"')},
+    ${businessesTable.phone}
   )`;
 }
 
