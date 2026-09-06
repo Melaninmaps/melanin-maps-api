@@ -4,25 +4,33 @@ import { UNIVERSAL_MAP_ENTITY_KINDS } from "./ensureUniversalMapEntities";
 
 const KINDS = new Set<string>(UNIVERSAL_MAP_ENTITY_KINDS);
 
+export function boundedMapEntityLimit(value: unknown): number {
+  if (typeof value !== "string" || !value.trim()) return 1_000;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? Math.min(1_000, Math.max(1, parsed)) : 1_000;
+}
+
 export function registerUniversalMapEntityRoutes(app: Express, pool: Pool): void {
   app.get("/api/map/entities", async (request: Request, response: Response, next: NextFunction) => {
     try {
       const kind = typeof request.query.kind === "string" ? request.query.kind.trim() : null;
       const city = typeof request.query.city === "string" ? request.query.city.trim() : null;
+      const limit = boundedMapEntityLimit(request.query.limit);
       if (kind && !KINDS.has(kind)) {
         return response.status(400).json({ code: "UNKNOWN_ENTITY_KIND" });
       }
       const { rows } = await pool.query(`
         SELECT id::text, entity_kind, title, slug, summary, city, state_region,
-               latitude, longitude, detail_url
+               country_code, latitude, longitude, source_url, detail_url
         FROM public.published_map_entities
         WHERE ($1::text IS NULL OR entity_kind = $1)
           AND ($2::text IS NULL OR lower(city) = lower($2))
         ORDER BY title ASC
-      `, [kind || null, city || null]);
+        LIMIT $3::integer
+      `, [kind || null, city || null, limit]);
       return response.json({
         items: rows,
-        metadata: { kind: kind || "all", city: city || null, count: rows.length },
+        metadata: { kind: kind || "all", city: city || null, count: rows.length, limit },
       });
     } catch (error) {
       return next(error);

@@ -20,6 +20,12 @@ function safePublicUrl(value?: string | null): string | null {
   }
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+  })[character] ?? character);
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type GMap = any;
 type GMarker = any;
@@ -40,12 +46,13 @@ type BizWithCoords = {
 
 type UniversalMapEntity = {
   id: string;
-  entity_kind: "cultural_site" | "hbcu" | "festival" | "community_event" | "market" | "public_art" | "heritage_marker";
+  entity_kind: "cultural_site" | "hbcu" | "festival" | "community_event" | "market" | "public_art" | "heritage_marker" | "travel_destination";
   title: string;
   slug: string;
   summary?: string | null;
   city: string;
   state_region?: string | null;
+  country_code?: string | null;
   latitude: number;
   longitude: number;
   detail_url: string;
@@ -53,6 +60,7 @@ type UniversalMapEntity = {
 
 // ── Pin colour helpers ──────────────────────────────────────────────────────
 function getCulturalPinColor(site: UniversalMapEntity): string {
+  if (site.entity_kind === "travel_destination") return "#2563A8";
   if (site.entity_kind === "hbcu") return "#7C3AED";
   if (site.entity_kind === "festival") return "#C8960C";
   if (site.entity_kind === "market") return "#16A34A";
@@ -68,6 +76,7 @@ function getCulturalPinLabel(site: UniversalMapEntity): string {
 
 // Which cultural sites match the active legend filter?
 function siteMatchesFilter(site: UniversalMapEntity, filter: string): boolean {
+  if (filter === "destinations") return site.entity_kind === "travel_destination";
   if (filter === "hbcu") return site.entity_kind === "hbcu";
   if (filter === "festival") return site.entity_kind === "festival";
   if (filter === "events") return site.entity_kind === "community_event";
@@ -209,6 +218,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 // Legend tile definitions
 const LEGEND_TILES = [
   { key: "business", color: "#CA922B", shape: "circle",   label: "Businesses" },
+  { key: "destinations", color: "#2563A8", shape: "diamond", label: "Travel Destinations" },
   { key: "cultural", color: "#92400E", shape: "diamond",  label: "Cultural Sites" },
   { key: "hbcu",     color: "#7C3AED", shape: "diamond",  label: "HBCUs" },
   { key: "festival", color: "#C8960C", shape: "diamond",  label: "Festivals" },
@@ -721,9 +731,18 @@ export default function MapPage() {
   useEffect(() => {
     if (!ready) return;
     const base = BASE.replace(/\/$/, "");
-    fetch(`${base}/api/map/entities`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : { items: [] })
-      .then((d: { items?: UniversalMapEntity[] }) => setCulturalSites(d.items ?? []))
+    const loadEntities = (url: string): Promise<{ items?: UniversalMapEntity[] }> =>
+      fetch(url, { credentials: "include" })
+        .then((response) => response.ok ? response.json() as Promise<{ items?: UniversalMapEntity[] }> : { items: [] })
+        .catch(() => ({ items: [] }));
+    Promise.all([
+      loadEntities(`${base}/api/map/entities`),
+      loadEntities(`${base}/api/map/entities?kind=travel_destination&limit=600`),
+    ])
+      .then(([general, destinations]) => {
+        return [...(general.items ?? []), ...(destinations.items ?? [])];
+      })
+      .then((items) => setCulturalSites([...new Map(items.map((item) => [item.id, item])).values()]))
       .catch(() => {});
   }, [ready]);
 
@@ -768,15 +787,16 @@ export default function MapPage() {
 
       marker.addListener("click", () => {
         const snippet = (site.summary ?? "").slice(0, 120);
+        const actionLabel = site.entity_kind === "travel_destination" ? "View planning reference" : "Learn more on MWM";
         infoWindowRef.current?.setContent(
           `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-              <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">${label}</span>
+              <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">${escapeHtml(label)}</span>
             </div>
-            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.title}</div>
-            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}${site.state_region ? `, ${site.state_region}` : ""}</div>
-            ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
-            <a href="${site.detail_url}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">Learn more on MWM →</a>
+            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${escapeHtml(site.title)}</div>
+            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${escapeHtml(site.city)}${site.entity_kind === "travel_destination" && site.country_code ? `, ${escapeHtml(site.country_code)}` : site.state_region ? `, ${escapeHtml(site.state_region)}` : ""}</div>
+            ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${escapeHtml(snippet)}${snippet.length === 120 ? "…" : ""}</div>` : ""}
+            <a href="${escapeHtml(site.detail_url)}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">${actionLabel} →</a>
           </div>`
         );
         mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
@@ -795,7 +815,9 @@ export default function MapPage() {
       if (!site) { marker.setMap(null); return; }
       const visible =
         legendFilter !== "business" &&
-        (legendFilter === null || siteMatchesFilter(site, legendFilter));
+        (legendFilter === null
+          ? site.entity_kind !== "travel_destination"
+          : siteMatchesFilter(site, legendFilter));
       marker.setMap(visible ? mapRef.current : null);
     });
   }, [legendFilter, culturalSites]);
@@ -1317,6 +1339,7 @@ export default function MapPage() {
   const renderSidebar = () => {
     // Content when a cultural legend filter is active
     const showingCultural = legendFilter && legendFilter !== "business";
+    const showingDestinations = legendFilter === "destinations";
 
     return (
       <div className="w-80 shrink-0 flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
@@ -1424,6 +1447,12 @@ export default function MapPage() {
           )}
         </div>
 
+        {showingDestinations && (
+          <div className="px-4 py-3 border-b border-[#2563A8]/15 bg-[#EFF6FF] text-xs leading-relaxed text-[#1E3A5F]">
+            <strong>Travel destinations — planning references.</strong> These pins use supplied destination coordinates; related references may share one city or regional node. They are not business listings and do not certify current safety or accessibility. Check current official travel guidance before travel.
+          </div>
+        )}
+
         {/* Location denied — show one-tap retry so user doesn't have to refresh */}
         {!showingCultural && !userCoords && geoPermissionDenied && (
           <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0">
@@ -1486,7 +1515,7 @@ export default function MapPage() {
         <div className="px-4 py-2 text-xs text-[#3A1F0E]/40 font-medium border-b border-[#3A1F0E]/6 shrink-0 flex items-center justify-between">
           <span>
             {showingCultural
-              ? `${activeCulturalSites.length} ${activeCulturalSites.length === 1 ? "site" : "sites"}`
+              ? `${activeCulturalSites.length} ${showingDestinations ? (activeCulturalSites.length === 1 ? "destination" : "destinations") : (activeCulturalSites.length === 1 ? "site" : "sites")}`
               : businessSearchActive
                 ? (() => {
                     const n = universalResults ? universalResults.totalResults : filtered.length;
@@ -1525,8 +1554,8 @@ export default function MapPage() {
                     onClick={() => {
                       if (!canFly) return;
                       mapRef.current!.panTo({ lat: siteLat, lng: siteLng });
-                      // HBCUs and cultural heritage use city-level zoom; specific addresses use street level
-                      mapRef.current!.setZoom(site.entity_kind === "hbcu" ? 14 : 16);
+                      // Destination pins can be city/island/region planning nodes rather than street addresses.
+                      mapRef.current!.setZoom(site.entity_kind === "travel_destination" ? 7 : site.entity_kind === "hbcu" ? 14 : 16);
                       setSidebarOpen(false);
                     }}
                     title={canFly ? `Fly to ${site.title}` : undefined}
@@ -1541,7 +1570,7 @@ export default function MapPage() {
                         <div className="text-[10px] font-bold uppercase tracking-wider mt-0.5" style={{ color }}>{label}</div>
                         <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
                           <MapPin className="w-3 h-3 shrink-0" />
-                          {site.city}{site.state_region ? `, ${site.state_region}` : ""}
+                          {site.city}{site.entity_kind === "travel_destination" && site.country_code ? `, ${site.country_code}` : site.state_region ? `, ${site.state_region}` : ""}
                         </div>
                         {site.summary && (
                           <p className="text-xs text-[#3A1F0E]/60 mt-1 leading-relaxed line-clamp-2">
@@ -1553,7 +1582,7 @@ export default function MapPage() {
                           className="text-[10px] font-bold mt-0.5 block hover:underline text-[#CA922B]"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          Learn more on MWM →
+                          {site.entity_kind === "travel_destination" ? "View planning reference →" : "Learn more on MWM →"}
                         </Link>
                       </div>
                     </div>

@@ -237,6 +237,39 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     `,
   },
   {
+    name: "extend_directory_publication_types_for_map_entities_v1",
+    sql: `
+      DO $migration$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid='directory_import_decision_events'::regclass
+            AND conname='directory_import_decision_events_published_record_type_check'
+            AND pg_get_constraintdef(oid) LIKE '%map_entity%'
+        ) THEN
+          ALTER TABLE directory_import_decision_events
+            DROP CONSTRAINT IF EXISTS directory_import_decision_events_published_record_type_check;
+          ALTER TABLE directory_import_decision_events
+            ADD CONSTRAINT directory_import_decision_events_published_record_type_check
+            CHECK (published_record_type IN ('business','resource','map_entity'));
+        END IF;
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid='directory_import_publications'::regclass
+            AND conname='directory_import_publications_record_type_check'
+            AND pg_get_constraintdef(oid) LIKE '%map_entity%'
+        ) THEN
+          ALTER TABLE directory_import_publications
+            DROP CONSTRAINT IF EXISTS directory_import_publications_record_type_check;
+          ALTER TABLE directory_import_publications
+            ADD CONSTRAINT directory_import_publications_record_type_check
+            CHECK (record_type IN ('business','resource','map_entity'));
+        END IF;
+      END
+      $migration$;
+    `,
+  },
+  {
     // Universal Search + Demand Flywheel — Checkpoint 1
     // Canonical search event log: one row per search across all surfaces.
     // Privacy: user_id nullable; demand signals use aggregated counts only.

@@ -14,6 +14,7 @@
     "stage-cumulative-content-global": "tsx ./src/stage-cumulative-content-global.ts",
     "stage-kinfolk-poc-businesses": "tsx ./src/stage-kinfolk-poc-businesses.ts",
     "publish-founder-business-inventory": "tsx ./src/publish-founder-business-inventory.ts",
+    "publish-founder-global-destinations": "tsx ./src/publish-founder-global-destinations.ts",
     "send-welcome-blast": "tsx ./src/send-welcome-blast.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

@@ -50,6 +50,7 @@ const HERITAGE_SITES_ENABLED = true;
 // Hard cap: prevents memory pressure if the API grows unexpectedly.
 // Current production total is 170 — this allows 47% headroom.
 const MAX_HERITAGE_MARKERS = 250;
+const MAX_TRAVEL_DESTINATION_MARKERS = 600;
 
 // US-wide overview so all business pins are visible on first load.
 // The map animates to the user's GPS position once permission is granted,
@@ -152,6 +153,21 @@ interface TourHeritageSite {
   siteType?: string; // 'landmark' | 'mural' | etc.
 }
 
+interface TravelDestination {
+  id: string;
+  entity_kind: "travel_destination";
+  title: string;
+  slug: string;
+  summary: string | null;
+  city: string;
+  state_region: string | null;
+  country_code: string | null;
+  latitude: number;
+  longitude: number;
+  source_url: string | null;
+  detail_url: string;
+}
+
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
 interface CategoryStyle {
@@ -252,6 +268,15 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const [selectedTourSite, setSelectedTourSite] = useState<TourHeritageSite | null>(null);
   const isFetchingTourSites = useRef(false);
 
+  // Global destination coordinates are an opt-in travel planning layer. They
+  // are never mixed with business pins and do not represent verified venues.
+  const [showTravelDestinations, setShowTravelDestinations] = useState(false);
+  const [travelDestinations, setTravelDestinations] = useState<TravelDestination[]>([]);
+  const [selectedTravelDestination, setSelectedTravelDestination] = useState<TravelDestination | null>(null);
+  const [travelDestinationsLoading, setTravelDestinationsLoading] = useState(false);
+  const [travelDestinationsError, setTravelDestinationsError] = useState(false);
+  const isFetchingTravelDestinations = useRef(false);
+
   const [mapReady, setMapReady] = useState(false);
   const [, setContainerSize] = useState({ w: 0, h: 0 });
 
@@ -270,6 +295,12 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
+
+  useEffect(() => {
+    if (selectedBusiness || selectedCulturalSite || selectedMapEvent || selectedOrg || selectedTourEvent || selectedTourSite) {
+      setSelectedTravelDestination(null);
+    }
+  }, [selectedBusiness, selectedCulturalSite, selectedMapEvent, selectedOrg, selectedTourEvent, selectedTourSite]);
 
   const mapped = businesses.filter(
     (b) =>
@@ -493,6 +524,36 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
       .finally(() => { isFetchingTourSites.current = false; });
   }, [showTourSites, mapReady, tourSites.length]);
 
+  useEffect(() => {
+    if (!showTravelDestinations || travelDestinations.length > 0 || isFetchingTravelDestinations.current || !mapReady) return;
+    isFetchingTravelDestinations.current = true;
+    setTravelDestinationsLoading(true);
+    setTravelDestinationsError(false);
+    const base = getApiBase();
+    if (!base) {
+      isFetchingTravelDestinations.current = false;
+      setTravelDestinationsLoading(false);
+      setTravelDestinationsError(true);
+      return;
+    }
+    fetch(`${base}/api/map/entities?kind=travel_destination&limit=${MAX_TRAVEL_DESTINATION_MARKERS}`)
+      .then((response) => response.ok ? response.json() as Promise<{ items: TravelDestination[] }> : Promise.reject(new Error("destination fetch failed")))
+      .then((data) => {
+        setTravelDestinations((data.items ?? []).filter((item) =>
+          item.entity_kind === "travel_destination"
+          && Number.isFinite(item.latitude) && Number.isFinite(item.longitude)
+          && item.latitude >= -90 && item.latitude <= 90
+          && item.longitude >= -180 && item.longitude <= 180
+          && (item.latitude !== 0 || item.longitude !== 0),
+        ));
+      })
+      .catch(() => setTravelDestinationsError(true))
+      .finally(() => {
+        isFetchingTravelDestinations.current = false;
+        setTravelDestinationsLoading(false);
+      });
+  }, [showTravelDestinations, mapReady, travelDestinations.length]);
+
   // ── Events fetch — loads once when map is ready, refreshes on focus ───────
   useEffect(() => {
     if (!mapReady || isFetchingMapEvents.current) return;
@@ -529,7 +590,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   };
 
   const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null || selectedMapEvent !== null
-    || selectedOrg !== null || selectedTourEvent !== null || selectedTourSite !== null;
+    || selectedOrg !== null || selectedTourEvent !== null || selectedTourSite !== null || selectedTravelDestination !== null;
 
   return (
     <View
@@ -564,7 +625,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             "postOffice", "restroom",
           ],
         } : {})}
-        onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedOrg(null); setSelectedTourEvent(null); setSelectedTourSite(null); }}
+        onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedOrg(null); setSelectedTourEvent(null); setSelectedTourSite(null); setSelectedTravelDestination(null); }}
       >
         {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
         {mapped.map((biz) => (
@@ -674,6 +735,25 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             />
           );
         })}
+
+        {/* Global travel planning destinations — blue and opt-in, never business pins. */}
+        {showTravelDestinations && travelDestinations.slice(0, MAX_TRAVEL_DESTINATION_MARKERS).map((destination) => (
+          <Marker
+            key={`destination-${destination.id}`}
+            coordinate={{ latitude: destination.latitude, longitude: destination.longitude }}
+            onPress={() => {
+              setSelectedTravelDestination(destination);
+              setSelectedBusiness(null);
+              setSelectedCulturalSite(null);
+              setSelectedMapEvent(null);
+              setSelectedOrg(null);
+              setSelectedTourEvent(null);
+              setSelectedTourSite(null);
+            }}
+            tracksViewChanges={false}
+            pinColor="#2563A8"
+          />
+        ))}
 
         {/* Community event pins — orange, plain pinColor (safe on Android Fabric) */}
         {showMapEvents && mapEvents.map((evt) => {
@@ -863,7 +943,38 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             <Feather name="flag" size={12} color={showTourSites ? "#fff" : GOLD} />
             <Text style={[s.layerBtnTxt, { color: showTourSites ? "#fff" : GOLD }]}>Heritage</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.layerBtn, showTravelDestinations && { backgroundColor: "#2563A8", borderColor: "transparent" }]}
+            onPress={() => {
+              const next = !showTravelDestinations;
+              setShowTravelDestinations(next);
+              setSelectedTravelDestination(null);
+              if (next) {
+                mapRef.current?.animateToRegion(
+                  { latitude: 10, longitude: 0, latitudeDelta: 150, longitudeDelta: 330 },
+                  700,
+                );
+              }
+            }}
+            activeOpacity={0.85}
+          >
+            {travelDestinationsLoading
+              ? <ActivityIndicator size="small" color={showTravelDestinations ? "#fff" : GOLD} />
+              : <Feather name="globe" size={12} color={showTravelDestinations ? "#fff" : GOLD} />}
+            <Text style={[s.layerBtnTxt, { color: showTravelDestinations ? "#fff" : GOLD }]}>Travel</Text>
+          </TouchableOpacity>
         </View>
+
+        {showTravelDestinations && (
+          <View style={[s.sitesStatusRow, { backgroundColor: "rgba(37,99,168,0.94)" }]}>
+            <Feather name={travelDestinationsError ? "wifi-off" : "info"} size={12} color="#fff" />
+            <Text style={[s.sitesStatusTxt, { color: "#fff" }]}>
+              {travelDestinationsError
+                ? "Travel destinations couldn't load. Turn the layer off and on to retry."
+                : "Travel destinations are planning references; related places may share one supplied node. Check current official guidance."}
+            </Text>
+          </View>
+        )}
 
         {/* Heritage category filter chips — hidden until HERITAGE_SITES_ENABLED */}
         {HERITAGE_SITES_ENABLED && showCulturalSites && (
@@ -1285,6 +1396,57 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
         );
       })()}
 
+      {/* ── Global travel destination planning card ── */}
+      {selectedTravelDestination && !selectedBusiness && !selectedCulturalSite && !selectedMapEvent && !selectedOrg && !selectedTourEvent && !selectedTourSite && (() => {
+        const destination = selectedTravelDestination;
+        const base = getApiBase();
+        const detailUrl = base ? `${base.replace(/\/$/, "")}${destination.detail_url}` : null;
+        return (
+          <View style={[s.card, { backgroundColor: colors.card, borderColor: "#2563A840", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
+            <View style={s.cardHandle} />
+            <TouchableOpacity style={s.cardClose} onPress={() => setSelectedTravelDestination(null)}>
+              <Feather name="x" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+            <View style={[s.catPill, { backgroundColor: "#2563A818", marginBottom: 8, alignSelf: "flex-start" }]}>
+              <Feather name="globe" size={11} color="#2563A8" />
+              <Text style={[s.catPillTxt, { color: "#2563A8" }]}>Travel planning destination</Text>
+            </View>
+            <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>{destination.title}</Text>
+            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
+              {destination.city}{destination.country_code ? `, ${destination.country_code}` : destination.state_region ? `, ${destination.state_region}` : ""}
+            </Text>
+            {destination.summary ? (
+              <Text style={[s.culturalDesc, { color: colors.foreground }]} numberOfLines={4}>{destination.summary}</Text>
+            ) : null}
+            <Text style={[s.cardSub, { color: "#2563A8", marginTop: 2, marginBottom: 8 }]}>
+              Planning reference only — not a business listing or verified venue. Check current official travel guidance.
+            </Text>
+            <View style={s.cardBtnRow}>
+              {destination.source_url ? (
+                <TouchableOpacity
+                  style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#2563A8" }]}
+                  activeOpacity={0.85}
+                  onPress={() => void openExternalUrl(destination.source_url)}
+                >
+                  <Feather name="external-link" size={14} color="#2563A8" />
+                  <Text style={[s.cardBtnTxt, { color: "#2563A8" }]}>Source</Text>
+                </TouchableOpacity>
+              ) : null}
+              {detailUrl ? (
+                <TouchableOpacity
+                  style={[s.cardBtnHalf, { backgroundColor: "#2563A8" }]}
+                  activeOpacity={0.85}
+                  onPress={() => void openExternalUrl(detailUrl)}
+                >
+                  <Feather name="map" size={14} color="#fff" />
+                  <Text style={s.cardBtnTxt}>Planning Page</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </View>
+        );
+      })()}
+
       {/* ── Business bottom card ── */}
       {!selectedCulturalSite && !selectedMapEvent && selectedBusiness && (
         <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
@@ -1356,7 +1518,7 @@ const s = StyleSheet.create({
 
   catRow: { paddingHorizontal: 12, paddingVertical: 4, gap: 8 },
 
-  layerRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingBottom: 2 },
+  layerRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 12, paddingBottom: 2 },
   layerBtn: {
     flexDirection: "row", alignItems: "center", gap: 5,
     backgroundColor: "rgba(0,0,0,0.52)",
