@@ -94,6 +94,8 @@ describe("founder global location canonicalization", () => {
     expect(source).toContain("p.id=s.publication_id");
     expect(source).not.toContain("r.new_id=p.record_id OR r.target_id=p.record_id");
     expect(source).toContain("LOCATION_REPAIR_UNEXPECTED_POINTERS");
+    expect(source).toContain("target_name text");
+    expect(source).toContain("b.name IS DISTINCT FROM r.target_name");
   });
 
   it("aggregates many-to-one target evidence deterministically and validates both unique indexes", () => {

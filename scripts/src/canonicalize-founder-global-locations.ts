@@ -46,6 +46,7 @@ type RepairRow = {
   canonical_country_code: string;
   canonical_dedupe_key: string;
   target_id: string | null;
+  target_name: string | null;
   target_country: string | null;
 };
 
@@ -208,6 +209,7 @@ async function buildLockedPlan(client: PoolClient): Promise<{ batchId: string; r
       canonical_country_code: sourceCountry,
       canonical_dedupe_key: dedupeKey({ name: row.name, address: row.address, city: parsed.city, state: parsed.state }),
       target_id: target?.id ?? null,
+      target_name: target?.name ?? null,
       target_country: target?.country ?? null,
     };
   });
@@ -231,7 +233,7 @@ async function installPlan(client: PoolClient, batchId: string, repairs: RepairR
       new_id text PRIMARY KEY, original_city text NOT NULL, original_state text,
       canonical_city text NOT NULL, canonical_state text NOT NULL, canonical_country text NOT NULL,
       canonical_country_code char(2) NOT NULL, canonical_dedupe_key text NOT NULL,
-      target_id text, target_country text
+      target_id text, target_name text, target_country text
     ) ON COMMIT DROP
   `);
   await client.query(`
@@ -239,7 +241,7 @@ async function installPlan(client: PoolClient, batchId: string, repairs: RepairR
     SELECT * FROM jsonb_to_recordset($1::jsonb) AS r(
       new_id text, original_city text, original_state text, canonical_city text,
       canonical_state text, canonical_country text, canonical_country_code char(2),
-      canonical_dedupe_key text, target_id text, target_country text
+      canonical_dedupe_key text, target_id text, target_name text, target_country text
     )
   `, [JSON.stringify(repairs)]);
   await client.query(`
@@ -295,16 +297,15 @@ async function applyLockedPlan(client: PoolClient, batchId: string, repairs: Rep
   }>(`
     SELECT count(*)::text count,
       count(*) FILTER (WHERE NOT public.business_record_is_public(b.status,b.listing_status,b.is_duplicate,b.permanently_hidden,b.name,b.description,b.data_source,b.phone))::text not_public,
-      count(*) FILTER (WHERE regexp_replace(lower(b.name),'[^a-z0-9]+','','g') <> regexp_replace(lower(s.name),'[^a-z0-9]+','','g'))::text name_mismatch,
+      count(*) FILTER (WHERE b.name IS DISTINCT FROM r.target_name)::text name_mismatch,
       count(*) FILTER (WHERE lower(btrim(b.city)) <> lower(r.canonical_city))::text city_mismatch,
       count(*) FILTER (WHERE upper(btrim(COALESCE(b.state,''))) <> r.canonical_state)::text state_mismatch,
       count(*) FILTER (WHERE b.country IS DISTINCT FROM r.target_country)::text country_snapshot_mismatch
     FROM mwm_global_location_repair r
     JOIN businesses b ON b.id=r.target_id
-    JOIN businesses s ON s.id=r.new_id
     WHERE r.target_id IS NOT NULL AND (
       NOT public.business_record_is_public(b.status,b.listing_status,b.is_duplicate,b.permanently_hidden,b.name,b.description,b.data_source,b.phone)
-      OR regexp_replace(lower(b.name),'[^a-z0-9]+','','g') <> regexp_replace(lower(s.name),'[^a-z0-9]+','','g')
+      OR b.name IS DISTINCT FROM r.target_name
       OR lower(btrim(b.city)) <> lower(r.canonical_city)
       OR upper(btrim(COALESCE(b.state,''))) <> r.canonical_state
       OR b.country IS DISTINCT FROM r.target_country
