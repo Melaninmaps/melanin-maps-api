@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { validCoordinates } from "../publish-today-net-new-census-pins";
+import { createPlans, validCoordinates } from "../publish-today-net-new-census-pins";
 
 const root = resolve(import.meta.dirname, "../../..");
 const bundle = resolve(root, "data/founder-imports/2026-09-06-today-net-new-businesses");
@@ -47,6 +47,28 @@ describe("today net-new cumulative business cohort", () => {
 describe("today net-new database safeguards", () => {
   const stageSource = readFileSync(resolve(import.meta.dirname,"../stage-today-net-new-businesses.ts"),"utf8");
   const pinSource = readFileSync(resolve(import.meta.dirname,"../publish-today-net-new-census-pins.ts"),"utf8");
+
+  it("accepts equivalent short/full street records but holds a different existing address", () => {
+    const source = {sourceRow:1,targetKind:"business",name:"Example",address:"123 Main St, Houston, TX 77002",city:"Houston",state:"TX"};
+    const accepted = [{sourceRow:1,targetKind:"business",accepted:true,latitude:29.75,longitude:-95.37,matchedAddress:"123 MAIN ST, HOUSTON, TX, 77002",tigerLineId:"1",matchStatus:"Match",matchType:"Exact",provider:"US Census Geocoder",benchmark:"Public_AR_Current",policyVersion:"founder-census-exact-address-v1",coordinatePrecision:"interpolated_address_range",verifiedBusinessLocation:false}];
+    const database = {candidate_id:"11111111-1111-4111-8111-111111111111",source_row:1,candidate_status:"published",candidate_address:source.address,candidate_city:"Houston",candidate_state:"TX",published_record_id:"22222222-2222-4222-8222-222222222222",business_id:"22222222-2222-4222-8222-222222222222",business_address:"123 Main St",business_city:"Houston",business_state:"TX",business_country:"USA",business_postal_code:"77002",latitude:null,longitude:null,listing_status:"live_unclaimed",business_status:"active",publication_count:"1"};
+    const ok=createPlans([database],new Map([[1,source]]),accepted);
+    expect(ok.plans).toHaveLength(1);
+    expect(ok.locationMismatchHeld).toBe(0);
+    const held=createPlans([{...database,business_address:"999 Other St"}],new Map([[1,source]]),accepted);
+    expect(held.plans).toHaveLength(0);
+    expect(held.locationMismatchHeld).toBe(1);
+    const cityHeld=createPlans([{...database,business_city:"Austin"}],new Map([[1,source]]),accepted);
+    expect(cityHeld.plans).toHaveLength(0);
+    expect(cityHeld.locationMismatchHeld).toBe(1);
+    expect(()=>createPlans([{...database,candidate_state:"LA"}],new Map([[1,source]]),accepted))
+      .toThrow("CENSUS_PIN_DATABASE_CONTRACT_MISMATCH:1");
+    const secondSource={...source,sourceRow:2};
+    const secondDatabase={...database,candidate_id:"33333333-3333-4333-8333-333333333333",source_row:2};
+    const secondAccepted={...accepted[0],sourceRow:2,latitude:30.01};
+    expect(()=>createPlans([database,secondDatabase],new Map([[1,source],[2,secondSource]]),[accepted[0],secondAccepted]))
+      .toThrow("CENSUS_PIN_DATABASE_CONTRACT_MISMATCH:1");
+  });
 
   it("stages only on local directory staging with exact persisted target counts", () => {
     expect(stageSource).toContain("assertLocalDirectoryStagingFromProcess");

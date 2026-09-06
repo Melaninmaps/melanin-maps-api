@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Pool, type PoolClient } from "pg";
 import { assertLocalDirectoryStagingFromProcess } from "./lib/local-directory-staging";
+import { canonicalStreetIdentity } from "./publish-founder-business-inventory";
 
 const MANIFEST = fileURLToPath(new URL(
   "../../data/founder-imports/2026-09-06-today-net-new-businesses/today-net-new-business-candidates.jsonl",
@@ -101,6 +102,7 @@ function createPlans(databaseRows: DatabaseRow[], manifest: Map<number,Candidate
   const inconsistent: number[] = [];
   const grouped = new Map<string,Plan>();
   let alreadyPinned = 0;
+  let locationMismatchHeld = 0;
   for (const result of accepted) {
     const row=bySource.get(result.sourceRow); const source=manifest.get(result.sourceRow)!;
     if(!row?.published_record_id)continue;
@@ -108,9 +110,14 @@ function createPlans(databaseRows: DatabaseRow[], manifest: Map<number,Candidate
       ||!["live_unclaimed","live_claimed"].includes(row.listing_status??"")
       ||["duplicate","permanently_hidden","removed","deleted"].includes(row.business_status??"")
       ||normalize(row.candidate_address)!==normalize(source.address)||normalize(row.candidate_city)!==normalize(source.city)
-      ||normalize(row.candidate_state)!==normalize(source.state)||normalize(row.business_address)!==normalize(source.address)
-      ||normalize(row.business_city)!==normalize(source.city)||normalize(row.business_state)!==normalize(source.state)) {
+      ||normalize(row.candidate_state)!==normalize(source.state)) {
       inconsistent.push(result.sourceRow);continue;
+    }
+    const sourceStreet=canonicalStreetIdentity(source.address,source.city,source.state);
+    const businessStreet=canonicalStreetIdentity(row.business_address,row.business_city??"",row.business_state);
+    if(!sourceStreet||!businessStreet||sourceStreet!==businessStreet
+      ||normalize(row.business_city)!==normalize(source.city)||normalize(row.business_state)!==normalize(source.state)) {
+      locationMismatchHeld+=1;continue;
     }
     const hasLat=row.latitude!==null,hasLng=row.longitude!==null;
     if(hasLat!==hasLng){inconsistent.push(result.sourceRow);continue;}
@@ -118,7 +125,8 @@ function createPlans(databaseRows: DatabaseRow[], manifest: Map<number,Candidate
     const latitude=result.latitude!,longitude=result.longitude!;
     const existing=grouped.get(row.business_id!);
     if(existing){
-      if(existing.latitude!==latitude||existing.longitude!==longitude||normalize(existing.address)!==normalize(source.address)) inconsistent.push(result.sourceRow);
+      if(existing.latitude!==latitude||existing.longitude!==longitude
+        ||canonicalStreetIdentity(existing.address,existing.city,existing.state)!==sourceStreet) inconsistent.push(result.sourceRow);
       else {existing.candidate_ids.push(row.candidate_id);existing.source_rows.push(result.sourceRow);}
     }else grouped.set(row.business_id!,{
       record_id:row.business_id!,latitude,longitude,matched_address:result.matchedAddress!,tiger_line_id:result.tigerLineId,
@@ -127,7 +135,7 @@ function createPlans(databaseRows: DatabaseRow[], manifest: Map<number,Candidate
     });
   }
   if(inconsistent.length)throw new Error(`CENSUS_PIN_DATABASE_CONTRACT_MISMATCH:${inconsistent.length}`);
-  return {plans:[...grouped.values()],pendingPublication,alreadyPinned,acceptedRows:resultBySource.size};
+  return {plans:[...grouped.values()],pendingPublication,alreadyPinned,locationMismatchHeld,acceptedRows:resultBySource.size};
 }
 
 async function installPlans(client:PoolClient,plans:Plan[]):Promise<void>{
@@ -234,6 +242,7 @@ async function apply(client:PoolClient,manifest:Map<number,CandidateManifest>,ac
       acceptedBusinessRows: prepared.acceptedRows,
       pendingPublication: prepared.pendingPublication,
       alreadyPinnedCandidateRows: prepared.alreadyPinned,
+      locationMismatchCandidateRowsHeld: prepared.locationMismatchHeld,
       pinnableRecords: prepared.plans.length,
       pinnedNow: updated.rowCount??0,
       candidateAuditRows: candidateUpdate.rowCount??0,
@@ -256,7 +265,7 @@ async function main():Promise<void>{
     console.log(JSON.stringify({
       mode:"dry_run",policyVersion:POLICY_VERSION,acceptedBusinessRows:prepared.acceptedRows,
       pendingPublication:prepared.pendingPublication,alreadyPinnedCandidateRows:prepared.alreadyPinned,
-      pinnableRecords:prepared.plans.length,
+      locationMismatchCandidateRowsHeld:prepared.locationMismatchHeld,pinnableRecords:prepared.plans.length,
     },null,2));
   }finally{client.release();await pool.end();}
 }
