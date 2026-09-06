@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseMediaUrls } from "../lib/mediaUrls";
 import { normalizeExternalUrl } from "../lib/urlSafety";
+import { parseSafeSourceLink } from "../lib/sourceLinks";
 
 function source(relativePath: string): string {
   return readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -140,5 +141,65 @@ describe("safety report incident-location contract", () => {
     expect(reportSource).not.toContain("useEffect(() =>");
     expect(reportSource).not.toContain("place.streetNumber");
     expect(reportSource).not.toContain("place.street");
+  });
+});
+
+describe("Build 106 protected-read and Kinfolk response contracts", () => {
+  it("authenticates nearby safety reads and never substitutes fabricated all-clear alerts", () => {
+    const activityAlerts = source("../hooks/useActivityAlerts.ts");
+    const alerts = source("../hooks/useAlerts.ts");
+    const safetyHub = source("../app/(tabs)/safety-hub.tsx");
+    const home = source("../app/(tabs)/index.tsx");
+
+    expect(activityAlerts).toContain("Authorization: `Bearer ${token}`");
+    expect(activityAlerts).toContain("setError(cause instanceof Error");
+    expect(alerts).toContain("Authorization: `Bearer ${token}`");
+    expect(alerts).not.toContain('import { ALERTS } from "@/constants/data"');
+    expect(home).toContain("error: alertError");
+    expect(home).not.toContain('useAlerts("GA")');
+    expect(safetyHub).toContain("Authorization: `Bearer ${token}`");
+    expect(safetyHub).toContain("Could not verify nearby conditions");
+    expect(safetyHub).toContain("!intelError && intelAlerts.length === 0");
+    expect(safetyHub).toContain("if (!token) throw new Error");
+    expect(safetyHub).toContain("setProtectedDataError");
+    expect(safetyHub).toContain("Protected safety records unavailable");
+    const protectedLoader = safetyHub.slice(
+      safetyHub.indexOf("const fetchData = useCallback"),
+      safetyHub.indexOf("const moveWidget"),
+    );
+    expect(protectedLoader).not.toContain("token ? { Authorization");
+  });
+
+  it("carries safe sources and evidence-focused Library actions through the alternate Kinfolk widget", () => {
+    const widget = source("../components/AIChatWidget.tsx");
+    expect(parseSafeSourceLink({ title: "Source", url: "https://example.com/report" })).toEqual({
+      title: "Source",
+      url: "https://example.com/report",
+    });
+    expect(parseSafeSourceLink({ title: "Source", url: "https://user@example.com/report" })).toBeNull();
+    expect(parseSafeSourceLink({ title: "Source", url: "https://user:secret@example.com/report" })).toBeNull();
+    expect(parseSafeSourceLink({ title: "Source", url: "http://example.com/report" })).toBeNull();
+    expect(widget).toContain("parseSafeSourceLink(source)");
+    expect(widget).toContain('accessibilityRole="link"');
+    expect(widget).toContain('pathname: "/library-topic"');
+    expect(widget).toContain('focus: "evidence"');
+  });
+
+  it("uses the configured API host for native business, profile, reference, and preview requests", () => {
+    for (const relativePath of [
+      "../app/business/[id].tsx",
+      "../app/(tabs)/index.tsx",
+      "../app/(tabs)/profile.tsx",
+      "../app/(tabs)/safety-hub.tsx",
+      "../app/community-reference.tsx",
+      "../app/preview.tsx",
+      "../components/AIChatWidget.tsx",
+    ]) {
+      const route = source(relativePath);
+      expect(route).toContain('from "@/lib/api"');
+      expect(route).not.toMatch(/fetch\((?:`|"|')\/api\//);
+      expect(route).not.toContain("EXPO_PUBLIC_DOMAIN");
+      expect(route).not.toMatch(/function getApiBase|const getApiBase/);
+    }
   });
 });

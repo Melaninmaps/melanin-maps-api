@@ -1,13 +1,13 @@
 {
-  "lastIosSubmitted": 98,
+  "lastIosSubmitted": 105,
   "lastAndroidSubmitted": 73,
-  "iosEasBuildId": "04eb33b2-bdf5-4d04-aca8-ed24b18d18e5",
-  "iosEasSubmissionId": "a7cb3544-801d-403c-9a08-62f28cba5004",
-  "iosArtifactUrl": "https://expo.dev/artifacts/eas/qCz8eETo2U1qQLhlItVcrtX5BX8vSeJjSMg3K54RsHM.ipa",
+  "iosEasBuildId": "7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
+  "iosEasSubmissionId": "c5193c56-2e49-450f-ab43-194a4baf52e8",
+  "iosArtifactUrl": "https://expo.dev/accounts/tlindsay428/projects/mobile/builds/7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
   "iosSubmissionStatus": "SUBMITTED_TO_ASC",
   "androidEasBuildId": "3e309685-851f-466f-9d00-cf44f27f954c",
   "androidArtifactUrl": "https://expo.dev/artifacts/eas/3kdQyf7pgJgqCpZM4Yat2mG4dYV69_jA-TYGtyxwUJ4.aab",
   "androidSubmissionStatus": "BUILD_COMPLETE_SUBMIT_PENDING_CREDENTIAL",
-  "sourceCommit": "b37c161954f100afa876bf41bf19d0000613fd7a",
-  "notes": "iOS Build 98: submitted directly to App Store Connect via EAS Submit (submission a7cb3544). Android VC73: AAB built successfully — Play Store submission still requires Google Service Account key regeneration (see docs/product/releases/ANDROID_VC72_CREDENTIAL_FIX.md). Both builds fix: HERITAGE_SITES_ENABLED re-enabled, Historical Sundown Town chip added to HERITAGE_CATEGORIES and CATEGORY_STYLES."
+  "sourceCommit": "4af512bc70e030beafd4f256aa8034be0c833bc8",
+  "notes": "iOS Build 105 was uploaded to App Store Connect/TestFlight with existing remote signing credentials. Android VC73 is the last build recorded here; confirm Google Play's current highest version code before submitting a new Android bundle."
 }

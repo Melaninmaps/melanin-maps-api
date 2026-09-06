@@ -47,6 +47,7 @@ import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
@@ -212,7 +213,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         await fetch(`${base}/api/businesses/${id}/view`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -225,7 +226,7 @@ export default function BusinessDetailScreen() {
     if (!id || !(business as any)?.isReferenceOnly) return;
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/businesses/${id}/reference-analytics`);
         if (res.ok) {
           const data = await res.json() as { totalViews: number; totalLinkClicks: number; clicksBySource: { source: string; total: number }[] };
@@ -239,7 +240,7 @@ export default function BusinessDetailScreen() {
     if (!id) return;
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/businesses/${id}/pinned`);
         if (res.ok) {
           const data = await res.json() as { pinned: PinnedItem[] };
@@ -254,7 +255,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/businesses/${id}/contributions`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -268,7 +269,7 @@ export default function BusinessDetailScreen() {
   }, [id]);
   useEffect(() => {
     if (!id) return;
-    fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/plate-passes/${id}/count`)
+    fetch(`${getApiBase()}/api/plate-passes/${id}/count`)
       .then(r => r.ok ? r.json() : null)
       .then((d: { thisWeek?: number } | null) => { if (d?.thisWeek) setPlatePassCount(d.thisWeek); })
       .catch(() => {});
@@ -280,7 +281,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/hidden-gems/${id}/status`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -298,7 +299,7 @@ export default function BusinessDetailScreen() {
       const { getItemAsync } = await import("expo-secure-store");
       const token = await getItemAsync("auth_session_token");
       if (!token) return;
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/businesses/${id}/safety-experience`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -421,7 +422,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = Platform.OS !== "web" ? await getItemAsync("auth_session_token") : null;
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
         await fetch(`${base}/api/businesses/${business.id}/click`, {
@@ -456,7 +457,7 @@ export default function BusinessDetailScreen() {
         try {
           const { getItemAsync: getToken } = await import("expo-secure-store");
           const token = Platform.OS !== "web" ? await getToken("auth_session_token") : null;
-          fetch(`/api/businesses/${business.id}/reference-link-click`, {
+          fetch(`${getApiBase()}/api/businesses/${business.id}/reference-link-click`, {
             method: "POST",
             headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify({ source: source ?? "business_profile", sourceId: sourceId ?? null, referrerUserId: referrerId ?? null }),
@@ -505,7 +506,7 @@ export default function BusinessDetailScreen() {
       try {
         const { getItemAsync: getItem } = await import("expo-secure-store");
         const token = Platform.OS !== "web" ? await getItem("auth_session_token") : null;
-        await fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/reviews/${editingReviewId}`, {
+        await fetch(`${getApiBase()}/api/reviews/${editingReviewId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
           body: JSON.stringify({ rating, text }),
@@ -543,7 +544,7 @@ export default function BusinessDetailScreen() {
         Alert.alert("Sign in required", "Please sign in to save businesses to your circles.");
         return;
       }
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/circles`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json() as { circles: { id: number; name: string; city: string | null; state: string | null; memberCount: number }[] };
       setUserCircles(data.circles ?? []);
@@ -557,7 +558,7 @@ export default function BusinessDetailScreen() {
     try {
       const { getItemAsync } = await import("expo-secure-store");
       const token = await getItemAsync("auth_session_token");
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const res = await fetch(`${base}/api/circles/${circleId}/suggestions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
@@ -1340,7 +1341,7 @@ export default function BusinessDetailScreen() {
                     destName: business.name ?? "", mode: travelMode,
                   });
 
-                  const resp = await fetch(`/api/directions?${params.toString()}`, {
+                  const resp = await fetch(`${getApiBase()}/api/directions?${params.toString()}`, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                   });
                   if (resp.ok) {
@@ -1354,7 +1355,7 @@ export default function BusinessDetailScreen() {
                     if (data.waypoints?.length) {
                       setSafetyLoading(true);
                       try {
-                        const safetyResp = await fetch("/api/directions/safety-context", {
+                        const safetyResp = await fetch(`${getApiBase()}/api/directions/safety-context`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
                           body: JSON.stringify({ waypoints: data.waypoints }),
@@ -1687,7 +1688,7 @@ export default function BusinessDetailScreen() {
                     destLat: String(business.latitude), destLng: String(business.longitude),
                     destName: business.name ?? "", mode: travelMode,
                   });
-                  const resp = await fetch(`/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                  const resp = await fetch(`${getApiBase()}/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
                   if (resp.ok) {
                     const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: { index: number; instruction: string; distance: string; maneuver: string | null }[]; waypoints: { lat: number; lng: number }[] };
                     setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
@@ -1695,7 +1696,7 @@ export default function BusinessDetailScreen() {
                     if (data.waypoints?.length) {
                       setSafetyLoading(true);
                       try {
-                        const sResp = await fetch("/api/directions/safety-context", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ waypoints: data.waypoints }) });
+                        const sResp = await fetch(`${getApiBase()}/api/directions/safety-context`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ waypoints: data.waypoints }) });
                         if (sResp.ok) setSafetyContext(await sResp.json());
                       } catch { } finally { setSafetyLoading(false); }
                     }
@@ -1995,7 +1996,7 @@ export default function BusinessDetailScreen() {
                     const { getItemAsync } = await import("expo-secure-store");
                     const token = await getItemAsync("auth_session_token");
                     if (!token) { Alert.alert("Sign in required", "Sign in to nominate a Hidden Gem."); setNomSheetOpen(false); setNomSubmitting(false); return; }
-                    const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+                    const base = getApiBase();
                     const res = await fetch(`${base}/api/hidden-gems/${id}/nominate`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

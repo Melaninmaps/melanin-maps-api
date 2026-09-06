@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { Platform, AppState } from "react-native";
+import { getApiBase } from "@/lib/api";
 
 export type AlertType = "police" | "ice" | "checkpoint" | "traffic" | "other";
 
@@ -26,11 +27,6 @@ export const ALERT_META: Record<AlertType, { label: string; icon: string; color:
   other: { label: "Community Alert", icon: "📢", color: "#059669", bgColor: "#064E3B" },
 };
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-
 async function getToken(): Promise<string | null> {
   try {
     if (Platform.OS === "web") return null;
@@ -43,6 +39,7 @@ const ALERT_RADIUS_KM = 16.09;
 
 export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}) {
   const [alerts, setAlerts] = useState<ActivityAlert[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [appActive, setAppActive] = useState(AppState.currentState === "active");
   const locationRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -64,13 +61,20 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
     const loc = locationRef.current;
     if (!loc) return;
     try {
+      const token = await getToken();
+      if (!token) throw new Error("Sign in to load nearby safety alerts.");
       const res = await fetch(
         `${getApiBase()}/api/community-alerts/nearby?lat=${loc.lat}&lng=${loc.lng}&radius=${ALERT_RADIUS_KM}`,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (!res.ok) return;
+      if (!res.ok) throw new Error(`Nearby safety alerts are unavailable (${res.status}).`);
       const data = await res.json() as { alerts: ActivityAlert[] };
       setAlerts(data.alerts ?? []);
-    } catch { }
+      setError(null);
+    } catch (cause) {
+      setAlerts([]);
+      setError(cause instanceof Error ? cause.message : "Nearby safety alerts are unavailable.");
+    }
   }, []);
 
   const updateLocation = useCallback(async (lat: number, lng: number) => {
@@ -187,5 +191,5 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
 
   const visible = alerts.filter((a) => !dismissed.has(a.id));
 
-  return { alerts: visible, reportAlert, confirmAlert, clearAlert, dismissAlert };
+  return { alerts: visible, error, reportAlert, confirmAlert, clearAlert, dismissAlert };
 }

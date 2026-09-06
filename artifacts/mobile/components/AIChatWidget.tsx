@@ -10,6 +10,7 @@ import { NativeScrollEvent, NativeSyntheticEvent ,
   Animated,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   PanResponder,
   Platform,
@@ -23,6 +24,8 @@ import { NativeScrollEvent, NativeSyntheticEvent ,
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
+import { parseSafeSourceLink } from "@/lib/sourceLinks";
 
 interface Message {
   id: string;
@@ -33,6 +36,8 @@ interface Message {
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
   sourceNote?: string | null;
+  sources?: Array<{ title: string; url: string }>;
+  libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
 }
 
 interface TaskActionPayload {
@@ -43,11 +48,6 @@ interface TaskActionPayload {
 }
 
 const AUTH_TOKEN_KEY = "auth_session_token";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }
@@ -106,6 +106,8 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
   sourceNote?: string | null;
+  sources: Array<{ title: string; url: string }>;
+  libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -136,6 +138,8 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     location?: { city: string; state: string | null; source: string } | null;
     locationSource?: string | null;
     sourceNote?: string | null;
+    sources?: Array<{ title: string; url: string }> | null;
+    libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -145,6 +149,11 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     location: data.location ?? null,
     locationSource: data.locationSource ?? null,
     sourceNote: data.sourceNote ?? null,
+    sources: (data.sources ?? []).flatMap((source) => {
+      const safe = parseSafeSourceLink(source);
+      return safe ? [safe] : [];
+    }),
+    libraryAction: data.libraryAction ?? null,
   };
 }
 
@@ -555,7 +564,16 @@ export function AIChatWidget() {
 
     try {
       const token = await getToken();
-      const { reply, taskAction, followUpSuggestions, location, locationSource, sourceNote } = await sendToKinfolk(text, token);
+      const {
+        reply,
+        taskAction,
+        followUpSuggestions,
+        location,
+        locationSource,
+        sourceNote,
+        sources,
+        libraryAction,
+      } = await sendToKinfolk(text, token);
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {
@@ -575,6 +593,8 @@ export function AIChatWidget() {
         location,
         locationSource,
         sourceNote,
+        sources,
+        libraryAction,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -780,6 +800,41 @@ export function AIChatWidget() {
                   <Text style={[styles.sourceNote, { color: colors.mutedForeground, borderTopColor: colors.border }]}>
                     {item.sourceNote}
                   </Text>
+                ) : null}
+                {!item.fromUser && item.sources?.length ? (
+                  <View style={[styles.sourceLinks, { marginLeft: 42 }]}>
+                    {item.sources.map((source: { title: string; url: string }) => (
+                      <TouchableOpacity
+                        key={`${source.url}-${source.title}`}
+                        onPress={() => void Linking.openURL(source.url)}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Open source: ${source.title}`}
+                      >
+                        <Text style={[styles.sourceLink, { color: colors.primary }]} numberOfLines={2}>
+                          {source.title}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : null}
+                {!item.fromUser && item.libraryAction ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setOpen(false);
+                      router.push({
+                        pathname: "/library-topic",
+                        params: { topicId: item.libraryAction!.topicId, focus: "evidence" },
+                      } as never);
+                    }}
+                    style={[styles.libraryAction, { marginLeft: 42, borderColor: colors.primary }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={item.libraryAction.label}
+                  >
+                    <Feather name="book-open" size={13} color={colors.primary} />
+                    <Text style={[styles.libraryActionText, { color: colors.primary }]}>
+                      {item.libraryAction.label}
+                    </Text>
+                  </TouchableOpacity>
                 ) : null}
               </View>
             )}
@@ -1061,6 +1116,10 @@ const styles = StyleSheet.create({
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
   sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
+  sourceLinks: { maxWidth: "78%", marginTop: 7, gap: 5 },
+  sourceLink: { fontSize: 11, fontFamily: "Inter_500Medium", lineHeight: 16, textDecorationLine: "underline" },
+  libraryAction: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, marginTop: 8, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 12, borderWidth: 1 },
+  libraryActionText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },
   trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
   chipsScroll: { borderTopWidth: 1, maxHeight: 56 },

@@ -40,6 +40,7 @@ import { type FilterState } from "@/components/ScoreFilterPanel";
 import { useSpaces } from "@/hooks/useSpaces";
 import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 function getTimeGreeting(): string {
@@ -62,7 +63,7 @@ export default function DiscoverScreen() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { alerts: liveAlerts, isLive, refetch: refetchAlerts } = useAlerts("GA");
+  const { alerts: liveAlerts, isLive, error: alertError, refetch: refetchAlerts } = useAlerts();
   const [alerts, setAlerts] = useState(liveAlerts);
   React.useEffect(() => { queueMicrotask(() => { setAlerts(liveAlerts); }); }, [liveAlerts]);
   const [filters, setFilters] = useState<FilterState>({
@@ -86,7 +87,7 @@ export default function DiscoverScreen() {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
         if (!token) { setTwinRecsLoading(false); return; }
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/kinfolk/twin-recommendations`, { headers: { Authorization: `Bearer ${token}` } });
         if (!cancelled && res.ok) {
           const data = await res.json() as { recommendations: typeof twinRecs };
@@ -103,7 +104,7 @@ export default function DiscoverScreen() {
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const res = await fetch(`${base}/api/hidden-gems?limit=10`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -675,7 +676,12 @@ export default function DiscoverScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              {alerts.length > 0 ? (
+              {alertError ? (
+                <View style={[styles.noAlerts, { backgroundColor: colors.card, borderColor: "#D97706" }]}>
+                  <Feather name="alert-circle" size={20} color="#D97706" />
+                  <Text style={[styles.noAlertsText, { color: colors.mutedForeground }]}>{alertError}</Text>
+                </View>
+              ) : alerts.length > 0 ? (
                 alerts.map((a) => (
                   <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
                 ))

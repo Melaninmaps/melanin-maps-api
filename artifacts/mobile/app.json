@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mapping With Melanin",
     "slug": "mobile",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mappingwithmelanin",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "104",
+      "buildNumber": "106",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
@@ -76,7 +76,7 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "versionCode": 79,
+      "versionCode": 80,
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -126,7 +126,9 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Mapping With Melanin uses your microphone so you can send voice messages to Kinfolk AI."
+          "microphonePermission": "Mapping With Melanin uses your microphone so you can send voice messages to Kinfolk AI.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
         }
       ],
       [
@@ -167,7 +169,7 @@
       }
     },
     "owner": "tlindsay428",
-    "runtimeVersion": "1.1.5-native.2",
+    "runtimeVersion": "1.1.6-native.1",
     "updates": {
       "url": "https://u.expo.dev/0f873107-7787-46ab-9a04-685c2a6756b1"
     }

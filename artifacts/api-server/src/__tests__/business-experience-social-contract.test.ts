@@ -69,7 +69,15 @@ describe("category-aware business experience contract", () => {
     expect(businessesSource).toContain("asc(businessesTable.name)");
     expect(businessesSource).toContain("asc(businessesTable.id)");
     expect(businessesSource).toContain("CATEGORY_FILTER_ALIASES");
-    expect(businessesSource).toContain('["Food", "Food & Drink", "Food Trucks"]');
+    for (const requiredFoodAlias of [
+      '"Food"',
+      '"Food & Drink"',
+      '"Food Trucks"',
+      '"Restaurant"',
+      '"Bakery"',
+    ]) {
+      expect(businessesSource).toContain(requiredFoodAlias);
+    }
     expect(businessesSource).toContain("categoryFilterStorageValues(category)");
   });
 
