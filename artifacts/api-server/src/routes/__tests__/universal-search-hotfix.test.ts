@@ -1,0 +1,220 @@
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import supertest from "supertest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const { captureLibraryGrowthSignal, poolQuery } = vi.hoisted(() => ({
+  captureLibraryGrowthSignal: vi.fn().mockResolvedValue(undefined),
+  poolQuery: vi.fn(),
+}));
+
+vi.mock("@workspace/db", () => ({
+  db: {},
+  pool: { query: poolQuery },
+}));
+
+vi.mock("../../lib/library-growth-engine", () => ({
+  captureLibraryGrowthSignal,
+  classifyGrowthSensitivity: () => "standard",
+}));
+
+import universalSearchRouter, { appendBusinessRadiusFilter } from "../universal-search";
+
+type QueryCall = readonly [query: string, params?: readonly unknown[]];
+
+function createApp(options: { authenticated?: boolean; isTester?: boolean; log?: { error: ReturnType<typeof vi.fn> } } = {}): Express {
+  const { authenticated = true, isTester = false, log = { error: vi.fn() } } = options;
+  const app = express();
+  app.use((request: Request, _response: Response, next: NextFunction) => {
+    request.isAuthenticated = (() => authenticated) as any;
+    if (authenticated) request.user = { id: "member-1", isTester } as any;
+    request.log = log as any;
+    next();
+  });
+  app.use("/api", universalSearchRouter);
+  return app;
+}
+
+async function flushBackgroundWork(): Promise<void> {
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  await new Promise<void>((resolve) => setImmediate(resolve));
+}
+
+function inserts(calls: QueryCall[]): QueryCall[] {
+  return calls.filter(([query]) => /INSERT INTO (search_events|business_search_inquiries)/.test(query));
+}
+
+function zeroResultRepository(calls: QueryCall[]): void {
+  poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
+    calls.push([query, params]);
+    return { rows: [] };
+  });
+}
+
+function publicBusiness() {
+  return {
+    id: "public-coffee",
+    name: "Public Coffee House",
+    category: "Food",
+    subcategory: "Cafe",
+    city: "Philadelphia",
+    state: "PA",
+    description: "Coffee and community.",
+    image_url: "https://images.example.test/public-coffee.jpg",
+    rating: "4.8",
+    review_count: "24",
+    verified: true,
+    latitude: "39.9526",
+    longitude: "-75.1652",
+    ownership_designations: ["Black-owned"],
+    black_owned: true,
+    instagram: "publiccoffee",
+    website: "https://public-coffee.example.test",
+    phone: "215-555-0100",
+    price_range: "$$",
+    confidence_score: "91",
+  };
+}
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("GET /api/search/universal privacy-safe hotfix", () => {
+  it("keeps the existing authentication wall before any lookup", async () => {
+    const response = await supertest(createApp({ authenticated: false }))
+      .get("/api/search/universal")
+      .query({ q: "coffee" });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: "Authentication required" });
+    expect(poolQuery).not.toHaveBeenCalled();
+  });
+
+  it("does not persist the raw query or a zero-result inquiry for exactly smart_search plus discovery_v1", async () => {
+    const calls: QueryCall[] = [];
+    zeroResultRepository(calls);
+    const rawQuery = "coffee coffee";
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({
+        q: rawQuery,
+        resultTypes: "businesses",
+        surface: "smart_search",
+        privacy_mode: "discovery_v1",
+      });
+    await flushBackgroundWork();
+
+    expect(response.status).toBe(200);
+    expect(response.body.totalResults).toBe(0);
+    expect(response.body.unmetDemandRecorded).toBe(false);
+    expect(inserts(calls)).toEqual([]);
+    expect(JSON.stringify(inserts(calls))).not.toContain(rawQuery);
+    expect(captureLibraryGrowthSignal).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["missing privacy_mode", {}],
+    ["invalid privacy_mode", { privacy_mode: "not_discovery_v1" }],
+  ])("preserves ordinary legacy persistence when %s", async (_label, extraQuery) => {
+    const calls: QueryCall[] = [];
+    zeroResultRepository(calls);
+    const rawQuery = "coffee coffee";
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({ q: rawQuery, resultTypes: "businesses", surface: "smart_search", ...extraQuery });
+    await flushBackgroundWork();
+
+    expect(response.status).toBe(200);
+    expect(response.body.unmetDemandRecorded).toBe(true);
+    const legacyInserts = inserts(calls);
+    expect(legacyInserts).toHaveLength(2);
+    expect(legacyInserts[0][0]).toContain("INSERT INTO search_events");
+    expect(legacyInserts[0][1]).toContain(rawQuery);
+    expect(legacyInserts[1][0]).toContain("INSERT INTO business_search_inquiries");
+    expect(legacyInserts[1][1]).toContain(rawQuery);
+  });
+
+  it("keeps only canonical public businesses for testers and retains the mixed response result shapes", async () => {
+    const calls: QueryCall[] = [];
+    const publicRow = publicBusiness();
+    const hiddenRows = [
+      { ...publicRow, id: "held-coffee", name: "Held Coffee", listing_status: "held" },
+      { ...publicRow, id: "private-coffee", name: "Private Coffee", listing_status: "private" },
+      { ...publicRow, id: "demo-coffee", name: "[Demo] Coffee", listing_status: "live_claimed" },
+    ];
+
+    poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
+      calls.push([query, params]);
+      if (query.includes("FROM businesses b")) {
+        // The fake repository models the DB visibility policy: an unrestricted tester
+        // query would expose held/private rows, while the canonical filter admits only live rows.
+        return {
+          rows: query.includes("b.listing_status IN ('live_unclaimed', 'live_claimed')")
+            ? [publicRow]
+            : [publicRow, ...hiddenRows],
+        };
+      }
+      if (query.includes("FROM events")) {
+        return { rows: [{ id: "event-1", title: "Coffee Community Meetup", category: "Community", city: "Philadelphia", date: "2026-09-07", description: "Meet neighbors.", image_url: null, result_type: "event", match_tier: "related_category" }] };
+      }
+      if (query.includes("FROM cultural_sites")) {
+        return { rows: [{ id: "heritage-1", name: "Coffee Heritage Site", city: "Philadelphia", state: "PA", description: "A landmark.", latitude: "39.95", longitude: "-75.16", verified_source: "heritage.example.test", source_table: "cultural_sites", result_type: "heritage", match_tier: "exact_specialty" }] };
+      }
+      if (query.includes("FROM knowledge_topics")) {
+        return { rows: [{ id: "library-1", name: "Coffee Culture", description: "Library context.", category: "Culture", result_type: "library_topic", match_tier: "related_category" }] };
+      }
+      if (query.includes("FROM community_organizations")) {
+        return { rows: [{ id: "organization-1", name: "Coffee Mutual Aid", category: "Community", city: "Philadelphia", state: "PA", description: "Community support.", website: "https://org.example.test", result_type: "community_org", match_tier: "related_category" }] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp({ isTester: true }))
+      .get("/api/search/universal")
+      .query({ q: "coffee" });
+    await flushBackgroundWork();
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses).toEqual([
+      expect.objectContaining({ id: "public-coffee", name: "Public Coffee House", matchTier: "exact_name", matchedFields: ["name"] }),
+    ]);
+    expect(response.body.results.businesses.map((business: { id: string }) => business.id)).not.toEqual(expect.arrayContaining(hiddenRows.map(({ id }) => id)));
+    expect(response.body.results.events).toEqual([expect.objectContaining({ id: "event-1", title: "Coffee Community Meetup", result_type: "event", match_tier: "related_category" })]);
+    expect(response.body.results.heritage).toEqual([expect.objectContaining({ id: "heritage-1", name: "Coffee Heritage Site", result_type: "heritage", match_tier: "exact_specialty" })]);
+    expect(response.body.results.libraryTopics).toEqual([expect.objectContaining({ id: "library-1", name: "Coffee Culture", result_type: "library_topic", match_tier: "related_category" })]);
+    expect(response.body.results.communityOrgs).toEqual([expect.objectContaining({ id: "organization-1", name: "Coffee Mutual Aid", result_type: "community_org", match_tier: "related_category" })]);
+
+    const businessReads = calls.filter(([query]) => query.includes("FROM businesses b"));
+    expect(businessReads).not.toHaveLength(0);
+    expect(businessReads.every(([query]) => query.includes("b.listing_status IN ('live_unclaimed', 'live_claimed')"))).toBe(true);
+  });
+
+  it("validates repeated or invalid query values safely without persisting a malformed request", async () => {
+    const calls: QueryCall[] = [];
+    zeroResultRepository(calls);
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal?q=coffee&q=tea&lat=not-a-number&lng=-75");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "q (query) required, minimum 2 characters" });
+    expect(calls).toEqual([]);
+  });
+});
+
+describe("appendBusinessRadiusFilter", () => {
+  it("adds an index-compatible latitude/longitude box before exact radius math", () => {
+    const params: unknown[] = [];
+    const sql = appendBusinessRadiusFilter(params, 39.9526, -75.1652, 25);
+
+    expect(sql).toContain("b.latitude BETWEEN $1 AND $2");
+    expect(sql).toContain("b.longitude BETWEEN $3 AND $4");
+    expect(sql).toContain("cos(radians($5))");
+    expect(sql).toContain("cos(radians(b.longitude) - radians($6))");
+    expect(sql).toContain(") <= $7");
+    expect(params).toHaveLength(7);
+    expect(params.slice(0, 4).every((value) => typeof value === "number" && Number.isFinite(value))).toBe(true);
+  });
+});

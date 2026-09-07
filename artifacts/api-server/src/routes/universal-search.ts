@@ -521,6 +521,60 @@ function safeParseArray(val: unknown): string[] | undefined {
   return undefined;
 }
 
+function singleQueryValue(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function boundedNumber(value: string | undefined, fallback: number, min: number, max: number): number {
+  if (value === undefined || value.trim() === "") return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
+function boundedInteger(value: string | undefined, fallback: number, min: number, max: number): number {
+  return Math.floor(boundedNumber(value, fallback, min, max));
+}
+
+function validCoordinate(value: string | undefined, min: number, max: number): number | undefined {
+  if (value === undefined || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : undefined;
+}
+
+/**
+ * Adds a conservative latitude/longitude bounding box before the exact distance
+ * calculation. The distance expression remains authoritative at the radius edge.
+ */
+export function appendBusinessRadiusFilter(
+  params: unknown[],
+  lat: number,
+  lng: number,
+  radiusMiles: number,
+): string {
+  const latitudeDelta = radiusMiles / 69;
+  const longitudeDelta = radiusMiles / (69 * Math.max(Math.abs(Math.cos(lat * Math.PI / 180)), 0.01));
+  const minLatitude = Math.max(-90, lat - latitudeDelta);
+  const maxLatitude = Math.min(90, lat + latitudeDelta);
+  const minLongitude = lng - longitudeDelta;
+  const maxLongitude = lng + longitudeDelta;
+  const first = params.length + 1;
+
+  params.push(minLatitude, maxLatitude);
+  const clauses = [`b.latitude BETWEEN $${first} AND $${first + 1}`];
+  if (minLongitude >= -180 && maxLongitude <= 180) {
+    params.push(minLongitude, maxLongitude);
+    clauses.push(`b.longitude BETWEEN $${first + 2} AND $${first + 3}`);
+  }
+  const distanceStart = params.length + 1;
+  params.push(lat, lng, radiusMiles);
+  clauses.push(`(3959 * acos(GREATEST(-1, LEAST(1,
+    cos(radians($${distanceStart})) * cos(radians(b.latitude)) *
+    cos(radians(b.longitude) - radians($${distanceStart + 1})) +
+    sin(radians($${distanceStart})) * sin(radians(b.latitude))
+  )))) <= $${distanceStart + 2}`);
+  return clauses.join("\n               AND ");
+}
+
 // ── Business search — multi-field, match-classified ──────────────────────────
 interface BusinessResult {
   id: string;
@@ -567,29 +621,18 @@ async function searchBusinesses(opts: {
   lng?: number;
   radius: number;
   limit: number;
-  isTester?: boolean;
 }): Promise<BusinessResult[]> {
   const {
     q, searchTokens, mappedCategories, intentType,
-    city, state, lat, lng, radius, limit, isTester,
+    city, state, lat, lng, radius, limit,
   } = opts;
 
   const results = new Map<string, BusinessResult>();
 
-  const listingFilter = isTester
-    ? "1=1"
-    : "b.listing_status IN ('live_unclaimed', 'live_claimed')";
+  // Universal search always uses the canonical public business set. Tester
+  // status must never expose held, private, or hidden rows through this route.
+  const listingFilter = "b.listing_status IN ('live_unclaimed', 'live_claimed')";
   const nonDemoFilter = "COALESCE(b.name, '') NOT ILIKE '%[demo]%' AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'";
-
-  const geoFilter = (lat !== undefined && lng !== undefined)
-    ? `AND (
-        3959 * acos(
-          cos(radians($LAT)) * cos(radians(b.latitude)) *
-          cos(radians(b.longitude) - radians($LNG)) +
-          sin(radians($LAT)) * sin(radians(b.latitude))
-        )
-      ) <= $RADIUS`
-    : "";
 
   // ── PASS 1: Exact name match ──────────────────────────────────────────────
   // named_business intent: NEVER apply a geo filter here. Someone searching for
@@ -603,17 +646,15 @@ async function searchBusinesses(opts: {
     try {
       const params: unknown[] = [`%${token}%`];
       let cityClause = "";
+      let stateClause = "";
       let geoClause = "";
-      let offset = 1;
 
-      if (city) { offset++; params.push(`%${city}%`); cityClause = `AND b.city ILIKE $${offset}`; }
-      if (state) { offset++; params.push(`%${state}%`); }
+      if (city) { params.push(`%${city}%`); cityClause = `AND b.city ILIKE $${params.length}`; }
+      if (state) { params.push(`%${state}%`); stateClause = `AND b.state ILIKE $${params.length}`; }
 
       // Skip geo radius for named-business searches — name lookup is always nationwide.
       if (!isNamedBusiness && lat !== undefined && lng !== undefined) {
-        params.push(lat, lng, radius);
-        geoClause = `AND (3959 * acos(GREATEST(-1, LEAST(1, cos(radians($${offset + 1})) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($${offset + 2})) + sin(radians($${offset + 1})) * sin(radians(b.latitude)))))) <= $${offset + 3}`;
-        offset += 3;
+        geoClause = `AND ${appendBusinessRadiusFilter(params, lat, lng, radius)}`;
       }
 
       const rows = await pool.query<{
@@ -634,7 +675,7 @@ async function searchBusinesses(opts: {
            AND ${listingFilter}
            AND ${nonDemoFilter}
            AND b.name ILIKE $1
-           ${cityClause} ${geoClause}
+           ${cityClause} ${stateClause} ${geoClause}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
          LIMIT ${Math.min(limit, 20)}`,
         params,
@@ -669,16 +710,13 @@ async function searchBusinesses(opts: {
     try {
       // Also join community_says if it exists
       const params: unknown[] = [`%${extendedToken}%`];
-      let offset = 1;
       let p2CityClause = "";
       let p2GeoClause = "";
-      if (city) { offset++; params.push(`%${city}%`); p2CityClause = `AND b.city ILIKE $${offset}`; }
+      if (city) { params.push(`%${city}%`); p2CityClause = `AND b.city ILIKE $${params.length}`; }
       // Apply geo filter when caller supplied coordinates — prevents PASS 2 from
       // returning US businesses when the search is geo-bounded to an international city.
       if (lat !== undefined && lng !== undefined) {
-        params.push(lat, lng, radius);
-        const p2li = params.length;
-        p2GeoClause = ` AND (3959 * acos(GREATEST(-1, LEAST(1, cos(radians($${p2li - 2})) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($${p2li - 1})) + sin(radians($${p2li - 2})) * sin(radians(b.latitude)))))) <= $${p2li}`;
+        p2GeoClause = ` AND ${appendBusinessRadiusFilter(params, lat, lng, radius)}`;
       }
 
       const rows = await pool.query<{
@@ -1028,9 +1066,7 @@ async function searchBusinesses(opts: {
       }
       if (effectiveLat !== undefined && effectiveLng !== undefined) {
         const geoRadius = serverExtractedGeo ? GEO_EXTRACT_RADIUS : radius;
-        params.push(effectiveLat, effectiveLng, geoRadius);
-        const li = params.length;
-        extraClauses += ` AND (3959 * acos(GREATEST(-1, LEAST(1, cos(radians($${li - 2})) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($${li - 1})) + sin(radians($${li - 2})) * sin(radians(b.latitude)))))) <= $${li}`;
+        extraClauses += ` AND ${appendBusinessRadiusFilter(params, effectiveLat, effectiveLng, geoRadius)}`;
       }
 
       const already = [...results.keys()];
@@ -1116,10 +1152,11 @@ async function searchBusinesses(opts: {
         if (!localAlready.find((r) => r.id === id)) results.delete(id);
       }
       try {
-        const params3b: unknown[] = [effectiveLat, effectiveLng, GEO_EXTRACT_RADIUS];
+        const params3b: unknown[] = [];
+        const geoClause3b = appendBusinessRadiusFilter(params3b, effectiveLat, effectiveLng, GEO_EXTRACT_RADIUS);
         const already3b = [...results.keys()];
         const excludeClause3b = already3b.length > 0
-          ? `AND b.id NOT IN (${already3b.map((_, i) => `$${i + 4}`).join(", ")})`
+          ? `AND b.id NOT IN (${already3b.map((_, i) => `$${params3b.length + i + 1}`).join(", ")})`
           : "";
         if (already3b.length > 0) params3b.push(...already3b);
         const geoAllRows = await pool.query<{
@@ -1139,10 +1176,7 @@ async function searchBusinesses(opts: {
            WHERE b.status = 'active'
              AND ${listingFilter}
              AND ${nonDemoFilter}
-             AND (3959 * acos(GREATEST(-1, LEAST(1,
-                   cos(radians($1)) * cos(radians(b.latitude)) *
-                   cos(radians(b.longitude) - radians($2)) +
-                   sin(radians($1)) * sin(radians(b.latitude)))))) <= $3
+             AND ${geoClause3b}
              ${excludeClause3b}
            ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
            LIMIT ${Math.min(limit - results.size, 20)}`,
@@ -1630,17 +1664,17 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     return;
   }
 
-  const {
-    q,
-    lat: latStr,
-    lng: lngStr,
-    city,
-    state,
-    radius: radiusStr = "25",
-    limit: limitStr = "20",
-    resultTypes: resultTypesStr,
-    surface = "general",
-  } = req.query as Record<string, string>;
+  const q = singleQueryValue(req.query.q);
+  const latStr = singleQueryValue(req.query.lat);
+  const lngStr = singleQueryValue(req.query.lng);
+  const city = singleQueryValue(req.query.city);
+  const state = singleQueryValue(req.query.state);
+  const radiusStr = singleQueryValue(req.query.radius);
+  const limitStr = singleQueryValue(req.query.limit);
+  const resultTypesStr = singleQueryValue(req.query.resultTypes);
+  const surface = singleQueryValue(req.query.surface) ?? "general";
+  const privacyMode = singleQueryValue(req.query.privacy_mode);
+  const privacySafeMode = surface === "smart_search" && privacyMode === "discovery_v1";
 
   if (!q?.trim() || q.trim().length < 2) {
     res.status(400).json({ error: "q (query) required, minimum 2 characters" });
@@ -1648,10 +1682,12 @@ router.get("/search/universal", async (req: Request, res: Response) => {
   }
 
   const trimmedQ = q.trim();
-  const lat = latStr ? parseFloat(latStr) : undefined;
-  const lng = lngStr ? parseFloat(lngStr) : undefined;
-  const radius = Math.min(100, Math.max(1, parseFloat(radiusStr) || 25));
-  const limit = Math.min(30, Math.max(1, parseInt(limitStr, 10) || 20));
+  const parsedLat = validCoordinate(latStr, -90, 90);
+  const parsedLng = validCoordinate(lngStr, -180, 180);
+  const lat = parsedLat !== undefined && parsedLng !== undefined ? parsedLat : undefined;
+  const lng = parsedLat !== undefined && parsedLng !== undefined ? parsedLng : undefined;
+  const radius = boundedNumber(radiusStr, 25, 1, 100);
+  const limit = boundedInteger(limitStr, 20, 1, 30);
   const user = (req as any).user as { id?: string; isTester?: boolean } | undefined;
 
   const requestedTypes = resultTypesStr
@@ -1678,9 +1714,8 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       ? searchBusinesses({
           q: trimmedQ, searchTokens, mappedCategories, intentType,
           city: cityStr, state: stateStr, lat, lng, radius, limit,
-          isTester: user?.isTester,
-        }).catch((err: unknown) => {
-          req.log?.error({ err }, "Universal search — business search failed");
+        }).catch(() => {
+          if (!privacySafeMode) req.log?.error("Universal search — business search failed");
           return [] as BusinessResult[];
         })
       : Promise.resolve([] as BusinessResult[]);
@@ -1882,11 +1917,13 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       trimmedQ, intentType, crossEntityTotal, mappedCategories.length > 0,
     );
 
-    void logSearchEvent({
-      userId: user?.id, rawQuery: trimmedQ, normalizedConcept, intentType,
-      surface, locationBucket, resultCount: totalResults,
-      matchTypes: matchTiers, fallbackUsed,
-    });
+    if (!privacySafeMode) {
+      void logSearchEvent({
+        userId: user?.id, rawQuery: trimmedQ, normalizedConcept, intentType,
+        surface, locationBucket, resultCount: totalResults,
+        matchTypes: matchTiers, fallbackUsed,
+      });
+    }
 
     res.json({
       query: trimmedQ,
@@ -1897,7 +1934,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       matchTiers,
       fallbackUsed,
       fallbackMessage,
-      unmetDemandRecorded: totalResults === 0 && FEATURE_FLAGS.search_event_logging,
+      unmetDemandRecorded: !privacySafeMode && totalResults === 0 && FEATURE_FLAGS.search_event_logging,
       // Correction 1 fields
       namedBusinessNotFound: namedBusinessNotFound || undefined,
       namedBusinessMessage,
@@ -1915,7 +1952,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     // Capture authenticated search queries as community demand signals.
     // Never blocks or slows the response — errors are swallowed.
     const growthCategory = INTENT_TO_GROWTH_CATEGORY[intentType];
-    if (user?.id && growthCategory && normalizedConcept && normalizedConcept.length >= 3) {
+    if (!privacySafeMode && user?.id && growthCategory && normalizedConcept && normalizedConcept.length >= 3) {
       const sensitivityTier = classifyGrowthSensitivity(normalizedConcept);
       if (sensitivityTier !== "excluded") {
         const canonicalSubjectKey = normalizedConcept.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 80);
@@ -1933,8 +1970,8 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         }).catch(() => { /* non-fatal */ });
       }
     }
-  } catch (err) {
-    req.log?.error({ err }, "Universal search failed");
+  } catch {
+    if (!privacySafeMode) req.log?.error("Universal search failed");
     res.status(500).json({ error: "Search failed" });
   }
 });
