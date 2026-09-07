@@ -122,7 +122,7 @@ router.put("/me/identity-context", async (req, res) => {
     patch = IdentityPatch.parse(req.body);
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: "Validation error", issues: err.errors });
+      return res.status(400).json({ error: "Validation error", issues: err.issues });
     }
     return res.status(400).json({ error: "Invalid request body" });
   }
