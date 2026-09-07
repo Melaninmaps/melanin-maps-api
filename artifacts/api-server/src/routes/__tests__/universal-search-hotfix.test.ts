@@ -143,21 +143,25 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
       { ...publicRow, id: "held-coffee", name: "Held Coffee", listing_status: "held" },
       { ...publicRow, id: "private-coffee", name: "Private Coffee", listing_status: "private" },
       { ...publicRow, id: "demo-coffee", name: "[Demo] Coffee", listing_status: "live_claimed" },
+      { ...publicRow, id: "duplicate-coffee", name: "Duplicate Coffee", is_duplicate: true },
+      { ...publicRow, id: "hidden-coffee", name: "Hidden Coffee", permanently_hidden: true },
+      { ...publicRow, id: "seed-coffee", name: "Seed Coffee", data_source: "demo_seed" },
+      { ...publicRow, id: "sentinel-coffee", name: "Sentinel Coffee", phone: "555-555-0100" },
     ];
 
     poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
       calls.push([query, params]);
-      if (query.includes("FROM businesses b")) {
-        // The fake repository models the DB visibility policy: an unrestricted tester
-        // query would expose held/private rows, while the canonical filter admits only live rows.
+      if (query.includes("FROM public.public_businesses b")) {
         return {
-          rows: query.includes("b.listing_status IN ('live_unclaimed', 'live_claimed')")
-            ? [publicRow]
-            : [publicRow, ...hiddenRows],
+          rows: [publicRow],
         };
       }
+      if (query.includes("FROM businesses b")) return { rows: [publicRow, ...hiddenRows] };
       if (query.includes("FROM events")) {
-        return { rows: [{ id: "event-1", title: "Coffee Community Meetup", category: "Community", city: "Philadelphia", date: "2026-09-07", description: "Meet neighbors.", image_url: null, result_type: "event", match_tier: "related_category" }] };
+        const future = { id: "event-1", title: "Coffee Community Meetup", category: "Community", city: "Philadelphia", date: "2099-09-07", description: "Meet neighbors.", image_url: null, result_type: "event", match_tier: "related_category" };
+        const expired = { ...future, id: "expired-event", title: "Expired Coffee Meetup", date: "2020-01-01" };
+        const fixture = { ...future, id: "fixture-event", title: "Fixture Coffee Meetup" };
+        return { rows: query.includes("created_by_id IS NOT NULL") ? [future, expired] : [future, expired, fixture] };
       }
       if (query.includes("FROM cultural_sites")) {
         return { rows: [{ id: "heritage-1", name: "Coffee Heritage Site", city: "Philadelphia", state: "PA", description: "A landmark.", latitude: "39.95", longitude: "-75.16", verified_source: "heritage.example.test", source_table: "cultural_sites", result_type: "heritage", match_tier: "exact_specialty" }] };
@@ -186,9 +190,11 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(response.body.results.libraryTopics).toEqual([expect.objectContaining({ id: "library-1", name: "Coffee Culture", result_type: "library_topic", match_tier: "related_category" })]);
     expect(response.body.results.communityOrgs).toEqual([expect.objectContaining({ id: "organization-1", name: "Coffee Mutual Aid", result_type: "community_org", match_tier: "related_category" })]);
 
-    const businessReads = calls.filter(([query]) => query.includes("FROM businesses b"));
+    const businessReads = calls.filter(([query]) => /FROM (?:public\.public_businesses|businesses) b/.test(query));
     expect(businessReads).not.toHaveLength(0);
-    expect(businessReads.every(([query]) => query.includes("b.listing_status IN ('live_unclaimed', 'live_claimed')"))).toBe(true);
+    expect(businessReads.every(([query]) => query.includes("FROM public.public_businesses b"))).toBe(true);
+    const eventReads = calls.filter(([query]) => query.includes("FROM events"));
+    expect(eventReads.every(([query]) => query.includes("created_by_id IS NOT NULL"))).toBe(true);
   });
 
   it("validates repeated or invalid query values safely without persisting a malformed request", async () => {
@@ -200,6 +206,22 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "q (query) required, minimum 2 characters" });
+    expect(calls).toEqual([]);
+  });
+
+  it.each([
+    ["missing longitude", "/api/search/universal?q=coffee&lat=39.9"],
+    ["invalid latitude", "/api/search/universal?q=coffee&lat=not-a-number&lng=-75"],
+    ["out-of-range longitude", "/api/search/universal?q=coffee&lat=39.9&lng=181"],
+    ["repeated latitude", "/api/search/universal?q=coffee&lat=39.9&lat=40&lng=-75"],
+  ])("rejects %s rather than silently broadening the search", async (_label, path) => {
+    const calls: QueryCall[] = [];
+    zeroResultRepository(calls);
+
+    const response = await supertest(createApp()).get(path);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "lat and lng must be single valid coordinates supplied together" });
     expect(calls).toEqual([]);
   });
 });
@@ -216,5 +238,31 @@ describe("appendBusinessRadiusFilter", () => {
     expect(sql).toContain(") <= $7");
     expect(params).toHaveLength(7);
     expect(params.slice(0, 4).every((value) => typeof value === "number" && Number.isFinite(value))).toBe(true);
+  });
+
+  it("does not apply a false longitude exclusion when the radius reaches a pole", () => {
+    const params: unknown[] = [];
+    const sql = appendBusinessRadiusFilter(params, 89.9, 30, 25);
+
+    expect(sql).toContain("b.latitude BETWEEN $1 AND $2");
+    expect(sql).not.toContain("b.longitude BETWEEN");
+    expect(sql).not.toContain("b.longitude >=");
+    expect(sql).toContain("cos(radians($3))");
+    expect(sql).toContain(") <= $5");
+    expect(params).toEqual([expect.any(Number), 90, 89.9, 30, 25]);
+  });
+
+  it.each([
+    [179, "east"],
+    [-179, "west"],
+  ])("splits the longitude interval safely across the %s date line", (longitude) => {
+    const params: unknown[] = [];
+    const sql = appendBusinessRadiusFilter(params, 0, longitude as number, 200);
+
+    expect(sql).toContain("(b.longitude >= $3 OR b.longitude <= $4)");
+    expect(sql).toContain("cos(radians($5))");
+    expect(sql).toContain(") <= $7");
+    expect(params).toHaveLength(7);
+    expect(params[5]).toBe(longitude);
   });
 });

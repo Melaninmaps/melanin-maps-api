@@ -15,6 +15,7 @@ import {
   captureLibraryGrowthSignal,
   classifyGrowthSensitivity,
 } from "../lib/library-growth-engine";
+import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
 
 // Maps universal-search IntentType → Library growth category
 const INTENT_TO_GROWTH_CATEGORY: Partial<Record<string, string>> = {
@@ -551,19 +552,37 @@ export function appendBusinessRadiusFilter(
   lng: number,
   radiusMiles: number,
 ): string {
-  const latitudeDelta = radiusMiles / 69;
-  const longitudeDelta = radiusMiles / (69 * Math.max(Math.abs(Math.cos(lat * Math.PI / 180)), 0.01));
+  const earthRadiusMiles = 3959;
+  const angularRadius = radiusMiles / earthRadiusMiles;
+  const latitudeDelta = angularRadius * 180 / Math.PI;
   const minLatitude = Math.max(-90, lat - latitudeDelta);
   const maxLatitude = Math.min(90, lat + latitudeDelta);
-  const minLongitude = lng - longitudeDelta;
-  const maxLongitude = lng + longitudeDelta;
   const first = params.length + 1;
 
   params.push(minLatitude, maxLatitude);
   const clauses = [`b.latitude BETWEEN $${first} AND $${first + 1}`];
-  if (minLongitude >= -180 && maxLongitude <= 180) {
-    params.push(minLongitude, maxLongitude);
-    clauses.push(`b.longitude BETWEEN $${first + 2} AND $${first + 3}`);
+
+  // A radius that reaches a pole spans every longitude, so latitude is the
+  // only safe finite prefilter there. Elsewhere use the spherical-cap
+  // longitude delta and split the interval when it crosses the date line.
+  if (minLatitude > -90 && maxLatitude < 90) {
+    const longitudeRatio = Math.sin(angularRadius) / Math.cos(lat * Math.PI / 180);
+    if (Math.abs(longitudeRatio) < 1) {
+      const longitudeDelta = Math.asin(Math.abs(longitudeRatio)) * 180 / Math.PI;
+      const rawMinLongitude = lng - longitudeDelta;
+      const rawMaxLongitude = lng + longitudeDelta;
+      const longitudeStart = params.length + 1;
+      if (rawMinLongitude < -180) {
+        params.push(rawMinLongitude + 360, rawMaxLongitude);
+        clauses.push(`(b.longitude >= $${longitudeStart} OR b.longitude <= $${longitudeStart + 1})`);
+      } else if (rawMaxLongitude > 180) {
+        params.push(rawMinLongitude, rawMaxLongitude - 360);
+        clauses.push(`(b.longitude >= $${longitudeStart} OR b.longitude <= $${longitudeStart + 1})`);
+      } else {
+        params.push(rawMinLongitude, rawMaxLongitude);
+        clauses.push(`b.longitude BETWEEN $${longitudeStart} AND $${longitudeStart + 1}`);
+      }
+    }
   }
   const distanceStart = params.length + 1;
   params.push(lat, lng, radiusMiles);
@@ -670,7 +689,7 @@ async function searchBusinesses(opts: {
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
                 b.black_owned, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score
-         FROM businesses b
+         FROM public.public_businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
@@ -742,7 +761,7 @@ async function searchBusinesses(opts: {
                   ELSE 'other'
                 END as matched_field,
                 NULL::text as says_text
-         FROM businesses b
+         FROM public.public_businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
@@ -798,7 +817,7 @@ async function searchBusinesses(opts: {
                 b.black_owned, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score,
                 cs.says_text
-         FROM businesses b
+         FROM public.public_businesses b
          JOIN community_says cs ON cs.business_id = b.id
          WHERE b.status = 'active'
            AND ${listingFilter}
@@ -859,7 +878,7 @@ async function searchBusinesses(opts: {
       try {
         const cityCheckRes = await pool.query<{ city_lower: string }>(
           `SELECT DISTINCT lower(city) AS city_lower
-           FROM businesses
+           FROM public.public_businesses
            WHERE status = 'active'
              AND COALESCE(name, '') NOT ILIKE '%[demo]%'
              AND COALESCE(description, '') NOT ILIKE '%[demo]%'
@@ -902,7 +921,7 @@ async function searchBusinesses(opts: {
                     b.verified, b.latitude, b.longitude, b.ownership_designations,
                     b.black_owned, b.instagram, b.website, b.phone,
                     b.price_range, b.confidence_score
-             FROM businesses b
+             FROM public.public_businesses b
              WHERE b.status = 'active'
                AND ${listingFilter}
                AND ${nonDemoFilter}
@@ -1000,7 +1019,7 @@ async function searchBusinesses(opts: {
           // variant the geocoder returns Shawn Hill, IL and geo-bounds the search
           // to Illinois, silently excluding the LA business.
           const bizGate = await pool.query<{ id: string }>(
-            `SELECT id FROM businesses
+            `SELECT id FROM public.public_businesses
              WHERE (name ILIKE $1 OR name ILIKE $2)
                AND status = 'active'
                AND COALESCE(name, '') NOT ILIKE '%[demo]%'
@@ -1091,7 +1110,7 @@ async function searchBusinesses(opts: {
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
                 b.black_owned, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score
-         FROM businesses b
+         FROM public.public_businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
@@ -1172,7 +1191,7 @@ async function searchBusinesses(opts: {
                   b.verified, b.latitude, b.longitude, b.ownership_designations,
                   b.black_owned, b.instagram, b.website, b.phone,
                   b.price_range, b.confidence_score
-           FROM businesses b
+           FROM public.public_businesses b
            WHERE b.status = 'active'
              AND ${listingFilter}
              AND ${nonDemoFilter}
@@ -1231,7 +1250,7 @@ async function searchBusinesses(opts: {
                 b.black_owned, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score,
                 similarity(LOWER(b.name), LOWER($1)) as similarity
-         FROM businesses b
+         FROM public.public_businesses b
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
@@ -1280,18 +1299,19 @@ async function searchEvents(q: string, city?: string, limit = 6): Promise<unknow
     const cityClause = city ? `AND (city ILIKE $2 OR location ILIKE $2)` : "";
     if (city) params.push(`%${city}%`);
 
-    const rows = await pool.query(
+    const rows = await pool.query<{ date: string } & Record<string, unknown>>(
       `SELECT id, title, category, city, date, description, image_url,
               'event' as result_type, 'related_category' as match_tier
        FROM events
        WHERE status = 'active'
+         AND created_by_id IS NOT NULL
          AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1)
          ${cityClause}
        ORDER BY date ASC
-       LIMIT ${limit}`,
+       LIMIT ${Math.min(600, Math.max(60, limit * 10))}`,
       params,
     );
-    return rows.rows;
+    return rows.rows.filter((row) => isUpcomingOneOffEventDate(row.date)).slice(0, limit);
   } catch { return []; }
 }
 
@@ -1682,8 +1702,15 @@ router.get("/search/universal", async (req: Request, res: Response) => {
   }
 
   const trimmedQ = q.trim();
+  const latProvided = req.query.lat !== undefined;
+  const lngProvided = req.query.lng !== undefined;
   const parsedLat = validCoordinate(latStr, -90, 90);
   const parsedLng = validCoordinate(lngStr, -180, 180);
+  if (latProvided !== lngProvided
+    || (latProvided && (parsedLat === undefined || parsedLng === undefined))) {
+    res.status(400).json({ error: "lat and lng must be single valid coordinates supplied together" });
+    return;
+  }
   const lat = parsedLat !== undefined && parsedLng !== undefined ? parsedLat : undefined;
   const lng = parsedLat !== undefined && parsedLng !== undefined ? parsedLng : undefined;
   const radius = boundedNumber(radiusStr, 25, 1, 100);
@@ -1992,7 +2019,7 @@ router.get("/search/suggest/universal", async (req: Request, res: Response) => {
     const [bizRows, eventRows] = await Promise.all([
       pool.query<{ label: string; type: string; category: string }>(
         `SELECT b.name as label, 'business' as type, b.category
-         FROM businesses b
+         FROM public.public_businesses b
          WHERE b.status = 'active'
            AND b.listing_status IN ('live_unclaimed', 'live_claimed')
            AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
@@ -2002,14 +2029,26 @@ router.get("/search/suggest/universal", async (req: Request, res: Response) => {
         params,
       ).catch(() => ({ rows: [] })),
 
-      pool.query<{ label: string; type: string; category: string }>(
-        `SELECT title as label, 'event' as type, category
+      pool.query<{ label: string; type: string; category: string; date: string }>(
+        `SELECT title as label, 'event' as type, category, date
          FROM events
-         WHERE status = 'active' AND title ILIKE $1
-         ORDER BY date ASC LIMIT 3`,
+         WHERE status = 'active'
+           AND created_by_id IS NOT NULL
+           AND title ILIKE $1
+         ORDER BY date ASC LIMIT 30`,
         [`${q}%`],
       ).catch(() => ({ rows: [] })),
     ]);
+
+    const publicEventSuggestions = (eventRows.rows as Array<{
+      label: string;
+      type: string;
+      category: string;
+      date: string;
+    }>)
+      .filter((event) => isUpcomingOneOffEventDate(event.date))
+      .slice(0, 3)
+      .map(({ date: _date, ...event }) => event);
 
     // Also add mapped concept suggestions
     const lowerQ = q.toLowerCase();
@@ -2021,7 +2060,7 @@ router.get("/search/suggest/universal", async (req: Request, res: Response) => {
     res.json({
       suggestions: [
         ...bizRows.rows,
-        ...eventRows.rows,
+        ...publicEventSuggestions,
         ...conceptSuggestions,
       ].slice(0, 10),
     });

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { CalendarDays, Clock3, MapPin, Plus } from "lucide-react";
 import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import { LocationSearchBar } from "@/features/location/LocationSearchBar";
@@ -76,9 +76,14 @@ function inSelectedRange(value: string, range: DateRange): boolean {
 
 export function LocationFirstEvents() {
   const { location, setExplicitLocation } = useDiscoveryLocation();
+  const searchString = useSearch();
+  const initialSearchText = useMemo(
+    () => new URLSearchParams(searchString).get("search")?.trim() ?? "",
+    [searchString],
+  );
   const [dateRange, setDateRange] = useState<DateRange>(null);
   const [category, setCategory] = useState<(typeof EVENT_CATEGORIES)[number]>("All");
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState(initialSearchText);
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

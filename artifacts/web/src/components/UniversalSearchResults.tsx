@@ -64,13 +64,10 @@ export function safePublicHttpsUrl(value: unknown): string | null {
         || (a === 100 && b >= 64 && b <= 127)) return null;
     }
 
-    if (host.includes(":")) {
-      const normalized = host.toLowerCase();
-      if (normalized === "::" || normalized === "::1" || normalized.startsWith("fc")
-        || normalized.startsWith("fd") || /^fe[89ab]/.test(normalized)
-        || normalized.startsWith("::ffff:127.") || normalized.startsWith("::ffff:10.")
-        || normalized.startsWith("::ffff:192.168.")) return null;
-    }
+    // Browser URL normalization converts mapped IPv4 hosts such as
+    // ::ffff:169.254.1.1 to hexadecimal. Reject every IP-literal IPv6 host;
+    // member-facing external destinations should use a public DNS hostname.
+    if (host.includes(":")) return null;
 
     return url.href;
   } catch {
@@ -100,14 +97,14 @@ function ownershipStatus(item: UniversalSearchItem): string | null {
   return null;
 }
 
-function internalHref(kind: ResultKind, item: UniversalSearchItem): string {
+function internalHref(kind: ResultKind, item: UniversalSearchItem): string | null {
   const id = item.id == null ? "" : encodeURIComponent(String(item.id));
   const name = encodeURIComponent(nameOf(item));
   if (kind === "Business" && id) return `/businesses/${id}`;
   if (kind === "Heritage / cultural site" && id) return `/cultural-sites/${id}`;
-  if (kind === "Event") return `/events?q=${name}`;
+  if (kind === "Event") return `/events?search=${name}`;
   if (kind === "Library topic / resource") return `/library/search?q=${name}`;
-  return `/community?q=${name}`;
+  return null;
 }
 
 function statusFor(kind: ResultKind, item: UniversalSearchItem): string {
@@ -131,13 +128,17 @@ function ResultCard({ item, kind, compact }: { item: UniversalSearchItem; kind: 
       <p className="mt-2 text-xs font-semibold text-[#6B4A2F]">{statusFor(kind, item)}</p>
       {ownership && <p className="mt-1 text-xs font-semibold text-[#6B4A2F]">{ownership}</p>}
       {item.description && <p className={`mt-2 text-sm leading-6 text-[#3A1F0E]/65 ${compact ? "line-clamp-2" : "line-clamp-3"}`}>{item.description}</p>}
-      <a
-        className="mt-3 inline-flex text-xs font-bold text-[#CA922B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
-        href={href}
-        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      >
-        {external ? "Visit public website →" : "View on MWM →"}
-      </a>
+      {href ? (
+        <a
+          className="mt-3 inline-flex text-xs font-bold text-[#CA922B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
+          href={href}
+          {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        >
+          {external ? "Visit public website →" : "View on MWM →"}
+        </a>
+      ) : (
+        <p className="mt-3 text-xs font-semibold text-[#3A1F0E]/55">No public detail link is available yet.</p>
+      )}
     </article>
   );
 }

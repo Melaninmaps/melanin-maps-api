@@ -52,7 +52,7 @@ describe("meeting-ready universal web search", () => {
     }
 
     expect(markup).toContain("/businesses/biz-1");
-    expect(markup).toContain("/events?q=Community%20Meeting");
+    expect(markup).toContain("/events?search=Community%20Meeting");
     expect(markup).toContain("/cultural-sites/heritage-1");
     expect(markup).toContain("/library/search?q=Philadelphia%20Black%20History");
     expect(markup).toContain("https://example.org/community");
@@ -69,6 +69,9 @@ describe("meeting-ready universal web search", () => {
       "https://10.0.0.2/private",
       "https://169.254.1.2/private",
       "https://192.168.1.2/private",
+      "https://[::1]/private",
+      "https://[::ffff:169.254.1.1]/private",
+      "https://[::ffff:10.0.0.1]/private",
       "javascript:alert(1)",
     ]) {
       expect(safePublicHttpsUrl(value)).toBeNull();
@@ -91,11 +94,35 @@ describe("meeting-ready universal web search", () => {
     expect(markup).not.toContain("Historic Church");
   });
 
+  it("does not invent a Community destination when an organization has no safe public website", () => {
+    const result: UniversalSearchResult = {
+      query: "mutual aid",
+      totalResults: 1,
+      results: {
+        businesses: [],
+        events: [],
+        heritage: [],
+        libraryTopics: [],
+        communityOrgs: [{ id: "org-private", name: "Mutual Aid Network", website: "https://127.0.0.1/private" }],
+      },
+    };
+    const markup = renderToStaticMarkup(React.createElement(UniversalSearchResults, {
+      result,
+      surface: "Discover",
+    }));
+
+    expect(markup).toContain("Mutual Aid Network");
+    expect(markup).toContain("No public detail link is available yet.");
+    expect(markup).not.toContain("/community?");
+    expect(markup).not.toContain("127.0.0.1");
+  });
+
   it("mounts the broad Discover page and keeps Businesses on the canonical focused endpoint", () => {
     const app = source("App.tsx");
     const discover = source("pages/discover-universal.tsx");
     const map = source("pages/map.tsx");
     const businesses = source("features/businesses/LocationFirstBusinessDirectory.tsx");
+    const events = source("features/events/LocationFirstEvents.tsx");
 
     expect(app).toContain('import DiscoverUniversal from "@/pages/discover-universal"');
     expect(app).toContain('<Route path="/discover">');
@@ -110,5 +137,6 @@ describe("meeting-ready universal web search", () => {
     expect(businesses).not.toContain("api/discovery/v1");
     expect(businesses).toContain("Open this business search on Map");
     expect(businesses).toContain('href="/submit-business"');
+    expect(events).toContain('new URLSearchParams(searchString).get("search")');
   });
 });
