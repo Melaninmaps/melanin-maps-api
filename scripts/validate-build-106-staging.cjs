@@ -132,7 +132,7 @@ function validateBuild106Policy() {
   assert(releaseScript.includes("validate-build-106-archive.cjs"), "release entrypoint must reject credential artifacts in the EAS archive");
 
   for (const [name, contents] of [["root", rootEasIgnore], ["mobile", mobileEasIgnore]]) {
-    for (const required of ["*.jks", "*.keystore", "*.pem", "*.p12", "*.p8", "*.key", "*.mobileprovision", "credentials.json", "google-service-account.json", "google-services.json", "GoogleService-Info.plist", ".replit", "replit.md", "replit.nix", "sedQ6qvzl", "upload_keystore.jks"]) {
+    for (const required of ["*.jks", "*.keystore", "*.pem", "*.p12", "*.p8", "*.key", "*.mobileprovision", "*.log", "complaint*.txt", "*_log.txt", "credentials.json", "google-service-account.json", "google-services.json", "GoogleService-Info.plist", ".replit", "replit.md", "replit.nix", "sedQ6qvzl", "upload_keystore.jks"]) {
       assert(contents.includes(required), `${name} .easignore does not exclude ${required}`);
     }
   }

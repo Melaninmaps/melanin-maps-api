@@ -65,6 +65,7 @@ function isForbiddenRiskyName(base) {
   if (/credential/.test(lower)) return true;
   if (/(?:google[-_.]?)?service[-_.]?account/.test(lower)) return true;
   if (/^upload[-_.]?(?:credential|certificate|cert|key|keystore|profile)/.test(lower)) return true;
+  if (lower.endsWith(".log") || /^complaint.*\.txt$/.test(lower) || /(?:^|[-_])log\.txt$/.test(lower)) return true;
   return false;
 }
 

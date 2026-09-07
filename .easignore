@@ -39,6 +39,10 @@ lib/dbintegrations-openai-ai-server
 *.aab
 *.tar.gz
 *.zip
+*.log
+complaint*.txt
+*_log.txt
+*-log.txt
 
 # Build 106 uploads only reviewed application source. Never send credentials,
 # signing artifacts, service configuration, or obsolete Replit task material.

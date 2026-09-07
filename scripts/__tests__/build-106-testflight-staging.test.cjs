@@ -232,6 +232,8 @@ test("rejects signing files, Replit config, environment files, and credential li
       ["upload-credential.txt", "config"],
       ["upload_key.txt", "config"],
       ["upload_profile.txt", "config"],
+      ["complaint_log.txt", "operational log"],
+      ["runtime.log", "operational log"],
       [".env.staging", "SECRET=value"],
       ["leak.txt", "sk-abcdefghijklmnopqrstuvwxyz1234567890"],
     ]) {
@@ -249,7 +251,7 @@ test("both EAS ignore files exclude the complete tracked risky-file inventory", 
   const tracked = execFileSync("git", ["-C", ROOT, "ls-files"], { encoding: "utf8" })
     .trim()
     .split("\n")
-    .filter((name) => /(^|\/)(\.replit(?:ignore)?$|\.replit-artifact\/|replit\.(?:md|nix)$|sedQ6qvzl$|google-services\.json$|GoogleService-Info\.plist$|credentials?\.json$|google-service-account\.json$|.*\.(?:jks|keystore|pem|p12|p8|pfx|key|cer|mobileprovision)$|upload_cert|upload_certificate)/i.test(name));
+    .filter((name) => /(^|\/)(\.replit(?:ignore)?$|\.replit-artifact\/|replit\.(?:md|nix)$|sedQ6qvzl$|google-services\.json$|GoogleService-Info\.plist$|credentials?\.json$|google-service-account\.json$|complaint.*\.txt$|.*(?:[-_]log\.txt|\.log)$|.*\.(?:jks|keystore|pem|p12|p8|pfx|key|cer|mobileprovision)$|upload_cert|upload_certificate)/i.test(name));
   assert(tracked.length > 0, "tracked risky-file inventory unexpectedly empty");
 
   for (const [label, ignorePath] of [["root", ROOT_EAS_IGNORE], ["mobile", MOBILE_EAS_IGNORE]]) {
