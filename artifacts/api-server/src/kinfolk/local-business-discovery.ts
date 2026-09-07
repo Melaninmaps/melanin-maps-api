@@ -19,6 +19,7 @@ import {
 } from "./web-search";
 import type { SearchQuery } from "./lens-planner";
 import { canonicalizeContextualUrl } from "./contextual-url";
+import { buildConversationalBusinessResultView, type ConversationalBusinessResultView } from "./business-result-view";
 
 export type BusinessDiscoverySignalRepository = Readonly<{
   recordCoverageGap(input: {
@@ -53,6 +54,7 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   website: string | null;
   phone: string | null;
   verified: boolean;
+  claimed: boolean;
   matchReasons: string[];
   provenance: "mwm_public_business";
 }>;
@@ -96,6 +98,7 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
       website: string | null;
       detailUrl: string;
       verified: boolean;
+      claimed: boolean;
       matchReasons: string[];
     }>;
     neighborhoods: [];
@@ -123,6 +126,8 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
   sources: SafeSource[];
   sourceNote: string;
   educationalStatus: "grounded" | "limited";
+  /** Compact cards for Kinfolk's conversational result renderer. */
+  resultView: ConversationalBusinessResultView;
 }>;
 
 type DiscoveryRepository = Pick<
@@ -192,6 +197,7 @@ function platformBusiness(business: GovernedKinfolkBusiness): BusinessDiscoveryP
     website: business.website ? safeWebUrl(business.website) : null,
     phone: business.phone,
     verified: business.verified,
+    claimed: business.claimed,
     matchReasons: "matchReasons" in business && Array.isArray(business.matchReasons)
       ? business.matchReasons.filter((reason): reason is string => typeof reason === "string")
       : [],
@@ -441,6 +447,7 @@ export async function discoverLocalBusinesses(input: {
         website: business.website,
         detailUrl: business.detailUrl,
         verified: business.verified,
+        claimed: business.claimed,
         matchReasons: business.matchReasons,
       })),
       neighborhoods: [],
@@ -468,6 +475,11 @@ export async function discoverLocalBusinesses(input: {
     sources,
     sourceNote: providerMessage(webOutcome.state, rankedWeb.length),
     educationalStatus: sources.length > 0 ? "grounded" : "limited",
+    resultView: buildConversationalBusinessResultView({
+      businesses,
+      external: rankedWeb,
+      subjectLabel: input.subject.label,
+    }),
   };
 }
 

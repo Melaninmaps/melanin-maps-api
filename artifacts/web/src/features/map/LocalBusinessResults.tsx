@@ -20,9 +20,9 @@ type Result = {
   name: string;
   city: string | null;
   stateCode: string | null;
-  latitude: number;
-  longitude: number;
-  distanceMi: number;
+  latitude: number | null;
+  longitude: number | null;
+  distanceMi: number | null;
   detailUrl: string;
 };
 
@@ -39,15 +39,16 @@ type SearchResponse = {
   };
 };
 
-type Area = { latitude: number; longitude: number; label: string };
+type Area = { latitude: number; longitude: number; label: string; city?: string; stateCode?: string };
 
 type Props = {
   query: string;
+  subject?: string;
   area: Area;
-  onPinsChange(pins: Result[], area: Area): void;
+  onPinsChange(pins: Array<Result & { latitude: number; longitude: number }>, area: Area): void;
 };
 
-export function LocalBusinessResults({ query, area, onPinsChange }: Props) {
+export function LocalBusinessResults({ query, subject, area, onPinsChange }: Props) {
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [radiusMi, setRadiusMi] = useState<5 | 10 | 25>(5);
@@ -57,7 +58,11 @@ export function LocalBusinessResults({ query, area, onPinsChange }: Props) {
     const controller = new AbortController();
     setStatus("loading");
 
-    const url = `${BASE}/api/map/local-business-search?q=${encodeURIComponent(query)}&lat=${area.latitude}&lng=${area.longitude}&radius=${radiusMi}&expand=${radiusMi > 5 ? 1 : 0}`;
+    const params = new URLSearchParams({ q: query, lat: String(area.latitude), lng: String(area.longitude), radius: String(radiusMi), expand: radiusMi > 5 ? "1" : "0" });
+    if (subject) params.set("subject", subject);
+    if (area.city) params.set("city", area.city);
+    if (area.stateCode) params.set("stateCode", area.stateCode);
+    const url = `${BASE}/api/map/local-business-search?${params}`;
 
     fetch(url, {
       signal: controller.signal,
@@ -72,7 +77,9 @@ export function LocalBusinessResults({ query, area, onPinsChange }: Props) {
       .then((result: SearchResponse) => {
         setResponse(result);
         setStatus("ready");
-        onPinsChange(result.pins, area);
+        onPinsChange(result.pins.filter((pin): pin is Result & { latitude: number; longitude: number } =>
+          Number.isFinite(pin.latitude) && Number.isFinite(pin.longitude) && pin.latitude !== 0 && pin.longitude !== 0,
+        ), area);
       })
       .catch((error: unknown) => {
         if ((error as Error)?.name !== "AbortError") {
@@ -121,7 +128,8 @@ export function LocalBusinessResults({ query, area, onPinsChange }: Props) {
           {response.results.map((business) => (
             <li
               key={business.id}
-              data-testid="local-search-pin"
+              data-testid="local-search-result"
+              data-business-id={business.id}
               className="p-4 hover:bg-[#FAF6EF] transition-colors"
             >
               <a
@@ -136,7 +144,7 @@ export function LocalBusinessResults({ query, area, onPinsChange }: Props) {
                     {[business.city, business.stateCode].filter(Boolean).join(", ")}
                     {" · "}
                     <span className="text-[#CA922B] font-semibold">
-                      {business.distanceMi.toFixed(1)} mi away
+                      {business.distanceMi === null ? "Location not mapped yet" : `${business.distanceMi.toFixed(1)} mi away`}
                     </span>
                   </span>
                 </div>

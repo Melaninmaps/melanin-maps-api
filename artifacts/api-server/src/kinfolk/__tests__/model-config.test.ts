@@ -8,6 +8,7 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("webSearch", {})).toBe("gpt-5");
     expect(kinfolkModel("libraryResearch", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("transcription", {})).toBe("gpt-4o-mini-transcribe");
+    expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
   it("accepts only role-compatible reviewed model IDs", () => {
@@ -16,6 +17,7 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-5" })).toBe("gpt-5");
     expect(kinfolkModel("libraryResearch", { LIBRARY_RESEARCH_MODEL: "gpt-4o" })).toBe("gpt-4o");
     expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "whisper-1" })).toBe("whisper-1");
+    expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
   it("fails closed to the role default for arbitrary or cross-purpose IDs", () => {

@@ -39,8 +39,10 @@ const governedBusiness = {
   phone: null,
   website: "https://reading-room.example.com/",
   verified: false,
+  claimed: false,
   blackOwned: false,
   tags: ["books"],
+  specialties: [],
   profileStatus: "community_listed",
   story: null,
   missionStatement: null,
@@ -56,6 +58,8 @@ const governedBusiness = {
   audienceType: null,
   environmentTags: [],
   amenityTags: [],
+  matchReasons: ["subcategory"],
+  identityReasons: [],
 };
 
 const forKeepsPlace = {
@@ -83,7 +87,8 @@ describe("local business subject classification", () => {
     (variant) => {
       const subject = deriveBusinessSubject(`Find ${variant} in Atlanta GA`);
       expect(subject).toMatchObject({ key: "bookstore", label: "bookstores" });
-      expect(subject?.searchTerms).toEqual(expect.arrayContaining(["bookstore", "book store", "bookshop", "books"]));
+      expect(subject?.searchTerms).toEqual(expect.arrayContaining(["bookstore", "book store", "bookshop", "bookseller"]));
+      expect(subject?.searchTerms).not.toContain("books");
     },
   );
 
@@ -321,9 +326,12 @@ describe("local web provider-state contract", () => {
     await expect(searchLocalBusinessQueriesWithState(queries, false)).resolves.toEqual({
       state: "unavailable",
       attempted: false,
+      providerAttempted: false,
+      providerUsed: false,
       provider: null,
       fallbackUsed: false,
       partial: false,
+      failure: "not_configured",
       results: [],
     });
     expect(responsesCreate).not.toHaveBeenCalled();
@@ -450,12 +458,18 @@ describe("local web provider-state contract", () => {
     globalThis.fetch = vi.fn().mockImplementation(async () =>
       new Response(JSON.stringify({ results: [] }), { status: 200 }),
     );
-    const completed = await searchLocalBusinessQueriesWithState(queries, false);
-    expect(completed).toMatchObject({ state: "completed", attempted: true, provider: "tavily", results: [] });
+    const noCitations = await searchLocalBusinessQueriesWithState(queries, false);
+    expect(noCitations).toMatchObject({
+      state: "degraded", attempted: true, providerAttempted: true, providerUsed: true,
+      provider: "tavily", failure: "no_citations", results: [],
+    });
 
     globalThis.fetch = vi.fn().mockResolvedValue(new Response("bad gateway", { status: 502 }));
     const degraded = await searchLocalBusinessQueriesWithState(queries, false);
-    expect(degraded).toMatchObject({ state: "degraded", attempted: true, provider: "tavily", results: [] });
+    expect(degraded).toMatchObject({
+      state: "unavailable", attempted: true, providerAttempted: true, providerUsed: false,
+      provider: "tavily", failure: "provider_error", results: [],
+    });
   });
 
   it("treats malformed Tavily JSON as degraded and skips malformed result rows", async () => {
@@ -466,9 +480,12 @@ describe("local web provider-state contract", () => {
       new Response("not-json", { status: 200 }),
     );
     await expect(searchLocalBusinessQueriesWithState(queries, false)).resolves.toMatchObject({
-      state: "degraded",
+      state: "unavailable",
       attempted: true,
+      providerAttempted: true,
+      providerUsed: false,
       provider: "tavily",
+      failure: "provider_error",
       results: [],
     });
 
@@ -476,9 +493,12 @@ describe("local web provider-state contract", () => {
       new Response(JSON.stringify({ results: [{ title: 42, url: true }] }), { status: 200 }),
     );
     await expect(searchLocalBusinessQueriesWithState(queries, false)).resolves.toMatchObject({
-      state: "completed",
+      state: "degraded",
       attempted: true,
+      providerAttempted: true,
+      providerUsed: true,
       provider: "tavily",
+      failure: "no_citations",
       results: [],
     });
   });

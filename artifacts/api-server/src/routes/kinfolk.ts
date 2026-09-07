@@ -101,6 +101,7 @@ import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
 import { searchAllQueriesWithState, type WebSearchOutcome } from "../kinfolk/web-search";
 import { kinfolkModel } from "../kinfolk/model-config";
+import { probeKinfolkProviderReadiness } from "../kinfolk/provider-readiness";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
@@ -917,6 +918,10 @@ export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }
   if (_kinfolkHealthCache && now - _kinfolkHealthCache.checkedAt < KINFOLK_HEALTH_CACHE_MS) {
     return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
   }
+  if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.trim() || !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim()) {
+    _kinfolkHealthCache = { ok: false, reason: "missing_configuration", checkedAt: now };
+    return { ok: false, reason: "missing_configuration" };
+  }
   try {
     const model = resolveKinfolkProbeModel(process.env);
     await openai.chat.completions.create(buildKinfolkProbeRequest({
@@ -927,7 +932,7 @@ export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }
     _kinfolkHealthCache = { ok: true, checkedAt: now };
     return { ok: true };
   } catch {
-    const reason = "AI connection failed";
+    const reason = "connection_failure";
     _kinfolkHealthCache = { ok: false, reason, checkedAt: now };
     return { ok: false, reason };
   }
@@ -2509,10 +2514,10 @@ const FREE_MONTHLY_LIMIT = 3;
 // Unauthenticated — safe for external uptime monitors (UptimeRobot, etc.).
 router.get("/kinfolk/health", async (_req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
-    return void res.status(503).json({ ok: false, reason: "AI env vars not configured" });
+    return void res.status(503).json({ ok: false, reason: "missing_configuration" });
   }
   const { ok } = await probeKinfolkAI();
-  if (!ok) return void res.status(503).json({ ok: false, reason: "AI connection failed" });
+  if (!ok) return void res.status(503).json({ ok: false, reason: "connection_failure" });
   res.json({ ok: true });
 });
 
@@ -5164,7 +5169,7 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: kinfolkModel("fallback"),
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
       max_tokens: isTrailblazer ? 2000 : 1000,
@@ -5306,7 +5311,7 @@ Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities w
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: kinfolkModel("fallback"),
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       max_tokens: 1500,
@@ -5537,7 +5542,7 @@ ${businessCatalog}`;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: kinfolkModel("fallback"),
       messages: [
         { role: "system", content: systemPrompt },
         ...(messages as Array<{ role: string; content: string }>).map(m => ({
@@ -5953,6 +5958,23 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   }
 });
 
+// ─── GET /api/kinfolk/provider-readiness — authenticated development command ──
+// This reports capability states, never environment values, credentials, URLs,
+// model IDs, prompts, or provider response content.
+router.get("/kinfolk/provider-readiness", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED" });
+  if (process.env.NODE_ENV === "production") {
+    return void res.status(403).json({ error: "DEVELOPMENT_COMMAND_DISABLED" });
+  }
+
+  const capabilities = await probeKinfolkProviderReadiness();
+  const ready = capabilities.every((capability) => capability.status === "PASS");
+  res.status(ready ? 200 : 503).json({
+    status: ready ? "ready" : "degraded",
+    capabilities,
+  });
+});
+
 // ─── POST /api/kinfolk/speak — TTS, gated by monthly char allowance ───────────
 router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
@@ -5990,7 +6012,23 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       });
     }
 
-    const audioBuffer = await textToSpeech(speakText, voice, "wav");
+    // Synthesis remains foreground-only. The integration does not currently
+    // accept an AbortSignal, so bound the member-facing request explicitly.
+    let ttsTimer: ReturnType<typeof setTimeout> | undefined;
+    const audioBuffer = await Promise.race([
+      textToSpeech(speakText, voice, "wav"),
+      new Promise<never>((_resolve, reject) => {
+        ttsTimer = setTimeout(() => reject(new Error("TTS_TIMEOUT")), 15_000);
+      }),
+    ]).finally(() => {
+      if (ttsTimer) clearTimeout(ttsTimer);
+    });
+    if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {
+      return void res.status(503).json({
+        error: "TTS_UNAVAILABLE",
+        message: "Kinfolk could not create audio for that response. Please try again or read the text instead.",
+      });
+    }
     await incrementVoiceChars(req.user.id, chars);
 
     const newUsed = usage.used + chars;
@@ -6009,7 +6047,13 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "TTS failed");
-    res.status(500).json({ error: "TTS failed" });
+    const timedOut = err instanceof Error && err.message === "TTS_TIMEOUT";
+    res.status(503).json({
+      error: timedOut ? "TTS_TIMEOUT" : "TTS_UNAVAILABLE",
+      message: timedOut
+        ? "Kinfolk audio is taking too long. Please try again or read the text instead."
+        : "Kinfolk could not create audio right now. Please try again or read the text instead.",
+    });
   }
 });
 

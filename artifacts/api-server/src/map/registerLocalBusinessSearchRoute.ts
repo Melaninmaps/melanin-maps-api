@@ -15,8 +15,8 @@ import { LocalBusinessSearch } from "./localBusinessSearch";
  *   radius  — one of 5 | 10 | 25 (default: 5)
  *   expand  — "1" to activate the radius (used for explicit expansion clicks only)
  *
- * The `pins` field in the response is an intentional reference to the same two
- * results as `results`. The map must not render any pin not present in `results`.
+ * `pins` is the validated-coordinate subset of `results`. The map must not
+ * render any pin not present in the list.
  * Register after location resolution routes and before the generic API 404 handler.
  */
 export function registerLocalBusinessSearchRoute(
@@ -27,7 +27,11 @@ export function registerLocalBusinessSearchRoute(
     "/api/map/local-business-search",
     async (request: Request, response: Response, next: NextFunction) => {
       try {
-        const query = typeof request.query["q"] === "string" ? request.query["q"] : "";
+        const query = typeof request.query["subject"] === "string"
+          ? request.query["subject"]
+          : typeof request.query["q"] === "string" ? request.query["q"] : "";
+        const city = typeof request.query["city"] === "string" ? request.query["city"] : undefined;
+        const stateCode = typeof request.query["stateCode"] === "string" ? request.query["stateCode"] : undefined;
         const latitude = Number(request.query["lat"]);
         const longitude = Number(request.query["lng"]);
         const radius = Number(request.query["radius"] ?? 5);
@@ -46,6 +50,8 @@ export function registerLocalBusinessSearchRoute(
           longitude,
           radiusMi: radius as 5 | 10 | 25,
           expansionAccepted,
+          city,
+          stateCode,
         });
 
         response.setHeader("Cache-Control", "no-store");

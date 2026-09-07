@@ -215,10 +215,10 @@ router.use(businessesRouter);
 // Safe to expose publicly: no user data, no platform data, no session required.
 router.get("/kinfolk/health", async (_req, res) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
-    return void res.status(503).json({ ok: false, reason: "AI env vars not configured" });
+    return void res.status(503).json({ ok: false, reason: "missing_configuration" });
   }
   const { ok } = await probeKinfolkAI();
-  if (!ok) return void res.status(503).json({ ok: false, reason: "AI connection failed" });
+  if (!ok) return void res.status(503).json({ ok: false, reason: "connection_failure" });
   res.json({ ok: true });
 });
 

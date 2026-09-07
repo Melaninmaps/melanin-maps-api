@@ -91,7 +91,7 @@ describe("actual Kinfolk transcription handler", () => {
   it("rejects JSON legacy voice with an explicit current-client error", async () => {
     const response = await request(app())
       .post("/api/kinfolk/transcribe")
-      .send({ audio: load("voice.wav").toString("base64"), format: "wav" });
+      .send({ audio: "legacy-base64-payload", format: "wav" });
     expect(response.status).toBe(415);
     expect(response.body).toMatchObject({ error: "AUDIO_MULTIPART_REQUIRED", audioRetained: false });
     expect(transcribe).not.toHaveBeenCalled();

@@ -3,6 +3,7 @@ import {
   businessSubjectSearchPatterns,
   type NormalizedBusinessSubject,
 } from "./business-subject";
+import { canonicalizeContextualUrl } from "./contextual-url";
 
 export type QueryPool = {
   query<T = Record<string, unknown>>(
@@ -37,9 +38,12 @@ export type GovernedKinfolkBusiness = Readonly<{
   phone: string | null;
   website: string | null;
   verified: boolean;
+  /** True only when the published listing status says it has been claimed. */
+  claimed: boolean;
   blackOwned: boolean;
   ownershipClaim?: string | null;
   tags: string[];
+  specialties: string[];
   profileStatus: string | null;
   story: string | null;
   missionStatement: string | null;
@@ -55,6 +59,10 @@ export type GovernedKinfolkBusiness = Readonly<{
   audienceType: string | null;
   environmentTags: string[];
   amenityTags: string[];
+  /** Server-derived evidence for why this record matched the requested service. */
+  matchReasons: string[];
+  /** Non-destructive identity evidence retained when likely duplicates are suppressed. */
+  identityReasons: string[];
 }>;
 
 
@@ -85,9 +93,11 @@ type BusinessRow = {
   phone: unknown;
   website: unknown;
   verified: unknown;
+  claimed: unknown;
   black_owned: unknown;
   ownership_claim: unknown;
   tags: unknown;
+  specialties: unknown;
   profile_status: unknown;
   business_story: unknown;
   mission_statement: unknown;
@@ -135,9 +145,15 @@ const CANONICAL_SELECT = `
   b.phone,
   b.website,
   COALESCE(b.verified, false) AS verified,
+  (COALESCE(b.listing_status, '') = 'live_claimed') AS claimed,
   COALESCE(b.black_owned, false) AS black_owned,
   b.ownership_claim,
   COALESCE(b.tags, '[]'::jsonb) AS tags,
+  COALESCE((
+    SELECT array_agg(bs.specialty_slug ORDER BY bs.specialty_slug)
+    FROM public.business_specialties AS bs
+    WHERE bs.business_id::text = b.id::text
+  ), ARRAY[]::text[]) AS specialties,
   b.profile_status,
   bi.business_story,
   bi.mission_statement,
@@ -197,11 +213,15 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     longitude: numberOrNull(row.longitude),
     distanceMiles: numberOrNull(row.distance_miles),
     phone: nullableText(row.phone),
-    website: nullableText(row.website),
+    // A published listing may contain a stale or malformed URL. Keep only a
+    // canonical navigable URL; this is never synthesized from free text.
+    website: nullableText(row.website) && canonicalizeContextualUrl(text(row.website)),
     verified: row.verified === true,
+    claimed: row.claimed === true,
     blackOwned: row.black_owned === true,
     ownershipClaim: nullableText(row.ownership_claim),
     tags: stringArray(row.tags),
+    specialties: stringArray(row.specialties),
     profileStatus: nullableText(row.profile_status),
     story: nullableText(row.business_story),
     missionStatement: nullableText(row.mission_statement),
@@ -217,6 +237,8 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     audienceType: nullableText(row.audience_type),
     environmentTags: stringArray(row.environment_tags),
     amenityTags: stringArray(row.amenity_tags),
+    matchReasons: [],
+    identityReasons: [],
   };
 }
 
@@ -239,6 +261,89 @@ function boundedLimit(limit: number | undefined): number {
   if (!Number.isInteger(limit) || limit < 1)
     throw new Error("KINFOLK_BUSINESS_LIMIT_INVALID");
   return Math.min(limit, MAX_CATALOG_LIMIT);
+}
+
+function normalizedIdentityText(value: string | null | undefined): string {
+  return text(value)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function normalizedPhone(value: string | null): string {
+  return text(value).replace(/\D/g, "");
+}
+
+function subjectMatchReasons(
+  business: GovernedKinfolkBusiness,
+  subject: NormalizedBusinessSubject,
+): string[] {
+  const terms = subject.searchTerms.map((term) => term.toLowerCase());
+  const fieldMatches = (value: string | null, field: string) => {
+    const normalized = ` ${text(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+    return terms.some((term) => {
+      const phrase = term.replace(/[^a-z0-9]+/g, " ").trim();
+      return phrase && normalized.includes(` ${phrase} `);
+    }) ? [field] : [];
+  };
+  return [
+    ...fieldMatches(business.category, "category"),
+    ...fieldMatches(business.subcategory, "subcategory"),
+    ...fieldMatches(business.name, "name"),
+    ...business.specialties.flatMap((specialty) => fieldMatches(specialty, "specialty")),
+    ...business.tags.flatMap((tag) => fieldMatches(tag, "explicit offering")),
+  ];
+}
+
+export type GovernedDuplicateSuppression = Readonly<{
+  suppressedId: string;
+  canonicalId: string;
+  reasons: string[];
+}>;
+
+/**
+ * Groups probable duplicates without modifying either database record. A
+ * normalized name plus the same city/state is the minimum evidence; a shared
+ * phone or website is recorded as stronger identity evidence. The canonical
+ * row is selected deterministically so responses and audit trails are stable.
+ */
+export function suppressProbableDuplicateBusinesses(
+  businesses: readonly GovernedKinfolkBusiness[],
+): { businesses: GovernedKinfolkBusiness[]; suppressed: GovernedDuplicateSuppression[] } {
+  const groups = new Map<string, GovernedKinfolkBusiness[]>();
+  for (const business of businesses) {
+    const key = [
+      normalizedIdentityText(business.name),
+      normalizedIdentityText(business.city),
+      normalizedIdentityText(business.stateCode),
+    ].join("|");
+    if (!key.replace(/\|/g, "")) continue;
+    groups.set(key, [...(groups.get(key) ?? []), business]);
+  }
+  const canonical: GovernedKinfolkBusiness[] = [];
+  const suppressed: GovernedDuplicateSuppression[] = [];
+  for (const group of groups.values()) {
+    const ordered = [...group].sort((left, right) =>
+      Number(right.verified) - Number(left.verified)
+      || Number(right.claimed) - Number(left.claimed)
+      || left.id.localeCompare(right.id));
+    const winner = ordered[0]!;
+    canonical.push({
+      ...winner,
+      identityReasons: group.length > 1
+        ? ["same normalized name and city/state", "deterministic canonical selection"]
+        : winner.identityReasons,
+    });
+    for (const duplicate of ordered.slice(1)) {
+      const reasons = ["same normalized name and city/state"];
+      const phone = normalizedPhone(winner.phone);
+      if (phone && phone === normalizedPhone(duplicate.phone)) reasons.push("same phone");
+      if (winner.website && winner.website === duplicate.website) reasons.push("same approved website");
+      suppressed.push({ suppressedId: duplicate.id, canonicalId: winner.id, reasons });
+    }
+  }
+  return { businesses: canonical, suppressed };
 }
 
 export function normalizeExactBusinessName(name: string): string {
@@ -302,13 +407,14 @@ async function queryCityCatalog(
     LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
     WHERE LOWER(BTRIM(b.city)) = LOWER($1)
       AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
+      AND COALESCE(b.promotion_eligible, true) = true
       AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
     ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
     LIMIT $3
   `,
     [location.city, location.stateCode, resultLimit],
   );
-  return rows.map(mapBusiness);
+  return suppressProbableDuplicateBusinesses(rows.map(mapBusiness)).businesses;
 }
 
 export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
@@ -344,41 +450,51 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+          AND COALESCE(b.promotion_eligible, true) = true
+          -- Service matching intentionally uses governed classification,
+          -- business name, or an explicit offering tag. Descriptions/stories
+          -- are not a service taxonomy: e.g. "books fast" must not turn a
+          -- restaurant into a bookstore.
           AND (
-            LOWER(COALESCE(b.name, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(b.category, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(b.subcategory, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(b.description, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(b.tags::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.business_story, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.mission_statement, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.why_started, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.what_customers_should_know, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.ownership_badges::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.community_values::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.audiences_served::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.vibes::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.current_highlights::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.accessibility_features::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.community_initiatives::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.growth_goals::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.age_restriction_reasons::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.environment_tags::text, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(bi.amenity_tags::text, '')) LIKE ANY($3::text[])
+            LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])
+            OR LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])
+            OR LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])
+            OR EXISTS (
+              SELECT 1
+              FROM public.business_specialties AS specialty
+              WHERE specialty.business_id::text = b.id::text
+                AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($3::text[])
+            )
+            OR EXISTS (
+              SELECT 1
+              FROM jsonb_array_elements_text(COALESCE(b.tags, '[]'::jsonb)) AS offering(tag)
+              WHERE LOWER(BTRIM(offering.tag)) ~ ANY($3::text[])
+            )
           )
         ORDER BY
           CASE
-            WHEN LOWER(COALESCE(b.category, '')) LIKE ANY($3::text[]) THEN 0
-            WHEN LOWER(COALESCE(b.subcategory, '')) LIKE ANY($3::text[]) THEN 1
-            WHEN LOWER(COALESCE(b.name, '')) LIKE ANY($3::text[]) THEN 2
-            ELSE 3
+            WHEN LOWER(COALESCE(b.category, '')) ~ ANY($3::text[]) THEN 0
+            WHEN LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[]) THEN 1
+            WHEN LOWER(COALESCE(b.name, '')) ~ ANY($3::text[]) THEN 2
+            WHEN EXISTS (
+              SELECT 1 FROM public.business_specialties AS specialty
+              WHERE specialty.business_id::text = b.id::text
+                AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($3::text[])
+            ) THEN 3
+            ELSE 4 -- explicit offering
           END,
           b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT $4
       `,
         [location.city, location.stateCode, patterns, resultLimit],
       );
-      return rows.map(mapBusiness);
+      return suppressProbableDuplicateBusinesses(
+        rows
+          .map(mapBusiness)
+          .map((business) => ({ ...business, matchReasons: subjectMatchReasons(business, subject) }))
+          // Defense in depth if a legacy DB collation differs from JS/regex.
+          .filter((business) => business.matchReasons.length > 0),
+      ).businesses;
     },
 
     async findPublishedMapEntities(
@@ -398,11 +514,11 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(state_region, ''))) = $2
           AND (
-            LOWER(COALESCE(title, '')) LIKE ANY($3::text[])
-            OR LOWER(COALESCE(summary, '')) LIKE ANY($3::text[])
+            LOWER(COALESCE(title, '')) ~ ANY($3::text[])
+            OR LOWER(COALESCE(summary, '')) ~ ANY($3::text[])
           )
         ORDER BY
-          CASE WHEN LOWER(COALESCE(title, '')) LIKE ANY($3::text[]) THEN 0 ELSE 1 END,
+          CASE WHEN LOWER(COALESCE(title, '')) ~ ANY($3::text[]) THEN 0 ELSE 1 END,
           title ASC
         LIMIT $4
       `,
@@ -430,6 +546,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
           WHERE b.latitude IS NOT NULL
             AND b.longitude IS NOT NULL
+            AND COALESCE(b.promotion_eligible, true) = true
             AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
         )
         SELECT *
@@ -440,7 +557,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       `,
         [radius.latitude, radius.longitude, radius.radiusMiles, resultLimit],
       );
-      return rows.map(mapBusiness);
+      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness)).businesses;
     },
 
     async findExactByNormalizedName(input: {
@@ -459,6 +576,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE REGEXP_REPLACE(LOWER(COALESCE(b.name, '')), '[^a-z0-9]+', '', 'g') = $1
           AND LOWER(BTRIM(b.city)) = LOWER($2)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $3
+          AND COALESCE(b.promotion_eligible, true) = true
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
         ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT 1
