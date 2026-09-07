@@ -111,3 +111,14 @@ export {
   getSpecialtiesForSubcategory,
   isApprovedSpecialty,
 } from "./specialties";
+
+// ── Canonical geography and city aliases ────────────────────────────────────
+export {
+  HERITAGE_CITIES,
+  getHeritageCity,
+  resolveHeritageCity,
+} from "./heritage-cities";
+export type {
+  HeritageCity,
+  HeritageCityResolution,
+} from "./heritage-cities";

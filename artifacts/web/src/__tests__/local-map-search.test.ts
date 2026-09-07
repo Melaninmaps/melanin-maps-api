@@ -18,6 +18,10 @@ const cases = [
   ["locs in Philadelphia", { subject: "locs", city: "Philadelphia", stateCode: "PA" }],
   ["natural-hair in Philadelphia", { subject: "locs", city: "Philadelphia", stateCode: "PA" }],
   ["HVAC in Phoenix", { subject: "hvac", city: "Phoenix", stateCode: "AZ" }],
+  ["plumber Atlanta", { subject: "plumber", city: "Atlanta", stateCode: "GA" }],
+  ["electrician Philadelphia PA", { subject: "electrician", city: "Philadelphia", stateCode: "PA" }],
+  ["welder 30303", { subject: "welder", city: "30303" }],
+  ["plumber", { subject: "plumber", usesDeviceLocation: true }],
 ] as const;
 
 describe("parseLocalMapSearch", () => {
@@ -28,5 +32,22 @@ describe("parseLocalMapSearch", () => {
   it("never marks a typed city or ZIP as device-location intent", () => {
     expect(parseLocalMapSearch("bookstore Atlanta").usesDeviceLocation).not.toBe(true);
     expect(parseLocalMapSearch("barber near 19104").usesDeviceLocation).not.toBe(true);
+    expect(parseLocalMapSearch("electrician Philadelphia PA").usesDeviceLocation).not.toBe(true);
+    expect(parseLocalMapSearch("welder 30303").usesDeviceLocation).not.toBe(true);
+  });
+
+  it("never infers an unvalidated trailing word as a city", () => {
+    expect(parseLocalMapSearch("mobile dog grooming")).toEqual({
+      subject: "mobile dog grooming",
+      usesDeviceLocation: true,
+    });
+  });
+
+  it("reuses canonical aliases for arbitrary services", () => {
+    expect(parseLocalMapSearch("locksmith Philly")).toEqual({
+      subject: "locksmith",
+      city: "Philadelphia",
+      stateCode: "PA",
+    });
   });
 });

@@ -1,5 +1,5 @@
 import type { Express, NextFunction, Request, Response } from "express";
-import { LocalBusinessSearch } from "./localBusinessSearch";
+import { isValidMapCoordinatePair, LocalBusinessSearch } from "./localBusinessSearch";
 
 /**
  * GET /api/map/local-business-search
@@ -36,12 +36,18 @@ export function registerLocalBusinessSearchRoute(
           : typeof request.query["q"] === "string" ? request.query["q"] : "";
         const city = typeof request.query["city"] === "string" ? request.query["city"] : undefined;
         const stateCode = typeof request.query["stateCode"] === "string" ? request.query["stateCode"] : undefined;
-        const latitude = Number(request.query["lat"]);
-        const longitude = Number(request.query["lng"]);
+        const rawLatitude = request.query["lat"];
+        const rawLongitude = request.query["lng"];
+        const latitude = typeof rawLatitude === "string" && rawLatitude.trim()
+          ? Number(rawLatitude)
+          : Number.NaN;
+        const longitude = typeof rawLongitude === "string" && rawLongitude.trim()
+          ? Number(rawLongitude)
+          : Number.NaN;
         const radius = Number(request.query["radius"] ?? 5);
         const expansionAccepted = request.query["expand"] === "1";
 
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        if (!isValidMapCoordinatePair(latitude, longitude)) {
           return response.status(400).json({ code: "LOCATION_REQUIRED" });
         }
         if (![5, 10, 25].includes(radius)) {
