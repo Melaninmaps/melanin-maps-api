@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS,
   KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS,
   parseOpenAiResponseCitations,
 } from "../web-search";
@@ -9,6 +10,7 @@ const query = [{ text: "current Maryland news", role: "general" as const, reason
 describe("Responses web-search citation contract", () => {
   it("uses the provider-proven bounded timeout for cited current research", () => {
     expect(KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS).toBe(30_000);
+    expect(KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS).toBe(4_000);
   });
 
   it("returns only clickable HTTPS citations and provider metadata", () => {

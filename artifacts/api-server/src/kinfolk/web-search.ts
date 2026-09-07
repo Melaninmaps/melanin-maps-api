@@ -81,6 +81,10 @@ type WebResearchPurpose = "local_business" | "general_current";
 // provider gathers and cites sources. Keep this bounded, but align it with the
 // independently exercised provider-readiness timeout to avoid false outages.
 export const KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS = 30_000;
+// GPT-5-family web research consumes reasoning tokens from this same budget.
+// The former 900-token ceiling completed tool calls but ended before emitting a
+// message or citations. This matches the real provider-readiness probe.
+export const KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS = 4_000;
 
 function openAiConfigured(): boolean {
   return Boolean(
@@ -184,7 +188,7 @@ async function searchOpenAiQuery(
         "Return concise factual findings with web citations. Do not invent facts or sources.",
       ].join("\n"),
       reasoning: { effort: "low" },
-      max_output_tokens: 900,
+      max_output_tokens: KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS,
     } as never, { signal: AbortSignal.timeout(KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS) });
     const results = parseOpenAiResponseCitations(response, [query]);
     return { kind: results.length ? "cited" : "no_citations", results };
