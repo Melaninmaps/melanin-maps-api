@@ -71,11 +71,33 @@ describe("family-compatible request parameters", () => {
     expect(request).toEqual({
       model: "openai/gpt-5-mini",
       messages,
+      stream: false,
       response_format: { type: "json_object" },
       max_completion_tokens: 900,
     });
     expect(request).not.toHaveProperty("max_tokens");
     expect(request).not.toHaveProperty("temperature");
+  });
+
+  it("preserves a caller-supplied JSON schema while applying GPT-5-family fields", () => {
+    const responseFormat = {
+      type: "json_schema" as const,
+      json_schema: { name: "readiness", strict: true },
+    };
+    const request = buildKinfolkChatCompletionRequest({
+      model: "gpt-5",
+      messages,
+      maxOutputTokens: 500,
+      temperature: 0.7,
+      responseFormat,
+    });
+    expect(request).toEqual({
+      model: "gpt-5",
+      messages,
+      stream: false,
+      response_format: responseFormat,
+      max_completion_tokens: 500,
+    });
   });
 
   it("preserves legacy max_tokens, JSON output, and optional temperature", () => {
@@ -88,6 +110,7 @@ describe("family-compatible request parameters", () => {
     expect(request).toEqual({
       model: "gpt-4o-mini",
       messages,
+      stream: false,
       response_format: { type: "json_object" },
       max_tokens: 600,
       temperature: 0.2,
@@ -101,7 +124,7 @@ describe("family-compatible request parameters", () => {
       messages,
       maxOutputTokens: 8,
       temperature: 0,
-    })).toEqual({ model: "gpt-5-mini", messages, max_completion_tokens: 8 });
+    })).toEqual({ model: "gpt-5-mini", messages, stream: false, max_completion_tokens: 8 });
   });
 });
 

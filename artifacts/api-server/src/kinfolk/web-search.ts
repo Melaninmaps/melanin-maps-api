@@ -54,6 +54,12 @@ export type WebSearchOutcome = Readonly<{
   partial: boolean;
   /** Keeps an outage distinct from a valid response with no information. */
   failure?: WebSearchFailure;
+  /** Sanitized provider state only; never response bodies, URLs, or errors. */
+  attempts?: ReadonlyArray<Readonly<{
+    provider: Exclude<WebSearchProvider, "mixed">;
+    used: boolean;
+    outcome: WebSearchBatch["kind"];
+  }>>;
   results: WebResult[];
 }>;
 
@@ -228,6 +234,7 @@ async function searchTavilyQuery(query: SearchQuery, imageRequested: boolean): P
 type QuerySearchOutcome = WebSearchBatch & Readonly<{
   provider: Exclude<WebSearchProvider, "mixed">;
   fallbackUsed: boolean;
+  attempts: NonNullable<WebSearchOutcome["attempts"]>;
 }>;
 
 async function searchQueryWithFallback(
@@ -239,15 +246,28 @@ async function searchQueryWithFallback(
   const safeQuery = { ...query, text: enforceDiasporaFirstProviderQuery(query.text) };
   if (openAiConfigured()) {
     const primary = await searchOpenAiQuery(safeQuery, purpose, location);
-    if (primary.kind === "cited") return { ...primary, provider: "openai", fallbackUsed: false };
+    const primaryAttempt = { provider: "openai" as const, used: primary.kind !== "provider_error", outcome: primary.kind };
+    if (primary.kind === "cited") {
+      return { ...primary, provider: "openai", fallbackUsed: false, attempts: [primaryAttempt] };
+    }
     if (process.env.TAVILY_API_KEY) {
       const fallback = await searchTavilyQuery(safeQuery, imageRequested);
-      return { ...fallback, provider: "tavily", fallbackUsed: true };
+      return {
+        ...fallback,
+        provider: "tavily",
+        fallbackUsed: true,
+        attempts: [primaryAttempt, { provider: "tavily", used: fallback.kind !== "provider_error", outcome: fallback.kind }],
+      };
     }
-    return { ...primary, provider: "openai", fallbackUsed: false };
+    return { ...primary, provider: "openai", fallbackUsed: false, attempts: [primaryAttempt] };
   }
   const fallback = await searchTavilyQuery(safeQuery, imageRequested);
-  return { ...fallback, provider: "tavily", fallbackUsed: false };
+  return {
+    ...fallback,
+    provider: "tavily",
+    fallbackUsed: false,
+    attempts: [{ provider: "tavily", used: fallback.kind !== "provider_error", outcome: fallback.kind }],
+  };
 }
 
 async function searchQueriesWithState(
@@ -261,18 +281,24 @@ async function searchQueriesWithState(
   if (!queries.length || (!hasOpenAi && !hasTavily)) {
     return {
       state: "unavailable", attempted: false, providerAttempted: false, providerUsed: false,
-      provider: null, fallbackUsed: false, partial: false, failure: "not_configured", results: [],
+      provider: null, fallbackUsed: false, partial: false, failure: "not_configured", attempts: [], results: [],
     };
   }
   const outcomes = await Promise.all(
     queries.map((query) => searchQueryWithFallback(query, purpose, _imageRequested, location)),
   );
   const cited = outcomes.filter((outcome) => outcome.kind === "cited");
-  const providerUsed = outcomes.some((outcome) => outcome.kind !== "provider_error");
+  const attempts = outcomes.flatMap((outcome) => outcome.attempts);
+  const providerUsed = attempts.some((attempt) => attempt.used);
   const complete = cited.length === outcomes.length;
   const fallbackUsed = outcomes.some((outcome) => outcome.fallbackUsed);
   const partial = cited.length > 0 && cited.length < outcomes.length;
-  const providers = new Set(outcomes.map((outcome) => outcome.provider));
+  const evidenceProviders = new Set(cited.map((outcome) => outcome.provider));
+  const usedProviders = new Set(attempts.filter((attempt) => attempt.used).map((attempt) => attempt.provider));
+  const attemptedProviders = new Set(attempts.map((attempt) => attempt.provider));
+  const reportedProviders = evidenceProviders.size > 0
+    ? evidenceProviders
+    : usedProviders.size > 0 ? usedProviders : attemptedProviders;
   const failure: WebSearchFailure | undefined = complete
     ? undefined
     : providerUsed ? "no_citations" : "provider_error";
@@ -281,10 +307,11 @@ async function searchQueriesWithState(
     attempted: true,
     providerAttempted: true,
     providerUsed,
-    provider: providers.size > 1 ? "mixed" : [...providers][0] ?? null,
+    provider: reportedProviders.size > 1 ? "mixed" : [...reportedProviders][0] ?? null,
     fallbackUsed,
     partial,
     ...(failure ? { failure } : {}),
+    attempts,
     results: outcomes.flatMap((outcome) => outcome.results),
   };
 }

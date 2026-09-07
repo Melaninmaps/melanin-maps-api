@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
 import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, incrementVoiceChars, getVoiceUsage, TIER_LIMITS, hasActiveTesterEntitlement } from "../constants/membershipTiers";
 import crypto from "crypto";
@@ -101,7 +102,7 @@ import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
 import { searchAllQueriesWithState, type WebSearchOutcome } from "../kinfolk/web-search";
 import { kinfolkModel } from "../kinfolk/model-config";
-import { probeKinfolkProviderReadiness } from "../kinfolk/provider-readiness";
+import { probeKinfolkProviderReadiness, summarizeKinfolkProviderReadiness } from "../kinfolk/provider-readiness";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
@@ -698,7 +699,7 @@ async function callOpenAIWithRetry(
           maxOutputTokens,
           messages,
           temperature,
-        }) as Parameters<typeof openai.chat.completions.create>[0],
+        }) as ChatCompletionCreateParamsNonStreaming,
         { signal },
       );
       if (!("choices" in completion)) {
@@ -905,10 +906,9 @@ function buildLibraryFallbackReply(topic: LibraryGrounding | null): string {
   return `The Library topic **${topic.topicName}** is a place to learn through the topic description and related community knowledge. ${topic.description ?? "The topic is currently available in the Library for further exploration."} Open the Library card to continue learning and follow it for future updates.`;
 }
 
-// ─── KinfolkAI health probe cache ────────────────────────────────────────────
-// Probes the real OpenAI connection at most once every 5 minutes.
-// Result is cached so the /kinfolk/health endpoint can be polled frequently
-// by uptime monitors without hammering OpenAI or the DB pool.
+// ─── KinfolkAI readiness cache ───────────────────────────────────────────────
+// The explicit Kinfolk boundary checks every required provider capability at
+// most once every 5 minutes. Directory liveness/readiness remains independent.
 type KinfolkHealthResult = { ok: boolean; reason?: string; checkedAt: number };
 let _kinfolkHealthCache: KinfolkHealthResult | null = null;
 const KINFOLK_HEALTH_CACHE_MS = 5 * 60 * 1000;
@@ -918,24 +918,10 @@ export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }
   if (_kinfolkHealthCache && now - _kinfolkHealthCache.checkedAt < KINFOLK_HEALTH_CACHE_MS) {
     return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
   }
-  if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.trim() || !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim()) {
-    _kinfolkHealthCache = { ok: false, reason: "missing_configuration", checkedAt: now };
-    return { ok: false, reason: "missing_configuration" };
-  }
-  try {
-    const model = resolveKinfolkProbeModel(process.env);
-    await openai.chat.completions.create(buildKinfolkProbeRequest({
-      model,
-      messages: [{ role: "user", content: "ping" }],
-      maxOutputTokens: 3,
-    }) as Parameters<typeof openai.chat.completions.create>[0]);
-    _kinfolkHealthCache = { ok: true, checkedAt: now };
-    return { ok: true };
-  } catch {
-    const reason = "connection_failure";
-    _kinfolkHealthCache = { ok: false, reason, checkedAt: now };
-    return { ok: false, reason };
-  }
+  const capabilities = await probeKinfolkProviderReadiness();
+  const result = summarizeKinfolkProviderReadiness(capabilities);
+  _kinfolkHealthCache = { ...result, checkedAt: now };
+  return result;
 }
 
 // ─── Kinfolk canary — real AI call with a known-answer question ──────────────
@@ -965,7 +951,7 @@ export async function runKinfolkCanary(): Promise<{
       ],
       maxOutputTokens: 8,
       temperature: 0,
-    }) as Parameters<typeof openai.chat.completions.create>[0]);
+    }) as ChatCompletionCreateParamsNonStreaming);
     if (!("choices" in completion)) {
       return { ok: false, reason: "Unexpected streaming response from AI provider", latencyMs: Date.now() - start };
     }
@@ -975,16 +961,6 @@ export async function runKinfolkCanary(): Promise<{
     return { ok: false, reason: "AI canary failed", latencyMs: Date.now() - start };
   }
 }
-
-// Run one probe at startup so Railway logs show the AI status immediately.
-void probeKinfolkAI().then(({ ok }) => {
-  if (ok) {
-    console.log("[kinfolk] AI connectivity check: OK");
-  } else {
-    console.error("[kinfolk] AI connectivity check FAILED");
-    console.error("[kinfolk] Check AI_INTEGRATIONS_OPENAI_BASE_URL and AI_INTEGRATIONS_OPENAI_API_KEY in Railway env vars.");
-  }
-});
 
 // ─── Privacy Intelligence — Sensitive Topic Classifier ───────────────────────
 // Per Manus AI Privacy Intelligence spec (Aug 11 2026):
@@ -2508,19 +2484,6 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 // ─── POST /api/kinfolk/chat ───────────────────────────────────────────────────
 const FREE_MONTHLY_LIMIT = 3;
 
-// ─── GET /api/kinfolk/health — real AI connectivity check for uptime monitors ─
-// Probes the actual OpenAI connection (cached 5 min) so monitors and the mobile
-// app know immediately when the AI backend is unreachable, not just unconfigured.
-// Unauthenticated — safe for external uptime monitors (UptimeRobot, etc.).
-router.get("/kinfolk/health", async (_req: Request, res: Response) => {
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
-    return void res.status(503).json({ ok: false, reason: "missing_configuration" });
-  }
-  const { ok } = await probeKinfolkAI();
-  if (!ok) return void res.status(503).json({ ok: false, reason: "connection_failure" });
-  res.json({ ok: true });
-});
-
 // ─── Kinfolk private memory — explicit consent and ownership only ──────────────
 const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{ key: string; pattern: RegExp }> = [
   { key: "fertility", pattern: /\b(fertility|infertility|ivf|iui|egg freezing|pregnan(?:t|cy)|miscarriage|reproductive|ob[- ]?gyn)\b/i },
@@ -3314,10 +3277,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // turns. It receives bounded turn text/history only, never preferences,
         // identity context, memories, location history, or business data.
         classify: async ({ message: plannerMessage, history }) => {
-          const completion = await openai.chat.completions.create({
+          const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
             model: kinfolkModel("fallback"),
-            response_format: { type: "json_object" },
-            max_tokens: 220,
+            maxOutputTokens: 220,
             temperature: 0,
             messages: [
               {
@@ -3327,7 +3289,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               ...history,
               { role: "user", content: plannerMessage },
             ],
-          }, { signal: AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)]) });
+          }) as ChatCompletionCreateParamsNonStreaming, { signal: AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)]) });
           const content = completion.choices[0]?.message?.content ?? "{}";
           try {
             const parsedClassifierPayload = JSON.parse(content) as unknown;
@@ -4844,6 +4806,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           provider: liveWebOutcome?.provider ?? null,
           fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
           partial: liveWebOutcome?.partial ?? false,
+          providerAttempted: liveWebOutcome?.providerAttempted ?? false,
+          providerUsed: liveWebOutcome?.providerUsed ?? false,
+          failure: liveWebOutcome?.failure ?? null,
+          attempts: liveWebOutcome?.attempts ?? [],
         },
         asOf: new Date().toISOString(),
       },
@@ -5168,12 +5134,12 @@ Return EXACTLY this JSON (no markdown, pure valid JSON):
 Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA compliance, wheelchair access, signage) and safety first. Be specific with dollar estimates. Keep language warm, community-centered, and practical.`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
       model: kinfolkModel("fallback"),
+      maxOutputTokens: isTrailblazer ? 2000 : 1000,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
-      max_tokens: isTrailblazer ? 2000 : 1000,
-    });
+    }) as ChatCompletionCreateParamsNonStreaming);
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
     const parsed = JSON.parse(raw) as { summary: string; actionItems: unknown[] };
@@ -5310,12 +5276,12 @@ Return EXACTLY this JSON (no markdown, pure valid JSON):
 Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities with strong Black communities: Atlanta, Houston, Chicago, DC, New York, New Orleans, LA, Miami, Dallas, Philadelphia, Detroit, Baltimore, Memphis, Charlotte. Prioritize cities near ${businessCity ?? "their base"}.`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
       model: kinfolkModel("fallback"),
+      maxOutputTokens: 1500,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 1500,
-    });
+    }) as ChatCompletionCreateParamsNonStreaming);
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
     const parsed = JSON.parse(raw) as { summary: string; opportunities: unknown[]; insights: string[] };
@@ -5541,8 +5507,9 @@ Include 3-5 businesses from the PLATFORM LIST below. If none match, use general 
 ${businessCatalog}`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
       model: kinfolkModel("fallback"),
+      maxOutputTokens: 2400,
       messages: [
         { role: "system", content: systemPrompt },
         ...(messages as Array<{ role: string; content: string }>).map(m => ({
@@ -5551,8 +5518,7 @@ ${businessCatalog}`;
         })),
       ],
       temperature: 0.75,
-      max_tokens: 2400,
-    });
+    }) as ChatCompletionCreateParamsNonStreaming);
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
     let parsed: Record<string, unknown>;
@@ -5963,6 +5929,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
 // model IDs, prompts, or provider response content.
 router.get("/kinfolk/provider-readiness", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED" });
+  if (!isAdmin(req)) return void res.status(403).json({ error: "ADMIN_REQUIRED" });
   if (process.env.NODE_ENV === "production") {
     return void res.status(403).json({ error: "DEVELOPMENT_COMMAND_DISABLED" });
   }

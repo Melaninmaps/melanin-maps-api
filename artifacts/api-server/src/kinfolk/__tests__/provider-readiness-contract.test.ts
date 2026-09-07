@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const route = readFileSync(new URL("../../routes/kinfolk.ts", import.meta.url), "utf8");
+const routesIndex = readFileSync(new URL("../../routes/index.ts", import.meta.url), "utf8");
 const command = readFileSync(new URL("../../scripts/kinfolkProviderReadiness.ts", import.meta.url), "utf8");
 
 describe("provider readiness entry points", () => {
@@ -10,11 +11,25 @@ describe("provider readiness entry points", () => {
     const end = route.indexOf('router.post("/kinfolk/speak"', start);
     const block = route.slice(start, end);
     expect(block).toContain("AUTHENTICATION_REQUIRED");
+    expect(block).toContain("ADMIN_REQUIRED");
+    expect(block).toContain("isAdmin(req)");
     expect(block).toContain('process.env.NODE_ENV === "production"');
     expect(block).toContain("probeKinfolkProviderReadiness()");
     expect(block).toContain('status === "PASS"');
     expect(block).not.toContain("AI_INTEGRATIONS_OPENAI_API_KEY");
     expect(block).not.toContain("AI_INTEGRATIONS_OPENAI_BASE_URL");
+  });
+
+  it("keeps one public, sanitized Kinfolk-only health boundary outside the member wall", () => {
+    expect(routesIndex.match(/router\.get\("\/kinfolk\/health"/g)).toHaveLength(1);
+    expect(route).not.toContain('router.get("/kinfolk/health"');
+    const start = routesIndex.indexOf('router.get("/kinfolk/health"');
+    const end = routesIndex.indexOf("router.use(requireAuth)", start);
+    const block = routesIndex.slice(start, end);
+    expect(block).toContain("probeKinfolkAI()");
+    expect(block).toContain('reason: result.reason ?? "connection_failure"');
+    expect(block).not.toContain("capabilities");
+    expect(block).not.toMatch(/modelId|prompt:|transcript:|providerUrl/i);
   });
 
   it("keeps the local command production-refusing and row-only", () => {

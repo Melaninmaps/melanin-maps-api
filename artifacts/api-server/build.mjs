@@ -6,6 +6,7 @@ import esbuildPluginPino from "esbuild-plugin-pino";
 import { rm, copyFile, cp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
+import { packageKinfolkReadinessFixture } from "./readiness-assets.mjs";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -259,6 +260,8 @@ generateBuildIdentity()
       path.resolve(artifactDir, "dist/NotoSans-Regular.ttf"),
     )
   )
+  .then(() => packageKinfolkReadinessFixture(artifactDir))
+  .then(() => console.log("Kinfolk readiness fixture copied to dist/assets/readiness/"))
   .then(() => {
     const webStaticSrc = path.resolve(artifactDir, "web-static");
     const webStaticDst = path.resolve(artifactDir, "dist/public");

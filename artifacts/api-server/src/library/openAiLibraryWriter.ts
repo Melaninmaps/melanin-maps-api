@@ -1,3 +1,4 @@
+import { buildKinfolkChatCompletionRequest } from "../kinfolk/staff-demo-policy";
 import type { LibrarySynthesisWriter, ResearchDocument } from "./types";
 
 type ChatCompletionResponse = {
@@ -69,10 +70,10 @@ export function createOpenAiLibraryWriter(input: {
           Authorization: `Bearer ${input.apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+        body: JSON.stringify(buildKinfolkChatCompletionRequest({
           model: input.model,
-          max_completion_tokens: 1_500,
-          response_format: { type: "json_schema", json_schema: OUTPUT_SCHEMA },
+          maxOutputTokens: 1_500,
+          responseFormat: { type: "json_schema", json_schema: OUTPUT_SCHEMA },
           messages: [
             {
               role: "system",
@@ -93,7 +94,7 @@ export function createOpenAiLibraryWriter(input: {
               ].join("\n\n"),
             },
           ],
-        }),
+        })),
       });
 
       if (!response.ok) throw new Error(`Synthesis model failed with status ${response.status}.`);

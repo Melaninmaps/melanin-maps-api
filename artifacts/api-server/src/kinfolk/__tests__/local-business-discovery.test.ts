@@ -326,6 +326,7 @@ describe("local web provider-state contract", () => {
     await expect(searchLocalBusinessQueriesWithState(queries, false)).resolves.toEqual({
       state: "unavailable",
       attempted: false,
+      attempts: [],
       providerAttempted: false,
       providerUsed: false,
       provider: null,

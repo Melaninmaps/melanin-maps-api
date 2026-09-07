@@ -211,14 +211,14 @@ router.use(businessesRouter);
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
 // checks) and the mobile app before showing the KinfolkAI chat UI.
-// It probes the real OpenAI connection (cached 5 min) and returns ok/503.
+// It probes all required Kinfolk provider capabilities (cached 5 min) and returns ok/503.
 // Safe to expose publicly: no user data, no platform data, no session required.
 router.get("/kinfolk/health", async (_req, res) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
     return void res.status(503).json({ ok: false, reason: "missing_configuration" });
   }
-  const { ok } = await probeKinfolkAI();
-  if (!ok) return void res.status(503).json({ ok: false, reason: "connection_failure" });
+  const result = await probeKinfolkAI();
+  if (!result.ok) return void res.status(503).json({ ok: false, reason: result.reason ?? "connection_failure" });
   res.json({ ok: true });
 });
 

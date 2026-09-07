@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const kinfolkDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const routeFile = resolve(kinfolkDirectory, "../routes/kinfolk.ts");
+const libraryWriterFile = resolve(kinfolkDirectory, "../library/openAiLibraryWriter.ts");
 
 function runtimeSources(directory: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -24,5 +25,20 @@ describe("Kinfolk runtime model boundary", () => {
         return /model\s*:\s*["'][^"']+["']/g.test(source) ? [path] : [];
       });
     expect(violations).toEqual([]);
+  });
+
+  it("routes every Kinfolk Chat Completions call through a family-compatible non-streaming builder", () => {
+    const routeSource = readFileSync(routeFile, "utf8");
+    const completionCalls = routeSource.match(/await openai\.chat\.completions\.create\s*\(/g) ?? [];
+    const guardedCalls = routeSource.match(
+      /await openai\.chat\.completions\.create\s*\(\s*buildKinfolk(?:ChatCompletion|Probe)Request\s*\(/g,
+    ) ?? [];
+    expect(completionCalls).toHaveLength(6);
+    expect(guardedCalls).toHaveLength(completionCalls.length);
+    expect(routeSource).not.toContain("as Parameters<typeof openai.chat.completions.create>[0]");
+
+    const libraryWriterSource = readFileSync(libraryWriterFile, "utf8");
+    expect(libraryWriterSource).toContain("JSON.stringify(buildKinfolkChatCompletionRequest({");
+    expect(libraryWriterSource).not.toMatch(/JSON\.stringify\(\{\s*model:/);
   });
 });

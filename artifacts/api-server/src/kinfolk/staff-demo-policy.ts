@@ -101,15 +101,21 @@ export function isGpt5Family(model: string): boolean {
   return /^gpt-5(?:$|[-.])/.test(finalSegment);
 }
 
+export type KinfolkChatResponseFormat =
+  | { type: "json_object" }
+  | { type: "json_schema"; json_schema: Record<string, unknown> };
+
 export function buildKinfolkChatCompletionRequest<TMessages>(input: {
   model: string;
   messages: TMessages;
   maxOutputTokens: number;
   temperature?: number;
+  responseFormat?: KinfolkChatResponseFormat;
 }): {
   model: string;
   messages: TMessages;
-  response_format: { type: "json_object" };
+  stream: false;
+  response_format: KinfolkChatResponseFormat;
   max_tokens?: number;
   max_completion_tokens?: number;
   temperature?: number;
@@ -117,7 +123,8 @@ export function buildKinfolkChatCompletionRequest<TMessages>(input: {
   const common = {
     model: input.model,
     messages: input.messages,
-    response_format: { type: "json_object" as const },
+    stream: false as const,
+    response_format: input.responseFormat ?? { type: "json_object" as const },
   };
 
   if (isGpt5Family(input.model)) {
@@ -142,11 +149,12 @@ export function buildKinfolkProbeRequest<TMessages>(input: {
 }): {
   model: string;
   messages: TMessages;
+  stream: false;
   max_tokens?: number;
   max_completion_tokens?: number;
   temperature?: number;
 } {
-  const common = { model: input.model, messages: input.messages };
+  const common = { model: input.model, messages: input.messages, stream: false as const };
   if (isGpt5Family(input.model)) {
     return { ...common, max_completion_tokens: input.maxOutputTokens };
   }
