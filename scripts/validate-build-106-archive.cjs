@@ -58,6 +58,16 @@ const SECRET_PATTERNS = [
   /\bAKIA[A-Z0-9]{16}\b/,
 ];
 
+function isForbiddenRiskyName(base) {
+  const lower = base.toLowerCase();
+  if (FORBIDDEN_NAMES.has(base) || FORBIDDEN_NAMES.has(lower)) return true;
+  if (lower === ".replitignore" || lower === "replit.md" || lower === "replit.nix") return true;
+  if (/credential/.test(lower)) return true;
+  if (/(?:google[-_.]?)?service[-_.]?account/.test(lower)) return true;
+  if (/^upload[-_.]?(?:credential|certificate|cert|key|keystore|profile)/.test(lower)) return true;
+  return false;
+}
+
 function walk(root) {
   const files = [];
   const visit = (directory) => {
@@ -92,7 +102,7 @@ function validateBuild106Archive(archivePath) {
     assert(!parts.includes(".git"), `Git metadata entered EAS archive: ${file.relative}`);
     assert(!parts.includes("node_modules"), `node_modules entered EAS archive: ${file.relative}`);
     assert(!parts.includes(".replit-artifact"), `Replit artifact metadata entered EAS archive: ${file.relative}`);
-    assert(!FORBIDDEN_NAMES.has(base), `credential/config artifact entered EAS archive: ${file.relative}`);
+    assert(!isForbiddenRiskyName(base), `credential/config artifact entered EAS archive: ${file.relative}`);
     assert(!FORBIDDEN_EXTENSIONS.has(extension), `signing artifact entered EAS archive: ${file.relative}`);
     assert(!/^\.env(?:\.|$)/.test(base), `environment file entered EAS archive: ${file.relative}`);
 
