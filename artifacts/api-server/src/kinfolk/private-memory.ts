@@ -10,6 +10,23 @@ export function isKinfolkPrivateMemoryEnabled(
     || environment.KINFOLK_PRIVATE_MEMORY_ENABLED === "true";
 }
 
+export type KinfolkMemoryConsentReader = (userId: string) => Promise<boolean | null | undefined>;
+
+/** Resolve this authenticated owner's opt-out before any retained session read. */
+export async function resolveKinfolkMemoryAccess(input: {
+  runtimeEnabled: boolean;
+  authenticatedUserId: string;
+  readOwnerSetting: KinfolkMemoryConsentReader;
+}): Promise<boolean> {
+  if (!input.runtimeEnabled) return false;
+  try {
+    const enabled = await input.readOwnerSetting(input.authenticatedUserId);
+    return enabled !== false;
+  } catch {
+    return false;
+  }
+}
+
 export type PrivateMemoryForPrompt = {
   content: string;
   purpose: string;

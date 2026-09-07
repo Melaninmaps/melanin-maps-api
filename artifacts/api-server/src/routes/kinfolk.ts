@@ -107,6 +107,7 @@ import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
+import { buildConversationalBusinessResultView } from "../kinfolk/business-result-view";
 import {
   businessDiscoveryClarification,
   temporaryBusinessAudienceBand,
@@ -124,6 +125,7 @@ import { loadAdaptiveDeliveryProfile } from "../kinfolk/adaptive-tone-and-audien
 import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
+  resolveKinfolkMemoryAccess,
 } from "../kinfolk/private-memory";
 import { isAdmin } from "../lib/adminAuth";
 import {
@@ -2442,6 +2444,8 @@ router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
   const t0 = Date.now();
   const userId = req.user.id;
   try {
+    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(userId);
+    if (!memoryEnabled) return void res.json({ sessions: [] });
     const now = Date.now();
     const existingEntry = sessionsCache.get(userId);
     const cacheState: "hit" | "miss" | "coalesced" =
@@ -2468,6 +2472,8 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const id = String(req.params.id);
   try {
+    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    if (!memoryEnabled) return void res.status(404).json({ error: "Session not found" });
     const [session] = await db
       .select()
       .from(kinfolkSessionsTable)
@@ -2541,6 +2547,10 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
   }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
+    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    if (!memoryEnabled) {
+      return void res.status(403).json({ error: "Kinfolk memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+    }
     const body = req.body as Record<string, unknown>;
     if (body.consent !== true) {
       res.status(400).json({ error: "Explicit consent is required before Kinfolk remembers anything.", code: "MEMORY_CONSENT_REQUIRED" });
@@ -2594,26 +2604,36 @@ router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   }
 });
 
+async function resolveOwnerKinfolkMemoryAccess(userId: string) {
+  return resolveKinfolkMemoryAccess({
+    runtimeEnabled: isKinfolkPrivateMemoryEnabled(),
+    authenticatedUserId: userId,
+    readOwnerSetting: async () => {
+      const [settings] = await db
+        .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
+        .from(userSettingsTable)
+        .where(eq(userSettingsTable.userId, userId))
+        .limit(1);
+      return settings?.kinfolkMemoryEnabled ?? null;
+    },
+  });
+}
+
 async function persistDeterministicDiscoveryTurn(input: {
   userId: string;
+  memoryEnabled: boolean;
   sessionId?: string;
   message: string;
   reply: string;
   recommendations: Record<string, unknown> | null;
+  resultView: Record<string, unknown> | null;
+  followUpSuggestions: string[];
   sources: Array<{ title: string; url: string }>;
   destination: string;
   vibes: string[];
 }): Promise<string | undefined> {
-  if (!isKinfolkPrivateMemoryEnabled()) return undefined;
+  if (!input.memoryEnabled) return undefined;
   try {
-    const [settings] = await db
-      .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
-      .from(userSettingsTable)
-      .where(eq(userSettingsTable.userId, input.userId))
-      .limit(1)
-      .catch(() => []);
-    if (settings?.kinfolkMemoryEnabled === false) return undefined;
-
     const [currentSession] = input.sessionId
       ? await db
           .select()
@@ -2625,14 +2645,15 @@ async function persistDeterministicDiscoveryTurn(input: {
           .limit(1)
       : [];
     const timestamp = new Date().toISOString();
-    const messages: SessionMessage[] = [
+    const messages: Array<SessionMessage & { resultView?: Record<string, unknown> | null }> = [
       ...(currentSession?.messages ?? []),
       { role: "user", content: input.message, timestamp },
       {
         role: "assistant",
         content: input.reply,
         recommendations: input.recommendations,
-        followUpSuggestions: [],
+        resultView: input.resultView,
+        followUpSuggestions: input.followUpSuggestions,
         sources: input.sources,
         timestamp,
       },
@@ -2671,9 +2692,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   sessionId?: string;
   message: string;
   vibes: string[];
+  memoryEnabled: boolean;
 }): Promise<boolean> {
   let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
-  if (isKinfolkPrivateMemoryEnabled() && input.sessionId && input.req.user?.id) {
+  if (input.memoryEnabled && input.sessionId && input.req.user?.id) {
     try {
       const [session] = await db
         .select()
@@ -2724,10 +2746,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       : `I can narrow the things to do in ${scope.city} without guessing who the activity is for.`;
     const clarificationSessionId = await persistDeterministicDiscoveryTurn({
       userId: input.req.user!.id,
+      memoryEnabled: input.memoryEnabled,
       sessionId: input.sessionId,
       message: input.message,
       reply,
       recommendations: null,
+      resultView: null,
+      followUpSuggestions: [],
       sources: [],
       destination: `${scope.city}, ${scope.stateCode}`,
       vibes: input.vibes,
@@ -2773,12 +2798,30 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       currentRequest: input.message,
     },
   });
+  const resultView = buildConversationalBusinessResultView({
+    businesses: discoveryResult.discovery.platformBusinesses,
+    external: discoveryResult.discovery.webFindings,
+    subjectLabel: discoveryResult.discovery.subject.label,
+  });
+  const platformCount = discoveryResult.discovery.platformBusinesses.length;
+  const externalCount = discoveryResult.discovery.webFindings.length;
+  const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
+  const conciseReply = platformCount > 0
+    ? `I found ${platformCount} matching MWM ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+    : discoveryResult.discovery.platformStatus === "degraded"
+      ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
+      : externalCount > 0
+        ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
+        : `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. Want me to widen the area or try a nearby city?`;
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
+    memoryEnabled: input.memoryEnabled,
     sessionId: input.sessionId,
     message: input.message,
-    reply: discoveryResult.reply,
+    reply: conciseReply,
     recommendations: discoveryResult.recommendations as Record<string, unknown> | null,
+    resultView: resultView as unknown as Record<string, unknown>,
+    followUpSuggestions: [resultView.followUp],
     sources: discoveryResult.sources.map(({ title, url }) => ({ title, url })),
     destination: location.city,
     vibes: input.vibes,
@@ -2786,10 +2829,11 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
 
   input.res.status(200).json({
     sessionId: finalSessionId,
-    reply: discoveryResult.reply,
+    reply: conciseReply,
     recommendations: discoveryResult.recommendations,
     itinerary: null,
-    followUpSuggestions: [],
+    followUpSuggestions: [resultView.followUp],
+    resultView,
     smartPromotion: null,
     taskAction: null,
     libraryAction: null,
@@ -2859,6 +2903,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  // Resolve the server flag and the authenticated member's own setting before
+  // any session/history lookup. A settings-read failure disables memory for this
+  // request rather than risking reinjection or persistence after an opt-out.
+  const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+
   // Arithmetic is deterministic and must not trigger Library, web, or model work.
   // Subsequent conversational turns still load normal session history below.
   const arithmetic = deterministicArithmeticAnswer(message);
@@ -2867,10 +2916,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // that?" has a bounded, explicit antecedent rather than a guessed one.
     const arithmeticSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
+      memoryEnabled,
       sessionId,
       message,
       reply: arithmetic,
       recommendations: null,
+      resultView: null,
+      followUpSuggestions: [],
       sources: [],
       destination: "",
       vibes,
@@ -2921,6 +2973,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     sessionId,
     message,
     vibes,
+    memoryEnabled,
   })) return;
   if (contextualRequestAbort.signal.aborted) return;
 
@@ -3090,16 +3143,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical */ }
     }
 
-    // When private memory is disabled, do not read historic conversations into
-    // the request or persist this turn. This prevents a disabled production
-    // runtime from retaining or re-injecting Kinfolk session content.
-    const privateMemoryEnabled = isKinfolkPrivateMemoryEnabled();
-
     // Load or create session
     chatStage = "session_read";
     let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
-    let sessionPersistenceAvailable = privateMemoryEnabled;
-    if (privateMemoryEnabled && sessionId && req.user?.id) {
+    let sessionPersistenceAvailable = memoryEnabled;
+    if (memoryEnabled && sessionId && req.user?.id) {
       try {
         const [s] = await db
           .select()
@@ -4143,7 +4191,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const pronounBlock = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
 
-    const activePrivateMemories = privateMemoryEnabled && req.user?.id
+    const activePrivateMemories = memoryEnabled && req.user?.id
       ? await db.select({ content: kinfolkPrivateMemoriesTable.content, purpose: kinfolkPrivateMemoriesTable.purpose, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
           .from(kinfolkPrivateMemoriesTable)
           .where(and(
@@ -4159,7 +4207,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       !memory.isSensitive || isSensitiveMemoryRelevant(memory.content, message),
     );
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
-      privateMemoryEnabled && !contextualEvidence,
+      memoryEnabled && !contextualEvidence,
       contextualEvidence ? [] : relevantPrivateMemories,
     );
 
@@ -4522,19 +4570,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
 
-    let memoryEnabled = privateMemoryEnabled;
-    if (req.user?.id) {
-      const [userSettings] = await db
-        .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
-        .from(userSettingsTable)
-        .where(eq(userSettingsTable.userId, req.user.id))
-        .limit(1)
-        .catch(() => []);
-      if (userSettings?.kinfolkMemoryEnabled === false) memoryEnabled = false;
-    }
-
     chatStage = "session_persist";
-    let finalSessionId = privateMemoryEnabled ? sessionId : undefined;
+    let finalSessionId = memoryEnabled ? sessionId : undefined;
     if (req.user?.id && memoryEnabled && sessionPersistenceAvailable) {
       try {
         if (currentSession) {
@@ -5559,6 +5596,10 @@ ${businessCatalog}`;
 router.post("/kinfolk/sessions/:id/share", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
   const { id } = req.params as { id: string };
+  const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+  if (!memoryEnabled) {
+    return void res.status(403).json({ error: "Kinfolk memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
 
   const [session] = await db
     .select()

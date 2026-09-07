@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  AppState,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -23,7 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge, type ConversationalBusinessResultView } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -138,6 +139,12 @@ const CULTURAL_INTERESTS_LIST = [
 ];
 
 // ─── Sub-component: Business Card ────────────────────────────────────────────
+function businessTrustLabel(biz: { verified?: boolean; claimed?: boolean }): string {
+  if (biz.verified === true) return "MWM verified";
+  if (biz.claimed === true) return "Claimed · Not MWM verified";
+  return "Unclaimed · Not MWM verified";
+}
+
 function BusinessCard({
   biz, messageId, city, feedback, onFeedback, wishlistItemId, onWishlist,
   compareMode, isSelected, onCompareToggle, colors,
@@ -190,9 +197,7 @@ function BusinessCard({
       </View>
       <Text style={[bizStyles.name, { color: colors.text }]}>{biz.name}</Text>
       <Text style={[bizStyles.desc, { color: colors.mutedForeground }]}>{biz.description}</Text>
-      {biz.verified === false && (
-        <Text style={[bizStyles.unclaimed, { color: colors.primary }]}>Founder-listed · Unclaimed · Not MWM verified</Text>
-      )}
+      <Text style={[bizStyles.unclaimed, { color: colors.primary }]}>{businessTrustLabel(biz)}</Text>
       {biz.matchReasons && biz.matchReasons.length > 0 && (
         <Text style={[bizStyles.matchReason, { color: colors.mutedForeground }]}>Why it surfaced: {biz.matchReasons.join(" · ")}</Text>
       )}
@@ -561,6 +566,49 @@ const laStyles = StyleSheet.create({
   label: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
 });
 
+function ConversationalResultCards({ view, colors }: { view: ConversationalBusinessResultView; colors: ReturnType<typeof useColors> }) {
+  return (
+    <View style={{ gap: 8, marginTop: 10 }}>
+      {view.cards.map((card) => {
+        const website = card.actions.find((action) => action.label === "Visit website")?.url;
+        const hasDetails = card.actions.some((action) => action.label === "View details");
+        return (
+          <View key={card.id} style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 12 }}>
+            <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 14 }}>{card.title}</Text>
+            <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 10, marginTop: 3 }}>{businessTrustLabel(card)}</Text>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 6 }}>{card.supportingText}</Text>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 5 }}>{card.matchReason}</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 9 }}>
+              {hasDetails && (
+                <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: card.id } })} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
+                  <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>View details</Text>
+                </TouchableOpacity>
+              )}
+              {website && (
+                <TouchableOpacity onPress={() => void openExternalUrl(website, { kind: "web" })} style={{ borderColor: colors.primary, borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
+                  <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>Visit website</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        );
+      })}
+      {view.seeAll && <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 11 }}>{view.seeAll.count} matching MWM listings found.</Text>}
+      {view.external.length > 0 && (
+        <View style={{ backgroundColor: GOLD + "12", borderColor: GOLD + "33", borderWidth: 1, borderRadius: 14, padding: 12 }}>
+          <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 11 }}>Current web findings</Text>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 2 }}>External sources are not MWM-verified business listings.</Text>
+          {view.external.map((finding) => (
+            <TouchableOpacity key={finding.url} onPress={() => void openExternalUrl(finding.url, { kind: "web" })} style={{ marginTop: 7 }}>
+              <Text style={{ color: GOLD, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{finding.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 // ─── Sub-component: AI Message ────────────────────────────────────────────────
 function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
@@ -650,8 +698,10 @@ function AiMessageBubble({
           <NearbyNudgeChip nudge={msg.nearbyNudge} onSend={onQuickReply} colors={colors} />
         )}
 
+        {msg.resultView && <ConversationalResultCards view={msg.resultView} colors={colors} />}
+
         {/* Recommendations */}
-        {recs && (
+        {recs && !msg.resultView && (
           <View style={aiStyles.recsContainer}>
             {/* Summary bar */}
             <View style={[aiStyles.destBar, { backgroundColor: GOLD + "14", borderColor: GOLD + "33" }]}>
@@ -859,7 +909,7 @@ function AiMessageBubble({
           </Text>
         ) : null}
 
-        {msg.sources && msg.sources.length > 0 && (
+        {!msg.resultView && msg.sources && msg.sources.length > 0 && (
           <View style={[aiStyles.sourcesBox, { borderColor: colors.border }]}>
             <Text style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}>Sources</Text>
             {msg.sources.slice(0, 5).map((source, index) => (
@@ -1823,6 +1873,16 @@ export default function TravelScreen() {
       onError: () => {},
     });
   }, [messages, isLoading, voiceOutput]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") void Speech.stop();
+    });
+    return () => {
+      subscription.remove();
+      void Speech.stop();
+    };
+  }, []);
 
   const pickKinfolkImage = useCallback(async () => {
     if (uploadingKinfolkImage || kinfolkImages.length >= 2) return;

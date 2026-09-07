@@ -6,16 +6,34 @@ import { businessClarificationContinuation } from "../lib/businessClarificationC
 const travelSource = readFileSync(fileURLToPath(new URL("../app/travel.tsx", import.meta.url)), "utf8");
 const hookSource = readFileSync(fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)), "utf8");
 const detailSource = readFileSync(fileURLToPath(new URL("../app/business/[id].tsx", import.meta.url)), "utf8");
+const widgetSource = readFileSync(fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)), "utf8");
 
 describe("Expo Kinfolk business demo cards", () => {
   it("supports canonical detail, vetted website, unclaimed status, and match reasons", () => {
     expect(hookSource).toContain("id?: string");
     expect(hookSource).toContain("website?: string | null");
+    expect(hookSource).toContain("claimed?: boolean");
     expect(hookSource).toContain("matchReasons?: string[]");
     expect(travelSource).toContain('pathname: "/business/[id]"');
     expect(travelSource).toContain("openExternalUrl(biz.website!)");
-    expect(travelSource).toContain("Founder-listed · Unclaimed · Not MWM verified");
+    expect(travelSource).toContain("Claimed · Not MWM verified");
+    expect(travelSource).toContain("Unclaimed · Not MWM verified");
+    expect(travelSource).toContain("MWM verified");
     expect(travelSource).toContain("Why it surfaced:");
+    expect(hookSource).toContain("resultView?: ConversationalBusinessResultView | null");
+    expect(hookSource).toContain("resultView: data.resultView ?? null");
+    expect(travelSource).toContain("<ConversationalResultCards view={msg.resultView}");
+    expect(travelSource).toContain("recs && !msg.resultView");
+    expect(travelSource).toContain("External sources are not MWM-verified business listings.");
+  });
+
+  it("stops Kinfolk audio when the widget closes or the app backgrounds", () => {
+    expect(widgetSource).toContain("AppState.addEventListener");
+    expect(widgetSource).toContain('state !== "active"');
+    expect(widgetSource).toContain("player.pause()");
+    expect(widgetSource).toContain("setListenUri(undefined)");
+    expect(travelSource).toContain("AppState.addEventListener");
+    expect(travelSource).toContain("void Speech.stop()");
   });
 
   it("shows only approved public creator links and opens them on the original platform", () => {

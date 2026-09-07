@@ -68,7 +68,22 @@ interface Business {
   website?: string | null;
   detailUrl?: string;
   verified?: boolean;
+  claimed?: boolean;
   matchReasons?: string[];
+}
+interface ConversationalBusinessResultView {
+  cards: Array<{
+    id: string;
+    title: string;
+    supportingText: string;
+    matchReason: string;
+    verified: boolean;
+    claimed: boolean;
+    actions: Array<{ label: "View details" | "Visit website"; url: string }>;
+  }>;
+  seeAll: { label: string; count: number } | null;
+  followUp: string;
+  external: Array<{ title: string; url: string; sourceHost: string; disclaimer: string }>;
 }
 interface Neighborhood { name: string; vibe: string; highlights: string[]; safetyNote: string }
 interface Event { name: string; type: string; description: string; timing: string }
@@ -141,6 +156,7 @@ interface Message {
   originalQuery?: string;
   imageUrls?: string[];
   experience?: KinfolkExperience | null;
+  resultView?: ConversationalBusinessResultView | null;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -566,6 +582,59 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
 }
 
 // ─── Business card ────────────────────────────────────────────────────────────
+function businessTrustLabel(input: { verified?: boolean; claimed?: boolean }): string {
+  if (input.verified === true) return "MWM verified";
+  if (input.claimed === true) return "Claimed · Not MWM verified";
+  return "Unclaimed · Not MWM verified";
+}
+
+function isSafeBusinessDetailPath(value: string): boolean {
+  return /^\/businesses\/[A-Za-z0-9_%.-]+$/.test(value) && !value.includes("..");
+}
+
+function ConversationalBusinessCards({ view }: { view: ConversationalBusinessResultView }) {
+  return (
+    <div className="mt-3 space-y-3" data-testid="kinfolk-business-result-view">
+      <div className="grid gap-2">
+        {view.cards.map((card) => (
+          <article key={card.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-sm font-bold text-[#3A1F0E]">{card.title}</h3>
+              <span className="shrink-0 rounded-full bg-[#FAF6EF] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-[#7A4B16]">
+                {businessTrustLabel(card)}
+              </span>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#3A1F0E]/75">{card.supportingText}</p>
+            <p className="mt-2 text-[11px] text-[#3A1F0E]/60">{card.matchReason}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {card.actions.flatMap((action) => {
+                if (action.label === "View details" && isSafeBusinessDetailPath(action.url)) {
+                  return [<Link key={`${card.id}-${action.label}`} href={action.url} className="rounded-full bg-[#2B1507] px-3 py-1.5 text-xs font-semibold text-white">View details</Link>];
+                }
+                const href = safeExternalSourceHref(action.url);
+                return href ? [<a key={`${card.id}-${action.label}`} href={href} target="_blank" rel="noopener noreferrer" className="rounded-full border border-[#CA922B]/40 bg-[#CA922B]/10 px-3 py-1.5 text-xs font-semibold text-[#7A4B16]">Visit website</a>] : [];
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
+      {view.seeAll && <p className="text-xs font-semibold text-[#3A1F0E]/65">{view.seeAll.count} matching MWM listings found.</p>}
+      {view.external.length > 0 && (
+        <section className="rounded-2xl border border-[#CA922B]/20 bg-[#FAF6EF] p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-[#7A4B16]">Current web findings</h3>
+          <p className="mt-1 text-[11px] text-[#3A1F0E]/60">External sources are not MWM-verified business listings.</p>
+          <ul className="mt-2 space-y-2">
+            {view.external.map((finding) => {
+              const href = safeExternalSourceHref(finding.url);
+              return href ? <li key={href}><a href={href} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#7A4B16] underline">{finding.title}</a></li> : null;
+            })}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
 function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback: (n: string, c: string, r: "like" | "dislike") => void; feedback: Record<string, "like" | "dislike"> }) {
   const reaction = feedback[biz.name];
   return (
@@ -583,7 +652,7 @@ function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback
           </div>
           <div className="flex items-center gap-1 text-[10px] text-[#3A1F0E]/40 uppercase tracking-wider font-bold mb-2"><MapPin size={9} />{biz.neighborhood}</div>
           <p className="text-xs text-[#3A1F0E]/70 leading-relaxed mb-3">{biz.description}</p>
-          {biz.verified === false && <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#7A4B16]">Founder-listed · Unclaimed · Not MWM verified</p>}
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#7A4B16]">{businessTrustLabel(biz)}</p>
           {biz.matchReasons && biz.matchReasons.length > 0 && (
             <p className="mb-3 text-[11px] leading-relaxed text-[#3A1F0E]/65"><strong>Why it surfaced:</strong> {biz.matchReasons.join(" · ")}</p>
           )}
@@ -819,6 +888,23 @@ function TravelPage() {
     if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     audioUrlRef.current = null;
   }, []);
+
+  useEffect(() => {
+    const stopPlayback = () => {
+      releaseAudio();
+      setPlayingId(null);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") stopPlayback();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", stopPlayback);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", stopPlayback);
+      releaseAudio();
+    };
+  }, [releaseAudio]);
 
   // ── Voice input state ──────────────────────────────────────────────────────
   type VoiceState = "idle" | "notice" | "requesting" | "denied" | "recording" | "processing";
@@ -1204,6 +1290,7 @@ function TravelPage() {
       const data = await r.json() as {
         sessionId?: string; reply?: string;
         recommendations?: Recommendations | null;
+        resultView?: ConversationalBusinessResultView | null;
         /** Structured itinerary payload is additive to legacy recommendations. */
         itinerary?: KinfolkItineraryResponse | null;
         structuredContent?: KinfolkStructuredContent | null;
@@ -1260,6 +1347,7 @@ function TravelPage() {
       setMessages(prev => [...prev, {
         id: assistantMsgId, role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
+        resultView: data.resultView ?? null,
         itinerary: data.itinerary ?? null,
         structuredContent: data.structuredContent ?? null,
         mediaLinks: data.mediaLinks ?? [],
@@ -1672,7 +1760,8 @@ function TravelPage() {
                           researchStatus={msg.researchStatus}
                         />
                       )}
-                      {msg.recommendations && !hasItineraryDays(msg.itinerary) && (
+                      {msg.resultView && <ConversationalBusinessCards view={msg.resultView} />}
+                      {msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
                       )}
                       {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
@@ -1707,7 +1796,7 @@ function TravelPage() {
                         </div>
                       )}
                       {/* Source citations — shown for Living Library research answers */}
-                      {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+                      {msg.role === "assistant" && !msg.resultView && msg.sources && msg.sources.length > 0 && (
                         <KinfolkSourceLinks sources={msg.sources} />
                       )}
                       {/* Library entry link — "Read the full source-cited entry" */}

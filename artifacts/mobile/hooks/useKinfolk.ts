@@ -28,7 +28,23 @@ export type TravelBusiness = {
   website?: string | null;
   detailUrl?: string;
   verified?: boolean;
+  claimed?: boolean;
   matchReasons?: string[];
+};
+
+export type ConversationalBusinessResultView = {
+  cards: Array<{
+    id: string;
+    title: string;
+    supportingText: string;
+    matchReason: string;
+    verified: boolean;
+    claimed: boolean;
+    actions: Array<{ label: "View details" | "Visit website"; url: string }>;
+  }>;
+  seeAll: { label: string; count: number } | null;
+  followUp: string;
+  external: Array<{ title: string; url: string; sourceHost: string; disclaimer: string }>;
 };
 
 export type TravelNeighborhood = {
@@ -105,6 +121,7 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   recommendations?: TravelRecommendations | null;
+  resultView?: ConversationalBusinessResultView | null;
   followUpSuggestions?: string[];
   smartPromotion?: SmartPromotion | null;
   taskAction?: TaskAction | null;
@@ -193,9 +210,10 @@ export function useKinfolk() {
 
       if (res.ok) {
         const data = (await res.json()) as {
-          sessionId: string;
+          sessionId?: string;
           reply: string;
           recommendations?: TravelRecommendations | null;
+          resultView?: ConversationalBusinessResultView | null;
           followUpSuggestions?: string[];
           smartPromotion?: SmartPromotion | null;
           taskAction?: TaskAction | null;
@@ -215,7 +233,7 @@ export function useKinfolk() {
           locationSource?: string | null;
         };
 
-        setSessionId(data.sessionId);
+        if (data.sessionId) setSessionId(data.sessionId);
         if (opts?.rememberThis) {
           fetch(`${apiBase}/api/kinfolk/memories`, {
             method: "POST",
@@ -231,6 +249,7 @@ export function useKinfolk() {
           role: "assistant",
           content: data.reply,
           recommendations: data.recommendations ?? null,
+          resultView: data.resultView ?? null,
           followUpSuggestions: data.followUpSuggestions ?? [],
           smartPromotion: data.smartPromotion ?? null,
           taskAction: data.taskAction ?? null,
@@ -362,7 +381,7 @@ export function useKinfolk() {
       });
       if (res.ok) {
         const data = (await res.json()) as {
-          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; followUpSuggestions?: string[]; timestamp: string }[] };
+          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; timestamp: string }[] };
         };
         setSessionId(id);
         setMessages(
@@ -371,6 +390,7 @@ export function useKinfolk() {
             role: m.role as "user" | "assistant",
             content: m.content,
             recommendations: (m.recommendations as TravelRecommendations | null) ?? null,
+            resultView: (m.resultView as ConversationalBusinessResultView | null) ?? null,
             followUpSuggestions: m.followUpSuggestions ?? [],
             timestamp: new Date(m.timestamp),
             feedback: {},

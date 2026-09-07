@@ -37,7 +37,7 @@ describe("contextual Kinfolk route safety wiring", () => {
     expect(routeSource).toContain("protectContextualOutput");
     expect(routeSource).toContain("renderableValues: [modelPayload.valid ? modelPayload.value : rawContent]");
     expect(routeSource).toContain("recommendations = null");
-    expect(routeSource).toContain("privateMemoryEnabled && !contextualEvidence");
+    expect(routeSource).toContain("memoryEnabled && !contextualEvidence");
     expect(routeSource).toContain("const historyMessages = contextualEvidence ? []");
     expect(routeSource).not.toContain("NORMALIZED EVIDENCE (only these URLs support material claims)");
   });

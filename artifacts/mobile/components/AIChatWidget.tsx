@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { NativeScrollEvent, NativeSyntheticEvent ,
   Alert,
   Animated,
+  AppState,
   FlatList,
   KeyboardAvoidingView,
   Linking,
@@ -438,6 +439,22 @@ export function AIChatWidget() {
       return () => clearTimeout(timer);
     }
   }, [player, player.playing, player.isLoaded, playingId]);
+
+  useEffect(() => {
+    const stopPlayback = () => {
+      if (player.playing || player.isLoaded) player.pause();
+      setListenUri(undefined);
+      setPlayingId(null);
+    };
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") stopPlayback();
+    });
+    if (!open) stopPlayback();
+    return () => {
+      subscription.remove();
+      if (player.playing || player.isLoaded) player.pause();
+    };
+  }, [open, player]);
 
   // ── Fetch voice usage + play daily signature when chat opens ─────────────
   useEffect(() => {

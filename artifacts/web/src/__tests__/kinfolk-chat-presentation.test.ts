@@ -72,8 +72,20 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("View details");
     expect(travelPageSource).toContain("Visit website");
     expect(travelPageSource).toContain('target="_blank" rel="noopener noreferrer"');
-    expect(travelPageSource).toContain("Founder-listed · Unclaimed · Not MWM verified");
+    expect(travelPageSource).toContain("Unclaimed · Not MWM verified");
+    expect(travelPageSource).toContain("Claimed · Not MWM verified");
+    expect(travelPageSource).toContain("MWM verified");
     expect(travelPageSource).toContain("Why it surfaced:");
+    expect(travelPageSource).toContain('data-testid="kinfolk-business-result-view"');
+    expect(travelPageSource).toContain("resultView: data.resultView ?? null");
+    expect(travelPageSource).toContain("msg.recommendations && !msg.resultView");
+    expect(travelPageSource).toContain("External sources are not MWM-verified business listings.");
+  });
+
+  it("stops and releases browser voice playback when the page is hidden or left", () => {
+    expect(travelPageSource).toContain('document.addEventListener("visibilitychange"');
+    expect(travelPageSource).toContain('window.addEventListener("pagehide"');
+    expect(travelPageSource).toContain("releaseAudio()");
   });
 
   it("renders a three-day itinerary naturally, without recommendation cards or raw JSON syntax", () => {
@@ -124,7 +136,7 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).toContain("Packing tips");
     expect(markup).not.toContain("Must-Visit Spots");
     expect(travelPageSource).toContain("itinerary: data.itinerary ?? null");
-    expect(travelPageSource).toContain("msg.recommendations && !hasItineraryDays(msg.itinerary)");
+    expect(travelPageSource).toContain("msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary)");
     expect(markup).not.toContain('"days"');
     expect(markup).not.toContain("```");
     expect(isSerializedItineraryContent('```json\n{"days": []}\n```')).toBe(true);

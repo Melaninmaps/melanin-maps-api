@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
+  resolveKinfolkMemoryAccess,
 } from "../private-memory";
 
 describe("Kinfolk private-memory production control", () => {
@@ -43,6 +44,19 @@ describe("Kinfolk private-memory production control", () => {
     }])).toContain("same member directly asks");
   });
 
+  it("honors the owner opt-out and fails closed when the setting cannot be read", async () => {
+    await expect(resolveKinfolkMemoryAccess({
+      runtimeEnabled: true,
+      authenticatedUserId: "member-1",
+      readOwnerSetting: async () => false,
+    })).resolves.toBe(false);
+    await expect(resolveKinfolkMemoryAccess({
+      runtimeEnabled: true,
+      authenticatedUserId: "member-1",
+      readOwnerSetting: async () => { throw new Error("database unavailable"); },
+    })).resolves.toBe(false);
+  });
+
   it("gates every memory API and session reads/writes with the runtime control", () => {
     const routeFile = resolve(
       dirname(fileURLToPath(import.meta.url)),
@@ -53,9 +67,20 @@ describe("Kinfolk private-memory production control", () => {
     for (const route of ["get", "post", "delete"]) {
       expect(source).toContain(`router.${route}("/kinfolk/memories`);
     }
-    expect(source.match(/code: "PRIVATE_MEMORY_DISABLED"/g)).toHaveLength(3);
-    expect(source).toContain("if (privateMemoryEnabled && sessionId && req.user?.id)");
+    expect((source.match(/code: "PRIVATE_MEMORY_DISABLED"/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    expect(source).toContain("if (memoryEnabled && sessionId && req.user?.id)");
     expect(source).toContain("if (req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
-    expect(source).toContain("const activePrivateMemories = privateMemoryEnabled && req.user?.id");
+    expect(source).toContain("const activePrivateMemories = memoryEnabled && req.user?.id");
+    expect(source).toContain("if (!input.memoryEnabled) return undefined");
+
+    const chatRoute = source.slice(source.indexOf('router.post("/kinfolk/chat"'));
+    const ownerSetting = chatRoute.indexOf("const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id)");
+    const arithmetic = chatRoute.indexOf("deterministicArithmeticAnswer(message)");
+    const deterministicDiscovery = chatRoute.indexOf("tryAnswerDeterministicBusinessDiscovery({");
+    const sessionRead = chatRoute.indexOf('chatStage = "session_read"');
+    expect(ownerSetting).toBeGreaterThan(0);
+    expect(ownerSetting).toBeLessThan(arithmetic);
+    expect(ownerSetting).toBeLessThan(deterministicDiscovery);
+    expect(ownerSetting).toBeLessThan(sessionRead);
   });
 });
