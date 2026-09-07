@@ -232,6 +232,22 @@ describe("Kinfolk provider readiness", () => {
     expect(row(rows, "transcription")).toEqual({ capability: "transcription", status: "FAIL", category: "connection_failure" });
   });
 
+  it("accepts the real provider transcript when it retains the three fixture-specific terms", async () => {
+    const dependencies = passingDependencies();
+    dependencies.transcriptionCreate.mockResolvedValue({
+      text: "This readiness voice fixture checks transcription.",
+    });
+    const rows = await probeKinfolkProviderReadiness(configured, dependencies as never);
+    expect(row(rows, "transcription")).toEqual({ capability: "transcription", status: "PASS", category: "ok" });
+  });
+
+  it("rejects a plausible transcript that is missing any fixture-specific term", async () => {
+    const dependencies = passingDependencies();
+    dependencies.transcriptionCreate.mockResolvedValue({ text: "This readiness voice check passed." });
+    const rows = await probeKinfolkProviderReadiness(configured, dependencies as never);
+    expect(row(rows, "transcription")).toEqual({ capability: "transcription", status: "FAIL", category: "connection_failure" });
+  });
+
   it("requires a decodable WAV rather than arbitrary non-empty TTS bytes", async () => {
     const dependencies = passingDependencies();
     dependencies.textToSpeech.mockResolvedValue(Buffer.from([1, 2, 3]));

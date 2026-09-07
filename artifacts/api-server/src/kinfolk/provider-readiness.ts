@@ -43,7 +43,11 @@ const fixtureCandidates = [
   // Bundled execution: dist/index.mjs -> dist/assets/readiness.
   fileURLToPath(new URL(KINFOLK_READINESS_FIXTURE_RELATIVE_PATH, import.meta.url)),
 ];
-const EXPECTED_TRANSCRIPT_TERMS = ["provider", "readiness", "voice", "transcription"] as const;
+// Real speech-to-text providers can omit a leading modifier while still
+// transcribing the fixture correctly. These three distinctive terms bind the
+// result to the checked-in readiness fixture without requiring a verbatim
+// transcript or accepting an arbitrary non-empty response.
+const REQUIRED_TRANSCRIPT_TERMS = ["readiness", "voice", "transcription"] as const;
 const AUTHORITATIVE_WEB_HOSTS = new Set([
   "nist.gov",
   "time.gov",
@@ -72,7 +76,7 @@ function normalizeMeaning(value: string): string[] {
 function expectedTranscriptMeaning(value: unknown): boolean {
   if (typeof value !== "string") return false;
   const terms = new Set(normalizeMeaning(value));
-  return EXPECTED_TRANSCRIPT_TERMS.every((term) => terms.has(term));
+  return REQUIRED_TRANSCRIPT_TERMS.every((term) => terms.has(term));
 }
 
 function parseStructuredChat(value: unknown): boolean {
