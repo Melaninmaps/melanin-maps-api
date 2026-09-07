@@ -77,6 +77,11 @@ type SearchLocation = Readonly<{
 
 type WebResearchPurpose = "local_business" | "general_current";
 
+// Real Responses web-search calls can legitimately exceed 12 seconds while the
+// provider gathers and cites sources. Keep this bounded, but align it with the
+// independently exercised provider-readiness timeout to avoid false outages.
+export const KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS = 30_000;
+
 function openAiConfigured(): boolean {
   return Boolean(
     process.env.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim()
@@ -180,7 +185,7 @@ async function searchOpenAiQuery(
       ].join("\n"),
       reasoning: { effort: "low" },
       max_output_tokens: 900,
-    } as never, { signal: AbortSignal.timeout(12_000) });
+    } as never, { signal: AbortSignal.timeout(KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS) });
     const results = parseOpenAiResponseCitations(response, [query]);
     return { kind: results.length ? "cited" : "no_citations", results };
   } catch {
