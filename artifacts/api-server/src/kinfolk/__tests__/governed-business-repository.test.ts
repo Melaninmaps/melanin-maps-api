@@ -412,5 +412,8 @@ describe("startup demo containment static safety", () => {
       startupSource.match(/AND NOT \$\{PROVEN_DEMO_BUSINESS_SQL_PREDICATE\}/g)
         ?.length,
     ).toBe(5);
+    expect(startupSource).not.toContain('["dir. businesses",   () => ensureDirectoryBusinesses');
+    expect(startupSource).not.toContain('["tour businesses",   () => ensureTourBusinesses');
+    expect(startupSource).not.toContain('["curated businesses", () => ensureFounderCuratedBusinesses');
   });
 });

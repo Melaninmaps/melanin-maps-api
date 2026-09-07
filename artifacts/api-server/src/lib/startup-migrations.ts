@@ -5225,9 +5225,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["festivals",         () => ensureNationalFestivals(log, warn)],
     ["sundown towns",     () => ensureSundownTowns(log, warn)],
     ["the_real_tags",     () => ensureTheRealTags(log, warn)],
-    ["dir. businesses",   () => ensureDirectoryBusinesses(log, warn)],
-    ["tour businesses",   () => ensureTourBusinesses(log, warn)],
-    ["curated businesses", () => ensureFounderCuratedBusinesses(log, warn)],
+    // Business inventory is community-fed and governed. Legacy directory,
+    // tour, and curated fixtures remain available as reference data in source,
+    // but startup must never publish or republish them automatically.
     ["community orgs",    () => ensureCommunityOrganizations(log, warn)],
     ["recurring events",  () => ensureRecurringEvents(log, warn)],
     ["tour cultural sites", () => ensureTourCulturalSites(log, warn)],
