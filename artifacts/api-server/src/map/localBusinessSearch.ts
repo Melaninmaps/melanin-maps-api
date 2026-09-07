@@ -93,11 +93,15 @@ export class LocalBusinessSearch {
     const radiusMi = input.expansionAccepted ? requestedRadius : DEFAULT_RADIUS_MI;
     const q = input.query.trim();
     if (!q) throw new Error("SEARCH_QUERY_REQUIRED");
-    const patterns = localBusinessSearchPatterns(q);
+    const subject = deriveBusinessSubject(q);
+    const patterns = subject
+      ? businessSubjectSearchPatterns(subject)
+      : [genericSearchPattern(q)];
 
-    // Classification, governed specialty, tags, and explicit offering evidence
-    // are the only service-match sources. Descriptions and other prose are not a
-    // taxonomy, so AMINA's incidental “books fast” copy cannot match bookstore.
+    // Classification, business name, and governed specialties are the only
+    // service-match sources. General tags, descriptions, and other prose are
+    // not a service taxonomy, so AMINA's incidental “books fast” copy cannot
+    // match bookstore and a city “cooling/AC” tag cannot imply HVAC service.
     // Unpinned rows are retained only for an explicitly resolved city/ZIP. They
     // never consume the two nearest-pins allowance or suppress expansion.
     const { rows } = await this.pool.query<LocalBusinessRow>(
@@ -116,7 +120,6 @@ export class LocalBusinessSearch {
           b.state AS "stateCode",
           b.postal_code,
           COALESCE(specialty_evidence.specialties, ARRAY[]::text[]) AS specialties,
-          COALESCE(b.tags, '[]'::jsonb) AS tags,
           CASE WHEN
             b.latitude IS NOT NULL AND b.longitude IS NOT NULL
             AND b.latitude::numeric BETWEEN -90 AND 90
@@ -142,7 +145,6 @@ export class LocalBusinessSearch {
         FROM public.public_businesses AS b
         LEFT JOIN specialty_evidence ON specialty_evidence.business_id = b.id::text
         WHERE NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND COALESCE(b.promotion_eligible, true) = true
           AND (
             LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])
             OR LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])
@@ -152,10 +154,20 @@ export class LocalBusinessSearch {
               FROM unnest(COALESCE(specialty_evidence.specialties, ARRAY[]::text[])) AS governed_specialty(value)
               WHERE LOWER(BTRIM(governed_specialty.value)) ~ ANY($3::text[])
             )
-            OR EXISTS (
-              SELECT 1
-              FROM jsonb_array_elements_text(COALESCE(b.tags, '[]'::jsonb)) AS explicit_offering(value)
-              WHERE LOWER(BTRIM(explicit_offering.value)) ~ ANY($3::text[])
+          )
+          AND NOT (
+            $8::text = 'hvac'
+            AND LOWER(CONCAT_WS(' ', b.name, b.category, b.subcategory))
+              ~ '(^|[^a-z0-9])(auto|automotive|car|vehicle)([^a-z0-9]|$)'
+            AND NOT (
+              LOWER(CONCAT_WS(' ', b.name, b.category, b.subcategory))
+                ~ '(^|[^a-z0-9])(hvac|heating|furnace|heat pump)([^a-z0-9]|$)'
+              OR EXISTS (
+                SELECT 1
+                FROM unnest(COALESCE(specialty_evidence.specialties, ARRAY[]::text[])) AS governed_specialty(value)
+                WHERE LOWER(BTRIM(governed_specialty.value))
+                  ~ '(^|[^a-z0-9])(hvac|heating|furnace|heat pump)([^a-z0-9]|$)'
+              )
             )
           )
       ), scoped AS (
@@ -203,6 +215,7 @@ export class LocalBusinessSearch {
         limit,
         input.city ?? "",
         input.stateCode ?? "",
+        subject?.key ?? "",
       ],
     );
 

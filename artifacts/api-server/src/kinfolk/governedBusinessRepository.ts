@@ -280,6 +280,17 @@ function subjectMatchReasons(
   subject: NormalizedBusinessSubject,
 ): string[] {
   const terms = subject.searchTerms.map((term) => term.toLowerCase());
+  const structuredText = [
+    business.name,
+    business.category,
+    business.subcategory,
+    ...business.specialties,
+  ].join(" ").toLowerCase();
+  if (
+    subject.key === "hvac"
+    && /\b(?:auto|automotive|car|vehicle)\b/.test(structuredText)
+    && !/\b(?:hvac|heating|furnace|heat pump)\b/.test(structuredText)
+  ) return [];
   const fieldMatches = (value: string | null, field: string) => {
     const normalized = ` ${text(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
     return terms.some((term) => {
@@ -292,7 +303,6 @@ function subjectMatchReasons(
     ...fieldMatches(business.subcategory, "subcategory"),
     ...fieldMatches(business.name, "name"),
     ...business.specialties.flatMap((specialty) => fieldMatches(specialty, "specialty")),
-    ...business.tags.flatMap((tag) => fieldMatches(tag, "explicit offering")),
   ];
 }
 
@@ -450,9 +460,10 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
           -- Service matching intentionally uses governed classification,
-          -- business name, or an explicit offering tag. Descriptions/stories
-          -- are not a service taxonomy: e.g. "books fast" must not turn a
-          -- restaurant into a bookstore.
+          -- business name, or a governed specialty. General tags and
+          -- descriptions/stories are not service taxonomies: e.g. a city
+          -- context tag such as "cooling/AC" must not turn a restaurant into
+          -- an HVAC business.
           AND (
             LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])
             OR LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])
@@ -463,10 +474,21 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
               WHERE specialty.business_id::text = b.id::text
                 AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($3::text[])
             )
-            OR EXISTS (
-              SELECT 1
-              FROM jsonb_array_elements_text(COALESCE(b.tags, '[]'::jsonb)) AS offering(tag)
-              WHERE LOWER(BTRIM(offering.tag)) ~ ANY($3::text[])
+          )
+          AND NOT (
+            $5::text = 'hvac'
+            AND LOWER(CONCAT_WS(' ', b.name, b.category, b.subcategory))
+              ~ '(^|[^a-z0-9])(auto|automotive|car|vehicle)([^a-z0-9]|$)'
+            AND NOT (
+              LOWER(CONCAT_WS(' ', b.name, b.category, b.subcategory))
+                ~ '(^|[^a-z0-9])(hvac|heating|furnace|heat pump)([^a-z0-9]|$)'
+              OR EXISTS (
+                SELECT 1
+                FROM public.business_specialties AS specialty
+                WHERE specialty.business_id::text = b.id::text
+                  AND LOWER(BTRIM(specialty.specialty_slug))
+                    ~ '(^|[^a-z0-9])(hvac|heating|furnace|heat pump)([^a-z0-9]|$)'
+              )
             )
           )
         ORDER BY
@@ -479,12 +501,12 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
               WHERE specialty.business_id::text = b.id::text
                 AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($3::text[])
             ) THEN 3
-            ELSE 4 -- explicit offering
+            ELSE 4
           END,
           b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT $4
       `,
-        [location.city, location.stateCode, patterns, resultLimit],
+        [location.city, location.stateCode, patterns, resultLimit, subject.key],
       );
       return suppressProbableDuplicateBusinesses(
         rows

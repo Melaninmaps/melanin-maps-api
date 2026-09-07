@@ -53,7 +53,7 @@ const atlantaSearch = {
 } as const;
 
 describe("LocalBusinessSearch", () => {
-  it("uses only the public governed catalog and explicit classification, specialty, and tag evidence", async () => {
+  it("uses only the public governed catalog plus classification, name, and specialty evidence", async () => {
     const specialtyResult = {
       ...mappedBookstore,
       id: "specialty-bookshop",
@@ -73,13 +73,15 @@ describe("LocalBusinessSearch", () => {
     expect(sql).toContain("LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])");
-    expect(sql).toContain("jsonb_array_elements_text(COALESCE(b.tags, '[]'::jsonb))");
-    expect(sql).toContain("COALESCE(b.promotion_eligible, true) = true");
+    expect(sql).not.toContain("jsonb_array_elements_text");
+    expect(sql).not.toContain("b.tags");
+    expect(sql).not.toContain("promotion_eligible");
     expect(params[2]).toEqual(expect.arrayContaining([
       "\\mbookstore\\M",
       "\\mbook[[:space:]-]+store\\M",
       "\\mbookshop\\M",
     ]));
+    expect(params[7]).toBe("bookstore");
     expect(response.results).toEqual([
       expect.objectContaining({ id: "specialty-bookshop", detailUrl: "/businesses/specialty-bookshop" }),
     ]);
@@ -164,6 +166,22 @@ describe("LocalBusinessSearch", () => {
       "\\mnatural[[:space:]-]+hair\\M",
     ]));
     expect(localBusinessSearchPatterns("HVAC")).toContain("\\mhvac\\M");
+  });
+
+  it("guards HVAC searches against automotive-only air conditioning matches", async () => {
+    const { query, service } = serviceReturning([]);
+    await service.search({
+      query: "HVAC",
+      latitude: 33.4484,
+      longitude: -112.074,
+      city: "Phoenix",
+      stateCode: "AZ",
+    });
+    const [sql, params] = query.mock.calls[0] as unknown as [string, unknown[]];
+    expect(sql).toContain("$8::text = 'hvac'");
+    expect(sql).toContain("(auto|automotive|car|vehicle)");
+    expect(sql).toContain("(hvac|heating|furnace|heat pump)");
+    expect(params[7]).toBe("hvac");
   });
 
   it("validates coordinates and guarantees every pin has the same identity as a listed result", async () => {

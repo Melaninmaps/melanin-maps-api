@@ -192,7 +192,7 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])");
-    expect(sql).toContain("jsonb_array_elements_text");
+    expect(sql).not.toContain("jsonb_array_elements_text");
     // Identity/story fields remain selected for a governed card, but are never
     // service-match predicates (so incidental prose cannot qualify a result).
     expect(sql).toContain("bi.business_story");
@@ -211,20 +211,31 @@ describe("governed Kinfolk business repository", () => {
       "GA",
       ["\\mbookstore\\M", "\\mbook[[:space:]-]+store\\M", "\\mbookshop\\M"],
       12,
+      "bookstore",
     ]);
   });
 
-  it("rejects incidental description text but retains an explicit bookstore-cafe offering", async () => {
+  it("rejects incidental description and generic tags but retains a governed specialty", async () => {
     const pool = { query: vi.fn().mockResolvedValue({
       rows: [
         { ...AMINA_ROW, description: "AMINA serves books fast after dinner.", tags: ["restaurant"] },
+        {
+          ...AMINA_ROW,
+          id: "context-tag-only",
+          name: "Community Context Center",
+          category: "Community Services",
+          subcategory: "Resource Hub",
+          tags: ["bookstore-cafe"],
+          specialties: [],
+        },
         {
           ...AMINA_ROW,
           id: "bookstore-cafe",
           name: "Chapter One Cafe",
           category: "Food",
           subcategory: "Cafe",
-          tags: ["bookstore-cafe"],
+          tags: ["community gathering"],
+          specialties: ["bookstore-cafe"],
         },
       ],
     }) };
@@ -235,9 +246,40 @@ describe("governed Kinfolk business repository", () => {
     expect(result).toEqual([
       expect.objectContaining({
         id: "bookstore-cafe",
-        matchReasons: ["explicit offering"],
+        matchReasons: ["specialty"],
       }),
     ]);
+  });
+
+  it("excludes automotive-only air conditioning from building HVAC results", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "auto-ac",
+        name: "Autocare Air Conditioning & Auto Repair",
+        category: "Automotive & Transportation",
+        subcategory: "Auto Repair / A/C",
+        specialties: [],
+        tags: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "building-hvac",
+        name: "Integrity Air Conditioning & Heating",
+        category: "Home & Property Services",
+        subcategory: "HVAC",
+        specialties: ["heating"],
+        tags: [],
+      },
+    ] }) };
+    const result = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Phoenix", stateCode: "AZ" },
+      { key: "hvac", label: "HVAC services", searchTerms: ["hvac", "heating", "air conditioning", "cooling"] },
+    );
+    expect(result.map(({ id }) => id)).toEqual(["building-hvac"]);
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("$5::text = 'hvac'");
+    expect(params[4]).toBe("hvac");
   });
 
   it("suppresses probable duplicates non-destructively with identity evidence", () => {
