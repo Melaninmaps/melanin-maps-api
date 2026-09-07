@@ -47,6 +47,7 @@ export function useVoiceRecorder(onTranscript: (transcript: string) => void) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordingStartedAtRef = useRef<number | null>(null);
 
   const releaseStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -117,7 +118,10 @@ export function useVoiceRecorder(onTranscript: (transcript: string) => void) {
         ));
         releaseStream();
       };
-      recorder.onstart = () => setState("recording");
+      recorder.onstart = () => {
+        recordingStartedAtRef.current = performance.now();
+        setState("recording");
+      };
       recorder.start(1_000); // emits chunks regularly; not a time limit
     } catch (caught: unknown) {
       const name = (caught as { name?: string }).name ?? "unknown";
@@ -141,6 +145,10 @@ export function useVoiceRecorder(onTranscript: (transcript: string) => void) {
 
     setState("uploading");
     recorder.onstop = async () => {
+      const durationMs = recordingStartedAtRef.current === null
+        ? 0
+        : Math.max(0, Math.round(performance.now() - recordingStartedAtRef.current));
+      recordingStartedAtRef.current = null;
       const mimeType = recorder.mimeType || "audio/webm";
       const audio = new Blob(chunksRef.current, { type: mimeType });
       recorderRef.current = null;
@@ -159,6 +167,7 @@ export function useVoiceRecorder(onTranscript: (transcript: string) => void) {
       try {
         const form = new FormData();
         form.append("audio", audio, `kinfolk-recording.${mimeType.includes("mp4") ? "m4a" : "webm"}`);
+        form.append("durationMs", String(durationMs));
         form.append("mimeType", mimeType);
         const response = await fetch(`${BASE}api/kinfolk/transcribe`, {
           method: "POST",
@@ -168,6 +177,7 @@ export function useVoiceRecorder(onTranscript: (transcript: string) => void) {
         const payload = (await response.json()) as {
           transcript?: string;
           error?: string;
+          message?: string;
           code?: string;
           detail?: string;
         };
@@ -175,7 +185,7 @@ export function useVoiceRecorder(onTranscript: (transcript: string) => void) {
           setState("error");
           setVoiceDiagnostic(diagnostic(
             payload.code === "TRANSCRIPTION_UNSUPPORTED" ? "transcription_failed" : "upload_failed",
-            payload.error || "Kinfolk could not transcribe that recording.",
+            payload.message || "Kinfolk could not transcribe that recording.",
             payload.detail || `Transcription endpoint returned HTTP ${response.status}.`,
           ));
           return;

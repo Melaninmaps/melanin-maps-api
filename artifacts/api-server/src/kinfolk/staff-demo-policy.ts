@@ -45,7 +45,6 @@ export type KinfolkEnvironment = Partial<Record<
   string | undefined
 >>;
 
-const STANDARD_MODEL = "gpt-4o-mini";
 const STANDARD_MAX_OUTPUT_TOKENS = 600;
 const STAFF_MAX_OUTPUT_TOKENS = 900;
 
@@ -73,7 +72,7 @@ export function resolveKinfolkModelPolicy(
   if (!eligibleForStaffDemo) {
     return {
       mode: "standard",
-      primaryModel: STANDARD_MODEL,
+      primaryModel: kinfolkModel("fallback", env),
       fallbackModel: null,
       maxOutputTokens: STANDARD_MAX_OUTPUT_TOKENS,
       historyMessageLimit: 8,
@@ -228,8 +227,8 @@ export function staffDemoResponseMarker(
     : {};
 }
 
-export function modelFamilyForLog(model: string): "gpt-5" | "legacy" {
-  return isGpt5Family(model) ? "gpt-5" : "legacy";
+export function modelFamilyForLog(model: string): "reasoning" | "legacy" {
+  return isGpt5Family(model) ? "reasoning" : "legacy";
 }
 
 export function buildCompatibilityFallbackLog(input: {
@@ -241,8 +240,8 @@ export function buildCompatibilityFallbackLog(input: {
   mode: KinfolkDemoMode;
   reason: CompatibilityFallbackReason | null;
   providerStatus: number | null;
-  primaryFamily: "gpt-5" | "legacy";
-  fallbackFamily: "gpt-5" | "legacy";
+  primaryFamily: "reasoning" | "legacy";
+  fallbackFamily: "reasoning" | "legacy";
 } {
   return {
     requestId: input.requestId,

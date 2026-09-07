@@ -10908,6 +10908,7 @@ async function ensureVisibilityAndDedupeHardening(
       SELECT b.*
       FROM public.businesses b
       WHERE ${PUBLIC_BUSINESSES_VIEW_FILTER}
+        AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
     `);
 
     await pool.query(`

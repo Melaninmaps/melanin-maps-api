@@ -224,6 +224,7 @@ export function AIChatWidget() {
   const [aaveSaving, setAaveSaving] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
+  const recordingStartedAtRef = useRef<number | null>(null);
   const listRef = useRef<FlatList>(null);
   // Scroll state — mirrors useKinfolkChatScroll for the widget's own FlatList
   const [widgetAtBottom, setWidgetAtBottom] = useState(true);
@@ -319,15 +320,23 @@ export function AIChatWidget() {
       if (!granted) return;
       await recorder.prepareToRecordAsync();
       recorder.record();
+      recordingStartedAtRef.current = Date.now();
       setIsRecording(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch { setIsRecording(false); }
+    } catch {
+      recordingStartedAtRef.current = null;
+      setIsRecording(false);
+    }
   };
 
   const stopVoice = async () => {
     if (!recorder.isRecording) return;
     setIsRecording(false);
     try {
+      const durationMs = recordingStartedAtRef.current === null
+        ? 0
+        : Math.max(0, Date.now() - recordingStartedAtRef.current);
+      recordingStartedAtRef.current = null;
       await recorder.stop();
       const uri = recorder.uri;
       if (!uri) return;
@@ -335,9 +344,20 @@ export function AIChatWidget() {
       const base = getApiBase();
       const token = await getToken();
       const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
-      const mimeType = ext === "wav" ? "audio/wav" : ext === "mp3" ? "audio/mpeg" : "audio/mp4";
+      const mimeType = ({
+        m4a: "audio/mp4",
+        mp4: "audio/mp4",
+        mp3: "audio/mpeg",
+        wav: "audio/wav",
+        webm: "audio/webm",
+      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
+      if (!mimeType) {
+        Alert.alert("Voice Input", "This recording format is not supported. Please try again or type your question.");
+        return;
+      }
       const form = new FormData();
       form.append("audio", { uri, name: `kinfolk-recording.${ext}`, type: mimeType } as unknown as Blob);
+      form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
 
       const r = await fetch(`${base}/api/kinfolk/transcribe`, {
@@ -365,6 +385,7 @@ export function AIChatWidget() {
         Alert.alert("Voice Input", serverMessage);
       }
     } catch (err) {
+      recordingStartedAtRef.current = null;
       const msg = err instanceof Error ? err.message : String(err);
       Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
     }

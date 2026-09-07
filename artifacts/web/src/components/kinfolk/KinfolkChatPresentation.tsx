@@ -1,4 +1,5 @@
 import React from "react";
+import { safePublicExternalHref } from "@/lib/publicExternalUrl";
 
 /**
  * UI metadata returned only for the controlled staff demo. This is a product
@@ -78,12 +79,7 @@ export function isStaffDemoExperience(
 }
 
 export function safeExternalSourceHref(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:" ? parsed.href : null;
-  } catch {
-    return null;
-  }
+  return safePublicExternalHref(url);
 }
 
 export function safeLibraryHref(url: string): string | null {

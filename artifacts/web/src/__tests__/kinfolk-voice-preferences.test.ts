@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   AAVE_LEVEL_OPTIONS,
@@ -13,6 +14,17 @@ describe("Kinfolk transcript review", () => {
     expect(composerValueFromTranscript("  Find dinner in Memphis  ")).toBe("Find dinner in Memphis");
     expect(composerValueFromTranscript(undefined)).toBe("");
     expect(composerValueFromTranscript("Kinfolk heard nothing special")).toBe("Kinfolk heard nothing special");
+  });
+});
+
+describe("Kinfolk web voice upload", () => {
+  it("sends binary audio with duration metadata and shows the readable server message", () => {
+    const recorder = readFileSync(new URL("../hooks/useVoiceRecorder.ts", import.meta.url), "utf8");
+    expect(recorder).toContain('form.append("audio"');
+    expect(recorder).toContain('form.append("durationMs", String(durationMs))');
+    expect(recorder).toContain('form.append("mimeType", mimeType)');
+    expect(recorder).toContain('payload.message || "Kinfolk could not transcribe that recording."');
+    expect(recorder).not.toContain('"Content-Type": "multipart/form-data"');
   });
 });
 

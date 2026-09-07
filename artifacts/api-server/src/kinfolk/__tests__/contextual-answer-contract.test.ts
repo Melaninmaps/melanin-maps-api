@@ -42,20 +42,20 @@ describe("contextual answer contract", () => {
   });
 
   it("drops malformed media and connection members without throwing", () => {
-    expect(() => parseKinfolkMediaLinks([null, 3, [], { title: "Interview", platform: "YouTube", url: "https://video.example/interview", reason: "Primary" }])).not.toThrow();
-    expect(parseKinfolkMediaLinks([null, { title: "Interview", platform: "YouTube", url: "https://video.example/interview", reason: "Primary" }])).toHaveLength(1);
-    expect(() => parseKinfolkRelatedConnections([null, 3, [], { title: "Topic", relationship: "Library", reason: "Related", href: "/library/topics/music", evidenceUrl: "https://source.example/profile" }])).not.toThrow();
+    expect(() => parseKinfolkMediaLinks([null, 3, [], { title: "Interview", platform: "YouTube", url: "https://video.example.com/interview", reason: "Primary" }])).not.toThrow();
+    expect(parseKinfolkMediaLinks([null, { title: "Interview", platform: "YouTube", url: "https://video.example.com/interview", reason: "Primary" }])).toHaveLength(1);
+    expect(() => parseKinfolkRelatedConnections([null, 3, [], { title: "Topic", relationship: "Library", reason: "Related", href: "/library/topics/music", evidenceUrl: "https://source.example.com/profile" }])).not.toThrow();
   });
 
   it("binds every rendered destination to exact evidence or a server-owned Library path", () => {
     const mediaLinks = parseKinfolkMediaLinks([
-      { title: "Model-proposed title", creator: "Model-proposed creator", platform: "YouTube", url: "https://video.example/interview?utm_source=x", reason: "Model-proposed reason" },
-      { title: "Invented recommendation", creator: "Unknown", platform: "Video", url: "https://invented.example/watch", reason: "Unsupported" },
+      { title: "Model-proposed title", creator: "Model-proposed creator", platform: "YouTube", url: "https://video.example.com/interview?utm_source=x", reason: "Model-proposed reason" },
+      { title: "Invented recommendation", creator: "Unknown", platform: "Video", url: "https://invented.example.com/watch", reason: "Unsupported" },
     ]);
     const relatedConnections = parseKinfolkRelatedConnections([
-      { title: "Published topic", relationship: "Library", reason: "Source-backed", href: "/library/topics/music", evidenceUrl: "https://source.example/profile" },
-      { title: "External masquerading as Library", relationship: "Library", reason: "Mismatched", href: "https://untrusted.example/topic", evidenceUrl: "https://source.example/profile" },
-      { title: "Genre-only claim", relationship: "Influence", reason: "Unsupported", href: null, evidenceUrl: "https://invented.example/influence" },
+      { title: "Published topic", relationship: "Library", reason: "Source-backed", href: "/library/topics/music", evidenceUrl: "https://source.example.com/profile" },
+      { title: "External masquerading as Library", relationship: "Library", reason: "Mismatched", href: "https://untrusted.example.com/topic", evidenceUrl: "https://source.example.com/profile" },
+      { title: "Genre-only claim", relationship: "Influence", reason: "Unsupported", href: null, evidenceUrl: "https://invented.example.com/influence" },
     ]);
     const structuredContent = parseKinfolkStructuredContent({
       kind: "entity_explorer",
@@ -70,10 +70,10 @@ describe("contextual answer contract", () => {
       structuredContent,
       mediaLinks,
       relatedConnections,
-      evidenceUrls: ["https://video.example/interview", "https://source.example/profile", "javascript:alert(1)"],
+      evidenceUrls: ["https://video.example.com/interview", "https://source.example.com/profile", "javascript:alert(1)"],
       mediaEvidence: [{
         title: "Verified interview",
-        url: "https://video.example/interview",
+        url: "https://video.example.com/interview",
         publisher: "Verified creator account",
         supports: ["The verified account demonstrates the method."],
       }],
@@ -89,9 +89,9 @@ describe("contextual answer contract", () => {
       mediaLinks: [expect.objectContaining({
         title: "Verified interview",
         creator: "Verified creator account",
-        platform: "video.example",
+        platform: "video.example.com",
         reason: "The verified account demonstrates the method.",
-        url: "https://video.example/interview",
+        url: "https://video.example.com/interview",
       })],
       relatedConnections: [
         expect.objectContaining({ title: "Published topic", href: "/library/topics/music" }),

@@ -14,6 +14,9 @@ describe("Living Library research presentation", () => {
     expect(safeLibrarySourceHref("javascript:alert(1)")).toBeNull();
     expect(safeLibrarySourceHref("http://example.org/source")).toBeNull();
     expect(safeLibrarySourceHref("https://name:secret@example.org/source")).toBeNull();
+    expect(safeLibrarySourceHref("https://localhost/source")).toBeNull();
+    expect(safeLibrarySourceHref("https://service.internal/source")).toBeNull();
+    expect(safeLibrarySourceHref("https://127.0.0.1/source")).toBeNull();
   });
 
   it("presents a concise overview with accessible See More and See Less controls", () => {

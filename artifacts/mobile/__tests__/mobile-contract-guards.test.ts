@@ -179,10 +179,25 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
     expect(parseSafeSourceLink({ title: "Source", url: "https://user@example.com/report" })).toBeNull();
     expect(parseSafeSourceLink({ title: "Source", url: "https://user:secret@example.com/report" })).toBeNull();
     expect(parseSafeSourceLink({ title: "Source", url: "http://example.com/report" })).toBeNull();
+    expect(parseSafeSourceLink({ title: "Source", url: "https://localhost/report" })).toBeNull();
+    expect(parseSafeSourceLink({ title: "Source", url: "https://service.internal/report" })).toBeNull();
+    expect(parseSafeSourceLink({ title: "Source", url: "https://127.0.0.1/report" })).toBeNull();
+    expect(parseSafeSourceLink({ title: "Source", url: "https://[::1]/report" })).toBeNull();
     expect(widget).toContain("parseSafeSourceLink(source)");
     expect(widget).toContain('accessibilityRole="link"');
     expect(widget).toContain('pathname: "/library-topic"');
     expect(widget).toContain('focus: "evidence"');
+  });
+
+  it("uploads native Kinfolk voice as bounded multipart audio with duration metadata", () => {
+    const widget = source("../components/AIChatWidget.tsx");
+    expect(widget).toContain('form.append("audio"');
+    expect(widget).toContain('form.append("durationMs", String(durationMs))');
+    expect(widget).toContain('form.append("mimeType", mimeType)');
+    expect(widget).toContain('webm: "audio/webm"');
+    expect(widget).toContain('m4a: "audio/mp4"');
+    expect(widget).toContain("if (errBody.message) serverMessage = errBody.message");
+    expect(widget).not.toContain('"Content-Type": "multipart/form-data"');
   });
 
   it("uses the configured API host for native business, profile, reference, and preview requests", () => {

@@ -165,6 +165,9 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).not.toContain("Protocol-relative source");
     expect(safeExternalSourceHref("javascript:alert(1)")).toBeNull();
     expect(safeExternalSourceHref("//evil.example/path")).toBeNull();
+    for (const unsafe of ["https://localhost/a", "https://intranet/a", "https://service.internal/a", "https://127.0.0.1/a", "https://[::1]/a"]) {
+      expect(safeExternalSourceHref(unsafe)).toBeNull();
+    }
   });
 
   it("accepts only canonical internal topic routes as Library actions", () => {

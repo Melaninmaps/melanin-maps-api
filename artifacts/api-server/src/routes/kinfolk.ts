@@ -40,7 +40,7 @@ import {
   getHeritageCity,
   resolveTurnGeography,
 } from "../kinfolk/heritage-city-registry";
-import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
+import { normalizeTranscript, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
 import { answerWithLivingLibrary } from "../kinfolk/kinfolkLibraryBridge";
 import { createPostgresLibraryRepository } from "../library/postgresLibraryRepository";
@@ -99,10 +99,11 @@ import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/heal
 import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
 import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../kinfolk/four-purpose-enforcement";
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
-import { searchAllQueries } from "../kinfolk/web-search";
+import { searchAllQueriesWithState, type WebSearchOutcome } from "../kinfolk/web-search";
 import { kinfolkModel } from "../kinfolk/model-config";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
+import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
 import {
   businessDiscoveryClarification,
@@ -174,6 +175,11 @@ import {
   normalizeRegionalFlavor,
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
+import {
+  canonicalVoiceFormat,
+  inspectVoiceAudio,
+  VoiceAudioInspectionError,
+} from "../kinfolk/voice/audioInspection";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -183,6 +189,17 @@ function pgCode(err: unknown): string | undefined {
   return typeof err === "object" && err !== null && "code" in err
     ? String((err as { code?: unknown }).code ?? "") || undefined
     : undefined;
+}
+export function safeKinfolkErrorMetadata(err: unknown): Record<string, string | number | boolean | undefined> {
+  const rawCode = pgCode(err);
+  const errorCode = rawCode && /^[A-Z0-9_]{1,64}$/.test(rawCode) ? rawCode : undefined;
+  const statusValue = typeof err === "object" && err !== null
+    ? ((err as { status?: unknown; statusCode?: unknown }).status ?? (err as { statusCode?: unknown }).statusCode)
+    : undefined;
+  const providerStatus = typeof statusValue === "number" && Number.isInteger(statusValue) && statusValue >= 100 && statusValue <= 599
+    ? statusValue
+    : undefined;
+  return { errorCode, providerStatus, timeout: err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError") };
 }
 function isOptionalSchemaGap(err: unknown): boolean {
   const code = pgCode(err);
@@ -844,8 +861,10 @@ async function loadLibraryGrounding(message: string): Promise<LibraryGrounding |
     if (!row) return null;
     const sources = Array.isArray(row.trusted_sources) ? row.trusted_sources : [];
     const trustedSources = sources
-      .map((s: any) => ({ title: String(s?.title ?? s?.name ?? "Source"), url: String(s?.url ?? "") }))
-      .filter((s) => /^https?:\/\//i.test(s.url));
+      .flatMap((s: any) => {
+        const url = canonicalizeContextualUrl(String(s?.url ?? ""));
+        return url ? [{ title: String(s?.title ?? s?.name ?? "Source"), url }] : [];
+      });
     return {
       id: row.id,
       topicName: row.topic_name,
@@ -856,10 +875,7 @@ async function loadLibraryGrounding(message: string): Promise<LibraryGrounding |
     };
   } catch (err) {
     // Library grounding is enrichment. It must never convert a valid chat into HTTP 500.
-    console.warn("[kinfolk-library-grounding-failed]", {
-      code: (err as any)?.code ?? "unknown",
-      message: err instanceof Error ? err.message.slice(0, 240) : String(err).slice(0, 240),
-    });
+    console.warn("[kinfolk-library-grounding-failed]", safeKinfolkErrorMetadata(err));
     return null;
   }
 }
@@ -910,8 +926,8 @@ export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }
     }) as Parameters<typeof openai.chat.completions.create>[0]);
     _kinfolkHealthCache = { ok: true, checkedAt: now };
     return { ok: true };
-  } catch (err) {
-    const reason = err instanceof Error ? `${err.message}` : String(err);
+  } catch {
+    const reason = "AI connection failed";
     _kinfolkHealthCache = { ok: false, reason, checkedAt: now };
     return { ok: false, reason };
   }
@@ -950,17 +966,17 @@ export async function runKinfolkCanary(): Promise<{
     }
     const answer = completion.choices[0]?.message?.content?.trim() ?? "(no content)";
     return { ok: true, answer, latencyMs: Date.now() - start };
-  } catch (err) {
-    return { ok: false, reason: err instanceof Error ? err.message : String(err), latencyMs: Date.now() - start };
+  } catch {
+    return { ok: false, reason: "AI canary failed", latencyMs: Date.now() - start };
   }
 }
 
 // Run one probe at startup so Railway logs show the AI status immediately.
-void probeKinfolkAI().then(({ ok, reason }) => {
+void probeKinfolkAI().then(({ ok }) => {
   if (ok) {
     console.log("[kinfolk] AI connectivity check: OK");
   } else {
-    console.error(`[kinfolk] AI connectivity check FAILED: ${reason ?? "unknown"}`);
+    console.error("[kinfolk] AI connectivity check FAILED");
     console.error("[kinfolk] Check AI_INTEGRATIONS_OPENAI_BASE_URL and AI_INTEGRATIONS_OPENAI_API_KEY in Railway env vars.");
   }
 });
@@ -2265,7 +2281,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       poolStats: getPoolStats(),
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch preferences");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch preferences");
     res.status(500).json({ error: "Failed to fetch preferences" });
   }
 });
@@ -2375,7 +2391,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     invalidatePrefsCache(req.user.id);
     res.json({ preferences: prefs });
   } catch (err) {
-    req.log.error({ err }, "Failed to update preferences");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to update preferences");
     res.status(500).json({ error: "Failed to update preferences" });
   }
 });
@@ -2409,7 +2425,7 @@ router.put("/kinfolk/preferences/response-style", async (req: Request, res: Resp
     );
     res.json({ responseStyle, deliveryProfile: { detailLevel: dp.detail_level, tonePreference: dp.tone_preference } });
   } catch (err) {
-    req.log.error({ err }, "Failed to save response style");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save response style");
     res.status(500).json({ error: "KINFOLK_RESPONSE_STYLE_SAVE_FAILED" });
   }
 });
@@ -2433,7 +2449,7 @@ router.post("/kinfolk/feedback", async (req: Request, res: Response) => {
     });
     res.status(201).json({ ok: true });
   } catch (err) {
-    req.log.error({ err }, "Failed to save feedback");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save feedback");
     res.status(500).json({ error: "Failed to save feedback" });
   }
 });
@@ -2461,7 +2477,7 @@ router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
       poolStats: getPoolStats(),
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch sessions");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch sessions");
     res.status(500).json({ error: "Failed to fetch sessions" });
   }
 });
@@ -2479,7 +2495,7 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
     if (!session) { res.status(404).json({ error: "Session not found" }); return; }
     res.json({ session });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch session");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch session");
     res.status(500).json({ error: "Failed to fetch session" });
   }
 });
@@ -2546,7 +2562,7 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
       .limit(50);
     res.json({ memories });
   } catch (err) {
-    req.log.error({ err }, "Failed to load Kinfolk memories");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to load Kinfolk memories");
     res.status(500).json({ error: "Failed to load memories" });
   }
 });
@@ -2587,7 +2603,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       message: `I’ll remember that for ${purpose.replace("_", " ")}. You can view or forget it any time in Kinfolk settings.`,
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to save Kinfolk memory");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save Kinfolk memory");
     res.status(500).json({ error: "Failed to save memory" });
   }
 });
@@ -2605,7 +2621,7 @@ router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
     if (!forgotten) { res.status(404).json({ error: "Memory not found" }); return; }
     res.json({ ok: true, memoryId: forgotten.id });
   } catch (err) {
-    req.log.error({ err }, "Failed to forget Kinfolk memory");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to forget Kinfolk memory");
     res.status(500).json({ error: "Failed to forget memory" });
   }
 });
@@ -2764,6 +2780,11 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       location: { city: location.city, state: location.state, source: location.source },
       locationSource: location.source,
       degraded: false,
+      researchStatus: {
+        usedInternal: false, usedLiveWeb: false, degraded: false,
+        web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+        asOf: new Date().toISOString(),
+      },
     });
     return true;
   }
@@ -2820,6 +2841,19 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     degraded:
       discoveryResult.discovery.platformStatus === "degraded" ||
       discoveryResult.discovery.webSearch.state !== "completed",
+    researchStatus: {
+      usedInternal: discoveryResult.discovery.platformBusinesses.length + discoveryResult.discovery.mapPlaces.length > 0,
+      usedLiveWeb: discoveryResult.discovery.webFindings.length > 0,
+      degraded: discoveryResult.discovery.webSearch.state === "degraded",
+      web: {
+        attempted: discoveryResult.discovery.webSearch.attempted,
+        state: discoveryResult.discovery.webSearch.state,
+        provider: discoveryResult.discovery.webSearch.provider,
+        fallbackUsed: discoveryResult.discovery.webSearch.fallbackUsed,
+        partial: discoveryResult.discovery.webSearch.partial,
+      },
+      asOf: new Date().toISOString(),
+    },
   });
   return true;
 }
@@ -2879,7 +2913,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       libraryAction: null, intentClass: "general_knowledge", sources: [],
       needsClarification: false, originalQuery: message, answerMode: "direct_answer",
       structuredContent: null, mediaLinks: [], relatedConnections: [],
-      researchStatus: { usedInternal: false, usedLiveWeb: false, degraded: false, asOf: new Date().toISOString() },
+      researchStatus: {
+        usedInternal: false, usedLiveWeb: false, degraded: false,
+        web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+        asOf: new Date().toISOString(),
+      },
     });
   }
 
@@ -3021,7 +3059,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         } catch (poolErr) {
           // family_ai_usage table may not exist on this deployment — treat as unlimited
           // rather than blocking the user. The startup migration will create it on next boot.
-          console.error("[kinfolk-pool-check] checkAiPool failed, treating as unlimited:", poolErr instanceof Error ? poolErr.message : String(poolErr));
+          console.error("[kinfolk-pool-check] checkAiPool failed, treating as unlimited", safeKinfolkErrorMetadata(poolErr));
         }
       }
       } // closes: standard quota policy
@@ -3219,7 +3257,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       req.log.info(
         {
           kinfolk_local_resolution: true,
-          message,
+          requestId: _kinfolkReqId,
           intentClass: "local_discovery",
           city: destination,
           state: resolvedState,
@@ -3317,7 +3355,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           needsClarification: true, originalQuery: message,
           answerMode: "clarification", structuredContent: null, mediaLinks: [],
           relatedConnections: [], researchStatus: {
-            usedInternal: false, usedLiveWeb: false, degraded: false, asOf: new Date().toISOString(),
+            usedInternal: false, usedLiveWeb: false, degraded: false,
+            web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+            asOf: new Date().toISOString(),
           },
         });
         return;
@@ -3401,11 +3441,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // OpenAI native-web provider is primary and the existing Tavily provider is
     // fallback; the orchestrator bounds both latency and document/query counts.
     let contextualEvidence: ContextualEvidenceBundle | null = null;
+    let liveWebOutcome: WebSearchOutcome | null = null;
     if (contextualPlan) {
-      const nativeProvider = createOpenAiWebResearchProvider({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-        baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
-      });
+      const contextualTrace = { primaryAttempted: false, fallbackAttempted: false };
+      const openAiConfigured = Boolean(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
+      const nativeProvider = openAiConfigured ? createOpenAiWebResearchProvider({
+          apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+          baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+          model: kinfolkModel("webSearch"),
+        }) : null;
+      const fallbackProvider = process.env.TAVILY_API_KEY ? getLivingLibraryDeps().researchProvider : null;
       contextualEvidence = await orchestrateContextualResearch(contextualPlan, {
           searchInternal: async (queries, signal) => [
             // Context resolver sources are release-gated entity aliases/source links.
@@ -3422,11 +3467,34 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               signal,
             }),
           ],
-          primaryProvider: nativeProvider,
-          fallbackProvider: getLivingLibraryDeps().researchProvider,
+          primaryProvider: nativeProvider ? {
+            ...nativeProvider,
+            search: async (input) => {
+              contextualTrace.primaryAttempted = true;
+              return nativeProvider.search(input);
+            },
+          } : undefined,
+          fallbackProvider: fallbackProvider ? {
+            ...fallbackProvider,
+            search: async (input) => {
+              contextualTrace.fallbackAttempted = true;
+              return fallbackProvider.search(input);
+            },
+          } : undefined,
           timeoutMs: 8_000,
           signal: contextualRequestAbort.signal,
         });
+      const attempted = contextualTrace.primaryAttempted || contextualTrace.fallbackAttempted;
+      liveWebOutcome = {
+        attempted,
+        state: attempted && contextualEvidence.degraded ? "degraded" : attempted ? "completed" : "unavailable",
+        provider: contextualTrace.primaryAttempted && contextualTrace.fallbackAttempted
+          ? "mixed"
+          : contextualTrace.fallbackAttempted ? "tavily" : contextualTrace.primaryAttempted ? "openai" : null,
+        fallbackUsed: contextualTrace.primaryAttempted && contextualTrace.fallbackAttempted,
+        partial: attempted && contextualEvidence.degraded && contextualEvidence.external.length + contextualEvidence.media.length > 0,
+        results: [],
+      };
       if (contextualRequestAbort.signal.aborted) return;
     }
 
@@ -3456,6 +3524,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         },
         // Return the original query so the client can preserve it for retry
         originalQuery: message,
+        researchStatus: {
+          usedInternal: contextResolution.sources.length > 0 || (contextualEvidence?.internal.length ?? 0) > 0,
+          usedLiveWeb: (contextualEvidence?.external.length ?? 0) + (contextualEvidence?.media.length ?? 0) > 0,
+          degraded: liveWebOutcome?.state === "degraded" || (contextualEvidence?.degraded ?? false),
+          web: {
+            attempted: liveWebOutcome?.attempted ?? false,
+            state: liveWebOutcome?.state ?? "unavailable",
+            provider: liveWebOutcome?.provider ?? null,
+            fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
+            partial: liveWebOutcome?.partial ?? false,
+          },
+          asOf: new Date().toISOString(),
+        },
       });
       return;
     }
@@ -3495,6 +3576,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           usedInternal: contextualEvidence.internal.length > 0,
           usedLiveWeb: contextualEvidence.external.length + contextualEvidence.media.length > 0,
           degraded: true,
+          web: {
+            attempted: liveWebOutcome?.attempted ?? false,
+            state: liveWebOutcome?.state ?? "unavailable",
+            provider: liveWebOutcome?.provider ?? null,
+            fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
+            partial: liveWebOutcome?.partial ?? false,
+          },
           asOf: new Date().toISOString(),
         },
       });
@@ -3571,6 +3659,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let webSearchBlock = "";
     let webResourceCards: ResourceCard[] = [];
     let webEntityCandidates: EntityCandidate[] | undefined;
+    let webResearchSourceNote: string | null = liveWebOutcome?.state === "degraded"
+      ? "Current web research returned partial or fallback-supported coverage; Kinfolk kept that limitation visible."
+      : null;
     let kinfolkLensDisclosure = "";
     let kinfolkUrgentMessage: string | undefined;
     const LENS_ELIGIBLE_INTENTS = new Set(["medical_health", "safety_emergency"]);
@@ -3607,9 +3698,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
         // Current-information search uses Responses web_search; optional Tavily
         // fallback is selected inside the adapter only after a provider failure.
-        if (searchPlan.queries.length > 0) {
-          const liveResults = await searchAllQueries(searchPlan.queries, searchPlan.imageRequested);
-          const ranked = rankResults(liveResults, memberProfile, searchPlan.activeLenses);
+        if (searchPlan.queries.length > 0 && !contextualEvidence) {
+          liveWebOutcome = await searchAllQueriesWithState(searchPlan.queries, searchPlan.imageRequested);
+          const ranked = rankResults(liveWebOutcome.results, memberProfile, searchPlan.activeLenses);
+          if (ranked.length === 0 && liveWebOutcome.state !== "completed") {
+            webResearchSourceNote = liveWebOutcome.attempted
+              ? "Current web research was attempted but did not return safe clickable citations. Kinfolk did not fill the gap from memory."
+              : "Current web research is not configured. Kinfolk did not present an unverified current answer.";
+          }
 
           if (ranked.length > 0) {
             const top = ranked.slice(0, 6);
@@ -3658,7 +3754,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // Medical and live/current claims fail closed when retrieval did not produce
     // claim-relevant authority. A model is never asked to fill these evidence gaps.
-    const hasLiveWebEvidence = healthRetrievalSources.some((source) => source.source === "kinfolk_web");
+    const hasLiveWebEvidence = healthRetrievalSources.some((source) => source.source === "kinfolk_web")
+      || (contextualEvidence?.external.length ?? 0) + (contextualEvidence?.media.length ?? 0) > 0;
     const failClosedReply = evidenceFailureReply({
       route: evidenceRoute,
       medicalContextBlock: healthEvidenceBlock,
@@ -3678,6 +3775,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         sources: [],
         needsClarification: false,
         originalQuery: message,
+        sourceNote: webResearchSourceNote ?? undefined,
+        researchStatus: {
+          usedInternal: (contextualEvidence?.internal.length ?? 0) > 0,
+          usedLiveWeb: hasLiveWebEvidence,
+          degraded: liveWebOutcome?.state === "degraded" || (contextualEvidence?.degraded ?? false),
+          web: {
+            attempted: liveWebOutcome?.attempted ?? false,
+            state: liveWebOutcome?.state ?? "unavailable",
+            provider: liveWebOutcome?.provider ?? null,
+            fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
+            partial: liveWebOutcome?.partial ?? false,
+          },
+          asOf: new Date().toISOString(),
+        },
       });
       return;
     }
@@ -4218,7 +4329,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
       estimateTokens(message);
     const estimatedTotal = Math.min(estimatedPromptTokens + verifiedImageUrls.length * 1000 + modelPolicy.maxOutputTokens, MAX_REQUEST_TOKEN_RESERVATION);
-    console.log(`[kinfolk-tokens] user=${req.user?.id ?? "anon"} estimatedPrompt=${estimatedPromptTokens} estimatedTotal=${estimatedTotal}`);
+    req.log.info({
+      requestId: _kinfolkReqId,
+      estimatedPromptTokens,
+      estimatedTotalTokens: estimatedTotal,
+    }, "kinfolk token estimate");
 
     // Call AI — routed through KinfolkTokenBucket so neither the concurrency cap
     // (MAX_ACTIVE_GENERATIONS=4) nor rolling 60-second TPM budget (TOKEN_BUCKET_TARGET=160k)
@@ -4501,7 +4616,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ? await findMatchingPublishedLibraryNode(libraryActionCategories, destination ?? null, message).catch(() => null)
         : null;
     } catch (libraryMatchErr) {
-      console.warn("[kinfolk-library-match-failed]", libraryMatchErr instanceof Error ? libraryMatchErr.message.slice(0, 240) : String(libraryMatchErr).slice(0, 240));
+      console.warn("[kinfolk-library-match-failed]", safeKinfolkErrorMetadata(libraryMatchErr));
       // Fall back to the DB-loaded grounding topic if the published-node lookup fails
       existingLibraryMatch = libraryTopic
         ? { type: "open_topic", topicId: libraryTopic.id, topicName: libraryTopic.topicName }
@@ -4589,15 +4704,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       phone: business.phone ?? undefined,
       verified: business.verified,
     }));
-    const localCoverageNote = assembledSources.length === 0 && destination
-      ? tourSiteBlock
-        ? "Coverage note: Heritage-site details come from MWM platform records; no external citation URLs are attached to this coverage."
-        : cityContext
-          ? "Coverage note: City context comes from MWM's built-in editorial city profile; no external citation URLs are attached to this profile."
-          : businessCatalog.length > 0
-            ? "Coverage note: Local suggestions come from MWM platform listings; no external citation URLs are attached to these records."
-            : "Coverage note: No source-backed local records were available for this city answer."
-      : null;
+    const localCoverageNote = webResearchSourceNote ?? (
+      assembledSources.length === 0 && destination
+        ? tourSiteBlock
+          ? "Coverage note: Heritage-site details come from MWM platform records; no external citation URLs are attached to this coverage."
+          : cityContext
+            ? "Coverage note: City context comes from MWM's built-in editorial city profile; no external citation URLs are attached to this profile."
+            : businessCatalog.length > 0
+              ? "Coverage note: Local suggestions come from MWM platform listings; no external citation URLs are attached to these records."
+              : "Coverage note: No source-backed local records were available for this city answer."
+        : null
+    );
     const enforced = enforceKinfolkResponse({
       reply,
       modelRecommendations: (recommendations as { businesses?: unknown } | null)?.businesses ?? [],
@@ -4710,13 +4827,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ) ? contextualStructuredContent : null,
         mediaLinks: contextualMediaLinks,
         relatedConnections: contextualRelatedConnections,
-        researchStatus: {
-          usedInternal: contextResolution.sources.length > 0 || knowledgeGraphSources.length > 0 || (contextualEvidence?.internal.length ?? 0) > 0,
-          usedLiveWeb: healthRetrievalSources.some((source) => source.source === "kinfolk_web") || (contextualEvidence?.external.length ?? 0) > 0,
-          degraded: contextualEvidence?.degraded ?? false,
-          asOf: new Date().toISOString(),
-        },
       } : {}),
+      researchStatus: {
+        usedInternal: contextResolution.sources.length > 0 || knowledgeGraphSources.length > 0 || (contextualEvidence?.internal.length ?? 0) > 0,
+        usedLiveWeb: healthRetrievalSources.some((source) => source.source === "kinfolk_web")
+          || (contextualEvidence?.external.length ?? 0) + (contextualEvidence?.media.length ?? 0) > 0,
+        degraded: liveWebOutcome?.state === "degraded" || (contextualEvidence?.degraded ?? false),
+        web: {
+          attempted: liveWebOutcome?.attempted ?? false,
+          state: liveWebOutcome?.state ?? "unavailable",
+          provider: liveWebOutcome?.provider ?? null,
+          fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
+          partial: liveWebOutcome?.partial ?? false,
+        },
+        asOf: new Date().toISOString(),
+      },
       resolution: contextResolution.responseMode !== "no_entity" ? {
         state: contextResolution.responseMode,
         entity: contextResolution.entityResolution?.state === "resolved"
@@ -4805,17 +4930,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const is401          = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
     const isConnRefused  = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND");
 
-    // Plain console.error so Railway log viewer surfaces the sanitized record
-    // (pino JSON payload is hidden in Railway UI). Never log prompts, user data,
-    // session content, or API credentials.
-    const errName = err instanceof Error ? err.name : "Unknown";
-    const errStack = err instanceof Error ? (err.stack ?? "").slice(0, 600) : "";
+    // Plain console.error so the host log viewer surfaces only server-owned
+    // categories. Never log exception messages/stacks, prompts, member data,
+    // provider text, URLs, transcripts, or credentials.
+    const safeError = safeKinfolkErrorMetadata(err);
     console.error(
       "[kinfolk-chat-error]",
       `chatStage=${chatStage}`,
-      `code=${errCode ?? "none"}`,
+      `code=${safeError.errorCode ?? "none"}`,
       `providerStatus=${providerStatus ?? "none"}`,
-      `errName=${errName}`,
       `isOverload=${isOverload}`,
       `isProviderRateLimit=${isProviderRateLimit}`,
       `isTimeout=${isTimeout}`,
@@ -4823,11 +4946,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       `isConnRefused=${isConnRefused}`,
       `active=${kinfolkActiveGenerations}`,
       `queued=${kinfolkQueuedGenerations}`,
-      `msg=${errMsg.slice(0, 300)}`,
-      `stack=${errStack}`,
     );
     req.log.error(
-      { errCode, providerStatus, isOverload, isTimeout, is401, isConnRefused,
+      { ...safeError, isOverload, isTimeout, is401, isConnRefused,
         kinfolkActiveGenerations, kinfolkQueuedGenerations },
       "KinfolkAI chat failed",
     );
@@ -4889,7 +5010,7 @@ router.get("/kinfolk/business-action-plan/:businessId", async (req: Request, res
     if (!cached) return void res.json({ plan: null });
     res.json({ plan: { ...(cached.planData as object), _cached: true, _cachedAt: cached.createdAt.toISOString(), tier: cached.tier } });
   } catch (err) {
-    req.log.error({ err }, "GET /kinfolk/business-action-plan error");
+    req.log.error(safeKinfolkErrorMetadata(err), "GET /kinfolk/business-action-plan error");
     res.status(500).json({ error: "Failed to load plan" });
   }
 });
@@ -5072,7 +5193,7 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
 
     res.json(result);
   } catch (err) {
-    req.log.error({ err }, "Business action plan failed");
+    req.log.error(safeKinfolkErrorMetadata(err), "Business action plan failed");
     res.status(500).json({ error: "Failed to generate action plan" });
   }
 });
@@ -5195,7 +5316,7 @@ Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities w
     const parsed = JSON.parse(raw) as { summary: string; opportunities: unknown[]; insights: string[] };
     res.json(parsed);
   } catch (err) {
-    req.log.error({ err }, "Expansion analysis failed");
+    req.log.error(safeKinfolkErrorMetadata(err), "Expansion analysis failed");
     res.status(500).json({ error: "Failed to generate expansion analysis" });
   }
 });
@@ -5458,7 +5579,7 @@ ${businessCatalog}`;
 
     res.json({ ...parsed, phase: { id: currentPhase, ...phase }, extraVerified });
   } catch (err) {
-    req.log.error({ err }, "Relocation concierge failed");
+    req.log.error(safeKinfolkErrorMetadata(err), "Relocation concierge failed");
     res.status(500).json({ error: "Failed to generate relocation guidance" });
   }
 });
@@ -5514,7 +5635,7 @@ router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
     const messages = rows.map((r) => r.message).filter((m): m is string => typeof m === "string" && m.trim().length > 0);
     res.json({ messages, total: messages.length });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch skip feedback");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch skip feedback");
     res.status(500).json({ error: "Failed to fetch skip feedback" });
   }
 });
@@ -5547,7 +5668,7 @@ router.get("/kinfolk/memory-summary", async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch memory summary");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch memory summary");
     res.status(500).json({ error: "Failed to fetch memory summary" });
   }
 });
@@ -5583,7 +5704,7 @@ router.post("/kinfolk/roots", async (req: Request, res: Response) => {
       });
     res.json({ ok: true, diasporaCountries: updated });
   } catch (err) {
-    req.log.error({ err }, "Failed to save culture roots");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save culture roots");
     res.status(500).json({ error: "Failed to save roots" });
   }
 });
@@ -5650,7 +5771,7 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
 
     res.json({ suggestion });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch proactive suggestion");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch proactive suggestion");
     res.status(500).json({ error: "Failed to fetch proactive suggestion" });
   }
 });
@@ -5659,10 +5780,8 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
 // Member-keyed rate limiter: 10 requests / 15 minutes per authenticated user.
 // IP fallback only for unauthenticated edge rejection (separate bucket).
 const transcribeUserBuckets = new Map<string, { count: number; resetAt: number }>();
-const transcribeIpBuckets  = new Map<string, { count: number; resetAt: number }>();
 const TRANSCRIBE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const TRANSCRIBE_USER_LIMIT = 10;
-const TRANSCRIBE_IP_LIMIT   = 5;  // tighter for unauthenticated edge rejection
 
 function checkTranscribeLimit(key: string, map: Map<string, { count: number; resetAt: number }>, limit: number): { allowed: boolean; retryAfterMs: number } {
   const now = Date.now();
@@ -5679,19 +5798,16 @@ function checkTranscribeLimit(key: string, map: Map<string, { count: number; res
 }
 
 const ALLOWED_AUDIO_FORMATS = new Set(["webm", "m4a", "wav", "mp3"]);
-const MAX_DECODED_BYTES = 10 * 1024 * 1024; // 10 MB
-// base64 expands ~33%, so max base64 chars = ceil(10MB / 3 * 4) ≈ 13,981,013
-const MAX_BASE64_CHARS = Math.ceil(MAX_DECODED_BYTES / 3) * 4 + 4;
 const MAX_VOICE_DURATION_MS = 60_000;
 const MAX_VOICE_PAYLOAD_BYTES = 4 * 1024 * 1024; // 4 MB binary cap for multipart path
 
 // Multer — memory storage, accept only audio fields, 4 MB binary limit.
-// Used for the new multipart/form-data upload path. The legacy JSON path
-// (base64-in-JSON) is preserved for backwards compatibility.
+// Voice transcription requires current web/mobile clients that send multipart.
+// Build 105 remains on its existing production API until a coordinated release.
 import multer from "multer";
 const transcribeUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES },
+  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 3 },
   fileFilter: (_req, file, cb) => {
     const ok = file.fieldname === "audio" && /^audio\//i.test(file.mimetype);
     if (!ok) {
@@ -5717,13 +5833,13 @@ function runMulter(req: Request, res: Response): Promise<void> {
 }
 
 router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription is temporarily unavailable.", audioRetained: false });
-  }
-
-  // 1. Authentication required
+  // Authentication is checked before provider configuration so unauthenticated
+  // requests never learn whether a backend credential is installed.
   if (!req.user?.id) {
     return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED", message: "Sign in to use voice input.", audioRetained: false });
+  }
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription is temporarily unavailable.", audioRetained: false });
   }
 
   // 2. Per-member rate limit (primary)
@@ -5734,103 +5850,56 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     return void res.status(429).json({ error: "VOICE_INPUT_RATE_LIMITED", message: `Voice input limit reached. Try again in ${retrySec} seconds.`, audioRetained: false });
   }
 
-  // ── Detect upload path: multipart/form-data (new) vs JSON (legacy) ───────
-  const isMultipart = req.is("multipart/form-data");
-  let buffer: Buffer;
-  let safeFormat: string;
-
-  if (isMultipart) {
-    // New path: binary FormData upload — no base64 expansion, separate
-    // duration and payload size checks so a 2-second clip is never
-    // falsely labelled "over 60 seconds" due to a proxy byte limit.
-    try {
-      await runMulter(req, res);
-    } catch (multerErr: unknown) {
-      if ((multerErr as { isPayloadTooLarge?: boolean }).isPayloadTooLarge) {
-        return void res.status(413).json({
-          error: "AUDIO_PAYLOAD_TOO_LARGE",
-          message: "This voice clip is too large to upload. Please try a shorter or lower-quality recording.",
-          audioRetained: false,
-        });
-      }
-      return void res.status(400).json({ error: "AUDIO_UNREADABLE", message: "Kinfolk could not read that audio. Please try again or type your question.", audioRetained: false });
-    }
-
-    if (!req.file?.buffer?.length) {
-      return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
-    }
-
-    // Duration check — uses wall-clock ms reported by client (never inferred from bytes)
-    const rawDurationMs = Number((req.body as Record<string, string>).durationMs ?? -1);
-    if (Number.isFinite(rawDurationMs) && rawDurationMs >= 0 && rawDurationMs > MAX_VOICE_DURATION_MS) {
-      return void res.status(400).json({
-        error: "AUDIO_DURATION_EXCEEDED",
-        message: "That recording is over 60 seconds. Please send a shorter clip.",
-        audioRetained: false,
-      });
-    }
-
-    // Payload size gate (4 MB binary)
-    if (req.file.buffer.length > MAX_VOICE_PAYLOAD_BYTES) {
+  if (!req.is("multipart/form-data")) {
+    return void res.status(415).json({
+      error: "AUDIO_MULTIPART_REQUIRED",
+      message: "Please update the app or browser and record again.",
+      audioRetained: false,
+    });
+  }
+  try {
+    await runMulter(req, res);
+  } catch (multerErr: unknown) {
+    if ((multerErr as { isPayloadTooLarge?: boolean }).isPayloadTooLarge) {
       return void res.status(413).json({
         error: "AUDIO_PAYLOAD_TOO_LARGE",
         message: "This voice clip is too large to upload. Please try a shorter or lower-quality recording.",
         audioRetained: false,
       });
     }
+    return void res.status(400).json({ error: "AUDIO_UNREADABLE", message: "Kinfolk could not read that audio. Please try again or type your question.", audioRetained: false });
+  }
+  if (!req.file?.buffer?.length) {
+    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
+  }
+  const buffer = req.file.buffer;
+  const format = canonicalVoiceFormat(req.file.mimetype ?? "");
 
-    buffer = req.file.buffer;
-    const rawMime = ((req.body as Record<string, string>).mimeType ?? req.file.mimetype ?? "audio/webm")
-      .split(";")[0].replace("audio/", "").toLowerCase();
-    safeFormat = ({
-      mp4: "m4a", "x-m4a": "m4a", mpeg: "mp3", "x-mp3": "mp3",
-      "x-wav": "wav", wave: "wav",
-    }[rawMime] ?? (rawMime || "webm")).replace(/[^a-z0-9]/g, "");
+  if (!format || !ALLOWED_AUDIO_FORMATS.has(format.safeFormat)) {
+    return void res.status(400).json({ error: "UNSUPPORTED_AUDIO_FORMAT", message: "Use WebM, M4A, WAV, or MP3 audio.", audioRetained: false });
+  }
+  const { safeFormat, mimeType: canonicalMimeType } = format;
 
-  } else {
-    // Legacy JSON path (base64 audio) — kept for backwards compatibility
-    const { audio, format, durationSeconds } = req.body as {
-      audio?: string;
-      format?: string;
-      durationSeconds?: number | null;
-    };
-
-    // Duration validation — only reject when client explicitly reports > 60 s
-    if (durationSeconds !== undefined && durationSeconds !== null) {
-      const dv = validateVoiceRecording({ durationSeconds, base64Audio: audio ?? "" });
-      if (!dv.ok && dv.code === "VOICE_CLIP_TOO_LONG") {
-        return void res.status(400).json({ error: "AUDIO_DURATION_EXCEEDED", message: dv.message, audioRetained: false });
-      }
-    }
-
-    if (!audio || typeof audio !== "string" || !audio.trim()) {
-      return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
-    }
-
-    safeFormat = (format ?? "webm").toLowerCase().replace(/[^a-z0-9]/g, "");
-
-    // Base64 size cap (checked before Buffer.from to avoid OOM)
-    if (audio.length > MAX_BASE64_CHARS) {
-      return void res.status(413).json({ error: "AUDIO_PAYLOAD_TOO_LARGE", message: "Audio exceeds the 10 MB maximum. Use a shorter clip.", audioRetained: false });
-    }
-
-    try {
-      buffer = Buffer.from(audio, "base64");
-    } catch {
-      return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio data could not be decoded.", audioRetained: false });
-    }
-    if (buffer.length > MAX_DECODED_BYTES) {
-      return void res.status(413).json({ error: "AUDIO_PAYLOAD_TOO_LARGE", message: "Audio exceeds the 10 MB maximum after decoding.", audioRetained: false });
-    }
-  } // end legacy JSON path
-
-  // Format allowlist — applied after both upload paths resolve safeFormat
-  if (!ALLOWED_AUDIO_FORMATS.has(safeFormat)) {
-    return void res.status(400).json({ error: "UNSUPPORTED_AUDIO_FORMAT", message: `Format '${safeFormat}' is not accepted. Use webm, m4a, wav, or mp3.`, audioRetained: false });
+  if (buffer.length > MAX_VOICE_PAYLOAD_BYTES) {
+    return void res.status(413).json({ error: "AUDIO_PAYLOAD_TOO_LARGE", message: "This voice clip is too large. Please send a shorter recording.", audioRetained: false });
   }
 
   if (buffer.length < 100) {
     return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio clip is too short.", audioRetained: false });
+  }
+
+  try {
+    await inspectVoiceAudio(buffer, canonicalMimeType, MAX_VOICE_DURATION_MS);
+  } catch (error) {
+    if (error instanceof VoiceAudioInspectionError) {
+      const message = error.code === "AUDIO_DURATION_EXCEEDED"
+        ? `Keep voice messages under ${VOICE_MAX_DURATION_SECONDS} seconds.`
+        : error.code === "AUDIO_MIME_MISMATCH"
+          ? "The recording format did not match its file type. Please record again or type your question."
+          : "Kinfolk could not read that recording. Please try again or type your question.";
+      return void res.status(400).json({ error: error.code, message, audioRetained: false });
+    }
+    return void res.status(400).json({ error: "AUDIO_UNREADABLE", message: "Kinfolk could not read that recording.", audioRetained: false });
   }
 
   // 7. Transcribe with 15-second timeout — never persist audio blob
@@ -5841,8 +5910,8 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
 
   try {
     const audioBytes = new Uint8Array(buffer);
-    const blob = new Blob([audioBytes], { type: `audio/${safeFormat}` });
-    const file = new File([blob], `voice.${safeFormat}`, { type: `audio/${safeFormat}` });
+    const blob = new Blob([audioBytes], { type: canonicalMimeType });
+    const file = new File([blob], `voice.${safeFormat}`, { type: canonicalMimeType });
 
     const transcription = await openai.audio.transcriptions.create(
       { file, model: transcriptionModel },
@@ -5939,7 +6008,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       tierName: TIER_LIMITS[tier].voiceTierName,
     });
   } catch (err) {
-    req.log.error({ err }, "TTS failed");
+    req.log.error(safeKinfolkErrorMetadata(err), "TTS failed");
     res.status(500).json({ error: "TTS failed" });
   }
 });
@@ -5965,7 +6034,7 @@ router.get("/kinfolk/voice-usage", async (req: Request, res: Response) => {
       percentRemaining,
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch voice usage");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch voice usage");
     res.status(500).json({ error: "Failed to fetch voice usage" });
   }
 });
@@ -5990,7 +6059,7 @@ router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
     invalidatePrefsCache(req.user.id);
     res.json({ aaveLevel: level });
   } catch (err) {
-    req.log.error({ err }, "Failed to save AAVE level");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save AAVE level");
     res.status(500).json({ error: "Failed to save AAVE level" });
   }
 });
@@ -6027,11 +6096,11 @@ router.patch("/kinfolk/answer-plans/:answerPlanId/depth", async (req: Request, r
       );
     } catch (err) {
       recorded = false;
-      req.log?.warn({ err }, "Kinfolk depth feedback persistence unavailable");
+      req.log?.warn(safeKinfolkErrorMetadata(err), "Kinfolk depth feedback persistence unavailable");
     }
     res.json({ ok: true, recorded, eligibleForLearning: eligible });
   } catch (err) {
-    req.log?.warn({ err }, "Kinfolk answer-plan depth persistence unavailable");
+    req.log?.warn(safeKinfolkErrorMetadata(err), "Kinfolk answer-plan depth persistence unavailable");
     res.status(503).json({ error: "Answer-plan persistence is temporarily unavailable" });
   }
 });
@@ -6057,7 +6126,7 @@ router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
       followUpSuggestions: lastRec?.followUpSuggestions ?? [],
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch shared trip");
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch shared trip");
     res.status(500).json({ error: "Failed to fetch shared trip" });
   }
 });

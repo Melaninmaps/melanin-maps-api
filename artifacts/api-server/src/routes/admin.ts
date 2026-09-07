@@ -2497,7 +2497,7 @@ router.get("/admin/kinfolk/canary", async (req: Request, res: Response) => {
     testedQuestion: "What is 2+2?",
     expectedAnswer: "4",
     pass: result.ok && result.answer?.includes("4"),
-    note: "Answer comes from gpt-4o-mini via the Replit AI Integrations proxy — same path all accounts use.",
+    note: "Answer comes from the configured Kinfolk probe model through the server-side AI provider path.",
   });
 });
 

@@ -6,6 +6,12 @@ import type { ExternalResearchProvider } from "../types";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("OpenAI Responses native Library research", () => {
+  it("accepts reviewed GPT-5 research models and rejects unknown IDs", () => {
+    expect(boundedLibraryResearchModel("gpt-5")).toBe("gpt-5");
+    expect(boundedLibraryResearchModel("gpt-4o")).toBe("gpt-4o");
+    expect(boundedLibraryResearchModel("unbounded-model")).toBe("gpt-5-mini");
+  });
+
   it("uses a bounded model, low reasoning, web_search filters, and no inferred identity prefix", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ output: [
       { type: "web_search_call", action: { sources: [{ url: "https://www.loc.gov/item/a", title: "Library of Congress" }, { url: "https://www.si.edu/item/b", title: "Smithsonian" }] } },

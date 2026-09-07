@@ -12,7 +12,7 @@ import {
   discoverLocalBusinesses,
 } from "../local-business-discovery";
 import { classifyKinfolkRequest } from "../request-classifier";
-import { searchLocalBusinessQueriesWithState } from "../web-search";
+import { searchAllQueriesWithState, searchLocalBusinessQueriesWithState } from "../web-search";
 
 const originalFetch = globalThis.fetch;
 
@@ -37,7 +37,7 @@ const governedBusiness = {
   longitude: -84.39,
   distanceMiles: null,
   phone: null,
-  website: "https://reading-room.example/",
+  website: "https://reading-room.example.com/",
   verified: false,
   blackOwned: false,
   tags: ["books"],
@@ -233,6 +233,7 @@ describe("deterministic local business discovery", () => {
       url: "https://discoveratlanta.com/bookstores",
     });
     expect(result.discovery.webSearch.provider).toBe("openai");
+    expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
     expect(result.reply).toContain("For Keeps Books and Auburn Avenue Bookstores");
     expect(result.reply).toContain("external; not MWM-verified business listings");
     expect(result.reply).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
@@ -270,6 +271,7 @@ describe("deterministic local business discovery", () => {
       webSearch: vi.fn().mockRejectedValue(Object.assign(new Error("rate limited"), { status: 429 })),
     });
     expect(result.discovery.webSearch.state).toBe("degraded");
+    expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
     expect(result.reply).toContain("For Keeps Books");
     expect(result.reply).toContain("provider error");
     expect(result.recommendations).toBeNull();
@@ -320,6 +322,8 @@ describe("local web provider-state contract", () => {
       state: "unavailable",
       attempted: false,
       provider: null,
+      fallbackUsed: false,
+      partial: false,
       results: [],
     });
     expect(responsesCreate).not.toHaveBeenCalled();
@@ -327,7 +331,7 @@ describe("local web provider-state contract", () => {
   });
 
   it("uses the provisioned OpenAI web tool first and returns sanitized visible citations", async () => {
-    vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "https://api.example/v1");
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "https://api.example.com/v1");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "test-key");
     vi.stubEnv("TAVILY_API_KEY", "fallback-key");
     responsesCreate.mockResolvedValue({
@@ -337,7 +341,7 @@ describe("local web provider-state contract", () => {
         content: [{
           annotations: [{
             title: "Official bookstore",
-            url: "https://bookstore.example/?utm_source=openai#hours",
+            url: "https://bookstore.example.com/?utm_source=openai#hours",
           }],
         }],
       }],
@@ -354,7 +358,7 @@ describe("local web provider-state contract", () => {
     expect(result).toMatchObject({ state: "completed", attempted: true, provider: "openai" });
     expect(result.results[0]).toMatchObject({
       title: "Official bookstore",
-      url: "https://bookstore.example/",
+      url: "https://bookstore.example.com/",
     });
     expect(responsesCreate).toHaveBeenCalledWith(expect.objectContaining({
       tools: [expect.objectContaining({
@@ -364,6 +368,79 @@ describe("local web provider-state contract", () => {
       reasoning: { effort: "low" },
     }), expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps each local-business citation attached to the exact query that produced it", async () => {
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "https://api.example.com/v1");
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "test-key");
+    vi.stubEnv("TAVILY_API_KEY", "");
+    responsesCreate.mockImplementation(async (request: { input?: string }) => {
+      const isCommunity = String(request.input).includes("community and minority-owned");
+      const text = isCommunity ? "Community evidence." : "Neutral evidence.";
+      return {
+        output: [{ type: "message", content: [{ text, annotations: [{
+          title: isCommunity ? "Community source" : "Neutral source",
+          url: isCommunity ? "https://community.example.com/source" : "https://neutral.example.com/source",
+          start_index: 0,
+          end_index: text.length,
+        }] }] }],
+      };
+    });
+
+    const result = await searchLocalBusinessQueriesWithState(queries, false);
+    expect(responsesCreate).toHaveBeenCalledTimes(2);
+    expect(result.results).toEqual(expect.arrayContaining([
+      expect.objectContaining({ title: "Community source", content: "Community evidence.", sourceQuery: expect.objectContaining({ role: "community_primary" }) }),
+      expect.objectContaining({ title: "Neutral source", content: "Neutral evidence.", sourceQuery: expect.objectContaining({ role: "general" }) }),
+    ]));
+  });
+
+  it("uses a general-current prompt for ordinary news and falls back when OpenAI returns no citations", async () => {
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "https://api.example.com/v1");
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "test-key");
+    vi.stubEnv("TAVILY_API_KEY", "fallback-key");
+    responsesCreate.mockResolvedValue({ output_text: "Uncited provider text.", output: [] });
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [{
+      title: "Official update",
+      url: "https://maryland.gov/news",
+      content: "Current official update.",
+      score: 0.9,
+    }] }), { status: 200 }));
+
+    const result = await searchAllQueriesWithState([{ text: "current Maryland news", role: "general", reason: "current" }], false);
+    const request = responsesCreate.mock.calls[0]?.[0] as { input?: string };
+    expect(String(request.input)).toContain("current-information question");
+    expect(String(request.input)).not.toContain("current local-business options");
+    expect(String(request.input)).not.toContain("minority-owned query");
+    expect(result).toMatchObject({ state: "degraded", attempted: true, provider: "tavily", fallbackUsed: true, partial: false });
+    expect(result.results[0]).toMatchObject({ title: "Official update", url: "https://maryland.gov/news" });
+  });
+
+  it("falls back only for an OpenAI query with zero citations and reports mixed degraded coverage", async () => {
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "https://api.example.com/v1");
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "test-key");
+    vi.stubEnv("TAVILY_API_KEY", "fallback-key");
+    responsesCreate.mockImplementation(async (request: { input?: string }) => {
+      if (String(request.input).includes("community and minority-owned")) {
+        return { output: [{ type: "message", content: [{ text: "Primary result.", annotations: [{
+          title: "Primary source", url: "https://primary.example.com/a", start_index: 0, end_index: 15,
+        }] }] }] };
+      }
+      return { output_text: "Uncited", output: [] };
+    });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [{
+      title: "Fallback source", url: "https://fallback.example.com/b", content: "Fallback evidence.", score: 0.8,
+    }] }), { status: 200 }));
+    globalThis.fetch = fetchMock;
+
+    const result = await searchLocalBusinessQueriesWithState(queries, false);
+    expect(responsesCreate).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ state: "degraded", attempted: true, provider: "mixed", fallbackUsed: true, partial: false });
+    expect(result.results).toEqual(expect.arrayContaining([
+      expect.objectContaining({ title: "Primary source", sourceQuery: expect.objectContaining({ role: "community_primary" }) }),
+      expect.objectContaining({ title: "Fallback source", sourceQuery: expect.objectContaining({ role: "general" }) }),
+    ]));
   });
 
   it("falls back to Tavily and distinguishes zero results from provider failure", async () => {

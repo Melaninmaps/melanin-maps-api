@@ -4,8 +4,9 @@ import type {
   ResearchDocument,
   ResearchProviderResult,
 } from "./types";
+import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
 
-const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o-mini"]);
+const ALLOWED_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
 
 export function boundedLibraryResearchModel(configuredModel?: string): string {
   return configuredModel && ALLOWED_MODELS.has(configuredModel)
@@ -57,17 +58,19 @@ function extractResponse(payload: ResponsePayload): { text: string; documents: R
   void consultedSources;
   for (const source of citations) {
     if (!source.url) continue;
-    const canonicalUrl = source.url.replace(/[#?].*$/, "");
+    const safeUrl = canonicalizeContextualUrl(source.url);
+    if (!safeUrl) continue;
+    const canonicalUrl = safeUrl.replace(/[#?].*$/, "");
     if (seen.has(canonicalUrl)) continue;
     seen.add(canonicalUrl);
     let publisher: string | null = null;
     try {
-      publisher = new URL(source.url).hostname.replace(/^www\./, "");
+      publisher = new URL(safeUrl).hostname.replace(/^www\./, "");
     } catch {
       continue;
     }
     documents.push({
-      url: source.url,
+      url: safeUrl,
       title: source.title?.trim() || publisher,
       content: outputText,
       publisher,

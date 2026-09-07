@@ -35,23 +35,26 @@ describe("staff-demo eligibility and policy", () => {
       historyCharacterLimit: 1200,
     });
     expect(resolveKinfolkModelPolicy(true, {
-      KINFOLK_STAFF_DEMO_MODEL: " gpt-5-pro ",
+      KINFOLK_STAFF_DEMO_MODEL: " gpt-5-mini ",
       KINFOLK_FALLBACK_MODEL: " gpt-4.1-mini ",
-    })).toMatchObject({ primaryModel: "gpt-5-pro", fallbackModel: "gpt-4.1-mini" });
+    })).toMatchObject({ primaryModel: "gpt-5-mini", fallbackModel: "gpt-4.1-mini" });
   });
 
-  it("preserves the exact standard model and limits regardless of staff env", () => {
+  it("uses the approved fallback role for standard chat and rejects arbitrary model IDs", () => {
     expect(resolveKinfolkModelPolicy(false, {
       KINFOLK_STAFF_DEMO_MODEL: "other-model",
-      KINFOLK_FALLBACK_MODEL: "other-fallback",
+      KINFOLK_FALLBACK_MODEL: "gpt-4.1-mini",
     })).toEqual({
       mode: "standard",
-      primaryModel: "gpt-4o-mini",
+      primaryModel: "gpt-4.1-mini",
       fallbackModel: null,
       maxOutputTokens: 600,
       historyMessageLimit: 8,
       historyCharacterLimit: 400,
     });
+    expect(resolveKinfolkModelPolicy(false, {
+      KINFOLK_FALLBACK_MODEL: "unreviewed-model",
+    }).primaryModel).toBe("gpt-4o-mini");
   });
 });
 
@@ -151,7 +154,7 @@ describe("compatibility-only fallback classification", () => {
       mode: "staff_demo",
       reason: "compatibility_http_status",
       providerStatus: 400,
-      primaryFamily: "legacy",
+      primaryFamily: "reasoning",
       fallbackFamily: "legacy",
     });
     expect(JSON.stringify(log)).not.toContain(providerMessage);
@@ -226,6 +229,14 @@ describe("truthful prompt and response marker", () => {
     expect(source).toContain("return callOpenAIWithCompatibilityFallback(");
     expect(source).toContain("const fallbackReply = buildLibraryFallbackReply(libraryTopic)");
     expect(source).toContain("const completionExperienceMarker = completionResult.usedFallback ? {} : experienceMarker");
+    expect(source).toContain('model: kinfolkModel("webSearch")');
+    expect(source).toContain("searchPlan.queries.length > 0 && !contextualEvidence");
+    expect(source).toContain("fallbackUsed: liveWebOutcome?.fallbackUsed ?? false");
+    expect(source).toContain("partial: liveWebOutcome?.partial ?? false");
+    expect(source).toContain("provider: liveWebOutcome?.provider ?? null");
+    expect(source).toContain("estimatedTotalTokens: estimatedTotal");
+    expect(source).not.toContain("[kinfolk-tokens] user=");
+    expect(source).not.toMatch(/kinfolk_local_resolution:[\s\S]{0,220}\n\s*message,/);
     expect(source).toContain("...completionExperienceMarker");
     expect(source).not.toContain("...experienceMarker");
     expect(source).not.toMatch(/req\.(?:headers?|query).*staff.?demo/i);

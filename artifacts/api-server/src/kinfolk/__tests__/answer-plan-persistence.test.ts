@@ -25,7 +25,7 @@ describe("Kinfolk answer-plan persistence", () => {
       plan: {
         reply: "A source-backed answer",
         depth: "standard",
-        sources: [{ url: "https://private.example/source" }],
+        sources: [{ url: "https://private.example.com/source" }],
       } as unknown as PersistedAnswerPlanState,
     });
 

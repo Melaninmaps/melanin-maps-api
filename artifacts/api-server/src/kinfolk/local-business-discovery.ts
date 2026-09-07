@@ -18,6 +18,7 @@ import {
   type WebSearchState,
 } from "./web-search";
 import type { SearchQuery } from "./lens-planner";
+import { canonicalizeContextualUrl } from "./contextual-url";
 
 export type BusinessDiscoverySignalRepository = Readonly<{
   recordCoverageGap(input: {
@@ -112,6 +113,8 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
       state: WebSearchState;
       attempted: boolean;
       provider: WebSearchOutcome["provider"];
+      fallbackUsed: boolean;
+      partial: boolean;
       findingCount: number;
       message: string;
     };
@@ -134,12 +137,7 @@ type WebSearch = (
 ) => Promise<WebSearchOutcome>;
 
 function safeWebUrl(value: string): string | null {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" ? url.toString() : null;
-  } catch {
-    return null;
-  }
+  return canonicalizeContextualUrl(value);
 }
 
 function hostOf(value: string): string {
@@ -372,7 +370,7 @@ export async function discoverLocalBusinesses(input: {
       { city: input.scope.city, stateCode: input.scope.stateCode, countryCode: "US" },
     );
   } catch {
-    webOutcome = { state: "degraded", attempted: true, provider: null, results: [] };
+    webOutcome = { state: "degraded", attempted: true, provider: null, fallbackUsed: false, partial: false, results: [] };
   }
 
   const rankedWeb = rankLocalBusinessResults(webOutcome.results)
@@ -460,6 +458,8 @@ export async function discoverLocalBusinesses(input: {
         state: webOutcome.state,
         attempted: webOutcome.attempted,
         provider: webOutcome.provider,
+        fallbackUsed: webOutcome.fallbackUsed ?? false,
+        partial: webOutcome.partial ?? false,
         findingCount: rankedWeb.length,
         message: providerMessage(webOutcome.state, rankedWeb.length),
       },

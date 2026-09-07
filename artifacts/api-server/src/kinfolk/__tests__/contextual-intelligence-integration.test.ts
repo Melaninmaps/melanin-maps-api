@@ -225,8 +225,8 @@ describe("contextual intelligence behavior integration", () => {
   });
 
   it("separates dated measurable reception from a named-conflict consensus judgment", async () => {
-    const chart = evidence("Official chart history", "https://charts.example/official-history", "official", "Dated chart positions.");
-    const criticism = evidence("Critical retrospective", "https://criticism.example/retrospective", "criticism", "Critics explain their judgments.");
+    const chart = evidence("Official chart history", "https://charts.example.com/official-history", "official", "Dated chart positions.");
+    const criticism = evidence("Critical retrospective", "https://criticism.example.com/retrospective", "criticism", "Critics explain their judgments.");
     const result = await contextualTurn({
       message: "Who won the Kendrick and Drake beef?",
       external: [chart, criticism],
@@ -257,8 +257,8 @@ describe("contextual intelligence behavior integration", () => {
 
   it("uses declared rubrics for evaluative music and diaspora-editorial acting scopes without identity inference", async () => {
     const musicSources = [
-      evidence("Recorded work archive", "https://archive.example/recorded-work", "primary", "Primary recording context."),
-      evidence("Regional critical histories", "https://criticism.example/regional-histories", "criticism", "East Coast and West Coast critical perspectives."),
+      evidence("Recorded work archive", "https://archive.example.com/recorded-work", "primary", "Primary recording context."),
+      evidence("Regional critical histories", "https://criticism.example.com/regional-histories", "criticism", "East Coast and West Coast critical perspectives."),
     ];
     const music = await contextualTurn({
       message: "What is the best diss song of all time?",
@@ -285,8 +285,8 @@ describe("contextual intelligence behavior integration", () => {
     const acting = await contextualTurn({
       message: "Who are the best actresses?",
       external: [
-        evidence("Angela Bassett official biography", "https://academy.example/angela-bassett", "official", "Career and awards record."),
-        evidence("Viola Davis official biography", "https://academy.example/viola-davis", "official", "Career and awards record."),
+        evidence("Angela Bassett official biography", "https://academy.example.com/angela-bassett", "official", "Career and awards record."),
+        evidence("Viola Davis official biography", "https://academy.example.com/viola-davis", "official", "Career and awards record."),
       ],
       synthesize: (plan) => {
         expect(plan.identityContextUsed).toEqual([]);
@@ -309,9 +309,9 @@ describe("contextual intelligence behavior integration", () => {
   });
 
   it("explores a named public entity through source-backed Library pathways", async () => {
-    const biography = evidence("Jay-Z primary biography", "https://artist.example/jay-z", "primary", "Works and career history.");
+    const biography = evidence("Jay-Z primary biography", "https://artist.example.com/jay-z", "primary", "Works and career history.");
     const library = {
-      ...evidence("Published hip-hop topic", "https://library.example/topics/hip-hop", "library_published", "Published Library context."),
+      ...evidence("Published hip-hop topic", "https://library.example.com/topics/hip-hop", "library_published", "Published Library context."),
       libraryPath: "/library/topics/hip-hop",
     };
     const result = await contextualTurn({
@@ -336,7 +336,7 @@ describe("contextual intelligence behavior integration", () => {
           },
           relatedConnections: [
             { title: "Published hip-hop topic", relationship: "Library topic", reason: "Published related context", href: "/library/topics/hip-hop", evidenceUrl: library.url },
-            { title: "Unsupported local artist", relationship: "Influence", reason: "Genre alone", href: null, evidenceUrl: "https://invented.example/claim" },
+            { title: "Unsupported local artist", relationship: "Influence", reason: "Genre alone", href: null, evidenceUrl: "https://invented.example.com/claim" },
           ],
           libraryAction: { type: "open_topic", topicId: "hip-hop", topicName: "Hip-hop" },
         };
@@ -349,7 +349,7 @@ describe("contextual intelligence behavior integration", () => {
 
   it("keeps medical evidence authoritative and the disclaimer at the bottom", async () => {
     const cdc = evidence("CDC blood pressure guidance", "https://cdc.gov/high-blood-pressure/about/index.html", "official", "Adult blood-pressure categories.");
-    const anecdote = evidence("Community discussion", "https://forum.example/blood-pressure", "community_discourse", "Anecdotal claims.");
+    const anecdote = evidence("Community discussion", "https://forum.example.com/blood-pressure", "community_discourse", "Anecdotal claims.");
     const result = await contextualTurn({
       message: "What should normal blood pressure be for my age?",
       external: [cdc, anecdote],
@@ -368,7 +368,7 @@ describe("contextual intelligence behavior integration", () => {
   });
 
   it("degrades on provider failure without inventing a current metric", async () => {
-    const stable = evidence("Artist catalog", "https://artist.example/catalog", "primary", "Stable catalog context.", null);
+    const stable = evidence("Artist catalog", "https://artist.example.com/catalog", "primary", "Stable catalog context.", null);
     const plan = await planSemanticTurn({
       message: "What is the latest streaming milestone for this artist?",
       evidenceRoute: routeEvidence("What is the latest streaming milestone for this artist?"),
@@ -406,7 +406,7 @@ describe("contextual intelligence behavior integration", () => {
         topicSlug: "culture-heritage",
         topicTitle: "Culture and heritage",
         sourceCount: 1,
-        sources: [{ title: "Museum collection", url: "https://museum.example/brazil", publisher: "Museum" }],
+        sources: [{ title: "Museum collection", url: "https://museum.example.com/brazil", publisher: "Museum" }],
         refreshedAt: new Date(NOW),
       }],
     });
@@ -418,7 +418,7 @@ describe("contextual intelligence behavior integration", () => {
     const first = await retrieveApprovedInternalLibrary({ repository, queries: ["Brazil"], now: () => NOW });
     expect(first).toEqual([expect.objectContaining({
       kind: "library_published",
-      url: "https://museum.example/brazil",
+      url: "https://museum.example.com/brazil",
       libraryPath: "/library/topics/culture-heritage",
       supports: ["Brazilian cultural history"],
     })]);
@@ -441,7 +441,7 @@ describe("contextual intelligence behavior integration", () => {
   });
 
   it("keeps the complete Build 105 reply and legacy source shapes alongside additive fields", async () => {
-    const source = evidence("Published source", "https://source.example/article", "reference", "Supported context.");
+    const source = evidence("Published source", "https://source.example.com/article", "reference", "Supported context.");
     const result = await contextualTurn({
       message: "Jay-Z",
       external: [source],

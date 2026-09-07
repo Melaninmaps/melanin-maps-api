@@ -217,8 +217,8 @@ router.get("/kinfolk/health", async (_req, res) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
     return void res.status(503).json({ ok: false, reason: "AI env vars not configured" });
   }
-  const { ok, reason } = await probeKinfolkAI();
-  if (!ok) return void res.status(503).json({ ok: false, reason: reason ?? "AI connection failed" });
+  const { ok } = await probeKinfolkAI();
+  if (!ok) return void res.status(503).json({ ok: false, reason: "AI connection failed" });
   res.json({ ok: true });
 });
 

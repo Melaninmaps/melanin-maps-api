@@ -129,4 +129,47 @@ describe("semantic turn planner", () => {
     expect(plan).toMatchObject({ taskMode: "direct_answer", needsClarification: false });
     expect(classify).not.toHaveBeenCalled();
   });
+
+  it.each(["What was the answer?", "What was that?", "How did you get that?"])(
+    "keeps the immediate arithmetic follow-up resolved: %s",
+    async (message) => {
+      const classify = vi.fn();
+      const plan = await planSemanticTurn({
+        message,
+        evidenceRoute: routeEvidence(message),
+        history: [
+          { role: "user", content: "10 + 10" },
+          { role: "assistant", content: "20" },
+        ],
+        classify,
+      });
+      expect(plan).toMatchObject({ taskMode: "direct_answer", needsClarification: false });
+      expect(classify).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not let older arithmetic suppress clarification for an unrelated conflict", async () => {
+    const classify = vi.fn().mockResolvedValue({
+      confidence: 0.4,
+      candidateMeanings: [
+        { label: "music conflict", domain: "culture", confidence: 0.4 },
+        { label: "historical conflict", domain: "history", confidence: 0.35 },
+      ],
+      clarificationQuestion: "Which conflict do you mean?",
+    });
+    const plan = await planSemanticTurn({
+      message: "Who won that conflict?",
+      evidenceRoute: routeEvidence("Who won that conflict?"),
+      history: [
+        { role: "user", content: "10 + 10" },
+        { role: "assistant", content: "20" },
+        { role: "user", content: "Tell me about Philadelphia" },
+        { role: "assistant", content: "Philadelphia has a rich history." },
+      ],
+      classify,
+    });
+    expect(plan.needsClarification).toBe(true);
+    expect(plan.clarificationQuestion).toMatch(/which conflict/i);
+    expect(classify).toHaveBeenCalledTimes(1);
+  });
 });

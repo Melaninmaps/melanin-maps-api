@@ -26,7 +26,7 @@ import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
 import { createResearchProviderChain } from "./library/researchProviderChain";
 import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
 import { createExtractiveLibraryWriter } from "./library/extractiveLibraryWriter";
-import { kinfolkModel } from "./kinfolk/model-config";
+import { assertKinfolkModelEnvironment, kinfolkModel } from "./kinfolk/model-config";
 import { registerExploreRoutes } from "./explore/registerExploreRoutes";
 import {
   createPostgresLocalContextRepository,
@@ -89,6 +89,7 @@ for (const dir of SPA_SEARCH_DIRS) {
 }
 // spaHtml is always set — worst case it's the bundled build-time snapshot
 
+assertKinfolkModelEnvironment();
 const app: Express = express();
 
 // Trust the proxy in front of us (Replit's reverse proxy sets X-Forwarded-For)
@@ -386,7 +387,7 @@ const libraryProviders = [
   ...(libraryOpenAiConfigured ? [createOpenAiWebResearchProvider({
     apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
     baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
-    model: process.env.LIBRARY_RESEARCH_MODEL,
+    model: kinfolkModel("libraryResearch"),
   })] : []),
   ...(process.env.TAVILY_API_KEY ? [createTavilyResearchProvider(process.env.TAVILY_API_KEY)] : []),
 ];
