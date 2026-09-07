@@ -131,7 +131,7 @@ Approved surgical fixes: logout race condition (LB-008), misleading error messag
 
 - **Response format:** All substantive responses (plans, documents, dashboards, proposals) must be provided in a copyable text box (markdown code block) so they can be copied and shared directly with advisors.
 - Custom domain: **mappingwithmelanin.com**
-- EAS builds: user runs `eas build` from the Replit shell, always from inside `artifacts/mobile/` directory (e.g. `cd artifacts/mobile && eas build --platform ios --profile production`)
+- Build 106 TestFlight staging: run only `bash scripts/release-build-106.sh ios-testflight-staging` from repository root. Never call `eas build`, `eas submit`, or `eas update` directly; never use a `production` profile.
 - Multi-step tasks: give one step at a time and wait for the user to share a screenshot confirming completion before moving to the next step
 - Slide decks: if the user sends emojis in a message, translate them to gold outlined SVG line-art icons (fill:none, stroke:#CA922B, rounded caps) — never use literal emoji characters in any slide
 - Slide decks: do not auto-export/download a PDF after every edit — only export when the user explicitly asks for a download
@@ -140,26 +140,27 @@ Approved surgical fixes: logout race condition (LB-008), misleading error messag
 
 ## Permanent Release Gates (Effective Immediately)
 
-A build is NOT ready to recommend until ALL of the following are confirmed against Railway production, not dev:
+A build is NOT ready to recommend until all relevant gates are confirmed against the exact backend it is configured to use. Build 106 is a staging-backed TestFlight candidate, so its preflight target is the isolated staging host—not Railway production.
 
 ### Before submitting to EAS
 1. `pnpm run typecheck` — zero errors
-2. POST `https://www.mappingwithmelanin.com/api/auth/login-email` with a real test account → HTTP 200 + token in < 2 seconds
-3. GET `https://www.mappingwithmelanin.com/api/businesses?limit=3` → HTTP 200 in < 2 seconds
+2. Authenticate privately against the configured staging API with an approved tester account → HTTP 200 + token.
+3. Verify `https://mwm-staging.35.196.78.19.nip.io/api/businesses?limit=3` and the staged Kinfolk/Map canaries.
+4. Prove the compiled iOS export contains only the reviewed staging API origin, has Expo Updates disabled, RevenueCat disabled/no-op, and no background audio mode.
 
 ### After build installs on TestFlight / Play Console
-4. Registration flow: new account created and reaches home screen
-5. Logout → login cycle: logout, then re-login with same account → succeeds
-6. Map renders: no blank/grey/spinning state
-7. Businesses load: at least one card visible
-8. KinfolkAI responds: message sent → AI reply received
+5. Registration flow: new account created and reaches home screen
+6. Logout → login cycle: logout, then re-login with same account → succeeds
+7. Map renders: no blank/grey/spinning state
+8. Businesses load: generic service and exact-name searches show relevant staged listings and truthful pin subsets
+9. KinfolkAI responds with relevant directory cards, current cited research, microphone transcription, and foreground-only spoken response
 
 ### Before expanding beyond founder testing
-9. Multicultural language audit: no "Black-owned" as default generic language anywhere
-10. End-to-end screen recording: uninterrupted from fresh install → registration → login → map → businesses → KinfolkAI → profile
+10. Multicultural language audit: no "Black-owned" as default generic language anywhere
+11. End-to-end screen recording: uninterrupted from fresh install → registration → login → map → businesses → KinfolkAI → profile
 
-### Production verification definition
-A feature is NOT verified by a dev DB or Replit environment result. Verification means HTTP 2xx confirmed against `https://www.mappingwithmelanin.com` with real data.
+### Verification definition
+A staging-backed TestFlight feature is verified only by the isolated staging runtime and installed Build 106. A public website feature is verified only after a separately controlled production deployment and production post-deploy checks. Development-only Replit results prove neither.
 
 ## Connection Pool / Deployment Rule (Permanent)
 

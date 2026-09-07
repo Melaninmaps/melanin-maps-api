@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -53,7 +53,7 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
     [data?.viewerSelections],
   );
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -74,9 +74,12 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
     } finally {
       setLoading(false);
     }
-  }
+  }, [businessId]);
 
-  useEffect(() => { void load(); }, [businessId]);
+  useEffect(() => {
+    const timer = setTimeout(() => { void load(); }, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
 
   async function chooseCommunityCode(value: CommunityCode) {
     setCommunityCode(value);

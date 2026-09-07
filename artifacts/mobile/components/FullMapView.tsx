@@ -298,6 +298,8 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
 
   useEffect(() => {
     if (selectedBusiness || selectedCulturalSite || selectedMapEvent || selectedOrg || selectedTourEvent || selectedTourSite) {
+      // Keep travel destinations mutually exclusive with all other map cards.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTravelDestination(null);
     }
   }, [selectedBusiness, selectedCulturalSite, selectedMapEvent, selectedOrg, selectedTourEvent, selectedTourSite]);
@@ -530,12 +532,6 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     setTravelDestinationsLoading(true);
     setTravelDestinationsError(false);
     const base = getApiBase();
-    if (!base) {
-      isFetchingTravelDestinations.current = false;
-      setTravelDestinationsLoading(false);
-      setTravelDestinationsError(true);
-      return;
-    }
     fetch(`${base}/api/map/entities?kind=travel_destination&limit=${MAX_TRAVEL_DESTINATION_MARKERS}`)
       .then((response) => response.ok ? response.json() as Promise<{ items: TravelDestination[] }> : Promise.reject(new Error("destination fetch failed")))
       .then((data) => {

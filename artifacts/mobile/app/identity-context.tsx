@@ -29,6 +29,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type SexAtBirth    = "female" | "male" | "intersex" | "prefer_not_to_say" | null;
@@ -125,7 +126,7 @@ export default function IdentityContextScreen() {
     version: 1,
   });
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "https://www.mappingwithmelanin.com";
+  const apiUrl = getApiBase();
 
   // ── Load current state ─────────────────────────────────────────────────────
   useEffect(() => {

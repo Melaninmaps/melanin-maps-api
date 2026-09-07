@@ -232,6 +232,8 @@ export function AIChatWidget() {
   const appStateRef = useRef(AppState.currentState);
   const queuedPlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
   const voiceGuardRef = useRef(createVoicePlaybackGuard(
+    // Factory stores this predicate and invokes it only from effects/events.
+    // eslint-disable-next-line react-hooks/refs
     () => openRef.current && appStateRef.current === "active",
   ));
   // Scroll state — mirrors useKinfolkChatScroll for the widget's own FlatList

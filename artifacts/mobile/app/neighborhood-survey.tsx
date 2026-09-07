@@ -29,10 +29,9 @@ import { useAutoContext } from "@/hooks/useAutoContext";
 import { ChipGrid } from "@/components/ChipGrid";
 import { VoiceTextField } from "@/components/VoiceTextField";
 import { WELCOME_RATING_CHIPS, WHAT_STOOD_OUT_CHIPS } from "@/config/chips";
+import { getApiBase } from "@/lib/api";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE = getApiBase();
 
 async function getToken(): Promise<string | null> {
   try {

@@ -163,11 +163,13 @@ function patchPackageJson() {
   const data = JSON.parse(original);
   if (data.name !== "@workspace/mobile") fail(`Unexpected mobile package name: ${data.name}`);
   data.scripts ??= {};
-  data.scripts["build:ios"] = "eas build --platform ios --profile production";
-  data.scripts["build:candidate:ios"] = "eas build --platform ios --profile production --non-interactive";
-  data.scripts["build:candidate:android"] = "eas build --platform android --profile production --non-interactive";
+  delete data.scripts["build:ios"];
+  delete data.scripts["build:android"];
+  delete data.scripts["build:candidate:ios"];
+  delete data.scripts["build:candidate:android"];
+  data.scripts["build:ios:testflight-staging"] = "cd ../.. && bash scripts/release-build-106.sh ios-testflight-staging";
   const next = `${JSON.stringify(data, null, 2)}\n`;
-  writeIfChanged(relative, original, next, "Remove automatic iOS submission and add explicit candidate-only build commands");
+  writeIfChanged(relative, original, next, "Remove direct EAS aliases and route Build 106 through the guarded staging-only dispatcher");
 }
 
 function patchCommunityComposer() {

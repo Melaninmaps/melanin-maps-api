@@ -1,28 +1,7 @@
 [phases.build]
 cmds = [
-  # ARCHITECTURE: both the API bundle (dist/index.mjs) and web assets (web-static/)
-  # are committed to git.  Railway does NOT rebuild from source — it serves the
-  # committed files.  This is intentional: Railway's multi-stage Docker build cannot
-  # reliably propagate a 25 MB compiled bundle from the build container to the runtime
-  # container, causing a BUILD_IDENTITY hash mismatch and exit-78 on every deploy.
-  #
-  # To update after any source change:
-  #   pnpm --filter @workspace/api-server run build          # compiles api-server
-  #   cp artifacts/api-server/dist/index.mjs dist/index.mjs  # sync to root
-  #   cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
-  #   pnpm --filter @workspace/web run build                 # compiles web
-  #   cp -r artifacts/web/dist/public/. web-static/          # sync web (dist/public/, not dist/)
-  #   git add dist/ web-static/ && git commit && git push github main
-  #
-  # Cache-bust token — increment on every push so Railway re-runs this phase.
-  "echo \"cross-platform-stability-v1-20260904\"",
-  # 1. Copy committed web-static into dist/public (what express.static serves).
-  "mkdir -p dist/public && cp -r web-static/. dist/public/",
-  # 2. Re-align dist/BUILD_IDENTITY to match whatever dist/index.mjs is on disk.
-  #    This is idempotent: if they already match (committed build), it's a no-op.
-  #    If Railway's runtime has a different file for any reason, this re-aligns so
-  #    static-server.mjs assertReleaseIdentity() always sees a consistent pair.
-  "node -e \"const c=require('node:crypto'),fs=require('fs');const h=c.createHash('sha256').update(fs.readFileSync('dist/index.mjs')).digest('hex');let id={};try{id=JSON.parse(fs.readFileSync('dist/BUILD_IDENTITY','utf8'));}catch(e){}const prev=id.bundle_sha256||'none';id.bundle_sha256=h;fs.writeFileSync('dist/BUILD_IDENTITY',JSON.stringify(id));console.log('BUILD_IDENTITY aligned: '+h.slice(0,16)+'... (was '+prev.slice(0,16)+'...)');\"",
+  "test -s web-static/index.html",
+  "echo 'public-frontend-staging-api-v1-20260907'",
 ]
 
 [start]

@@ -20,6 +20,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
 export interface PlaceResult {
   id: string;
@@ -39,9 +40,7 @@ interface PlacesAutocompleteInputProps {
   style?: ViewStyle;
 }
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE = getApiBase();
 
 export function PlacesAutocompleteInput({
   placeholder = "What business should we add?",

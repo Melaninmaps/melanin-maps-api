@@ -30,6 +30,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
 const MAX_CHARS = 1000;
 
@@ -66,7 +67,7 @@ export default function MuralContributionScreen() {
   const [submitting, setSubmitting]       = useState(false);
   const [submitted, setSubmitted]         = useState(false);
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "https://www.mappingwithmelanin.com";
+  const apiUrl = getApiBase();
   const getToken = async (): Promise<string> => {
     if (Platform.OS === "web") return "";
     return (await SecureStore.getItemAsync("auth_session_token")) ?? "";

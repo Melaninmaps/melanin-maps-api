@@ -42,7 +42,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
+import { SubscriptionProvider } from "@/lib/revenuecat";
 
 // ── Sentry removed from native integration ────────────────────────────────────
 // @sentry/react-native native SDK caused a pre-JS native crash on Build 100.

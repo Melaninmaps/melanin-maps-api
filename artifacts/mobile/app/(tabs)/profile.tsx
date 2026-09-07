@@ -22,7 +22,6 @@ import {
   View,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import Purchases from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
 import { useColors } from "@/hooks/useColors";
@@ -30,6 +29,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { getApiBase } from "@/lib/api";
+import { resetRevenueCatUser } from "@/lib/revenuecat";
 import { usePoints } from "@/hooks/usePoints";
 import { useMembership } from "@/hooks/useMembership";
 import { useCheckins } from "@/hooks/useCheckins";
@@ -1573,9 +1573,7 @@ export default function ProfileScreen() {
                       });
                       if (res.ok) {
                         await SecureStore.deleteItemAsync("auth_session_token").catch(() => {});
-                        if (Platform.OS !== "web") {
-                          Purchases.logOut().catch(() => {});
-                        }
+                        void resetRevenueCatUser();
                         logout();
                       } else {
                         Alert.alert("Error", "Could not sign out all devices. Please try again.");

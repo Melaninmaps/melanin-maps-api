@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -14,10 +14,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE = getApiBase();
 
 type SubmissionStatus = "pending_review" | "needs_info" | "declined" | "published";
 
@@ -49,7 +48,7 @@ export default function MyBusinessSubmissionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load(refresh = false) {
+  const load = useCallback(async (refresh = false) => {
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
@@ -67,9 +66,12 @@ export default function MyBusinessSubmissionsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => { void load(); }, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>

@@ -16,12 +16,17 @@
         "gradleCommand": ":app:assembleDebug"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
-        "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9"
+        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_API_ORIGIN": "https://mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
+        "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "APP_ENV": "staging",
+        "APP_RELEASE_CHANNEL": "development-staging"
       }
     },
     "preview": {
-      "channel": "preview",
+      "channel": "preview-staging",
       "distribution": "internal",
       "ios": {
         "simulator": false,
@@ -31,18 +36,19 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
+        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_API_ORIGIN": "https://mwm-staging.35.196.78.19.nip.io",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
-        "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
-        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_YtlteQfYyxtiWoOvOylWcxKaIBk",
-        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv"
+        "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "APP_ENV": "staging",
+        "APP_RELEASE_CHANNEL": "preview-staging"
       }
     },
-    "production": {
-      "channel": "production",
-      "environment": "production",
+    "testflight-staging": {
+      "channel": "testflight-staging",
+      "distribution": "store",
       "autoIncrement": false,
       "node": "22.23.1",
       "corepack": true,
@@ -52,33 +58,23 @@
         "resourceClass": "m-medium",
         "image": "sdk-57"
       },
-      "android": {
-        "buildType": "app-bundle",
-        "credentialsSource": "remote",
-        "image": "sdk-57"
-      },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
+        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_API_ORIGIN": "https://mwm-staging.35.196.78.19.nip.io",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
-        "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
-        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_YtlteQfYyxtiWoOvOylWcxKaIBk",
-        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
-        "SENTRY_ALLOW_FAILURE": "true"
+        "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "APP_ENV": "staging",
+        "APP_RELEASE_CHANNEL": "testflight-staging"
       }
     }
   },
   "submit": {
-    "production": {
+    "testflight-staging": {
       "ios": {
-        "appleId": "tlindsay428@yahoo.com",
         "ascAppId": "6783773366",
         "appleTeamId": "Y46Y4A5MMZ"
-      },
-      "android": {
-        "serviceAccountKeyPath": "./google-service-account.json",
-        "track": "internal"
       }
     }
   }

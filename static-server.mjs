@@ -1,277 +1,129 @@
 import express from "express";
-import { spawn } from "child_process";
-import { request as httpRequest } from "http";
-import { fileURLToPath } from "url";
-import path from "path";
-import fs from "fs";
-import net from "node:net";
-import pg from "pg";
-import { createHash } from "node:crypto";
+import fs from "node:fs";
+import { request as httpsRequest } from "node:https";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = parseInt(process.env.PORT || "8080");
-const API_PORT = 3001;
-const cwdPath = path.join(process.cwd(), "web-static");
-const dirnamePath = path.join(__dirname, "web-static");
-const WEB_STATIC = fs.existsSync(dirnamePath) ? dirnamePath : fs.existsSync(cwdPath) ? cwdPath : null;
-process.stderr.write(`Using web-static: ${WEB_STATIC}\n`);
+const PORT = Number.parseInt(process.env.PORT || "8080", 10);
+const UPSTREAM = new URL("https://mwm-staging.35.196.78.19.nip.io");
+const WEB_STATIC = path.join(__dirname, "web-static");
+const INDEX = path.join(WEB_STATIC, "index.html");
+const HOP_BY_HOP = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
 
-function buildPool() {
-  const dbUrl = process.env.DATABASE_URL ?? "";
-  let url;
-  try { url = new URL(dbUrl); } catch { return null; }
-  const noSsl = url.hostname.includes("localhost") || url.hostname.includes("127.0.0.1") || url.hostname.includes(".internal");
-  const ssl = noSsl ? false : { rejectUnauthorized: false };
-  return new Pool({ connectionString: dbUrl, ssl, connectionTimeoutMillis: 10000 });
-}
-
-async function runMigration() {
-  const pool = buildPool();
-  if (!pool) { process.stderr.write("DB_MIGRATION: no DATABASE_URL\n"); return; }
-  try {
-    await pool.query(`CREATE TABLE IF NOT EXISTS waitlist_signups (
-      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      email VARCHAR(255) NOT NULL UNIQUE,
-      first_name VARCHAR(100), last_name VARCHAR(100),
-      city VARCHAR(100), state VARCHAR(50),
-      is_business_owner BOOLEAN NOT NULL DEFAULT false,
-      website_url VARCHAR(500), status VARCHAR(20) NOT NULL DEFAULT 'pending',
-      referral_code VARCHAR(20), referred_by VARCHAR(20),
-      family_group_id VARCHAR(36), notes TEXT, city_nomination VARCHAR(150),
-      welcome_email_sent BOOLEAN NOT NULL DEFAULT false,
-      launch_email_sent BOOLEAN NOT NULL DEFAULT false,
-      beta_email_sent BOOLEAN NOT NULL DEFAULT false,
-      approved_at TIMESTAMP, last_nudge_sent_at TIMESTAMP,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(), import_batch_id VARCHAR(100)
-    )`);
-    process.stderr.write("DB_MIGRATION: waitlist_signups table ensured\n");
-    const addCols = [
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS city_nomination VARCHAR(150)`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS launch_email_sent BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS beta_email_sent BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS last_nudge_sent_at TIMESTAMP`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS import_batch_id VARCHAR(100)`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS family_group_id VARCHAR(36)`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS city VARCHAR(100)`,
-      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS state VARCHAR(50)`,
-    ];
-    for (const sql of addCols) { try { await pool.query(sql); } catch(e) { process.stderr.write(`DB_MIGRATION: col skip: ${e.message}\n`); } }
-    process.stderr.write("DB_MIGRATION: columns backfilled\n");
-    const seeds = [
-      `INSERT INTO waitlist_signups (id,email,status,referral_code,welcome_email_sent,created_at) VALUES ('2db6dd96-1629-436b-ab1e-8f9b2b2f69f3','test@example.com','pending','TESTEXAM',true,'2026-06-19 00:46:35') ON CONFLICT (id) DO NOTHING`,
-      `INSERT INTO waitlist_signups (id,email,status,referral_code,welcome_email_sent,created_at) VALUES ('f8e1cbdb-436e-42f1-9f85-870075579fef','hello@melaninmaps.app','pending','HELLOMEL',true,'2026-06-19 00:47:18') ON CONFLICT (id) DO NOTHING`,
-      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,status,referral_code,welcome_email_sent,created_at) VALUES ('a045ce9c-fa43-47f2-b00b-849599b1d661','demo@example.com','Jordan','Williams','Atlanta','GA','pending','DEMOEXAM',true,'2026-06-27 03:28:28') ON CONFLICT (id) DO NOTHING`,
-      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,status,referral_code,created_at) VALUES ('10db70f8-4f18-4da6-b464-1ee1131185bf','regression_test_delete_me@example.com','RegressionTest','DeleteMe','Atlanta','GA','pending','REGRESSI','2026-07-20 13:12:28') ON CONFLICT (id) DO NOTHING`,
-    ];
-    for (const sql of seeds) { try { await pool.query(sql); } catch(e) { /* ignore dups */ } }
-    process.stderr.write(`DB_MIGRATION: seeded rows\n`);
-
-    // Add missing columns to businesses table (schema drift fix)
-    const businessCols = [
-      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS profile_status VARCHAR(30) NOT NULL DEFAULT 'community_listed'`,
-      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS community_audience_type VARCHAR(30) NOT NULL DEFAULT 'unknown'`,
-    ];
-    for (const sql of businessCols) {
-      try { await pool.query(sql); } catch(e) { process.stderr.write(`DB_MIGRATION: biz col skip: ${e.message}\n`); }
-    }
-    process.stderr.write("DB_MIGRATION: businesses columns ensured\n");
-
-    // Add missing columns to cultural_sites table (schema drift fix).
-    // These columns were added after the initial table creation and may be absent
-    // in older Railway Postgres instances.
-    const culturalSiteCols = [
-      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS audio_guide BOOLEAN NOT NULL DEFAULT false`,
-      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS ethnic_community VARCHAR(200)`,
-      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)`,
-      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS year_established INTEGER`,
-      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS country VARCHAR(100) NOT NULL DEFAULT 'United States'`,
-      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS address VARCHAR(300)`,
-    ];
-    for (const sql of culturalSiteCols) {
-      try { await pool.query(sql); } catch(e) { process.stderr.write(`DB_MIGRATION: cultural_sites col skip: ${e.message}\n`); }
-    }
-    process.stderr.write("DB_MIGRATION: cultural_sites columns ensured\n");
-
-    await pool.end();
-  } catch(err) { process.stderr.write(`DB_MIGRATION: FATAL ${err.message}\n`); }
-}
-runMigration();
-
-// ── Build identity: fail closed on a mixed/stale release ────────────────────
-// Railway must never serve a newer static tree with an older API bundle, or
-// launch dist/index.mjs when BUILD_IDENTITY describes another file.  Refuse
-// startup and let Railway roll back instead of advertising a broken release.
-function sha256File(filePath) {
-  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
-}
-
-function assertReleaseIdentity() {
-  const apiEntry = path.join(__dirname, "dist", "index.mjs");
-  const identityPath = path.join(__dirname, "dist", "BUILD_IDENTITY");
-  if (!fs.existsSync(apiEntry)) {
-    throw new Error(`Release integrity failure: missing API bundle ${apiEntry}`);
-  }
-  if (!fs.existsSync(identityPath)) {
-    throw new Error(`Release integrity failure: missing ${identityPath}`);
-  }
-  const identity = JSON.parse(fs.readFileSync(identityPath, "utf8"));
-  const actualHash = sha256File(apiEntry);
-  if (!identity.bundle_sha256 || identity.bundle_sha256 !== actualHash) {
-    throw new Error(
-      `Release integrity failure: BUILD_IDENTITY hash ${identity.bundle_sha256 || "missing"}` +
-      ` does not match dist/index.mjs hash ${actualHash}`,
-    );
-  }
-  // Verify the SPA entry exists and is non-trivial — do not silently serve an
-  // error page or empty file. 1 KB floor guards against zero-byte writes or
-  // a truncated build that deployed an empty index.html.
-  const spaEntry = WEB_STATIC && path.join(WEB_STATIC, "index.html");
-  if (!spaEntry || !fs.existsSync(spaEntry)) {
-    throw new Error("Release integrity failure: canonical web-static/index.html is missing");
-  }
-  const spaSize = fs.statSync(spaEntry).size;
-  if (spaSize < 1024) {
-    throw new Error(
-      `Release integrity failure: web-static/index.html is only ${spaSize} bytes — ` +
-      "expected a full SPA bundle (>1 KB). Check the Vite build output."
-    );
-  }
-  return { identity, apiEntry };
-}
-
-let _buildId = {};
-try {
-  const verified = assertReleaseIdentity();
-  _buildId = verified.identity;
-  process.stderr.write(`BUILD_IDENTITY: sha256=${_buildId.bundle_sha256?.slice(0,16)}... built_from=${_buildId.built_from_sha?.slice(0,10)}...\n`);
-} catch (e) {
-  process.stderr.write(`FATAL_RELEASE_IDENTITY: ${e.message}\n`);
+function fail(message) {
+  process.stderr.write(`PUBLIC_FRONTEND_BLOCKED: ${message}\n`);
   process.exit(78);
 }
 
-const api = spawn(process.execPath, ["dist/index.mjs"], {
-  env: {
-    ...process.env,
-    PORT: String(API_PORT),
-    BUILD_BUNDLE_SHA256: _buildId.bundle_sha256 ?? "",
-    BUILD_FROM_SHA: _buildId.built_from_sha ?? "",
-    BUILD_AT: _buildId.built_at ?? "",
-  },
-  stdio: "inherit",
-});
-api.on("exit", (code) => { process.stderr.write(`API server exited: ${code}\n`); process.exit(code || 1); });
-
-const clientErrors = [];
-const app = express();
-
-app.post("/__client-error", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => { body += chunk; });
-  req.on("end", () => {
-    const entry = { ts: new Date().toISOString(), ua: req.headers["user-agent"] || "", body };
-    clientErrors.unshift(entry); if (clientErrors.length > 50) clientErrors.pop();
-    res.status(204).end();
-  });
-});
-
-app.get("/__errors", (req, res) => { res.json({ count: clientErrors.length, errors: clientErrors }); });
-// /__debug REMOVED (July 28 2026) — exposed full workspace file listing including
-// .jks keystores, .ipa build artifacts, .pem certificates, and .aab bundles to
-// any unauthenticated request. Security issue identified by independent audit.
-
-// Full table counts for reconciliation — probe-key protected
-app.get("/api/waitlist-diag", async (req, res) => {
-  if (req.headers["x-probe-key"] !== process.env.DB_PROBE_KEY) return res.status(401).end();
-  const pool = buildPool();
-  if (!pool) return res.json({ error: "no DATABASE_URL" });
-  const dbUrl = process.env.DATABASE_URL ?? "";
-  let hostRedacted = "unknown";
-  try { const u = new URL(dbUrl); hostRedacted = u.hostname.replace(/^[^.]+/, "***"); } catch {}
-  const tables = ["users","sessions","waitlist_signups","businesses","community_posts","reviews","messages","saved_places","neighborhood_surveys","knowledge_articles"];
-  const counts = {};
-  try {
-    for (const t of tables) {
-      try { const r = await pool.query(`SELECT count(*) FROM ${t}`); counts[t] = parseInt(r.rows[0].count); }
-      catch(e) { counts[t] = `ERR: ${e.message.slice(0,80)}`; }
-    }
-    let cityRows = [];
-    try { const r2 = await pool.query(`SELECT city, count(*) AS total FROM waitlist_signups WHERE city IS NOT NULL GROUP BY city ORDER BY count(*) DESC`); cityRows = r2.rows; } catch {}
-    await pool.end();
-    res.json({ db_host: hostRedacted, counts, waitlist_cities: cityRows });
-  } catch(err) {
-    try { await pool.end(); } catch {}
-    res.json({ error: err.message });
-  }
-});
-
-app.get("/api/db-probe", (req, res) => {
-  if (process.env.DB_PROBE_ENABLED !== "true") return res.status(404).end();
-  if (!process.env.DB_PROBE_KEY || req.headers["x-probe-key"] !== process.env.DB_PROBE_KEY) return res.status(401).json({ error: "Unauthorized" });
-  let databaseUrl;
-  try { databaseUrl = new URL(process.env.DATABASE_URL ?? ""); } catch { return res.json({ connected: false, elapsedMs: 0, hostCategory: "unknown", error: { code: "INVALID_DATABASE_URL" } }); }
-  const host = databaseUrl.hostname; const port = Number(databaseUrl.port || 5432);
-  const hostCategory = host.endsWith(".internal") ? "internal" : "public-proxy";
-  const startedAt = Date.now();
-  const socket = net.createConnection({ host, port });
-  let finished = false;
-  const finish = (payload) => { if (finished) return; finished = true; socket.destroy(); if (!res.headersSent) res.json({ ...payload, elapsedMs: Date.now() - startedAt, hostCategory, host, port }); };
-  socket.setTimeout(3000);
-  socket.once("connect", () => finish({ connected: true }));
-  socket.once("timeout", () => finish({ connected: false, error: { code: "ETIMEDOUT" } }));
-  socket.once("error", (error) => finish({ connected: false, error: { code: typeof error.code === "string" ? error.code : "SOCKET_ERROR" } }));
-});
-
-// Legal/compliance pages (/privacy, /privacy-policy, /terms, /delete-account,
-// /support) are React routes in the web SPA — NOT API routes.
-// Do NOT proxy them to the API server (that was causing 404s for Apple's
-// privacy policy URL check, blocking App Store approval).
-// They fall through to the express.static + SPA-fallback block below.
-
-app.use("/api", (req, res) => {
-  const proxyReq = httpRequest(
-    { hostname: "localhost", port: API_PORT, path: "/api" + req.url, method: req.method, headers: { ...req.headers, host: `localhost:${API_PORT}` } },
-    (proxyRes) => { res.writeHead(proxyRes.statusCode, proxyRes.headers); proxyRes.pipe(res); }
-  );
-  proxyReq.on("error", () => res.status(502).json({ error: "API starting, please retry" }));
-  req.pipe(proxyReq);
-});
-
-// Block archive/binary downloads regardless of what exists on disk.
-// Guards against stale Docker layer cache retaining deleted zip files.
-app.use((req, res, next) => {
-  if (/\.(zip|tar\.gz|ipa|aab|apk|dmg)$/i.test(req.path)) {
-    return res.status(404).end();
-  }
-  next();
-});
-
-if (WEB_STATIC) {
-  // Assets (JS/CSS) get long-lived cache; HTML is always revalidated so users
-  // never need to manually clear their browser cache to see a new deploy.
-  app.use(express.static(WEB_STATIC, {
-    extensions: ["html"],
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".html") || !filePath.includes(".")) {
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        res.setHeader("Pragma", "no-cache");
-        res.setHeader("Expires", "0");
-      } else if (filePath.includes("/assets/")) {
-        // Content-hashed filenames (Vite fingerprinting) — safe to cache for 1 year
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      }
-    },
-  }));
-  app.use((req, res) => {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-    res.sendFile(path.join(WEB_STATIC, "index.html"));
-  });
-} else {
-  app.use((req, res) => { res.status(503).send(`Web app not found. Deploy with web-static/ present.`); });
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) fail("invalid PORT");
+if (!fs.existsSync(INDEX) || fs.statSync(INDEX).size < 1024) fail("web-static/index.html is missing or truncated");
+if (process.env.DATABASE_URL) {
+  process.stderr.write("PUBLIC_FRONTEND: DATABASE_URL is intentionally ignored; this process has no database client\n");
 }
 
-app.listen(PORT, () => { process.stderr.write(`Listening on port ${PORT} — API on ${API_PORT}\n`); });
+function sanitizedRequestHeaders(req) {
+  const headers = {};
+  for (const [name, value] of Object.entries(req.headers)) {
+    if (!HOP_BY_HOP.has(name.toLowerCase()) && value !== undefined) headers[name] = value;
+  }
+  const forwardedFor = [req.headers["x-forwarded-for"], req.socket.remoteAddress]
+    .filter(Boolean)
+    .join(", ");
+  headers.host = UPSTREAM.host;
+  headers.origin = UPSTREAM.origin;
+  headers["x-forwarded-host"] = req.headers.host ?? "www.mappingwithmelanin.com";
+  headers["x-forwarded-proto"] = "https";
+  if (forwardedFor) headers["x-forwarded-for"] = forwardedFor;
+  return headers;
+}
+
+function proxyApi(req, res) {
+  const upstreamRequest = httpsRequest({
+    protocol: UPSTREAM.protocol,
+    hostname: UPSTREAM.hostname,
+    port: UPSTREAM.port || 443,
+    method: req.method,
+    path: `/api${req.url}`,
+    headers: sanitizedRequestHeaders(req),
+    timeout: 120_000,
+  }, (upstreamResponse) => {
+    const responseHeaders = {};
+    for (const [name, value] of Object.entries(upstreamResponse.headers)) {
+      if (!HOP_BY_HOP.has(name.toLowerCase()) && value !== undefined) responseHeaders[name] = value;
+    }
+    res.writeHead(upstreamResponse.statusCode ?? 502, responseHeaders);
+    upstreamResponse.pipe(res);
+  });
+
+  upstreamRequest.on("timeout", () => upstreamRequest.destroy(new Error("upstream timeout")));
+  upstreamRequest.on("error", () => {
+    if (!res.headersSent) res.status(502).json({ error: "Service temporarily unavailable. Please try again." });
+    else res.destroy();
+  });
+  req.on("aborted", () => upstreamRequest.destroy());
+  req.pipe(upstreamRequest);
+}
+
+async function assertUpstreamReady() {
+  await new Promise((resolve, reject) => {
+    const request = httpsRequest({
+      protocol: UPSTREAM.protocol,
+      hostname: UPSTREAM.hostname,
+      port: UPSTREAM.port || 443,
+      method: "GET",
+      path: "/api/healthz",
+      headers: { accept: "application/json", host: UPSTREAM.host },
+      timeout: 15_000,
+    }, (response) => {
+      response.resume();
+      response.once("end", () => {
+        if ((response.statusCode ?? 500) >= 200 && (response.statusCode ?? 500) < 300) resolve();
+        else reject(new Error(`staging health returned ${response.statusCode ?? "unknown"}`));
+      });
+    });
+    request.once("timeout", () => request.destroy(new Error("staging health timed out")));
+    request.once("error", reject);
+    request.end();
+  });
+}
+
+await assertUpstreamReady().catch((error) => fail(error instanceof Error ? error.message : String(error)));
+
+const app = express();
+app.disable("x-powered-by");
+app.post("/__client-error", (_req, res) => res.status(204).end());
+app.use("/api", proxyApi);
+app.use((req, res, next) => {
+  if (/\.(?:zip|tar\.gz|ipa|aab|apk|dmg|pem|p12|mobileprovision)$/i.test(req.path)) return res.status(404).end();
+  next();
+});
+app.use(express.static(WEB_STATIC, {
+  extensions: ["html"],
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html") || !filePath.includes(".")) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    }
+  },
+}));
+app.use((_req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.sendFile(INDEX);
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  process.stderr.write(`PUBLIC_FRONTEND_READY: port=${PORT} api_upstream=isolated-staging database_access=disabled\n`);
+});

@@ -1825,6 +1825,8 @@ export default function TravelScreen() {
   const voiceOutputRef = useRef(false);
   const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
   const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
+    // Factory stores this predicate and invokes it only from effects/events.
+    // eslint-disable-next-line react-hooks/refs
     () => appStateRef.current === "active" && voiceOutputRef.current,
   ));
   const [showProfile, setShowProfile] = useState(false);

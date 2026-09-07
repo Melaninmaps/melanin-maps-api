@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pre-build gate for Mapping With Melanin production EAS builds.
+ * Pre-build gate for Mapping With Melanin release candidates.
  *
  * Usage:
  *   node scripts/pre-build-check.js ios
@@ -190,7 +190,7 @@ if (blocked) {
   console.log("\n  All checks passed. Safe to run:\n");
   if (checkIos) {
     console.log(
-      `    eas build --platform ios --profile production`
+      `    scripts/release-build-106.sh ios-testflight-staging`
     );
     console.log(
       `\n  After the build completes, record the submitted number:\n`
@@ -200,14 +200,6 @@ if (blocked) {
     );
   }
   if (checkAndroid) {
-    console.log(
-      `    eas build --platform android --profile production`
-    );
-    console.log(
-      `\n  After the build completes, record the submitted number:\n`
-    );
-    console.log(
-      `    node scripts/pre-build-check.js --record android\n`
-    );
+    console.log("    Android release builds are hard-blocked by the Build 106 entrypoint.\n");
   }
 }

@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, typ
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import { AppState, Platform } from "react-native";
-import Purchases from "react-native-purchases";
+import { getApiBase } from "@/lib/api";
+import { identifyRevenueCatUser, resetRevenueCatUser } from "@/lib/revenuecat";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,23 +51,7 @@ const AuthContext = createContext<AuthContextValue>({
   refreshUser: async () => false,
 });
 
-// Canonical production API base — same value used in all eas.json build profiles.
-const _PRODUCTION_BASE = "https://www.mappingwithmelanin.com";
-
-export function getApiBaseUrl(): string {
-  // Replit dev domain: only present during simulator testing against a local server.
-  if (process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN}`;
-  }
-  // EXPO_PUBLIC_DOMAIN is set in eas.json for ALL build profiles.
-  // Prefer it because eas.json values are baked in at build time and are reliable.
-  // EXPO_PUBLIC_API_URL lives only in EAS Dashboard and may be stale — intentionally skipped.
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  // Hard fallback: guarantees auth works even when neither env var is propagated (e.g. OTA).
-  return _PRODUCTION_BASE;
-}
+export const getApiBaseUrl = getApiBase;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -110,9 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsLoading(false);
           // Tie RC entitlements to this MWM account so they are portable
           // across devices and reinstalls.
-          if (Platform.OS !== "web") {
-            Purchases.logIn(String((data.user as User).id)).catch(() => {});
-          }
+          void identifyRevenueCatUser(String((data.user as User).id));
           return true;
         } else if (res.status === 401) {
           // Server explicitly says this token is invalid (401) — safe to sign out.
@@ -120,9 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setSessionExpired(true);
           setIsLoading(false);
-          if (Platform.OS !== "web") {
-            Purchases.logOut().catch(() => {});
-          }
+          void resetRevenueCatUser();
           return false;
         } else {
           // Non-401 response with no user (e.g. 500 server error, transient failure).
@@ -304,9 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
 
     // Step 4: RevenueCat session cleanup (non-blocking).
-    if (Platform.OS !== "web") {
-      Purchases.logOut().catch(() => {});
-    }
+    void resetRevenueCatUser();
 
     // Step 5: Bounded server-side revocation. Uses the old token retained in
     // memory — does not read or restore anything from SecureStore.

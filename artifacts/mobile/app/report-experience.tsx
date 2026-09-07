@@ -32,12 +32,11 @@ import {
   HAPPENED_BEFORE_CHIPS,
   OTHERS_SAW_CHIPS,
 } from "@/config/chips";
+import { getApiBase } from "@/lib/api";
 
 type Stage = "chip" | "confirmed" | "expanding1" | "expanding2" | "done";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE = getApiBase();
 
 async function getToken(): Promise<string | null> {
   try {

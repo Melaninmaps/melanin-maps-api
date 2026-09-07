@@ -1,18 +1,43 @@
-// Canonical production API base — never changes.
-// All build profiles (dev / preview / production) in eas.json already point here.
-const PRODUCTION_BASE = "https://www.mappingwithmelanin.com";
+const STAGING_ORIGIN = "https://mwm-staging.35.196.78.19.nip.io";
+
+function normalizeOrigin(raw: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error("API configuration blocked: EXPO_PUBLIC_API_ORIGIN must be a valid HTTPS origin");
+  }
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.username ||
+    parsed.password ||
+    parsed.pathname !== "/" ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error("API configuration blocked: API origin cannot contain credentials, paths, query parameters, or fragments");
+  }
+  return parsed.origin;
+}
 
 export function getApiBase(): string {
-  // Replit dev domain: only present during simulator testing against a local server.
-  if (process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN}`;
+  const raw = process.env.EXPO_PUBLIC_API_ORIGIN;
+  if (!raw) {
+    throw new Error("API configuration blocked: EXPO_PUBLIC_API_ORIGIN is required");
   }
-  // EXPO_PUBLIC_DOMAIN is set in eas.json for ALL build profiles.
-  // Prefer it because eas.json values are baked in at build time and are reliable.
-  // EXPO_PUBLIC_API_URL lives only in EAS Dashboard and may be stale — intentionally skipped.
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  const origin = normalizeOrigin(raw);
+  if (process.env.EXPO_PUBLIC_APP_ENV === "staging" && origin !== STAGING_ORIGIN) {
+    throw new Error("Staging release blocked: API origin is not the reviewed staging backend");
   }
-  // Hard fallback: guarantees OTA updates work even when neither env var is propagated.
-  return PRODUCTION_BASE;
+  return origin;
 }
+
+export function assertBuild106StagingApiOrigin(): string {
+  const origin = getApiBase();
+  if (origin !== STAGING_ORIGIN) {
+    throw new Error("Build 106 blocked: staging API origin mismatch");
+  }
+  return origin;
+}
+
+export { STAGING_ORIGIN };
