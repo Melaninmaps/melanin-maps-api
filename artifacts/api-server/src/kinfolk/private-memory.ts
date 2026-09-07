@@ -27,6 +27,24 @@ export async function resolveKinfolkMemoryAccess(input: {
   }
 }
 
+/**
+ * Resolve public shared content only through a lookup that has already joined
+ * the retained session to its existing owner and that owner's current consent.
+ * A disabled runtime, no matching consented owner, or any lookup failure is
+ * deliberately indistinguishable from an unknown share ID.
+ */
+export async function resolvePublicSharedKinfolkSession<T>(input: {
+  runtimeEnabled: boolean;
+  readConsentedOwnerSession: () => Promise<T | null | undefined>;
+}): Promise<T | null> {
+  if (!input.runtimeEnabled) return null;
+  try {
+    return await input.readConsentedOwnerSession() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export type PrivateMemoryForPrompt = {
   content: string;
   purpose: string;

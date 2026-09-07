@@ -128,6 +128,7 @@ import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
   resolveKinfolkMemoryAccess,
+  resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import { isAdmin } from "../lib/adminAuth";
 import {
@@ -6162,28 +6163,41 @@ router.patch("/kinfolk/answer-plans/:answerPlanId/depth", async (req: Request, r
 
 router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
   const { shareId } = req.params as { shareId: string };
-  try {
-    const [session] = await db
-      .select()
-      .from(kinfolkSessionsTable)
-      .where(eq(kinfolkSessionsTable.shareId, shareId))
-      .limit(1);
+  const session = await resolvePublicSharedKinfolkSession({
+    runtimeEnabled: isKinfolkPrivateMemoryEnabled(),
+    readConsentedOwnerSession: async () => {
+      const [consentedSession] = await db
+        .select({
+          title: kinfolkSessionsTable.title,
+          destination: kinfolkSessionsTable.destination,
+          messages: kinfolkSessionsTable.messages,
+        })
+        .from(kinfolkSessionsTable)
+        .innerJoin(usersTable, eq(usersTable.id, kinfolkSessionsTable.userId))
+        .leftJoin(userSettingsTable, eq(userSettingsTable.userId, usersTable.id))
+        .where(and(
+          eq(kinfolkSessionsTable.shareId, shareId),
+          or(
+            isNull(userSettingsTable.userId),
+            eq(userSettingsTable.kinfolkMemoryEnabled, true),
+          ),
+        ))
+        .limit(1);
+      return consentedSession;
+    },
+  });
 
-    if (!session) return void res.status(404).json({ error: "Trip not found" });
+  if (!session) return void res.status(404).json({ error: "Trip not found" });
 
-    const msgs = session.messages ?? [];
-    const lastRec = [...msgs].reverse().find(m => m.role === "assistant" && m.recommendations);
+  const msgs = session.messages ?? [];
+  const lastRec = [...msgs].reverse().find(m => m.role === "assistant" && m.recommendations);
 
-    return void res.json({
-      title: session.title,
-      destination: session.destination,
-      lastRecommendations: lastRec?.recommendations ?? null,
-      followUpSuggestions: lastRec?.followUpSuggestions ?? [],
-    });
-  } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch shared trip");
-    res.status(500).json({ error: "Failed to fetch shared trip" });
-  }
+  return void res.json({
+    title: session.title,
+    destination: session.destination,
+    lastRecommendations: lastRec?.recommendations ?? null,
+    followUpSuggestions: lastRec?.followUpSuggestions ?? [],
+  });
 });
 
 export default router;
