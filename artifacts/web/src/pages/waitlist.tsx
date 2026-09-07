@@ -8,13 +8,13 @@ const SITE_URL = "https://mappingwithmelanin.com";
 
 const BENEFITS = [
   { icon: Shield, label: "Community Intelligence", desc: "Community-sourced context from members who've actually been there — arrival experiences and practical local conditions" },
-  { icon: MapPin, label: "2,400+ Businesses", desc: "Verified minority-owned businesses across 48 states" },
-  { icon: Users, label: "10K+ Members", desc: "A growing community of travelers, entrepreneurs, and creators" },
-  { icon: Sparkles, label: "KinfolkAI™", desc: "AI travel planning that understands your culture and community" },
+  { icon: MapPin, label: "Community-Fed Directory", desc: "Searchable business listings clearly show their current claim and verification status" },
+  { icon: Users, label: "Early Access Community", desc: "Invited members and testers help shape a useful, welcoming platform" },
+  { icon: Sparkles, label: "KinfolkAI™", desc: "Designed to combine useful answers, community context, and relevant directory results" },
 ];
 
 function openShare(platform: string, url: string) {
-  const text = "Join me on Mapping with Melanin™ — find trusted businesses, Community Intelligence, and community everywhere you go:";
+  const text = "Join me on Mapping with Melanin™ — explore business listings, Community Intelligence, and community wherever you go:";
   if (platform === "Threads" || platform === "Facebook" || platform === "LinkedIn") {
     window.open(getSocialShareUrl(platform as SharePlatform, text, url), "_blank", "noopener,noreferrer,width=600,height=500");
   }
