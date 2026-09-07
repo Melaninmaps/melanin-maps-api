@@ -18,6 +18,7 @@ import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { loadV1State, saveV1State } from "@/lib/discoveryV1";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
@@ -290,7 +291,30 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const { user } = useAuth();
   const pollingEnabled = isFocused && user !== null;
 
-  const { businesses } = useBusinesses();
+  const [v1State, setV1State] = useState(() => loadV1State());
+  useFocusEffect(
+    useCallback(() => {
+      setV1State(loadV1State());
+    }, [])
+  );
+
+  const { businesses: legacyBusinesses } = useBusinesses();
+  const businesses = React.useMemo(() => {
+    if (v1State && v1State.fullResults && v1State.fullResults.length > 0) {
+      return v1State.fullResults.filter(r => r.recordType === "business").map(r => ({
+        id: r.id,
+        name: r.title,
+        category: r.subtitle || "",
+        subcategory: r.subtitle,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        verified: r.isVerified,
+        rating: 0,
+        reviewCount: 0,
+      })) as Business[];
+    }
+    return legacyBusinesses;
+  }, [v1State, legacyBusinesses]);
 
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
@@ -876,6 +900,34 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Search Entry */}
+        <View style={{ paddingHorizontal: 12, paddingBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, paddingHorizontal: 4 }}>
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 15, color: colors.foreground }}>
+              {v1State && v1State.q ? `Results for "${v1State.q}"` : "Find a place"}
+            </Text>
+            {v1State && (
+              <TouchableOpacity onPress={() => { saveV1State(null); setV1State(null); }}>
+                <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "600" }}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push("/smart-search")}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 10,
+              backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1,
+              borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11
+            }}
+          >
+            <Feather name="search" size={18} color={colors.mutedForeground} />
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: colors.mutedForeground, flex: 1 }}>
+              Describe what you need, or search by name
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Category filter pills */}
         <ScrollView

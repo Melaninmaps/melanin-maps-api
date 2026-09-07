@@ -40,6 +40,30 @@
         "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv"
       }
     },
+    "testflight-staging": {
+      "channel": "testflight-staging",
+      "distribution": "store",
+      "environment": "preview",
+      "autoIncrement": false,
+      "node": "22.23.1",
+      "corepack": true,
+      "pnpm": "10.26.1",
+      "ios": {
+        "credentialsSource": "remote",
+        "resourceClass": "m-medium",
+        "image": "sdk-57"
+      },
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_YtlteQfYyxtiWoOvOylWcxKaIBk",
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
+        "SENTRY_ALLOW_FAILURE": "true"
+      }
+    },
     "production": {
       "channel": "production",
       "environment": "production",

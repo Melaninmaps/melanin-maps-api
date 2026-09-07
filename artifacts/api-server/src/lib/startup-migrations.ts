@@ -4858,6 +4858,22 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       applied_at   timestamptz  NOT NULL DEFAULT now()
     )`,
   },
+  // ── Discovery V1: governed offering evidence and consented event ledger ───
+  {
+    name: "discovery_v1_evidence_and_events",
+    sql: `CREATE TABLE IF NOT EXISTS discovery_taxonomy_concepts (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), kind VARCHAR(32) NOT NULL CHECK (kind IN ('category','specialty','offering','community_tag')), canonical_label VARCHAR(200) NOT NULL, normalized_label VARCHAR(200) NOT NULL, status VARCHAR(20) NOT NULL DEFAULT 'approved' CHECK (status IN ('pending','approved','retired')), created_by VARCHAR(100), reviewed_by VARCHAR(100), reviewed_at TIMESTAMPTZ, audit_note TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE(kind, normalized_label));
+      CREATE TABLE IF NOT EXISTS discovery_taxonomy_synonyms (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), concept_id UUID NOT NULL REFERENCES discovery_taxonomy_concepts(id) ON DELETE CASCADE, synonym VARCHAR(200) NOT NULL, normalized_synonym VARCHAR(200) NOT NULL, status VARCHAR(20) NOT NULL DEFAULT 'approved' CHECK (status IN ('pending','approved','retired')), source_kind VARCHAR(32) NOT NULL CHECK (source_kind IN ('owner','approved_source','governed_community','curator')), reviewed_by VARCHAR(100), reviewed_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE(concept_id, normalized_synonym));
+      CREATE TABLE IF NOT EXISTS business_offering_evidence (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), business_id VARCHAR(100) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE, concept_id UUID REFERENCES discovery_taxonomy_concepts(id), normalized_label VARCHAR(200) NOT NULL, label VARCHAR(200) NOT NULL, kind VARCHAR(32) NOT NULL CHECK (kind IN ('owner_offering','menu_or_offering_source','community_tag')), source_url TEXT, as_of TIMESTAMPTZ, confidence VARCHAR(32) NOT NULL DEFAULT 'supported' CHECK (confidence IN ('exact','supported','contextual')), status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected','withdrawn')), submitted_by VARCHAR(100), reviewed_by VARCHAR(100), reviewed_at TIMESTAMPTZ, audit_note TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), CONSTRAINT offering_evidence_source_required CHECK (kind = 'owner_offering' OR source_url IS NOT NULL), CONSTRAINT offering_evidence_https_source CHECK (source_url IS NULL OR source_url ~* '^https://'));
+      ALTER TABLE business_offering_evidence ADD COLUMN IF NOT EXISTS confidence VARCHAR(32);
+      UPDATE business_offering_evidence SET confidence = 'supported' WHERE confidence IS NULL OR confidence NOT IN ('exact','supported','contextual');
+      ALTER TABLE business_offering_evidence ALTER COLUMN confidence SET DEFAULT 'supported', ALTER COLUMN confidence SET NOT NULL;
+      DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'business_offering_evidence_confidence_check') THEN ALTER TABLE business_offering_evidence ADD CONSTRAINT business_offering_evidence_confidence_check CHECK (confidence IN ('exact','supported','contextual')); END IF; END $$;
+      CREATE INDEX IF NOT EXISTS business_offering_evidence_approved_search_idx ON business_offering_evidence (normalized_label, business_id) WHERE status = 'approved';
+      CREATE TABLE IF NOT EXISTS discovery_events_v1 (event_id UUID PRIMARY KEY, idempotency_key VARCHAR(200) NOT NULL UNIQUE, member_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE, event_name VARCHAR(32) NOT NULL, consent_version VARCHAR(50) NOT NULL, surface VARCHAR(32) NOT NULL, platform VARCHAR(32) NOT NULL, entry_point VARCHAR(100) NOT NULL, app_version VARCHAR(64) NOT NULL, request_id UUID, result_set_id UUID, normalized_intent VARCHAR(160), structured_filters JSONB NOT NULL DEFAULT '{}'::jsonb, coarse_location_bucket VARCHAR(160), radius_miles SMALLINT, result_id VARCHAR(160), rank INTEGER, record_type VARCHAR(32), result_count INTEGER, zero_result BOOLEAN, latency_ms INTEGER, fallback_state VARCHAR(80), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), retention_expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + interval '90 days'), deleted_at TIMESTAMPTZ);
+      CREATE INDEX IF NOT EXISTS discovery_events_v1_aggregate_idx ON discovery_events_v1 (event_name, created_at) WHERE deleted_at IS NULL;
+      CREATE INDEX IF NOT EXISTS discovery_events_v1_member_retention_idx ON discovery_events_v1 (member_id, retention_expires_at) WHERE deleted_at IS NULL;
+      CREATE TABLE IF NOT EXISTS discovery_member_preferences (member_id VARCHAR(100) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, search_improvement BOOLEAN NOT NULL DEFAULT FALSE, consent_version VARCHAR(50) NOT NULL DEFAULT 'v1', updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());`,
+  },
 ];
 
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
@@ -5379,6 +5395,42 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       warn(`Seed guard "${name}" threw unexpectedly: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+}
+
+const REQUIRED_DISCOVERY_TABLES = [
+  "discovery_taxonomy_concepts",
+  "business_offering_evidence",
+  "discovery_events_v1",
+  "discovery_member_preferences",
+] as const;
+
+/**
+ * Applies and verifies only the request-path Discovery V1 migration.
+ * Unlike the optional startup loop, any migration or verification failure is
+ * fatal to boot. Other optional migrations retain their existing best-effort
+ * behavior and continue to run in the normal startup loop.
+ */
+export async function ensureRequiredDiscoverySchema(
+  db: Pick<typeof pool, "query"> = pool,
+  logger?: Logger,
+): Promise<void> {
+  const migration = MIGRATIONS.find((candidate) => candidate.name === "discovery_v1_evidence_and_events");
+  if (!migration) throw new Error("Required Discovery V1 migration is missing from source.");
+
+  await db.query(migration.sql);
+  const result = await db.query<{ table_name: string }>(
+    `SELECT table_name
+       FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1::text[])`,
+    [[...REQUIRED_DISCOVERY_TABLES]],
+  );
+  const present = new Set(result.rows.map((row) => row.table_name));
+  const missing = REQUIRED_DISCOVERY_TABLES.filter((table) => !present.has(table));
+  if (missing.length) {
+    throw new Error(`Required Discovery V1 schema is incomplete; missing tables: ${missing.join(", ")}`);
+  }
+  logger?.info("Required Discovery V1 schema verified before traffic acceptance");
 }
 
 // ── Helper: bulk dedup key set from cultural_sites (name|state) ──────────────

@@ -305,11 +305,14 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.searchWrap}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingHorizontal: 4 }}>
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16, color: colors.foreground }}>Find a place</Text>
+          </View>
           <SearchBar
             value={search}
             onChangeText={setSearch}
-            placeholder="Search businesses, events..."
-            onFocus={() => router.push("/business-search")}
+            placeholder="Describe what you need, or search by name"
+            onFocus={() => router.push("/smart-search")}
           />
         </View>
 

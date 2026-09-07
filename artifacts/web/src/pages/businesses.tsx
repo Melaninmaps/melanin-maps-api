@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
+import { executeV1SearchWithFallback } from "@/lib/discoveryV1";
 
 const BASE = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -373,20 +374,20 @@ export default function Businesses() {
       }
     } catch { /* geo-extract failed — search continues with no geo-bounds */ }
 
-    // Step 2 — MWM database search only (never display geocoder businesses)
+    // Step 2 — V1 Search with Universal Fallback
     try {
-      const p = new URLSearchParams({ q: query, surface: "directory", limit: "30" });
-      if (geoLat !== null && geoLng !== null) {
-        // Geo-bound to the detected destination.
-        // radius=50 mirrors the map page — covers a full province/island/metro area
-        // regardless of how individual sub-areas are stored (e.g. "Patong" for Phuket).
-        p.set("lat", String(geoLat));
-        p.set("lng", String(geoLng));
-        p.set("radius", "50");
-      }
-      const res = await fetch(`${API_BASE}/api/search/universal?${p}`, { credentials: "include" });
-      if (res.ok) {
-        setUniversalResult(await res.json());
+      const res = await executeV1SearchWithFallback({
+        query,
+        surface: "businesses",
+        city: detectedLocation?.name || undefined,
+        latitude: geoLat !== null ? geoLat : undefined,
+        longitude: geoLng !== null ? geoLng : undefined,
+        radiusMiles: 5,
+        fallbackLimit: 30
+      });
+
+      if (res && res.payload) {
+        setUniversalResult(res.payload);
       }
     } catch { /* fall through to client-side browse */ }
     finally { setUniversalLoading(false); }
@@ -466,6 +467,9 @@ export default function Businesses() {
 
         {/* Search bar */}
         <div className="mb-8 space-y-5">
+          <div className="w-full text-left mb-1 pl-1">
+            <span className="text-[#3A1F0E] font-serif font-bold text-lg">Find a place</span>
+          </div>
           <div className="relative flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#3A1F0E]/40 pointer-events-none" />
@@ -478,7 +482,7 @@ export default function Businesses() {
                   if (universalResult) { setUniversalResult(null); setSearchedQuery(""); }
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="Try: Churches in Philadelphia · OBGYN Atlanta · Ethiopian restaurant DC · tax attorney"
+                placeholder="Describe what you need, or search by name"
                 className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/50 shadow-sm text-base"
               />
             </div>
@@ -674,9 +678,9 @@ export default function Businesses() {
                   <Link href="/for-business-owners">
                     <Button variant="outline" className="rounded-full border-[#3A1F0E]/30 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] text-sm bg-transparent">Submit a Business</Button>
                   </Link>
-                  <Link href="/map">
+                  <Link href={`/map${search || detectedLocation?.name ? '?' : ''}${search ? `q=${encodeURIComponent(search)}` : ''}${search && detectedLocation?.name ? '&' : ''}${detectedLocation?.name ? `area=${encodeURIComponent(detectedLocation.name)}` : ''}`}>
                     <Button className="rounded-full bg-[#2B1507] text-white text-sm">
-                      <MapPin className="w-4 h-4 mr-2" /> Near Me
+                      <MapPin className="w-4 h-4 mr-2" /> View on Map
                     </Button>
                   </Link>
                 </div>

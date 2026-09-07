@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Crypto from "expo-crypto";
+import * as Location from "expo-location";
+import { executeV1Search, loadV1State } from "@/lib/discoveryV1";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
@@ -69,6 +71,31 @@ export default function SmartSearchScreen() {
   const inputRef = useRef<TextInput>(null);
   const primaryGold = "#CA922B";
   const { history, add: addHistory } = useSearchHistory("smart");
+
+  useEffect(() => {
+    const v1 = loadV1State();
+    if (v1 && v1.q && !query) {
+      setQuery(v1.q);
+      if (v1.fullResults.length > 0) {
+        setResults({
+          query: v1.q,
+          intent: v1.intentType || "general",
+          contextNote: v1.capabilityMessage || "Here is what we found nearby.",
+          suggestedCategories: [],
+          results: {
+            businesses: v1.fullResults.filter((r: any) => r.recordType === "business").map((r: any) => ({
+              id: r.id,
+              name: r.title,
+              category: r.subtitle,
+              city: v1.area,
+              verified: r.isVerified,
+              description: r.matchReason
+            }))
+          }
+        } as any);
+      }
+    }
+  }, []);
 
   // Nomination modal state
   const [showNominate, setShowNominate] = useState(false);
@@ -149,16 +176,48 @@ export default function SmartSearchScreen() {
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const recentCats = history.flatMap((h) => h.categories).slice(0, 10).join(",");
-      const params = new URLSearchParams({ q });
-      if (recentCats) params.set("recentCategories", recentCats);
-      const res = await fetch(`${getApiBase()}/api/search/intent?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json() as SearchResults;
-        setResults(data);
-        void addHistory(q, data.suggestedCategories ?? []);
+      let lat, lng;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          lat = Number(loc.coords.latitude.toFixed(2));
+          lng = Number(loc.coords.longitude.toFixed(2));
+        }
+      } catch {}
+
+      if (lat === undefined || lng === undefined) {
+        throw new Error("Location access is required for search. Please enable it in your device settings.");
       }
-    } catch { /* silent */ } finally { setLoading(false); }
+
+      const payload = await executeV1Search({
+        query: q,
+        surface: "smart_search",
+        latitude: lat,
+        longitude: lng,
+        radiusMiles: 5 // Smart search uses device location directly
+      });
+
+      setResults({
+        query: q,
+        intent: payload.interpretedIntent || "general",
+        contextNote: payload.capabilityMessage || "Here is what we found nearby.",
+        suggestedCategories: payload.nextActions || [],
+        results: {
+          businesses: payload.results.filter((r: any) => r.recordType === "business").map((r: any) => ({
+            id: r.id,
+            name: r.title,
+            category: r.subtitle,
+            city: payload.locationLabel || "nearby",
+            verified: r.isVerified,
+            description: r.matchReason,
+          }))
+        }
+      } as any);
+      void addHistory(q, []);
+    } catch (err: any) {
+       console.log("Search error", err);
+    } finally { setLoading(false); }
   }, [history, addHistory]);
 
   const handleExampleTap = (q: string) => {
@@ -177,31 +236,36 @@ export default function SmartSearchScreen() {
           <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
-          <View style={[styles.searchInputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="search" size={16} color={colors.mutedForeground} style={{ marginRight: 8 }} />
-            <TextInput
-              ref={inputRef}
-              style={[styles.searchInput, { color: colors.foreground }]}
-              placeholder="I need a realtor... I have diabetes... I'm moving..."
-              placeholderTextColor={colors.mutedForeground}
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={() => void search(query)}
-              returnKeyType="search"
-              autoFocus
-            />
-            {query.length > 0 && (
-              <TouchableOpacity activeOpacity={0.85} onPress={() => { setQuery(""); setResults(null); }}>
-                <Feather name="x" size={16} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            )}
+          <View style={[styles.searchInputWrap, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: 'column', alignItems: 'stretch', padding: 0 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16, color: colors.foreground }}>Find a place</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 10, paddingTop: 4 }}>
+              <Feather name="search" size={16} color={colors.mutedForeground} style={{ marginRight: 8 }} />
+              <TextInput
+                ref={inputRef}
+                style={[styles.searchInput, { color: colors.foreground, flex: 1 }]}
+                placeholder="Describe what you need, or search by name"
+                placeholderTextColor={colors.mutedForeground}
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={() => void search(query)}
+                returnKeyType="search"
+                autoFocus
+              />
+              {query.length > 0 && (
+                <TouchableOpacity activeOpacity={0.85} onPress={() => { setQuery(""); setResults(null); }}>
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <TouchableOpacity activeOpacity={0.85}
             style={[styles.searchBtn, { backgroundColor: primaryGold, opacity: loading || !query.trim() ? 0.6 : 1 }]}
             onPress={() => void search(query)}
             disabled={loading || !query.trim()}
           >
-            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="arrow-right" size={16} color="#fff" />}
+            {loading ? <ActivityIndicator size="small" color={colors.primaryForeground} /> : <Feather name="arrow-right" size={16} color={colors.primaryForeground} />}
           </TouchableOpacity>
         </View>
 
@@ -382,7 +446,7 @@ export default function SmartSearchScreen() {
                   style={[styles.kinfolkBtn, { backgroundColor: primaryGold }]}
                   onPress={() => router.push(`/travel?q=${encodeURIComponent(query.trim())}` as any)}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Ask KinfolkAI™ instead</Text>
+                  <Text style={{ color: colors.primaryForeground, fontWeight: "700", fontSize: 14 }}>Ask KinfolkAI™ instead</Text>
                 </TouchableOpacity>
                 <TouchableOpacity activeOpacity={0.85}
                   style={[styles.nominateBtn, { borderColor: primaryGold }]}
@@ -400,7 +464,7 @@ export default function SmartSearchScreen() {
       <Modal visible={showNominate} transparent animationType="slide" onRequestClose={() => setShowNominate(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
           <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setShowNominate(false)} />
-          <View style={[styles.nominateModal, { backgroundColor: "#fff" }]}>
+          <View style={[styles.nominateModal, { backgroundColor: colors.card }]}>
             <Text style={styles.nominateTitle}>Save a Business Tip</Text>
             <Text style={styles.nominateSub}>Save the name and city now, or use the complete form for immediate publication with a precise pin.</Text>
 
@@ -415,13 +479,13 @@ export default function SmartSearchScreen() {
                   style={[styles.nominateSubmit, { backgroundColor: "#2B1507", marginTop: 20 }]}
                   onPress={() => { setShowNominate(false); router.push("/list-business" as never); }}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Add details for an immediate pin</Text>
+                  <Text style={{ color: colors.primaryForeground, fontWeight: "700", fontSize: 15 }}>Add details for an immediate pin</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.nominateSubmit, { backgroundColor: "#CA922B", marginTop: 20 }]}
                   onPress={() => setShowNominate(false)}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Done</Text>
+                  <Text style={{ color: colors.primaryForeground, fontWeight: "700", fontSize: 15 }}>Done</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -463,8 +527,8 @@ export default function SmartSearchScreen() {
                   disabled={nominateLoading}
                 >
                   {nominateLoading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Save Business Tip</Text>
+                    ? <ActivityIndicator color={colors.primaryForeground} />
+                    : <Text style={{ color: colors.primaryForeground, fontWeight: "700", fontSize: 15 }}>Save Business Tip</Text>
                   }
                 </TouchableOpacity>
               </>

@@ -1,18 +1,12 @@
 import { useRef, useState } from "react";
-import { useListBusinesses } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useSearch } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, Star, Grid, Map as MapIcon, Compass, Clock, PlusCircle, X, Building2, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { executeV1SearchWithFallback } from "@/lib/discoveryV1";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -302,7 +296,6 @@ export default function Discover() {
   const scrollToResults = () => {
     document.getElementById("discover-results")?.scrollIntoView({ behavior: "smooth" });
   };
-  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [openNow, setOpenNow] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
@@ -312,23 +305,42 @@ export default function Discover() {
     ? VIBES.find(v => v.label === activeVibe)?.category ?? undefined
     : activeCategory === "All" ? undefined : activeCategory;
 
-  const { data, isLoading } = useListBusinesses({
-    search: query || undefined,
-    category: effectiveCategory,
-  }, { query: { queryKey: ['businesses', query, activeCategory, activeVibe] } });
+  const { data, isLoading } = useQuery({
+    queryKey: ['businesses', query, activeCategory, activeVibe],
+    queryFn: async () => {
+      const res = await executeV1SearchWithFallback({
+        query: query || "",
+        surface: "discover",
+        fallbackLimit: 50
+      });
+      let businesses = res?.payload?.results?.businesses ?? res?.payload?.businesses ?? [];
+      if (effectiveCategory) {
+        businesses = businesses.filter((b: any) => b.category?.toLowerCase().includes(effectiveCategory.toLowerCase()));
+      }
+      return { businesses };
+    }
+  });
 
-  const businesses = openNow
-    ? (data?.businesses ?? []).filter(b => isOpenNow((b as any).hours))
+  const businesses: any[] = openNow
+    ? (data?.businesses ?? []).filter((b: any) => isOpenNow((b as any).hours))
     : (data?.businesses ?? []);
 
   const hasActiveFilter = activeCategory !== "All" || activeVibe !== null;
 
-  const { data: expandData } = useListBusinesses(
-    { search: query || undefined },
-    { query: { queryKey: ['businesses-expand', query], enabled: minorityExpanded && businesses.length === 0 && hasActiveFilter } }
-  );
+  const { data: expandData } = useQuery({
+    queryKey: ['businesses-expand', query],
+    enabled: minorityExpanded && businesses.length === 0 && hasActiveFilter,
+    queryFn: async () => {
+      const res = await executeV1SearchWithFallback({
+        query: query || "",
+        surface: "discover",
+        fallbackLimit: 50
+      });
+      return { businesses: res?.payload?.results?.businesses ?? res?.payload?.businesses ?? [] };
+    }
+  });
 
-  const expansionBusinesses = minorityExpanded && businesses.length === 0 && hasActiveFilter
+  const expansionBusinesses: any[] = minorityExpanded && businesses.length === 0 && hasActiveFilter
     ? (expandData?.businesses ?? [])
     : [];
 
@@ -363,13 +375,16 @@ export default function Discover() {
             Find the best minority-owned businesses, authentic experiences, and trusted community spots.
           </p>
 
+          <div className="w-full max-w-2xl text-left mb-2 pl-4">
+            <span className="text-white/90 font-serif font-bold text-lg">Find a place</span>
+          </div>
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
             <Search className="w-5 h-5 text-muted-foreground ml-4" />
-            <Input 
+            <Input
               data-testid="discover-search-input"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for restaurants, services, landmarks..."
+              placeholder="Describe what you need, or search by name"
               className="border-0 focus-visible:ring-0 shadow-none text-base h-12 bg-transparent rounded-full"
             />
             <Button data-testid="discover-search-button" onClick={scrollToResults} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Search</Button>
@@ -449,31 +464,12 @@ export default function Discover() {
               <Clock size={14} className={openNow ? "text-white" : "text-green-600"} />
               Open Now
             </button>
-            <Select defaultValue="recommended">
-              <SelectTrigger className="w-[180px] bg-white border-[#2B1507]/10 rounded-full h-10">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recommended">Recommended</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-                <SelectItem value="newest">Newest</SelectItem>
-              </SelectContent>
-            </Select>
 
-            <div className="flex bg-white rounded-full p-1 border border-[#2B1507]/10">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-full ${viewMode === "grid" ? "bg-[#FAF6EF] text-[#2B1507]" : "text-muted-foreground"}`}
-              >
-                <Grid size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode("map")}
-                className={`p-2 rounded-full ${viewMode === "map" ? "bg-[#FAF6EF] text-[#2B1507]" : "text-muted-foreground"}`}
-              >
-                <MapIcon size={18} />
-              </button>
-            </div>
+            <Link href={`/map${query ? `?q=${encodeURIComponent(query)}` : ''}`}>
+              <Button variant="outline" className="rounded-full border-[#2B1507]/20 text-[#3A1F0E] bg-white h-10 px-4">
+                <MapIcon size={14} className="mr-2" /> View on Map
+              </Button>
+            </Link>
           </div>
         </div>
 

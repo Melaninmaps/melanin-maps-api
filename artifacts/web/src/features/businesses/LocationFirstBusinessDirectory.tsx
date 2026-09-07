@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
@@ -10,6 +10,7 @@ import {
   readCanonicalBusinessSearchResponse,
   type CanonicalBusinessSearchRecord,
 } from "./canonicalBusinessSearch";
+import { executeV1SearchWithFallback } from "@/lib/discoveryV1";
 
 const BASE = import.meta.env.BASE_URL;
 const PAGE_SIZE = 60;
@@ -30,11 +31,22 @@ const OWNERSHIP_FILTERS = [
 ] as const;
 
 export function LocationFirstBusinessDirectory() {
+  const searchString = useSearch();
+  const searchParams = useMemo(() => new URLSearchParams(searchString), [searchString]);
+
   const { location, setExplicitLocation } = useDiscoveryLocation();
   const [category, setCategory] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [ownership, setOwnership] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState(searchParams.get("q") ?? "");
+
+  useEffect(() => {
+    const areaParam = searchParams.get("area");
+    if (areaParam && areaParam !== location.city) {
+      setExplicitLocation({ city: areaParam, stateCode: null, neighborhood: null });
+    }
+  }, [searchParams, location.city, setExplicitLocation]);
+
   const [records, setRecords] = useState<CanonicalBusinessSearchRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -87,27 +99,48 @@ export function LocationFirstBusinessDirectory() {
     setError(null);
     setRecords([]);
     setTotal(0);
-    authenticatedFetch(`${BASE}api/businesses?${queryParams.toString()}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`Business search failed (${response.status})`);
-        return readCanonicalBusinessSearchResponse(await response.json());
-      })
-      .then((result) => {
-        if (requestId !== requestIdRef.current || controller.signal.aborted) return;
-        setRecords(result.businesses);
-        setTotal(result.total);
-      })
-      .catch((caught: unknown) => {
-        if (controller.signal.aborted || requestId !== requestIdRef.current) return;
-        setRecords([]);
-        setTotal(0);
-        setError(caught instanceof Error ? caught.message : "Business search is unavailable right now.");
-      })
-      .finally(() => {
-        if (requestId === requestIdRef.current && !controller.signal.aborted) setLoading(false);
-      });
+
+    const filters: any = {};
+    if (category) filters.categoryIds = [category];
+    if (specialtyLabel) filters.specialtyIds = [specialtyLabel];
+    if (ownership) filters.ownershipClaims = [ownership];
+
+    executeV1SearchWithFallback({
+      query: searchText,
+      surface: "businesses",
+      city: location.city ?? undefined,
+      stateRegion: location.stateCode ?? undefined,
+      radiusMiles: 5,
+      fallbackLimit: PAGE_SIZE,
+      filters,
+      useBusinessApiFallback: true
+    }).then(async (res) => {
+      if (requestId !== requestIdRef.current || controller.signal.aborted) return;
+      if (!res) throw new Error("Search is unavailable.");
+
+      const results = res.payload.results?.businesses ?? res.payload.businesses ?? [];
+      const businesses = results.map((b: any) => ({
+        id: b.id,
+        name: b.name,
+        category: b.category,
+        latitude: b.latitude,
+        longitude: b.longitude,
+        verified: b.verified,
+        sourceUrl: b.sourceUrl,
+        city: location.city ?? "",
+        state: location.stateCode ?? "",
+      }));
+      setRecords(businesses as any);
+      setTotal(res.payload.totalResults);
+    }).catch((caught: unknown) => {
+      if (controller.signal.aborted || requestId !== requestIdRef.current) return;
+      setRecords([]);
+      setTotal(0);
+      setError(caught instanceof Error ? caught.message : "Business search is unavailable right now.");
+    }).finally(() => {
+      if (requestId === requestIdRef.current && !controller.signal.aborted) setLoading(false);
+    });
+
     return () => controller.abort();
   }, [queryKey, retryKey]);
 
@@ -161,9 +194,12 @@ export function LocationFirstBusinessDirectory() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-8">
+        <div className="mb-2 pl-1">
+          <span className="text-[#3A1F0E] font-serif font-bold text-lg">Find a place</span>
+        </div>
         <LocationSearchBar
-          queryLabel="What are you looking for?"
-          queryPlaceholder="Search bookstore, natural hair, HVAC, CPA, restaurant…"
+          queryLabel="Find a place"
+          queryPlaceholder="Describe what you need, or search by name"
           areaPlaceholder="City, neighborhood, or ZIP"
           initialQuery={searchText}
           initialAreaLabel={locationLabel}
@@ -179,10 +215,20 @@ export function LocationFirstBusinessDirectory() {
           }}
         />
 
-        <p className="mt-4 text-sm font-semibold text-[#2B1507]" aria-live="polite">{countLabel}</p>
-        <p className="mt-1 text-xs text-[#3A1F0E]/60">
-          Listings marked unclaimed are searchable but are not presented as verified or owner-controlled.
-        </p>
+        <div className="mt-4 flex items-start justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[#2B1507]" aria-live="polite">{countLabel}</p>
+            <p className="mt-1 text-xs text-[#3A1F0E]/60 max-w-lg">
+              Listings marked unclaimed are searchable but are not presented as verified or owner-controlled.
+            </p>
+          </div>
+          <Link
+            href={`/map${searchText || location.city ? '?' : ''}${searchText ? `q=${encodeURIComponent(searchText)}` : ''}${searchText && location.city ? '&' : ''}${location.city ? `area=${encodeURIComponent(location.city)}` : ''}`}
+            className="inline-flex items-center gap-2 rounded-full border border-[#2B1507]/20 bg-white px-4 py-2 text-sm font-medium text-[#3A1F0E] transition-colors hover:border-[#CA922B] hover:text-[#CA922B]"
+          >
+            View on Map
+          </Link>
+        </div>
 
         <FilterRow
           label="Category"

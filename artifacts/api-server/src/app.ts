@@ -52,6 +52,7 @@ import {
 import { registerLocationFirstDiscoveryRoutes } from "./discovery/registerLocationFirstDiscoveryRoutes";
 import { createPostgresFlywheelRepository } from "./discovery/postgresFlywheelRepository";
 import { findExactRecords, findNearestAvailableLocation } from "./discovery/postgresLocationFirstRepository";
+import { registerDiscoveryV1Routes } from "./discovery/registerDiscoveryV1Routes";
 import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRoutes";
 import { registerMediaRoutes } from "./media/registerMediaRoutes";
 import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
@@ -416,6 +417,11 @@ registerUniversalMapEntityRoutes(app, pool);
 // Register before the aggregate /api router, whose global requireAuth middleware
 // would otherwise turn this intentionally public resolver into a cookie-only 401.
 registerLocationResolutionRoutes(app, pool);
+
+// New callers use this typed V1 contract. It is mounted before the aggregate
+// router so public search remains compatible with existing public discovery;
+// event ingestion itself requires the server-authenticated member below.
+registerDiscoveryV1Routes(app, pool);
 
 app.use("/api", router);
 app.use(webSsrRouter);

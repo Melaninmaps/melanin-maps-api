@@ -19,6 +19,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
+import * as Location from "expo-location";
+import { executeV1Search, loadV1State, saveV1State } from "@/lib/discoveryV1";
 import { CATEGORIES } from "@/constants/data";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 
@@ -62,6 +64,27 @@ export default function BusinessSearchScreen() {
   const [results, setResults] = useState<Business[]>([]);
   const [searched, setSearched] = useState(false);
   const [mode, setMode] = useState<Mode>("search");
+
+  useEffect(() => {
+    const v1 = loadV1State();
+    if (v1 && v1.q) {
+      if (!name) setName(v1.q);
+      if (v1.radius) setRadiusMiles(v1.radius);
+      if (v1.fullResults.length > 0) {
+        setResults(v1.fullResults.filter((r: any) => r.recordType === "business").map((r: any) => ({
+          id: r.id,
+          name: r.title,
+          category: r.subtitle,
+          city: v1.area,
+          state: "",
+          verified: r.isVerified,
+          description: r.matchReason
+        })) as Business[]);
+        setSearched(true);
+        setMode("results");
+      }
+    }
+  }, []);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [inviteContact, setInviteContact] = useState("");
@@ -70,6 +93,8 @@ export default function BusinessSearchScreen() {
   const [inviteSent, setInviteSent] = useState(false);
 
   const { history, add: addHistory } = useSearchHistory("business");
+
+  const [radiusMiles, setRadiusMiles] = useState<number | null>(null);
 
   useEffect(() => {
     if (history.length > 0 && !category) {
@@ -95,49 +120,73 @@ export default function BusinessSearchScreen() {
       const stateParam = state.trim();
       const handleParam = handle.trim();
 
-      const allParams = new URLSearchParams();
-      if (nameParam) allParams.set("search", nameParam);
-      if (cityParam) allParams.set("city", cityParam);
-      if (stateParam) allParams.set("state", stateParam);
-      if (handleParam) allParams.set("handle", handleParam);
-      if (category) allParams.set("category", category);
-      allParams.set("limit", "200");
+      let lat, lng;
+      if (radiusMiles || (!cityParam && !stateParam)) {
+        let locGranted = false;
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === "granted") {
+            locGranted = true;
+          }
+        } catch (err) {}
 
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 6000);
-      let data: { businesses?: unknown };
-      try {
-        const res = await fetch(`${getApiBase()}/api/businesses?${allParams.toString()}`, {
-          signal: controller.signal,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        data = await res.json() as { businesses?: unknown };
-        if (!Array.isArray(data.businesses)) throw new Error("Invalid businesses response");
-      } finally {
-        clearTimeout(timeout);
+        if (!locGranted) {
+          throw new Error("Location access is required for distance filters. Please enable it in your device settings.");
+        }
+
+        try {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          lat = Number(loc.coords.latitude.toFixed(2));
+          lng = Number(loc.coords.longitude.toFixed(2));
+        } catch (err) {
+          throw new Error("Unable to determine location. Please try again.");
+        }
       }
-      const list = data.businesses as Business[];
+
+      const q = [nameParam, handleParam].filter(Boolean).join(" ") || category || "businesses";
+
+      const payload = await executeV1Search({
+        query: q,
+        surface: "businesses",
+        city: cityParam || undefined,
+        stateRegion: stateParam || undefined,
+        latitude: lat,
+        longitude: lng,
+        radiusMiles: radiusMiles || undefined
+      });
 
       if (requestId !== searchRequestIdRef.current) return;
+
+      const list = payload.results.filter((r: any) => r.recordType === "business").map((r: any) => ({
+        id: r.id,
+        name: r.title,
+        category: r.subtitle,
+        city: payload.locationLabel || cityParam || "nearby",
+        state: stateParam || "",
+        verified: r.isVerified,
+        description: r.matchReason
+      })) as Business[];
+
       setResults(list);
       setSearched(true);
       setMode(list.length > 0 ? "results" : "invite");
 
       const searchLabel = [nameParam, cityParam, stateParam].filter(Boolean).join(", ") || category;
       void addHistory(searchLabel, category ? [category] : []);
-    } catch {
+    } catch (error: any) {
       if (requestId === searchRequestIdRef.current) {
         setResults([]);
         setSearched(true);
         setMode("search");
-        setSearchError("Unable to search businesses right now. Check your connection and try again.");
+        const msg = error instanceof Error && (error.message.includes("Location") || error.message.includes("location"))
+          ? error.message
+          : "Unable to search businesses right now. Check your connection and try again.";
+        setSearchError(msg);
       }
     } finally {
       if (requestId === searchRequestIdRef.current) setLoading(false);
     }
-  }, [name, city, state, handle, category, addHistory]);
+  }, [name, city, state, handle, category, addHistory, radiusMiles]);
 
   const handleSendInquiry = useCallback(async () => {
     if (!name.trim()) return;
@@ -231,7 +280,7 @@ export default function BusinessSearchScreen() {
         >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Find a Business</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Find a place</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -285,7 +334,7 @@ export default function BusinessSearchScreen() {
               ref={nameRef}
               value={name}
               onChangeText={setName}
-              placeholder='e.g. "Mapping with Melanin"'
+              placeholder="Describe what you need, or search by name"
               placeholderTextColor={colors.mutedForeground}
               style={[styles.input, { color: colors.foreground }]}
               returnKeyType="next"
@@ -365,35 +414,57 @@ export default function BusinessSearchScreen() {
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: category === cat ? primaryGold : colors.secondary,
-                    borderColor: category === cat ? primaryGold : colors.border,
+                    backgroundColor: category === cat ? colors.primary : colors.secondary,
+                    borderColor: category === cat ? colors.primary : colors.border,
                   },
                 ]}
                 onPress={() => setCategory(category === cat ? "" : cat)}
               >
-                <Text style={[styles.chipText, { color: category === cat ? "#fff" : colors.foreground }]}>
+                <Text style={[styles.chipText, { color: category === cat ? colors.primaryForeground : colors.foreground }]}>
                   {cat}
                 </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
+
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 16 }]}>DISTANCE</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            {[5, 10, 25].map((r) => (
+              <TouchableOpacity
+                key={r}
+                activeOpacity={0.8}
+                onPress={() => setRadiusMiles(radiusMiles === r ? null : r)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: radiusMiles === r ? colors.primary : colors.secondary,
+                    borderColor: radiusMiles === r ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.chipText, { color: radiusMiles === r ? colors.primaryForeground : colors.foreground }]}>
+                  {r} mi
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <TouchableOpacity
           style={[
             styles.searchBtn,
-            { backgroundColor: hasQuery ? primaryGold : colors.secondary },
+            { backgroundColor: hasQuery ? colors.primary : colors.secondary },
           ]}
           activeOpacity={0.85}
           onPress={handleSearch}
           disabled={!hasQuery || loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
+            <ActivityIndicator color={colors.primaryForeground} size="small" />
           ) : (
             <>
-              <Feather name="search" size={18} color={hasQuery ? "#fff" : colors.mutedForeground} />
-              <Text style={[styles.searchBtnText, { color: hasQuery ? "#fff" : colors.mutedForeground }]}>
+              <Feather name="search" size={18} color={hasQuery ? colors.primaryForeground : colors.mutedForeground} />
+              <Text style={[styles.searchBtnText, { color: hasQuery ? colors.primaryForeground : colors.mutedForeground }]}>
                 Search Directory
               </Text>
             </>
@@ -520,11 +591,11 @@ export default function BusinessSearchScreen() {
                   disabled={inviteSubmitting}
                 >
                   {inviteSubmitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={colors.primaryForeground} size="small" />
                   ) : (
                     <>
-                      <Feather name="send" size={16} color="#fff" />
-                      <Text style={styles.inviteBtnText}>Send Them an Invite</Text>
+                      <Feather name="send" size={16} color={colors.primaryForeground} />
+                      <Text style={[styles.inviteBtnText, { color: colors.primaryForeground }]}>Send Them an Invite</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -714,7 +785,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
   },
-  inviteBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
+  inviteBtnText: { fontFamily: "Inter_700Bold", fontSize: 15 },
   inviteFootnote: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center" },
   inviteSent: { alignItems: "center", paddingVertical: 8 },
   inviteSentIcon: {

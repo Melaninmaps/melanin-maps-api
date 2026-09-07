@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
 import AddPlaceModal from "@/components/AddPlaceModal";
+import { executeV1SearchWithFallback, loadV1State, getUniversalFromV1State } from "@/lib/discoveryV1";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -353,30 +354,6 @@ export default function MapPage() {
     lat: number; lng: number; name: string;
   } | null>(null);
 
-  // Parses structured phrases like "Black-owned grocery stores in Atlanta"
-  // into discrete API parameters so the business endpoint returns real results
-  // instead of a universal-search zero-result fallback.
-  function parseMapSearchPhrase(input: string): {
-    search: string; city?: string; ownership?: "black-owned"; category?: string;
-  } {
-    const lower = input.toLowerCase().trim();
-    const cityMatch = lower.match(/\bin\s+([a-z][a-z .'-]+?)(?:\s*$|\s+(?:near|around)\b)/);
-    const city = cityMatch?.[1]?.trim().replace(/[.,]+$/, "");
-    const ownership: "black-owned" | undefined = /\bblack[- ]owned\b/i.test(input) ? "black-owned" : undefined;
-    const category =
-      /\bgrocery\s+stores?\b/i.test(input) ? "Grocery" :
-      /\brestaurants?\b|\bdining\b/i.test(input) ? "Food" :
-      /\bbarber|salon|beauty\b/i.test(input) ? "Beauty & Personal Care" :
-      undefined;
-    const search = input
-      .replace(/\bblack[- ]owned\b/gi, "")
-      .replace(/\bgrocery\s+stores?\b/gi, "")
-      .replace(/\bin\s+[a-z][a-z .'-]+?\s*$/i, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    return { search, city, ownership, category };
-  }
-
   // Universal Search — triggered on Enter or button click.
   //
   // ARCHITECTURE:
@@ -472,67 +449,43 @@ export default function MapPage() {
       }
     } catch { /* geo-extract failed — map stays at current position, search continues */ }
 
-    // Step 2 — search MWM database only
-    // Pass full query so Pass 2.5 city detection works ("Phuket" found in
-    // businesses table → filters to Phuket). Also pass detected lat/lng so
-    // geo-radius ranking activates for that geography.
+    // Step 2 — V1 Search with Universal Fallback
     try {
-      const p = new URLSearchParams({ q, surface: "map", limit: "20" });
-      if (geoLat !== null && geoLng !== null) {
-        // Override user GPS coords with the detected location so the MWM DB
-        // search is geo-bounded around the identified city/region.
-        // radius=50: wider than the near-me default (25 mi) so international
-        // cities (Phuket province, Jamaica, etc.) are fully covered.
-        p.set("lat", String(geoLat));
-        p.set("lng", String(geoLng));
-        p.set("radius", "50");
-        // NOTE: we intentionally do NOT pass city= here. The geo-filter alone
-        // (lat/lng + radius=50) is better for international searches: Phuket
-        // businesses are stored as "Phuket Town", "Patong", "Karon" — city=Phuket
-        // would AND-filter to only ILIKE '%Phuket%' matches, excluding Patong/Karon.
-        // The radius covers the full region regardless of how each sub-area is named.
-      } else if (userCoords) {
-        p.set("lat", String(userCoords.lat));
-        p.set("lng", String(userCoords.lng));
-      }
-      const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
-      if (res.ok) {
-        const payload = await res.json();
-        const universalBusinesses: any[] = payload?.results?.businesses ?? [];
-
-        // Phrase-search fallback: when universal search returns 0 businesses for a
-        // structured phrase ("Black-owned grocery stores in Atlanta"), also call the
-        // direct businesses endpoint with parsed ownership/category/city params.
-        let phraseBusinesses: any[] = [];
-        if (universalBusinesses.length === 0) {
-          try {
-            const parsed = parseMapSearchPhrase(q);
-            if (parsed.ownership || parsed.category || parsed.city) {
-              const bp = new URLSearchParams({ limit: "200" });
-              if (parsed.search) bp.set("search", parsed.search);
-              if (parsed.city) bp.set("city", parsed.city);
-              if (parsed.ownership) bp.set("ownership", parsed.ownership);
-              if (parsed.category) bp.set("category", parsed.category);
-              const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
-              if (bizRes.ok) {
-                const bizPayload = await bizRes.json();
-                phraseBusinesses = Array.isArray(bizPayload.businesses) ? bizPayload.businesses : [];
-              }
-            }
-          } catch { /* phrase fallback failed — continue with universal results */ }
+      // Check session state first if handoffQuery is active
+      const cached = loadV1State();
+      if (cached && cached.q === q && (cached.area === geoName || cached.area === handoffArea || !geoName)) {
+        const payload = getUniversalFromV1State(cached);
+        setUniversalResults(payload);
+        const finalBusinesses = payload.results.businesses ?? [];
+        const useLocalSearch = (geoLat !== null && geoLng !== null) || userCoords !== null;
+        if (!useLocalSearch) {
+          const fitted = fitMapToBusinessResults(finalBusinesses);
+          if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
+            searchViewportLockedRef.current = true;
+            mapRef.current.panTo({ lat: geoLat, lng: geoLng });
+            mapRef.current.setZoom(12);
+          }
+        } else if (!searchViewportLockedRef.current && geoLat !== null && geoLng !== null && mapRef.current) {
+          mapRef.current.panTo({ lat: geoLat, lng: geoLng });
+          mapRef.current.setZoom(12);
         }
+        return;
+      }
 
-        const finalBusinesses = phraseBusinesses.length > 0 ? phraseBusinesses : universalBusinesses;
-        const finalPayload = phraseBusinesses.length > 0
-          ? {
-              ...payload,
-              results: { ...payload.results, businesses: phraseBusinesses },
-              totalResults: phraseBusinesses.length,
-              fallbackMessage: null,
-            }
-          : payload;
+      const res = await executeV1SearchWithFallback({
+        query: q,
+        surface: "map",
+        city: geoName ?? undefined,
+        latitude: geoLat !== null ? geoLat : userCoords?.lat,
+        longitude: geoLng !== null ? geoLng : userCoords?.lng,
+        radiusMiles: 5,
+        fallbackLimit: 20
+      });
 
-        setUniversalResults(finalPayload);
+      if (res && res.payload) {
+        const payload = res.payload;
+        setUniversalResults(payload);
+        const finalBusinesses: any[] = payload?.results?.businesses ?? [];
 
         // Fit canvas to MWM results so the viewport reflects where businesses
         // actually are, not just the geocoded city center.
@@ -1349,18 +1302,29 @@ export default function MapPage() {
             <h1 className="font-serif font-bold text-[#2B1507] text-lg">
               {showingCultural ? legendTileLabel : "Explore the Map"}
             </h1>
-            <button
-              onClick={() => { setSidebarOpen(false); setLegendFilter(null); }}
-              className="w-7 h-7 rounded-full bg-[#3A1F0E]/6 flex items-center justify-center hover:bg-[#3A1F0E]/12 transition-colors"
-              aria-label="Close panel"
-            >
-              <X className="w-4 h-4 text-[#3A1F0E]/60" />
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/businesses${search || detectedLocation?.name ? '?' : ''}${search ? `q=${encodeURIComponent(search)}` : ''}${search && detectedLocation?.name ? '&' : ''}${detectedLocation?.name ? `area=${encodeURIComponent(detectedLocation.name)}` : ''}`}
+                className="px-2 py-1 text-xs font-semibold text-[#CA922B] hover:text-[#B38024]"
+              >
+                List view
+              </Link>
+              <button
+                onClick={() => { setSidebarOpen(false); setLegendFilter(null); }}
+                className="w-7 h-7 rounded-full bg-[#3A1F0E]/6 flex items-center justify-center hover:bg-[#3A1F0E]/12 transition-colors"
+                aria-label="Close panel"
+              >
+                <X className="w-4 h-4 text-[#3A1F0E]/60" />
+              </button>
+            </div>
           </div>
 
           {/* Search — only shown in business view */}
           {!showingCultural && (
             <>
+              <div className="mb-1 text-left pl-1">
+                <span className="text-[#3A1F0E] font-serif font-bold text-[15px]">Find a place</span>
+              </div>
               <div className="relative mb-3">
                 <button
                   onClick={() => runUniversalSearch()}
@@ -1382,7 +1346,7 @@ export default function MapPage() {
                     localSearchMarkersRef.current = [];
                   }}
                   onKeyDown={(e) => { if (e.key === "Enter") runUniversalSearch(); }}
-                  placeholder="Search businesses, heritage, events — press Enter"
+                  placeholder="Describe what you need, or search by name"
                   className="w-full pl-9 pr-8 py-2 text-sm bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
                 />
                 {search && (
