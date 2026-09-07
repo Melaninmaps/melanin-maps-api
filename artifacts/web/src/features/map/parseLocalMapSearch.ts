@@ -18,8 +18,49 @@ const SUBJECTS: Array<{ expression: RegExp; subject: string }> = [
 ];
 const DEVICE_LOCATION = /^(?:me|my location|current location|nearby|here)$/i;
 const ZIP_CODE = /^\d{5}(?:-\d{4})?$/;
+const CITY_NAME = /^[\p{L}][\p{L}\p{M}.'’ -]{0,78}[\p{L}.]$/u;
+const US_STATE_CODES = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+]);
+const US_STATE_NAMES = new Map<string, string>([
+  ["alabama", "AL"], ["alaska", "AK"], ["arizona", "AZ"], ["arkansas", "AR"],
+  ["california", "CA"], ["colorado", "CO"], ["connecticut", "CT"], ["delaware", "DE"],
+  ["florida", "FL"], ["georgia", "GA"], ["hawaii", "HI"], ["idaho", "ID"],
+  ["illinois", "IL"], ["indiana", "IN"], ["iowa", "IA"], ["kansas", "KS"],
+  ["kentucky", "KY"], ["louisiana", "LA"], ["maine", "ME"], ["maryland", "MD"],
+  ["massachusetts", "MA"], ["michigan", "MI"], ["minnesota", "MN"], ["mississippi", "MS"],
+  ["missouri", "MO"], ["montana", "MT"], ["nebraska", "NE"], ["nevada", "NV"],
+  ["new hampshire", "NH"], ["new jersey", "NJ"], ["new mexico", "NM"], ["new york", "NY"],
+  ["north carolina", "NC"], ["north dakota", "ND"], ["ohio", "OH"], ["oklahoma", "OK"],
+  ["oregon", "OR"], ["pennsylvania", "PA"], ["rhode island", "RI"], ["south carolina", "SC"],
+  ["south dakota", "SD"], ["tennessee", "TN"], ["texas", "TX"], ["utah", "UT"],
+  ["vermont", "VT"], ["virginia", "VA"], ["washington", "WA"], ["west virginia", "WV"],
+  ["wisconsin", "WI"], ["wyoming", "WY"], ["district of columbia", "DC"],
+]);
 
 type TypedGeography = { city: string; stateCode?: string };
+
+function explicitUsCityState(value: string): TypedGeography | null {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  const codeMatch = normalized.match(/^(.+?)(?:,\s*|\s+)([A-Za-z]{2})$/);
+  if (codeMatch) {
+    const city = codeMatch[1].trim();
+    const stateCode = codeMatch[2].toUpperCase();
+    return CITY_NAME.test(city) && US_STATE_CODES.has(stateCode) ? { city, stateCode } : null;
+  }
+  const lowered = normalized.toLocaleLowerCase("en-US");
+  for (const [stateName, stateCode] of US_STATE_NAMES) {
+    const suffix = ` ${stateName}`;
+    if (!lowered.endsWith(suffix)) continue;
+    const city = normalized.slice(0, -suffix.length).replace(/,\s*$/, "").trim();
+    return CITY_NAME.test(city) ? { city, stateCode } : null;
+  }
+  return null;
+}
 
 function normalizeSubject(value: string): string {
   const subject = value.trim().replace(/^[, ]+|[, ]+$/g, "");
@@ -30,7 +71,9 @@ function typedGeography(value: string): TypedGeography | null {
   const candidate = value.trim().replace(/^[, ]+|[, .!?]+$/g, "");
   if (ZIP_CODE.test(candidate)) return { city: candidate };
   const canonical = getHeritageCity(candidate);
-  return canonical ? { city: canonical.city, stateCode: canonical.state } : null;
+  return canonical
+    ? { city: canonical.city, stateCode: canonical.state }
+    : explicitUsCityState(candidate);
 }
 
 function parsedWithGeography(subjectText: string, geography: TypedGeography): ParsedLocalMapSearch {
@@ -64,7 +107,7 @@ export function parseLocalMapSearch(input: string): ParsedLocalMapSearch {
 
   // Test every trailing phrase against the canonical city/state/alias registry or
   // ZIP grammar. A bare trailing word is never geography merely because it is last.
-  for (const match of text.matchAll(/\s+/g)) {
+  for (const match of Array.from(text.matchAll(/\s+/g)).reverse()) {
     const boundary = (match.index ?? -1) + match[0].length;
     const subjectText = text.slice(0, match.index).trim();
     if (!subjectText) continue;

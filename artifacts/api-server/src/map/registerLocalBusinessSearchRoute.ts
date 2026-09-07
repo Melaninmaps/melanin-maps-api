@@ -1,6 +1,14 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import { isValidMapCoordinatePair, LocalBusinessSearch } from "./localBusinessSearch";
 
+const DECIMAL_COORDINATE = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/;
+
+function decimalCoordinate(value: unknown): number {
+  if (typeof value !== "string") return Number.NaN;
+  const normalized = value.trim();
+  return DECIMAL_COORDINATE.test(normalized) ? Number(normalized) : Number.NaN;
+}
+
 /**
  * GET /api/map/local-business-search
  *
@@ -38,12 +46,8 @@ export function registerLocalBusinessSearchRoute(
         const stateCode = typeof request.query["stateCode"] === "string" ? request.query["stateCode"] : undefined;
         const rawLatitude = request.query["lat"];
         const rawLongitude = request.query["lng"];
-        const latitude = typeof rawLatitude === "string" && rawLatitude.trim()
-          ? Number(rawLatitude)
-          : Number.NaN;
-        const longitude = typeof rawLongitude === "string" && rawLongitude.trim()
-          ? Number(rawLongitude)
-          : Number.NaN;
+        const latitude = decimalCoordinate(rawLatitude);
+        const longitude = decimalCoordinate(rawLongitude);
         const radius = Number(request.query["radius"] ?? 5);
         const expansionAccepted = request.query["expand"] === "1";
 

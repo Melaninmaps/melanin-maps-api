@@ -20,6 +20,10 @@ const cases = [
   ["HVAC in Phoenix", { subject: "hvac", city: "Phoenix", stateCode: "AZ" }],
   ["plumber Atlanta", { subject: "plumber", city: "Atlanta", stateCode: "GA" }],
   ["electrician Philadelphia PA", { subject: "electrician", city: "Philadelphia", stateCode: "PA" }],
+  ["plumber in Boston, MA", { subject: "plumber", city: "Boston", stateCode: "MA" }],
+  ["plumber Boston MA", { subject: "plumber", city: "Boston", stateCode: "MA" }],
+  ["plumber in Boise, ID", { subject: "plumber", city: "Boise", stateCode: "ID" }],
+  ["electrician in Spokane, Washington", { subject: "electrician", city: "Spokane", stateCode: "WA" }],
   ["welder 30303", { subject: "welder", city: "30303" }],
   ["plumber", { subject: "plumber", usesDeviceLocation: true }],
 ] as const;
@@ -33,12 +37,18 @@ describe("parseLocalMapSearch", () => {
     expect(parseLocalMapSearch("bookstore Atlanta").usesDeviceLocation).not.toBe(true);
     expect(parseLocalMapSearch("barber near 19104").usesDeviceLocation).not.toBe(true);
     expect(parseLocalMapSearch("electrician Philadelphia PA").usesDeviceLocation).not.toBe(true);
+    expect(parseLocalMapSearch("plumber Boston MA").usesDeviceLocation).not.toBe(true);
+    expect(parseLocalMapSearch("plumber in Boise, ID").usesDeviceLocation).not.toBe(true);
     expect(parseLocalMapSearch("welder 30303").usesDeviceLocation).not.toBe(true);
   });
 
   it("never infers an unvalidated trailing word as a city", () => {
     expect(parseLocalMapSearch("mobile dog grooming")).toEqual({
       subject: "mobile dog grooming",
+      usesDeviceLocation: true,
+    });
+    expect(parseLocalMapSearch("plumber Nowhere ZZ")).toEqual({
+      subject: "plumber Nowhere ZZ",
       usesDeviceLocation: true,
     });
   });
