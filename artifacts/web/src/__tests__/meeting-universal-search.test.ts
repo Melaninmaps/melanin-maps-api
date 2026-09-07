@@ -23,7 +23,7 @@ const mixedResult: UniversalSearchResult = {
   results: {
     businesses: [{ id: "biz-1", name: "AMINA", city: "Philadelphia", state: "PA", listingStatus: "live_unclaimed" }],
     events: [{ id: "event-1", title: "Community Meeting", city: "Philadelphia", state: "PA" }],
-    heritage: [{ id: "heritage-1", name: "Historic Church", city: "Philadelphia", state: "PA", heritage_category: "Faith heritage" }],
+    heritage: [{ id: "heritage-1", name: "Historic Church", city: "Philadelphia", state: "PA", entity_kind: "cultural_site", detail_url: "/places/heritage-1/historic-church-philadelphia" }],
     libraryTopics: [{ id: "topic-1", name: "Philadelphia Black History", category: "History" }],
     communityOrgs: [{ id: "org-1", name: "Neighborhood Coalition", city: "Philadelphia", state: "PA", website: "https://example.org/community" }],
   },
@@ -44,7 +44,7 @@ describe("meeting-ready universal web search", () => {
       "Neighborhood Coalition",
       "Businesses (1)",
       "Events (1)",
-      "Heritage &amp; cultural sites (1)",
+      "Places, heritage &amp; culture (1)",
       "Library topics &amp; resources (1)",
       "Community organizations (1)",
     ]) {
@@ -53,7 +53,7 @@ describe("meeting-ready universal web search", () => {
 
     expect(markup).toContain("/businesses/biz-1");
     expect(markup).toContain("/events?search=Community%20Meeting");
-    expect(markup).toContain("/cultural-sites/heritage-1");
+    expect(markup).toContain("/places/heritage-1/historic-church-philadelphia");
     expect(markup).toContain("/library/search?q=Philadelphia%20Black%20History");
     expect(markup).toContain("https://example.org/community");
     expect(markup).toContain("Community/founder-listed · Unclaimed · Not verified");
@@ -115,6 +115,34 @@ describe("meeting-ready universal web search", () => {
     expect(markup).toContain("No public detail link is available yet.");
     expect(markup).not.toContain("/community?");
     expect(markup).not.toContain("127.0.0.1");
+  });
+
+  it("labels governed travel destinations as planning references rather than businesses", () => {
+    const result: UniversalSearchResult = {
+      query: "Brazil travel",
+      totalResults: 1,
+      results: {
+        businesses: [],
+        events: [],
+        heritage: [{
+          id: "destination-1",
+          name: "Salvador",
+          city: "Salvador",
+          country: "BR",
+          entity_kind: "travel_destination",
+          detail_url: "/places/destination-1/salvador-brazil",
+        }],
+        libraryTopics: [],
+        communityOrgs: [],
+      },
+    };
+    const markup = renderToStaticMarkup(React.createElement(UniversalSearchResults, {
+      result,
+      surface: "Discover",
+    }));
+
+    expect(markup).toContain("Travel planning reference · Not a verified business");
+    expect(markup).toContain("/places/destination-1/salvador-brazil");
   });
 
   it("mounts the broad Discover page and keeps Businesses on the canonical focused endpoint", () => {

@@ -623,7 +623,7 @@ interface BusinessResult {
   // are suppressed from this member-facing result set.
   culturalContextSources?: Array<{
     id: string;
-    sourceType: "cultural_site" | "tour_cultural_site";
+    sourceType: "cultural_site" | "tour_cultural_site" | "published_map_entity";
     reason: "same_canonical_place";
     officialDomainMatch?: boolean;
   }>;
@@ -1329,7 +1329,7 @@ type HeritageResult = {
   latitude?: string | number | null;
   longitude?: string | number | null;
   verified_source?: string | null;
-  source_table?: "cultural_sites" | "tour_cultural_sites";
+  source_table?: "cultural_sites" | "tour_cultural_sites" | "published_map_entities";
   [key: string]: unknown;
 };
 
@@ -1457,7 +1457,11 @@ async function suppressCrossSourceDuplicates(
       if (!business.culturalContextSources.some((source) => source.id === site.id)) {
         business.culturalContextSources.push({
           id: site.id,
-          sourceType: site.source_table === "tour_cultural_sites" ? "tour_cultural_site" : "cultural_site",
+          sourceType: site.source_table === "tour_cultural_sites"
+            ? "tour_cultural_site"
+            : site.source_table === "published_map_entities"
+              ? "published_map_entity"
+              : "cultural_site",
           reason: "same_canonical_place",
           officialDomainMatch: fallback.officialDomainMatch || undefined,
         });
@@ -1553,6 +1557,56 @@ async function searchHeritage(
   return [];
 }
 
+async function searchPublishedMapEntities(
+  q: string,
+  opts: { city?: string; state?: string; limit?: number } = {},
+): Promise<HeritageResult[]> {
+  const { city, state, limit = 5 } = opts;
+  const broadPlaceIntent = /\b(heritage|historic|history|culture|cultural|community|site|sites|place|places|things to do|landmark|landmarks|hbcu|festival|festivals|event|events|market|markets|public art|destination|destinations|travel)\b/i.test(q);
+  const params: unknown[] = [`%${q}%`, q];
+  let locationClause = "";
+  let browseClause = "";
+
+  if (city) {
+    params.push(city);
+    locationClause += ` AND LOWER(BTRIM(city)) = LOWER(BTRIM($${params.length}))`;
+    if (broadPlaceIntent) browseClause = " OR TRUE";
+  } else if (broadPlaceIntent) {
+    // Free-text Discover has one simple box. Treat a governed entity's stored
+    // city as location intent only when that full city name appears in the query.
+    browseClause = " OR LOWER($2) LIKE '%' || LOWER(BTRIM(city)) || '%'";
+  }
+  if (state) {
+    params.push(state.toUpperCase());
+    locationClause += ` AND UPPER(BTRIM(COALESCE(state_region, ''))) = $${params.length}`;
+  }
+  params.push(limit);
+
+  try {
+    const rows = await pool.query<HeritageResult>(
+      `SELECT id::text, title AS name, city, state_region AS state,
+              COALESCE(summary, '') AS description, latitude, longitude,
+              COALESCE(website_url, source_url) AS verified_source,
+              detail_url, entity_kind, country_code,
+              'published_map_entities' AS source_table,
+              'map_entity' AS result_type, 'related_category' AS match_tier
+       FROM public.published_map_entities
+       WHERE (
+         title ILIKE $1 OR COALESCE(summary, '') ILIKE $1 OR entity_kind ILIKE $1${browseClause}
+       )
+       ${locationClause}
+       ORDER BY
+         CASE WHEN title ILIKE $1 THEN 0 ELSE 1 END,
+         title ASC
+       LIMIT $${params.length}`,
+      params,
+    );
+    return rows.rows;
+  } catch {
+    return [];
+  }
+}
+
 // ── Community organizations search ───────────────────────────────────────────
 // Searches community_organizations for the query. Returns rows with result_type
 // "community_org" so the frontend can render them in a distinct labeled section.
@@ -1581,15 +1635,23 @@ async function searchCommunityOrgs(
 }
 
 // ── Library topic search ──────────────────────────────────────────────────────
-async function searchLibrary(q: string, limit = 5): Promise<unknown[]> {
+async function searchLibrary(q: string, city?: string, limit = 5): Promise<unknown[]> {
   try {
+    const params: unknown[] = [`%${q}%`];
+    const cityClause = city
+      ? `AND (kt.topic_name ILIKE $2 OR kt.description ILIKE $2)`
+      : "";
+    if (city) params.push(`%${city}%`);
+    params.push(limit);
     const rows = await pool.query(
       `SELECT kt.id, kt.topic_name AS name, kt.description, kt.category,
               'library_topic' as result_type, 'related_category' as match_tier
        FROM knowledge_topics kt
        WHERE (kt.topic_name ILIKE $1 OR kt.description ILIKE $1 OR kt.category ILIKE $1)
-       LIMIT ${limit}`,
-      [`%${q}%`],
+         ${cityClause}
+       ORDER BY CASE WHEN kt.topic_name ILIKE $1 THEN 0 ELSE 1 END, kt.topic_name ASC
+       LIMIT $${params.length}`,
+      params,
     );
     return rows.rows;
   } catch { return []; }
@@ -1753,7 +1815,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         ? searchEvents(trimmedQ, cityStr, 6)
         : Promise.resolve([]),
       requestedTypes.includes("library_topics")
-        ? searchLibrary(trimmedQ, 5)
+        ? searchLibrary(trimmedQ, cityStr, 5)
         : Promise.resolve([]),
       requestedTypes.includes("community_orgs")
         ? searchCommunityOrgs(trimmedQ, cityStr, 4)
@@ -1843,8 +1905,23 @@ router.get("/search/universal", async (req: Request, res: Response) => {
           })()
         : undefined);
 
+      // The governed published map view is the canonical source for HBCUs,
+      // heritage, public art, recurring community events, markets, festivals,
+      // and planning-reference travel destinations. Prefer it whenever it has
+      // an exact query or city-intent match; legacy heritage tables remain the
+      // fallback for records not yet represented in the governed view.
+      const publishedMapResults = await searchPublishedMapEntities(heritageQuery, {
+        city: heritageCity,
+        state: stateStr,
+        limit: 5,
+      });
+      if (publishedMapResults.length > 0) {
+        heritage = publishedMapResults;
+        heritageGeoExpansion = heritageCity ? "city" : stateStr ? "state" : "national";
+      }
+
       // Step 1 — exact city match
-      if (heritageCity) {
+      if (heritageGeoExpansion === "none" && heritageCity) {
         const r = await searchHeritage(heritageQuery, { city: heritageCity, limit: 5 });
         if (r.length > 0) { heritage = r; heritageGeoExpansion = "city"; }
       }

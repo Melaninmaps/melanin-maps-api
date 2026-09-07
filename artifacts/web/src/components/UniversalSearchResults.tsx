@@ -19,6 +19,10 @@ export type UniversalSearchItem = {
   ownership_claim?: string | null;
   heritageCategory?: string | null;
   heritage_category?: string | null;
+  detailUrl?: string | null;
+  detail_url?: string | null;
+  entityKind?: string | null;
+  entity_kind?: string | null;
   result_type?: string | null;
 };
 
@@ -97,11 +101,20 @@ function ownershipStatus(item: UniversalSearchItem): string | null {
   return null;
 }
 
+function safeInternalDetailPath(value: unknown): string | null {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return null;
+  return /^\/(?:places|cultural-sites|sites|tour-cultural-sites)\/[A-Za-z0-9%._~!$&'()*+,;=:@/-]+$/.test(value)
+    ? value
+    : null;
+}
+
 function internalHref(kind: ResultKind, item: UniversalSearchItem): string | null {
   const id = item.id == null ? "" : encodeURIComponent(String(item.id));
   const name = encodeURIComponent(nameOf(item));
   if (kind === "Business" && id) return `/businesses/${id}`;
-  if (kind === "Heritage / cultural site" && id) return `/cultural-sites/${id}`;
+  if (kind === "Heritage / cultural site" && id) {
+    return safeInternalDetailPath(item.detailUrl ?? item.detail_url) ?? `/cultural-sites/${id}`;
+  }
   if (kind === "Event") return `/events?search=${name}`;
   if (kind === "Library topic / resource") return `/library/search?q=${name}`;
   return null;
@@ -110,7 +123,12 @@ function internalHref(kind: ResultKind, item: UniversalSearchItem): string | nul
 function statusFor(kind: ResultKind, item: UniversalSearchItem): string {
   if (kind === "Business") return businessStatus(item);
   if (kind === "Event") return "Published community event";
-  if (kind === "Heritage / cultural site") return item.heritageCategory ?? item.heritage_category ?? "Heritage / cultural site";
+  if (kind === "Heritage / cultural site") {
+    const entityKind = item.entityKind ?? item.entity_kind;
+    if (entityKind === "travel_destination") return "Travel planning reference · Not a verified business";
+    if (entityKind) return entityKind.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+    return item.heritageCategory ?? item.heritage_category ?? "Heritage / cultural site";
+  }
   if (kind === "Library topic / resource") return "Library topic / resource";
   return "Community organization";
 }
@@ -168,7 +186,7 @@ export function UniversalSearchResults({
   const groups = [
     { title: "Businesses", kind: "Business" as const, items: result.results.businesses ?? [] },
     { title: "Events", kind: "Event" as const, items: result.results.events ?? [] },
-    { title: "Heritage & cultural sites", kind: "Heritage / cultural site" as const, items: result.results.heritage ?? [] },
+    { title: "Places, heritage & culture", kind: "Heritage / cultural site" as const, items: result.results.heritage ?? [] },
     { title: "Library topics & resources", kind: "Library topic / resource" as const, items: result.results.libraryTopics ?? [] },
     { title: "Community organizations", kind: "Community organization" as const, items: result.results.communityOrgs ?? [] },
   ].filter((group) => !allowedKinds || allowedKinds.has(group.kind));

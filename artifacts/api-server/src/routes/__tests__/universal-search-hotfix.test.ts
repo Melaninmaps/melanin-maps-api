@@ -163,11 +163,30 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
         const fixture = { ...future, id: "fixture-event", title: "Fixture Coffee Meetup" };
         return { rows: query.includes("created_by_id IS NOT NULL") ? [future, expired] : [future, expired, fixture] };
       }
+      if (query.includes("FROM public.published_map_entities")) {
+        return { rows: [{
+          id: "map-place-1",
+          name: "Coffee Heritage Plaza",
+          city: "Philadelphia",
+          state: "PA",
+          description: "A governed cultural place.",
+          latitude: "39.95",
+          longitude: "-75.16",
+          verified_source: "https://heritage.example.test",
+          detail_url: "/places/map-place-1/coffee-heritage-plaza-philadelphia",
+          entity_kind: "cultural_site",
+          source_table: "published_map_entities",
+          result_type: "map_entity",
+          match_tier: "related_category",
+        }] };
+      }
       if (query.includes("FROM cultural_sites")) {
         return { rows: [{ id: "heritage-1", name: "Coffee Heritage Site", city: "Philadelphia", state: "PA", description: "A landmark.", latitude: "39.95", longitude: "-75.16", verified_source: "heritage.example.test", source_table: "cultural_sites", result_type: "heritage", match_tier: "exact_specialty" }] };
       }
       if (query.includes("FROM knowledge_topics")) {
-        return { rows: [{ id: "library-1", name: "Coffee Culture", description: "Library context.", category: "Culture", result_type: "library_topic", match_tier: "related_category" }] };
+        return { rows: query.includes("kt.topic_name ILIKE $2 OR kt.description ILIKE $2")
+          ? [{ id: "library-1", name: "Philadelphia Coffee Culture", description: "Local Library context.", category: "Culture", result_type: "library_topic", match_tier: "related_category" }]
+          : [{ id: "unscoped-library", name: "Unrelated Global Coffee", description: "Global context.", category: "Culture", result_type: "library_topic", match_tier: "related_category" }] };
       }
       if (query.includes("FROM community_organizations")) {
         return { rows: [{ id: "organization-1", name: "Coffee Mutual Aid", category: "Community", city: "Philadelphia", state: "PA", description: "Community support.", website: "https://org.example.test", result_type: "community_org", match_tier: "related_category" }] };
@@ -177,7 +196,7 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
 
     const response = await supertest(createApp({ isTester: true }))
       .get("/api/search/universal")
-      .query({ q: "coffee" });
+      .query({ q: "coffee", city: "Philadelphia", state: "PA" });
     await flushBackgroundWork();
 
     expect(response.status).toBe(200);
@@ -186,8 +205,8 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     ]);
     expect(response.body.results.businesses.map((business: { id: string }) => business.id)).not.toEqual(expect.arrayContaining(hiddenRows.map(({ id }) => id)));
     expect(response.body.results.events).toEqual([expect.objectContaining({ id: "event-1", title: "Coffee Community Meetup", result_type: "event", match_tier: "related_category" })]);
-    expect(response.body.results.heritage).toEqual([expect.objectContaining({ id: "heritage-1", name: "Coffee Heritage Site", result_type: "heritage", match_tier: "exact_specialty" })]);
-    expect(response.body.results.libraryTopics).toEqual([expect.objectContaining({ id: "library-1", name: "Coffee Culture", result_type: "library_topic", match_tier: "related_category" })]);
+    expect(response.body.results.heritage).toEqual([expect.objectContaining({ id: "map-place-1", name: "Coffee Heritage Plaza", detail_url: "/places/map-place-1/coffee-heritage-plaza-philadelphia", entity_kind: "cultural_site", result_type: "map_entity" })]);
+    expect(response.body.results.libraryTopics).toEqual([expect.objectContaining({ id: "library-1", name: "Philadelphia Coffee Culture", result_type: "library_topic", match_tier: "related_category" })]);
     expect(response.body.results.communityOrgs).toEqual([expect.objectContaining({ id: "organization-1", name: "Coffee Mutual Aid", result_type: "community_org", match_tier: "related_category" })]);
 
     const businessReads = calls.filter(([query]) => /FROM (?:public\.public_businesses|businesses) b/.test(query));
@@ -195,6 +214,14 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(businessReads.every(([query]) => query.includes("FROM public.public_businesses b"))).toBe(true);
     const eventReads = calls.filter(([query]) => query.includes("FROM events"));
     expect(eventReads.every(([query]) => query.includes("created_by_id IS NOT NULL"))).toBe(true);
+    const mapEntityReads = calls.filter(([query]) => query.includes("FROM public.published_map_entities"));
+    expect(mapEntityReads).toHaveLength(1);
+    expect(mapEntityReads[0][0]).toContain("detail_url");
+    expect(mapEntityReads[0][1]).toContain("Philadelphia");
+    const libraryReads = calls.filter(([query]) => query.includes("FROM knowledge_topics"));
+    expect(libraryReads).toHaveLength(1);
+    expect(libraryReads[0][0]).toContain("kt.topic_name ILIKE $2 OR kt.description ILIKE $2");
+    expect(libraryReads[0][1]).toContain("%Philadelphia%");
   });
 
   it("validates repeated or invalid query values safely without persisting a malformed request", async () => {
