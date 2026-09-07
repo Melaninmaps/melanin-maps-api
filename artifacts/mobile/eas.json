@@ -48,6 +48,7 @@
     },
     "testflight-staging": {
       "channel": "testflight-staging",
+      "environment": "testflight-staging",
       "distribution": "store",
       "autoIncrement": false,
       "node": "22.23.1",

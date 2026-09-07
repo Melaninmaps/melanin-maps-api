@@ -33,17 +33,21 @@ if (process.env.DATABASE_URL) {
 
 function sanitizedRequestHeaders(req) {
   const headers = {};
+  const connectionTokens = new Set(
+    String(req.headers.connection ?? "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+  );
   for (const [name, value] of Object.entries(req.headers)) {
-    if (!HOP_BY_HOP.has(name.toLowerCase()) && value !== undefined) headers[name] = value;
+    const normalizedName = name.toLowerCase();
+    if (!HOP_BY_HOP.has(normalizedName) && !connectionTokens.has(normalizedName) && value !== undefined) headers[name] = value;
   }
-  const forwardedFor = [req.headers["x-forwarded-for"], req.socket.remoteAddress]
-    .filter(Boolean)
-    .join(", ");
   headers.host = UPSTREAM.host;
   headers.origin = UPSTREAM.origin;
-  headers["x-forwarded-host"] = req.headers.host ?? "www.mappingwithmelanin.com";
+  headers["x-forwarded-host"] = "www.mappingwithmelanin.com";
   headers["x-forwarded-proto"] = "https";
-  if (forwardedFor) headers["x-forwarded-for"] = forwardedFor;
+  if (req.socket.remoteAddress) headers["x-forwarded-for"] = req.socket.remoteAddress;
   return headers;
 }
 
@@ -119,7 +123,8 @@ app.use(express.static(WEB_STATIC, {
     }
   },
 }));
-app.use((_req, res) => {
+app.use((req, res) => {
+  if (path.extname(req.path)) return res.status(404).end();
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.sendFile(INDEX);
 });

@@ -8,6 +8,8 @@ const path = require("node:path");
 const test = require("node:test");
 const { validateBuild106Policy } = require("../validate-build-106-staging.cjs");
 const { validateExpoOutput } = require("../validate-build-106-expo-output.cjs");
+const { validateBuild106EasEnvironment } = require("../validate-build-106-eas-environment.cjs");
+const { validateBuild106Archive } = require("../validate-build-106-archive.cjs");
 
 const ROOT = path.resolve(__dirname, "../..");
 const RELEASE = path.join(ROOT, "scripts/release-build-106.sh");
@@ -102,16 +104,17 @@ test("accepts the reviewed Build 106 staging/TestFlight contract", () => {
   assert.equal(profile.env.EXPO_PUBLIC_API_URL, undefined);
   assert.equal(profile.env.EXPO_PUBLIC_APP_ENV, "staging");
   assert.equal(profile.env.EXPO_PUBLIC_REVENUECAT_ENABLED, "false");
-  assert.equal(profile.environment, undefined);
+  assert.equal(profile.environment, "testflight-staging");
   assert.equal(mobilePackage.scripts["build:ios"], undefined);
   assert.equal(mobilePackage.scripts["build:android"], undefined);
   assert.equal(mobilePackage.dependencies["react-native-purchases"], undefined);
 });
 
-test("rejects production, alternate store, inherited environment, and root EAS profiles", () => {
+test("rejects production, alternate store, wrong environment, and root EAS profiles", () => {
   withJsonMutation(EAS_PATH, (eas) => { eas.build.production = { distribution: "store" }; }, /production build profile/);
   withJsonMutation(EAS_PATH, (eas) => { eas.build.other = { distribution: "store" }; }, /unauthorized store build profile/);
-  withJsonMutation(EAS_PATH, (eas) => { eas.build["testflight-staging"].environment = "production"; }, /must not inherit/);
+  withJsonMutation(EAS_PATH, (eas) => { eas.build["testflight-staging"].environment = "production"; }, /dedicated testflight-staging EAS environment/);
+  withJsonMutation(EAS_PATH, (eas) => { delete eas.build["testflight-staging"].environment; }, /dedicated testflight-staging EAS environment/);
   withJsonMutation(ROOT_EAS_PATH, (eas) => { eas.build.preview = { distribution: "internal" }; }, /root EAS build profiles/);
 });
 
@@ -173,19 +176,59 @@ test("unauthorized modes fail before git, package managers, EAS, or backend clie
   }
 });
 
-test("the only dispatcher EAS invocation builds iOS staging with frozen signing and TestFlight auto-submit", () => {
+test("the dispatcher inspects remote environment and archive before one iOS build with frozen signing and TestFlight auto-submit", () => {
   const source = fs.readFileSync(RELEASE, "utf8");
-  const calls = source.match(/pnpm exec eas [\s\S]*?(?=\n\nprintf|$)/g) ?? [];
-  assert.equal(calls.length, 1);
-  assert.match(calls[0], /eas build/);
-  assert.match(calls[0], /--platform ios/);
-  assert.match(calls[0], /--profile testflight-staging/);
-  assert.match(calls[0], /--freeze-credentials/);
-  assert.match(calls[0], /--auto-submit-with-profile testflight-staging/);
+  const buildCalls = source.match(/pnpm exec eas build \\/g) ?? [];
+  assert.equal(buildCalls.length, 1);
+  assert.match(source, /eas env:list testflight-staging --scope project/);
+  assert.match(source, /eas env:list testflight-staging --scope account/);
+  assert.match(source, /eas build:inspect/);
+  assert.match(source, /--stage archive/);
+  assert.match(source, /pnpm exec eas build \\\n[\s\S]*--platform ios/);
+  assert.match(source, /pnpm exec eas build \\\n[\s\S]*--profile testflight-staging/);
+  assert.match(source, /--freeze-credentials/);
+  assert.match(source, /--auto-submit-with-profile testflight-staging/);
   assert.match(source, /expo export --platform ios --no-bytecode/);
-  assert.doesNotMatch(calls[0], /production|android|eas update|submit --platform/);
+  assert.doesNotMatch(source, /--profile production|--platform android|eas update|submit --platform/);
   assert.match(source, /export EXPO_PUBLIC_API_ORIGIN="\$STAGING_ORIGIN"/);
   assert.match(source, /unset EXPO_PUBLIC_API_URL/);
+});
+
+test("requires an empty dedicated EAS environment at project and account scopes", () => {
+  const empty = "Environment: testflight-staging\nNo variables found for this environment.\n";
+  assert.deepEqual(validateBuild106EasEnvironment(empty, empty), {
+    environment: "testflight-staging",
+    projectVariables: 0,
+    accountVariables: 0,
+  });
+  assert.throws(
+    () => validateBuild106EasEnvironment("Environment: testflight-staging\nEXPO_PUBLIC_API_ORIGIN=*****\n", empty),
+    /must be empty|contains a variable/,
+  );
+});
+
+test("rejects signing files, Replit config, environment files, and credential literals in the local EAS archive", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "mwm-build106-archive-"));
+  const mobile = path.join(root, "artifacts/mobile");
+  fs.mkdirSync(path.join(mobile, "lib"), { recursive: true });
+  fs.writeFileSync(path.join(mobile, "app.json"), "{}\n");
+  fs.writeFileSync(path.join(mobile, "lib/api.ts"), "export const api = 'https://mwm-staging.35.196.78.19.nip.io';\n");
+  try {
+    assert.doesNotThrow(() => validateBuild106Archive(root));
+    for (const [name, value] of [
+      ["upload_keystore.jks", "binary"],
+      [".replit", "config"],
+      [".env.staging", "SECRET=value"],
+      ["leak.txt", "sk-abcdefghijklmnopqrstuvwxyz1234567890"],
+    ]) {
+      const candidate = path.join(root, name);
+      fs.writeFileSync(candidate, value);
+      assert.throws(() => validateBuild106Archive(root), /artifact|environment file|credential-like literal/);
+      fs.rmSync(candidate);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("accepts exact public config, introspection, and iOS export staging proof", () => {

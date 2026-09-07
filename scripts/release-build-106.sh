@@ -42,10 +42,16 @@ STAGING_ORIGIN="https://$STAGING_DOMAIN"
 EXPORT_DIR=""
 PUBLIC_CONFIG=""
 INTROSPECT_CONFIG=""
+PROJECT_ENV_OUTPUT=""
+ACCOUNT_ENV_OUTPUT=""
+ARCHIVE_DIR=""
 cleanup() {
   [[ -z "$EXPORT_DIR" ]] || rm -rf -- "$EXPORT_DIR"
   [[ -z "$PUBLIC_CONFIG" ]] || rm -f -- "$PUBLIC_CONFIG"
   [[ -z "$INTROSPECT_CONFIG" ]] || rm -f -- "$INTROSPECT_CONFIG"
+  [[ -z "$PROJECT_ENV_OUTPUT" ]] || rm -f -- "$PROJECT_ENV_OUTPUT"
+  [[ -z "$ACCOUNT_ENV_OUTPUT" ]] || rm -f -- "$ACCOUNT_ENV_OUTPUT"
+  [[ -z "$ARCHIVE_DIR" ]] || rm -rf -- "$ARCHIVE_DIR"
 }
 trap cleanup EXIT
 
@@ -94,6 +100,26 @@ pass "Expo public config, native introspection, and iOS export prove staging run
 cd "$ROOT"
 node "$ROOT/scripts/validate-build-106-staging.cjs"
 [[ "$(git rev-parse HEAD)" == "$EXPECTED_SHA" && -z "$(git status --porcelain --untracked-files=all)" ]] || fail "source identity changed before EAS"
+cd "$MOBILE"
+PROJECT_ENV_OUTPUT="$(mktemp)"
+ACCOUNT_ENV_OUTPUT="$(mktemp)"
+NO_COLOR=1 pnpm exec eas env:list testflight-staging --scope project --format short > "$PROJECT_ENV_OUTPUT"
+NO_COLOR=1 pnpm exec eas env:list testflight-staging --scope account --format short > "$ACCOUNT_ENV_OUTPUT"
+node "$ROOT/scripts/validate-build-106-eas-environment.cjs" "$PROJECT_ENV_OUTPUT" "$ACCOUNT_ENV_OUTPUT"
+pass "dedicated EAS environment contains zero project or account variables"
+
+ARCHIVE_DIR="$(mktemp -d)"
+pnpm exec eas build:inspect \
+  --platform ios \
+  --stage archive \
+  --profile testflight-staging \
+  --output "$ARCHIVE_DIR" \
+  --force
+node "$ROOT/scripts/validate-build-106-archive.cjs" "$ARCHIVE_DIR"
+cd "$ROOT"
+[[ "$(git rev-parse HEAD)" == "$EXPECTED_SHA" && -z "$(git status --porcelain --untracked-files=all)" ]] || fail "archive inspection changed the reviewed source"
+pass "local EAS archive contains no credential or signing artifacts"
+
 cd "$MOBILE"
 pnpm exec eas build \
   --platform ios \

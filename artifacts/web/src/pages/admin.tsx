@@ -1237,7 +1237,7 @@ export default function Admin() {
               Set <code className="bg-white/10 px-1 rounded">ADMIN_CRON_KEY</code> in environment secrets, then point any weekly cron service (GitHub Actions, Render Cron, EasyCron, etc.) at this URL:
             </p>
             <code className="block text-xs bg-black/30 rounded-lg px-3 py-2 text-[#CA922B] break-all select-all">
-              GET https://www.mappingwithmelanin.com/api/admin/cron-weekly-nudge?key=YOUR_ADMIN_CRON_KEY
+              GET /api/admin/cron-weekly-nudge?key=YOUR_ADMIN_CRON_KEY
             </code>
           </div>
 

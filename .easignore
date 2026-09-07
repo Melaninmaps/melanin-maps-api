@@ -39,3 +39,30 @@ lib/dbintegrations-openai-ai-server
 *.aab
 *.tar.gz
 *.zip
+
+# Build 106 uploads only reviewed application source. Never send credentials,
+# signing artifacts, service configuration, or obsolete Replit task material.
+*.jks
+*.keystore
+*.pem
+*.p12
+*.key
+*.mobileprovision
+*.p8
+*.pfx
+*.cer
+.env
+.env.*
+credentials.json
+google-service-account.json
+**/.replit-artifact
+/.replit
+/.replitignore
+/sedQ6qvzl
+/@tlindsay428__workspace.jks
+/upload_cert.pem
+/upload_certificate.pem
+/upload_certificate.txt
+/upload_keystore.jks
+/replit
+/docs

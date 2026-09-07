@@ -36,6 +36,8 @@ function validateBuild106Policy() {
   const rootEas = readJson("eas.json");
   const buildRecord = readJson("artifacts/mobile/.build-record.json");
   const releaseScript = fs.readFileSync(path.join(ROOT, "scripts/release-build-106.sh"), "utf8");
+  const rootEasIgnore = fs.readFileSync(path.join(ROOT, ".easignore"), "utf8");
+  const mobileEasIgnore = fs.readFileSync(path.join(MOBILE, ".easignore"), "utf8");
   const revenueCat = fs.readFileSync(path.join(MOBILE, "lib/revenuecat.tsx"), "utf8");
   const auth = fs.readFileSync(path.join(MOBILE, "lib/auth.tsx"), "utf8");
   const profileScreen = fs.readFileSync(path.join(MOBILE, "app/(tabs)/profile.tsx"), "utf8");
@@ -73,7 +75,7 @@ function validateBuild106Policy() {
   assert(build.env?.APP_ENV === "staging", `${PROFILE} APP_ENV mismatch`);
   assert(build.env?.APP_RELEASE_CHANNEL === PROFILE, `${PROFILE} release channel mismatch`);
   assert(build.env?.EXPO_PUBLIC_REVENUECAT_ENABLED === "false", `${PROFILE} must explicitly disable RevenueCat`);
-  assert(!Object.hasOwn(build, "environment"), `${PROFILE} must not inherit a dashboard EAS environment`);
+  assert(build.environment === PROFILE, `${PROFILE} must use only the dedicated ${PROFILE} EAS environment`);
   assert(!Object.keys(build.env ?? {}).some((key) => /^EXPO_PUBLIC_REVENUECAT_(IOS|ANDROID|TEST)_API_KEY$/.test(key)), `${PROFILE} contains a RevenueCat API key`);
   assert(!JSON.stringify(build).includes("mappingwithmelanin.com"), `${PROFILE} references the production backend`);
 
@@ -122,6 +124,18 @@ function validateBuild106Policy() {
   assert(releaseScript.includes('export EXPO_PUBLIC_API_ORIGIN="$STAGING_ORIGIN"'), "release entrypoint must set the exact staging API origin");
   assert(releaseScript.includes("unset EXPO_PUBLIC_API_URL"), "release entrypoint must clear the legacy API URL variable");
   assert(releaseScript.includes('export APP_RELEASE_CHANNEL="testflight-staging"'), "release entrypoint must pin the Expo staging release channel");
+  assert(releaseScript.includes("eas env:list testflight-staging --scope project"), "release entrypoint must inspect project EAS variables");
+  assert(releaseScript.includes("eas env:list testflight-staging --scope account"), "release entrypoint must inspect account EAS variables");
+  assert(releaseScript.includes("validate-build-106-eas-environment.cjs"), "release entrypoint must reject inherited remote EAS variables");
+  assert(releaseScript.includes("eas build:inspect"), "release entrypoint must create a local EAS archive for inspection");
+  assert(releaseScript.includes("--stage archive"), "release entrypoint must inspect the exact EAS archive stage");
+  assert(releaseScript.includes("validate-build-106-archive.cjs"), "release entrypoint must reject credential artifacts in the EAS archive");
+
+  for (const [name, contents] of [["root", rootEasIgnore], ["mobile", mobileEasIgnore]]) {
+    for (const required of ["*.jks", "*.keystore", "*.pem", "*.p12", "*.p8", "*.key", "*.mobileprovision", "credentials.json", "google-service-account.json", ".replit", "sedQ6qvzl", "upload_keystore.jks"]) {
+      assert(contents.includes(required), `${name} .easignore does not exclude ${required}`);
+    }
+  }
 
   assert(revenueCat.includes("REVENUECAT_ENABLED = false"), "RevenueCat no-op flag is missing");
   assert(!revenueCat.includes("react-native-purchases"), "RevenueCat no-op imports the native SDK");

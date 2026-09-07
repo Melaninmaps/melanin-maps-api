@@ -7,7 +7,8 @@ This repository permits exactly one store-distribution action for Build 106: an 
 Run from the repository root only after the exact candidate commit has passed independent review:
 
 ```bash
-bash scripts/release-build-106.sh ios-testflight-staging
+MWM_BUILD106_SOURCE_SHA=<reviewed-40-character-commit-sha> \
+  bash scripts/release-build-106.sh ios-testflight-staging
 ```
 
 Do not call `eas build`, `eas submit`, or `eas update` directly. The dispatcher verifies the clean full SHA, Build `1.1.6 (106)`, runtime `1.1.6-native.1`, staging API origin, disabled Expo Updates, disabled RevenueCat behavior, removed background audio, source scans, tests, typechecks, Expo config/introspection, and a local iOS export before it starts EAS. It uses only the `testflight-staging` build and submit profiles and freezes existing remote signing credentials.

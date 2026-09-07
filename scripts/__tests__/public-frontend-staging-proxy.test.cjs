@@ -15,6 +15,10 @@ test("public frontend uses only the accepted isolated staging API", () => {
   assert.match(server, /app\.use\("\/api", proxyApi\)/);
   assert.match(server, /await assertUpstreamReady/);
   assert.doesNotMatch(server, /mappingwithmelanin\.com.*\/api/);
+  assert.match(server, /connectionTokens/);
+  assert.match(server, /headers\["x-forwarded-host"\] = "www\.mappingwithmelanin\.com"/);
+  assert.match(server, /headers\["x-forwarded-for"\] = req\.socket\.remoteAddress/);
+  assert.doesNotMatch(server, /req\.headers\["x-forwarded-for"\]/);
 });
 
 test("public frontend cannot access or mutate a production database", () => {
@@ -33,4 +37,6 @@ test("static server blocks binary and signing artifacts", () => {
   for (const extension of ["ipa", "aab", "apk", "pem", "p12", "mobileprovision"]) {
     assert.match(server, new RegExp(extension));
   }
+  assert.match(server, /path\.extname\(req\.path\)/);
+  assert.match(server, /res\.status\(404\)\.end\(\)/);
 });
