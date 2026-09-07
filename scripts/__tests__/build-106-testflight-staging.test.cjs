@@ -15,6 +15,8 @@ const ROOT = path.resolve(__dirname, "../..");
 const RELEASE = path.join(ROOT, "scripts/release-build-106.sh");
 const ROOT_EAS_PATH = path.join(ROOT, "eas.json");
 const EAS_PATH = path.join(ROOT, "artifacts/mobile/eas.json");
+const ROOT_EAS_IGNORE = path.join(ROOT, ".easignore");
+const MOBILE_EAS_IGNORE = path.join(ROOT, "artifacts/mobile/.easignore");
 const PACKAGE_PATH = path.join(ROOT, "artifacts/mobile/package.json");
 const APP_CONFIG_PATH = path.join(ROOT, "artifacts/mobile/app.config.js");
 const SHA = "a".repeat(40);
@@ -217,7 +219,9 @@ test("rejects signing files, Replit config, environment files, and credential li
     assert.doesNotThrow(() => validateBuild106Archive(root));
     for (const [name, value] of [
       ["upload_keystore.jks", "binary"],
+      ["google-services.json", "{\"api_key\":\"AIzaabcdefghijklmnopqrstuvwxyz1234567890\"}"],
       [".replit", "config"],
+      ["replit.nix", "config"],
       [".env.staging", "SECRET=value"],
       ["leak.txt", "sk-abcdefghijklmnopqrstuvwxyz1234567890"],
     ]) {
@@ -228,6 +232,31 @@ test("rejects signing files, Replit config, environment files, and credential li
     }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("both EAS ignore files exclude the complete tracked risky-file inventory", () => {
+  const tracked = execFileSync("git", ["-C", ROOT, "ls-files"], { encoding: "utf8" })
+    .trim()
+    .split("\n")
+    .filter((name) => /(^|\/)(\.replit(?:ignore)?$|\.replit-artifact\/|replit\.(?:md|nix)$|sedQ6qvzl$|google-services\.json$|GoogleService-Info\.plist$|credentials?\.json$|google-service-account\.json$|.*\.(?:jks|keystore|pem|p12|p8|pfx|key|cer|mobileprovision)$|upload_cert|upload_certificate)/i.test(name));
+  assert(tracked.length > 0, "tracked risky-file inventory unexpectedly empty");
+
+  for (const [label, ignorePath] of [["root", ROOT_EAS_IGNORE], ["mobile", MOBILE_EAS_IGNORE]]) {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), `mwm-${label}-easignore-`));
+    try {
+      fs.copyFileSync(ignorePath, path.join(directory, ".gitignore"));
+      execFileSync("git", ["-C", directory, "init", "-q"]);
+      for (const relative of tracked) {
+        const candidate = path.join(directory, relative);
+        fs.mkdirSync(path.dirname(candidate), { recursive: true });
+        fs.writeFileSync(candidate, "fixture");
+        const result = spawnSync("git", ["-C", directory, "check-ignore", "-q", "--no-index", relative]);
+        assert.equal(result.status, 0, `${label} .easignore permits tracked risky file ${relative}`);
+      }
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   }
 });
 

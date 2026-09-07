@@ -55,9 +55,13 @@ lib/dbintegrations-openai-ai-server
 .env.*
 credentials.json
 google-service-account.json
+google-services.json
+GoogleService-Info.plist
 .replit-artifact
 .replit
 .replitignore
+replit.md
+replit.nix
 sedQ6qvzl
 @tlindsay428__workspace.jks
 upload_cert.pem
