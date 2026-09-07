@@ -10,6 +10,7 @@ import { isPublicBusinessRecord } from "../../businesses/publicBusinessVisibilit
 import {
   createGovernedKinfolkBusinessRepository,
   normalizeExactBusinessName,
+  suppressProbableDuplicateBusinesses,
 } from "../governedBusinessRepository";
 
 const AMINA_ROW = {
@@ -176,7 +177,7 @@ describe("governed Kinfolk business repository", () => {
       {
         key: "bookstore",
         label: "bookstores",
-        searchTerms: ["bookstore", "book store", "bookshop", "books"],
+        searchTerms: ["bookstore", "book store", "bookshop"],
       },
       12,
     );
@@ -186,22 +187,84 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("LEFT JOIN public.business_identity AS bi");
     expect(sql).toContain("LOWER(BTRIM(b.city)) = LOWER($1)");
     expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $2");
-    expect(sql).toContain("LOWER(COALESCE(b.name, '')) LIKE ANY($3::text[])");
-    expect(sql).toContain("LOWER(COALESCE(b.category, '')) LIKE ANY($3::text[])");
-    expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) LIKE ANY($3::text[])");
-    expect(sql).toContain("LOWER(COALESCE(b.description, '')) LIKE ANY($3::text[])");
-    expect(sql).toContain("LOWER(COALESCE(b.tags::text, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])");
+    expect(sql).toContain("jsonb_array_elements_text");
+    // Identity/story fields remain selected for a governed card, but are never
+    // service-match predicates (so incidental prose cannot qualify a result).
     expect(sql).toContain("bi.business_story");
-    expect(sql).toContain("bi.ownership_badges");
+    expect(sql).not.toContain("LOWER(COALESCE(b.description, '')) ~ ANY");
+    expect(sql).not.toContain("LOWER(COALESCE(bi.business_story, '')) ~ ANY");
+    expect(sql).toContain("COALESCE(b.promotion_eligible, true) = true");
+    expect(sql).toContain("AND NOT (");
     expect(sql).toContain("CASE");
     expect(sql).toContain("LIMIT $4");
     expect(sql).toContain("COALESCE(b.name, '') ILIKE '%[DEMO]%'");
     expect(params).toEqual([
       "Atlanta",
       "GA",
-      ["%bookstore%", "%book store%", "%bookshop%", "%books%"],
+      ["\\mbookstore\\M", "\\mbook[[:space:]-]+store\\M", "\\mbookshop\\M"],
       12,
     ]);
+  });
+
+  it("rejects incidental description text but retains an explicit bookstore-cafe offering", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({
+      rows: [
+        { ...AMINA_ROW, description: "AMINA serves books fast after dinner.", tags: ["restaurant"] },
+        {
+          ...AMINA_ROW,
+          id: "bookstore-cafe",
+          name: "Chapter One Cafe",
+          category: "Food",
+          subcategory: "Cafe",
+          tags: ["bookstore-cafe"],
+        },
+      ],
+    }) };
+    const result = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      { key: "bookstore", label: "bookstores", searchTerms: ["bookstore", "book store", "bookshop"] },
+    );
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "bookstore-cafe",
+        matchReasons: ["explicit offering"],
+      }),
+    ]);
+  });
+
+  it("suppresses probable duplicates non-destructively with identity evidence", () => {
+    const base = {
+      ...AMINA_ROW,
+      city: "Philadelphia",
+      state_code: "PA",
+      phone: "+1 215 555 0200",
+      website: "https://example.test/amina",
+      tags: [],
+    };
+    const toBusiness = (row: typeof base, id: string, verified: boolean) => ({
+      id, name: row.name, category: row.category, subcategory: row.subcategory,
+      description: row.description, city: row.city, stateCode: row.state_code,
+      country: null, latitude: null, longitude: null, distanceMiles: null,
+      phone: row.phone, website: row.website, verified, claimed: false,
+      blackOwned: false, ownershipClaim: null, tags: [], specialties: [], profileStatus: null,
+      story: null, missionStatement: null, whyStarted: null, whatCustomersShouldKnow: null,
+      ownershipBadges: [], communityValues: [], audiencesServed: [], vibes: [],
+      accessibilityFeatures: [], communityInitiatives: [], growthGoals: [],
+      audienceType: null, environmentTags: [], amenityTags: [], matchReasons: [], identityReasons: [],
+    });
+    const outcome = suppressProbableDuplicateBusinesses([
+      toBusiness(base, "canonical", true),
+      toBusiness(base, "probable-duplicate", false),
+    ]);
+    expect(outcome.businesses).toHaveLength(1);
+    expect(outcome.businesses[0]).toMatchObject({ id: "canonical" });
+    expect(outcome.suppressed).toEqual([expect.objectContaining({
+      suppressedId: "probable-duplicate", canonicalId: "canonical",
+      reasons: expect.arrayContaining(["same normalized name and city/state", "same phone"]),
+    })]);
   });
 
   it("searches matching published map records in the same exact city and state", async () => {
@@ -223,7 +286,7 @@ describe("governed Kinfolk business repository", () => {
       {
         key: "bookstore",
         label: "bookstores",
-        searchTerms: ["bookstore", "book store", "bookshop", "books"],
+        searchTerms: ["bookstore", "book store", "bookshop"],
       },
     );
 
@@ -236,12 +299,12 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("FROM public.published_map_entities");
     expect(sql).toContain("LOWER(BTRIM(city)) = LOWER($1)");
     expect(sql).toContain("UPPER(BTRIM(COALESCE(state_region, ''))) = $2");
-    expect(sql).toContain("LOWER(COALESCE(title, '')) LIKE ANY($3::text[])");
-    expect(sql).toContain("LOWER(COALESCE(summary, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(title, '')) ~ ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(summary, '')) ~ ANY($3::text[])");
     expect(params).toEqual([
       "Atlanta",
       "GA",
-      ["%bookstore%", "%book store%", "%bookshop%", "%books%"],
+      ["\\mbookstore\\M", "\\mbook[[:space:]-]+store\\M", "\\mbookshop\\M"],
       8,
     ]);
   });

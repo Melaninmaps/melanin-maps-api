@@ -12,6 +12,8 @@ export type LocalSearchRequest = {
   radiusMi?: 5 | 10 | 25;
   limit?: number;
   expansionAccepted?: boolean;
+  city?: string;
+  stateCode?: string;
 };
 
 export type LocalBusinessResult = {
@@ -20,9 +22,9 @@ export type LocalBusinessResult = {
   category: string | null;
   city: string | null;
   stateCode: string | null;
-  latitude: number;
-  longitude: number;
-  distanceMi: number;
+  latitude: number | null;
+  longitude: number | null;
+  distanceMi: number | null;
   detailUrl: string;
 };
 
@@ -55,8 +57,8 @@ export class LocalBusinessSearch {
 
     // Haversine distance is calculated inside PostgreSQL and constrained by HAVING.
     // No client-side post-filter or generic national fallback may add records outside
-    // this radius. `pins` intentionally mirrors `results` so the map cannot display
-    // any record absent from the left result list, and vice versa.
+    // this radius. Ungeocoded records can appear only for the explicitly resolved
+    // city; pins remain a coordinate-validated subset of this list.
     const { rows } = await this.pool.query<LocalBusinessResult>(
       `WITH nearby AS (
         SELECT
@@ -68,14 +70,12 @@ export class LocalBusinessSearch {
           b.state AS "stateCode",
           b.latitude,
           b.longitude,
-          (3958.7613 * acos(least(1, greatest(-1,
+          CASE WHEN b.latitude IS NOT NULL AND b.longitude IS NOT NULL THEN (3958.7613 * acos(least(1, greatest(-1,
             cos(radians($2)) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($3)) +
             sin(radians($2)) * sin(radians(b.latitude))
-          )))) AS "distanceMi"
+          )))) END AS "distanceMi"
         FROM public.public_businesses b
-        WHERE b.latitude IS NOT NULL
-          AND b.longitude IS NOT NULL
-          AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
+        WHERE COALESCE(b.name, '') NOT ILIKE '%[demo]%'
           AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
           AND (
             to_tsvector('simple',
@@ -99,10 +99,16 @@ export class LocalBusinessSearch {
         "distanceMi",
         '/businesses/' || id || '/' || coalesce(slug, id) AS "detailUrl"
       FROM nearby
-      WHERE "distanceMi" <= $4
-      ORDER BY "distanceMi" ASC, name ASC
+        WHERE "distanceMi" <= $4
+          OR (
+            latitude IS NULL AND longitude IS NULL
+            AND NULLIF($7, '') IS NOT NULL
+            AND LOWER(COALESCE(city, '')) = LOWER($7)
+            AND (NULLIF($8, '') IS NULL OR UPPER(COALESCE("stateCode", '')) = UPPER($8))
+          )
+        ORDER BY "distanceMi" ASC NULLS LAST, name ASC
       LIMIT $5`,
-      [q, input.latitude, input.longitude, radiusMi, limit, categoryAliases],
+       [q, input.latitude, input.longitude, radiusMi, limit, categoryAliases, input.city ?? "", input.stateCode ?? ""],
     );
 
     const expansion = this.nextExpansion(radiusMi, rows.length);
@@ -111,7 +117,7 @@ export class LocalBusinessSearch {
       radiusMi,
       limit,
       results: rows,
-      pins: rows, // intentional alias — map and list are always the same set
+      pins: rows.filter((row) => row.latitude !== null && row.longitude !== null),
       expansion,
     };
   }

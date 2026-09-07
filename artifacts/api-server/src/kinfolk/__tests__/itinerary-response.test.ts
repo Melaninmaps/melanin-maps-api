@@ -23,8 +23,10 @@ const AMINA: GovernedKinfolkBusiness = {
   phone: null,
   website: null,
   verified: true,
+  claimed: false,
   blackOwned: true,
   tags: ["restaurant"],
+  specialties: [],
   profileStatus: "community_listed",
   story: null,
   missionStatement: null,
@@ -40,6 +42,8 @@ const AMINA: GovernedKinfolkBusiness = {
   audienceType: null,
   environmentTags: [],
   amenityTags: [],
+  matchReasons: [],
+  identityReasons: [],
 };
 
 describe("Kinfolk itinerary normalization", () => {

@@ -4,6 +4,7 @@ import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
+import { parseLocalMapSearch } from "@/features/map/parseLocalMapSearch";
 import AddPlaceModal from "@/components/AddPlaceModal";
 import UniversalSearchResults, { type UniversalSearchResult } from "@/components/UniversalSearchResults";
 
@@ -434,6 +435,7 @@ export default function MapPage() {
   const runUniversalSearch = useCallback(async (queryOverride?: string) => {
     const q = (queryOverride ?? search).trim();
     if (!q || q.length < 2) return;
+    const localIntent = parseLocalMapSearch(q);
     setBusinessSearchActive(true);
     setUniversalResults(null);
     setUniversalLoading(true);
@@ -450,7 +452,9 @@ export default function MapPage() {
     let geoName: string | null = null;
     try {
       const geoRes = await fetch(
-        `${apiBase}/api/maps/geo-extract?q=${encodeURIComponent(q)}`,
+        `${apiBase}/api/maps/geo-extract?q=${encodeURIComponent(
+          localIntent.city ? `${localIntent.city}${localIntent.stateCode ? `, ${localIntent.stateCode}` : ""}` : q,
+        )}`,
         { credentials: "include" }
       );
       if (geoRes.ok) {
@@ -477,7 +481,7 @@ export default function MapPage() {
     // geo-radius ranking activates for that geography.
     try {
       const p = new URLSearchParams({
-        q,
+        q: localIntent.subject,
         surface: "smart_search",
         privacy_mode: "discovery_v1",
         limit: "20",
@@ -495,7 +499,7 @@ export default function MapPage() {
         // businesses are stored as "Phuket Town", "Patong", "Karon" — city=Phuket
         // would AND-filter to only ILIKE '%Phuket%' matches, excluding Patong/Karon.
         // The radius covers the full region regardless of how each sub-area is named.
-      } else if (userCoords) {
+      } else if (userCoords && !localIntent.city) {
         p.set("lat", String(userCoords.lat));
         p.set("lng", String(userCoords.lng));
       }
@@ -542,7 +546,7 @@ export default function MapPage() {
         // actually are, not just the geocoded city center.
         // When coordinates are available, LocalBusinessResults.onPinsChange → applyLocalMapViewport
         // manages the business viewport. Skip fitMapToBusinessResults to avoid overriding it.
-        const useLocalSearch = (geoLat !== null && geoLng !== null) || userCoords !== null;
+        const useLocalSearch = (geoLat !== null && geoLng !== null) || (userCoords !== null && !localIntent.city);
         if (!useLocalSearch) {
           const fitted = fitMapToBusinessResults(finalBusinesses);
           if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
@@ -1250,7 +1254,10 @@ export default function MapPage() {
   // Business marker visibility — only shown after user explicitly submits a search
   useEffect(() => {
     if (!mapRef.current) return;
-    const showBiz = businessSearchActive && (!legendFilter || legendFilter === "business");
+    const localSearchOwnsPins = businessSearchActive && (
+      detectedLocation !== null || (userCoords !== null && !parseLocalMapSearch(search).city)
+    );
+    const showBiz = businessSearchActive && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
     // When universal search returned results, only show those businesses as markers
     const activeIds = universalResults
       ? new Set((universalResults.results.businesses ?? []).map((b: any) => b.id as string))
@@ -1491,10 +1498,10 @@ export default function MapPage() {
         {!showingCultural && userCoords && (
           <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0 flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">Near Me</span>
-            {[5, 10, 25].map((r) => (
+            {[5, ...(nearMeRadius === 5 ? [10] : nearMeRadius === 10 ? [25] : [])].map((r) => (
               <button
                 key={r}
-                onClick={() => setNearMeRadius(nearMeRadius === r ? null : r)}
+                onClick={() => setNearMeRadius(nearMeRadius === r ? null : r as 5 | 10 | 25)}
                 className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
                   nearMeRadius === r
                     ? "bg-[#CA922B] text-white border-[#CA922B]"
@@ -1705,16 +1712,28 @@ export default function MapPage() {
                 )}
 
                 {/* Business results — local-scoped endpoint when coordinates are known */}
-                {businessSearchActive && (detectedLocation ?? userCoords) ? (
+                {businessSearchActive && (detectedLocation || (userCoords && !parseLocalMapSearch(search).city)) ? (
                   <LocalBusinessResults
                     query={search}
+                    subject={parseLocalMapSearch(search).subject}
                     area={
                       detectedLocation
-                        ? { latitude: detectedLocation.lat, longitude: detectedLocation.lng, label: detectedLocation.name }
+                        ? {
+                            latitude: detectedLocation.lat, longitude: detectedLocation.lng, label: detectedLocation.name,
+                            city: parseLocalMapSearch(search).city,
+                            stateCode: parseLocalMapSearch(search).stateCode,
+                          }
                         : { latitude: userCoords!.lat, longitude: userCoords!.lng, label: "your location" }
                     }
                     onPinsChange={(pins, area) => applyLocalMapViewport(makeMapAdapter(), area, pins)}
                   />
+                ) : businessSearchActive ? (
+                  <div className="p-8 text-center">
+                    <p className="text-sm font-semibold text-[#2B1507] mb-1">Add a city or ZIP code</p>
+                    <p className="text-xs text-[#3A1F0E]/50 leading-relaxed">
+                      Search nearby needs a location. Try “bookstores in Atlanta” or enable your location.
+                    </p>
+                  </div>
                 ) : (universalResults?.results?.businesses ?? filtered).length === 0 ? (
                   <div className="p-8 text-center">
                     <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />

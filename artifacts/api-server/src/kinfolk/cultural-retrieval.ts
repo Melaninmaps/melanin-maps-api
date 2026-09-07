@@ -13,6 +13,7 @@
  */
 
 import { pool } from "@workspace/db";
+import { kinfolkModel } from "./model-config";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ async function embedQuery(text: string): Promise<number[] | null> {
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     });
     const resp = await client.embeddings.create({
-      model: "text-embedding-3-small",
+      model: kinfolkModel("embedding"),
       input: text.slice(0, 8192),
     });
     return resp.data[0]?.embedding ?? null;

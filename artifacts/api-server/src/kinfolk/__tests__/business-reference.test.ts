@@ -23,8 +23,10 @@ const AMINA: GovernedKinfolkBusiness = {
   phone: null,
   website: "https://example.test/amina",
   verified: true,
+  claimed: false,
   blackOwned: true,
   tags: ["restaurant"],
+  specialties: [],
   profileStatus: "community_listed",
   story: null,
   missionStatement: null,
@@ -40,6 +42,8 @@ const AMINA: GovernedKinfolkBusiness = {
   audienceType: null,
   environmentTags: [],
   amenityTags: [],
+  matchReasons: [],
+  identityReasons: [],
 };
 
 function repository(result: GovernedKinfolkBusiness | null) {

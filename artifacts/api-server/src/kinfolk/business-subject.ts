@@ -49,7 +49,7 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "bookstore",
     label: "bookstores",
     match: /\b(?:book[ -]?stores?|bookshops?|booksellers?)\b/i,
-    searchTerms: ["bookstore", "book store", "bookshop", "bookseller", "books"],
+    searchTerms: ["bookstore", "book store", "bookshop", "bookseller"],
   },
   {
     key: "restaurant",
@@ -246,7 +246,16 @@ export function hasBusinessSubject(message: string): boolean {
 }
 
 export function businessSubjectSearchPatterns(subject: NormalizedBusinessSubject): string[] {
-  return subject.searchTerms.map((term) => `%${term.toLowerCase()}%`);
+  // PostgreSQL regex patterns with word boundaries. These are used only for
+  // governed directory fields, never arbitrary descriptive copy, so "books
+  // fast" does not qualify a restaurant as a bookstore while "bookstore-cafe"
+  // remains an explicit match.
+  return subject.searchTerms
+    .map((term) => term.trim().toLowerCase())
+    .filter(Boolean)
+    .map((term) => `\\m${term
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/[\s-]+/g, "[[:space:]-]+")}\\M`);
 }
 
 export const BUSINESS_SUBJECTS = SUBJECTS.map(({ match: _match, requiresDiscoveryContext: _requiresDiscoveryContext, priority: _priority, ...subject }) => subject);

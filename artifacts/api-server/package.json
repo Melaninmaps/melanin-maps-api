@@ -12,7 +12,8 @@
     "release-db:verify": "tsx src/scripts/verifyReleaseDatabase.ts",
     "geocode:founder-business-inventory": "tsx src/scripts/geocodeFounderBusinessInventory.ts",
     "library:seed": "tsx scripts/seedLivingLibrary.ts",
-    "library:verify": "tsx scripts/seedLivingLibrary.ts --verify"
+    "library:verify": "tsx scripts/seedLivingLibrary.ts --verify",
+    "kinfolk:provider-readiness": "tsx src/scripts/kinfolkProviderReadiness.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",

@@ -37,16 +37,20 @@ export function applyLocalMapViewport(
   area: Coordinate,
   pins: NearbyPin[],
 ) {
+  const mappablePins = pins.filter((pin) =>
+    Number.isFinite(pin.latitude) && Number.isFinite(pin.longitude) &&
+    pin.latitude !== 0 && pin.longitude !== 0,
+  );
   // Local search results own a distinct pin layer. Never reuse the global discovery layer.
   map.clearSearchPins();
-  map.renderSearchPins(pins);
+  map.renderSearchPins(mappablePins);
 
-  if (pins.length === 0) {
+  if (mappablePins.length === 0) {
     map.setView([area.latitude, area.longitude], 12);
     return;
   }
 
-  const coordinates = [{ latitude: area.latitude, longitude: area.longitude }, ...pins];
+  const coordinates = [{ latitude: area.latitude, longitude: area.longitude }, ...mappablePins];
   const latitudes = coordinates.map((point) => point.latitude);
   const longitudes = coordinates.map((point) => point.longitude);
 

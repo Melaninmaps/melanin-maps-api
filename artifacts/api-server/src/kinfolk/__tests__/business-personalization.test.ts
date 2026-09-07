@@ -29,8 +29,10 @@ function business(
     phone: null,
     website: `https://example.test/${id}`,
     verified: false,
+    claimed: false,
     blackOwned: false,
     tags,
+    specialties: [],
     profileStatus: "community_listed",
     story: null,
     missionStatement: null,
@@ -46,6 +48,8 @@ function business(
     audienceType: null,
     environmentTags: [],
     amenityTags: [],
+    matchReasons: [],
+    identityReasons: [],
   };
 }
 

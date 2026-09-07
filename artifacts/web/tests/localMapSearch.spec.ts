@@ -69,7 +69,39 @@ test(
     expect(searchUrl).toContain("radius=5");
     expect(searchUrl).toContain("expand=0");
 
-    await expect(page.locator("[data-testid='local-search-pin']")).toHaveCount(2);
+    await expect(page.locator("[data-testid='local-search-result']")).toHaveCount(2);
+    await expect(page.locator("[data-business-id='urban-reader']")).toContainText("Urban Reader");
+  },
+);
+
+test(
+  "Book Store Atlanta resolves Atlanta over stale device location and sends bookstore as the local subject",
+  async ({ page }) => {
+    let localUrl = "";
+    await page.route("**/api/maps/geo-extract?*", async (route) => {
+      expect(route.request().url()).toContain(encodeURIComponent("Atlanta, GA"));
+      await route.fulfill({ json: { hasLocation: true, locationQuery: "Atlanta, GA", contentQuery: "bookstore", lat: 33.749, lng: -84.388 } });
+    });
+    await page.route("**/api/search/universal?*", async (route) => {
+      await route.fulfill({ json: { results: { businesses: [], heritage: [], events: [], libraryTopics: [] }, totalResults: 0 } });
+    });
+    await page.route("**/api/map/local-business-search?*", async (route) => {
+      localUrl = route.request().url();
+      await route.fulfill({ json: {
+        scope: "local", radiusMi: 5, limit: 2,
+        results: [{ ...urbanReader, city: "Atlanta", stateCode: "GA" }, { ...curio, id: "atlanta-unmapped", name: "Atlanta Unmapped Books", city: "Atlanta", stateCode: "GA", latitude: null, longitude: null, distanceMi: null }],
+        pins: [{ ...urbanReader, city: "Atlanta", stateCode: "GA" }],
+        expansion: { available: true, nextRadiusMi: 10, message: "Only 1 mapped nearby result found. Search within 10 miles?" },
+      } });
+    });
+    await page.goto("/map?q=Book%20Store%20Atlanta");
+    await expect(page.getByRole("region", { name: "Nearby search results" })).toContainText("Atlanta Unmapped Books");
+    await expect(page.getByText("Location not mapped yet")).toBeVisible();
+    expect(localUrl).toContain("subject=bookstore");
+    expect(localUrl).toContain("city=Atlanta");
+    expect(localUrl).toContain("stateCode=GA");
+    await expect(page.locator("[data-testid='local-search-result']")).toHaveCount(2);
+    await expect(page.locator("[data-business-id='urban-reader']")).toHaveCount(1);
   },
 );
 
