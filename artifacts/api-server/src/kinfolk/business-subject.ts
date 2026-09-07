@@ -114,7 +114,7 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "locs",
     label: "loc and natural-hair care",
-    match: /\b(?:locs?|dreadlocks?|protective styles?|braids?|natural hair)\b/i,
+    match: /\b(?:locs?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
     searchTerms: ["locs", "loc maintenance", "natural hair", "protective styles", "braids"],
     priority: 10,
   },

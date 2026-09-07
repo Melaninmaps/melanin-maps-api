@@ -436,6 +436,9 @@ export default function MapPage() {
     const q = (queryOverride ?? search).trim();
     if (!q || q.length < 2) return;
     const localIntent = parseLocalMapSearch(q);
+    // Lock synchronously, before geo-extract awaits, so an older asynchronous
+    // browser GPS callback can never recenter over a city or ZIP the member typed.
+    if (localIntent.city) searchViewportLockedRef.current = true;
     setBusinessSearchActive(true);
     setUniversalResults(null);
     setUniversalLoading(true);
@@ -450,35 +453,37 @@ export default function MapPage() {
     let geoLat: number | null = null;
     let geoLng: number | null = null;
     let geoName: string | null = null;
-    try {
-      const geoRes = await fetch(
-        `${apiBase}/api/maps/geo-extract?q=${encodeURIComponent(
-          localIntent.city ? `${localIntent.city}${localIntent.stateCode ? `, ${localIntent.stateCode}` : ""}` : q,
-        )}`,
-        { credentials: "include" }
-      );
-      if (geoRes.ok) {
-        const gd = await geoRes.json() as {
-          hasLocation: boolean; locationQuery: string | null;
-          contentQuery: string; lat: number | null; lng: number | null;
-        };
-        if (gd.hasLocation && typeof gd.lat === "number" && typeof gd.lng === "number") {
-          geoLat = gd.lat;
-          geoLng = gd.lng;
-          geoName = gd.locationQuery ?? null;
-          setDetectedLocation({ lat: gd.lat, lng: gd.lng, name: gd.locationQuery ?? q });
-          if (mapRef.current) {
-            mapRef.current.panTo({ lat: gd.lat, lng: gd.lng });
-            mapRef.current.setZoom(12);
+    if (!localIntent.usesDeviceLocation) {
+      try {
+        const geoRes = await fetch(
+          `${apiBase}/api/maps/geo-extract?q=${encodeURIComponent(
+            localIntent.city ? `${localIntent.city}${localIntent.stateCode ? `, ${localIntent.stateCode}` : ""}` : q,
+          )}`,
+          { credentials: "include" }
+        );
+        if (geoRes.ok) {
+          const gd = await geoRes.json() as {
+            hasLocation: boolean; locationQuery: string | null;
+            contentQuery: string; lat: number | null; lng: number | null;
+          };
+          if (gd.hasLocation && typeof gd.lat === "number" && typeof gd.lng === "number") {
+            geoLat = gd.lat;
+            geoLng = gd.lng;
+            geoName = gd.locationQuery ?? null;
+            setDetectedLocation({ lat: gd.lat, lng: gd.lng, name: gd.locationQuery ?? q });
+            if (mapRef.current) {
+              mapRef.current.panTo({ lat: gd.lat, lng: gd.lng });
+              mapRef.current.setZoom(12);
+            }
           }
         }
-      }
-    } catch { /* geo-extract failed — map stays at current position, search continues */ }
+      } catch { /* geo-extract failed — map stays at current position, search continues */ }
+    }
 
     // Step 2 — search MWM database only
-    // Pass full query so Pass 2.5 city detection works ("Phuket" found in
-    // businesses table → filters to Phuket). Also pass detected lat/lng so
-    // geo-radius ranking activates for that geography.
+    // Pass the normalized current-turn subject to universal search and detected
+    // coordinates for ranking. The governed local endpoint below is the only
+    // source for the nearby list and its validated pin subset.
     try {
       const p = new URLSearchParams({
         q: localIntent.subject,
@@ -499,7 +504,7 @@ export default function MapPage() {
         // businesses are stored as "Phuket Town", "Patong", "Karon" — city=Phuket
         // would AND-filter to only ILIKE '%Phuket%' matches, excluding Patong/Karon.
         // The radius covers the full region regardless of how each sub-area is named.
-      } else if (userCoords && !localIntent.city) {
+      } else if (userCoords && localIntent.usesDeviceLocation) {
         p.set("lat", String(userCoords.lat));
         p.set("lng", String(userCoords.lng));
       }
@@ -546,7 +551,7 @@ export default function MapPage() {
         // actually are, not just the geocoded city center.
         // When coordinates are available, LocalBusinessResults.onPinsChange → applyLocalMapViewport
         // manages the business viewport. Skip fitMapToBusinessResults to avoid overriding it.
-        const useLocalSearch = (geoLat !== null && geoLng !== null) || (userCoords !== null && !localIntent.city);
+        const useLocalSearch = (geoLat !== null && geoLng !== null) || (userCoords !== null && localIntent.usesDeviceLocation === true);
         if (!useLocalSearch) {
           const fitted = fitMapToBusinessResults(finalBusinesses);
           if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
@@ -1254,8 +1259,9 @@ export default function MapPage() {
   // Business marker visibility — only shown after user explicitly submits a search
   useEffect(() => {
     if (!mapRef.current) return;
+    const localSearchIntent = parseLocalMapSearch(search);
     const localSearchOwnsPins = businessSearchActive && (
-      detectedLocation !== null || (userCoords !== null && !parseLocalMapSearch(search).city)
+      detectedLocation !== null || (userCoords !== null && localSearchIntent.usesDeviceLocation === true)
     );
     const showBiz = businessSearchActive && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
     // When universal search returned results, only show those businesses as markers
@@ -1712,7 +1718,7 @@ export default function MapPage() {
                 )}
 
                 {/* Business results — local-scoped endpoint when coordinates are known */}
-                {businessSearchActive && (detectedLocation || (userCoords && !parseLocalMapSearch(search).city)) ? (
+                {businessSearchActive && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
                   <LocalBusinessResults
                     query={search}
                     subject={parseLocalMapSearch(search).subject}

@@ -459,9 +459,10 @@ registerLocationFirstDiscoveryRoutes(
   ),
 );
 
-// ── Local business search — scoped map results (≤ 2 within 5 mi, no national fallback) ─
+// ── Local business search — scoped list + validated pin subset, no national fallback ─
 // GET /api/map/local-business-search?q=&lat=&lng=&radius=5&expand=0
-// Constrained by Haversine radius server-side; pins == results (no independent source).
+// Pinnable rows are radius-constrained and capped at two display pins; matching
+// unpinned rows remain searchable when the request has explicit city/ZIP scope.
 registerLocalBusinessSearchRoute(app, new LocalBusinessSearch(pool));
 
 // ── Community Vibes — evidence-backed member signals ─────────────────────────

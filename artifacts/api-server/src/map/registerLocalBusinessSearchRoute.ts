@@ -4,19 +4,23 @@ import { LocalBusinessSearch } from "./localBusinessSearch";
 /**
  * GET /api/map/local-business-search
  *
- * Returns at most 2 businesses nearest to the supplied coordinates that match
- * the text query, constrained to the requested radius (5 / 10 / 25 miles).
- * No national fallback, no cross-city results.
+ * Returns the two nearest pinnable businesses plus every matching unpinned
+ * listing in an explicitly supplied city or ZIP. Coordinate-bearing rows are
+ * constrained to the requested radius (5 / 10 / 25 miles). There is no
+ * national fallback and no independent pin source.
  *
  * Query params:
  *   q       — free-text search (required, min 1 char)
+ *   subject — normalized current-turn business subject (preferred over q)
  *   lat     — decimal latitude of the member's location
  *   lng     — decimal longitude of the member's location
  *   radius  — one of 5 | 10 | 25 (default: 5)
  *   expand  — "1" to activate the radius (used for explicit expansion clicks only)
+ *   city/stateCode — explicit geography used to retain matching unpinned rows
  *
- * `pins` is the validated-coordinate subset of `results`. The map must not
- * render any pin not present in the list.
+ * `pins` is the validated-coordinate subset of `results`; total and pinnable
+ * counts describe all relevant rows in scope before the two-pin display cap.
+ * The response is marked no-store with no query/location retention headers.
  * Register after location resolution routes and before the generic API 404 handler.
  */
 export function registerLocalBusinessSearchRoute(
@@ -55,6 +59,8 @@ export function registerLocalBusinessSearchRoute(
         });
 
         response.setHeader("Cache-Control", "no-store");
+        response.setHeader("X-Location-Retention", "none");
+        response.setHeader("X-Query-Retention", "none");
         return response.json(result);
       } catch (error) {
         return next(error);

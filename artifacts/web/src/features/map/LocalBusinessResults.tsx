@@ -1,17 +1,5 @@
-/**
- * LocalBusinessResults — fetches up to 2 businesses nearest to a supplied
- * area using the scoped /api/map/local-business-search endpoint.
- *
- * The result set returned by the API is identical to the pin set — the map
- * never shows a business that is absent from this list. Wider radii (10 mi,
- * 25 mi) are only activated after an explicit member click on the expansion
- * button; they never trigger automatically.
- *
- * Each result item carries data-testid="local-search-pin" so regression tests
- * can assert the exact count of locally-scoped pins without inspecting the map
- * canvas.
- */
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -30,6 +18,8 @@ type SearchResponse = {
   scope: "local" | "expanded";
   radiusMi: number;
   limit: number;
+  totalRelevantListings: number;
+  pinnableCount: number;
   results: Result[];
   pins: Result[];
   expansion: {
@@ -48,23 +38,43 @@ type Props = {
   onPinsChange(pins: Array<Result & { latitude: number; longitude: number }>, area: Area): void;
 };
 
+export function hasValidLocalResultCoordinates(
+  result: Pick<Result, "latitude" | "longitude">,
+): result is Result & { latitude: number; longitude: number } {
+  const { latitude, longitude } = result;
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+    && latitude! >= -90 && latitude! <= 90
+    && longitude! >= -180 && longitude! <= 180
+    && !(latitude === 0 && longitude === 0);
+}
+
 export function LocalBusinessResults({ query, subject, area, onPinsChange }: Props) {
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [radiusMi, setRadiusMi] = useState<5 | 10 | 25>(5);
 
   useEffect(() => {
+    setRadiusMi(5);
+  }, [query, subject, area.latitude, area.longitude, area.city, area.stateCode]);
+
+  useEffect(() => {
     if (!query.trim()) return;
     const controller = new AbortController();
     setStatus("loading");
 
-    const params = new URLSearchParams({ q: query, lat: String(area.latitude), lng: String(area.longitude), radius: String(radiusMi), expand: radiusMi > 5 ? "1" : "0" });
+    const params = new URLSearchParams({
+      q: query,
+      lat: String(area.latitude),
+      lng: String(area.longitude),
+      radius: String(radiusMi),
+      expand: radiusMi > 5 ? "1" : "0",
+      privacy_mode: "discovery_v1",
+    });
     if (subject) params.set("subject", subject);
     if (area.city) params.set("city", area.city);
     if (area.stateCode) params.set("stateCode", area.stateCode);
-    const url = `${BASE}/api/map/local-business-search?${params}`;
 
-    fetch(url, {
+    fetch(`${BASE}/api/map/local-business-search?${params}`, {
       signal: controller.signal,
       credentials: "include",
       headers: { Accept: "application/json" },
@@ -74,11 +84,12 @@ export function LocalBusinessResults({ query, subject, area, onPinsChange }: Pro
           ? (result.json() as Promise<SearchResponse>)
           : Promise.reject(new Error("LOCAL_SEARCH_FAILED")),
       )
-      .then((result: SearchResponse) => {
+      .then((result) => {
         setResponse(result);
         setStatus("ready");
+        const listedIds = new Set(result.results.map((business) => business.id));
         onPinsChange(result.pins.filter((pin): pin is Result & { latitude: number; longitude: number } =>
-          Number.isFinite(pin.latitude) && Number.isFinite(pin.longitude) && pin.latitude !== 0 && pin.longitude !== 0,
+          listedIds.has(pin.id) && hasValidLocalResultCoordinates(pin),
         ), area);
       })
       .catch((error: unknown) => {
@@ -90,7 +101,7 @@ export function LocalBusinessResults({ query, subject, area, onPinsChange }: Pro
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, area.latitude, area.longitude, radiusMi]);
+  }, [query, subject, area.latitude, area.longitude, area.city, area.stateCode, radiusMi]);
 
   if (status === "loading") {
     return (
@@ -102,27 +113,19 @@ export function LocalBusinessResults({ query, subject, area, onPinsChange }: Pro
   }
 
   if (status === "error") {
-    return (
-      <p className="p-4 text-sm text-[#9c1c1c] font-semibold">
-        We could not load nearby results. Please try again.
-      </p>
-    );
+    return <p className="p-4 text-sm text-[#9c1c1c] font-semibold">We could not load nearby results. Please try again.</p>;
   }
-
   if (!response) return null;
 
   return (
     <section aria-label="Nearby search results" className="flex flex-col">
-      <p className="px-4 py-2 text-xs text-[#3A1F0E]/50 font-medium border-b border-[#3A1F0E]/6">
-        {response.results.length}{" "}
-        {response.results.length === 1 ? "result" : "results"} within{" "}
-        {response.radiusMi} miles of {area.label}.
+      <p data-testid="local-search-counts" className="px-4 py-2 text-xs text-[#3A1F0E]/50 font-medium border-b border-[#3A1F0E]/6">
+        <span data-testid="local-search-total-count">{response.totalRelevantListings}</span> relevant {response.totalRelevantListings === 1 ? "listing" : "listings"} within{" "}
+        {response.radiusMi} miles of {area.label}; <span data-testid="local-search-pinnable-count">{response.pinnableCount}</span> {response.pinnableCount === 1 ? "has" : "have"} a map pin.
       </p>
 
       {response.results.length === 0 ? (
-        <p className="p-4 text-sm text-[#3A1F0E]/60">
-          No matching places were found nearby.
-        </p>
+        <p className="p-4 text-sm text-[#3A1F0E]/60">No matching places were found nearby.</p>
       ) : (
         <ol className="divide-y divide-[#3A1F0E]/6">
           {response.results.map((business) => (
@@ -130,16 +133,12 @@ export function LocalBusinessResults({ query, subject, area, onPinsChange }: Pro
               key={business.id}
               data-testid="local-search-result"
               data-business-id={business.id}
+              data-pinnable={hasValidLocalResultCoordinates(business) ? "true" : "false"}
               className="p-4 hover:bg-[#FAF6EF] transition-colors"
             >
-              <a
-                href={business.detailUrl}
-                className="flex items-start justify-between gap-3"
-              >
+              <Link href={`/businesses/${encodeURIComponent(business.id)}`} className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <strong className="block font-bold text-sm text-[#2B1507] leading-tight truncate">
-                    {business.name}
-                  </strong>
+                  <strong className="block font-bold text-sm text-[#2B1507] leading-tight truncate">{business.name}</strong>
                   <span className="block text-xs text-[#3A1F0E]/60 mt-0.5">
                     {[business.city, business.stateCode].filter(Boolean).join(", ")}
                     {" · "}
@@ -148,10 +147,8 @@ export function LocalBusinessResults({ query, subject, area, onPinsChange }: Pro
                     </span>
                   </span>
                 </div>
-                <span className="text-[10px] font-bold text-[#CA922B] hover:underline shrink-0 mt-0.5">
-                  View →
-                </span>
-              </a>
+                <span className="text-[10px] font-bold text-[#CA922B] hover:underline shrink-0 mt-0.5">View →</span>
+              </Link>
             </li>
           ))}
         </ol>

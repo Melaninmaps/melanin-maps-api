@@ -2,25 +2,43 @@ export type ParsedLocalMapSearch = {
   subject: string;
   city?: string;
   stateCode?: string;
+  usesDeviceLocation?: boolean;
 };
 
 const SUBJECTS: Array<{ expression: RegExp; subject: string }> = [
-  { expression: /\bbook\s*stores?\b|\bbookshops?\b|\bbooksellers?\b/i, subject: "bookstore" },
+  { expression: /\b(?:book\s*stores?|bookshops?|booksellers?)\b/i, subject: "bookstore" },
   { expression: /\bgrocery\s+stores?\b/i, subject: "grocery store" },
-  { expression: /\brestaurants?\b|\bdining\b/i, subject: "restaurant" },
-  { expression: /\bbarbers?\b|\bsalons?\b|\bbeauty\b/i, subject: "beauty" },
+  { expression: /\b(?:restaurants?|dining)\b/i, subject: "restaurant" },
+  { expression: /\b(?:barber[ -]?shops?|barbers?)\b/i, subject: "barber" },
+  { expression: /\b(?:locs?|dreadlocks?|natural[ -]?hair|protective styles?)\b/i, subject: "locs" },
+  { expression: /\b(?:salons?|beauty)\b/i, subject: "salon" },
+  { expression: /\b(?:hvac|heating and (?:air|cooling)|air conditioning|a\/c repair)\b/i, subject: "hvac" },
 ];
-const DEFAULT_STATE_BY_CITY: Record<string, string> = { atlanta: "GA" };
+const DEFAULT_STATE_BY_CITY: Record<string, string> = {
+  atlanta: "GA",
+  philadelphia: "PA",
+  phoenix: "AZ",
+};
+const DEVICE_LOCATION = /^(?:me|my location|current location|nearby|here)$/i;
 
 /** Coordinates are intentionally resolved by the server, never from this parser. */
 export function parseLocalMapSearch(input: string): ParsedLocalMapSearch {
   const text = input.trim().replace(/\s+/g, " ");
-  const match = SUBJECTS.find(({ expression }) => expression.test(text));
-  const subject = match?.subject ?? text;
-  const afterIn = text.match(/\bin\s+(.+?)\s*$/i)?.[1];
-  const atStart = match && text.match(new RegExp(`^\\s*${match.expression.source}\\s+(.+?)\\s*$`, "i"));
-  const location = (afterIn ?? atStart?.[1])?.trim().replace(/^[, ]+|[, ]+$/g, "");
-  if (!location) return { subject };
+  const definition = SUBJECTS.find(({ expression }) => expression.test(text));
+  const subjectMatch = definition?.expression.exec(text);
+  const subject = definition?.subject ?? text;
+  const trailingText = subjectMatch
+    ? text.slice((subjectMatch.index ?? 0) + subjectMatch[0].length)
+    : "";
+  const location = trailingText
+    .replace(/^\s*,?\s*(?:(?:in|near|at|around)\s+)?/i, "")
+    .trim()
+    .replace(/^[, ]+|[, ]+$/g, "");
+  // A recognized subject with no typed geography is a genuine nearby search.
+  // Any city or ZIP parsed below is returned without this flag, so callers can
+  // never let an older GPS fix override geography the member typed.
+  if (!location) return definition ? { subject, usesDeviceLocation: true } : { subject };
+  if (DEVICE_LOCATION.test(location)) return { subject, usesDeviceLocation: true };
   const stateMatch = location.match(/^(.*?)\s*,?\s+([A-Z]{2})$/i);
   const city = (stateMatch?.[1] ?? location).trim();
   const suppliedState = stateMatch?.[2]?.toUpperCase();
