@@ -152,11 +152,11 @@ export function LocationFirstBusinessDirectory() {
     <main className="bg-[#FBF6EC] pb-16">
       <section className="bg-[#2B1507] px-6 py-14 text-center text-white">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E5B94B]">
-          Community business and service finder
+          Focused business and service finder
         </p>
         <h1 className="mt-3 font-serif text-4xl font-bold">Find who you need, where you are.</h1>
         <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/75">
-          Search published community- and founder-listed businesses by name, specialty, category, and city.
+          Search published community- and founder-listed businesses by name, specialty, category, ownership, city, or postal code.
         </p>
       </section>
 
@@ -183,6 +183,14 @@ export function LocationFirstBusinessDirectory() {
         <p className="mt-1 text-xs text-[#3A1F0E]/60">
           Listings marked unclaimed are searchable but are not presented as verified or owner-controlled.
         </p>
+        {location.city && (
+          <Link
+            href={`/map?area=${encodeURIComponent([location.city, location.stateCode].filter(Boolean).join("-"))}${searchText.trim() ? `&q=${encodeURIComponent(searchText.trim())}` : ""}`}
+            className="mt-3 inline-flex rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
+          >
+            Open this business search on Map
+          </Link>
+        )}
 
         <FilterRow
           label="Category"

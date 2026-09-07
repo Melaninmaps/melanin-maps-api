@@ -23,7 +23,7 @@ import About from "@/pages/about";
 import Features from "@/pages/features";
 import Contact from "@/pages/contact";
 import { LocationFirstExplore } from "@/features/explore/LocationFirstExplore";
-import Discover from "@/pages/discover";
+import DiscoverUniversal from "@/pages/discover-universal";
 import BusinessDetail from "@/pages/business-detail";
 import Safety from "@/pages/safety";
 import Community from "@/pages/community";
@@ -301,7 +301,7 @@ function Router() {
         <Layout><PreLaunchRoute><LocationFirstExplore /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/discover">
-        <Layout><PreLaunchRoute><Discover /></PreLaunchRoute></Layout>
+        <Layout><PreLaunchRoute><DiscoverUniversal /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/businesses">
         <Layout><PreLaunchRoute><LocationFirstBusinessDirectory /></PreLaunchRoute></Layout>

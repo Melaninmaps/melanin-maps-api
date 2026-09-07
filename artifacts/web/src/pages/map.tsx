@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
 import AddPlaceModal from "@/components/AddPlaceModal";
+import UniversalSearchResults, { type UniversalSearchResult } from "@/components/UniversalSearchResults";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -337,9 +338,7 @@ export default function MapPage() {
   const [geoPermissionDenied, setGeoPermissionDenied] = useState(false);
 
   // Universal Search — populated on explicit submit; null = client-side filtering
-  const [universalResults, setUniversalResults] = useState<{
-    results: { businesses: any[]; heritage: any[]; events: any[]; libraryTopics: any[] };
-    intentType: string; totalResults: number; fallbackMessage?: string | null;
+  const [universalResults, setUniversalResults] = useState<UniversalSearchResult & {
     namedBusinessNotFound?: boolean; namedBusinessMessage?: string; namedBusinessNextActions?: string[];
     heritageGeoExpansion?: string; heritageGeoMessage?: string;
     libraryTopicQueued?: boolean; libraryQueueMessage?: string;
@@ -477,7 +476,12 @@ export default function MapPage() {
     // businesses table → filters to Phuket). Also pass detected lat/lng so
     // geo-radius ranking activates for that geography.
     try {
-      const p = new URLSearchParams({ q, surface: "map", limit: "20" });
+      const p = new URLSearchParams({
+        q,
+        surface: "smart_search",
+        privacy_mode: "discovery_v1",
+        limit: "20",
+      });
       if (geoLat !== null && geoLng !== null) {
         // Override user GPS coords with the detected location so the MWM DB
         // search is geo-bounded around the identified city/region.
@@ -1682,6 +1686,21 @@ export default function MapPage() {
                 {universalResults?.fallbackMessage && !universalResults?.namedBusinessNotFound && (
                   <div className="px-4 py-2 border-b border-[#3A1F0E]/6">
                     <p className="text-[11px] text-[#3A1F0E]/50 italic">{universalResults.fallbackMessage}</p>
+                  </div>
+                )}
+
+                {/* Preserve Map's proven business/heritage pin controls above and
+                    expose the universal record types that previously had no visible
+                    result cards. These are cards/handoffs only, never fabricated pins. */}
+                {universalResults && (
+                  <div className="border-b border-[#3A1F0E]/6">
+                    <UniversalSearchResults
+                      result={universalResults}
+                      surface="Map"
+                      compact
+                      includeKinds={["Event", "Library topic / resource", "Community organization"]}
+                      hideWhenEmpty
+                    />
                   </div>
                 )}
 
