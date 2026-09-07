@@ -101,9 +101,9 @@ function ownershipStatus(item: UniversalSearchItem): string | null {
   return null;
 }
 
-function safeInternalDetailPath(value: unknown): string | null {
+export function safeInternalDetailPath(value: unknown): string | null {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return null;
-  return /^\/(?:places|cultural-sites|sites|tour-cultural-sites)\/[A-Za-z0-9%._~!$&'()*+,;=:@/-]+$/.test(value)
+  return /^\/(?:places|cultural-sites|sites|tour-cultural-sites)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)?$/.test(value)
     ? value
     : null;
 }

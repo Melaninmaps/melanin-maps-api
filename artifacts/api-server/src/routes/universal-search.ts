@@ -1496,10 +1496,11 @@ async function searchHeritage(
       if (city) {
         params.push(`%${city}%`);
         whereClause += ` AND city ILIKE $${params.length}`;
-      } else if (state) {
+      }
+      if (state) {
         params.push(state.toUpperCase());
         whereClause += ` AND UPPER(state) = $${params.length}`;
-      } else if (lat !== undefined && lng !== undefined && radiusMiles !== undefined) {
+      } else if (!city && lat !== undefined && lng !== undefined && radiusMiles !== undefined) {
         // Haversine proximity filter — LEAST(1,x) prevents acos domain errors
         whereClause += `
           AND latitude IS NOT NULL AND longitude IS NOT NULL
@@ -1513,7 +1514,7 @@ async function searchHeritage(
           * cos(radians(CAST(longitude AS double precision)) - radians(${lng}))
           + sin(radians(${lat})) * sin(radians(CAST(latitude AS double precision)))
         )))) ASC`;
-      } else if (lat !== undefined && lng !== undefined) {
+      } else if (!city && lat !== undefined && lng !== undefined) {
         // National — sort by distance when we have coords
         orderClause = `ORDER BY (3959 * acos(LEAST(1.0, GREATEST(-1.0,
           cos(radians(${lat})) * cos(radians(CAST(latitude AS double precision)))
@@ -1557,28 +1558,37 @@ async function searchHeritage(
   return [];
 }
 
-async function searchPublishedMapEntities(
+export async function searchPublishedMapEntities(
   q: string,
   opts: { city?: string; state?: string; limit?: number } = {},
 ): Promise<HeritageResult[]> {
   const { city, state, limit = 5 } = opts;
   const broadPlaceIntent = /\b(heritage|historic|history|culture|cultural|community|site|sites|place|places|things to do|landmark|landmarks|hbcu|festival|festivals|event|events|market|markets|public art|destination|destinations|travel)\b/i.test(q);
-  const params: unknown[] = [`%${q}%`, q];
+  const params: unknown[] = [`%${q}%`];
   let locationClause = "";
-  let browseClause = "";
+  let semanticClause = "title ILIKE $1 OR COALESCE(summary, '') ILIKE $1";
 
   if (city) {
     params.push(city);
     locationClause += ` AND LOWER(BTRIM(city)) = LOWER(BTRIM($${params.length}))`;
-    if (broadPlaceIntent) browseClause = " OR TRUE";
-  } else if (broadPlaceIntent) {
-    // Free-text Discover has one simple box. Treat a governed entity's stored
-    // city as location intent only when that full city name appears in the query.
-    browseClause = " OR LOWER($2) LIKE '%' || LOWER(BTRIM(city)) || '%'";
   }
   if (state) {
     params.push(state.toUpperCase());
     locationClause += ` AND UPPER(BTRIM(COALESCE(state_region, ''))) = $${params.length}`;
+  }
+
+  if (broadPlaceIntent && (city || state)) {
+    // A generic place word may browse only inside an explicit structured scope.
+    semanticClause += " OR TRUE";
+  } else if (broadPlaceIntent) {
+    // Free-text Discover has one simple box. Treat a governed entity's stored
+    // city as location intent only when that full city name appears in the query.
+    params.push(q);
+    semanticClause += ` OR LOWER($${params.length}::text) LIKE '%' || LOWER(BTRIM(city)) || '%'`;
+  } else {
+    // Specific map-only queries may match the governed kind without opening a
+    // generic national browse for words such as market, festival, or travel.
+    semanticClause += " OR entity_kind ILIKE $1";
   }
   params.push(limit);
 
@@ -1591,9 +1601,7 @@ async function searchPublishedMapEntities(
               'published_map_entities' AS source_table,
               'map_entity' AS result_type, 'related_category' AS match_tier
        FROM public.published_map_entities
-       WHERE (
-         title ILIKE $1 OR COALESCE(summary, '') ILIKE $1 OR entity_kind ILIKE $1${browseClause}
-       )
+       WHERE (${semanticClause})
        ${locationClause}
        ORDER BY
          CASE WHEN title ILIKE $1 THEN 0 ELSE 1 END,
@@ -1922,12 +1930,13 @@ router.get("/search/universal", async (req: Request, res: Response) => {
 
       // Step 1 — exact city match
       if (heritageGeoExpansion === "none" && heritageCity) {
-        const r = await searchHeritage(heritageQuery, { city: heritageCity, limit: 5 });
+        const r = await searchHeritage(heritageQuery, { city: heritageCity, state: stateStr, limit: 5 });
         if (r.length > 0) { heritage = r; heritageGeoExpansion = "city"; }
       }
 
-      // Step 2 — within 50 miles (requires lat/lng from client or geocode)
-      if (heritageGeoExpansion === "none" && lat !== undefined && lng !== undefined) {
+      // Step 2 — within 50 miles only when no city/state scope was requested.
+      // Structured geography is authoritative and must never silently widen.
+      if (heritageGeoExpansion === "none" && !heritageCity && !stateStr && lat !== undefined && lng !== undefined) {
         const r = await searchHeritage(heritageQuery, { lat, lng, radiusMiles: 50, limit: 5 });
         if (r.length > 0) {
           heritage = r;
@@ -1939,7 +1948,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       }
 
       // Step 3 — same state / region
-      if (heritageGeoExpansion === "none" && stateStr) {
+      if (heritageGeoExpansion === "none" && !heritageCity && stateStr) {
         const r = await searchHeritage(heritageQuery, { state: stateStr, lat, lng, limit: 5 });
         if (r.length > 0) {
           heritage = r;
@@ -1951,7 +1960,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       }
 
       // Step 4 — national (sorted nearest-first when lat/lng available)
-      if (heritageGeoExpansion === "none") {
+      if (heritageGeoExpansion === "none" && !heritageCity && !stateStr) {
         const r = await searchHeritage(heritageQuery, { lat, lng, limit: 5 });
         if (r.length > 0) {
           heritage = r;

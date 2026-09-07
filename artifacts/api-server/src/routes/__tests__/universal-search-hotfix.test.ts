@@ -17,7 +17,10 @@ vi.mock("../../lib/library-growth-engine", () => ({
   classifyGrowthSensitivity: () => "standard",
 }));
 
-import universalSearchRouter, { appendBusinessRadiusFilter } from "../universal-search";
+import universalSearchRouter, {
+  appendBusinessRadiusFilter,
+  searchPublishedMapEntities,
+} from "../universal-search";
 
 type QueryCall = readonly [query: string, params?: readonly unknown[]];
 
@@ -250,6 +253,59 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "lat and lng must be single valid coordinates supplied together" });
     expect(calls).toEqual([]);
+  });
+
+  it("never widens legacy heritage beyond an explicit city and state", async () => {
+    const calls: QueryCall[] = [];
+    zeroResultRepository(calls);
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({ q: "museum", city: "Philadelphia", state: "PA" });
+
+    expect(response.status).toBe(200);
+    const legacyHeritageReads = calls.filter(([query]) => /FROM (?:cultural_sites|tour_cultural_sites)/.test(query));
+    expect(legacyHeritageReads).toHaveLength(2);
+    for (const [query, params] of legacyHeritageReads) {
+      expect(query).toContain("city ILIKE");
+      expect(query).toContain("UPPER(state)");
+      expect(params).toEqual(["%museum%", "%Philadelphia%", "PA"]);
+    }
+  });
+});
+
+describe("searchPublishedMapEntities SQL option matrix", () => {
+  it.each([
+    ["specific, no scope", "Coffee Heritage Plaza", {}],
+    ["specific, city", "Coffee Heritage Plaza", { city: "Philadelphia" }],
+    ["specific, state", "Coffee Heritage Plaza", { state: "PA" }],
+    ["specific, city and state", "Coffee Heritage Plaza", { city: "Philadelphia", state: "PA" }],
+    ["broad, no scope", "market", {}],
+    ["broad, city", "market", { city: "Philadelphia" }],
+    ["broad, state", "market", { state: "PA" }],
+    ["broad, city and state", "market", { city: "Philadelphia", state: "PA" }],
+  ])("binds contiguous placeholders for %s", async (_label, q, options) => {
+    poolQuery.mockResolvedValue({ rows: [] });
+
+    await searchPublishedMapEntities(q as string, options as { city?: string; state?: string });
+
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+    const [sql, params] = poolQuery.mock.calls[0] as [string, unknown[]];
+    const referenced = new Set([...sql.matchAll(/\$(\d+)/g)].map((match) => Number(match[1])));
+    expect(referenced).toEqual(new Set(params.map((_value, index) => index + 1)));
+    expect(sql).toContain("FROM public.published_map_entities");
+    expect(params.at(-1)).toBe(5);
+  });
+
+  it("does not turn a generic unspecific kind into a national browse", async () => {
+    poolQuery.mockResolvedValue({ rows: [] });
+
+    await searchPublishedMapEntities("market");
+
+    const [sql, params] = poolQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).not.toContain("entity_kind ILIKE $1");
+    expect(sql).toContain("LOWER(BTRIM(city))");
+    expect(params).toEqual(["%market%", "market", 5]);
   });
 });
 

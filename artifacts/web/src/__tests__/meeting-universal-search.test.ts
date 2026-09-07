@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   UniversalSearchResults,
+  safeInternalDetailPath,
   safePublicHttpsUrl,
   type UniversalSearchResult,
 } from "@/components/UniversalSearchResults";
@@ -75,6 +76,20 @@ describe("meeting-ready universal web search", () => {
       "javascript:alert(1)",
     ]) {
       expect(safePublicHttpsUrl(value)).toBeNull();
+    }
+  });
+
+  it("rejects literal, encoded, and malformed internal detail traversal", () => {
+    expect(safeInternalDetailPath("/places/place-1/safe-slug")).toBe("/places/place-1/safe-slug");
+    for (const value of [
+      "/places/../../admin",
+      "/places/%2e%2e/%2e%2e/admin",
+      "/places/place-1/%2fadmin",
+      "//example.org/places/place-1",
+      "/admin",
+      "/places/place.1/slug",
+    ]) {
+      expect(safeInternalDetailPath(value)).toBeNull();
     }
   });
 
