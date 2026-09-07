@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -343,9 +344,6 @@ export default function RelocationPlannerScreen() {
     ...(preferences?.culturalInterests ?? []),
     ...(preferences?.favoriteCategories ?? []),
   ];
-
-  const getApiBase = () =>
-    process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
   const getToken = async () => {
     try { return await SecureStore.getItemAsync("auth_session_token"); } catch { return null; }

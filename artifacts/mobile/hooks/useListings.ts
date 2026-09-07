@@ -1,10 +1,8 @@
+import { getApiBase } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 
-function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -54,7 +52,7 @@ export function useListings(businessId: string) {
     if (!businessId) return;
     setLoading(true);
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const res = await fetch(`${base}/api/businesses/${businessId}/listings`);
       if (res.ok) {
         const data = await res.json() as { listings: Listing[] };
@@ -71,7 +69,7 @@ export function useListings(businessId: string) {
   const openCheckout = async (listing: Listing) => {
     if (!listing.stripePriceId) return null;
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const token = await getToken();
       const res = await fetch(`${base}/api/connect/listings/${listing.id}/checkout`, {
         method: "POST",
@@ -98,7 +96,7 @@ export function useOwnerListings(businessId: string) {
     if (!businessId) return;
     setLoading(true);
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const token = await getToken();
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -125,7 +123,7 @@ export function useOwnerListings(businessId: string) {
 
   const startOnboarding = async (): Promise<string | null> => {
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const token = await getToken();
       const res = await fetch(`${base}/api/connect/onboard`, {
         method: "POST",
@@ -149,7 +147,7 @@ export function useOwnerListings(businessId: string) {
     listingType?: ListingType;
   }): Promise<Listing | null> => {
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const token = await getToken();
       const res = await fetch(`${base}/api/connect/listings`, {
         method: "POST",
@@ -167,7 +165,7 @@ export function useOwnerListings(businessId: string) {
 
   const toggleActive = async (listingId: string, active: boolean): Promise<void> => {
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const token = await getToken();
       await fetch(`${base}/api/connect/listings/${listingId}`, {
         method: "PATCH",
@@ -180,7 +178,7 @@ export function useOwnerListings(businessId: string) {
 
   const deleteListing = async (listingId: string): Promise<void> => {
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const token = await getToken();
       await fetch(`${base}/api/connect/listings/${listingId}`, {
         method: "DELETE",

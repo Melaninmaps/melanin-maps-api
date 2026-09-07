@@ -1491,11 +1491,6 @@ type TrackedFlight = {
   delay?: number;
 };
 
-function getFlightApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-
 function FlightTrackerModal({
   visible, onClose, isAuthenticated, colors,
 }: {
@@ -1519,7 +1514,7 @@ function FlightTrackerModal({
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const base = getFlightApiBase();
+      const base = getApiBase();
       const res = await fetch(`${base}/api/travel/flights/status`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -1541,7 +1536,7 @@ function FlightTrackerModal({
     setAdding(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const base = getFlightApiBase();
+      const base = getApiBase();
       const res = await fetch(`${base}/api/travel/flights`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -1565,7 +1560,7 @@ function FlightTrackerModal({
 
   const handleDelete = async (id: string) => {
     const token = await SecureStore.getItemAsync("auth_session_token");
-    const base = getFlightApiBase();
+    const base = getApiBase();
     await fetch(`${base}/api/travel/flights/${id}`, {
       method: "DELETE",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -1801,7 +1796,7 @@ export default function TravelScreen() {
   useEffect(() => {
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const r = await fetch(`${base}/api/kinfolk/health`, { signal: AbortSignal.timeout(8000) });
         setKinfolkOk(r.ok);
       } catch {

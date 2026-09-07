@@ -6,6 +6,7 @@
  * Auto-captures: current page (pathname), user ID, timestamp, and device info.
  * POSTs to /api/tester-report which stores to DB and emails the founder directly.
  */
+import { getApiBase } from "@/lib/api";
 import React, { useState, useCallback } from "react";
 import {
   ActivityIndicator,
@@ -27,10 +28,7 @@ import { useColors } from "@/hooks/useColors";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 export function TesterReportButton() {
   const { user } = useAuth();

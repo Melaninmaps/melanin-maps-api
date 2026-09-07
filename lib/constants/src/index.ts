@@ -20,6 +20,13 @@ export {
 } from "./business-categories";
 export type { BusinessCategory } from "./business-categories";
 
+export {
+  foldDiscoveryLocation,
+  getDiscoveryCityAliases,
+  getDiscoveryCountryAliases,
+  normalizeDiscoveryPostalCode,
+} from "./discovery-location-normalization";
+
 // ── Business discovery normalization ───────────────────────────────────────
 export {
   BUSINESS_SEARCH_NORMALIZATION_VERSION,

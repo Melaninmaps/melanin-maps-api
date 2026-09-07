@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
@@ -321,7 +322,7 @@ export default function ListBusinessScreen() {
     setAiFilling(true);
     setAiSuggestion(null);
     try {
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const apiBase = getApiBase();
       const res = await fetch(`${apiBase}/api/businesses/smart-fill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -357,7 +358,7 @@ export default function ListBusinessScreen() {
     if (!waitlistCat || !waitlistEmail.trim() || !waitlistEmail.includes("@")) return;
     setWaitlistSubmitting(true);
     try {
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const apiBase = getApiBase();
       await fetch(`${apiBase}/api/category-waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -378,7 +379,7 @@ export default function ListBusinessScreen() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const apiBase = getApiBase();
       const token = await SecureStore.getItemAsync("auth_session_token");
       if (!token) throw new Error("Sign in with your approved community account to submit a business.");
       const res = await fetch(`${apiBase}/api/community/business-submissions`, {

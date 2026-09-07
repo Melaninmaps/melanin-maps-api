@@ -56,11 +56,11 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
+        "APP_RELEASE_CHANNEL": "testflight-staging",
+        "APP_ENV": "staging",
         "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
         "PNPM_VERSION": "10.26.1",
-        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
-        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_YtlteQfYyxtiWoOvOylWcxKaIBk",
-        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
+        "EXPO_PUBLIC_REVENUECAT_DISABLED": "true",
         "SENTRY_ALLOW_FAILURE": "true"
       }
     },
@@ -94,6 +94,13 @@
     }
   },
   "submit": {
+    "testflight-staging": {
+      "ios": {
+        "appleId": "tlindsay428@yahoo.com",
+        "ascAppId": "6783773366",
+        "appleTeamId": "Y46Y4A5MMZ"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "tlindsay428@yahoo.com",

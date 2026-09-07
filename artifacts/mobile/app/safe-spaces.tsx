@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,10 +14,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface CommunityPlace {
   id: string;

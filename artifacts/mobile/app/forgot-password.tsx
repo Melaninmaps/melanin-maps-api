@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { getApiBaseUrl } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 
 export default function ForgotPasswordScreen() {
   const colors = useColors();
@@ -45,7 +45,7 @@ export default function ForgotPasswordScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       let response: Response;
       try {
         response = await fetch(`${base}/api/auth/forgot-password`, {
@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       let response: Response;
       try {
         response = await fetch(`${base}/api/auth/reset-password`, {

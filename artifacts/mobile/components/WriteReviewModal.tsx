@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
@@ -128,7 +129,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     try {
       const { getItemAsync } = await import("expo-secure-store");
       const token = await getItemAsync("auth_session_token");
-      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const base = getApiBase();
       const formData = new FormData();
       const ext = asset.uri.split(".").pop() ?? "jpg";
       formData.append("photo", { uri: asset.uri, name: `photo.${ext}`, type: `image/${ext}` } as any);
@@ -151,7 +152,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
       try {
         const { getItemAsync } = await import("expo-secure-store");
         const token = await getItemAsync("auth_session_token");
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         await fetch(`${base}/api/captions/${businessId}`, {
           method: "POST",
           headers: {

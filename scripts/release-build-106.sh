@@ -99,7 +99,7 @@ NODE
 
 verify_testflight_staging() {
   local staging_audio="${MWM_KINFOLK_TEST_AUDIO:-}"
-  local config_json introspect_json compiled_dir health_json login_json auth_header ordinary_json research_json inventory_json transcript_json speech_json
+  local config_json introspect_json compiled_dir version_json health_json login_json auth_header discovery_search_json discovery_preferences_json discovery_event_json discovery_opt_out_json ordinary_json research_json inventory_json transcript_json speech_json
 
   [[ -n "$EXPECTED_SHA" && "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "set MWM_BUILD106_SOURCE_SHA to the exact reviewed 40-character lowercase commit SHA"
   [[ -n "$TESTER_EMAIL_SECRET" && -n "$TESTER_PASSWORD_SECRET" ]] || fail "secure staging tester credentials are required in environment secrets"
@@ -109,6 +109,20 @@ verify_testflight_staging() {
   git cat-file -e "${EXPECTED_SHA}^{commit}" || fail "MWM_BUILD106_SOURCE_SHA is not a commit"
   [[ -z "$(git status --porcelain)" ]] || fail "working tree is not clean"
   pass "clean committed source $EXPECTED_SHA"
+
+  version_json="$(mktemp)"
+  TEMP_FILES=("$version_json")
+  curl --silent --show-error --fail --max-time 30 "$STAGING_URL/api/version" > "$version_json"
+  node - "$version_json" "$EXPECTED_SHA" <<'NODE'
+const version = JSON.parse(require("node:fs").readFileSync(process.argv[2], "utf8"));
+if (version.built_from_sha !== process.argv[3]) {
+  console.error("BUILD_106_BLOCKED: staging /api/version.built_from_sha does not equal the reviewed source SHA");
+  process.exit(1);
+}
+NODE
+  rm -f -- "$version_json"
+  TEMP_FILES=()
+  pass "isolated staging /api/version reports the exact reviewed built_from_sha"
 
   node - "$MOBILE/app.json" "$MOBILE/eas.json" "$STAGING_HOST" <<'NODE'
 const fs = require("node:fs");
@@ -124,7 +138,10 @@ if (profile?.channel !== "testflight-staging") failures.push("profile.channel");
 if (profile?.distribution !== "store") failures.push("profile.distribution");
 if (profile?.environment !== "preview") failures.push("profile.environment");
 if (profile?.env?.EXPO_PUBLIC_DOMAIN !== host) failures.push("staging API host");
+if (profile?.env?.EXPO_PUBLIC_REVENUECAT_DISABLED !== "true") failures.push("RevenueCat staging kill switch");
+if (Object.keys(profile?.env ?? {}).some((key) => /REVENUECAT_(?:IOS|ANDROID|TEST)_API_KEY/i.test(key))) failures.push("production RevenueCat API key");
 if (Object.keys(profile?.env ?? {}).some((key) => /OPENAI|AI_INTEGRATIONS/i.test(key))) failures.push("provider variable in EAS profile");
+if (!eas.submit?.["testflight-staging"]?.ios) failures.push("explicit testflight-staging submit profile");
 if (failures.length) {
   console.error(`BUILD_106_BLOCKED: TestFlight staging metadata mismatch: ${failures.join(", ")}`);
   process.exit(1);
@@ -137,12 +154,16 @@ NODE
   health_json="$(mktemp)"
   login_json="$(mktemp)"
   auth_header="$(mktemp)"
+  discovery_search_json="$(mktemp)"
+  discovery_preferences_json="$(mktemp)"
+  discovery_event_json="$(mktemp)"
+  discovery_opt_out_json="$(mktemp)"
   ordinary_json="$(mktemp)"
   research_json="$(mktemp)"
   inventory_json="$(mktemp)"
   transcript_json="$(mktemp)"
   speech_json="$(mktemp)"
-  TEMP_FILES=("$config_json" "$introspect_json" "$health_json" "$login_json" "$auth_header" "$ordinary_json" "$research_json" "$inventory_json" "$transcript_json" "$speech_json")
+  TEMP_FILES=("$config_json" "$introspect_json" "$health_json" "$login_json" "$auth_header" "$discovery_search_json" "$discovery_preferences_json" "$discovery_event_json" "$discovery_opt_out_json" "$ordinary_json" "$research_json" "$inventory_json" "$transcript_json" "$speech_json")
   chmod 0600 "${TEMP_FILES[@]}"
   trap 'rm -rf -- "$compiled_dir"; cleanup' EXIT
 
@@ -176,9 +197,10 @@ for (const entry of fs.readdirSync(outputDir, { recursive: true })) {
   const file = path.join(outputDir, entry);
   if (fs.statSync(file).isFile() && /\.(?:js|map)$/.test(file)) compiled += fs.readFileSync(file, "utf8");
 }
-if (!compiled.includes(host)) process.exit(1);
+const productionOrigin = "https://www.mappingwithmelanin.com";
+if (!compiled.includes(host) || compiled.includes(productionOrigin)) process.exit(1);
 NODE
-  pass "staging Expo public configuration, compiled API host, mobile tests, typecheck, and foreground-only audio configuration"
+  pass "staging Expo public configuration, staging-only compiled API origin, mobile tests, typecheck, and foreground-only audio configuration"
 
   curl --silent --show-error --fail --max-time 30 "$STAGING_URL/api/kinfolk/health" > "$health_json"
   node - "$health_json" <<'NODE'
@@ -196,6 +218,66 @@ NODE
   : > "$login_json"
   unset TESTER_EMAIL_SECRET TESTER_PASSWORD_SECRET
   printf 'Authorization: Bearer %s\n' "$TOKEN" > "$auth_header"
+
+  discovery_request_id="$(node -e 'process.stdout.write(require("node:crypto").randomUUID())')"
+  discovery_event_id="$(node -e 'process.stdout.write(require("node:crypto").randomUUID())')"
+  discovery_key="build106-staging-${discovery_event_id}"
+  DISCOVERY_REQUEST_ID="$discovery_request_id" jq -cn '{
+    schemaVersion:"1", requestId:env.DISCOVERY_REQUEST_ID, surface:"smart_search", platform:"ios",
+    entryPoint:"testflight_staging_release_canary", query:"bakery",
+    location:{source:"typed",city:"Philadelphia",stateRegion:"PA",countryCode:"US"},
+    filters:{}, consent:{personalizedSuggestions:false,searchImprovement:false,preciseLocation:false}
+  }' | curl --silent --show-error --fail --max-time 30 -H 'Content-Type: application/json' \
+    --data-binary @- "$STAGING_URL/api/discovery/v1/search" > "$discovery_search_json"
+  node - "$discovery_search_json" "$discovery_request_id" <<'NODE'
+const result = JSON.parse(require("node:fs").readFileSync(process.argv[2], "utf8"));
+if (result.requestId !== process.argv[3] || typeof result.resultSetId !== "string" ||
+    !Array.isArray(result.results) || typeof result.total !== "number") process.exit(1);
+NODE
+  pass "isolated staging Discovery search schema canary"
+
+  curl --silent --show-error --fail --max-time 30 -H @"$auth_header" \
+    "$STAGING_URL/api/discovery/v1/preferences" > "$discovery_preferences_json"
+  node - "$discovery_preferences_json" <<'NODE'
+const preference = JSON.parse(require("node:fs").readFileSync(process.argv[2], "utf8"));
+if (typeof preference.searchImprovement !== "boolean" || typeof preference.consentVersion !== "string") process.exit(1);
+NODE
+  jq -cn '{searchImprovement:true,consentVersion:"build106-staging-canary"}' |
+    curl --silent --show-error --fail --max-time 30 -X PUT -H 'Content-Type: application/json' -H @"$auth_header" \
+      --data-binary @- "$STAGING_URL/api/discovery/v1/preferences" > "$discovery_preferences_json"
+  jq -e '.searchImprovement == true and .consentVersion == "build106-staging-canary"' "$discovery_preferences_json" >/dev/null ||
+    fail "Discovery consent canary failed"
+  pass "isolated staging Discovery preferences and consent canary"
+
+  DISCOVERY_EVENT_ID="$discovery_event_id" DISCOVERY_KEY="$discovery_key" DISCOVERY_REQUEST_ID="$discovery_request_id" jq -cn '{
+    schemaVersion:"1", eventId:env.DISCOVERY_EVENT_ID, idempotencyKey:env.DISCOVERY_KEY,
+    eventName:"search_submitted", consent:{searchImprovement:true,version:"build106-staging-canary"},
+    surface:"smart_search", platform:"ios", entryPoint:"testflight_staging_release_canary",
+    appVersion:"106", requestId:env.DISCOVERY_REQUEST_ID, normalizedIntent:"bakery",
+    coarseLocationBucket:"city:philadelphia-pa"
+  }' > "$discovery_event_json"
+  curl --silent --show-error --fail --max-time 30 -H 'Content-Type: application/json' -H @"$auth_header" \
+    --data-binary @"$discovery_event_json" "$STAGING_URL/api/discovery/v1/events" > "$discovery_opt_out_json"
+  jq -e '.accepted == true' "$discovery_opt_out_json" >/dev/null || fail "Discovery event consent canary failed"
+  curl --silent --show-error --fail --max-time 30 -H 'Content-Type: application/json' -H @"$auth_header" \
+    --data-binary @"$discovery_event_json" "$STAGING_URL/api/discovery/v1/events" > "$discovery_opt_out_json"
+  jq -e '.accepted == true' "$discovery_opt_out_json" >/dev/null || fail "Discovery idempotent replay canary failed"
+  pass "isolated staging Discovery event consent and idempotency canary"
+
+  jq -cn '{searchImprovement:false,consentVersion:"build106-staging-canary"}' |
+    curl --silent --show-error --fail --max-time 30 -X PUT -H 'Content-Type: application/json' -H @"$auth_header" \
+      --data-binary @- "$STAGING_URL/api/discovery/v1/preferences" > "$discovery_opt_out_json"
+  jq -e '.searchImprovement == false' "$discovery_opt_out_json" >/dev/null || fail "Discovery opt-out canary failed"
+  DISCOVERY_EVENT_ID="$(node -e 'process.stdout.write(require("node:crypto").randomUUID())')" DISCOVERY_REQUEST_ID="$discovery_request_id" jq -cn '{
+    schemaVersion:"1", eventId:env.DISCOVERY_EVENT_ID, idempotencyKey:"build106-staging-after-opt-out",
+    eventName:"search_submitted", consent:{searchImprovement:true,version:"build106-staging-canary"},
+    surface:"smart_search", platform:"ios", entryPoint:"testflight_staging_release_canary",
+    appVersion:"106", requestId:env.DISCOVERY_REQUEST_ID
+  }' | curl --silent --show-error --fail --max-time 30 -H 'Content-Type: application/json' -H @"$auth_header" \
+    --data-binary @- "$STAGING_URL/api/discovery/v1/events" > "$discovery_opt_out_json"
+  jq -e '.accepted == false and .reason == "search_improvement_consent_required"' "$discovery_opt_out_json" >/dev/null ||
+    fail "Discovery opt-out enforcement canary failed"
+  pass "isolated staging Discovery opt-out enforcement canary"
 
   staging_chat() {
     local message="$1" output="$2"
@@ -256,11 +338,11 @@ ios_testflight_staging() {
   corepack pnpm install --frozen-lockfile
   [[ "$(git -C "$BUILD_DIR" rev-parse HEAD)" == "$EXPECTED_SHA" && -z "$(git -C "$BUILD_DIR" status --porcelain)" ]] || fail "sealed staging EAS checkout is not exact and clean"
   corepack pnpm exec eas whoami >/dev/null
-  corepack pnpm exec eas build --platform ios --profile testflight-staging --non-interactive --auto-submit
+  corepack pnpm exec eas build --platform ios --profile testflight-staging --non-interactive --auto-submit --auto-submit-with-profile testflight-staging
   printf '\nIOS_STAGING_BUILD_106_SENT_TO_TESTFLIGHT. App Store review was not started.\n'
 }
 
-[[ "$MODE" =~ ^(verify|verify-testflight-staging|ios-testflight-staging|ios-testflight|android-build)$ ]] || fail "usage: $0 verify|verify-testflight-staging|ios-testflight-staging|ios-testflight|android-build"
+[[ "$MODE" =~ ^(verify|verify-testflight-staging|ios-testflight-staging|ios-testflight-production|android-build)$ ]] || fail "usage: $0 verify|verify-testflight-staging|ios-testflight-staging|ios-testflight-production|android-build"
 if [[ "$MODE" == "verify-testflight-staging" ]]; then
   verify_testflight_staging
   exit 0
@@ -287,6 +369,7 @@ node --test \
   "$ROOT/scripts/__tests__/release-smoke-policy.test.cjs" \
   "$ROOT/scripts/__tests__/release-version-policy.test.cjs" \
   "$ROOT/scripts/__tests__/release-secret-lifecycle.test.cjs" \
+  "$ROOT/scripts/__tests__/testflight-staging-policy.test.cjs" \
   "$ROOT/scripts/__tests__/verify-release-evidence.test.mjs"
 MWM_RELEASE_TEST_DATABASE_URL="$TEST_DB_SECRET" \
   MWM_PRODUCTION_DATABASE_FINGERPRINT="$PRODUCTION_DB_FINGERPRINT_SECRET" \
@@ -491,9 +574,11 @@ corepack pnpm install --frozen-lockfile
 [[ "$(git -C "$BUILD_DIR" rev-parse HEAD)" == "$EXPECTED_SHA" && -z "$(git -C "$BUILD_DIR" status --porcelain)" ]] || fail "sealed EAS checkout is not exact and clean"
 corepack pnpm exec eas whoami >/dev/null
 
-if [[ "$MODE" == "ios-testflight" ]]; then
+if [[ "$MODE" == "ios-testflight-production" ]]; then
+  ios_build_number="$(node -e 'const app=require(process.argv[1]).expo; process.stdout.write(String(app.ios?.buildNumber ?? ""))' "$MOBILE/app.json")"
+  [[ "$ios_build_number" =~ ^[0-9]+$ && "$ios_build_number" -ge 107 ]] || fail "iOS build 106 is staging-only; production TestFlight requires iOS build number 107 or later"
   corepack pnpm exec eas build --platform ios --profile production --non-interactive --auto-submit
-  printf '\nIOS_BUILD_106_SENT_TO_TESTFLIGHT. App Store review was not started.\n'
+  printf '\nIOS_PRODUCTION_BUILD_SENT_TO_TESTFLIGHT. App Store review was not started.\n'
 else
   corepack pnpm exec eas build --platform android --profile production --non-interactive
   printf '\nANDROID_VERSION_CODE_80_BUILT. Google Play submission was not started.\n'

@@ -1586,6 +1586,15 @@ async function logSearchEvent(opts: {
   } catch { /* never crash on logging */ }
 }
 
+/**
+ * The only universal-search mode allowed to suppress legacy raw-query
+ * persistence. Both values are required, so an arbitrary `noLog=true` (or an
+ * unrelated surface) can never alter audit/logging behavior.
+ */
+export function isPrivacySafeSmartSearchRequest(query: Record<string, unknown>): boolean {
+  return query.surface === "smart_search" && query.privacy_mode === "discovery_v1";
+}
+
 // ── Build fallback message ────────────────────────────────────────────────────
 function buildFallbackMessage(
   q: string,
@@ -1640,7 +1649,12 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     limit: limitStr = "20",
     resultTypes: resultTypesStr,
     surface = "general",
+    privacy_mode: privacyMode,
   } = req.query as Record<string, string>;
+  const privacySafeSmartSearch = isPrivacySafeSmartSearchRequest({
+    surface,
+    privacy_mode: privacyMode,
+  });
 
   if (!q?.trim() || q.trim().length < 2) {
     res.status(400).json({ error: "q (query) required, minimum 2 characters" });
@@ -1882,11 +1896,16 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       trimmedQ, intentType, crossEntityTotal, mappedCategories.length > 0,
     );
 
-    void logSearchEvent({
-      userId: user?.id, rawQuery: trimmedQ, normalizedConcept, intentType,
-      surface, locationBucket, resultCount: totalResults,
-      matchTypes: matchTiers, fallbackUsed,
-    });
+    // Smart Search is deliberately not a legacy search-log surface. Its only
+    // telemetry is the bounded, consent-gated Discovery V1 event ledger
+    // emitted by the client. This applies equally to zero-result searches.
+    if (!privacySafeSmartSearch) {
+      void logSearchEvent({
+        userId: user?.id, rawQuery: trimmedQ, normalizedConcept, intentType,
+        surface, locationBucket, resultCount: totalResults,
+        matchTypes: matchTiers, fallbackUsed,
+      });
+    }
 
     res.json({
       query: trimmedQ,
@@ -1897,7 +1916,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       matchTiers,
       fallbackUsed,
       fallbackMessage,
-      unmetDemandRecorded: totalResults === 0 && FEATURE_FLAGS.search_event_logging,
+      unmetDemandRecorded: !privacySafeSmartSearch && totalResults === 0 && FEATURE_FLAGS.search_event_logging,
       // Correction 1 fields
       namedBusinessNotFound: namedBusinessNotFound || undefined,
       namedBusinessMessage,
@@ -1915,7 +1934,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     // Capture authenticated search queries as community demand signals.
     // Never blocks or slows the response — errors are swallowed.
     const growthCategory = INTENT_TO_GROWTH_CATEGORY[intentType];
-    if (user?.id && growthCategory && normalizedConcept && normalizedConcept.length >= 3) {
+    if (!privacySafeSmartSearch && user?.id && growthCategory && normalizedConcept && normalizedConcept.length >= 3) {
       const sensitivityTier = classifyGrowthSensitivity(normalizedConcept);
       if (sensitivityTier !== "excluded") {
         const canonicalSubjectKey = normalizedConcept.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 80);

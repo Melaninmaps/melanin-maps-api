@@ -3,6 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import { AppState, Platform } from "react-native";
 import Purchases from "react-native-purchases";
+import { getApiBase } from "@/lib/api";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,24 +51,6 @@ const AuthContext = createContext<AuthContextValue>({
   refreshUser: async () => false,
 });
 
-// Canonical production API base — same value used in all eas.json build profiles.
-const _PRODUCTION_BASE = "https://www.mappingwithmelanin.com";
-
-export function getApiBaseUrl(): string {
-  // Replit dev domain: only present during simulator testing against a local server.
-  if (process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN}`;
-  }
-  // EXPO_PUBLIC_DOMAIN is set in eas.json for ALL build profiles.
-  // Prefer it because eas.json values are baked in at build time and are reliable.
-  // EXPO_PUBLIC_API_URL lives only in EAS Dashboard and may be stale — intentionally skipped.
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  // Hard fallback: guarantees auth works even when neither env var is propagated (e.g. OTA).
-  return _PRODUCTION_BASE;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    const apiBase = getApiBaseUrl();
+    const apiBase = getApiBase();
     const maxAttempts = 3;
     const FETCH_TIMEOUT_MS = 10_000;
 
@@ -163,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async () => {
     try {
-      const apiBase = getApiBaseUrl();
+      const apiBase = getApiBase();
       const result = await WebBrowser.openAuthSessionAsync(
         `${apiBase}/api/mobile-auth/init`,
         "mappingwithmelanin://auth-complete",
@@ -193,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string; authenticated?: boolean; errorCode?: string }> => {
-    const apiBase = getApiBaseUrl();
+    const apiBase = getApiBase();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 12_000);
     let response: Response;
@@ -314,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Failure does not restore the local token or block the return.
     if (token) {
       try {
-        const apiBase = getApiBaseUrl();
+        const apiBase = getApiBase();
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 3_000);
         try {

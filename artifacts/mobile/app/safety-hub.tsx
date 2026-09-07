@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -21,10 +22,7 @@ import { useAuth } from "@/lib/auth";
 
 const WIDGET_ORDER_KEY = "@melanin_maps_safety_widget_order";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 type SafetyCheckin = {
   id: number;

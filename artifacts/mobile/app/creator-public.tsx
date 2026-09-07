@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -6,12 +7,6 @@ import React, { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import Constants from "expo-constants";
-
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  const host = Constants.expoConfig?.hostUri?.split(":")[0] ?? "localhost";
-  return Platform.OS === "web" ? "" : `http://${host}:8080`;
-}
 
 const PLATFORM_META: Record<string, { label: string; icon: string; color: string }> = {
   tiktok:    { label: "TikTok",     icon: "♪",  color: "#010101" },

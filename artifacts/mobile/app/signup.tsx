@@ -21,7 +21,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import { useColors } from "@/hooks/useColors";
-import { useAuth, getApiBaseUrl } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 
 const STEPS = ["Your info", "Your identity", "Final details"];
 
@@ -110,7 +111,7 @@ export default function SignupScreen() {
         nonce: hashedNonce,
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const res = await fetch(`${base}/api/auth/apple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,7 +161,7 @@ export default function SignupScreen() {
     setUsernameStatus("checking");
     checkTimeout.current = setTimeout(async () => {
       try {
-        const apiBase = getApiBaseUrl();
+        const apiBase = getApiBase();
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 10000);
         const res = await fetch(`${apiBase}/api/auth/check-username?username=${encodeURIComponent(clean)}`, { signal: controller.signal });
@@ -232,7 +233,7 @@ export default function SignupScreen() {
     }
 
     try {
-      const apiBase = getApiBaseUrl();
+      const apiBase = getApiBase();
       const res = await fetch(`${apiBase}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

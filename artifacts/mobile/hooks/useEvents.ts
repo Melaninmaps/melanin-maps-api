@@ -3,11 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import type { Event } from "@/constants/types";
 import { EVENTS } from "@/constants/data";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+import { getApiBase } from "@/lib/api";
 
 function mapApiEvent(e: Record<string, unknown>): Event {
   return {

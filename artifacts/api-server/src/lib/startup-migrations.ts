@@ -4868,11 +4868,94 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       UPDATE business_offering_evidence SET confidence = 'supported' WHERE confidence IS NULL OR confidence NOT IN ('exact','supported','contextual');
       ALTER TABLE business_offering_evidence ALTER COLUMN confidence SET DEFAULT 'supported', ALTER COLUMN confidence SET NOT NULL;
       DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'business_offering_evidence_confidence_check') THEN ALTER TABLE business_offering_evidence ADD CONSTRAINT business_offering_evidence_confidence_check CHECK (confidence IN ('exact','supported','contextual')); END IF; END $$;
+      -- This is the sole Discovery V1 DDL authority.  It owns the evidence,
+      -- consent ledger, aggregate indexes, and durable retention job state.
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS postal_code TEXT;
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS permanently_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS data_source TEXT;
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS phone TEXT;
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS listing_status TEXT NOT NULL DEFAULT 'live_unclaimed';
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+      ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_duplicate BOOLEAN NOT NULL DEFAULT FALSE;
+      CREATE OR REPLACE FUNCTION public.business_record_is_public(
+        p_status text, p_listing_status text, p_is_duplicate boolean,
+        p_permanently_hidden boolean, p_name text, p_description text,
+        p_data_source text, p_phone text
+      ) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$${PUBLIC_BUSINESS_RECORD_FUNCTION_BODY}$$;
+      -- PostgreSQL expands b.* when a view is created. Replacing the canonical
+      -- public view after adding postal_code is therefore required; otherwise a
+      -- valid postal search fails before it reaches the visibility policy.
+      CREATE OR REPLACE VIEW public.public_businesses AS
+        SELECT b.* FROM public.businesses b
+        WHERE public.business_record_is_public(
+          b.status, b.listing_status, b.is_duplicate, b.permanently_hidden,
+          b.name, b.description, b.data_source, b.phone
+        );
       CREATE INDEX IF NOT EXISTS business_offering_evidence_approved_search_idx ON business_offering_evidence (normalized_label, business_id) WHERE status = 'approved';
-      CREATE TABLE IF NOT EXISTS discovery_events_v1 (event_id UUID PRIMARY KEY, idempotency_key VARCHAR(200) NOT NULL UNIQUE, member_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE, event_name VARCHAR(32) NOT NULL, consent_version VARCHAR(50) NOT NULL, surface VARCHAR(32) NOT NULL, platform VARCHAR(32) NOT NULL, entry_point VARCHAR(100) NOT NULL, app_version VARCHAR(64) NOT NULL, request_id UUID, result_set_id UUID, normalized_intent VARCHAR(160), structured_filters JSONB NOT NULL DEFAULT '{}'::jsonb, coarse_location_bucket VARCHAR(160), radius_miles SMALLINT, result_id VARCHAR(160), rank INTEGER, record_type VARCHAR(32), result_count INTEGER, zero_result BOOLEAN, latency_ms INTEGER, fallback_state VARCHAR(80), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), retention_expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + interval '90 days'), deleted_at TIMESTAMPTZ);
+      CREATE UNIQUE INDEX IF NOT EXISTS business_offering_evidence_dedup_idx ON business_offering_evidence (business_id, normalized_label, kind, COALESCE(source_url, ''));
+      CREATE INDEX IF NOT EXISTS business_offering_evidence_approved_fts_idx ON business_offering_evidence USING GIN (to_tsvector('simple', normalized_label || ' ' || label)) WHERE status = 'approved';
+      CREATE INDEX IF NOT EXISTS businesses_discovery_fts_idx ON businesses USING GIN (to_tsvector('simple', coalesce(name,'') || ' ' || coalesce(category,'') || ' ' || coalesce(subcategory,'') || ' ' || coalesce(description,'')));
+      CREATE INDEX IF NOT EXISTS businesses_discovery_city_postal_idx ON businesses (LOWER(city), UPPER(REPLACE(COALESCE(postal_code, ''), ' ', '')));
+      CREATE INDEX IF NOT EXISTS businesses_discovery_bbox_idx ON businesses (latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+      CREATE TABLE IF NOT EXISTS discovery_analytics_allowed_filter_ids (
+        filter_key TEXT NOT NULL, filter_id TEXT NOT NULL,
+        PRIMARY KEY (filter_key, filter_id)
+      );
+      -- The database allowlist is intentionally independent from request
+      -- validation: a direct SQL writer cannot turn analytics into a text sink.
+      INSERT INTO discovery_analytics_allowed_filter_ids (filter_key, filter_id) VALUES
+        ('priceRanges','budget'),('priceRanges','moderate'),('priceRanges','premium'),
+        ('priceRanges',chr(36)),('priceRanges',chr(36)||chr(36)),
+        ('priceRanges',chr(36)||chr(36)||chr(36)),('priceRanges',chr(36)||chr(36)||chr(36)||chr(36))
+      ON CONFLICT DO NOTHING;
+      INSERT INTO discovery_analytics_allowed_filter_ids (filter_key, filter_id)
+      SELECT CASE kind WHEN 'category' THEN 'categoryIds' WHEN 'specialty' THEN 'specialtyIds' WHEN 'community_tag' THEN 'communityTagIds' ELSE 'ownerTagIds' END, normalized_label
+      FROM discovery_taxonomy_concepts WHERE status='approved'
+      ON CONFLICT DO NOTHING;
+      CREATE OR REPLACE FUNCTION public.discovery_safe_filters(filters jsonb) RETURNS boolean LANGUAGE plpgsql STABLE AS $$
+      DECLARE item record; value_item jsonb;
+      BEGIN
+        IF jsonb_typeof(filters) <> 'object' OR filters - 'categoryIds' - 'specialtyIds' - 'ownershipClaims' - 'priceRanges' - 'ownerTagIds' - 'communityTagIds' - 'accessNeedIds' - 'openNow' - 'recordTypes' <> '{}'::jsonb THEN RETURN FALSE; END IF;
+        FOR item IN SELECT key, value FROM jsonb_each(filters) LOOP
+          IF item.key = 'openNow' THEN IF jsonb_typeof(item.value) <> 'boolean' THEN RETURN FALSE; END IF;
+          ELSIF jsonb_typeof(item.value) <> 'array' THEN RETURN FALSE;
+          ELSE FOR value_item IN SELECT value FROM jsonb_array_elements(item.value) LOOP
+            IF jsonb_typeof(value_item) <> 'string' OR NOT EXISTS (
+              SELECT 1 FROM discovery_analytics_allowed_filter_ids a
+              WHERE a.filter_key=item.key AND a.filter_id=value_item #>> '{}'
+            ) THEN RETURN FALSE; END IF;
+          END LOOP; END IF;
+        END LOOP;
+        RETURN TRUE;
+      END $$;
+      CREATE TABLE IF NOT EXISTS discovery_events_v1 (event_id UUID PRIMARY KEY, idempotency_key VARCHAR(200) NOT NULL UNIQUE, member_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE, event_name VARCHAR(32) NOT NULL CHECK (event_name IN ('search_submitted','results_rendered','result_exposed','result_opened','filter_opened','filter_changed','map_toggled','radius_expanded','save_changed','directions_handoff','contact_handoff','share','correction_submitted','coverage_request','return_to_results')), consent_version VARCHAR(50) NOT NULL, surface VARCHAR(32) NOT NULL CHECK (surface IN ('discover','businesses','map','explore','smart_search')), platform VARCHAR(32) NOT NULL CHECK (platform IN ('web_desktop','web_mobile','ios','android')), entry_point VARCHAR(100) NOT NULL, app_version VARCHAR(64) NOT NULL, request_id UUID, result_set_id UUID, normalized_intent VARCHAR(160), structured_filters JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (public.discovery_safe_filters(structured_filters)), coarse_location_bucket VARCHAR(160), radius_miles SMALLINT CHECK (radius_miles IS NULL OR radius_miles IN (5,10,25)), result_id VARCHAR(160), rank INTEGER CHECK (rank IS NULL OR rank BETWEEN 1 AND 1000), record_type VARCHAR(32) CHECK (record_type IS NULL OR record_type IN ('business','cultural_site','community_place','event','resource','travel_destination')), result_count INTEGER CHECK (result_count IS NULL OR result_count BETWEEN 0 AND 10000), zero_result BOOLEAN, latency_ms INTEGER CHECK (latency_ms IS NULL OR latency_ms BETWEEN 0 AND 120000), fallback_state VARCHAR(80) CHECK (fallback_state IS NULL OR fallback_state IN ('exact','expanded_radius','nearest_city','none')), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), retention_expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + interval '90 days'), deleted_at TIMESTAMPTZ);
+      DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='discovery_events_v1_filters_safe_check') THEN ALTER TABLE discovery_events_v1 ADD CONSTRAINT discovery_events_v1_filters_safe_check CHECK (public.discovery_safe_filters(structured_filters)); END IF; END $$;
       CREATE INDEX IF NOT EXISTS discovery_events_v1_aggregate_idx ON discovery_events_v1 (event_name, created_at) WHERE deleted_at IS NULL;
       CREATE INDEX IF NOT EXISTS discovery_events_v1_member_retention_idx ON discovery_events_v1 (member_id, retention_expires_at) WHERE deleted_at IS NULL;
-      CREATE TABLE IF NOT EXISTS discovery_member_preferences (member_id VARCHAR(100) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, search_improvement BOOLEAN NOT NULL DEFAULT FALSE, consent_version VARCHAR(50) NOT NULL DEFAULT 'v1', updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());`,
+      CREATE TABLE IF NOT EXISTS discovery_member_preferences (member_id VARCHAR(100) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, search_improvement BOOLEAN NOT NULL DEFAULT FALSE, consent_version VARCHAR(50) NOT NULL DEFAULT 'v1', updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS discovery_coverage_gaps (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(), city_name TEXT NOT NULL DEFAULT '', state_code TEXT NOT NULL DEFAULT '',
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','cultural_site','event','community_place','resource')),
+        category TEXT NOT NULL DEFAULT '', specialty_slug TEXT NOT NULL DEFAULT '',
+        first_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), last_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        observation_count INTEGER NOT NULL DEFAULT 1, UNIQUE (city_name, state_code, record_type, category, specialty_slug)
+      );
+      CREATE TABLE IF NOT EXISTS discovery_flywheel_daily_signals (
+        day DATE NOT NULL DEFAULT CURRENT_DATE, surface TEXT NOT NULL CHECK (surface IN ('map','businesses','explore','events','kinfolk')),
+        action TEXT NOT NULL, city_name TEXT NOT NULL DEFAULT '', state_code TEXT NOT NULL DEFAULT '',
+        record_type TEXT NOT NULL DEFAULT 'none', category TEXT NOT NULL DEFAULT '', specialty_slug TEXT NOT NULL DEFAULT '',
+        count INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (day, surface, action, city_name, state_code, record_type, category, specialty_slug)
+      );
+      CREATE TABLE IF NOT EXISTS discovery_retention_jobs (job_name TEXT PRIMARY KEY, last_started_at TIMESTAMPTZ, last_succeeded_at TIMESTAMPTZ, last_failed_at TIMESTAMPTZ, last_error TEXT, deleted_count INTEGER NOT NULL DEFAULT 0, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      INSERT INTO discovery_retention_jobs (job_name) VALUES ('discovery_events_v1') ON CONFLICT DO NOTHING;
+      CREATE OR REPLACE FUNCTION public.discovery_events_v1_consent_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        PERFORM 1 FROM discovery_member_preferences WHERE member_id = NEW.member_id AND search_improvement = TRUE FOR KEY SHARE;
+        IF NOT FOUND THEN RAISE EXCEPTION 'discovery event consent is not active' USING ERRCODE = '42501'; END IF;
+        RETURN NEW;
+      END $$;
+      DROP TRIGGER IF EXISTS discovery_events_v1_consent_guard ON discovery_events_v1;
+      CREATE TRIGGER discovery_events_v1_consent_guard BEFORE INSERT ON discovery_events_v1 FOR EACH ROW EXECUTE FUNCTION public.discovery_events_v1_consent_guard();`,
   },
 ];
 
@@ -5402,6 +5485,9 @@ const REQUIRED_DISCOVERY_TABLES = [
   "business_offering_evidence",
   "discovery_events_v1",
   "discovery_member_preferences",
+  "discovery_coverage_gaps",
+  "discovery_flywheel_daily_signals",
+  "discovery_retention_jobs",
 ] as const;
 
 /**
@@ -5429,6 +5515,65 @@ export async function ensureRequiredDiscoverySchema(
   const missing = REQUIRED_DISCOVERY_TABLES.filter((table) => !present.has(table));
   if (missing.length) {
     throw new Error(`Required Discovery V1 schema is incomplete; missing tables: ${missing.join(", ")}`);
+  }
+  // Table names alone are not readiness.  A half-applied schema is just as
+  // unsafe as an absent one: validate the request-path columns, their types
+  // and defaults, plus the constraints, FKs, unique keys, and indexes used by
+  // search and consent enforcement.
+  const catalog = await db.query<{ kind: string; name: string }>(`
+    WITH required_columns(table_name, column_name, data_type) AS (VALUES
+      ('business_offering_evidence','business_id','character varying'),
+      ('business_offering_evidence','normalized_label','character varying'),
+      ('business_offering_evidence','status','character varying'),
+      ('public_businesses','postal_code','text'),
+      ('discovery_events_v1','event_id','uuid'),
+      ('discovery_events_v1','idempotency_key','character varying'),
+      ('discovery_events_v1','member_id','character varying'),
+      ('discovery_events_v1','structured_filters','jsonb'),
+      ('discovery_events_v1','retention_expires_at','timestamp with time zone'),
+      ('discovery_member_preferences','member_id','character varying'),
+      ('discovery_member_preferences','search_improvement','boolean'),
+      ('discovery_retention_jobs','job_name','text'),
+      ('discovery_retention_jobs','deleted_count','integer'),
+      ('discovery_coverage_gaps','observation_count','integer'),
+      ('discovery_flywheel_daily_signals','day','date'),
+      ('discovery_flywheel_daily_signals','count','integer')
+    ), missing_columns AS (
+      SELECT 'column'::text AS kind, table_name || '.' || column_name AS name
+      FROM required_columns r WHERE NOT EXISTS (
+        SELECT 1 FROM information_schema.columns c WHERE c.table_schema='public'
+          AND c.table_name=r.table_name AND c.column_name=r.column_name AND c.data_type=r.data_type
+      )
+    ), required_defaults(table_name, column_name, default_fragment) AS (VALUES
+      ('discovery_events_v1','structured_filters','{}'),
+      ('discovery_events_v1','retention_expires_at','90 days'),
+      ('discovery_member_preferences','search_improvement','false'),
+      ('discovery_retention_jobs','deleted_count','0')
+    ), missing_defaults AS (
+      SELECT 'default'::text AS kind, table_name || '.' || column_name AS name
+      FROM required_defaults r WHERE NOT EXISTS (
+        SELECT 1 FROM information_schema.columns c WHERE c.table_schema='public'
+          AND c.table_name=r.table_name AND c.column_name=r.column_name
+          AND COALESCE(c.column_default,'') ILIKE '%' || r.default_fragment || '%'
+      )
+    ), required_objects(kind, name) AS (VALUES
+      ('constraint','discovery_events_v1_pkey'), ('constraint','discovery_events_v1_idempotency_key_key'),
+      ('constraint','discovery_member_preferences_pkey'), ('constraint','discovery_events_v1_member_id_fkey'),
+      ('constraint','discovery_events_v1_filters_safe_check'),
+      ('index','business_offering_evidence_approved_search_idx'), ('index','business_offering_evidence_dedup_idx'), ('index','business_offering_evidence_approved_fts_idx'),
+      ('index','businesses_discovery_fts_idx'), ('index','businesses_discovery_city_postal_idx'),
+      ('index','businesses_discovery_bbox_idx'), ('index','discovery_events_v1_aggregate_idx'),
+      ('index','discovery_events_v1_member_retention_idx'), ('trigger','discovery_events_v1_consent_guard')
+    ), missing_objects AS (
+      SELECT r.kind, r.name FROM required_objects r WHERE NOT EXISTS (
+        SELECT 1 FROM pg_constraint c WHERE r.kind='constraint' AND c.conname=r.name
+        UNION ALL SELECT 1 FROM pg_indexes i WHERE r.kind='index' AND i.schemaname='public' AND i.indexname=r.name
+        UNION ALL SELECT 1 FROM pg_trigger t WHERE r.kind='trigger' AND t.tgname=r.name AND NOT t.tgisinternal
+      )
+    ) SELECT * FROM missing_columns UNION ALL SELECT * FROM missing_defaults UNION ALL SELECT * FROM missing_objects
+  `);
+  if (catalog.rows.length) {
+    throw new Error(`Required Discovery V1 catalog is incomplete: ${catalog.rows.map((row) => `${row.kind}:${row.name}`).join(", ")}`);
   }
   logger?.info("Required Discovery V1 schema verified before traffic acceptance");
 }
@@ -11868,38 +12013,6 @@ async function ensureLocationFirstDiscovery(
       FROM businesses
       WHERE LOWER(COALESCE(category, '')) IN ('barber', 'barbershop', 'barbers')
       ON CONFLICT DO NOTHING
-    `);
-
-    // ── discovery_coverage_gaps ─────────────────────────────────────────────
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS discovery_coverage_gaps (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        city_name TEXT NOT NULL DEFAULT '',
-        state_code TEXT NOT NULL DEFAULT '',
-        record_type TEXT NOT NULL CHECK (record_type IN ('business','cultural_site','event','community_place','resource')),
-        category TEXT NOT NULL DEFAULT '',
-        specialty_slug TEXT NOT NULL DEFAULT '',
-        first_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        last_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        observation_count INTEGER NOT NULL DEFAULT 1,
-        UNIQUE (city_name, state_code, record_type, category, specialty_slug)
-      )
-    `);
-
-    // ── discovery_flywheel_daily_signals ────────────────────────────────────
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS discovery_flywheel_daily_signals (
-        day DATE NOT NULL DEFAULT CURRENT_DATE,
-        surface TEXT NOT NULL CHECK (surface IN ('map','businesses','explore','events','kinfolk')),
-        action TEXT NOT NULL,
-        city_name TEXT NOT NULL DEFAULT '',
-        state_code TEXT NOT NULL DEFAULT '',
-        record_type TEXT NOT NULL DEFAULT 'none',
-        category TEXT NOT NULL DEFAULT '',
-        specialty_slug TEXT NOT NULL DEFAULT '',
-        count INTEGER NOT NULL DEFAULT 1,
-        PRIMARY KEY (day, surface, action, city_name, state_code, record_type, category, specialty_slug)
-      )
     `);
 
     // ── Backfill canonical_record_locations from existing businesses ────────

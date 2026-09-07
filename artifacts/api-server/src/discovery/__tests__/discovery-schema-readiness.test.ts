@@ -30,4 +30,12 @@ describe("required Discovery V1 startup schema", () => {
     expect(assertion).toBeGreaterThan(-1);
     expect(listen).toBeGreaterThan(assertion);
   });
+  it("makes the canonical public view expose postal_code and keeps DB analytics allowlisted", () => {
+    const source = readFileSync(new URL("../../lib/startup-migrations.ts", import.meta.url), "utf8");
+    expect(source).toContain("CREATE OR REPLACE VIEW public.public_businesses");
+    expect(source).toContain("ALTER TABLE businesses ADD COLUMN IF NOT EXISTS postal_code TEXT");
+    expect(source).toContain("discovery_analytics_allowed_filter_ids");
+    expect(source).toContain("a.filter_key=item.key AND a.filter_id=value_item #>> '{}'");
+    expect(source).toContain("businesses_discovery_city_postal_idx");
+  });
 });

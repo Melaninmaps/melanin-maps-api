@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -24,10 +25,7 @@ async function getToken(): Promise<string | null> {
     return await getItemAsync(AUTH_TOKEN_KEY);
   } catch { return null; }
 }
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 const EMOJIS = ["📍", "☕", "🍽️", "📚", "💅🏾", "🛍️", "✈️", "👨🏾‍👩🏾‍👧🏾", "🌙", "🎷", "💼", "🏪", "🤎", "🌿", "🎁", "🏋🏾", "🎭", "🌸"];
 const CATEGORIES = ["Food", "Culture", "Travel", "Family", "Wellness", "Shopping", "Nightlife", "Professional"];

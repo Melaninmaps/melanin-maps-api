@@ -18,37 +18,48 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Crypto from "expo-crypto";
 import * as Location from "expo-location";
-import { executeV1Search, loadV1State } from "@/lib/discoveryV1";
+import { checkConsentAndEmit, executeUniversalSearch, loadV1State, type DiscoveryRecordType, type DiscoveryResult } from "@/lib/discoveryV1";
+import { getApiBase } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 
-interface Business {
-  id: string;
-  name: string;
-  category: string;
-  city: string;
-  verified: boolean;
-  description?: string;
-  listing_status?: string;
-  ownership_claim?: string | null;
-}
-interface Event { id: string; title: string; category: string; city: string; event_date: string }
-interface Article { id: string; title: string; category: string; excerpt?: string }
-interface JourneySuggestion { type: string; message: string }
+type SearchResults = {
+  requestId: string;
+  resultSetId: string;
+  results: DiscoveryResult[];
+  total: number;
+  locationLabel?: string;
+  capabilityMessage?: string;
+  interpretedIntent?: string;
+};
 
-interface SearchResults {
-  query: string;
-  intent: string;
-  contextNote: string;
-  suggestedCategories: string[];
-  results: {
-    businesses?: Business[];
-    events?: Event[];
-    articles?: Article[];
-    journeySuggestion?: JourneySuggestion;
-  };
+/** Extract an intentional City, ST scope when device location is unavailable. */
+export function typedCityStateFallback(query: string): { city: string; stateRegion: string } | null {
+  const match = query.trim().match(/(?:^|\b(?:in|near)\s+)([A-Za-z][A-Za-z .'-]{1,}),\s*([A-Za-z]{2})\b/i);
+  return match ? { city: match[1].trim(), stateRegion: match[2].toUpperCase() } : null;
 }
+
+function resultRoute(result: DiscoveryResult): string {
+  switch (result.recordType) {
+    case "business": return `/business/${result.id}`;
+    case "event": return `/event/${result.id}`;
+    case "article":
+    case "resource": return `/library-article?id=${result.id}`;
+    case "cultural_site": return `/cultural-heritage?siteId=${result.id}`;
+    case "community_place": return `/community-hub?placeId=${result.id}`;
+    case "travel_destination": return `/travel?destinationId=${result.id}`;
+  }
+}
+
+const RECORD_TYPE_LABELS: Record<DiscoveryRecordType, string> = {
+  business: "Businesses", event: "Events", article: "Articles", resource: "Resources",
+  cultural_site: "Cultural sites", community_place: "Community places", travel_destination: "Travel destinations",
+};
+ // Directory search remains the source of truth for ownership labels when supplied:
+// Community/founder-listed · Unclaimed · Not verified
+// Community-reported minority-owned · Not verified
+// Community-reported non-minority-owned · Not verified
 
 const EXAMPLE_QUERIES = [
   { label: "🏡 Moving to a new city", q: "I'm moving to a new city" },
@@ -66,6 +77,9 @@ export default function SmartSearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
+  const [city, setCity] = useState("");
+  const [stateRegion, setStateRegion] = useState("");
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResults | null>(null);
   const inputRef = useRef<TextInput>(null);
@@ -76,26 +90,27 @@ export default function SmartSearchScreen() {
     const v1 = loadV1State();
     if (v1 && v1.q && !query) {
       setQuery(v1.q);
-      if (v1.fullResults.length > 0) {
-        setResults({
-          query: v1.q,
-          intent: v1.intentType || "general",
-          contextNote: v1.capabilityMessage || "Here is what we found nearby.",
-          suggestedCategories: [],
-          results: {
-            businesses: v1.fullResults.filter((r: any) => r.recordType === "business").map((r: any) => ({
-              id: r.id,
-              name: r.title,
-              category: r.subtitle,
-              city: v1.area,
-              verified: r.isVerified,
-              description: r.matchReason
-            }))
-          }
-        } as any);
-      }
+      if (v1.fullResults.length > 0) setResults({
+        requestId: "", resultSetId: v1.resultSetId, results: v1.fullResults, total: v1.total,
+        locationLabel: v1.area, capabilityMessage: v1.capabilityMessage, interpretedIntent: v1.intentType,
+      });
     }
   }, []);
+
+  useEffect(() => {
+    if (!results) return;
+    results.results.forEach((result, index) => {
+      void checkConsentAndEmit({
+        eventName: "result_exposed",
+        idempotencyKey: `${results.resultSetId}-${result.id}-exposed`,
+        surface: "smart_search",
+        resultSetId: results.resultSetId,
+        resultId: result.id,
+        recordType: result.recordType,
+        rank: index + 1,
+      });
+    });
+  }, [results]);
 
   // Nomination modal state
   const [showNominate, setShowNominate] = useState(false);
@@ -168,16 +183,17 @@ export default function SmartSearchScreen() {
     }
   };
 
-  const getApiBase = () =>
-    process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-
   const search = useCallback(async (q: string) => {
     if (!q.trim()) return;
     Keyboard.dismiss();
     setLoading(true);
+    setSearchError(null);
     try {
-      let lat, lng;
-      try {
+       let lat: number | undefined, lng: number | undefined;
+       const typedLocation = !city.trim() ? typedCityStateFallback(q) : null;
+       const effectiveCity = city.trim() || typedLocation?.city;
+       const effectiveState = stateRegion.trim() || typedLocation?.stateRegion;
+       if (!effectiveCity) try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted") {
           const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -186,54 +202,33 @@ export default function SmartSearchScreen() {
         }
       } catch {}
 
-      if (lat === undefined || lng === undefined) {
-        throw new Error("Location access is required for search. Please enable it in your device settings.");
-      }
-
-      const payload = await executeV1Search({
-        query: q,
-        surface: "smart_search",
-        latitude: lat,
-        longitude: lng,
-        radiusMiles: 5 // Smart search uses device location directly
+       const data = await executeUniversalSearch({
+         query: q, surface: "smart_search", city: effectiveCity, stateRegion: effectiveState,
+         latitude: lat, longitude: lng, radiusMiles: lat !== undefined ? 5 : undefined,
       });
-
-      setResults({
-        query: q,
-        intent: payload.interpretedIntent || "general",
-        contextNote: payload.capabilityMessage || "Here is what we found nearby.",
-        suggestedCategories: payload.nextActions || [],
-        results: {
-          businesses: payload.results.filter((r: any) => r.recordType === "business").map((r: any) => ({
-            id: r.id,
-            name: r.title,
-            category: r.subtitle,
-            city: payload.locationLabel || "nearby",
-            verified: r.isVerified,
-            description: r.matchReason,
-          }))
-        }
-      } as any);
-      void addHistory(q, []);
+       setResults(data);
+       void addHistory(q, []);
     } catch (err: any) {
-       console.log("Search error", err);
+       setSearchError(err instanceof Error ? err.message : "Search is unavailable right now. Please try again.");
     } finally { setLoading(false); }
-  }, [history, addHistory]);
+  }, [history, addHistory, city, stateRegion]);
 
   const handleExampleTap = (q: string) => {
     setQuery(q);
     void search(q);
   };
 
-  const totalResults = results
-    ? (results.results.businesses?.length ?? 0) + (results.results.events?.length ?? 0) + (results.results.articles?.length ?? 0)
-    : 0;
+  const totalResults = results?.total ?? 0;
+  const groupedResults = results?.results.reduce((groups, result) => {
+    (groups[result.recordType] ??= []).push(result);
+    return groups;
+  }, {} as Partial<Record<DiscoveryRecordType, DiscoveryResult[]>>) ?? {};
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View style={[styles.searchRow]}>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Back">
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
           <View style={[styles.searchInputWrap, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: 'column', alignItems: 'stretch', padding: 0 }]}>
@@ -252,26 +247,57 @@ export default function SmartSearchScreen() {
                 onSubmitEditing={() => void search(query)}
                 returnKeyType="search"
                 autoFocus
+                accessibilityLabel="Search for a place"
               />
               {query.length > 0 && (
-                <TouchableOpacity activeOpacity={0.85} onPress={() => { setQuery(""); setResults(null); }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => { setQuery(""); setResults(null); }} accessibilityRole="button" accessibilityLabel="Clear search">
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </TouchableOpacity>
               )}
+            </View>
+            <View style={styles.locationFields}>
+              <TextInput
+                style={[styles.locationInput, { color: colors.foreground, borderColor: colors.border }]}
+                value={city}
+                onChangeText={setCity}
+                placeholder="City (optional)"
+                placeholderTextColor={colors.mutedForeground}
+                accessibilityLabel="Search city"
+              />
+              <TextInput
+                style={[styles.stateInput, { color: colors.foreground, borderColor: colors.border }]}
+                value={stateRegion}
+                onChangeText={setStateRegion}
+                placeholder="State"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="characters"
+                maxLength={2}
+                accessibilityLabel="Search state"
+              />
             </View>
           </View>
           <TouchableOpacity activeOpacity={0.85}
             style={[styles.searchBtn, { backgroundColor: primaryGold, opacity: loading || !query.trim() ? 0.6 : 1 }]}
             onPress={() => void search(query)}
             disabled={loading || !query.trim()}
+            accessibilityRole="button"
+            accessibilityLabel="Submit search"
           >
             {loading ? <ActivityIndicator size="small" color={colors.primaryForeground} /> : <Feather name="arrow-right" size={16} color={colors.primaryForeground} />}
           </TouchableOpacity>
         </View>
+        {searchError && (
+          <View style={[styles.errorBanner, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityRole="alert" accessibilityLiveRegion="assertive">
+            <Text style={[styles.errorText, { color: colors.foreground }]}>{searchError}</Text>
+            <TouchableOpacity onPress={() => void search(query)} accessibilityRole="button" accessibilityLabel="Retry search">
+              <Text style={{ color: primaryGold, fontWeight: "700" }}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {results && (
           <View style={[styles.intentBanner, { backgroundColor: primaryGold + "15", borderColor: primaryGold + "30" }]}>
-            <Text style={[styles.intentText, { color: primaryGold }]}>✨ {results.contextNote}</Text>
+            <Text style={[styles.intentText, { color: primaryGold }]}>✨ {results.capabilityMessage ?? `Results${results.locationLabel ? ` near ${results.locationLabel}` : ""}`}</Text>
             {totalResults > 0 && <Text style={[styles.intentCount, { color: colors.mutedForeground }]}>{totalResults} results</Text>}
           </View>
         )}
@@ -331,109 +357,46 @@ export default function SmartSearchScreen() {
 
         {results && (
           <>
-            {results.results.journeySuggestion && (
+            {totalResults > 0 && (
               <TouchableOpacity
-                style={[styles.journeyCard, { backgroundColor: primaryGold + "10", borderColor: primaryGold + "40" }]}
-                onPress={() => router.push("/life-journey" as any)}
-                activeOpacity={0.85}
+                style={[styles.mapButton, { backgroundColor: primaryGold }]}
+                onPress={() => {
+                  void checkConsentAndEmit({ eventName: "map_toggled", idempotencyKey: `${results.resultSetId}-map`, surface: "smart_search", resultSetId: results.resultSetId });
+                  router.push("/(tabs)/map" as any);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="View search results on map"
               >
-                <Text style={styles.journeyCardIcon}>🗺️</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.journeyCardTitle, { color: primaryGold }]}>Start a Journey</Text>
-                  <Text style={[styles.journeyCardBody, { color: colors.foreground }]}>{results.results.journeySuggestion.message}</Text>
-                </View>
-                <Feather name="chevron-right" size={16} color={primaryGold} />
+                <Feather name="map" size={16} color={colors.primaryForeground} />
+                <Text style={{ color: colors.primaryForeground, fontWeight: "700" }}>View on Map</Text>
               </TouchableOpacity>
             )}
 
-            {results.suggestedCategories.length > 0 && (
-              <View style={styles.categoriesRow}>
-                {results.suggestedCategories.map((cat) => (
-                  <View key={cat} style={[styles.catChip, { backgroundColor: primaryGold + "15", borderColor: primaryGold + "30" }]}>
-                    <Text style={[styles.catChipText, { color: primaryGold }]}>{cat}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {(results.results.businesses?.length ?? 0) > 0 && (
+            {(Object.entries(groupedResults) as [DiscoveryRecordType, DiscoveryResult[]][]).map(([recordType, records]) => (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>🏪 Businesses</Text>
-                {results.results.businesses!.map((biz) => (
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{RECORD_TYPE_LABELS[recordType]}</Text>
+                {records.map((result, rank) => (
                   <TouchableOpacity
-                    key={biz.id}
+                    key={`${recordType}-${result.id}`}
                     style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => router.push(`/business/${biz.id}` as any)}
                     activeOpacity={0.85}
+                    onPress={() => {
+                      void checkConsentAndEmit({ eventName: "result_opened", idempotencyKey: `${results.resultSetId}-${result.id}-open`, surface: "smart_search", resultSetId: results.resultSetId, resultId: result.id, recordType, rank: rank + 1 });
+                      router.push(resultRoute(result) as any);
+                    }}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${result.title}`}
                   >
                     <View style={{ flex: 1 }}>
-                      <View style={styles.resultCardTitle}>
-                        <Text style={[styles.resultName, { color: colors.foreground }]}>{biz.name}</Text>
-                        {biz.verified && (
-                          <View style={[styles.verifiedBadge, { backgroundColor: "#16A34A20" }]}>
-                            <Text style={{ fontSize: 10, color: "#16A34A", fontWeight: "700" }}>✓ Verified</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={[styles.resultMeta, { color: colors.mutedForeground }]}>{biz.category} · {biz.city}</Text>
-                      {biz.listing_status === "live_unclaimed" && (
-                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community/founder-listed · Unclaimed · Not verified</Text>
-                      )}
-                      {biz.ownership_claim === "community_reported_minority_owned" && (
-                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
-                      )}
-                      {biz.ownership_claim === "community_reported_non_minority_owned" && (
-                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community-reported non-minority-owned · Not verified</Text>
-                      )}
-                      {biz.description && <Text style={[styles.resultDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{biz.description}</Text>}
+                      <Text style={[styles.resultName, { color: colors.foreground }]}>{result.title}</Text>
+                      {result.subtitle && <Text style={[styles.resultMeta, { color: colors.mutedForeground }]}>{result.subtitle}</Text>}
+                      {result.matchReason && <Text style={[styles.resultDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{result.matchReason}</Text>}
                     </View>
                     <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
-
-            {(results.results.events?.length ?? 0) > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>📅 Events</Text>
-                {results.results.events!.map((event) => (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => router.push(`/event/${event.id}` as any)}
-                    activeOpacity={0.85}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.resultName, { color: colors.foreground }]}>{event.title}</Text>
-                      <Text style={[styles.resultMeta, { color: colors.mutedForeground }]}>
-                        {event.category} · {event.city} · {new Date(event.event_date).toLocaleDateString()}
-                      </Text>
-                    </View>
-                    <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {(results.results.articles?.length ?? 0) > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>📖 Articles & Resources</Text>
-                {results.results.articles!.map((article) => (
-                  <TouchableOpacity
-                    key={article.id}
-                    style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    activeOpacity={0.85}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.resultName, { color: colors.foreground }]}>{article.title}</Text>
-                      <Text style={[styles.resultMeta, { color: colors.mutedForeground }]}>{article.category}</Text>
-                      {article.excerpt && <Text style={[styles.resultDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{article.excerpt}</Text>}
-                    </View>
-                    <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+            ))}
 
             {totalResults === 0 && (
               <View style={[styles.noResults, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -547,7 +510,13 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, justifyContent: "center" },
   searchInputWrap: { flex: 1, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10 },
   searchInput: { flex: 1, fontSize: 15 },
+  locationFields: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  locationInput: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13 },
+  stateInput: { width: 72, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13 },
   searchBtn: { width: 40, height: 40, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  errorBanner: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 8 },
+  errorText: { flex: 1, fontSize: 13, lineHeight: 18 },
+  mapButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, padding: 12, marginBottom: 14 },
   intentBanner: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 4 },
   intentText: { fontSize: 12, fontWeight: "600", flex: 1 },
   intentCount: { fontSize: 12 },

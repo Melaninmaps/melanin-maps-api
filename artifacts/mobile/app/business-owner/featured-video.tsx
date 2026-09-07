@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -21,10 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { VIDEO_PURPOSES, detectPlatform, type VideoPurpose } from "@/components/FeaturedVideoCard";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 async function getToken(): Promise<string | null> {
   try {
     if ((Platform.OS as string) === "web") return null;

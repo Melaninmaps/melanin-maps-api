@@ -3,6 +3,7 @@
  * Full historical context for a city, opened from Library tab, map banner,
  * or welcome card. Param: slug (e.g. "philadelphia")
  */
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -21,9 +22,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 async function getToken() {
   try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); }
   catch { return null; }

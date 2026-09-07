@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
@@ -15,12 +16,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  const host = Constants.expoConfig?.hostUri?.split(":")[0] ?? "localhost";
-  return Platform.OS === "web" ? "" : `http://${host}:8080`;
-}
 
 function formatTimeAgo(ts: string) {
   const diff = Date.now() - new Date(ts).getTime();

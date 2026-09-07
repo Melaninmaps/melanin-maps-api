@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
@@ -25,10 +26,7 @@ async function getToken(): Promise<string | null> {
   } catch { return null; }
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 function createBusinessApplicationId(name: string): string {
   return `${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;

@@ -21,7 +21,8 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-import { useAuth, getApiBaseUrl } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 import {
   getBiometricCapabilities,
   isBiometricsEnabled,
@@ -130,7 +131,7 @@ export default function LoginScreen() {
         nonce: hashedNonce,
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
-      const base = getApiBaseUrl();
+      const base = getApiBase();
       const appleController = new AbortController();
       const appleTimer = setTimeout(() => appleController.abort(), 12_000);
       let res: Response;

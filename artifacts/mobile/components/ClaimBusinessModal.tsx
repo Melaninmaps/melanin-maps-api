@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useState } from "react";
 import {
   Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
@@ -20,10 +21,7 @@ interface Props {
   onClose: () => void;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 export function ClaimBusinessModal({ visible, businessId, businessName, onClose }: Props) {
   const colors = useColors();

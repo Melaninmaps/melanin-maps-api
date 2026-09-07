@@ -11,6 +11,7 @@ import { Platform ,
 } from "react-native";
 import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
 const REPORT_CATEGORIES = [
   { id: "not_black_owned", icon: "flag" as const, label: "Ownership Misrepresented", sub: "Ownership claim appears incorrect or false", triggersDispute: true },
@@ -63,11 +64,6 @@ export function ReportContentModal({ visible, businessName, businessId, onClose,
     onClose();
   };
 
-  const getBaseUrl = () => {
-    if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-    return "";
-  };
-
   const handleSubmit = async () => {
     if (!selected || loading) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -85,7 +81,7 @@ export function ReportContentModal({ visible, businessName, businessId, onClose,
 
       if (category?.triggersDispute && businessId) {
         // Dispute route — increments flag count, auto-marks business under review at threshold
-        const resp = await fetch(`${getBaseUrl()}/api/businesses/${businessId}/dispute`, {
+        const resp = await fetch(`${getApiBase()}/api/businesses/${businessId}/dispute`, {
           method: "POST",
           headers,
           body: JSON.stringify({ description: details.trim() || undefined }),
@@ -105,7 +101,7 @@ export function ReportContentModal({ visible, businessName, businessId, onClose,
         onFlagged?.();
       } else {
         // Generic content report for non-dispute categories
-        const resp = await fetch(`${getBaseUrl()}/api/content-reports`, {
+        const resp = await fetch(`${getApiBase()}/api/content-reports`, {
           method: "POST",
           headers,
           body: JSON.stringify({ targetType: "business", targetId: businessId, reason, description: details.trim() || undefined }),

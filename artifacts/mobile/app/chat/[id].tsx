@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -37,10 +38,7 @@ interface ConvMeta {
   requestedBy?: string | null;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }

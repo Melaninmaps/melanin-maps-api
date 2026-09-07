@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -76,7 +77,7 @@ function PushNotificationRegistrar() {
         if (!perms?.granted && perms?.status !== "granted") return;
         const pushToken = await Notifications.getExpoPushTokenAsync({ projectId: "0f873107-7787-46ab-9a04-685c2a6756b1" }).catch(() => null);
         if (!pushToken?.data) return;
-        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const apiBase = getApiBase();
         if (!apiBase) return;
         await fetch(`${apiBase}/api/notifications/register`, {
           method: "POST",
@@ -776,7 +777,6 @@ function RootLayoutNav() {
       <Stack.Screen name="group" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="groups" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="guides" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="roadmap" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="user" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="user-profile" options={{ headerShown: false, presentation: "card" }} />
     </Stack>

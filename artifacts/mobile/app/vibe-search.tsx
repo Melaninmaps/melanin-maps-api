@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -17,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 
-const BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+const BASE = getApiBase();
 
 const VIBES = [
   { id: "date-night", label: "Date Night", icon: "heart" as const, description: "Romantic & intimate" },

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -20,10 +21,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 import { useReviews } from "@/hooks/useReviews";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface PinnedItem {
   id: number;

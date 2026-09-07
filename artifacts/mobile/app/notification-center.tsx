@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -14,9 +15,7 @@ import { useColors } from "@/hooks/useColors";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@/lib/auth";
 
-function getApiBase(): string {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 
 type NotifType = "all" | "safety" | "events" | "business" | "community" | "weather" | "travel";
 

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   View,
@@ -102,9 +103,6 @@ export default function BusinessSearchScreen() {
       if (lastCat) queueMicrotask(() => { setCategory(lastCat); });
     }
   }, [history]);
-
-  const getApiBase = () =>
-    process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
   const handleSearch = useCallback(async () => {
     const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category;

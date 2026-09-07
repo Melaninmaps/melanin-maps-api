@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,10 +18,7 @@ import { CommunityPostCard } from "@/components/CommunityPostCard";
 import type { CommunityPost } from "@/constants/types";
 import { parseMediaUrls } from "@/lib/mediaUrls";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 function formatTimeAgo(ts: string): string {
   const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);

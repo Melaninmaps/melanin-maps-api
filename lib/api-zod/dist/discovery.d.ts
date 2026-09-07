@@ -2,6 +2,39 @@ import { z } from "zod";
 export declare const discoverySurfaceV1Schema: z.ZodEnum<["discover", "businesses", "map", "explore", "smart_search"]>;
 export declare const discoveryPlatformV1Schema: z.ZodEnum<["web_desktop", "web_mobile", "ios", "android"]>;
 export declare const discoveryRecordTypeV1Schema: z.ZodEnum<["business", "cultural_site", "community_place", "event", "resource", "travel_destination"]>;
+export declare const discoveryEntryPointV1Schema: z.ZodEnum<["find_a_place", "search_bar", "results", "result_card", "filter_chip", "filter_sheet", "map_handoff", "save_button", "correction_form", "coverage_request"]>;
+export declare const discoveryNormalizedIntentV1Schema: z.ZodEnum<["general_local", "food_or_offering", "category", "specialty", "none"]>;
+export declare const discoveryFiltersV1Schema: z.ZodObject<{
+    categoryIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    specialtyIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    ownershipClaims: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    priceRanges: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    ownerTagIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    communityTagIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    accessNeedIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+    openNow: z.ZodOptional<z.ZodBoolean>;
+    recordTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<["business", "cultural_site", "community_place", "event", "resource", "travel_destination"]>, "many">>;
+}, "strict", z.ZodTypeAny, {
+    categoryIds?: string[] | undefined;
+    specialtyIds?: string[] | undefined;
+    ownershipClaims?: string[] | undefined;
+    priceRanges?: string[] | undefined;
+    ownerTagIds?: string[] | undefined;
+    communityTagIds?: string[] | undefined;
+    accessNeedIds?: string[] | undefined;
+    openNow?: boolean | undefined;
+    recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+}, {
+    categoryIds?: string[] | undefined;
+    specialtyIds?: string[] | undefined;
+    ownershipClaims?: string[] | undefined;
+    priceRanges?: string[] | undefined;
+    ownerTagIds?: string[] | undefined;
+    communityTagIds?: string[] | undefined;
+    accessNeedIds?: string[] | undefined;
+    openNow?: boolean | undefined;
+    recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+}>;
 export declare const discoverySearchRequestV1Schema: z.ZodEffects<z.ZodObject<{
     schemaVersion: z.ZodLiteral<"1">;
     requestId: z.ZodString;
@@ -56,13 +89,13 @@ export declare const discoverySearchRequestV1Schema: z.ZodEffects<z.ZodObject<{
         radiusMiles?: 5 | 10 | 25 | undefined;
     }>;
     filters: z.ZodObject<{
-        categoryIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-        specialtyIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-        ownershipClaims: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-        priceRanges: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-        ownerTagIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-        communityTagIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
-        accessNeedIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        categoryIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        specialtyIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        ownershipClaims: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        priceRanges: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        ownerTagIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        communityTagIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        accessNeedIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
         openNow: z.ZodOptional<z.ZodBoolean>;
         recordTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<["business", "cultural_site", "community_place", "event", "resource", "travel_destination"]>, "many">>;
     }, "strict", z.ZodTypeAny, {
@@ -249,12 +282,42 @@ export declare const discoveryEventV1Schema: z.ZodEffects<z.ZodObject<{
     }>;
     surface: z.ZodEnum<["discover", "businesses", "map", "explore", "smart_search"]>;
     platform: z.ZodEnum<["web_desktop", "web_mobile", "ios", "android"]>;
-    entryPoint: z.ZodString;
+    entryPoint: z.ZodEnum<["find_a_place", "search_bar", "results", "result_card", "filter_chip", "filter_sheet", "map_handoff", "save_button", "correction_form", "coverage_request"]>;
     appVersion: z.ZodString;
     requestId: z.ZodOptional<z.ZodString>;
     resultSetId: z.ZodOptional<z.ZodString>;
-    normalizedIntent: z.ZodOptional<z.ZodString>;
-    filters: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodArray<z.ZodString, "many">>>;
+    normalizedIntent: z.ZodOptional<z.ZodEnum<["general_local", "food_or_offering", "category", "specialty", "none"]>>;
+    filters: z.ZodOptional<z.ZodObject<{
+        categoryIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        specialtyIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        ownershipClaims: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        priceRanges: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        ownerTagIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        communityTagIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        accessNeedIds: z.ZodOptional<z.ZodArray<z.ZodEffects<z.ZodString, string, string>, "many">>;
+        openNow: z.ZodOptional<z.ZodBoolean>;
+        recordTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<["business", "cultural_site", "community_place", "event", "resource", "travel_destination"]>, "many">>;
+    }, "strict", z.ZodTypeAny, {
+        categoryIds?: string[] | undefined;
+        specialtyIds?: string[] | undefined;
+        ownershipClaims?: string[] | undefined;
+        priceRanges?: string[] | undefined;
+        ownerTagIds?: string[] | undefined;
+        communityTagIds?: string[] | undefined;
+        accessNeedIds?: string[] | undefined;
+        openNow?: boolean | undefined;
+        recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+    }, {
+        categoryIds?: string[] | undefined;
+        specialtyIds?: string[] | undefined;
+        ownershipClaims?: string[] | undefined;
+        priceRanges?: string[] | undefined;
+        ownerTagIds?: string[] | undefined;
+        communityTagIds?: string[] | undefined;
+        accessNeedIds?: string[] | undefined;
+        openNow?: boolean | undefined;
+        recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+    }>>;
     coarseLocationBucket: z.ZodOptional<z.ZodString>;
     radiusMiles: z.ZodOptional<z.ZodUnion<[z.ZodLiteral<5>, z.ZodLiteral<10>, z.ZodLiteral<25>]>>;
     resultId: z.ZodOptional<z.ZodString>;
@@ -263,26 +326,36 @@ export declare const discoveryEventV1Schema: z.ZodEffects<z.ZodObject<{
     resultCount: z.ZodOptional<z.ZodNumber>;
     zeroResult: z.ZodOptional<z.ZodBoolean>;
     latencyMs: z.ZodOptional<z.ZodNumber>;
-    fallbackState: z.ZodOptional<z.ZodString>;
+    fallbackState: z.ZodOptional<z.ZodEnum<["exact", "expanded_radius", "nearest_city", "none"]>>;
     coverageRequested: z.ZodOptional<z.ZodBoolean>;
 }, "strict", z.ZodTypeAny, {
     schemaVersion: "1";
     surface: "discover" | "businesses" | "map" | "explore" | "smart_search";
     platform: "web_desktop" | "web_mobile" | "ios" | "android";
-    entryPoint: string;
+    entryPoint: "find_a_place" | "search_bar" | "results" | "result_card" | "filter_chip" | "filter_sheet" | "map_handoff" | "save_button" | "correction_form" | "coverage_request";
     consent: {
         searchImprovement: boolean;
         version: string;
     };
     eventId: string;
     idempotencyKey: string;
-    eventName: "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "coverage_request" | "return_to_results";
+    eventName: "coverage_request" | "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "return_to_results";
     appVersion: string;
     requestId?: string | undefined;
     radiusMiles?: 5 | 10 | 25 | undefined;
-    filters?: Record<string, string[]> | undefined;
+    filters?: {
+        categoryIds?: string[] | undefined;
+        specialtyIds?: string[] | undefined;
+        ownershipClaims?: string[] | undefined;
+        priceRanges?: string[] | undefined;
+        ownerTagIds?: string[] | undefined;
+        communityTagIds?: string[] | undefined;
+        accessNeedIds?: string[] | undefined;
+        openNow?: boolean | undefined;
+        recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+    } | undefined;
     resultSetId?: string | undefined;
-    normalizedIntent?: string | undefined;
+    normalizedIntent?: "general_local" | "food_or_offering" | "category" | "specialty" | "none" | undefined;
     coarseLocationBucket?: string | undefined;
     resultId?: string | undefined;
     rank?: number | undefined;
@@ -290,26 +363,36 @@ export declare const discoveryEventV1Schema: z.ZodEffects<z.ZodObject<{
     resultCount?: number | undefined;
     zeroResult?: boolean | undefined;
     latencyMs?: number | undefined;
-    fallbackState?: string | undefined;
+    fallbackState?: "none" | "exact" | "expanded_radius" | "nearest_city" | undefined;
     coverageRequested?: boolean | undefined;
 }, {
     schemaVersion: "1";
     surface: "discover" | "businesses" | "map" | "explore" | "smart_search";
     platform: "web_desktop" | "web_mobile" | "ios" | "android";
-    entryPoint: string;
+    entryPoint: "find_a_place" | "search_bar" | "results" | "result_card" | "filter_chip" | "filter_sheet" | "map_handoff" | "save_button" | "correction_form" | "coverage_request";
     consent: {
         searchImprovement: boolean;
         version: string;
     };
     eventId: string;
     idempotencyKey: string;
-    eventName: "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "coverage_request" | "return_to_results";
+    eventName: "coverage_request" | "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "return_to_results";
     appVersion: string;
     requestId?: string | undefined;
     radiusMiles?: 5 | 10 | 25 | undefined;
-    filters?: Record<string, string[]> | undefined;
+    filters?: {
+        categoryIds?: string[] | undefined;
+        specialtyIds?: string[] | undefined;
+        ownershipClaims?: string[] | undefined;
+        priceRanges?: string[] | undefined;
+        ownerTagIds?: string[] | undefined;
+        communityTagIds?: string[] | undefined;
+        accessNeedIds?: string[] | undefined;
+        openNow?: boolean | undefined;
+        recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+    } | undefined;
     resultSetId?: string | undefined;
-    normalizedIntent?: string | undefined;
+    normalizedIntent?: "general_local" | "food_or_offering" | "category" | "specialty" | "none" | undefined;
     coarseLocationBucket?: string | undefined;
     resultId?: string | undefined;
     rank?: number | undefined;
@@ -317,26 +400,36 @@ export declare const discoveryEventV1Schema: z.ZodEffects<z.ZodObject<{
     resultCount?: number | undefined;
     zeroResult?: boolean | undefined;
     latencyMs?: number | undefined;
-    fallbackState?: string | undefined;
+    fallbackState?: "none" | "exact" | "expanded_radius" | "nearest_city" | undefined;
     coverageRequested?: boolean | undefined;
 }>, {
     schemaVersion: "1";
     surface: "discover" | "businesses" | "map" | "explore" | "smart_search";
     platform: "web_desktop" | "web_mobile" | "ios" | "android";
-    entryPoint: string;
+    entryPoint: "find_a_place" | "search_bar" | "results" | "result_card" | "filter_chip" | "filter_sheet" | "map_handoff" | "save_button" | "correction_form" | "coverage_request";
     consent: {
         searchImprovement: boolean;
         version: string;
     };
     eventId: string;
     idempotencyKey: string;
-    eventName: "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "coverage_request" | "return_to_results";
+    eventName: "coverage_request" | "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "return_to_results";
     appVersion: string;
     requestId?: string | undefined;
     radiusMiles?: 5 | 10 | 25 | undefined;
-    filters?: Record<string, string[]> | undefined;
+    filters?: {
+        categoryIds?: string[] | undefined;
+        specialtyIds?: string[] | undefined;
+        ownershipClaims?: string[] | undefined;
+        priceRanges?: string[] | undefined;
+        ownerTagIds?: string[] | undefined;
+        communityTagIds?: string[] | undefined;
+        accessNeedIds?: string[] | undefined;
+        openNow?: boolean | undefined;
+        recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+    } | undefined;
     resultSetId?: string | undefined;
-    normalizedIntent?: string | undefined;
+    normalizedIntent?: "general_local" | "food_or_offering" | "category" | "specialty" | "none" | undefined;
     coarseLocationBucket?: string | undefined;
     resultId?: string | undefined;
     rank?: number | undefined;
@@ -344,26 +437,36 @@ export declare const discoveryEventV1Schema: z.ZodEffects<z.ZodObject<{
     resultCount?: number | undefined;
     zeroResult?: boolean | undefined;
     latencyMs?: number | undefined;
-    fallbackState?: string | undefined;
+    fallbackState?: "none" | "exact" | "expanded_radius" | "nearest_city" | undefined;
     coverageRequested?: boolean | undefined;
 }, {
     schemaVersion: "1";
     surface: "discover" | "businesses" | "map" | "explore" | "smart_search";
     platform: "web_desktop" | "web_mobile" | "ios" | "android";
-    entryPoint: string;
+    entryPoint: "find_a_place" | "search_bar" | "results" | "result_card" | "filter_chip" | "filter_sheet" | "map_handoff" | "save_button" | "correction_form" | "coverage_request";
     consent: {
         searchImprovement: boolean;
         version: string;
     };
     eventId: string;
     idempotencyKey: string;
-    eventName: "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "coverage_request" | "return_to_results";
+    eventName: "coverage_request" | "search_submitted" | "results_rendered" | "result_exposed" | "result_opened" | "filter_opened" | "filter_changed" | "map_toggled" | "radius_expanded" | "save_changed" | "directions_handoff" | "contact_handoff" | "share" | "correction_submitted" | "return_to_results";
     appVersion: string;
     requestId?: string | undefined;
     radiusMiles?: 5 | 10 | 25 | undefined;
-    filters?: Record<string, string[]> | undefined;
+    filters?: {
+        categoryIds?: string[] | undefined;
+        specialtyIds?: string[] | undefined;
+        ownershipClaims?: string[] | undefined;
+        priceRanges?: string[] | undefined;
+        ownerTagIds?: string[] | undefined;
+        communityTagIds?: string[] | undefined;
+        accessNeedIds?: string[] | undefined;
+        openNow?: boolean | undefined;
+        recordTypes?: ("business" | "cultural_site" | "community_place" | "event" | "resource" | "travel_destination")[] | undefined;
+    } | undefined;
     resultSetId?: string | undefined;
-    normalizedIntent?: string | undefined;
+    normalizedIntent?: "general_local" | "food_or_offering" | "category" | "specialty" | "none" | undefined;
     coarseLocationBucket?: string | undefined;
     resultId?: string | undefined;
     rank?: number | undefined;
@@ -371,7 +474,7 @@ export declare const discoveryEventV1Schema: z.ZodEffects<z.ZodObject<{
     resultCount?: number | undefined;
     zeroResult?: boolean | undefined;
     latencyMs?: number | undefined;
-    fallbackState?: string | undefined;
+    fallbackState?: "none" | "exact" | "expanded_radius" | "nearest_city" | undefined;
     coverageRequested?: boolean | undefined;
 }>;
 export type DiscoverySearchRequestV1 = z.infer<typeof discoverySearchRequestV1Schema>;

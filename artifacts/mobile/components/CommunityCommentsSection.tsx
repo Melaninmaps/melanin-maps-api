@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -22,10 +23,7 @@ const MAX_PICKS = 3;
 const MAX_CHARS = 200;
 const URL_RE = /^https?:\/\/.+\..+/i;
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 async function getToken(): Promise<string | null> {
   try {
     if (Platform.OS === "web") return null;

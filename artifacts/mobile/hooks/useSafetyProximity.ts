@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -31,10 +32,7 @@ export interface AreaIncident {
   reportCount: number;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;

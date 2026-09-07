@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -19,9 +20,7 @@ interface PulseStats {
   recentNeighborhoods: string[];
 }
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 
 function safetyLabel(score: number): { label: string; color: string } {
   if (score >= 4.5) return { label: "Very Safe", color: "#2D7A4F" };

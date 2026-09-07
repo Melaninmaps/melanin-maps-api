@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useState, useCallback } from "react";
 import {
   ActivityIndicator,
@@ -12,10 +13,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 export interface LocationSelection {
   placeId?: string;

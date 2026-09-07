@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
@@ -11,10 +12,7 @@ interface QuotaData {
   tierLabel: string;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 const TIER_TABLE: { tier: string; label: string; videoMonthly: number }[] = [
   { tier: "free",              label: "Community",       videoMonthly: 3   },

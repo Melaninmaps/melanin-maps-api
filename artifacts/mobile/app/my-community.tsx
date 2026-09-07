@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -34,10 +35,7 @@ interface SavedLocation {
   createdAt: string;
 }
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 async function getToken() {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }
   catch { return null; }

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -15,10 +16,7 @@ import { useColors } from "@/hooks/useColors";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 const REASONS = [
   { value: "suspicious", label: "Suspicious behavior" },

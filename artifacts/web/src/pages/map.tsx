@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
 import AddPlaceModal from "@/components/AddPlaceModal";
-import { executeV1SearchWithFallback, loadV1State, getUniversalFromV1State } from "@/lib/discoveryV1";
+import { executeUniversalDiscoverySearch } from "@/lib/discoveryV1";
+import { emitDiscoveryAnalytics } from "@/lib/discoveryAnalytics";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -449,42 +450,29 @@ export default function MapPage() {
       }
     } catch { /* geo-extract failed — map stays at current position, search continues */ }
 
-    // Step 2 — V1 Search with Universal Fallback
+    // Step 2 — universal search. Map is a broad discovery surface: a
+    // business-only V1 response must never hide canonical cultural sites,
+    // events, resources, or travel destinations.
     try {
-      // Check session state first if handoffQuery is active
-      const cached = loadV1State();
-      if (cached && cached.q === q && (cached.area === geoName || cached.area === handoffArea || !geoName)) {
-        const payload = getUniversalFromV1State(cached);
-        setUniversalResults(payload);
-        const finalBusinesses = payload.results.businesses ?? [];
-        const useLocalSearch = (geoLat !== null && geoLng !== null) || userCoords !== null;
-        if (!useLocalSearch) {
-          const fitted = fitMapToBusinessResults(finalBusinesses);
-          if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
-            searchViewportLockedRef.current = true;
-            mapRef.current.panTo({ lat: geoLat, lng: geoLng });
-            mapRef.current.setZoom(12);
-          }
-        } else if (!searchViewportLockedRef.current && geoLat !== null && geoLng !== null && mapRef.current) {
-          mapRef.current.panTo({ lat: geoLat, lng: geoLng });
-          mapRef.current.setZoom(12);
-        }
-        return;
-      }
-
-      const res = await executeV1SearchWithFallback({
+      const payload = await executeUniversalDiscoverySearch({
         query: q,
         surface: "map",
         city: geoName ?? undefined,
         latitude: geoLat !== null ? geoLat : userCoords?.lat,
         longitude: geoLng !== null ? geoLng : userCoords?.lng,
         radiusMiles: 5,
-        fallbackLimit: 20
+        limit: 20,
       });
 
-      if (res && res.payload) {
-        const payload = res.payload;
+      if (payload) {
         setUniversalResults(payload);
+        void emitDiscoveryAnalytics({
+          eventName: "result_exposed",
+          surface: "map",
+          entryPoint: "results",
+          resultCount: payload.totalResults ?? 0,
+          zeroResult: (payload.totalResults ?? 0) === 0,
+        });
         const finalBusinesses: any[] = payload?.results?.businesses ?? [];
 
         // Fit canvas to MWM results so the viewport reflects where businesses

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -50,10 +51,7 @@ const TRIP_LENGTHS = [
   { value: "1 Week", label: "1 Week" },
 ];
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 export default function PlanTripScreen() {
   const { id, groupName, memberCount } = useLocalSearchParams<{

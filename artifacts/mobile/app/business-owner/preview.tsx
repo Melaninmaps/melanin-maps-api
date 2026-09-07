@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -12,13 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-function getApiBase(): string {
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    const domain = process.env.EXPO_PUBLIC_DEV_API_URL ?? "";
-    if (domain) return domain;
-  }
-  return "";
-}
+
 
 export default function BusinessPreviewScreen() {
   const colors = useColors();

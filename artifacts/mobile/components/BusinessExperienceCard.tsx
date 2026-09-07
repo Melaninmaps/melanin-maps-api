@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
@@ -36,7 +37,7 @@ type ExperienceResponse = {
 };
 
 function apiBase(): string {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+  return getApiBase();
 }
 
 export default function BusinessExperienceCard({ businessId }: { businessId: string }) {

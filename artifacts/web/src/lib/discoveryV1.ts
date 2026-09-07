@@ -1,4 +1,5 @@
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { emitDiscoveryAnalytics } from "@/lib/discoveryAnalytics";
 
 export const V1_STATE_KEY = "mwm_v1_search_state";
 
@@ -62,9 +63,42 @@ export function getUniversalFromV1State(state: V1SessionState) {
   });
 }
 
+/**
+ * Universal discovery remains authoritative for broad Discover and Map searches.
+ * Discovery V1 returns a business-only result set, so it must not be used on
+ * surfaces that promise canonical non-business records beside businesses.
+ */
+export async function executeUniversalDiscoverySearch(params: {
+  query: string;
+  surface: "discover" | "directory" | "map" | "explore";
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+  radiusMiles?: number;
+  limit?: number;
+}) {
+  const search = new URLSearchParams({
+    q: params.query.trim(),
+    surface: params.surface,
+    limit: String(params.limit ?? 30),
+  });
+  if (params.latitude !== undefined && params.longitude !== undefined) {
+    search.set("lat", String(params.latitude));
+    search.set("lng", String(params.longitude));
+    if (params.radiusMiles !== undefined) search.set("radius", String(params.radiusMiles));
+  } else if (params.city) {
+    search.set("city", params.city);
+  }
+
+  const response = await authenticatedFetch(`/api/search/universal?${search.toString()}`);
+  if (!response.ok) throw new Error(`Universal discovery search failed (${response.status})`);
+  return response.json();
+}
+
 export async function executeV1SearchWithFallback(params: {
   query: string;
-  surface: "discover" | "businesses" | "map" | "explore" | "smart_search";
+  /** V1 is a governed business directory endpoint, never a broad surface. */
+  surface: "businesses";
   city?: string;
   stateRegion?: string;
   postalCode?: string;
@@ -94,41 +128,6 @@ export async function executeV1SearchWithFallback(params: {
       let source = "typed";
       if (roundedLat !== undefined && roundedLng !== undefined) {
         source = "device_coarse";
-      }
-
-      // Check consent before sending the request
-      let consentVersion = "1.0";
-      let searchImprovement = false;
-      try {
-        const prefRes = await authenticatedFetch("/api/discovery/v1/preferences");
-        if (prefRes.ok) {
-          const pref = await prefRes.json();
-          searchImprovement = !!pref.searchImprovement;
-          consentVersion = pref.consentVersion || "1.0";
-        }
-      } catch {}
-
-      if (searchImprovement) {
-        // Emit search_submitted event before request
-        const submitEvent = {
-          idempotencyKey: requestId + "-submit",
-          eventName: "search_submitted",
-          surface,
-          platform: "web_desktop",
-          entryPoint: "search_bar",
-          requestId,
-        };
-        await authenticatedFetch("/api/discovery/v1/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...submitEvent,
-            schemaVersion: "1",
-            eventId: crypto.randomUUID(),
-            consent: { searchImprovement: true, version: consentVersion },
-            appVersion: "web-1.0.0"
-          })
-        }).catch(() => {});
       }
 
       const locationPayload: any = { source };
@@ -161,30 +160,13 @@ export async function executeV1SearchWithFallback(params: {
       if (v1Res.ok) {
         const payload = await v1Res.json();
 
-        if (searchImprovement) {
-          const renderEvent = {
-            idempotencyKey: requestId + "-success",
-            eventName: "results_rendered",
-            surface,
-            platform: "web_desktop",
-            entryPoint: "search_bar",
-            requestId,
-            resultSetId: payload.resultSetId,
-            resultCount: payload.total,
-            zeroResult: payload.total === 0,
-          };
-          await authenticatedFetch("/api/discovery/v1/events", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...renderEvent,
-              schemaVersion: "1",
-              eventId: crypto.randomUUID(),
-              consent: { searchImprovement: true, version: consentVersion },
-              appVersion: "web-1.0.0"
-            })
-          }).catch(() => {});
-        }
+        void emitDiscoveryAnalytics({
+          eventName: "result_exposed",
+          surface: "businesses",
+          entryPoint: "results",
+          resultCount: payload.total,
+          zeroResult: payload.total === 0,
+        });
 
         saveV1State({
           q: query.trim(),

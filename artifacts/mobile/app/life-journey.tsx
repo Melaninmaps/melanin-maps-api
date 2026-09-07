@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -162,9 +163,6 @@ export default function LifeJourneyScreen() {
     );
     Haptics.selectionAsync();
   };
-
-  const getApiBase = () =>
-    process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
   const getToken = async () => {
     try { return await SecureStore.getItemAsync("auth_session_token"); } catch { return null; }

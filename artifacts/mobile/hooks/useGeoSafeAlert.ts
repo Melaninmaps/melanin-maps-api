@@ -2,15 +2,11 @@ import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getApiBase } from "@/lib/api";
 
 const ALERT_CACHE_KEY = "@melanin_geo_alert_";
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
 const LOW_SAFETY_THRESHOLD = 45;
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 export interface GeoAlert {
   city: string;

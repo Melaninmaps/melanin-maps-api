@@ -5,6 +5,41 @@ type Queryable = {
   query<T = Record<string, unknown>>(sql: string, parameters?: unknown[]): Promise<{ rows: T[] }>;
 };
 
+export type PrivacySafeDiscoveryAggregate = {
+  day: string;
+  surface: string;
+  action: string;
+  recordType: string;
+  count: number;
+};
+
+/**
+ * Returns only k-anonymous coarse aggregate cells. Member identity, request
+ * IDs, result IDs, query text, filters, and coordinates never leave SQL.
+ */
+export async function readPrivacySafeDiscoveryAggregates(
+  db: Queryable,
+  fromDay: string,
+  toDay: string,
+  minimumCellSize = 5,
+): Promise<PrivacySafeDiscoveryAggregate[]> {
+  const result = await db.query<{
+    day: string; surface: string; action: string; record_type: string; count: number;
+  }>(`
+    SELECT created_at::date::text AS day, surface, event_name AS action,
+           COALESCE(record_type, 'none') AS record_type, COUNT(*)::integer AS count
+    FROM discovery_events_v1
+    WHERE deleted_at IS NULL AND created_at >= $1::date AND created_at < ($2::date + INTERVAL '1 day')
+    GROUP BY created_at::date, surface, event_name, COALESCE(record_type, 'none')
+    HAVING COUNT(*) >= $3
+    ORDER BY created_at::date DESC, surface, event_name, record_type
+  `, [fromDay, toDay, Math.max(5, Math.min(100, Math.floor(minimumCellSize)))]);
+  return result.rows.map((row) => ({
+    day: row.day, surface: row.surface, action: row.action,
+    recordType: row.record_type, count: Number(row.count),
+  }));
+}
+
 export function createPostgresDiscoverySignalRepository(
   db: Queryable,
 ): Pick<LocationFirstDiscoveryRepository, "recordCoverageGap" | "recordFlywheelSignal"> {

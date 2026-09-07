@@ -208,7 +208,7 @@ function OgRedirectHandler() {
   return null;
 }
 
-function Router() {
+export function AppRoutes() {
   return (
     <Switch>
       {/* ── Public / Marketing pages ────────────────────────────────────────── */}
@@ -467,7 +467,7 @@ function App() {
             <WouterRouter base={ROUTER_BASE}>
               <ScrollToTop />
               <OgRedirectHandler />
-              <Router />
+              <AppRoutes />
             </WouterRouter>
             <Toaster />
           </LocationContextProvider>

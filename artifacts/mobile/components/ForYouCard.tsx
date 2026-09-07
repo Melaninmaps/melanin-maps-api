@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useEffect, useState } from "react";
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -6,10 +7,7 @@ import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface Suggestion {
   icon: string;

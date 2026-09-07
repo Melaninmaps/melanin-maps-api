@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
@@ -10,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase() { return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""; }
+
 async function getToken() { try { return Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null; } catch { return null; } }
 async function authedFetch(path: string, opts?: RequestInit) {
   const token = await getToken();

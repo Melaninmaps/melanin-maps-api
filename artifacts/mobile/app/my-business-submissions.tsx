@@ -14,10 +14,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE = getApiBase();
 
 type SubmissionStatus = "pending_review" | "needs_info" | "declined" | "published";
 

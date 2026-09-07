@@ -18,7 +18,7 @@ import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
-import { loadV1State, saveV1State } from "@/lib/discoveryV1";
+import { loadV1State, saveV1State, type DiscoveryResult } from "@/lib/discoveryV1";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
@@ -229,7 +229,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const mapRef = useRef<MapView>(null);
   const mapReadyRef = useRef(false);
   const pendingLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
-  const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once on load
+  const lastFittedResultSetRef = useRef<string | null>(null);
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(true);
@@ -315,6 +315,25 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     }
     return legacyBusinesses;
   }, [v1State, legacyBusinesses]);
+  // Broad Smart Search includes more than directory businesses. Keep those
+  // typed records in memory and render every result with valid coordinates.
+  const searchMapPins = React.useMemo(() => (v1State?.fullResults ?? []).filter((result) =>
+    result.recordType !== "business" &&
+    result.latitude != null && result.longitude != null &&
+    Number.isFinite(result.latitude) && Number.isFinite(result.longitude) &&
+    (Math.abs(result.latitude) > 0.001 || Math.abs(result.longitude) > 0.001),
+  ), [v1State]);
+  const openSearchMapPin = (result: DiscoveryResult) => {
+    switch (result.recordType) {
+      case "event": router.push(`/event/${result.id}` as never); break;
+      case "article":
+      case "resource": router.push(`/library-article?id=${result.id}` as never); break;
+      case "cultural_site": router.push(`/cultural-heritage?siteId=${result.id}` as never); break;
+      case "community_place": router.push(`/community-hub?placeId=${result.id}` as never); break;
+      case "travel_destination": router.push(`/travel?destinationId=${result.id}` as never); break;
+      default: router.push(`/business/${result.id}` as never);
+    }
+  };
 
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
@@ -389,7 +408,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     return () => clearTimeout(timer);
   }, [focusSiteId, focusLat, focusLng, mapReady, tourSites]);
 
-  // ── Auto-fit to business pins on first load ────────────────────────────────
+  // ── Auto-fit each new Discovery result set ─────────────────────────────────
   // Build 99 crash-blocker note: this effect previously sat ABOVE the
   // `mapped` declaration — a temporal-dead-zone ReferenceError (TS2448/
   // TS2454; Hermes throws at component mount). Moved below the declaration;
@@ -400,16 +419,22 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   // Also handles the common case where the user's GPS location has no nearby
   // businesses — the fit ensures something is always visible.
   useEffect(() => {
-    if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current) return;
-    hasFitToBusinessesRef.current = true;
+    const coordinates = [
+      ...mapped.map((business) => ({ latitude: business.latitude, longitude: business.longitude })),
+      ...searchMapPins.map((result) => ({ latitude: result.latitude!, longitude: result.longitude! })),
+    ];
+    if (!mapReady || coordinates.length === 0) return;
+    const fitKey = v1State?.resultSetId ?? "legacy";
+    if (lastFittedResultSetRef.current === fitKey) return;
+    lastFittedResultSetRef.current = fitKey;
     // Give the map a brief moment to finish rendering before fitting
     setTimeout(() => {
       mapRef.current?.fitToCoordinates(
-        mapped.map((b) => ({ latitude: b.latitude, longitude: b.longitude })),
+        coordinates,
         { edgePadding: { top: 80, right: 40, bottom: 100, left: 40 }, animated: true },
       );
     }, 600);
-  }, [mapReady, mapped]);
+  }, [mapReady, mapped, searchMapPins, v1State?.resultSetId]);
 
   const filteredCulturalSites = activeCulturalCategory
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
@@ -657,6 +682,17 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
             onPress={() => { setSelectedBusiness(biz); setSelectedCulturalSite(null); }}
+            tracksViewChanges={false}
+            pinColor={GOLD}
+          />
+        ))}
+        {/* Typed canonical search records (events, heritage, library, and
+            community places) with coordinates are map pins too. */}
+        {searchMapPins.map((result) => (
+          <Marker
+            key={`search-${result.recordType}-${result.id}`}
+            coordinate={{ latitude: result.latitude!, longitude: result.longitude! }}
+            onPress={() => openSearchMapPin(result)}
             tracksViewChanges={false}
             pinColor={GOLD}
           />

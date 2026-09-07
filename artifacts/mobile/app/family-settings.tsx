@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, Switch, TouchableOpacity,
@@ -10,9 +11,7 @@ import * as Haptics from "expo-haptics";
 import { useColors } from "../hooks/useColors";
 import { RATING_META, type AudienceRating } from "../components/AudienceRatingBadge";
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 
 interface FamilySettings {
   allowEveryone: boolean;

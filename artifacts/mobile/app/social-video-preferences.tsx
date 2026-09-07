@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -22,7 +23,7 @@ import { useColors } from "@/hooks/useColors";
 import { cacheSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
 function apiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+  return getApiBase();
 }
 
 export default function SocialVideoPreferencesScreen() {

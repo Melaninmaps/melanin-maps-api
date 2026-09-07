@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import type { Business } from "@/constants/types";
 import { ownershipDesignationFilterId } from "@workspace/constants";
+import { getApiBase } from "@/lib/api";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 const BUSINESS_LOAD_ERROR = "Unable to load businesses. Check your connection and try again.";
@@ -22,13 +23,6 @@ interface UseBusinessByIdResult {
   business: Business | undefined;
   isLoading: boolean;
   error: string | null;
-}
-
-function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  return "";
 }
 
 function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
@@ -103,7 +97,7 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
     setError(null);
 
     try {
-      const apiBase = getApiBaseUrl();
+      const apiBase = getApiBase();
       const params = new URLSearchParams();
       if (search.length > 0) params.set("search", search);
       if (category && category !== "All") params.set("category", category);
@@ -160,7 +154,7 @@ export function useBusinessById(id: string): UseBusinessByIdResult {
       setError(null);
       setBusiness(undefined);
       try {
-        const apiBase = getApiBaseUrl();
+        const apiBase = getApiBase();
         const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);

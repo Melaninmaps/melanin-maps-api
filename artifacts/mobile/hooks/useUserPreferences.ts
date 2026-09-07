@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
@@ -5,10 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 const AUTH_TOKEN_KEY = "auth_session_token";
 const PENDING_OWNERSHIP_PREFS_KEY = "@mwm_pending_ownership_prefs";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }

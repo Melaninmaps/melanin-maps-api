@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 
 export interface ModerationItem {
@@ -28,12 +29,7 @@ interface UseReportsResult {
   ) => Promise<void>;
 }
 
-function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  return "";
-}
+
 
 export function useReports(statusFilter: string = "pending"): UseReportsResult {
   const [items, setItems] = useState<ModerationItem[]>([]);
@@ -44,7 +40,7 @@ export function useReports(statusFilter: string = "pending"): UseReportsResult {
   const fetchReports = useCallback(async () => {
     setIsLoading(true);
     try {
-      const apiBase = getApiBaseUrl();
+      const apiBase = getApiBase();
       const res = await fetch(
         `${apiBase}/api/moderation/reports?status=${encodeURIComponent(statusFilter)}`,
         { headers: { Accept: "application/json" } },
@@ -76,7 +72,7 @@ export function useReports(statusFilter: string = "pending"): UseReportsResult {
       status: "approved" | "rejected" | "pending",
       notes?: string,
     ) => {
-      const apiBase = getApiBaseUrl();
+      const apiBase = getApiBase();
       await fetch(`${apiBase}/api/moderation/reports/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

@@ -70,4 +70,36 @@ describe('Discovery V1 Client', () => {
     const state = JSON.parse(stateStr!);
     expect(state.radius).toBeUndefined();
   });
+
+  test("sends mounted directory category, specialty, and ownership chips through the business-only V1 surface", async () => {
+    const fetchSpy = vi.spyOn(authenticatedFetchModule, "authenticatedFetch").mockImplementation(async (url) => {
+      if (url === "/api/discovery/v1/preferences") {
+        return { ok: true, json: async () => ({ searchImprovement: false, consentVersion: "v1" }) } as any;
+      }
+      return { ok: true, json: async () => ({ results: [], total: 0, resultSetId: "test-filters" }) } as any;
+    });
+    fetchSpy.mockClear();
+
+    await executeV1SearchWithFallback({
+      query: "barber",
+      surface: "businesses",
+      city: "Philadelphia",
+      filters: {
+        categoryIds: ["Beauty & Personal Care"],
+        specialtyIds: ["Barber"],
+        ownershipClaims: ["Black / African American-Owned"],
+      },
+    });
+
+    const searchRequest = fetchSpy.mock.calls.find(([url]) => url === "/api/discovery/v1/search");
+    expect(searchRequest).toBeDefined();
+    expect(JSON.parse(searchRequest![1]!.body)).toMatchObject({
+      surface: "businesses",
+      filters: {
+        categoryIds: ["Beauty & Personal Care"],
+        specialtyIds: ["Barber"],
+        ownershipClaims: ["Black / African American-Owned"],
+      },
+    });
+  });
 });

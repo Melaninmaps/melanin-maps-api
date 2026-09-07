@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
 import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
+import { emitDiscoveryAnalytics } from "@/lib/discoveryAnalytics";
 
 function safeExternalProfileUrl(value: unknown, expectedPlatform: SocialVideoPlatform): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -445,6 +446,10 @@ export default function BusinessDetail() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["listSavedPlaces"] });
           toast({ title: "Removed from saved places" });
+          void emitDiscoveryAnalytics({
+            eventName: "save_changed", surface: "businesses", entryPoint: "save_button",
+            resultId: id, resultType: "business",
+          });
         },
         onError: () => {
           toast({ title: "Could not remove from saved places", description: "Please try again.", variant: "destructive" });
@@ -455,6 +460,10 @@ export default function BusinessDetail() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["listSavedPlaces"] });
           toast({ title: "Added to saved places" });
+          void emitDiscoveryAnalytics({
+            eventName: "save_changed", surface: "businesses", entryPoint: "save_button",
+            resultId: id, resultType: "business",
+          });
         },
         onError: () => {
           toast({ title: "Could not save this place", description: "Please try again.", variant: "destructive" });

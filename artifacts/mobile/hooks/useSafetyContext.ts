@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 
 export interface IncidentCount {
@@ -32,12 +33,7 @@ export const SUPPORTED_CITIES: { key: string; label: string }[] = [
   { key: "washington-dc", label: "Washington DC" },
 ];
 
-function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  return "";
-}
+
 
 export function useSafetyContext(city: string | null): UseSafetyContextResult {
   const [context, setContext] = useState<SafetyContext | null>(null);
@@ -46,7 +42,7 @@ export function useSafetyContext(city: string | null): UseSafetyContextResult {
 
   const fetchContext = useCallback(async () => {
     if (!city) return;
-    const apiBase = getApiBaseUrl();
+    const apiBase = getApiBase();
 
     setIsLoading(true);
     setError(null);

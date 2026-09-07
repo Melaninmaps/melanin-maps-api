@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -25,10 +26,7 @@ import { BusinessImprovementPlanModal } from "@/components/BusinessImprovementPl
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface MyBusiness {
   id: string;

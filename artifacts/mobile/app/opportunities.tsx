@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,9 +24,7 @@ import * as Location from "expo-location";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 async function getToken() {
   try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); } catch { return null; }
 }

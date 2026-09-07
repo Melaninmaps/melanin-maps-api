@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 
@@ -28,10 +29,7 @@ export interface ShowLoveNomination {
   created_at: string;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 async function getAuthHeader(): Promise<Record<string, string>> {
   try {

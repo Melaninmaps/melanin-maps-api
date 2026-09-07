@@ -23,10 +23,9 @@ import { useColors } from "@/hooks/useColors";
 import { ChipGrid } from "@/components/ChipGrid";
 import { VoiceTextField } from "@/components/VoiceTextField";
 import { REVIEW_BADGE_CHIPS, NEGATIVE_REVIEW_BADGES } from "@/config/chips";
+import { getApiBase } from "@/lib/api";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE = getApiBase();
 
 async function getToken(): Promise<string | null> {
   try {

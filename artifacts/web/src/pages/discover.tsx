@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Search, MapPin, Star, Grid, Map as MapIcon, Compass, Clock, PlusCircle, X, Building2, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
-import { executeV1SearchWithFallback } from "@/lib/discoveryV1";
+import { executeUniversalDiscoverySearch } from "@/lib/discoveryV1";
+import { emitDiscoveryAnalytics } from "@/lib/discoveryAnalytics";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -308,16 +309,25 @@ export default function Discover() {
   const { data, isLoading } = useQuery({
     queryKey: ['businesses', query, activeCategory, activeVibe],
     queryFn: async () => {
-      const res = await executeV1SearchWithFallback({
+      const payload = await executeUniversalDiscoverySearch({
         query: query || "",
         surface: "discover",
-        fallbackLimit: 50
+        limit: 50
       });
-      let businesses = res?.payload?.results?.businesses ?? res?.payload?.businesses ?? [];
+      void emitDiscoveryAnalytics({
+        eventName: "result_exposed",
+        surface: "discover",
+        entryPoint: "results",
+        resultCount: payload.totalResults ?? 0,
+        zeroResult: (payload.totalResults ?? 0) === 0,
+      });
+      let businesses = payload.results?.businesses ?? payload.businesses ?? [];
       if (effectiveCategory) {
         businesses = businesses.filter((b: any) => b.category?.toLowerCase().includes(effectiveCategory.toLowerCase()));
       }
-      return { businesses };
+      // Keep the canonical response intact: this broad surface must not turn a
+      // universal response into a business-only result set.
+      return { payload, businesses };
     }
   });
 
@@ -331,12 +341,12 @@ export default function Discover() {
     queryKey: ['businesses-expand', query],
     enabled: minorityExpanded && businesses.length === 0 && hasActiveFilter,
     queryFn: async () => {
-      const res = await executeV1SearchWithFallback({
+      const payload = await executeUniversalDiscoverySearch({
         query: query || "",
         surface: "discover",
-        fallbackLimit: 50
+        limit: 50
       });
-      return { businesses: res?.payload?.results?.businesses ?? res?.payload?.businesses ?? [] };
+      return { payload, businesses: payload.results?.businesses ?? payload.businesses ?? [] };
     }
   });
 

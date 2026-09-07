@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
@@ -13,7 +14,7 @@ let cached: SocialVideoPlatform[] | null = null;
 const listeners = new Set<(value: SocialVideoPlatform[]) => void>();
 
 function apiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+  return getApiBase();
 }
 
 function publish(value: SocialVideoPlatform[]) {

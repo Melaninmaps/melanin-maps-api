@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
 import { Platform } from "react-native";
@@ -14,9 +15,7 @@ export interface SearchHistoryEntry {
 const KEY = (type: SearchType) => `@melanin_maps_search_history_${type}`;
 const MAX_PER_TYPE = 10;
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 
 async function getToken(): Promise<string | null> {
   if ((Platform.OS as string) === "web") return null;

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -128,11 +129,6 @@ export function MapTabView() {
 
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
   const { warnings, dismissWarning } = useSafetyProximity();
-
-  function getApiBase() {
-    if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-    return "";
-  }
 
   const loadFlaggedBusinesses = async () => {
     if (Platform.OS === "web") {

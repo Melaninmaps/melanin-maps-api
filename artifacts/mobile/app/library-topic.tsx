@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -21,10 +22,7 @@ import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 async function getToken(): Promise<string | null> {
   try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); }
   catch { return null; }

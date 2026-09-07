@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
@@ -37,9 +38,7 @@ const ROLE_COLORS: Record<string, { color: string; label: string }> = {
 
 const AVATAR_COLORS = ["#CA922B", "#2D7A4F", "#CA922B", "#1D4ED8", "#7B2D8B"];
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 async function getToken() {
   try { return await SecureStore.getItemAsync("auth_session_token"); } catch { return null; }
 }

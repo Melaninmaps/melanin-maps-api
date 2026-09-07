@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -6,12 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 const STORAGE_KEY = "@mapping_with_melanin_favorites";
 const AUTH_TOKEN_KEY = "auth_session_token";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  return "";
-}
+
 
 async function getToken(): Promise<string | null> {
   try {

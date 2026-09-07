@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -7,10 +8,7 @@ import * as SecureStore from "expo-secure-store";
 
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 export default function TabLayout() {
   const colors = useColors();

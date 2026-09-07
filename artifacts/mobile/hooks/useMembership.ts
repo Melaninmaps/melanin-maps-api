@@ -1,13 +1,9 @@
 import * as SecureStore from "expo-secure-store";
 import { Linking } from "react-native";
 import { useCallback, useEffect, useState } from "react";
+import { getApiBase } from "@/lib/api";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -22,10 +23,7 @@ async function getToken(): Promise<string | null> {
     return await getItemAsync(AUTH_TOKEN_KEY);
   } catch { return null; }
 }
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 type CommunityList = {
   id: number;

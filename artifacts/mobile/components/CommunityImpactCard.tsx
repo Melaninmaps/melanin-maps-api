@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,10 +13,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface ImpactStats {
   reviewCount: number;

@@ -18,7 +18,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useAuth, getApiBaseUrl } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 
 type Step = "phone" | "otp" | "choose" | "link" | "signup";
 
@@ -53,7 +54,7 @@ export default function PhoneLoginScreen() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [error, setError] = useState("");
 
-  const base = getApiBaseUrl();
+  const base = getApiBase();
 
   useEffect(() => {
     if (resendCooldown <= 0) return;

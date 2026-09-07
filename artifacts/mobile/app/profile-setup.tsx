@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { getApiBaseUrl } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 
 const TOTAL_STEPS = 4;
 
@@ -76,7 +76,7 @@ export default function ProfileSetupScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const base = getApiBaseUrl();
+      const base = getApiBase();
 
       // Bug 2 fix: retrieve heritage + ownership designations collected during pre-auth onboarding
       let diasporaCountries: string[] = [];

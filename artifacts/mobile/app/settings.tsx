@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
@@ -149,7 +150,7 @@ export default function SettingsScreen() {
               try {
                 const SecureStore = await import("expo-secure-store");
                 const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
-                const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+                const apiBase = getApiBase();
                 const res = await fetch(`${apiBase}/api/users/me`, {
                   method: "DELETE",
                   headers: token ? { Authorization: `Bearer ${token}` } : {},

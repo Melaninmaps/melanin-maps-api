@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -21,10 +22,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { PrivacyPinModal, isSensitiveCategory } from "@/components/PrivacyPinModal";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 async function getToken(): Promise<string | null> {
   try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); }
   catch { return null; }

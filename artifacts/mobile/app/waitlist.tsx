@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Clipboard from "expo-clipboard";
@@ -41,9 +42,7 @@ const BIZ_CATEGORIES = [
   "Entertainment", "Professional Services", "Tech", "Home Services", "Food & Beverage", "Other",
 ];
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 
 function RecommendModal({
   visible, onClose, isAuthenticated,

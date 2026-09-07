@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Linking from "expo-linking";
@@ -22,10 +23,7 @@ import { useAuth } from "@/lib/auth";
 import { PostDetailModal } from "@/components/PostDetailModal";
 import type { CommunityPost } from "@/constants/types";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "📸",

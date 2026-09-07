@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { discoveryEventV1Schema, discoverySearchRequestV1Schema } from "@workspace/api-zod";
+import {
+  getDiscoveryCityAliases,
+  getDiscoveryCountryAliases,
+  normalizeDiscoveryPostalCode,
+} from "@workspace/constants";
 import { readFileSync } from "node:fs";
 describe("Discovery V1 contract", () => {
   const search = { schemaVersion: "1" as const, requestId: "00000000-0000-4000-8000-000000000001", surface: "map" as const, platform: "ios" as const, entryPoint: "find_a_place", query: "fruity pebbled French toast", location: { source: "typed" as const, city: "Atlanta", stateRegion: "GA", radiusMiles: 5 as const }, filters: {}, consent: { personalizedSuggestions: false, searchImprovement: false, preciseLocation: false } };
@@ -15,12 +20,23 @@ describe("Discovery V1 contract", () => {
     expect(discoveryEventV1Schema.safeParse({ ...event, coverageRequested: true }).success).toBe(true);
     expect(discoveryEventV1Schema.safeParse({ ...event, coverageRequested: true, userId: "attacker-controlled" }).success).toBe(false);
   });
+  it("uses the shared location normalization policy", () => {
+    expect(getDiscoveryCityAliases("Washington, D.C.")).toContain("washington");
+    expect(getDiscoveryCityAliases("Philly")).toContain("philadelphia");
+    expect(getDiscoveryCountryAliases("us")).toContain("UNITED STATES");
+    expect(normalizeDiscoveryPostalCode(" 191 03 ")).toBe("19103");
+  });
   it("keeps radius, retention, readiness, and withdrawal enforcement server-side", () => {
     const route = readFileSync(new URL("../registerDiscoveryV1Routes.ts", import.meta.url), "utf8");
     expect(route).toContain("3958.7613 * acos");
     expect(route).toContain("distance_miles <= $3");
     expect(route).toContain("ORDER BY distance_miles ASC");
-    expect(route).toContain("POSTAL_SCOPE_UNAVAILABLE");
+    expect(route).toContain("postal_code");
+    expect(route).toContain("getDiscoveryCountryAliases");
+    expect(route).toContain("getDiscoveryCityAliases");
+    expect(route).toContain("locationClause");
+    expect(route).toContain("FOR UPDATE");
+    expect(route).toContain("sweepExpiredEvents");
     expect(route).toContain("information_schema.tables");
     expect(route).toContain("cleanup.unref()");
     expect(route).toContain("DELETE FROM discovery_events_v1 WHERE member_id=$1");

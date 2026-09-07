@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -69,10 +70,7 @@ type PendingInvite = { id: number; invitedUserId: string; invitedUserFirstName: 
 type GroupDetail = Group & { isMember: boolean; isAdmin: boolean };
 type ConnectionRow = { id: number; status: string; requesterId: string; recipientId: string; otherId: string | null; otherFirstName: string | null; otherLastName: string | null };
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 function formatDate(iso: string | Date): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });

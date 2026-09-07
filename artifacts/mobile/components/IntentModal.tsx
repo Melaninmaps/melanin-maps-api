@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
@@ -34,10 +35,7 @@ export const INTENTS: { id: IntentId; label: string; emoji: string; color: strin
   { id: "work",       label: "Looking for work",               emoji: "💼", color: "#059669", description: "Career resources & employers" },
 ];
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 async function getToken(): Promise<string | null> {
   try { if (Platform.OS === "web") return null; return await SecureStore.getItemAsync("auth_session_token"); }
   catch { return null; }

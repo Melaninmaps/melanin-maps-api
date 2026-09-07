@@ -21,6 +21,10 @@ const locationShareSource = readFileSync(
   decodeURIComponent(new URL("../app/location-share.tsx", import.meta.url).pathname),
   "utf8",
 );
+const discoveryV1Source = readFileSync(
+  decodeURIComponent(new URL("../lib/discoveryV1.ts", import.meta.url).pathname),
+  "utf8",
+);
 
 describe("business discovery data contract", () => {
   it("never substitutes fixture businesses for an API response", () => {
@@ -37,27 +41,25 @@ describe("business discovery data contract", () => {
     expect(hookSource).toContain("if (requestId === requestIdRef.current)");
   });
 
-  it("sends the saved session token as a bearer token on discovery requests", () => {
-    expect(hookSource).toContain('import * as SecureStore from "expo-secure-store"');
-    expect(hookSource).toContain('SecureStore.getItemAsync(AUTH_TOKEN_KEY)');
-    expect(hookSource).toContain("Authorization: `Bearer ${token}`");
-    expect(searchSource).toContain('SecureStore.getItemAsync("auth_session_token")');
-    expect(searchSource).toContain("headers: token ? { Authorization: `Bearer ${token}` } : {}");
+  it("sends the saved session token through the shared Discovery V1 client", () => {
+    expect(searchSource).toContain("executeV1Search({");
+    expect(discoveryV1Source).toContain('SecureStore.getItemAsync("auth_session_token")');
+    expect(discoveryV1Source).toContain("headers.Authorization = `Bearer ${token}`");
   });
 
-  it("sends name, city, state, category, and a bounded limit to canonical search", () => {
-    expect(searchSource).toContain('allParams.set("search", nameParam)');
-    expect(searchSource).toContain('allParams.set("city", cityParam)');
-    expect(searchSource).toContain('allParams.set("state", stateParam)');
-    expect(searchSource).toContain('allParams.set("category", category)');
-    expect(searchSource).toContain('allParams.set("limit", "200")');
-    expect(searchSource).not.toContain("list = list.filter((b)");
+  it("sends normalized query, city, state, and bounded radius to Discovery V1", () => {
+    expect(searchSource).toContain("const q = [nameParam, handleParam]");
+    expect(searchSource).toContain("city: cityParam || undefined");
+    expect(searchSource).toContain("stateRegion: stateParam || undefined");
+    expect(searchSource).toContain("radiusMiles: radiusMiles || undefined");
+    expect(discoveryV1Source).toContain("query: query.trim()");
+    expect(discoveryV1Source).toContain("[5, 10, 25].includes(effectiveRadius)");
   });
 
   it("does not present authentication or transport failures as a missing business", () => {
-    expect(searchSource).toContain("if (!res.ok) throw new Error(`HTTP ${res.status}`)");
-    expect(searchSource).toContain('setSearchError("Unable to search businesses right now. Check your connection and try again.")');
-    expect(searchSource).toContain('{searched && !searchError && mode === "invite" && (');
+    expect(discoveryV1Source).toContain('if (!v1Res.ok) throw new Error("Search failed")');
+    expect(searchSource).toContain('"Unable to search businesses right now. Check your connection and try again."');
+    expect(searchSource).toContain('setMode(list.length > 0 ? "results" : "invite")');
     expect(searchSource).toContain("const requestId = ++searchRequestIdRef.current");
     expect(searchSource).toContain("if (requestId !== searchRequestIdRef.current) return");
     expect(searchSource).toContain('accessibilityLabel="Back"');

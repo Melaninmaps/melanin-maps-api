@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
@@ -5,10 +6,7 @@ import { Platform } from "react-native";
 const PUSH_TOKEN_KEY = "@melanin_maps_push_token";
 const AUTH_TOKEN_KEY = "auth_session_token";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface PermissionResult {
   status: string;

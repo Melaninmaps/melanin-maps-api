@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
@@ -18,10 +19,7 @@ import { useColors } from "@/hooks/useColors";
 import type { Business } from "@/constants/types";
 import { RatingStars } from "./RatingStars";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 function openSocial(raw: string, baseUrl: string, allowedDomains: readonly string[]) {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
@@ -6,10 +7,7 @@ import { useColors } from "@/hooks/useColors";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+
 
 interface UserResult {
   id: string;

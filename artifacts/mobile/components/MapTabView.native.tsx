@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -379,7 +380,7 @@ export function MapTabView() {
     });
   }, []);
 
-  const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+  const apiBase = getApiBase();
 
   // Re-voice steps in new mode when user changes the discretion selector
   const handleVoiceModeChange = useCallback(async (mode: VoiceMode) => {

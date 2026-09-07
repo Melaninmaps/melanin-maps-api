@@ -11,6 +11,7 @@ import {
   type CanonicalBusinessSearchRecord,
 } from "./canonicalBusinessSearch";
 import { executeV1SearchWithFallback } from "@/lib/discoveryV1";
+import { emitDiscoveryAnalytics } from "@/lib/discoveryAnalytics";
 
 const BASE = import.meta.env.BASE_URL;
 const PAGE_SIZE = 60;
@@ -100,38 +101,49 @@ export function LocationFirstBusinessDirectory() {
     setRecords([]);
     setTotal(0);
 
-    const filters: any = {};
+    const filters: {
+      categoryIds?: string[];
+      specialtyIds?: string[];
+      ownershipClaims?: string[];
+    } = {};
     if (category) filters.categoryIds = [category];
     if (specialtyLabel) filters.specialtyIds = [specialtyLabel];
     if (ownership) filters.ownershipClaims = [ownership];
 
+    // Discovery V1 is the governed, business-only search path for the mounted
+    // directory. Its supported filter contract accepts the UI chip values.
     executeV1SearchWithFallback({
       query: searchText,
       surface: "businesses",
       city: location.city ?? undefined,
       stateRegion: location.stateCode ?? undefined,
-      radiusMiles: 5,
       fallbackLimit: PAGE_SIZE,
       filters,
-      useBusinessApiFallback: true
+      useBusinessApiFallback: true,
     }).then(async (res) => {
       if (requestId !== requestIdRef.current || controller.signal.aborted) return;
       if (!res) throw new Error("Search is unavailable.");
-
-      const results = res.payload.results?.businesses ?? res.payload.businesses ?? [];
-      const businesses = results.map((b: any) => ({
-        id: b.id,
-        name: b.name,
-        category: b.category,
-        latitude: b.latitude,
-        longitude: b.longitude,
-        verified: b.verified,
-        sourceUrl: b.sourceUrl,
-        city: location.city ?? "",
-        state: location.stateCode ?? "",
-      }));
-      setRecords(businesses as any);
-      setTotal(res.payload.totalResults);
+      const businesses = (res.payload.results?.businesses ?? res.payload.businesses ?? [])
+        .filter((business: unknown): business is Record<string, unknown> => !!business && typeof business === "object")
+        .map((business: Record<string, unknown>) => ({
+          ...business,
+          id: String(business.id ?? ""),
+          name: String(business.name ?? ""),
+          category: typeof business.category === "string" ? business.category : null,
+          latitude: business.latitude as string | number | null | undefined,
+          longitude: business.longitude as string | number | null | undefined,
+          verified: Boolean(business.verified),
+          sourceUrl: typeof business.sourceUrl === "string" ? business.sourceUrl : null,
+          city: location.city ?? "",
+          state: location.stateCode ?? "",
+        }))
+        .filter((business: { id: string; name: string }) => business.id && business.name);
+      const result = readCanonicalBusinessSearchResponse({
+        businesses,
+        total: res.payload.totalResults,
+      });
+      setRecords(result.businesses);
+      setTotal(result.total);
     }).catch((caught: unknown) => {
       if (controller.signal.aborted || requestId !== requestIdRef.current) return;
       setRecords([]);
@@ -142,7 +154,7 @@ export function LocationFirstBusinessDirectory() {
     });
 
     return () => controller.abort();
-  }, [queryKey, retryKey]);
+  }, [category, location.city, location.stateCode, ownership, queryKey, retryKey, searchText, specialtyLabel]);
 
   const loadMore = useCallback(async () => {
     if (!queryParams || loadingMore || records.length >= total) return;
@@ -224,6 +236,11 @@ export function LocationFirstBusinessDirectory() {
           </div>
           <Link
             href={`/map${searchText || location.city ? '?' : ''}${searchText ? `q=${encodeURIComponent(searchText)}` : ''}${searchText && location.city ? '&' : ''}${location.city ? `area=${encodeURIComponent(location.city)}` : ''}`}
+            onClick={() => void emitDiscoveryAnalytics({
+              eventName: "map_toggled",
+              surface: "businesses",
+              entryPoint: "map_handoff",
+            })}
             className="inline-flex items-center gap-2 rounded-full border border-[#2B1507]/20 bg-white px-4 py-2 text-sm font-medium text-[#3A1F0E] transition-colors hover:border-[#CA922B] hover:text-[#CA922B]"
           >
             View on Map
@@ -236,7 +253,14 @@ export function LocationFirstBusinessDirectory() {
           selected={category ? [category] : []}
           onToggle={(value) => {
             invalidateRequests();
-            setCategory(category === value ? null : value);
+             const next = category === value ? null : value;
+             setCategory(next);
+             void emitDiscoveryAnalytics({
+               eventName: "filter_changed",
+               surface: "businesses",
+               entryPoint: "filter_chip",
+               filters: next ? { categoryIds: [next] } : {},
+             });
           }}
         />
         <FilterRow
@@ -246,14 +270,30 @@ export function LocationFirstBusinessDirectory() {
           onToggle={(label) => {
             invalidateRequests();
             const slug = BUSINESS_SPECIALTIES.find((item) => item.label === label)?.slug ?? null;
-            setSpecialty(slug === specialty ? null : slug);
+            const next = slug === specialty ? null : slug;
+            setSpecialty(next);
+            void emitDiscoveryAnalytics({
+              eventName: "filter_changed",
+              surface: "businesses",
+              entryPoint: "filter_chip",
+              filters: next ? { specialtyIds: [next] } : {},
+            });
           }}
         />
         <FilterRow
           label="Ownership"
           values={OWNERSHIP_FILTERS}
           selected={ownership ? [ownership] : []}
-          onToggle={toggleOwnership}
+          onToggle={(value) => {
+            toggleOwnership(value);
+            const next = ownership === value ? null : value;
+            void emitDiscoveryAnalytics({
+              eventName: "filter_changed",
+              surface: "businesses",
+              entryPoint: "filter_chip",
+              filters: next ? { ownershipClaims: [next] } : {},
+            });
+          }}
         />
 
         {!location.city && <LocationNeededState />}
@@ -342,6 +382,13 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
   return (
     <Link
       href={`/businesses/${encodeURIComponent(record.id)}`}
+      onClick={() => void emitDiscoveryAnalytics({
+        eventName: "result_opened",
+        surface: "businesses",
+        entryPoint: "result_card",
+        resultId: record.id,
+        resultType: "business",
+      })}
       className="block rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 shadow-sm transition hover:border-[#CA922B]/60"
     >
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8D5C17]">
@@ -394,6 +441,17 @@ function DirectoryGapState() {
         <Link href="/submit-business" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
           Add a business
         </Link>
+        <button
+          type="button"
+          onClick={() => void emitDiscoveryAnalytics({
+            eventName: "coverage_request",
+            surface: "businesses",
+            entryPoint: "coverage_request",
+          })}
+          className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]"
+        >
+          Request coverage
+        </button>
       </div>
     </section>
   );

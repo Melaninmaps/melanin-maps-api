@@ -11,7 +11,7 @@
  * Saves via PATCH /api/admin/businesses/:id/profile (no new API needed).
  * Works on mobile — designed for the tour workflow.
  */
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   X, Loader2, Store, Info, Share2, Award, Compass, Image,
   Check, AlertTriangle, ChevronLeft, ChevronRight
@@ -23,6 +23,7 @@ import {
   VIBE_ELIGIBLE_CATEGORIES,
   OWNERSHIP_DESIGNATIONS,
 } from "@workspace/constants";
+import { emitDiscoveryAnalytics } from "@/lib/discoveryAnalytics";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -184,6 +185,13 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
       const data = await res.json() as { error?: string };
       if (!res.ok) { setSaveError(data.error ?? "Save failed."); return; }
       setSavedOk(true);
+      void emitDiscoveryAnalytics({
+        eventName: "correction_submitted",
+        surface: "businesses",
+        entryPoint: "correction_form",
+        resultId: businessId,
+        resultType: "business",
+      });
       onSaved();
       setTimeout(() => setSavedOk(false), 3000);
     } finally {

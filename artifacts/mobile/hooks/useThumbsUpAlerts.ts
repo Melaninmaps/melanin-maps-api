@@ -1,6 +1,7 @@
+import { getApiBase } from "@/lib/api";
 import { useCallback, useEffect, useState } from "react";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+const API_BASE = getApiBase();
 
 const THUMBS_UP_THRESHOLD = 3;
 

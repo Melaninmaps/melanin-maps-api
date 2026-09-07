@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
+import { getApiBase } from "@/lib/api";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
 async function getToken() {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); } catch { return null; }
 }

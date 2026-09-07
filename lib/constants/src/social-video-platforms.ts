@@ -1,3 +1,13 @@
+declare const URL: {
+  new (input: string): {
+    hostname: string;
+    pathname: string;
+    protocol: string;
+    username: string;
+    password: string;
+  };
+};
+
 /**
  * Supported public social-video providers.
  *

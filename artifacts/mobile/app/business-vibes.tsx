@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
@@ -40,11 +41,7 @@ function videoSource(url: string): { label: string; icon: "youtube" | "instagram
   return { label: "Watch Video", icon: "link" };
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN)
-    return `https://${process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN}`;
-  return "";
-}
+
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);

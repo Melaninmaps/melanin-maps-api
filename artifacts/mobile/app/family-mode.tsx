@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
@@ -9,9 +10,7 @@ import * as SecureStore from "expo-secure-store";
 import * as Haptics from "expo-haptics";
 import { useColors } from "../hooks/useColors";
 
-function getApiBase() {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
+
 
 interface FamilyPost {
   id: string;

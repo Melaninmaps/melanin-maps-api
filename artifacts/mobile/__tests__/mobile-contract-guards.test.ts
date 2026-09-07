@@ -21,6 +21,16 @@ describe("Expo config plugin imports", () => {
   });
 });
 
+describe("TestFlight staging API isolation", () => {
+  it("uses a staging-only API origin and ships a fail-closed resolver", () => {
+    const eas = JSON.parse(source("../eas.json"));
+    expect(eas.build["testflight-staging"].env.EXPO_PUBLIC_DOMAIN).not.toBe("www.mappingwithmelanin.com");
+    const api = source("../lib/api.ts");
+    expect(api).toContain('process.env.APP_ENV === "staging"');
+    expect(api).toContain("return \"\"");
+  });
+});
+
 describe("community media URL normalization", () => {
   it("accepts direct arrays and historical JSON text", () => {
     expect(parseMediaUrls(["https://example.com/a.jpg"])).toEqual([
@@ -103,6 +113,17 @@ describe("community-fed business publication governance", () => {
     expect(smartSearch).toContain("Community-reported non-minority-owned · Not verified");
     expect(smartSearch).not.toContain("/api/business-nominations");
     expect(smartSearch).not.toContain("blackOwned: true");
+  });
+
+  it("uses canonical universal search for broad Smart Search, not business-only V1", () => {
+    const smartSearch = source("../app/smart-search.tsx");
+    const discovery = source("../lib/discoveryV1.ts");
+    expect(smartSearch).toContain("executeUniversalSearch({");
+    expect(smartSearch).not.toContain("executeV1Search({");
+    expect(discovery).toContain("/api/search/universal?");
+    expect(discovery).toContain('mapUniversalResult(item, "event")');
+    expect(discovery).toContain('mapUniversalResult(item, "cultural_site")');
+    expect(discovery).toContain('mapUniversalResult(item, "community_place")');
   });
 
   it("keeps review status reachable after success and from Profile", () => {
