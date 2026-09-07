@@ -222,6 +222,7 @@ test("rejects signing files, Replit config, environment files, and credential li
       ["google-services.json", "{\"api_key\":\"AIzaabcdefghijklmnopqrstuvwxyz1234567890\"}"],
       [".replit", "config"],
       [".replitignore", "config"],
+      ["replit.md", "config"],
       ["replit.nix", "config"],
       ["service-account.json", "{}"],
       ["google-service-account-prod.json", "{}"],
