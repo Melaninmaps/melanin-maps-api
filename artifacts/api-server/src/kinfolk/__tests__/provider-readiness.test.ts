@@ -45,6 +45,18 @@ function authoritativeUtcResponse(url = "https://www.nist.gov/pml/time-and-frequ
   };
 }
 
+function authoritativeTavilyResponse() {
+  return new Response(JSON.stringify({ results: [{
+    title: "Coordinated Universal Time",
+    url: "https://www.nist.gov/pml/time-and-frequency-division/time-realization/utc",
+    content: "NIST realizes and distributes Coordinated Universal Time.",
+  }] }), { status: 200 });
+}
+
+function embeddingVector(length = 1536): number[] {
+  return Array.from({ length }, (_, index) => index / 1536);
+}
+
 function passingDependencies() {
   return {
     chatCreate: vi.fn().mockResolvedValue({ choices: [{ message: { content: "{\"ok\":true}" } }] }),
@@ -52,7 +64,8 @@ function passingDependencies() {
     transcriptionCreate: vi.fn().mockResolvedValue({
       text: "This synthetic provider readiness voice fixture checks transcription.",
     }),
-    embeddingsCreate: vi.fn().mockResolvedValue({ data: [{ embedding: [0.25, -0.5, 1] }] }),
+    embeddingsCreate: vi.fn().mockResolvedValue({ data: [{ embedding: embeddingVector() }] }),
+    tavilySearch: vi.fn().mockImplementation(async () => authoritativeTavilyResponse()),
     textToSpeech: vi.fn().mockResolvedValue(pcmWav()),
     readFixture: vi.fn().mockResolvedValue(pcmWav()),
   };
@@ -99,6 +112,83 @@ describe("Kinfolk provider readiness", () => {
     expect(dependencies.transcriptionCreate).toHaveBeenCalledTimes(1);
     expect(dependencies.textToSpeech).toHaveBeenCalledTimes(1);
     expect(dependencies.embeddingsCreate).toHaveBeenCalledTimes(1);
+    expect(dependencies.embeddingsCreate).toHaveBeenCalledWith({
+      model: "text-embedding-3-small",
+      dimensions: 1536,
+      input: "Kinfolk readiness",
+    });
+  });
+
+  it("probes configured Tavily fallback with one sanitized authoritative result and includes it in aggregate health", async () => {
+    const dependencies = passingDependencies();
+    const environment = { ...configured, TAVILY_API_KEY: "tavily-test-secret" };
+    const rows = await probeKinfolkProviderReadiness(environment, dependencies as never);
+    expect(row(rows, "tavily_fallback")).toEqual({
+      capability: "tavily_fallback", status: "PASS", category: "ok",
+    });
+    expect(summarizeKinfolkProviderReadiness(rows)).toEqual({ ok: true });
+    expect(dependencies.tavilySearch).toHaveBeenCalledTimes(1);
+    const [url, init] = dependencies.tavilySearch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://api.tavily.com/search");
+    expect(init.method).toBe("POST");
+    expect(init.headers).toEqual({
+      Authorization: "Bearer tavily-test-secret",
+      "Content-Type": "application/json",
+    });
+    expect(JSON.parse(String(init.body))).toEqual({
+      query: "Coordinated Universal Time NIST definition",
+      topic: "general",
+      search_depth: "basic",
+      max_results: 1,
+      include_answer: false,
+      include_raw_content: false,
+      include_images: false,
+      include_domains: ["nist.gov"],
+      safe_search: true,
+    });
+  });
+
+  it.each([
+    ["auth failure", () => new Response("credential rejected", { status: 401 })],
+    ["malformed response", () => new Response("not-json", { status: 200 })],
+    ["zero results", () => new Response(JSON.stringify({ results: [] }), { status: 200 })],
+    ["unsafe or irrelevant result", () => new Response(JSON.stringify({ results: [{
+      title: "Coordinated Universal Time", url: "https://nist.gov.evil.example/utc", content: "Coordinated Universal Time",
+    }] }), { status: 200 })],
+  ])("fails aggregate readiness for Tavily %s", async (_label, response) => {
+    const dependencies = passingDependencies();
+    dependencies.tavilySearch.mockImplementation(async () => response());
+    const rows = await probeKinfolkProviderReadiness({
+      ...configured,
+      TAVILY_API_KEY: "never-returned-secret",
+    }, dependencies as never);
+    expect(row(rows, "tavily_fallback")).toEqual({
+      capability: "tavily_fallback", status: "FAIL", category: "connection_failure",
+    });
+    expect(kinfolkProviderReadinessHttpResult(rows)).toEqual({
+      status: 503, body: { ok: false, reason: "connection_failure" },
+    });
+  });
+
+  it("fails aggregate readiness when the Tavily probe times out", async () => {
+    const dependencies = passingDependencies();
+    dependencies.tavilySearch.mockImplementation(() => new Promise<Response>(() => undefined));
+    const rows = await probeKinfolkProviderReadiness({
+      ...configured,
+      TAVILY_API_KEY: "timeout-secret",
+    }, { ...dependencies, tavilyTimeoutMilliseconds: 5 } as never);
+    expect(row(rows, "tavily_fallback")?.status).toBe("FAIL");
+    expect(kinfolkProviderReadinessHttpResult(rows).status).toBe(503);
+  });
+
+  it("still probes Tavily when fallback is usable but OpenAI configuration is absent", async () => {
+    const dependencies = passingDependencies();
+    const rows = await probeKinfolkProviderReadiness({ TAVILY_API_KEY: "fallback-only" }, dependencies as never);
+    expect(row(rows, "tavily_fallback")?.status).toBe("PASS");
+    expect(row(rows, "staff_demo_chat")?.category).toBe("missing_configuration");
+    expect(dependencies.tavilySearch).toHaveBeenCalledTimes(1);
+    expect(dependencies.chatCreate).not.toHaveBeenCalled();
+    expect(kinfolkProviderReadinessHttpResult(rows).status).toBe(503);
   });
 
   it("uses GPT-5-family-compatible shared Chat Completions shapes for every chat readiness role", async () => {
@@ -170,9 +260,15 @@ describe("Kinfolk provider readiness", () => {
     dependencies.chatCreate.mockRejectedValue(new Error(sensitive));
     dependencies.responsesCreate.mockResolvedValue(authoritativeUtcResponse());
     dependencies.transcriptionCreate.mockResolvedValue({ text: sensitive });
-    const rows = await probeKinfolkProviderReadiness({ ...configured, AI_INTEGRATIONS_OPENAI_API_KEY: sensitive }, dependencies as never);
+    dependencies.tavilySearch.mockRejectedValue(new Error(`${sensitive} Coordinated Universal Time NIST definition`));
+    const rows = await probeKinfolkProviderReadiness({
+      ...configured,
+      AI_INTEGRATIONS_OPENAI_API_KEY: sensitive,
+      TAVILY_API_KEY: sensitive,
+    }, dependencies as never);
     const serialized = JSON.stringify(rows);
     expect(serialized).not.toContain(sensitive);
+    expect(serialized).not.toContain("Coordinated Universal Time NIST definition");
     expect(serialized).not.toMatch(/https?:|gpt-|"prompt"|"transcript"|secret|member content/i);
     expect(rows.every((candidate) => Object.keys(candidate).sort().join(",") === "capability,category,status")).toBe(true);
   });

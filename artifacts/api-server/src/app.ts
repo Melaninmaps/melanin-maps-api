@@ -27,6 +27,7 @@ import { createResearchProviderChain } from "./library/researchProviderChain";
 import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
 import { createExtractiveLibraryWriter } from "./library/extractiveLibraryWriter";
 import { assertKinfolkModelEnvironment, kinfolkModel } from "./kinfolk/model-config";
+import { kinfolkTavilyApiKey } from "./kinfolk/provider-config";
 import { registerExploreRoutes } from "./explore/registerExploreRoutes";
 import {
   createPostgresLocalContextRepository,
@@ -383,13 +384,14 @@ if (assertDirectoryReviewLocalStaging(process.env)) {
 const libraryOpenAiConfigured = Boolean(
   process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 );
+const libraryTavilyApiKey = kinfolkTavilyApiKey();
 const libraryProviders = [
   ...(libraryOpenAiConfigured ? [createOpenAiWebResearchProvider({
     apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
     baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
     model: kinfolkModel("libraryResearch"),
   })] : []),
-  ...(process.env.TAVILY_API_KEY ? [createTavilyResearchProvider(process.env.TAVILY_API_KEY)] : []),
+  ...(libraryTavilyApiKey ? [createTavilyResearchProvider(libraryTavilyApiKey)] : []),
 ];
 registerLivingLibraryRoutes(app, {
   repository: createPostgresLibraryRepository(pool),

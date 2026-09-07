@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { assertKinfolkModelEnvironment, kinfolkModel } from "../model-config";
+import {
+  assertKinfolkModelEnvironment,
+  kinfolkEmbeddingConfig,
+  kinfolkModel,
+} from "../model-config";
 
 describe("Kinfolk model configuration", () => {
   it("uses reviewed defaults when a role is not configured", () => {
@@ -24,6 +28,29 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("staffDemo", { KINFOLK_STAFF_DEMO_MODEL: "private-preview-model" })).toBe("gpt-5");
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-4o-mini-transcribe" })).toBe("gpt-5");
     expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("gpt-4o-mini-transcribe");
+  });
+
+  it("omits semantic embedding configuration when dimensions are absent or blank", () => {
+    expect(kinfolkEmbeddingConfig({})).toBeNull();
+    expect(kinfolkEmbeddingConfig({ KINFOLK_EMBEDDING_DIMENSIONS: "   " })).toBeNull();
+  });
+
+  it("strictly accepts only the database-compatible embedding dimensions", () => {
+    expect(kinfolkEmbeddingConfig({ KINFOLK_EMBEDDING_DIMENSIONS: " 1536 " })).toEqual({
+      model: "text-embedding-3-small",
+      dimensions: 1536,
+    });
+    for (const invalid of ["0", "1535", "1537", "1536.0", "+1536", "1e3", "1536px", "Infinity", "NaN"]) {
+      expect(() => kinfolkEmbeddingConfig({ KINFOLK_EMBEDDING_DIMENSIONS: invalid }))
+        .toThrow(/KINFOLK_EMBEDDING_DIMENSIONS.*exactly 1536/i);
+    }
+  });
+
+  it("fails the startup assertion for invalid or out-of-policy embedding dimensions", () => {
+    expect(() => assertKinfolkModelEnvironment({ KINFOLK_EMBEDDING_DIMENSIONS: "3072" }))
+      .toThrow(/KINFOLK_EMBEDDING_DIMENSIONS.*1536/i);
+    expect(() => assertKinfolkModelEnvironment({ KINFOLK_EMBEDDING_DIMENSIONS: "1536" }))
+      .not.toThrow();
   });
 
   it("fails startup when a configured role contains an unapproved model", () => {

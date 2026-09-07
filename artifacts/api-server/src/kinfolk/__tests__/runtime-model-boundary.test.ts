@@ -27,6 +27,17 @@ describe("Kinfolk runtime model boundary", () => {
     expect(violations).toEqual([]);
   });
 
+  it("centralizes every runtime embedding request behind validated model and dimensions", () => {
+    const embeddingCallSites = runtimeSources(kinfolkDirectory)
+      .filter((path) => readFileSync(path, "utf8").includes("openai.embeddings.create"));
+    expect(embeddingCallSites).toEqual([resolve(kinfolkDirectory, "embedding-provider.ts")]);
+
+    const culturalRetrieval = readFileSync(resolve(kinfolkDirectory, "cultural-retrieval.ts"), "utf8");
+    expect(culturalRetrieval).toContain("createKinfolkEmbedding(text)");
+    expect(culturalRetrieval).not.toContain("process.env.KINFOLK_EMBEDDING_DIMENSIONS");
+    expect(culturalRetrieval).not.toContain('kinfolkModel("embedding")');
+  });
+
   it("routes every Kinfolk Chat Completions call through a family-compatible non-streaming builder", () => {
     const routeSource = readFileSync(routeFile, "utf8");
     const completionCalls = routeSource.match(/await openai\.chat\.completions\.create\s*\(/g) ?? [];

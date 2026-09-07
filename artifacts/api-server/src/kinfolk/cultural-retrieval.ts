@@ -13,7 +13,7 @@
  */
 
 import { pool } from "@workspace/db";
-import { kinfolkModel } from "./model-config";
+import { createKinfolkEmbedding } from "./embedding-provider";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,21 +59,8 @@ export function parseMessageSignals(message: string): ParsedSignals {
 // Returns null when KINFOLK_EMBEDDING_DIMENSIONS env var is absent (embeddings not configured)
 
 async function embedQuery(text: string): Promise<number[] | null> {
-  const dims = process.env.KINFOLK_EMBEDDING_DIMENSIONS;
-  if (!dims) return null;
-  // We re-use the OpenAI client that kinfolk.ts already uses.
-  // Dynamic import avoids circular deps; pool never created here.
   try {
-    const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-    });
-    const resp = await client.embeddings.create({
-      model: kinfolkModel("embedding"),
-      input: text.slice(0, 8192),
-    });
-    return resp.data[0]?.embedding ?? null;
+    return await createKinfolkEmbedding(text);
   } catch {
     return null;
   }

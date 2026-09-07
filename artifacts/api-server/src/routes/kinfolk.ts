@@ -78,8 +78,9 @@ let _libraryRepo: ReturnType<typeof createPostgresLibraryRepository> | null = nu
 let _researchProvider: ReturnType<typeof createTavilyResearchProvider> | null = null;
 let _libraryWriter: ReturnType<typeof createOpenAiLibraryWriter> | null = null;
 function getLivingLibraryDeps() {
+  const tavilyApiKey = kinfolkTavilyApiKey();
   if (!_libraryRepo) _libraryRepo = createPostgresLibraryRepository(pool);
-  if (!_researchProvider) _researchProvider = createTavilyResearchProvider(process.env.TAVILY_API_KEY ?? "");
+  if (!_researchProvider && tavilyApiKey) _researchProvider = createTavilyResearchProvider(tavilyApiKey);
   if (!_libraryWriter) _libraryWriter = createOpenAiLibraryWriter({
     apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
     baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
@@ -102,6 +103,7 @@ import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
 import { searchAllQueriesWithState, type WebSearchOutcome } from "../kinfolk/web-search";
 import { kinfolkModel } from "../kinfolk/model-config";
+import { kinfolkTavilyApiKey } from "../kinfolk/provider-config";
 import { probeKinfolkProviderReadiness, summarizeKinfolkProviderReadiness } from "../kinfolk/provider-readiness";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
@@ -3398,6 +3400,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (shouldResearchInLibrary && !contextualIntelligenceEnabled && !destination && message.trim().length > 15) {
       try {
         const deps = getLivingLibraryDeps();
+        if (!deps.researchProvider) throw new Error("KINFOLK_LIBRARY_RESEARCH_NOT_CONFIGURED");
         const result = await answerWithLivingLibrary({
           memberQuestion: researchPlan.researchQuery,
           locationLabel: null,
@@ -3465,7 +3468,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
           model: kinfolkModel("webSearch"),
         }) : null;
-      const fallbackProvider = process.env.TAVILY_API_KEY ? getLivingLibraryDeps().researchProvider : null;
+      const fallbackProvider = getLivingLibraryDeps().researchProvider;
       contextualEvidence = await orchestrateContextualResearch(contextualPlan, {
           searchInternal: async (queries, signal) => [
             // Context resolver sources are release-gated entity aliases/source links.

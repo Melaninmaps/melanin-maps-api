@@ -5,13 +5,16 @@ import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 import { canonicalizeContextualUrl } from "./contextual-url";
 import { inspectVoiceAudio } from "./voice/audioInspection";
 import { buildKinfolkChatCompletionRequest } from "./staff-demo-policy";
-import { kinfolkModel } from "./model-config";
+import { createKinfolkEmbedding } from "./embedding-provider";
+import { kinfolkEmbeddingConfig, kinfolkModel } from "./model-config";
+import { kinfolkTavilyApiKey } from "./provider-config";
 
 export type ProviderReadinessCategory = "ok" | "missing_configuration" | "connection_failure";
 export type ProviderReadinessCapability =
   | "staff_demo_chat"
   | "fallback_chat"
   | "web_search"
+  | "tavily_fallback"
   | "library_research"
   | "transcription"
   | "tts"
@@ -26,7 +29,9 @@ type ReadinessDependencies = Readonly<{
   chatCreate: (body: unknown) => Promise<unknown>;
   responsesCreate: (body: unknown) => Promise<unknown>;
   transcriptionCreate: (body: unknown) => Promise<unknown>;
-  embeddingsCreate: (body: unknown) => Promise<unknown>;
+  embeddingsCreate?: (body: unknown) => Promise<unknown>;
+  tavilySearch: (url: string, init: RequestInit) => Promise<Response>;
+  tavilyTimeoutMilliseconds: number;
   textToSpeech: typeof textToSpeech;
   readFixture: (path: string) => Promise<Buffer>;
 }>;
@@ -126,6 +131,55 @@ function isAuthoritativeWebCitation(value: unknown): boolean {
   });
 }
 
+function isAuthoritativeTavilyResult(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const results = (value as Record<string, unknown>).results;
+  if (!Array.isArray(results) || results.length === 0) return false;
+  return results.some((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const result = entry as Record<string, unknown>;
+    if (typeof result.url !== "string") return false;
+    const safeUrl = canonicalizeContextualUrl(result.url);
+    if (!safeUrl) return false;
+    const hostname = new URL(safeUrl).hostname.replace(/^www\./, "").toLowerCase();
+    if (hostname !== "nist.gov" && !hostname.endsWith(".nist.gov")) return false;
+    const evidence = [result.title, result.content]
+      .filter((part): part is string => typeof part === "string")
+      .join(" ");
+    const meaning = normalizeMeaning(evidence);
+    return meaning.includes("coordinated") && meaning.includes("universal") && meaning.includes("time");
+  });
+}
+
+async function tavilyProbe(
+  dependencies: ReadinessDependencies,
+  apiKey: string,
+): Promise<boolean> {
+  const response = await timeout(dependencies.tavilySearch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: "Coordinated Universal Time NIST definition",
+      topic: "general",
+      search_depth: "basic",
+      max_results: 1,
+      include_answer: false,
+      include_raw_content: false,
+      include_images: false,
+      include_domains: ["nist.gov"],
+      safe_search: true,
+    }),
+    signal: AbortSignal.timeout(dependencies.tavilyTimeoutMilliseconds),
+  }), dependencies.tavilyTimeoutMilliseconds);
+  if (!response.ok) return false;
+  return isAuthoritativeTavilyResult(
+    await timeout(response.json(), dependencies.tavilyTimeoutMilliseconds),
+  );
+}
+
 async function chatProbe(
   dependencies: ReadinessDependencies,
   model: string,
@@ -177,15 +231,19 @@ export function kinfolkProviderReadinessHttpResult(
   return { status: body.ok ? 200 : 503, body };
 }
 
-function requiredCapabilities(environment: NodeJS.ProcessEnv): ProviderReadinessCapability[] {
+function requiredCapabilities(input: {
+  tavilyConfigured: boolean;
+  embeddingConfigured: boolean;
+}): ProviderReadinessCapability[] {
   return [
     "staff_demo_chat",
     "fallback_chat",
     "web_search",
+    ...(input.tavilyConfigured ? ["tavily_fallback" as const] : []),
     "library_research",
     "transcription",
     "tts",
-    ...(environment.KINFOLK_EMBEDDING_DIMENSIONS?.trim() ? ["embedding" as const] : []),
+    ...(input.embeddingConfigured ? ["embedding" as const] : []),
   ];
 }
 
@@ -203,21 +261,24 @@ export async function probeKinfolkProviderReadiness(
     chatCreate: (body) => openai.chat.completions.create(body as never),
     responsesCreate: (body) => openai.responses.create(body as never),
     transcriptionCreate: (body) => openai.audio.transcriptions.create(body as never),
-    embeddingsCreate: (body) => openai.embeddings.create(body as never),
+    tavilySearch: (url, init) => fetch(url, init),
+    tavilyTimeoutMilliseconds: 6_000,
     textToSpeech,
     readFixture: readFile,
     ...injected,
   };
-  const capabilities = requiredCapabilities(environment);
-  const configured = Boolean(
+  const embeddingConfig = kinfolkEmbeddingConfig(environment);
+  const tavilyApiKey = kinfolkTavilyApiKey(environment);
+  const capabilities = requiredCapabilities({
+    tavilyConfigured: Boolean(tavilyApiKey),
+    embeddingConfigured: Boolean(embeddingConfig),
+  });
+  const openAiConfigured = Boolean(
     environment.AI_INTEGRATIONS_OPENAI_API_KEY?.trim()
     && environment.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim(),
   );
   const fail = (capability: ProviderReadinessCapability, category: ProviderReadinessCategory): ProviderReadinessRow =>
     ({ capability, status: "FAIL", category });
-  if (!configured) {
-    return capabilities.map((capability) => fail(capability, "missing_configuration"));
-  }
   const run = async (
     capability: ProviderReadinessCapability,
     work: () => Promise<boolean>,
@@ -250,11 +311,17 @@ export async function probeKinfolkProviderReadiness(
 
   // Sequential by design: provider-wide burst limits otherwise create false negatives.
   const rows: ProviderReadinessRow[] = [];
-  rows.push(await run("staff_demo_chat", () =>
+  const runOpenAi = (
+    capability: ProviderReadinessCapability,
+    work: () => Promise<boolean>,
+  ) => openAiConfigured
+    ? run(capability, work)
+    : Promise.resolve(fail(capability, "missing_configuration"));
+  rows.push(await runOpenAi("staff_demo_chat", () =>
     chatProbe(dependencies, kinfolkModel("staffDemo", environment))));
-  rows.push(await run("fallback_chat", () =>
+  rows.push(await runOpenAi("fallback_chat", () =>
     chatProbe(dependencies, kinfolkModel("fallback", environment))));
-  rows.push(await run("web_search", async () => {
+  rows.push(await runOpenAi("web_search", async () => {
     const response = await timeout(dependencies.responsesCreate({
       model: kinfolkModel("webSearch", environment),
       tools: [{ type: "web_search" }],
@@ -264,32 +331,28 @@ export async function probeKinfolkProviderReadiness(
     }));
     return isAuthoritativeWebCitation(response);
   }));
-  rows.push(await run("library_research", () =>
+  if (tavilyApiKey) {
+    rows.push(await run("tavily_fallback", () => tavilyProbe(dependencies, tavilyApiKey)));
+  }
+  rows.push(await runOpenAi("library_research", () =>
     chatProbe(dependencies, kinfolkModel("libraryResearch", environment), "json_schema")));
-  rows.push(await run("transcription", async () => {
+  rows.push(await runOpenAi("transcription", async () => {
     const response = await timeout(dependencies.transcriptionCreate({
       file: await wav(),
       model: kinfolkModel("transcription", environment),
     }));
     return expectedTranscriptMeaning((response as { text?: unknown }).text);
   }));
-  rows.push(await run("tts", async () => {
+  rows.push(await runOpenAi("tts", async () => {
     const audio = await timeout(dependencies.textToSpeech("Kinfolk readiness check.", "alloy", "wav"));
     if (!Buffer.isBuffer(audio)) return false;
     await inspectVoiceAudio(audio, "audio/wav", 30_000);
     return true;
   }));
-  if (environment.KINFOLK_EMBEDDING_DIMENSIONS?.trim()) {
-    rows.push(await run("embedding", async () => {
-      const response = await timeout(dependencies.embeddingsCreate({
-        model: kinfolkModel("embedding", environment),
-        input: "Kinfolk readiness",
-      }));
-      const vector = (response as { data?: Array<{ embedding?: unknown }> }).data?.[0]?.embedding;
-      return Array.isArray(vector)
-        && vector.length > 0
-        && vector.every((entry) => typeof entry === "number" && Number.isFinite(entry));
-    }));
+  if (embeddingConfig) {
+    rows.push(await runOpenAi("embedding", async () => Boolean(await timeout(
+      createKinfolkEmbedding("Kinfolk readiness", environment, dependencies.embeddingsCreate),
+    ))));
   }
   return rows;
 }

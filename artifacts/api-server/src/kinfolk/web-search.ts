@@ -9,6 +9,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import type { SearchQuery } from "./lens-planner.js";
 import { enforceDiasporaFirstProviderQuery } from "./diasporaFirstResearchPolicy.js";
 import { kinfolkModel } from "./model-config.js";
+import { kinfolkTavilyApiKey } from "./provider-config.js";
 import { canonicalizeContextualUrl } from "./contextual-url.js";
 
 export type WebResult = {
@@ -189,7 +190,7 @@ async function searchOpenAiQuery(
 
 /** Tavily is an explicit fallback; its rows are never represented as OpenAI citations. */
 async function searchTavilyQuery(query: SearchQuery, imageRequested: boolean): Promise<WebSearchBatch> {
-  const apiKey = process.env.TAVILY_API_KEY;
+  const apiKey = kinfolkTavilyApiKey();
   if (!apiKey) return { kind: "provider_error", results: [] };
   try {
     const response = await fetch("https://api.tavily.com/search", {
@@ -250,7 +251,7 @@ async function searchQueryWithFallback(
     if (primary.kind === "cited") {
       return { ...primary, provider: "openai", fallbackUsed: false, attempts: [primaryAttempt] };
     }
-    if (process.env.TAVILY_API_KEY) {
+    if (kinfolkTavilyApiKey()) {
       const fallback = await searchTavilyQuery(safeQuery, imageRequested);
       return {
         ...fallback,
@@ -277,7 +278,7 @@ async function searchQueriesWithState(
   location?: SearchLocation,
 ): Promise<WebSearchOutcome> {
   const hasOpenAi = openAiConfigured();
-  const hasTavily = Boolean(process.env.TAVILY_API_KEY);
+  const hasTavily = Boolean(kinfolkTavilyApiKey());
   if (!queries.length || (!hasOpenAi && !hasTavily)) {
     return {
       state: "unavailable", attempted: false, providerAttempted: false, providerUsed: false,
