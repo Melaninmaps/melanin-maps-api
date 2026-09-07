@@ -407,7 +407,6 @@ async function queryCityCatalog(
     LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
     WHERE LOWER(BTRIM(b.city)) = LOWER($1)
       AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
-      AND COALESCE(b.promotion_eligible, true) = true
       AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
     ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
     LIMIT $3
@@ -450,7 +449,6 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND COALESCE(b.promotion_eligible, true) = true
           -- Service matching intentionally uses governed classification,
           -- business name, or an explicit offering tag. Descriptions/stories
           -- are not a service taxonomy: e.g. "books fast" must not turn a
@@ -546,7 +544,6 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
           WHERE b.latitude IS NOT NULL
             AND b.longitude IS NOT NULL
-            AND COALESCE(b.promotion_eligible, true) = true
             AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
         )
         SELECT *
@@ -576,7 +573,6 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE REGEXP_REPLACE(LOWER(COALESCE(b.name, '')), '[^a-z0-9]+', '', 'g') = $1
           AND LOWER(BTRIM(b.city)) = LOWER($2)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $3
-          AND COALESCE(b.promotion_eligible, true) = true
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
         ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT 1

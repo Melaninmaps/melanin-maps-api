@@ -119,6 +119,7 @@ describe("governed Kinfolk business repository", () => {
     );
     expect(sql).toContain("LOWER(BTRIM(b.city)) = LOWER($2)");
     expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $3");
+    expect(sql).not.toContain("promotion_eligible");
     expect(params).toEqual(["amina", "Philadelphia", "PA"]);
   });
 
@@ -164,6 +165,7 @@ describe("governed Kinfolk business repository", () => {
       expect(sql).toContain("b.data_source");
       expect(sql).toContain("b.listing_status");
       expect(sql).toContain("b.phone");
+      expect(sql).not.toContain("promotion_eligible");
     },
   );
 
@@ -196,7 +198,10 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("bi.business_story");
     expect(sql).not.toContain("LOWER(COALESCE(b.description, '')) ~ ANY");
     expect(sql).not.toContain("LOWER(COALESCE(bi.business_story, '')) ~ ANY");
-    expect(sql).toContain("COALESCE(b.promotion_eligible, true) = true");
+    // Promotion is a paid/featured state, not a public-directory visibility
+    // state. Canonical public founder and community listings remain searchable
+    // even when promotion_eligible is false.
+    expect(sql).not.toContain("promotion_eligible");
     expect(sql).toContain("AND NOT (");
     expect(sql).toContain("CASE");
     expect(sql).toContain("LIMIT $4");
