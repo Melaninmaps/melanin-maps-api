@@ -53,7 +53,8 @@ function explicitUsCityState(value: string): TypedGeography | null {
     return CITY_NAME.test(city) && US_STATE_CODES.has(stateCode) ? { city, stateCode } : null;
   }
   const lowered = normalized.toLocaleLowerCase("en-US");
-  for (const [stateName, stateCode] of US_STATE_NAMES) {
+  const stateNamesLongestFirst = [...US_STATE_NAMES].sort((left, right) => right[0].length - left[0].length);
+  for (const [stateName, stateCode] of stateNamesLongestFirst) {
     const suffix = ` ${stateName}`;
     if (!lowered.endsWith(suffix)) continue;
     const city = normalized.slice(0, -suffix.length).replace(/,\s*$/, "").trim();
@@ -65,6 +66,10 @@ function explicitUsCityState(value: string): TypedGeography | null {
 function normalizeSubject(value: string): string {
   const subject = value.trim().replace(/^[, ]+|[, ]+$/g, "");
   return SUBJECTS.find(({ expression }) => expression.test(subject))?.subject ?? subject;
+}
+
+function isKnownSubject(value: string): boolean {
+  return SUBJECTS.some(({ expression }) => expression.test(value));
 }
 
 function typedGeography(value: string): TypedGeography | null {
@@ -105,14 +110,38 @@ export function parseLocalMapSearch(input: string): ParsedLocalMapSearch {
     return { subject: normalizeSubject(trailingDeviceLocation[1]), usesDeviceLocation: true };
   }
 
-  // Test every trailing phrase against the canonical city/state/alias registry or
-  // ZIP grammar. A bare trailing word is never geography merely because it is last.
-  for (const match of Array.from(text.matchAll(/\s+/g)).reverse()) {
+  // Collect every trailing phrase that satisfies the canonical registry, ZIP
+  // grammar, or explicit city+state grammar. Multiword cities can otherwise
+  // produce several syntactically valid splits (for example Los Angeles CA).
+  const candidates: Array<{
+    subjectText: string;
+    locationText: string;
+    geography: TypedGeography;
+  }> = [];
+  for (const match of text.matchAll(/\s+/g)) {
     const boundary = (match.index ?? -1) + match[0].length;
     const subjectText = text.slice(0, match.index).trim();
     if (!subjectText) continue;
-    const geography = typedGeography(text.slice(boundary));
-    if (geography) return parsedWithGeography(subjectText, geography);
+    const locationText = text.slice(boundary).trim();
+    const geography = typedGeography(locationText);
+    if (geography) candidates.push({ subjectText, locationText, geography });
+  }
+  if (candidates.length > 0) {
+    // A recognized business phrase is the strongest split: this preserves
+    // Book Store | Atlanta, GA instead of Book | Store Atlanta, GA.
+    const recognized = candidates.filter(({ subjectText }) => isKnownSubject(subjectText)).at(-1);
+    if (recognized) return parsedWithGeography(recognized.subjectText, recognized.geography);
+
+    // Capitalization identifies the boundary for arbitrary multiword services
+    // when present (mobile dog grooming | Boston MA). Otherwise the first valid
+    // split retains the complete city tail (plumber | Los Angeles CA).
+    const capitalizationBoundary = candidates.find(({ subjectText, locationText }) => {
+      const subjectLast = subjectText.split(/\s+/).at(-1) ?? "";
+      const locationFirst = locationText.split(/\s+/)[0] ?? "";
+      return /^[a-z]/.test(subjectLast) && /^\p{Lu}/u.test(locationFirst);
+    });
+    const selected = capitalizationBoundary ?? candidates[0];
+    return parsedWithGeography(selected.subjectText, selected.geography);
   }
 
   // With no validated typed geography, local business text is a genuine nearby
