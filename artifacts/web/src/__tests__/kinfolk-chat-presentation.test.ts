@@ -16,6 +16,7 @@ import {
   safeLibraryHref,
 } from "../components/kinfolk/KinfolkChatPresentation";
 import { businessClarificationContinuation } from "../features/kinfolk/businessClarificationContinuation";
+import { createVoicePlaybackGuard } from "../lib/voicePlaybackGuard";
 
 const travelPageSource = readFileSync(
   fileURLToPath(new URL("../pages/travel.tsx", import.meta.url)),
@@ -82,9 +83,34 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("External sources are not MWM-verified business listings.");
   });
 
-  it("stops and releases browser voice playback when the page is hidden or left", () => {
+  it("invalidates a deferred browser voice response before hidden-page playback", async () => {
+    let visible = true;
+    let resolveResponse!: () => void;
+    const response = new Promise<void>((resolve) => { resolveResponse = resolve; });
+    const guard = createVoicePlaybackGuard(() => visible);
+    const request = guard.begin();
+    let played = false;
+
+    const playback = response.then(() => {
+      if (guard.canPlay(request)) played = true;
+    });
+    visible = false;
+    guard.invalidate("visibilitychange");
+    resolveResponse();
+    await playback;
+
+    expect(request.signal.aborted).toBe(true);
+    expect(played).toBe(false);
+  });
+
+  it("aborts and foreground-gates browser voice playback when the page is hidden or left", () => {
     expect(travelPageSource).toContain('document.addEventListener("visibilitychange"');
     expect(travelPageSource).toContain('window.addEventListener("pagehide"');
+    expect(travelPageSource).toContain('voiceGuardRef.current.invalidate("page_hidden")');
+    expect(travelPageSource).toContain('voiceGuardRef.current.invalidate("unmount")');
+    expect(travelPageSource).toContain("signal: request.signal");
+    expect(travelPageSource).toContain("if (!voiceGuardRef.current.canPlay(request))");
+    expect(travelPageSource).toContain('document.visibilityState !== "visible"');
     expect(travelPageSource).toContain("releaseAudio()");
   });
 

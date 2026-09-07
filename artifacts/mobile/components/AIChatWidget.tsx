@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
+import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 
 interface Message {
   id: string;
@@ -227,6 +228,12 @@ export function AIChatWidget() {
   const player = useAudioPlayer(listenUri);
   const recordingStartedAtRef = useRef<number | null>(null);
   const listRef = useRef<FlatList>(null);
+  const openRef = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
+  const queuedPlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
+  const voiceGuardRef = useRef(createVoicePlaybackGuard(
+    () => openRef.current && appStateRef.current === "active",
+  ));
   // Scroll state — mirrors useKinfolkChatScroll for the widget's own FlatList
   const [widgetAtBottom, setWidgetAtBottom] = useState(true);
   const NEAR_BOTTOM_PX = 120;
@@ -425,12 +432,33 @@ export function AIChatWidget() {
     finally { setAaveSaving(false); }
   };
 
-  // ── Play audio when listenUri + player are ready ──────────────────────────
+  const stopPlayback = useCallback((reason: string) => {
+    voiceGuardRef.current.invalidate(reason);
+    queuedPlaybackRequestRef.current = null;
+    if (player.playing || player.isLoaded) player.pause();
+    setListenUri(undefined);
+    setPlayingId(null);
+    setPreviewingVoice(null);
+  }, [player]);
+
+  const setWidgetOpen = useCallback((nextOpen: boolean) => {
+    openRef.current = nextOpen;
+    setOpen(nextOpen);
+    if (!nextOpen) stopPlayback("widget_closed");
+  }, [stopPlayback]);
+
+  // ── Play audio only while the app is active and the widget remains open ──
   useEffect(() => {
-    if (listenUri && player.isLoaded) {
-      player.play();
+    const request = queuedPlaybackRequestRef.current;
+    if (!listenUri || !player.isLoaded || !request) return;
+    if (!voiceGuardRef.current.canPlay(request) || appStateRef.current !== "active" || !openRef.current) {
+      stopPlayback("playback_not_allowed");
+      return;
     }
-  }, [listenUri, player]);
+    player.play();
+    voiceGuardRef.current.finish(request);
+    queuedPlaybackRequestRef.current = null;
+  }, [listenUri, player, player.isLoaded, stopPlayback]);
 
   // ── Clear playingId when audio finishes ───────────────────────────────────
   useEffect(() => {
@@ -441,32 +469,32 @@ export function AIChatWidget() {
   }, [player, player.playing, player.isLoaded, playingId]);
 
   useEffect(() => {
-    const stopPlayback = () => {
-      if (player.playing || player.isLoaded) player.pause();
-      setListenUri(undefined);
-      setPlayingId(null);
-    };
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state !== "active") stopPlayback();
+      appStateRef.current = state;
+      if (state !== "active") stopPlayback("app_background");
     });
-    if (!open) stopPlayback();
     return () => {
       subscription.remove();
-      if (player.playing || player.isLoaded) player.pause();
+      openRef.current = false;
+      appStateRef.current = "background";
+      stopPlayback("unmount");
     };
-  }, [open, player]);
+  }, [stopPlayback]);
 
   // ── Fetch voice usage + play daily signature when chat opens ─────────────
   useEffect(() => {
-    if (!open) return;
-    (async () => {
+    if (!open || !openRef.current || appStateRef.current !== "active") return;
+    const request = voiceGuardRef.current.begin();
+    let queued = false;
+    void (async () => {
       try {
         const base = getApiBase();
         const token = await getToken();
-        if (!token) return;
+        if (!token || !voiceGuardRef.current.canPlay(request)) return;
 
         // Load voice preference (in case updated elsewhere)
         const savedPref = await AsyncStorage.getItem(VOICE_PREF_KEY).catch(() => null);
+        if (!voiceGuardRef.current.canPlay(request)) return;
         const currentVoice = savedPref ?? voicePref;
         if (savedPref && savedPref !== voicePref) setVoicePref(savedPref);
 
@@ -478,52 +506,62 @@ export function AIChatWidget() {
         // Daily audio signature — play once per calendar day
         const today = new Date().toISOString().slice(0, 10);
         const lastSig = await AsyncStorage.getItem(SIGNATURE_DATE_KEY).catch(() => null);
-        if (lastSig !== today && Platform.OS !== "web") {
+        if (lastSig !== today && Platform.OS !== "web" && voiceGuardRef.current.canPlay(request)) {
           await AsyncStorage.setItem(SIGNATURE_DATE_KEY, today).catch(() => {});
-          try {
-            const sigRes = await fetch(`${base}/api/kinfolk/speak`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: currentVoice }),
-            });
-            if (sigRes.ok) {
-              const { audio, format } = await sigRes.json() as { audio: string; format: string };
-              const sigFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_sig.${format}`);
-              sigFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
-              setPlayingId("__signature__");
-              setListenUri(sigFile.uri);
-            }
-          } catch { /* non-critical */ }
+          const sigRes = await fetch(`${base}/api/kinfolk/speak`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: currentVoice }),
+            signal: request.signal,
+          });
+          if (sigRes.ok && voiceGuardRef.current.canPlay(request)) {
+            const { audio, format } = await sigRes.json() as { audio: string; format: string };
+            if (!voiceGuardRef.current.canPlay(request)) return;
+            const sigFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_sig.${format}`);
+            sigFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
+            if (!voiceGuardRef.current.canPlay(request)) return;
+            queuedPlaybackRequestRef.current = request;
+            setPlayingId("__signature__");
+            setListenUri(sigFile.uri);
+            queued = true;
+          }
         }
 
-        // Resolve usage
+        // Resolve usage without allowing a closed/backgrounded effect to update UI.
         const usageRes = await usageReq;
-        if (usageRes.ok) {
+        if (usageRes.ok && voiceGuardRef.current.canPlay(request)) {
           const data = await usageRes.json() as {
             charsUsed: number; charsLimit: number;
             tierName: string; percentRemaining: number;
           };
-          setVoiceUsage({
-            used: data.charsUsed,
-            limit: data.charsLimit,
-            percent: data.percentRemaining,
-            tierName: data.tierName,
-          });
+          if (voiceGuardRef.current.canPlay(request)) {
+            setVoiceUsage({
+              used: data.charsUsed,
+              limit: data.charsLimit,
+              percent: data.percentRemaining,
+              tierName: data.tierName,
+            });
+          }
         }
       } catch { /* non-critical */ }
+      finally {
+        if (!queued) voiceGuardRef.current.finish(request);
+      }
     })();
   }, [open, voicePref]);
 
   const speakMessage = async (msgId: string, text: string) => {
-    if (Platform.OS === "web") return;
+    if (Platform.OS === "web" || !openRef.current || appStateRef.current !== "active") return;
     if (playingId === msgId) {
-      player.pause();
-      setPlayingId(null);
+      stopPlayback("manual_stop");
       return;
     }
+    const request = voiceGuardRef.current.begin();
+    let queued = false;
     try {
       const base = getApiBase();
       const token = await getToken();
+      if (!voiceGuardRef.current.canPlay(request)) return;
       const r = await fetch(`${base}/api/kinfolk/speak`, {
         method: "POST",
         headers: {
@@ -531,7 +569,9 @@ export function AIChatWidget() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ text, voice: voicePref }),
+        signal: request.signal,
       });
+      if (!voiceGuardRef.current.canPlay(request)) return;
       if (r.status === 429) {
         Alert.alert(
           "Voice Time Used",
@@ -549,21 +589,31 @@ export function AIChatWidget() {
         audio: string; format: string; charsUsed: number;
         charsLimit: number; percentRemaining: number; tierName: string;
       };
+      if (!voiceGuardRef.current.canPlay(request)) return;
       setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
       const tempFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}.${format}`);
       tempFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
+      if (!voiceGuardRef.current.canPlay(request)) return;
+      queuedPlaybackRequestRef.current = request;
       setPlayingId(msgId);
       setListenUri(tempFile.uri);
+      queued = true;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch { /* non-critical */ }
+    finally {
+      if (!queued) voiceGuardRef.current.finish(request);
+    }
   };
 
   const previewVoice = async (voiceId: string) => {
-    if (Platform.OS === "web" || previewingVoice !== null) return;
+    if (Platform.OS === "web" || previewingVoice !== null || !openRef.current || appStateRef.current !== "active") return;
+    const request = voiceGuardRef.current.begin();
+    let queued = false;
     setPreviewingVoice(voiceId);
     try {
       const base = getApiBase();
       const token = await getToken();
+      if (!voiceGuardRef.current.canPlay(request)) return;
       const r = await fetch(`${base}/api/kinfolk/speak`, {
         method: "POST",
         headers: {
@@ -571,16 +621,24 @@ export function AIChatWidget() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: voiceId }),
+        signal: request.signal,
       });
-      if (r.ok) {
+      if (r.ok && voiceGuardRef.current.canPlay(request)) {
         const { audio, format } = await r.json() as { audio: string; format: string };
+        if (!voiceGuardRef.current.canPlay(request)) return;
         const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${voiceId}.${format}`);
         file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
+        if (!voiceGuardRef.current.canPlay(request)) return;
+        queuedPlaybackRequestRef.current = request;
         setPlayingId(`__preview_${voiceId}__`);
         setListenUri(file.uri);
+        queued = true;
       }
     } catch { /* non-critical */ }
-    finally { setPreviewingVoice(null); }
+    finally {
+      if (voiceGuardRef.current.isCurrent(request)) setPreviewingVoice(null);
+      if (!queued) voiceGuardRef.current.finish(request);
+    }
   };
 
   if (suppressed) return null;
@@ -660,7 +718,7 @@ export function AIChatWidget() {
   };
 
   const goToTasks = () => {
-    setOpen(false);
+    setWidgetOpen(false);
     router.push("/kinfolk-tasks");
   };
 
@@ -691,7 +749,7 @@ export function AIChatWidget() {
           <TouchableOpacity
             style={styles.fabPill}
             onPress={() => {
-              setOpen(true);
+              setWidgetOpen(true);
               pulse.stopAnimation();
               if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }}
@@ -708,7 +766,7 @@ export function AIChatWidget() {
         </Animated.View>
       )}
 
-      <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWidgetOpen(false)}>
         <KeyboardAvoidingView
           style={[styles.modal, { backgroundColor: colors.background }]}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -736,7 +794,7 @@ export function AIChatWidget() {
                 <Feather name="volume-2" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => { setOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                onPress={() => { setWidgetOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
               >
@@ -854,7 +912,7 @@ export function AIChatWidget() {
                 {!item.fromUser && item.libraryAction ? (
                   <TouchableOpacity
                     onPress={() => {
-                      setOpen(false);
+                      setWidgetOpen(false);
                       router.push({
                         pathname: "/library-topic",
                         params: { topicId: item.libraryAction!.topicId, focus: "evidence" },

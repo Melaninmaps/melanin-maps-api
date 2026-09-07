@@ -45,6 +45,7 @@ import {
   REGIONAL_LANGUAGE_OPTIONS,
   shouldAutoSpeakNewReply,
 } from "@/lib/kinfolkVoicePreferences";
+import { createVoicePlaybackGuard } from "@/lib/voicePlaybackGuard";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -876,6 +877,10 @@ function TravelPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const autoSpokenMessageIdsRef = useRef(new Set<string>());
+  const pageForegroundRef = useRef(document.visibilityState === "visible");
+  const voiceGuardRef = useRef(createVoicePlaybackGuard(
+    () => pageForegroundRef.current && document.visibilityState === "visible",
+  ));
 
   const releaseAudio = useCallback(() => {
     const audio = audioRef.current;
@@ -891,17 +896,26 @@ function TravelPage() {
 
   useEffect(() => {
     const stopPlayback = () => {
+      pageForegroundRef.current = false;
+      voiceGuardRef.current.invalidate("page_hidden");
       releaseAudio();
       setPlayingId(null);
     };
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== "visible") stopPlayback();
+      pageForegroundRef.current = document.visibilityState === "visible";
+      if (!pageForegroundRef.current) stopPlayback();
+    };
+    const handlePageShow = () => {
+      pageForegroundRef.current = document.visibilityState === "visible";
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pagehide", stopPlayback);
+    window.addEventListener("pageshow", handlePageShow);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", stopPlayback);
+      window.removeEventListener("pageshow", handlePageShow);
+      voiceGuardRef.current.invalidate("unmount");
       releaseAudio();
     };
   }, [releaseAudio]);
@@ -1145,11 +1159,14 @@ function TravelPage() {
   const playMessage = useCallback(async (msgId: string, content: string, source: "manual" | "auto" = "manual") => {
     if (!content.trim()) return;
     if (source === "manual" && playingId === msgId) {
+      voiceGuardRef.current.invalidate("manual_stop");
       releaseAudio();
       setPlayingId(null);
       setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
       return;
     }
+    if (!pageForegroundRef.current || document.visibilityState !== "visible") return;
+    const request = voiceGuardRef.current.begin();
     releaseAudio();
     setPlayingId(msgId);
     setVoiceStatus(prev => ({ ...prev, [msgId]: source === "auto" ? "Preparing voice…" : "" }));
@@ -1158,29 +1175,48 @@ function TravelPage() {
         method: "POST", credentials: "include",
         headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ text: content.slice(0, 600), voice: prefs.kinfolkVoice || "onyx" }),
+        signal: request.signal,
       });
+      if (!voiceGuardRef.current.canPlay(request)) return;
       if (!r.ok) throw new Error("TTS request failed");
       const d = await r.json() as { audio?: string };
+      if (!voiceGuardRef.current.canPlay(request)) return;
       if (!d.audio) throw new Error("No audio returned");
       const bytes = Uint8Array.from(atob(d.audio), char => char.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+      if (!voiceGuardRef.current.canPlay(request)) {
+        URL.revokeObjectURL(url);
+        return;
+      }
       const audio = new Audio(url);
       audioRef.current = audio;
       audioUrlRef.current = url;
       const finish = () => {
+        voiceGuardRef.current.finish(request);
         releaseAudio();
         setPlayingId(null);
         setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
       };
       audio.onended = finish;
       audio.onerror = () => {
+        voiceGuardRef.current.finish(request);
         releaseAudio();
         setPlayingId(null);
         setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
       };
+      if (!voiceGuardRef.current.canPlay(request)) {
+        releaseAudio();
+        return;
+      }
       await audio.play();
+      if (!voiceGuardRef.current.canPlay(request)) {
+        releaseAudio();
+        return;
+      }
       setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
     } catch {
+      if (!voiceGuardRef.current.isCurrent(request)) return;
+      voiceGuardRef.current.finish(request);
       releaseAudio();
       setPlayingId(null);
       setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));

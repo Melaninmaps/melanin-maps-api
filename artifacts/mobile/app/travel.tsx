@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKinfolkChatScroll } from "@/hooks/useKinfolkChatScroll";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
@@ -37,6 +37,7 @@ import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
+import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -613,7 +614,7 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
 function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
   compareMode, compareSelectedNames, onCompareToggle,
-  onConfirmTaskAction, onDismissTaskAction,
+  onConfirmTaskAction, onDismissTaskAction, onSpeak,
   colors,
 }: {
   msg: ChatMessage;
@@ -626,6 +627,7 @@ function AiMessageBubble({
   onCompareToggle: (biz: TravelBusiness) => void;
   onConfirmTaskAction: (msgId: string, action: TaskAction) => void;
   onDismissTaskAction: (msgId: string) => void;
+  onSpeak: (content: string) => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const recs = msg.recommendations;
@@ -649,13 +651,7 @@ function AiMessageBubble({
           <Text style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
           <TouchableOpacity
             style={aiStyles.speakBtn}
-            onPress={() => {
-              Speech.speak(msg.content, {
-                language: "en-US",
-                rate: 0.95,
-                onError: () => Alert.alert("Playback Unavailable", "Voice playback couldn't start. Make sure your device volume is on and try again."),
-              });
-            }}
+            onPress={() => onSpeak(msg.content)}
             activeOpacity={0.7}
           >
             <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
@@ -1825,6 +1821,12 @@ export default function TravelScreen() {
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
   const [rememberThis, setRememberThis] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
+  const appStateRef = useRef(AppState.currentState);
+  const voiceOutputRef = useRef(false);
+  const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
+  const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
+    () => appStateRef.current === "active" && voiceOutputRef.current,
+  ));
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -1862,26 +1864,68 @@ export default function TravelScreen() {
 
   // Scroll is managed entirely by useKinfolkChatScroll — no direct scrollToEnd here.
 
+  const armAutoSpeech = useCallback(() => {
+    if (!voiceOutputRef.current || appStateRef.current !== "active") {
+      pendingAutoSpeechRef.current = null;
+      autoSpeechGuardRef.current.invalidate("auto_speech_not_allowed");
+      return;
+    }
+    pendingAutoSpeechRef.current = autoSpeechGuardRef.current.begin();
+  }, []);
+
   useEffect(() => {
     if (!voiceOutput || isLoading) return;
+    const request = pendingAutoSpeechRef.current;
     const last = messages[messages.length - 1];
-    if (!last || last.role !== "assistant") return;
-    void Speech.stop();
-    Speech.speak(last.content, {
-      language: "en-US",
-      rate: 0.95,
-      onError: () => {},
-    });
+    if (!request || !last || last.role !== "assistant" || !autoSpeechGuardRef.current.canPlay(request)) return;
+    pendingAutoSpeechRef.current = null;
+    void (async () => {
+      await Speech.stop();
+      if (!autoSpeechGuardRef.current.canPlay(request) || appStateRef.current !== "active") return;
+      Speech.speak(last.content, {
+        language: "en-US",
+        rate: 0.95,
+        onError: () => {},
+      });
+      autoSpeechGuardRef.current.finish(request);
+    })();
   }, [messages, isLoading, voiceOutput]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state !== "active") void Speech.stop();
+      appStateRef.current = state;
+      if (state !== "active") {
+        pendingAutoSpeechRef.current = null;
+        autoSpeechGuardRef.current.invalidate("app_background");
+        void Speech.stop();
+      }
     });
     return () => {
       subscription.remove();
+      appStateRef.current = "background";
+      pendingAutoSpeechRef.current = null;
+      autoSpeechGuardRef.current.invalidate("unmount");
       void Speech.stop();
     };
+  }, []);
+
+  const speakManually = useCallback((content: string) => {
+    if (!content.trim() || appStateRef.current !== "active") return;
+    pendingAutoSpeechRef.current = null;
+    autoSpeechGuardRef.current.invalidate("manual_speech");
+    void (async () => {
+      await Speech.stop();
+      if (appStateRef.current !== "active") return;
+      Speech.speak(content, {
+        language: "en-US",
+        rate: 0.95,
+        onError: () => {
+          if (appStateRef.current === "active") {
+            Alert.alert("Playback Unavailable", "Voice playback couldn't start. Make sure your device volume is on and try again.");
+          }
+        },
+      });
+    })();
   }, []);
 
   const pickKinfolkImage = useCallback(async () => {
@@ -1915,10 +1959,11 @@ export default function TravelScreen() {
     const shouldRemember = rememberThis;
     setInputText("");
     onUserSend(); // scroll to bottom, suppress jump button for this send
+    armAutoSpeech();
     await sendMessage(msg, { voiceMode, imageUrls: attachedImages, rememberThis: shouldRemember });
     setKinfolkImages([]);
     setRememberThis(false);
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend, kinfolkImages, rememberThis]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend, kinfolkImages, rememberThis, armAutoSpeech]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -1999,8 +2044,9 @@ export default function TravelScreen() {
       .map((b, i) => `${i + 1}. ${b.name} (${b.category}${b.neighborhood ? `, ${b.neighborhood}` : ""}) — ${b.description}. Must try: ${b.mustTry}`)
       .join("\n");
     const prompt = `Compare these ${selected.length} spots and tell me which is the best fit for me based on my taste profile and everything I've rated:\n\n${list}\n\nPick one winner and explain why it's the right call for me.`;
+    armAutoSpeech();
     await sendMessage(prompt, { voiceMode });
-  }, [compareSelected, sendMessage, voiceMode]);
+  }, [compareSelected, sendMessage, voiceMode, armAutoSpeech]);
 
   const hasProfile = preferences && (
     (preferences.favoriteCategories?.length ?? 0) > 0 ||
@@ -2023,10 +2069,11 @@ export default function TravelScreen() {
         onCompareToggle={handleCompareToggle}
         onConfirmTaskAction={handleConfirmTaskAction}
         onDismissTaskAction={handleDismissTaskAction}
+        onSpeak={speakManually}
         colors={colors}
       />
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -2264,8 +2311,16 @@ export default function TravelScreen() {
           <TouchableOpacity
             style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
             onPress={() => {
-              if (voiceOutput) void Speech.stop();
-              setVoiceOutput((v) => !v);
+              const nextVoiceOutput = !voiceOutputRef.current;
+              voiceOutputRef.current = nextVoiceOutput;
+              setVoiceOutput(nextVoiceOutput);
+              if (!nextVoiceOutput) {
+                pendingAutoSpeechRef.current = null;
+                autoSpeechGuardRef.current.invalidate("voice_output_disabled");
+                void Speech.stop();
+              } else if (isLoading && appStateRef.current === "active") {
+                armAutoSpeech();
+              }
             }}
             activeOpacity={0.75}
           >
