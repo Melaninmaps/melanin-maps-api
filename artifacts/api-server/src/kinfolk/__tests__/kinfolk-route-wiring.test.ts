@@ -40,7 +40,7 @@ describe("Kinfolk chat static wiring", () => {
     const ownerContext = chatRoute.indexOf("let ownerBusinessContext");
     const travelRanking = chatRoute.indexOf("businessCatalog = rankTravelCatalogForMember({");
     const promptBuild = chatRoute.indexOf("const baseSystemPrompt = buildSystemPrompt({");
-    const itineraryNormalization = chatRoute.indexOf("itinerary = normalizeKinfolkItinerary({");
+    const itineraryNormalization = chatRoute.indexOf("normalizeKinfolkItinerary({");
 
     expect(ageContext).toBeGreaterThan(-1);
     expect(audienceFilter).toBeGreaterThan(ageContext);
@@ -55,6 +55,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
     expect(chatRoute).toContain("dietaryNotes: prefs?.dietaryNotes");
+    expect(chatRoute).toContain("buildRankedCatalogItinerary({ message, catalog: businessCatalog })");
     expect(chatRoute).toContain("reply = buildValidatedItineraryReply(destination, itinerary)");
   });
 

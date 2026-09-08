@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { GovernedKinfolkBusiness } from "../governedBusinessRepository";
 import {
   SAFE_MODEL_RESPONSE_FALLBACK,
+  buildRankedCatalogItinerary,
   buildValidatedItineraryReply,
   extractItineraryDayCount,
   itineraryPromptInstruction,
@@ -204,6 +205,20 @@ describe("Kinfolk itinerary normalization", () => {
     expect(instruction).toMatch(/never invent or rename a venue/i);
     expect(instruction).toMatch(/explicit preferences and audience policy/i);
     expect(instruction).toMatch(/without stating or guessing the member's age/i);
+  });
+
+  it("builds a complete server-authored itinerary when the model omits itinerary JSON", () => {
+    const itinerary = buildRankedCatalogItinerary({
+      message: "Plan a one-day trip in Philadelphia",
+      catalog: [AMINA],
+    });
+    expect(itinerary.days).toHaveLength(1);
+    expect(itinerary.days[0]?.activities[0]).toMatchObject({
+      title: "AMINA",
+      description: "A canonical restaurant.",
+      canonicalVenue: "AMINA",
+    });
+    expect(buildValidatedItineraryReply("Philadelphia", itinerary)).toMatch(/prioritized AMINA/i);
   });
 
   it("ranks distinct, explainable Philadelphia trip options for the four attainable family profiles", () => {

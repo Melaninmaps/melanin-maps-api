@@ -67,6 +67,7 @@ import {
   evidenceRoutePromptBlock,
 } from "../kinfolk/evidence-runtime";
 import {
+  buildRankedCatalogItinerary,
   buildValidatedItineraryReply,
   extractItineraryDayCount,
   isTravelPlanningPrompt,
@@ -4630,15 +4631,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       if (recommendations && typeof recommendations.destination === "string") {
         proposedModelDestination = recommendations.destination;
       }
-      if (travelPlanning && destination) {
-        itinerary = normalizeKinfolkItinerary({
-          message,
-          modelValue: parsed,
-          catalog: businessCatalog,
-        });
-        reply = buildValidatedItineraryReply(destination, itinerary);
-        recommendations = null;
-      }
+    }
+
+    if (travelPlanning && destination) {
+      const parsedItinerary = modelPayload.valid && modelPayload.value?.itinerary
+        && typeof modelPayload.value.itinerary === "object"
+        && !Array.isArray(modelPayload.value.itinerary)
+        ? modelPayload.value
+        : null;
+      itinerary = parsedItinerary
+        ? normalizeKinfolkItinerary({ message, modelValue: parsedItinerary, catalog: businessCatalog })
+        : buildRankedCatalogItinerary({ message, catalog: businessCatalog });
+      reply = buildValidatedItineraryReply(destination, itinerary);
+      recommendations = null;
     }
 
     const protectedReply = protectContextualOutput({

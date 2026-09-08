@@ -176,6 +176,37 @@ function genericActivity(day: number): KinfolkItineraryActivity {
   };
 }
 
+function governedActivity(business: GovernedKinfolkBusiness): KinfolkItineraryActivity {
+  return {
+    time: "Flexible",
+    title: business.name,
+    description: business.description
+      || `Visit ${business.name} after confirming current hours and availability.`,
+    canonicalVenue: business.name,
+  };
+}
+
+/**
+ * Build a complete itinerary without reflecting model prose when the provider
+ * omits usable itinerary JSON. The catalog has already been audience-filtered
+ * and ranked from explicit member preferences by the server.
+ */
+export function buildRankedCatalogItinerary(input: {
+  message: string;
+  catalog: GovernedKinfolkBusiness[];
+}): KinfolkItinerary {
+  const dayCount = extractItineraryDayCount(input.message);
+  return {
+    days: Array.from({ length: dayCount }, (_, index) => ({
+      day: index + 1,
+      theme: index === 0 ? "Arrival and local highlights" : `Day ${index + 1} highlights`,
+      activities: input.catalog.length > 0
+        ? [governedActivity(input.catalog[index % input.catalog.length]!)]
+        : [genericActivity(index + 1)],
+    })),
+  };
+}
+
 function safeActivityTime(value: string): string {
   return /^(?:morning|afternoon|evening|noon|midday|flexible|\d{1,2}(?::\d{2})?\s*(?:am|pm))$/i.test(value)
     ? value
