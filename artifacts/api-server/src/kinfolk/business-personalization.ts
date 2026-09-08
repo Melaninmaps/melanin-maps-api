@@ -6,6 +6,7 @@ export type BusinessAudienceBand = AgeBand | "mixed_all_ages";
 export type KinfolkBusinessPersonalization = Readonly<{
   ageBand?: BusinessAudienceBand | null;
   preferenceTerms?: readonly string[];
+  priorityPreferenceTerms?: readonly string[];
   avoidTerms?: readonly string[];
   currentRequest?: string;
 }>;
@@ -111,6 +112,11 @@ function scoredBusiness(
 
   let score = 0;
   const reasons: string[] = [];
+  const priorityTerms = new Set(
+    (personalization.priorityPreferenceTerms ?? [])
+      .map((value) => cleanTerm(value))
+      .filter((value): value is string => value !== null),
+  );
   const request = cleanTerm(personalization.currentRequest);
   if (request) {
     const directRequestTokens = meaningfulTokens(request).filter((token) => containsWholeTerm(text, token));
@@ -120,8 +126,9 @@ function scoredBusiness(
   for (const rawTerm of personalization.preferenceTerms ?? []) {
     const term = cleanTerm(rawTerm);
     if (!term) continue;
+    const isPriority = priorityTerms.has(term);
     if (containsWholeTerm(text, term)) {
-      score += 7;
+      score += isPriority ? 30 : 7;
       reasons.push(`Matches your saved preference: ${rawTerm.trim()}`);
       continue;
     }
@@ -129,7 +136,9 @@ function scoredBusiness(
     const matchingTokens = termTokens.filter((token) => containsWholeTerm(text, token));
     const requiredTokenMatches = termTokens.length > 1 ? 2 : 1;
     if (matchingTokens.length >= requiredTokenMatches) {
-      score += Math.min(4, matchingTokens.length);
+      score += isPriority
+        ? Math.min(24, matchingTokens.length * 8)
+        : Math.min(4, matchingTokens.length);
       reasons.push(`Related to your saved preference: ${rawTerm.trim()}`);
     }
   }

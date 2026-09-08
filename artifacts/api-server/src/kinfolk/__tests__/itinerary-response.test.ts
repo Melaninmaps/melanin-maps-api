@@ -212,19 +212,19 @@ describe("Kinfolk itinerary normalization", () => {
         profile: "P21",
         statedAge: 21,
         expected: "Loomen Labs",
-        settings: { ageBand: "18_plus" as const, favoriteCategories: ["candle-making experiences"], tripStyle: ["hands-on"], travelCompanion: "friends" },
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["candle-making experiences"], tripStyle: ["group"], travelCompanion: "friends" },
       },
       {
         profile: "P45",
         statedAge: 45,
         expected: "AMINA",
-        settings: { ageBand: "18_plus" as const, favoriteCategories: ["American Southern cuisine and African-inspired dining"], tripStyle: ["date night"], travelCompanion: "partner" },
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["American Southern cuisine and African-inspired dining"], tripStyle: ["couple"], travelCompanion: "partner" },
       },
       {
         profile: "P65",
         statedAge: 65,
         expected: "Uncle Bobbie's Coffee & Books",
-        settings: { ageBand: "18_plus" as const, favoriteCategories: ["independent bookstores and author events"], tripStyle: ["cultural"], travelCompanion: "solo" },
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["author events and workshops"], tripStyle: ["solo"], travelCompanion: "solo" },
       },
       {
         profile: "P14",

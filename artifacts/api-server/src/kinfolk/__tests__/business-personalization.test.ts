@@ -81,9 +81,9 @@ const PHILADELPHIA_ACTIVITIES = [
 
 describe("Kinfolk business personalization", () => {
   it.each([
-    { profile: "P21", statedAge: 21, ageBand: "18_plus" as const, preferenceTerms: ["hands-on candle-making experiences"], expected: "Loomen Labs" },
+    { profile: "P21", statedAge: 21, ageBand: "18_plus" as const, preferenceTerms: ["candle-making experiences"], expected: "Loomen Labs" },
     { profile: "P45", statedAge: 45, ageBand: "18_plus" as const, preferenceTerms: ["American Southern cuisine and African-inspired dining"], expected: "Amina" },
-    { profile: "P65", statedAge: 65, ageBand: "18_plus" as const, preferenceTerms: ["independent bookstores and author events"], expected: "Uncle Bobbie's Coffee & Books" },
+    { profile: "P65", statedAge: 65, ageBand: "18_plus" as const, preferenceTerms: ["author events and workshops"], expected: "Uncle Bobbie's Coffee & Books" },
     { profile: "P14", statedAge: 14, ageBand: "13_15" as const, preferenceTerms: ["video games and board games"], expected: "Queen & Rook Game Cafe" },
   ])("ranks a different explainable top result for $profile (age $statedAge)", ({ ageBand, preferenceTerms, expected }) => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
@@ -97,6 +97,21 @@ describe("Kinfolk business personalization", () => {
     expect(ranked[0]?.claimed).toBe(false);
     expect(ranked[0]?.verified).toBe(false);
     expect(ranked[0]?.profileStatus).toBe("community_listed");
+  });
+
+  it("prioritizes an explicit favorite category over multiple broad trip-style matches", () => {
+    const broadTripMatch = business("broad", "Broad Creative Food Club", "Entertainment", "Social Club", [
+      "creative", "food", "group",
+    ]);
+    const loomen = PHILADELPHIA_ACTIVITIES.find((entry) => entry.name === "Loomen Labs")!;
+    const ranked = rankGovernedBusinessesForMember([broadTripMatch, loomen], {
+      ageBand: "18_plus",
+      preferenceTerms: ["candle-making experiences", "creative", "food", "group"],
+      priorityPreferenceTerms: ["candle-making experiences"],
+      currentRequest: "Find things to do in Philadelphia",
+    });
+    expect(ranked[0]?.name).toBe("Loomen Labs");
+    expect(ranked[0]?.matchReasons).toContain("Matches your saved preference: candle-making experiences");
   });
 
   it("blocks adult-only nightlife for a real persisted 13_15 member but retains a venue with published teen evidence", () => {

@@ -79,6 +79,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("temporaryBusinessAudienceBand(input.message)");
     expect(helper).not.toContain("loadAdaptiveDeliveryProfile");
     expect(helper).toContain("await discoverLocalBusinesses({");
+    expect(helper).toContain("priorityPreferenceTerms: prefs?.favoriteCategories ?? []");
     expect(helper).toContain("await persistDeterministicDiscoveryTurn({");
     expect(helper).toContain("input.res.status(200).json({");
     expect(helper).not.toContain("openai.chat.completions.create");

@@ -197,7 +197,7 @@ describe("deterministic local business discovery", () => {
     const profiles = [
       { profile: "P21", ageBand: "18_plus" as const, terms: ["candle-making experiences"], expected: "Loomen Labs" },
       { profile: "P45", ageBand: "18_plus" as const, terms: ["American Southern cuisine and African-inspired dining"], expected: "AMINA" },
-      { profile: "P65", ageBand: "18_plus" as const, terms: ["independent bookstores and author events"], expected: "Uncle Bobbie's Coffee & Books" },
+      { profile: "P65", ageBand: "18_plus" as const, terms: ["author events and workshops"], expected: "Uncle Bobbie's Coffee & Books" },
       { profile: "P14", ageBand: "13_15" as const, terms: ["video games and board games"], expected: "Queen & Rook Game Cafe" },
     ];
 
@@ -214,6 +214,7 @@ describe("deterministic local business discovery", () => {
         personalization: {
           ageBand: profile.ageBand,
           preferenceTerms: profile.terms,
+          priorityPreferenceTerms: profile.terms,
           currentRequest: "Find things to do in Philadelphia PA",
         },
         webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),

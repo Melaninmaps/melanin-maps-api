@@ -2805,17 +2805,18 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     subject,
     repository: governedBusinessRepository,
     signalRepository: discoverySignalRepository,
-    personalization: {
-      ageBand,
-      preferenceTerms: [
-        ...(prefs?.favoriteCategories ?? []),
+      personalization: {
+        ageBand,
+        preferenceTerms: [
+          ...(prefs?.favoriteCategories ?? []),
         ...(prefs?.tripStyle ?? []),
         ...(prefs?.culturalInterests ?? []),
-        ...(prefs?.lifestyleServices ?? []),
-      ],
-      avoidTerms: prefs?.avoidCategories ?? [],
-      currentRequest: input.message,
-    },
+          ...(prefs?.lifestyleServices ?? []),
+        ],
+        priorityPreferenceTerms: prefs?.favoriteCategories ?? [],
+        avoidTerms: prefs?.avoidCategories ?? [],
+        currentRequest: input.message,
+      },
   });
   const resultView = buildConversationalBusinessResultView({
     businesses: discoveryResult.discovery.platformBusinesses,

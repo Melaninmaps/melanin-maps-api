@@ -114,6 +114,7 @@ export function rankTravelCatalogForMember(input: {
   return rankGovernedBusinessesForMember(input.catalog, {
     ageBand: input.profile.ageBand,
     preferenceTerms,
+    priorityPreferenceTerms: input.profile.favoriteCategories ?? [],
     avoidTerms: input.profile.avoidCategories ?? [],
     currentRequest: input.message,
   });
