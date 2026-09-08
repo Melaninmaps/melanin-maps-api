@@ -19,7 +19,7 @@ if [[ "${DEPLOYMENT_TIER:-}" != "local_staging" || "${DIRECTORY_IMPORT_LOCAL_STA
 fi
 DATABASE_IDENTITY="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc \
   "SELECT current_database() || '|' || COALESCE(inet_server_addr()::text, '')")"
-if [[ "$DATABASE_IDENTITY" != "mwm_directory_staging|127.0.0.1" ]]; then
+if [[ "$DATABASE_IDENTITY" != "mwm_directory_staging|127.0.0.1/32" ]]; then
   echo "QUEEN_ROOK_EVIDENCE_BLOCKED: database identity is not approved isolated staging" >&2
   exit 1
 fi

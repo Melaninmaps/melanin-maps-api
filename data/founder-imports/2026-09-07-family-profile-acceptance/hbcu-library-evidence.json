@@ -1,0 +1,45 @@
+{
+  "evidenceVersion": "2026-09-08-hbcu-library-v1",
+  "reviewedAt": "2026-09-08T02:36:47Z",
+  "purpose": "Source-backed foundational Living Library entry answering what HBCUs are and linking members to authoritative resources.",
+  "entry": {
+    "title": "What Are Historically Black Colleges and Universities (HBCUs)?",
+    "topicSlug": "education-learning",
+    "domain": "education",
+    "publicationStatus": "published",
+    "summary": "Historically Black Colleges and Universities are accredited U.S. institutions established principally to educate Black Americans during eras when access to higher education was systematically denied. They remain open to students of all races and continue to play an important role in education, culture, research, and economic mobility.",
+    "body": "The Higher Education Act defines an HBCU as an accredited college or university established before 1964 whose principal mission was, and is, the education of Black Americans. HBCUs were created in response to exclusion from much of American higher education, especially during and after slavery and segregation. Today, HBCUs include public and private institutions and enroll students from many racial and ethnic backgrounds. Members can use the U.S. Department of Education and NCES links below to find institutions and compare programs, admissions, tuition, and other current information. The Library treats HBCUs as both an education subject and part of the history of Black communities in the United States.",
+    "relatedQuestions": [
+      "Which HBCUs offer the program I want to study?",
+      "Which HBCUs are near me?",
+      "How do public and private HBCUs differ?",
+      "What scholarships and grants support HBCU students?"
+    ]
+  },
+  "sources": [
+    {
+      "id": "5cd1642e-14ab-46bc-a460-afbe519a570f",
+      "url": "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/",
+      "title": "What is a Historically Black College and University (HBCU)?",
+      "publisher": "U.S. Department of Education, White House Initiative on HBCUs",
+      "sourceTier": "primary",
+      "factsUsed": "Statutory definition; accreditation requirement; principal mission; HBCUs serve students and the nation; links to NCES College Navigator and Fast Facts.",
+      "pageLastReviewed": "2026-08-31"
+    },
+    {
+      "id": "48774803-7dce-4269-b80a-1adeb60b4f53",
+      "url": "https://www.pewresearch.org/short-reads/2024/10/02/a-look-at-historically-black-colleges-and-universities-in-the-u-s/",
+      "title": "A look at historically Black colleges and universities in the U.S.",
+      "publisher": "Pew Research Center",
+      "sourceTier": "public-service",
+      "factsUsed": "Historical origin, public/private institutional diversity, broad student enrollment, and education-landscape context based primarily on NCES data.",
+      "publishedAt": "2024-10-02"
+    }
+  ],
+  "invariants": [
+    "The entry links directly to public HTTPS sources.",
+    "No community submission is represented as verified evidence.",
+    "No member identity or private query is stored.",
+    "The entry is attached to Education & Learning and cross-linked to Places & Our History."
+  ]
+}

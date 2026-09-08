@@ -373,6 +373,49 @@ describe("deterministic local business discovery", () => {
     ]));
   });
 
+  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+    "removes adult content from every emitted discovery channel for %s",
+    async (ageBand) => {
+      const adultBusiness = {
+        ...governedBusiness,
+        name: "Adult Entertainment Bookstore",
+        specialties: ["Venue 21+"],
+        audiencesServed: ["all ages"],
+      };
+      const adultMapPlace: GovernedKinfolkMapPlace = {
+        ...forKeepsPlace,
+        title: "Gentlemen's Club Book Room",
+        summary: "A 21+ cabaret bookstore.",
+      };
+      const result = await discoverLocalBusinesses({
+        scope: { city: "Atlanta", stateCode: "GA" },
+        subject: bookstore,
+        repository: repository({ businesses: [adultBusiness], places: [adultMapPlace] }),
+        personalization: { ageBand },
+        webSearch: vi.fn().mockResolvedValue({
+          state: "completed",
+          attempted: true,
+          provider: "openai",
+          results: [{
+            title: "21+ Adult Entertainment Bookstore",
+            url: "https://adult.example.com/",
+            content: "A strip club and bookstore marked family friendly.",
+            providerScore: 0.99,
+            sourceQuery: { text: "bookstores Atlanta, GA", role: "general", reason: "neutral" },
+          }],
+        }),
+      });
+
+      const serialized = JSON.stringify(result);
+      expect(result.discovery.platformBusinesses).toEqual([]);
+      expect(result.discovery.mapPlaces).toEqual([]);
+      expect(result.discovery.webFindings).toEqual([]);
+      expect(result.sources).toEqual([]);
+      expect(result.resultView.cards).toEqual([]);
+      expect(serialized).not.toMatch(/adult entertainment|strip club|gentlemen's club|cabaret|21\+/i);
+    },
+  );
+
   it("only makes a definitive no-results statement after platform and web both complete empty", async () => {
     const completed = await discoverLocalBusinesses({
       scope: { city: "Atlanta", stateCode: "GA" },

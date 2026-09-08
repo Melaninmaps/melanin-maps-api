@@ -7,6 +7,7 @@ import type {
 } from "./governedBusinessRepository";
 import type { NormalizedBusinessSubject } from "./business-subject";
 import {
+  audienceAllowsBusinessText,
   rankGovernedBusinessesForMember,
   type KinfolkBusinessPersonalization,
 } from "./business-personalization";
@@ -400,13 +401,22 @@ export async function discoverLocalBusinesses(input: {
   }
 
   const rankedWeb = rankLocalBusinessResults(webOutcome.results)
+    .filter((result) => audienceAllowsBusinessText({
+      ageBand: input.personalization?.ageBand,
+      text: `${result.title} ${result.content}`,
+    }))
     .slice(0, 8)
     .map(webFinding)
     .filter((value): value is BusinessDiscoveryWebFinding => value !== null);
   const businesses = rankGovernedBusinessesForMember(businessRows, input.personalization)
     .slice(0, 12)
     .map(platformBusiness);
-  const mapPlaces = mapRows.map(mapPlace);
+  const mapPlaces = mapRows
+    .filter((place) => audienceAllowsBusinessText({
+      ageBand: input.personalization?.ageBand,
+      text: `${place.entityKind} ${place.title} ${place.summary}`,
+    }))
+    .map(mapPlace);
 
   await recordSignals({
     repository: input.signalRepository,

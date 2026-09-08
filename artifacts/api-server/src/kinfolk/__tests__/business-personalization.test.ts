@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rankGovernedBusinessesForMember } from "../business-personalization";
+import { audienceAllowsBusinessText, rankGovernedBusinessesForMember } from "../business-personalization";
 import { deriveBusinessSubject } from "../business-subject";
 import {
   businessDiscoveryClarification,
@@ -125,6 +125,32 @@ describe("Kinfolk business personalization", () => {
         audiencesServed: ["all ages", "family friendly"],
       };
       expect(rankGovernedBusinessesForMember([adultEntertainment], { ageBand })).toEqual([]);
+    },
+  );
+
+  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+    "blocks standalone 21+ and restrictions stored outside tags for protective band %s",
+    (ageBand) => {
+      const onlyTwentyOnePlus = {
+        ...business("twenty-one", "Late Show", "Entertainment", "Shows", []),
+        audiencesServed: ["family friendly"],
+        specialties: ["Venue 21+"],
+      };
+      const adultAudienceType = {
+        ...business("audience", "After Dark", "Entertainment", "Shows", []),
+        audiencesServed: ["all ages"],
+        audienceType: "adult entertainment",
+      };
+      const adultNarrative = {
+        ...business("narrative", "Evening Stage", "Entertainment", "Shows", []),
+        audiencesServed: ["all ages"],
+        whatCustomersShouldKnow: "This is a gentlemen's club.",
+      };
+      expect(rankGovernedBusinessesForMember(
+        [onlyTwentyOnePlus, adultAudienceType, adultNarrative],
+        { ageBand },
+      )).toEqual([]);
+      expect(audienceAllowsBusinessText({ ageBand, text: "Venue 21+" })).toBe(false);
     },
   );
 

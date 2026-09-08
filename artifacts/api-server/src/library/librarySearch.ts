@@ -67,7 +67,14 @@ export const LIBRARY_TOPIC_VOCABULARY: readonly VocabularyGroup[] = [
   },
   {
     topicSlug: "education-learning",
-    terms: ["education", "training", "learning", "school", "classes"],
+    terms: [
+      "education", "training", "learning", "school", "classes",
+      "hbcu", "hbcus", "historically black college", "historically black colleges and universities",
+    ],
+  },
+  {
+    topicSlug: "places-our-history",
+    terms: ["hbcu", "hbcus", "historically black college", "historically black colleges and universities"],
   },
   {
     topicSlug: "careers-professional-life",
@@ -86,6 +93,13 @@ const HVAC_RESEARCH_TERMS = [
   "ventilation",
   "air conditioning",
   "refrigeration",
+] as const;
+
+const HBCU_RESEARCH_TERMS = [
+  "hbcu",
+  "hbcus",
+  "historically black college",
+  "historically black colleges and universities",
 ] as const;
 
 const HVAC_INTENT_CHOICES: LibraryIntentChoice[] = [
@@ -192,7 +206,9 @@ export function resolveLibrarySearchVocabulary(normalizedQuery: string): {
 
   const expandedTerms = normalizedQuery === "hvac"
     ? HVAC_RESEARCH_TERMS
-    : [normalizedQuery];
+    : /\bhbcu(?:'?s)?\b|historically black colleges?(?: and universities)?/.test(normalizedQuery)
+      ? HBCU_RESEARCH_TERMS
+      : [normalizedQuery];
   const searchTerms = [...new Set(expandedTerms)];
 
   return {

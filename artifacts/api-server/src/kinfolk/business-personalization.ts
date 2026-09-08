@@ -24,7 +24,7 @@ const PROTECTIVE_BANDS = new Set<BusinessAudienceBand>([
   "16_17",
   "mixed_all_ages",
 ]);
-const MINOR_HARD_EXCLUDED = /\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|21\+|adults? only|age[- ]restricted|mature audiences? only)\b/i;
+const MINOR_HARD_EXCLUDED = /(?:\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|age[- ]restricted|mature audiences? only)\b|(?:^|[^a-z0-9])21\+(?=$|[^a-z0-9]))/i;
 const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
 const MINOR_POSITIVE = /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
 const STOP_WORDS = new Set([
@@ -46,16 +46,37 @@ function searchableText(business: GovernedKinfolkBusiness): string {
     business.subcategory,
     business.description,
     ...business.tags,
+    ...business.specialties,
     ...business.communityValues,
     ...business.audiencesServed,
     ...business.vibes,
     ...business.accessibilityFeatures,
     ...business.environmentTags,
     ...business.amenityTags,
+    business.audienceType,
+    business.story,
+    business.missionStatement,
+    business.whyStarted,
+    business.whatCustomersShouldKnow,
   ].filter((value): value is string => typeof value === "string" && value.trim().length > 0)
     .join(" ")
     .normalize("NFKD")
     .toLowerCase();
+}
+
+export function isProtectiveBusinessAudience(ageBand: BusinessAudienceBand | null | undefined): boolean {
+  return PROTECTIVE_BANDS.has(ageBand ?? "unknown");
+}
+
+export function audienceAllowsBusinessText(input: {
+  ageBand: BusinessAudienceBand | null | undefined;
+  text: string;
+  publishedAudienceEvidence?: string;
+}): boolean {
+  if (!isProtectiveBusinessAudience(input.ageBand)) return true;
+  if (MINOR_HARD_EXCLUDED.test(input.text)) return false;
+  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(input.publishedAudienceEvidence ?? "");
+  return !MINOR_SOFT_EXCLUDED.test(input.text) || hasPublishedMinorAudienceSignal;
 }
 
 function meaningfulTokens(value: string): string[] {
@@ -81,13 +102,12 @@ function scoredBusiness(
     business.audienceType,
   ].filter((value): value is string => typeof value === "string" && value.trim().length > 0).join(" ");
   const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(publishedAudienceEvidence);
-  const protectiveAudience = PROTECTIVE_BANDS.has(personalization.ageBand ?? "unknown");
-  if (protectiveAudience && MINOR_HARD_EXCLUDED.test(text)) return null;
-  if (
-    protectiveAudience
-    && MINOR_SOFT_EXCLUDED.test(text)
-    && !hasPublishedMinorAudienceSignal
-  ) return null;
+  const protectiveAudience = isProtectiveBusinessAudience(personalization.ageBand);
+  if (!audienceAllowsBusinessText({
+    ageBand: personalization.ageBand,
+    text,
+    publishedAudienceEvidence,
+  })) return null;
 
   let score = 0;
   const reasons: string[] = [];

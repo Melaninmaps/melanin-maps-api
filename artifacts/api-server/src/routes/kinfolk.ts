@@ -111,6 +111,10 @@ import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
+import {
+  audienceAllowsBusinessText,
+  rankGovernedBusinessesForMember,
+} from "../kinfolk/business-personalization";
 import { buildConversationalBusinessResultView } from "../kinfolk/business-result-view";
 import {
   businessDiscoveryClarification,
@@ -3316,6 +3320,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       rawIntentClass === "business_discovery" &&
       TRAVEL_POLICY_OVERRIDE.test(message)
     ) ? "legal_regulated" : rawIntentClass;
+    const memberCtx = req.user?.id
+      ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
+      : { audienceBand: "unknown" as const, pronounMode: "none" as const };
+    const effectiveAudienceBand = effectiveBusinessAudienceBand(
+      memberCtx.audienceBand,
+      temporaryBusinessAudienceBand(message),
+    );
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
@@ -3999,6 +4010,26 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical — proceed without catalog */ }
     }
 
+    businessCatalog = rankGovernedBusinessesForMember(businessCatalog, {
+      ageBand: effectiveAudienceBand,
+      currentRequest: message,
+    });
+    if (!audienceAllowsBusinessText({ ageBand: effectiveAudienceBand, text: message })) {
+      res.status(200).json({
+        sessionId: memoryEnabled ? sessionId : undefined,
+        reply: "I can help you find an all-ages activity, restaurant, bookstore, museum, class, or another safe option instead. Tell me what kind of outing you want and where.",
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: ["Find all-ages activities", "Find a museum", "Find a bookstore"],
+        sources: [],
+        sourceNote: "No adult-only business results were returned for this audience.",
+        educationalStatus: "limited",
+        intentClass,
+        degraded: false,
+      });
+      return;
+    }
+
     // Fetch active life journey for this user (inject into system prompt)
     let activeJourney: { title: string; city: string | null; journeyType: string; phases: JourneyPhase[]; aiContext: string | null } | null = null;
     if (req.user?.id) {
@@ -4193,16 +4224,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Minimum-use policy inside loadKinfolkMemberContext governs these existing,
     // non-business member affordances. Explicit cultural/population context still
     // comes only from the current turn through permittedIdentity above.
-    const memberCtx = req.user?.id
-      ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
-      : { audienceBand: "unknown" as const, pronounMode: "none" as const };
     const travelPlanning = isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning";
     if (travelPlanning && businessCatalog.length > 0) {
       businessCatalog = rankTravelCatalogForMember({
         catalog: businessCatalog,
         message,
         profile: {
-          ageBand: memberCtx.audienceBand,
+          ageBand: effectiveAudienceBand,
           favoriteCategories: prefs?.favoriteCategories,
           tripStyle: prefs?.tripStyle,
           culturalInterests: prefs?.culturalInterests,
@@ -4537,7 +4565,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A named business response stays scoped to exactly the canonical visible row.
     // Persisting this recommendation object safely retains its ID inside the existing
     // session messages JSON; no schema migration or new broad cultural field is used.
-    if (namedBusiness && modelPayload.valid && !travelPlanning) {
+    if (
+      namedBusiness
+      && businessCatalog.some((business) => business.id === namedBusiness.id)
+      && modelPayload.valid
+      && !travelPlanning
+    ) {
       recommendations = {
         businesses: [{
           businessId: namedBusiness.id,

@@ -36,15 +36,21 @@ describe("Kinfolk chat static wiring", () => {
 
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {
     const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
+    const audienceFilter = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
+    const ownerContext = chatRoute.indexOf("let ownerBusinessContext");
     const travelRanking = chatRoute.indexOf("businessCatalog = rankTravelCatalogForMember({");
     const promptBuild = chatRoute.indexOf("const baseSystemPrompt = buildSystemPrompt({");
     const itineraryNormalization = chatRoute.indexOf("itinerary = normalizeKinfolkItinerary({");
 
     expect(ageContext).toBeGreaterThan(-1);
+    expect(audienceFilter).toBeGreaterThan(ageContext);
+    expect(audienceFilter).toBeLessThan(ownerContext);
     expect(travelRanking).toBeGreaterThan(ageContext);
     expect(travelRanking).toBeLessThan(promptBuild);
     expect(travelRanking).toBeLessThan(itineraryNormalization);
-    expect(chatRoute).toContain("ageBand: memberCtx.audienceBand");
+    expect(chatRoute).toContain("ageBand: effectiveAudienceBand");
+    expect(chatRoute).toContain("audienceAllowsBusinessText({ ageBand: effectiveAudienceBand, text: message })");
+    expect(chatRoute).toContain("businessCatalog.some((business) => business.id === namedBusiness.id)");
     expect(chatRoute).toContain("favoriteCategories: prefs?.favoriteCategories");
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
