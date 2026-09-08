@@ -69,7 +69,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(deterministicTravel).toBeLessThan(providerCall);
     expect(chatRoute).toContain("const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog })");
     expect(chatRoute).toContain("&& !contextualEvidence");
-    expect(chatRoute).toContain("&& !CURRENT_RESEARCH_RE.test(message)");
+    expect(chatRoute).toContain("&& !requiresCurrentResearch(message)");
     expect(chatRoute).toContain("&& !sensitiveTopicDetected");
     expect(chatRoute).toContain("&& !bodyCircleId");
     expect(chatRoute).toContain("&& verifiedImageUrls.length === 0");
@@ -118,7 +118,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(approvedLookup).toBeLessThan(semanticPlanner);
     expect(approvedLookup).toBeLessThan(providerCall);
     expect(chatRoute).toContain('intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness');
-    expect(routeSource).toMatch(/CURRENT_RESEARCH_RE = \/.*as of.*\/i;/);
+    expect(routeSource).toContain('import { requiresCurrentResearch } from "../kinfolk/current-research"');
+    expect(chatRoute).toContain('intentClass === "general_knowledge" && requiresCurrentResearch(message)');
     expect(chatRoute).toContain('answerMode: "approved_library"');
     expect(chatRoute).toContain("usedInternal: true");
     expect(chatRoute).toContain("usedLiveWeb: false");

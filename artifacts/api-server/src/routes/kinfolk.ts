@@ -61,6 +61,7 @@ import {
   resolveNamedBusinessTurn,
 } from "../kinfolk/business-reference";
 import { routeEvidence as classifyEvidenceRoute } from "../kinfolk/evidence-route";
+import { requiresCurrentResearch } from "../kinfolk/current-research";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
 import {
   evidenceFailureReply,
@@ -838,7 +839,6 @@ function normalizeTopicText(value: string): string {
     .trim();
 }
 
-const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this weekend|next weekend|this month|this year|right now|as of|open now|what(?:'s| is) open|hours?|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
 
 function isLibraryTopicQuestion(message: string): boolean {
   const text = normalizeTopicText(message);
@@ -3341,7 +3341,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     const shouldResearchInLibrary = intentClass === "medical_health"
       || intentClass === "legal_regulated"
-      || (intentClass === "general_knowledge" && CURRENT_RESEARCH_RE.test(message));
+      || (intentClass === "general_knowledge" && requiresCurrentResearch(message));
 
     // Kinfolk is the member's conversational companion; the Library is shared,
     // curator-approved community knowledge. For stable general questions, reuse
@@ -4368,7 +4368,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       && Boolean(destination)
       && businessCatalog.length > 0
       && !contextualEvidence
-      && !CURRENT_RESEARCH_RE.test(message)
+      && !requiresCurrentResearch(message)
       && !sensitiveTopicDetected
       && !bodyCircleId
       && verifiedImageUrls.length === 0;
