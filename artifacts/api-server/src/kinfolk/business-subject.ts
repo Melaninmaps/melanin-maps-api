@@ -72,7 +72,7 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "salon",
     label: "salons",
-    match: /\b(?:hair|salons?|hair stylists?|hair color|wash and style)\b/i,
+    match: /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
     searchTerms: ["salon", "hair salon", "hair stylist", "hair color", "wash and style"],
   },
   {
@@ -206,8 +206,8 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "fashion",
     label: "fashion and clothing businesses",
-    match: /\b(?:fashion|clothing|apparel|boutiques?|lingerie|vintage shops?|thrift shops?)\b/i,
-    searchTerms: ["fashion", "clothing", "apparel", "boutique", "lingerie", "vintage", "thrift"],
+    match: /\b(?:fashion|wardrobe|personal styl(?:ists?|ing)|product styl(?:ists?|ing)|clothing|apparel|boutiques?|lingerie|vintage shops?|thrift shops?)\b/i,
+    searchTerms: ["fashion", "wardrobe stylist", "personal stylist", "personal styling", "product stylist", "clothing", "apparel", "boutique", "lingerie", "vintage", "thrift"],
   },
   {
     key: "dessert",
@@ -224,6 +224,14 @@ export function deriveBusinessSubject(message: string): NormalizedBusinessSubjec
     .filter((candidate) => candidate.match.test(message) && (!candidate.requiresDiscoveryContext || discoveryContext))
     .sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0))[0];
   if (!subject) {
+    const bareStylistDiscovery = discoveryContext
+      && /\bstylists?\b/i.test(message)
+      && !/\b(?:fashion|wardrobe|clothing|apparel|editorial|photos?|photography|photo\s+shoots?|products?|personal styl(?:ists?|ing))\b/i.test(message)
+      && !/\b(?:what does|what is|how (?:do|can|should) I|career|training|school|become|recommends? this|said this)\b/i.test(message);
+    if (bareStylistDiscovery) {
+      const salon = SUBJECTS.find((candidate) => candidate.key === "salon")!;
+      return { key: salon.key, label: salon.label, searchTerms: salon.searchTerms };
+    }
     const booksAsShoppingRequest = /\bbooks\b/i.test(message)
       && /\b(?:find|buy|shop|shopping|store|near|where)\b/i.test(message);
     if (!booksAsShoppingRequest) return null;

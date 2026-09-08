@@ -34,6 +34,7 @@ import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
 import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
 import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
+import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
@@ -5203,6 +5204,16 @@ export async function ensureRequiredPublicationSchema(
   log("directory publication schema and indexes verified before traffic acceptance");
 }
 
+const DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS = new Set([
+  "tester_universal_accounts_v1",
+  "tester_password_force_reset_v1",
+  "tester_accounts_restore_v1",
+  "tester_batch_v2",
+  "pre_manus_tester_accounts_v1",
+  "pre_manus_tester_clear_must_change_password_v1",
+  "tester_moon_mayes_v1",
+]);
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
@@ -5215,6 +5226,11 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   let skipped = 0;
 
   for (const m of MIGRATIONS) {
+    if (DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS.has(m.name)) {
+      log(`  ↷ ${m.name} disabled: external tester access is operator-managed`);
+      skipped++;
+      continue;
+    }
     try {
       await pool.query(m.sql);
       log(`  ✓ ${m.name}`);
@@ -6212,76 +6228,12 @@ const ADMIN_EMAILS = [
 // ── Tester account grants ──────────────────────────────────────────────────────
 // All testers who have already registered are promoted to role='tester'.
 // Idempotent — only updates rows where role is still 'user'.
-const TESTER_EMAILS = [
-  "tester@mwm.com",          // Manus AI audit account — pre-approved founding tester
-  "cardwellkayla219@gmail.com",
-  "kcardwell17@yahoo.com",
-  "kaylacardwell3@gmail.com",
-  "taleisham.saunders@gmail.com",
-  "trinalindsayhairston@gmail.com",
-  "trinalindsayhairston@gmail..com", // typo variant as registered
-  "bigdot6017@gmail.com",
-  "zykiral.morton@yahoo.com",
-  "kyleisha.m.morton@gmail.com",
-  "kyleisha.m.fisher@gmail.com",
-  "taleisha.fisher@gmail.com",
-  "lilanarich@gmail.com",
-  "jordanwtester@gmail.com",
-  "joshuabierd99@gmail.com",
-  // Added Aug 11 2026
-  "aniaylar@gmail.com",
-];
+const TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;
 
 // ── Pre-approved tester emails (haven't registered yet) ───────────────────────
 // These are seeded into pending_tester_emails so that when they self-register,
 // role='tester' is automatically applied. ON CONFLICT DO NOTHING — safe to re-run.
-const PRE_APPROVED_TESTER_EMAILS = [
-  // Founder test personas
-  "tlindsay428@gmail.com",
-  "tlindsay428@aol.com",
-  "zykiral.morton@yahoo.com",
-  "kyleisha.m.morton@gmail.com",
-  "kyleisha.m.fisher@gmail.com",
-  "taleisha.fisher@gmail.com",
-  "lilanarich@gmail.com",
-  "jordanwtester@gmail.com",
-  "joshuabierd99@gmail.com",
-  "kaylacardwelltester@gmail.com",
-  "kevinctester@gmail.com",
-  "kevkaytester@gmail.com",
-  "teiannaltester@gmail.com",
-  "trinalindsaytester@gmail.com",
-  "jross215@gmail.com",
-  "kaylathomas20011@gmail.com",
-  "kansesdwilliams@gmail.com",
-  "fatimccoy@icloud.com",
-  "jordanwyatt117@icloud.com",
-  "jordanw117@icloud.com",
-  "nydiahholly12@gmail.com",
-  "meaparks@gmail.com",
-  "melody.brown1988@gmail.com",
-  "owcforyouth@gmail.com",
-  // Founder-confirmed tester cohort (Aug 10 2026)
-  "dghaskin@gmail.com",
-  "sharonnlw2@gmail.com",
-  "ninamartinez409@gmail.com",
-  "winternewman88@gmail.com",
-  "shawnhillhomes@gmail.com",
-  "kaylacardwell3@gmail.com",
-  "taleisham.saunders@gmail.com",
-  "trinalindsayhairston@gmail.com",
-  "bigdot6017@gmail.com",
-  "themontgomerymanagementgroup@gmail.com",
-  "gregorywilliam05@gmail.com",
-  "kahvealynne@gmail.com",
-  // Added Aug 10 2026 — final pre-tester cohort
-  "reinaoba06@gmail.com",
-  "mayagz05@icloud.com",
-  // Manus audit tester — added to pending list so self-registration works after clean slate
-  "kayla.m.manus@mappingwithmelanin.com",
-  // Added Aug 11 2026 — founder-invited tester
-  "aniaylar@gmail.com",
-];
+const PRE_APPROVED_TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;
 
 async function ensureAdminAccounts(
   log: (msg: string) => void,
@@ -6672,6 +6624,16 @@ async function ensurePendingTesterEmails(
       if (r.rowCount && r.rowCount > 0) inserted++;
     }
 
+    // Reconcile only legacy system-seeded website-test rows. Explicit grants made
+    // through the admin endpoint carry granted_by and remain operator-managed.
+    const retired = await pool.query(
+      `DELETE FROM pending_tester_emails
+       WHERE tester_access_source = 'website_test'
+         AND granted_by IS NULL
+         AND NOT (LOWER(TRIM(email)) = ANY($1::text[]))`,
+      [PRE_APPROVED_TESTER_EMAILS.map(e => e.toLowerCase().trim())]
+    );
+
     // Mark already-registered testers as applied
     await pool.query(`
       UPDATE pending_tester_emails pte
@@ -6682,7 +6644,10 @@ async function ensurePendingTesterEmails(
         AND pte.applied_at IS NULL
     `);
 
-    log(`Pending tester emails: table ensured, ${inserted} new emails seeded`);
+    log(
+      `Pending tester emails: table ensured, ${inserted} new emails seeded, ` +
+      `${retired.rowCount ?? 0} stale system rows retired`
+    );
   } catch (err: unknown) {
     warn(`Pending tester emails guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -11181,13 +11146,16 @@ async function ensureManusAuditAccounts(
            NOW(), 'founder',
            true, true, 'individual',
            true, false,
-           false, 1, 0,
+           true, 1, 0,
            0, $6, 0,
            false, true, true, 'full',
-           false, true,
+           true, true,
            NOW(), NOW()
          )
-         ON CONFLICT (email) DO NOTHING`,
+         ON CONFLICT (email) DO UPDATE SET
+           is_load_test = true,
+           marketing_opt_out = true,
+           updated_at = NOW()`,
         [email, `Tester ${n}`, username, username, PW_HASH, refCode],
       );
       if ((rowCount ?? 0) > 0) inserted++;

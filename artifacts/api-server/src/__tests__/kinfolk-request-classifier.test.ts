@@ -70,6 +70,57 @@ describe("classifyKinfolkRequest — brunch routing", () => {
   });
 });
 
+describe("classifyKinfolkRequest — stylist proof-of-concept", () => {
+  it("routes the founder screenshot request to deterministic Philadelphia discovery", () => {
+    expect(classifyKinfolkRequest(
+      "Can you find me a stylist in Philadelphia",
+      "Philadelphia",
+    )).toMatchObject({
+      route: "business_discovery",
+      location: "Philadelphia",
+    });
+  });
+
+  it("asks a hair-specific location question without restaurant language", () => {
+    const result = classifyKinfolkRequest("a stylist is a hairdresser or a salon");
+    expect(result.route).toBe("clarification");
+    expect(result.clarification).toMatch(/stylist|salon/i);
+    expect(result.clarification).toMatch(/city|neighborhood/i);
+    expect(result.clarification).toMatch(/locs|braids|natural hair/i);
+    expect(result.clarification).not.toMatch(/cuisine/i);
+  });
+
+  it.each([
+    "What does a stylist do?",
+    "How do I become a stylist?",
+    "My stylist recommends this product",
+  ])("does not demand a location for informational stylist wording: %s", (message) => {
+    expect(classifyKinfolkRequest(message).route).toBe("general_knowledge");
+  });
+
+  it("routes a fashion stylist request as fashion rather than salon discovery", () => {
+    const result = classifyKinfolkRequest("I need a fashion stylist in Philadelphia", "Philadelphia");
+    expect(result.route).toBe("business_discovery");
+    expect(result.location).toBe("Philadelphia");
+  });
+
+  it.each([
+    "Find a stylist for a photo in Philadelphia",
+    "Find a stylist for a photo shoot in Philadelphia",
+    "Find a stylist for a product in Philadelphia",
+  ])("never treats creative-production styling as a hair salon request: %s", (message) => {
+    const result = classifyKinfolkRequest(message, "Philadelphia");
+    expect(result.clarification ?? "").not.toMatch(/hair|salon|locs|braids/i);
+  });
+
+  it.each([
+    "Find personal styling in Philadelphia",
+    "I need personal styling in Philadelphia",
+  ])("routes explicit personal styling as fashion business discovery: %s", (message) => {
+    expect(classifyKinfolkRequest(message, "Philadelphia").route).toBe("business_discovery");
+  });
+});
+
 // ── Voice duration validation ─────────────────────────────────────────────────
 
 describe("validateVoiceRecording", () => {

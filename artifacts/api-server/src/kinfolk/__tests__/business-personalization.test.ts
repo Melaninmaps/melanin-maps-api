@@ -212,6 +212,7 @@ describe("Kinfolk business personalization", () => {
 
   it.each([
     ["HVAC in Phoenix", "hvac"],
+    ["Can you find me a stylist in Philadelphia", "salon"],
     ["Find natural hair in Philadelphia", "locs"],
     ["auto repair in Philadelphia", "auto_repair"],
     ["Find a therapist in DC", "therapist"],
@@ -230,6 +231,29 @@ describe("Kinfolk business personalization", () => {
     expect(deriveBusinessSubject("What can help hair loss in Philadelphia?")).toBeNull();
   });
 
+  it.each([
+    "What does a stylist do?",
+    "How do I become a stylist?",
+    "My stylist recommends this product",
+    "I need a wardrobe stylist in Philadelphia",
+    "I need a personal stylist in Philadelphia",
+    "Find a stylist for a photo in Philadelphia",
+    "Find a stylist for a photo shoot in Philadelphia",
+    "Find a stylist for a product in Philadelphia",
+  ])("does not misclassify ambiguous non-hair wording: %s", (message) => {
+    expect(deriveBusinessSubject(message)?.key).not.toBe("salon");
+  });
+
+  it.each([
+    "I need a fashion stylist in Philadelphia",
+    "Find a wardrobe stylist in Philadelphia",
+    "Find personal styling in Philadelphia",
+    "I need personal styling in Philadelphia",
+    "Find product styling in Philadelphia",
+  ])("keeps explicit fashion styling out of salon discovery: %s", (message) => {
+    expect(deriveBusinessSubject(message)?.key).toBe("fashion");
+  });
+
   it("asks a skippable service-type question for a broad hair search", () => {
     const steps = businessDiscoveryClarification({
       message: "Find hair in Philadelphia",
@@ -243,6 +267,22 @@ describe("Kinfolk business personalization", () => {
     expect(deriveBusinessSubject("For my last question — Loc and natural-hair care in Philadelphia")?.key).toBe("locs");
     expect(steps[0]?.skippable).toBe(true);
     expect(steps[0]?.persistence).toBe("temporary");
+  });
+
+  it("asks the same skippable hair-service question for a plain stylist request", () => {
+    const message = "Can you find me a stylist in Philadelphia";
+    const subject = deriveBusinessSubject(message);
+    expect(subject?.key).toBe("salon");
+    expect(businessDiscoveryClarification({
+      message,
+      subjectKey: subject!.key,
+      ageBand: "18_plus",
+      city: "Philadelphia",
+    })[0]).toMatchObject({
+      id: "business-hair-service",
+      question: "What kind of hair service should I focus on?",
+      skippable: true,
+    });
   });
 
   it("asks for an age group only when an activity audience is unknown", () => {
