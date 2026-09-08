@@ -837,6 +837,8 @@ function normalizeTopicText(value: string): string {
     .trim();
 }
 
+const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this month|this year|right now|as of|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
+
 function isLibraryTopicQuestion(message: string): boolean {
   const text = normalizeTopicText(message);
   return /\b(library|learn|topic|history|what can i learn|tell me about)\b/.test(text)
@@ -3334,99 +3336,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
-    // The contextual planner is intentionally downstream of deterministic safety
-    // routing and governed business handling. It receives the locked route and no
-    // member profile, so it cannot weaken consequence policy or infer identity.
-    let contextualPlan: SemanticTurnPlan | null = null;
-    if (contextualIntelligenceEnabled) {
-      contextualPlan = await planSemanticTurn({
-        message,
-        evidenceRoute,
-        history: buildKinfolkHistory(existingMessages, modelPolicy).map((entry) => ({
-          role: entry.role === "assistant" ? "assistant" : "user",
-          content: entry.content,
-        })),
-        // The planner is only called by planSemanticTurn for materially ambiguous
-        // turns. It receives bounded turn text/history only, never preferences,
-        // identity context, memories, location history, or business data.
-        classify: async ({ message: plannerMessage, history }) => {
-          const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
-            model: kinfolkModel("fallback"),
-            maxOutputTokens: 220,
-            temperature: 0,
-            messages: [
-              {
-                role: "system",
-                content: "Classify only ambiguity. Return JSON with confidence (0..1), up to four candidateMeanings ({label,domain,confidence,evidenceQuery}), resolvedMeaning, clarificationQuestion, and up to three retrievalQueries. Do not answer the member. Do not infer identity or use demographics. If interpretations materially differ and confidence is below .75, ask one short clarification.",
-              },
-              ...history,
-              { role: "user", content: plannerMessage },
-            ],
-          }) as ChatCompletionCreateParamsNonStreaming, { signal: AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)]) });
-          const content = completion.choices[0]?.message?.content ?? "{}";
-          try {
-            const parsedClassifierPayload = JSON.parse(content) as unknown;
-            const protectedClassifierPayload = protectContextualOutput({
-              reply: "",
-              renderableValues: [parsedClassifierPayload],
-              protectedValues: history.map((entry) => entry.content),
-            });
-            return protectedClassifierPayload.blocked ? {} : parsedClassifierPayload;
-          } catch { return {}; }
-        },
-      });
-      if (contextualPlan.needsClarification && contextualPlan.clarificationQuestion) {
-        recordKinfolkTelemetry({
-          requestId: _kinfolkReqId,
-          questionClass: "clarification",
-          status: 200,
-          degraded: false,
-          degradedReason: null,
-          providerStatus: null,
-          latencyMs: Date.now() - _kinfolkStartedAt,
-          taskMode: "clarification",
-          retrievalState: "not_used",
-          sourceCount: 0,
-        });
-        res.json({
-          sessionId, reply: "I can help with that. Are you asking about food and cooking, a person or cultural topic, a place, or something else?", recommendations: null,
-          itinerary: null, followUpSuggestions: [], smartPromotion: null, taskAction: null,
-          libraryAction: null, intentClass: "clarification", sources: [],
-          needsClarification: true, originalQuery: message,
-          answerMode: "clarification", structuredContent: null, mediaLinks: [],
-          relatedConnections: [], researchStatus: {
-            usedInternal: false, usedLiveWeb: false, degraded: false,
-            web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
-            asOf: new Date().toISOString(),
-          },
-        });
-        return;
-      }
-    }
 
-    // ── Diaspora-first research plan ──────────────────────────────────────────
-    // Permanently enriches every retrieval query with community-first context so
-    // Black women and minority community sources surface before generic results.
-    // researchQuery replaces the raw message in external searches only —
-    // it never changes Kinfolk's spoken answer or identifies the member.
-    // clarification is an optional offer rendered AFTER the general answer.
-    const researchPlan = prepareKinfolkResearchPlan(message, { subject: "unknown" });
-
-    // ── Conversational research branch ─────────────────────────────────────────
-    // Stable general knowledge should feel like a normal conversation. Search is
-    // reserved for high-stakes or changing questions; Library publication remains
-    // optional enrichment and may never block an in-chat answer.
-    const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this month|this year|right now|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
     const shouldResearchInLibrary = intentClass === "medical_health"
       || intentClass === "legal_regulated"
       || (intentClass === "general_knowledge" && CURRENT_RESEARCH_RE.test(message));
 
     // Kinfolk is the member's conversational companion; the Library is shared,
     // curator-approved community knowledge. For stable general questions, reuse
-    // a published, cited Library entry before asking a model. This is the same
-    // governed search used by the Library UI, so aliases such as “HBCUs” work
-    // without turning the question into a business search. Pending entries are
-    // never eligible, and current/high-consequence questions continue through
+    // a published, cited Library entry before asking any model. Pending entries
+    // are never eligible, and current/high-consequence questions continue through
     // their stricter research policies below.
     if (intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness) {
       const approvedLibraryAnswer = await findApprovedLibraryAnswer({
@@ -3515,6 +3433,88 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // The contextual planner is intentionally downstream of deterministic safety
+    // routing and governed business handling. It receives the locked route and no
+    // member profile, so it cannot weaken consequence policy or infer identity.
+    let contextualPlan: SemanticTurnPlan | null = null;
+    if (contextualIntelligenceEnabled) {
+      contextualPlan = await planSemanticTurn({
+        message,
+        evidenceRoute,
+        history: buildKinfolkHistory(existingMessages, modelPolicy).map((entry) => ({
+          role: entry.role === "assistant" ? "assistant" : "user",
+          content: entry.content,
+        })),
+        // The planner is only called by planSemanticTurn for materially ambiguous
+        // turns. It receives bounded turn text/history only, never preferences,
+        // identity context, memories, location history, or business data.
+        classify: async ({ message: plannerMessage, history }) => {
+          const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
+            model: kinfolkModel("fallback"),
+            maxOutputTokens: 220,
+            temperature: 0,
+            messages: [
+              {
+                role: "system",
+                content: "Classify only ambiguity. Return JSON with confidence (0..1), up to four candidateMeanings ({label,domain,confidence,evidenceQuery}), resolvedMeaning, clarificationQuestion, and up to three retrievalQueries. Do not answer the member. Do not infer identity or use demographics. If interpretations materially differ and confidence is below .75, ask one short clarification.",
+              },
+              ...history,
+              { role: "user", content: plannerMessage },
+            ],
+          }) as ChatCompletionCreateParamsNonStreaming, { signal: AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)]) });
+          const content = completion.choices[0]?.message?.content ?? "{}";
+          try {
+            const parsedClassifierPayload = JSON.parse(content) as unknown;
+            const protectedClassifierPayload = protectContextualOutput({
+              reply: "",
+              renderableValues: [parsedClassifierPayload],
+              protectedValues: history.map((entry) => entry.content),
+            });
+            return protectedClassifierPayload.blocked ? {} : parsedClassifierPayload;
+          } catch { return {}; }
+        },
+      });
+      if (contextualPlan.needsClarification && contextualPlan.clarificationQuestion) {
+        recordKinfolkTelemetry({
+          requestId: _kinfolkReqId,
+          questionClass: "clarification",
+          status: 200,
+          degraded: false,
+          degradedReason: null,
+          providerStatus: null,
+          latencyMs: Date.now() - _kinfolkStartedAt,
+          taskMode: "clarification",
+          retrievalState: "not_used",
+          sourceCount: 0,
+        });
+        res.json({
+          sessionId, reply: "I can help with that. Are you asking about food and cooking, a person or cultural topic, a place, or something else?", recommendations: null,
+          itinerary: null, followUpSuggestions: [], smartPromotion: null, taskAction: null,
+          libraryAction: null, intentClass: "clarification", sources: [],
+          needsClarification: true, originalQuery: message,
+          answerMode: "clarification", structuredContent: null, mediaLinks: [],
+          relatedConnections: [], researchStatus: {
+            usedInternal: false, usedLiveWeb: false, degraded: false,
+            web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+            asOf: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+    }
+
+    // ── Diaspora-first research plan ──────────────────────────────────────────
+    // Permanently enriches every retrieval query with community-first context so
+    // Black women and minority community sources surface before generic results.
+    // researchQuery replaces the raw message in external searches only —
+    // it never changes Kinfolk's spoken answer or identifies the member.
+    // clarification is an optional offer rendered AFTER the general answer.
+    const researchPlan = prepareKinfolkResearchPlan(message, { subject: "unknown" });
+
+    // ── Conversational research branch ─────────────────────────────────────────
+    // Stable general knowledge should feel like a normal conversation. Search is
+    // reserved for high-stakes or changing questions; Library publication remains
+    // optional enrichment and may never block an in-chat answer.
     if (shouldResearchInLibrary && !contextualIntelligenceEnabled && !destination && message.trim().length > 15) {
       try {
         const deps = getLivingLibraryDeps();
