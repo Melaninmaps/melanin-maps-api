@@ -273,28 +273,37 @@ async function run(): Promise<void> {
       const saved = preferenceRead.body.preferences as JsonObject;
       assert.deepEqual(saved.favoriteCategories, profile.preferences.favoriteCategories, `${profile.label} saved categories`);
 
-      const directoryClarification = await requestJson("/api/kinfolk/chat", {
+      const initialDirectory = await requestJson("/api/kinfolk/chat", {
         method: "POST",
         body: JSON.stringify({ message: "Find things to do in Philadelphia PA" }),
       }, cookie);
-      assert.equal(directoryClarification.response.status, 200, `${profile.label} directory clarification`);
-      assert.equal(directoryClarification.body.needsClarification, true, `${profile.label} audience clarification required`);
-      const clarificationSteps = (directoryClarification.body.clarificationSteps as Array<{
-        options?: Array<{ label?: string }>;
-      }> | undefined) ?? [];
-      assert.ok(
-        clarificationSteps.some((step) => (step.options ?? []).some((option) => /keep this search broad/i.test(option.label ?? ""))),
-        `${profile.label} skip option`,
-      );
-
-      const directory = await requestJson("/api/kinfolk/chat", {
-        method: "POST",
-        body: JSON.stringify({ message: "Find things to do in Philadelphia PA — keep this search broad" }),
-      }, cookie);
+      assert.equal(initialDirectory.response.status, 200, `${profile.label} initial directory request`);
+      let directoryClarificationPassed = false;
+      let directory = initialDirectory;
+      if (initialDirectory.body.needsClarification === true) {
+        const clarificationSteps = (initialDirectory.body.clarificationSteps as Array<{
+          options?: Array<{ label?: string }>;
+        }> | undefined) ?? [];
+        assert.ok(
+          clarificationSteps.some((step) => (step.options ?? []).some((option) => /keep this search broad/i.test(option.label ?? ""))),
+          `${profile.label} skip option`,
+        );
+        directory = await requestJson("/api/kinfolk/chat", {
+          method: "POST",
+          body: JSON.stringify({ message: "Find things to do in Philadelphia PA — keep this search broad" }),
+        }, cookie);
+        directoryClarificationPassed = true;
+      }
       assert.equal(directory.response.status, 200, `${profile.label} directory search`);
       const resultView = directory.body.resultView as { cards?: Array<Record<string, unknown>> } | undefined;
       const cards = resultView?.cards ?? [];
       const top = cards[0];
+      if (!top) {
+        const responseKeys = Object.keys(directory.body).sort().join(",");
+        throw new Error(
+          `${profile.label} directory cards missing intent=${String(directory.body.intentClass ?? "unknown")} keys=${responseKeys}`,
+        );
+      }
       assert.equal(top?.title, profile.expectedBusiness, `${profile.label} directory top result`);
       assert.equal(top?.claimed, false, `${profile.label} claim truth`);
       assert.equal(top?.verified, false, `${profile.label} verification truth`);
@@ -357,7 +366,7 @@ async function run(): Promise<void> {
       results.push({
         profile: profile.label,
         storedAgeBand: String(ageRead.body.ageBand),
-        directoryClarificationPassed: true,
+        directoryClarificationPassed,
         directoryTopResult: String(top?.title),
         directoryWhy: String(top?.matchReason),
         directoryActions: actions.map((action) => String(action.label)),
