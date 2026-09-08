@@ -22,10 +22,10 @@
 import crypto from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import { pool } from "@workspace/db";
+import { getMemberAgeBand, type AgeBand } from "../lib/audience-policy";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
-export type AgeBand = "under_13" | "13_17" | "18_24" | "25_plus" | "unknown";
 export type DetailLevel = "quick" | "standard" | "deep";
 export type TonePreference =
   | "default"
@@ -125,7 +125,7 @@ export interface AuthenticatedRequest extends Request {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isMinor(ageBand: AgeBand): boolean {
-  return ageBand === "under_13" || ageBand === "13_17";
+  return ageBand === "under_13" || ageBand === "13_15" || ageBand === "16_17";
 }
 
 function isHighStakes(plan: RouterContentPlan): boolean {
@@ -164,23 +164,26 @@ export async function loadAdaptiveDeliveryProfile(
   userId: string,
 ): Promise<AdaptiveDeliveryProfile> {
   try {
-    const r = await pool.query(
+    const [r, ageBand] = await Promise.all([
+      pool.query(
       `SELECT detail_level, tone_preference, learning_mode, notification_cadence,
-              age_band, regional_language_opt_in, regional_reference,
+              regional_language_opt_in, regional_reference,
               allow_related_branches, allow_non_sensitive_recommendations,
               allow_civic_safety_updates
        FROM kinfolk_delivery_profiles
        WHERE user_id = $1
        LIMIT 1`,
       [userId],
-    );
+      ),
+      getMemberAgeBand(userId),
+    ]);
     const data = r.rows[0] ?? null;
     return {
       detailLevel: data?.detail_level ?? "standard",
       tonePreference: data?.tone_preference ?? "default",
       learningMode: data?.learning_mode ?? "guided",
       notificationCadence: data?.notification_cadence ?? "essential_only",
-      ageBand: data?.age_band ?? "unknown",
+      ageBand,
       regionalLanguageOptIn: Boolean(data?.regional_language_opt_in),
       regionalReference: data?.regional_reference ?? null,
       allowRelatedBranches: Boolean(data?.allow_related_branches),
@@ -252,7 +255,7 @@ export function buildDeliveryInstructions(
   const ageAppropriateInstruction =
     profile.ageBand === "under_13"
       ? "Use age-appropriate, non-graphic language. Do not provide proactive civic, traumatic, adult, or relationship content. Encourage a trusted adult for safety or health topics when appropriate."
-      : profile.ageBand === "13_17"
+      : profile.ageBand === "13_15" || profile.ageBand === "16_17"
         ? "Use age-appropriate, non-graphic language. When a sensitive or traumatic topic is directly asked, provide factual context, practical safety guidance, and optional trusted-adult or official-resource pathways. Do not make political or traumatic content proactive."
         : "Use the member-selected detail level. Do not infer competence, education, or maturity from age or writing style.";
 

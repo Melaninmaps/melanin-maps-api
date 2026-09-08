@@ -34,6 +34,23 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+  it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {
+    const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
+    const travelRanking = chatRoute.indexOf("businessCatalog = rankTravelCatalogForMember({");
+    const promptBuild = chatRoute.indexOf("const baseSystemPrompt = buildSystemPrompt({");
+    const itineraryNormalization = chatRoute.indexOf("itinerary = normalizeKinfolkItinerary({");
+
+    expect(ageContext).toBeGreaterThan(-1);
+    expect(travelRanking).toBeGreaterThan(ageContext);
+    expect(travelRanking).toBeLessThan(promptBuild);
+    expect(travelRanking).toBeLessThan(itineraryNormalization);
+    expect(chatRoute).toContain("ageBand: memberCtx.audienceBand");
+    expect(chatRoute).toContain("favoriteCategories: prefs?.favoriteCategories");
+    expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
+    expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
+    expect(chatRoute).toContain("dietaryNotes: prefs?.dietaryNotes");
+  });
+
 
 
   it("short-circuits category discovery before quota/model calls while preserving session context", () => {
@@ -50,6 +67,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("resolveTurnGeography(input.message, currentSession?.destination ?? null)");
     expect(helper).toContain('decision.route !== "business_discovery"');
     expect(helper).toContain('namedBusiness.state !== "not_named"');
+    expect(helper).toContain("getMemberAgeBand(input.req.user!.id)");
+    expect(helper).not.toContain("loadAdaptiveDeliveryProfile");
     expect(helper).toContain("await discoverLocalBusinesses({");
     expect(helper).toContain("await persistDeterministicDiscoveryTurn({");
     expect(helper).toContain("input.res.status(200).json({");

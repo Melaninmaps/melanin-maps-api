@@ -1,7 +1,10 @@
+import type { AgeBand } from "../lib/audience-policy";
 import type { GovernedKinfolkBusiness } from "./governedBusinessRepository";
 
+export type BusinessAudienceBand = AgeBand | "mixed_all_ages";
+
 export type KinfolkBusinessPersonalization = Readonly<{
-  ageBand?: string | null;
+  ageBand?: BusinessAudienceBand | null;
   preferenceTerms?: readonly string[];
   avoidTerms?: readonly string[];
   currentRequest?: string;
@@ -11,7 +14,16 @@ export type RankedKinfolkBusiness = GovernedKinfolkBusiness & Readonly<{
   matchReasons: string[];
 }>;
 
-const MINOR_BANDS = new Set(["under_13", "13_17"]);
+// Unknown and mixed-age requests stay as protective as the youngest supported
+// audience. Only the canonical persisted bands from audience-policy are valid;
+// fixture-only values such as 13_17, 18_39, 40_64, and 65_plus are excluded.
+const PROTECTIVE_BANDS = new Set<BusinessAudienceBand>([
+  "unknown",
+  "under_13",
+  "13_15",
+  "16_17",
+  "mixed_all_ages",
+]);
 const MINOR_HARD_EXCLUDED = /\b(?:night\s*club|nightclub|adult nightlife|21\+|adults? only|age[- ]restricted)\b/i;
 const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
 const MINOR_POSITIVE = /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
@@ -61,10 +73,10 @@ function scoredBusiness(
     business.audienceType,
   ].filter((value): value is string => typeof value === "string" && value.trim().length > 0).join(" ");
   const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(publishedAudienceEvidence);
-  const isMinor = MINOR_BANDS.has(personalization.ageBand ?? "");
-  if (isMinor && MINOR_HARD_EXCLUDED.test(text)) return null;
+  const protectiveAudience = PROTECTIVE_BANDS.has(personalization.ageBand ?? "unknown");
+  if (protectiveAudience && MINOR_HARD_EXCLUDED.test(text)) return null;
   if (
-    isMinor
+    protectiveAudience
     && MINOR_SOFT_EXCLUDED.test(text)
     && !hasPublishedMinorAudienceSignal
   ) return null;
@@ -97,7 +109,7 @@ function scoredBusiness(
     if (term && text.includes(term)) score -= 8;
   }
 
-  if (isMinor && hasPublishedMinorAudienceSignal) {
+  if (protectiveAudience && hasPublishedMinorAudienceSignal) {
     score += 8;
     reasons.unshift("Includes a published youth, child, teen, or family audience signal");
   }

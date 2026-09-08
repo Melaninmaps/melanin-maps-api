@@ -67,7 +67,11 @@ const PHILADELPHIA_ACTIVITIES = [
     ...business("queen", "Queen & Rook Game Cafe", "Arts, Culture & Entertainment", "Gaming & Recreation", [
       "Board-game play", "Retro video-game arcade", "Food and full bar",
     ]),
-    audiencesServed: ["all ages"],
+    // Official Queen & Rook youth-program evidence: programs serve ages 6–16,
+    // including a Teen Camp for ages 13–16. The adult bar signal is therefore
+    // allowed only because structured youth evidence exists alongside it.
+    audiencesServed: ["youth ages 6-16", "teen programs ages 13-16"],
+    website: "https://www.queenandrookcafe.com/youth-programs/",
   },
   business("night", "Adults Only Night Club", "Arts, Culture & Entertainment", "Nightlife", [
     "Adult nightlife", "Cocktails", "21+",
@@ -76,11 +80,11 @@ const PHILADELPHIA_ACTIVITIES = [
 
 describe("Kinfolk business personalization", () => {
   it.each([
-    ["P21", "18_39", ["hands-on candle-making experiences"], "Loomen Labs"],
-    ["P44", "40_64", ["Southern and West African inspired dining"], "Amina"],
-    ["P65", "65_plus", ["independent bookstores and author events"], "Uncle Bobbie's Coffee & Books"],
-    ["P14", "13_17", ["video games and board games"], "Queen & Rook Game Cafe"],
-  ])("ranks a different explainable top result for %s", (_profile, ageBand, preferenceTerms, expected) => {
+    { profile: "P21", statedAge: 21, ageBand: "18_plus" as const, preferenceTerms: ["hands-on candle-making experiences"], expected: "Loomen Labs" },
+    { profile: "P45", statedAge: 45, ageBand: "18_plus" as const, preferenceTerms: ["Southern and West African inspired dining"], expected: "Amina" },
+    { profile: "P65", statedAge: 65, ageBand: "18_plus" as const, preferenceTerms: ["independent bookstores and author events"], expected: "Uncle Bobbie's Coffee & Books" },
+    { profile: "P14", statedAge: 14, ageBand: "13_15" as const, preferenceTerms: ["video games and board games"], expected: "Queen & Rook Game Cafe" },
+  ])("ranks a different explainable top result for $profile (age $statedAge)", ({ ageBand, preferenceTerms, expected }) => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
       ageBand,
       preferenceTerms,
@@ -88,11 +92,15 @@ describe("Kinfolk business personalization", () => {
     });
     expect(ranked[0]?.name).toBe(expected);
     expect(ranked[0]?.matchReasons.length).toBeGreaterThan(0);
+    expect(ranked[0]?.website).toMatch(/^https:\/\//);
+    expect(ranked[0]?.claimed).toBe(false);
+    expect(ranked[0]?.verified).toBe(false);
+    expect(ranked[0]?.profileStatus).toBe("community_listed");
   });
 
-  it("blocks adult-only nightlife for minors but retains a mixed-age venue with explicit child evidence", () => {
+  it("blocks adult-only nightlife for a real persisted 13_15 member but retains a venue with published teen evidence", () => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
-      ageBand: "13_17",
+      ageBand: "13_15",
       preferenceTerms: ["video games"],
     });
     expect(ranked.some((entry) => entry.name === "Adults Only Night Club")).toBe(false);
@@ -103,17 +111,19 @@ describe("Kinfolk business personalization", () => {
     const misleading = business("blocked", "Family-Owned Adults Only Club", "Entertainment", "Nightclub", [
       "family-owned", "adults only", "21+",
     ]);
-    expect(rankGovernedBusinessesForMember([misleading], { ageBand: "13_17" })).toEqual([]);
+    expect(rankGovernedBusinessesForMember([misleading], { ageBand: "13_15" })).toEqual([]);
   });
 
-  it("holds bars, taverns, lounges, and social clubs from minor results without explicit youth evidence", () => {
+  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+    "holds adult-leaning venues from %s results without explicit youth evidence",
+    (ageBand) => {
     const adultLeaning = [
       business("bar", "L&I Bar", "Food & Drink", "Bar", []),
       business("tavern", "Point Breeze Tavern", "Food & Drink", "Restaurant", []),
       business("lounge", "Night Lounge", "Entertainment", "Live Music", []),
       business("club", "Broad Street Social Club", "Entertainment", "Events", []),
     ];
-    expect(rankGovernedBusinessesForMember(adultLeaning, { ageBand: "13_17" })).toEqual([]);
+    expect(rankGovernedBusinessesForMember(adultLeaning, { ageBand })).toEqual([]);
   });
 
   it("accepts only structured audience evidence—not family-owned or student-night wording—as a minor exception", () => {
@@ -124,8 +134,8 @@ describe("Kinfolk business personalization", () => {
       ...business("structured", "Community Lounge", "Entertainment", "Lounge", []),
       audiencesServed: ["all ages"],
     };
-    expect(rankGovernedBusinessesForMember([incidental], { ageBand: "13_17" })).toEqual([]);
-    expect(rankGovernedBusinessesForMember([structured], { ageBand: "13_17" }).map((entry) => entry.name)).toEqual([
+    expect(rankGovernedBusinessesForMember([incidental], { ageBand: "16_17" })).toEqual([]);
+    expect(rankGovernedBusinessesForMember([structured], { ageBand: "16_17" }).map((entry) => entry.name)).toEqual([
       "Community Lounge",
     ]);
   });
@@ -154,7 +164,7 @@ describe("Kinfolk business personalization", () => {
     const steps = businessDiscoveryClarification({
       message: "Find hair in Philadelphia",
       subjectKey: "salon",
-      ageBand: "40_64",
+      ageBand: "18_plus",
       city: "Philadelphia",
     });
     expect(steps).toHaveLength(1);
@@ -189,7 +199,7 @@ describe("Kinfolk business personalization", () => {
     for (const message of continuations) {
       const subject = deriveBusinessSubject(message);
       expect(subject).not.toBeNull();
-      expect(businessDiscoveryClarification({ message, subjectKey: subject!.key, ageBand: "40_64", city: "Philadelphia" })).toEqual([]);
+      expect(businessDiscoveryClarification({ message, subjectKey: subject!.key, ageBand: "18_plus", city: "Philadelphia" })).toEqual([]);
     }
   });
 
@@ -200,5 +210,11 @@ describe("Kinfolk business personalization", () => {
       expect(temporaryAgeBand).not.toBe("unknown");
       expect(businessDiscoveryClarification({ message, subjectKey: "activity", ageBand: temporaryAgeBand, city: "Philadelphia" })).toEqual([]);
     }
+  });
+
+  it("maps temporary audience language to canonical, attainable, protective bands", () => {
+    expect(temporaryBusinessAudienceBand("things to do for teens")).toBe("13_15");
+    expect(temporaryBusinessAudienceBand("things to do for adults")).toBe("18_plus");
+    expect(temporaryBusinessAudienceBand("things to do for mixed ages")).toBe("mixed_all_ages");
   });
 });

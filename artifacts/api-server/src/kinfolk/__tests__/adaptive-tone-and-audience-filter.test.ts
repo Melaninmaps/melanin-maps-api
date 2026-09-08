@@ -27,7 +27,7 @@ const defaultProfile: AdaptiveDeliveryProfile = {
   tonePreference: 'default',
   learningMode: 'guided',
   notificationCadence: 'essential_only',
-  ageBand: '25_plus',
+  ageBand: '18_plus',
   regionalLanguageOptIn: false,
   regionalReference: null,
   allowRelatedBranches: false,
@@ -123,9 +123,9 @@ describe('buildDeliveryInstructions', () => {
     expect(delivery.toneInstruction).toContain('Avoid slang');
   });
 
-  it('lets a 13–17 member ask a sensitive question with age-appropriate framing', () => {
+  it.each(['13_15', '16_17'] as const)('lets a %s member ask a sensitive question with age-appropriate framing', (ageBand) => {
     const delivery = buildDeliveryInstructions(
-      { ...defaultProfile, ageBand: '13_17', detailLevel: 'standard' },
+      { ...defaultProfile, ageBand, detailLevel: 'standard' },
       medicalPlan,
     );
 
@@ -182,11 +182,11 @@ describe('evaluateAudienceEligibility', () => {
     expect(decision.reason).toBe('location_not_permitted');
   });
 
-  it('blocks proactive civic/traumatic content for a 13–17 member even if local', () => {
+  it.each(['13_15', '16_17'] as const)('blocks proactive civic/traumatic content for a %s member even if local', (ageBand) => {
     const decision = evaluateAudienceEligibility(
       {
         ...defaultProfile,
-        ageBand: '13_17',
+        ageBand,
         notificationCadence: 'opt_in_updates',
         allowNonSensitiveRecommendations: true,
         allowCivicSafetyUpdates: true,
@@ -226,9 +226,9 @@ describe('evaluateAudienceEligibility', () => {
     expect(decision.reason).toBe('sensitive_or_high_consequence');
   });
 
-  it('allows a current official safety alert in age-appropriate form for a minor', () => {
+  it.each(['13_15', '16_17'] as const)('allows a current official safety alert in age-appropriate form for a %s member', (ageBand) => {
     const decision = evaluateAudienceEligibility(
-      { ...defaultProfile, ageBand: '13_17', notificationCadence: 'essential_only' },
+      { ...defaultProfile, ageBand, notificationCadence: 'essential_only' },
       {
         ...nonSensitiveRecommendation,
         id: 'hurricane-watch',

@@ -132,7 +132,7 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
 
 type DiscoveryRepository = Pick<
   GovernedKinfolkBusinessRepository,
-  "findBySubject" | "findPublishedMapEntities"
+  "findBySubject" | "findByPreferenceTerms" | "findPublishedMapEntities"
 >;
 
 type WebSearch = (
@@ -357,9 +357,29 @@ export async function discoverLocalBusinesses(input: {
   let businessRows: GovernedKinfolkBusiness[] = [];
   let mapRows: GovernedKinfolkMapPlace[] = [];
 
+  const preferenceTerms = (input.personalization?.preferenceTerms ?? [])
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  const subjectBusinessRead = input.repository.findBySubject(
+    input.scope,
+    input.subject,
+    input.personalization ? 50 : 12,
+  );
+  const businessRead = input.subject.key === "activity" && preferenceTerms.length > 0
+    ? Promise.all([
+        subjectBusinessRead,
+        input.repository.findByPreferenceTerms(input.scope, preferenceTerms, 50),
+      ]).then(([subjectMatches, preferenceMatches]) => {
+        const unique = new Map<string, GovernedKinfolkBusiness>();
+        for (const business of [...subjectMatches, ...preferenceMatches]) {
+          if (!unique.has(business.id)) unique.set(business.id, business);
+        }
+        return [...unique.values()];
+      })
+    : subjectBusinessRead;
+
   // Database first: both sources are exact-city/state and subject-focused.
   const platformResults = await Promise.allSettled([
-    input.repository.findBySubject(input.scope, input.subject, input.personalization ? 50 : 12),
+    businessRead,
     input.repository.findPublishedMapEntities(input.scope, input.subject, 8),
   ]);
   if (platformResults[0].status === "fulfilled") businessRows = platformResults[0].value;

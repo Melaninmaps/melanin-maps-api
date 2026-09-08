@@ -6,6 +6,7 @@ import {
   itineraryPromptInstruction,
   normalizeKinfolkItinerary,
   parseKinfolkModelPayload,
+  rankTravelCatalogForMember,
 } from "../itinerary-response";
 
 const AMINA: GovernedKinfolkBusiness = {
@@ -21,11 +22,11 @@ const AMINA: GovernedKinfolkBusiness = {
   longitude: null,
   distanceMiles: null,
   phone: null,
-  website: null,
-  verified: true,
+  website: "https://www.aminaphilly.com",
+  verified: false,
   claimed: false,
-  blackOwned: true,
-  tags: ["restaurant"],
+  blackOwned: false,
+  tags: ["restaurant", "Southern-inspired dishes", "West African-inspired dishes"],
   specialties: [],
   profileStatus: "community_listed",
   story: null,
@@ -45,6 +46,48 @@ const AMINA: GovernedKinfolkBusiness = {
   matchReasons: [],
   identityReasons: [],
 };
+
+const LOOMEN: GovernedKinfolkBusiness = {
+  ...AMINA,
+  id: "loomen-id",
+  name: "Loomen Labs",
+  category: "Arts, Culture & Entertainment",
+  subcategory: "Attractions",
+  website: "https://www.loomenlabs.com/",
+  tags: ["Guided custom perfume experiences", "Custom eco-friendly candle-making experiences"],
+};
+
+const UNCLE_BOBBIES: GovernedKinfolkBusiness = {
+  ...AMINA,
+  id: "uncle-bobbies-id",
+  name: "Uncle Bobbie's Coffee & Books",
+  category: "Food",
+  subcategory: "Cafés & Coffee",
+  website: "https://www.unclebobbies.com/",
+  tags: ["Independent bookstore", "Coffee and espresso bar", "Author events and workshops"],
+};
+
+const QUEEN_AND_ROOK: GovernedKinfolkBusiness = {
+  ...AMINA,
+  id: "queen-and-rook-id",
+  name: "Queen & Rook Game Cafe",
+  category: "Arts, Culture & Entertainment",
+  subcategory: "Gaming & Recreation",
+  website: "https://www.queenandrookcafe.com/youth-programs/",
+  tags: ["Board-game play", "Retro video-game arcade", "Food and full bar"],
+  audiencesServed: ["youth ages 6-16", "teen programs ages 13-16"],
+};
+
+const ADULT_NIGHTCLUB: GovernedKinfolkBusiness = {
+  ...AMINA,
+  id: "adults-only-id",
+  name: "Adults Only Night Club",
+  category: "Arts, Culture & Entertainment",
+  subcategory: "Nightlife",
+  tags: ["Adult nightlife", "Cocktails", "21+"],
+};
+
+const PHILADELPHIA_CATALOG = [AMINA, LOOMEN, UNCLE_BOBBIES, QUEEN_AND_ROOK, ADULT_NIGHTCLUB];
 
 describe("Kinfolk itinerary normalization", () => {
   it("extracts and normalizes exactly three day-by-day entries", () => {
@@ -127,6 +170,56 @@ describe("Kinfolk itinerary normalization", () => {
     expect(instruction).toContain("Set recommendations:null");
     expect(instruction).toMatch(/omit canonicalVenue/i);
     expect(instruction).toMatch(/never invent or rename a venue/i);
+    expect(instruction).toMatch(/explicit preferences and audience policy/i);
+    expect(instruction).toMatch(/without stating or guessing the member's age/i);
+  });
+
+  it("ranks distinct, explainable Philadelphia trip options for the four attainable family profiles", () => {
+    const profiles = [
+      {
+        profile: "P21",
+        statedAge: 21,
+        expected: "Loomen Labs",
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["candle-making experiences"], tripStyle: ["hands-on"], travelCompanion: "friends" },
+      },
+      {
+        profile: "P45",
+        statedAge: 45,
+        expected: "AMINA",
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["Southern and West African inspired dining"], tripStyle: ["date night"], travelCompanion: "partner" },
+      },
+      {
+        profile: "P65",
+        statedAge: 65,
+        expected: "Uncle Bobbie's Coffee & Books",
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["independent bookstores and author events"], tripStyle: ["cultural"], travelCompanion: "solo" },
+      },
+      {
+        profile: "P14",
+        statedAge: 14,
+        expected: "Queen & Rook Game Cafe",
+        settings: { ageBand: "13_15" as const, favoriteCategories: ["video games and board games"], tripStyle: ["family"], travelCompanion: "family" },
+      },
+    ];
+
+    const winners = profiles.map(({ profile, statedAge, expected, settings }) => {
+      const ranked = rankTravelCatalogForMember({
+        catalog: PHILADELPHIA_CATALOG,
+        message: "Plan a weekend trip in Philadelphia",
+        profile: settings,
+      });
+      expect(ranked[0]?.name, `${profile} age ${statedAge}`).toBe(expected);
+      expect(ranked[0]?.matchReasons.length, `${profile} why-this-fits`).toBeGreaterThan(0);
+      expect(ranked[0]?.website, `${profile} action link`).toMatch(/^https:\/\//);
+      expect(ranked[0]?.claimed, `${profile} claim truth`).toBe(false);
+      expect(ranked[0]?.verified, `${profile} verification truth`).toBe(false);
+      if (profile === "P14") {
+        expect(ranked.some((entry) => entry.name === "Adults Only Night Club")).toBe(false);
+      }
+      return ranked[0]!.name;
+    });
+
+    expect(new Set(winners).size).toBe(4);
   });
 });
 

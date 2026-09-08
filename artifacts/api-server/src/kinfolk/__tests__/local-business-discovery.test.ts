@@ -7,6 +7,7 @@ vi.mock("@workspace/integrations-openai-ai-server", () => ({
 
 import { resolveNamedBusinessTurn } from "../business-reference";
 import { deriveBusinessSubject } from "../business-subject";
+import type { GovernedKinfolkBusiness, GovernedKinfolkMapPlace } from "../governedBusinessRepository";
 import {
   buildBusinessDiscoveryWebQueries,
   discoverLocalBusinesses,
@@ -24,7 +25,7 @@ afterEach(() => {
 
 const bookstore = deriveBusinessSubject("Can you tell me about bookstores in Atlanta GA")!;
 
-const governedBusiness = {
+const governedBusiness: GovernedKinfolkBusiness = {
   id: "business-1",
   name: "Atlanta Reading Room",
   category: "Shopping",
@@ -62,7 +63,7 @@ const governedBusiness = {
   identityReasons: [],
 };
 
-const forKeepsPlace = {
+const forKeepsPlace: GovernedKinfolkMapPlace = {
   id: "7a361f84-68e2-4f41-8928-863311d0cae2",
   entityKind: "cultural_site",
   title: "For Keeps Books and Auburn Avenue Bookstores",
@@ -74,12 +75,85 @@ const forKeepsPlace = {
   sourceUrl: null,
 };
 
-function repository(input?: { businesses?: typeof governedBusiness[]; places?: typeof forKeepsPlace[] }) {
+function repository(input?: {
+  businesses?: GovernedKinfolkBusiness[];
+  preferenceBusinesses?: GovernedKinfolkBusiness[];
+  places?: GovernedKinfolkMapPlace[];
+}) {
   return {
     findBySubject: vi.fn().mockResolvedValue(input?.businesses ?? []),
+    findByPreferenceTerms: vi.fn().mockResolvedValue(input?.preferenceBusinesses ?? []),
     findPublishedMapEntities: vi.fn().mockResolvedValue(input?.places ?? []),
   };
 }
+
+const philadelphiaFamilyCatalog = [
+  {
+    ...governedBusiness,
+    id: "loomen",
+    name: "Loomen Labs",
+    city: "Philadelphia",
+    stateCode: "PA",
+    category: "Arts, Culture & Entertainment",
+    subcategory: "Attractions",
+    description: "Founder-curated, unclaimed Attractions listing in Philadelphia. Not verified by Mapping With Melanin.",
+    website: "https://www.loomenlabs.com/",
+    tags: ["Guided custom perfume experiences", "Custom eco-friendly candle-making experiences"],
+    matchReasons: [],
+  },
+  {
+    ...governedBusiness,
+    id: "amina",
+    name: "AMINA",
+    city: "Philadelphia",
+    stateCode: "PA",
+    category: "Food",
+    subcategory: "Restaurants",
+    description: "Southern cuisine in Philadelphia. Unclaimed and not MWM verified.",
+    website: "https://www.aminaphilly.com",
+    tags: ["Southern cuisine", "West African-inspired dishes", "dining"],
+    matchReasons: [],
+  },
+  {
+    ...governedBusiness,
+    id: "uncle-bobbies",
+    name: "Uncle Bobbie's Coffee & Books",
+    city: "Philadelphia",
+    stateCode: "PA",
+    category: "Food",
+    subcategory: "Cafés & Coffee",
+    description: "Founder-curated, unclaimed cafe listing in Philadelphia. Not verified by Mapping With Melanin.",
+    website: "https://www.unclebobbies.com/",
+    tags: ["Independent bookstore", "Author events and workshops"],
+    matchReasons: [],
+  },
+  {
+    ...governedBusiness,
+    id: "queen-and-rook",
+    name: "Queen & Rook Game Cafe",
+    city: "Philadelphia",
+    stateCode: "PA",
+    category: "Arts, Culture & Entertainment",
+    subcategory: "Gaming & Recreation",
+    description: "Founder-curated, unclaimed game cafe listing in Philadelphia. Not verified by Mapping With Melanin.",
+    website: "https://www.queenandrookcafe.com/youth-programs/",
+    tags: ["Board-game play", "Retro video-game arcade", "Food and full bar"],
+    audiencesServed: ["youth ages 6-16", "teen programs ages 13-16"],
+    matchReasons: [],
+  },
+  {
+    ...governedBusiness,
+    id: "adult-nightclub",
+    name: "Adults Only Night Club",
+    city: "Philadelphia",
+    stateCode: "PA",
+    category: "Arts, Culture & Entertainment",
+    subcategory: "Nightlife",
+    description: "Adults only nightlife.",
+    tags: ["Cocktails", "21+"],
+    matchReasons: [],
+  },
+];
 
 describe("local business subject classification", () => {
   it.each(["bookstore", "bookstores", "book store", "bookshop", "bookseller", "books"])(
@@ -118,6 +192,56 @@ describe("local business subject classification", () => {
 });
 
 describe("deterministic local business discovery", () => {
+  it("uses one generic Philadelphia activity request to produce four distinct profile-backed cards", async () => {
+    const activity = deriveBusinessSubject("Find things to do in Philadelphia PA")!;
+    const profiles = [
+      { profile: "P21", ageBand: "18_plus" as const, terms: ["candle-making experiences"], expected: "Loomen Labs" },
+      { profile: "P45", ageBand: "18_plus" as const, terms: ["Southern and West African dining"], expected: "AMINA" },
+      { profile: "P65", ageBand: "18_plus" as const, terms: ["independent bookstores and author events"], expected: "Uncle Bobbie's Coffee & Books" },
+      { profile: "P14", ageBand: "13_15" as const, terms: ["video games and board games"], expected: "Queen & Rook Game Cafe" },
+    ];
+
+    const winners: string[] = [];
+    for (const profile of profiles) {
+      const db = repository({
+        businesses: philadelphiaFamilyCatalog.filter((business) => business.id === "loomen" || business.id === "queen-and-rook"),
+        preferenceBusinesses: philadelphiaFamilyCatalog,
+      });
+      const result = await discoverLocalBusinesses({
+        scope: { city: "Philadelphia", stateCode: "PA" },
+        subject: activity,
+        repository: db,
+        personalization: {
+          ageBand: profile.ageBand,
+          preferenceTerms: profile.terms,
+          currentRequest: "Find things to do in Philadelphia PA",
+        },
+        webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+      });
+
+      expect(db.findByPreferenceTerms).toHaveBeenCalledWith(
+        { city: "Philadelphia", stateCode: "PA" },
+        profile.terms,
+        50,
+      );
+      expect(result.resultView.cards[0]).toMatchObject({
+        title: profile.expected,
+        verified: false,
+        claimed: false,
+      });
+      expect(result.resultView.cards[0]?.matchReason).toMatch(/saved preference|published youth/i);
+      expect(result.resultView.cards[0]?.actions.map((action) => action.label)).toEqual([
+        "View details",
+        "Visit website",
+      ]);
+      if (profile.profile === "P14") {
+        expect(result.discovery.platformBusinesses.some((business) => business.name === "Adults Only Night Club")).toBe(false);
+      }
+      winners.push(result.resultView.cards[0]!.title);
+    }
+    expect(new Set(winners).size).toBe(4);
+  });
+
   it.each([
     ["Philadelphia", "PA", "restaurant", "restaurant"],
     ["Philadelphia", "PA", "bookstore", "bookstore"],

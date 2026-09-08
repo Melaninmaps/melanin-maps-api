@@ -169,6 +169,45 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
+  it("searches explicit preference evidence only inside the governed Philadelphia catalog", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [AMINA_ROW] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    const result = await repository.findByPreferenceTerms(
+      { city: " Philadelphia ", stateCode: "pa" },
+      ["Southern and West African inspired dining", "trip", "and"],
+      50,
+    );
+
+    expect(result[0]).toMatchObject({ name: "AMINA", city: "Philadelphia", stateCode: "PA" });
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("FROM public.public_businesses AS b");
+    expect(sql).toContain("LEFT JOIN public.business_identity AS bi");
+    expect(sql).toContain("LOWER(BTRIM(b.city)) = LOWER($1)");
+    expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $2");
+    expect(sql).toContain("FROM unnest($3::text[])");
+    expect(sql).toContain("COALESCE(bi.audiences_served, '[]'::jsonb)::text");
+    expect(sql).toContain("LIMIT $4");
+    expect(sql).not.toContain("promotion_eligible");
+    expect(params).toEqual([
+      "Philadelphia",
+      "PA",
+      ["southern", "west", "african", "dining"],
+      50,
+    ]);
+  });
+
+  it("does not query when explicit preferences normalize to no safe search tokens", async () => {
+    const pool = { query: vi.fn() };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    await expect(repository.findByPreferenceTerms(
+      { city: "Philadelphia", stateCode: "PA" },
+      ["and", "the", "trip"],
+    )).resolves.toEqual([]);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
 
   it("searches exact Atlanta geography by bookstore relevance before limiting rows", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };

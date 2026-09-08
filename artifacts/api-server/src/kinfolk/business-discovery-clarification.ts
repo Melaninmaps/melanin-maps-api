@@ -1,18 +1,21 @@
+import type { BusinessAudienceBand } from "./business-personalization";
 import type { BusinessSubjectKey } from "./business-subject";
 import type { ClarificationStep } from "./intentClarification";
 
-export function temporaryBusinessAudienceBand(message: string): string | null {
-  if (/\b(?:teens?|teenagers?|13\s*(?:-|to)\s*17)\b/i.test(message)) return "13_17";
+export function temporaryBusinessAudienceBand(message: string): BusinessAudienceBand | null {
+  // A broad "teen" request uses the younger canonical teen band so results are
+  // safe across the full 13–17 range without inventing a persisted 13_17 value.
+  if (/\b(?:teens?|teenagers?|13\s*(?:-|to)\s*17)\b/i.test(message)) return "13_15";
   if (/\b(?:child|children|kid|kids|under 13)\b/i.test(message)) return "under_13";
-  if (/\b(?:adult|adults|grown[- ]?ups?)\b/i.test(message)) return "18_39";
-  if (/\b(?:mixed ages|all ages|keep this search broad)\b/i.test(message)) return "mixed";
+  if (/\b(?:adult|adults|grown[- ]?ups?)\b/i.test(message)) return "18_plus";
+  if (/\b(?:mixed ages|all ages|keep this search broad)\b/i.test(message)) return "mixed_all_ages";
   return null;
 }
 
 export function businessDiscoveryClarification(input: {
   message: string;
   subjectKey: BusinessSubjectKey;
-  ageBand: string;
+  ageBand: BusinessAudienceBand;
   city?: string;
 }): ClarificationStep[] {
   const locationSuffix = input.city?.trim() ? ` in ${input.city.trim()}` : "";

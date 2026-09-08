@@ -130,6 +130,10 @@ type MapPlaceRow = {
 const DEFAULT_CATALOG_LIMIT = 25;
 const MAX_CATALOG_LIMIT = 50;
 const MAX_RADIUS_MILES = 100;
+const PREFERENCE_STOP_WORDS = new Set([
+  "and", "the", "for", "with", "from", "into", "near", "local", "style",
+  "things", "places", "travel", "trip", "experiences", "experience", "inspired",
+]);
 
 const CANONICAL_SELECT = `
   b.id,
@@ -261,6 +265,17 @@ function boundedLimit(limit: number | undefined): number {
   if (!Number.isInteger(limit) || limit < 1)
     throw new Error("KINFOLK_BUSINESS_LIMIT_INVALID");
   return Math.min(limit, MAX_CATALOG_LIMIT);
+}
+
+function preferenceSearchTokens(values: readonly string[]): string[] {
+  return [...new Set(values.flatMap((value) => value
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length >= 3 && !PREFERENCE_STOP_WORDS.has(token))))]
+    .slice(0, 32);
 }
 
 function normalizedIdentityText(value: string | null | undefined): string {
@@ -515,6 +530,47 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           // Defense in depth if a legacy DB collation differs from JS/regex.
           .filter((business) => business.matchReasons.length > 0),
       ).businesses;
+    },
+
+    async findByPreferenceTerms(
+      scope: ValidatedKinfolkCityScope,
+      preferenceTerms: readonly string[],
+      limit = 50,
+    ): Promise<GovernedKinfolkBusiness[]> {
+      const location = validateKinfolkCityScope(scope);
+      const resultLimit = boundedLimit(limit);
+      const tokens = preferenceSearchTokens(preferenceTerms);
+      if (tokens.length === 0) return [];
+      const { rows } = await pool.query<BusinessRow>(
+        `
+        SELECT ${CANONICAL_SELECT}, NULL::double precision AS distance_miles
+        FROM public.public_businesses AS b
+        LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
+        WHERE LOWER(BTRIM(b.city)) = LOWER($1)
+          AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
+          AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+          AND EXISTS (
+            SELECT 1
+            FROM unnest($3::text[]) AS preference(token)
+            WHERE LOWER(CONCAT_WS(' ',
+              b.name,
+              b.category,
+              b.subcategory,
+              b.description,
+              COALESCE(b.tags, '[]'::jsonb)::text,
+              COALESCE(bi.community_values, '[]'::jsonb)::text,
+              COALESCE(bi.audiences_served, '[]'::jsonb)::text,
+              COALESCE(bi.vibes, '[]'::jsonb)::text,
+              COALESCE(bi.environment_tags, '[]'::jsonb)::text,
+              COALESCE(bi.amenity_tags, '[]'::jsonb)::text
+            )) LIKE '%' || preference.token || '%'
+          )
+        ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
+        LIMIT $4
+      `,
+        [location.city, location.stateCode, tokens, resultLimit],
+      );
+      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness)).businesses;
     },
 
     async findPublishedMapEntities(

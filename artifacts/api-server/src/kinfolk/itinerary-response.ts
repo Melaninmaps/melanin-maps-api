@@ -2,6 +2,11 @@ import {
   normalizeExactBusinessName,
   type GovernedKinfolkBusiness,
 } from "./governedBusinessRepository";
+import {
+  rankGovernedBusinessesForMember,
+  type BusinessAudienceBand,
+  type RankedKinfolkBusiness,
+} from "./business-personalization";
 
 export type KinfolkItineraryActivity = {
   time: string;
@@ -30,6 +35,18 @@ export type ParsedKinfolkModelPayload = {
   reply: string;
   value: Record<string, unknown> | null;
 };
+
+export type KinfolkTravelProfile = Readonly<{
+  ageBand: BusinessAudienceBand;
+  favoriteCategories?: readonly string[] | null;
+  tripStyle?: readonly string[] | null;
+  culturalInterests?: readonly string[] | null;
+  lifestyleServices?: readonly string[] | null;
+  avoidCategories?: readonly string[] | null;
+  budgetRange?: string | null;
+  travelCompanion?: string | null;
+  dietaryNotes?: string | null;
+}>;
 
 export const SAFE_MODEL_RESPONSE_FALLBACK =
   "I’m having trouble putting that answer together safely right now. Please try again.";
@@ -68,6 +85,38 @@ export function extractItineraryDayCount(message: string): number {
   if (word) return NUMBER_WORDS[word[1].toLowerCase()] ?? 1;
   if (/\bweekend\b/i.test(message)) return 2;
   return 1;
+}
+
+/**
+ * Order a destination's governed catalog using only explicit profile choices and
+ * the canonical audience policy. Adult life stage is not guessed from DOB or age;
+ * adult profiles differ when their selected tastes differ. Teen/unknown profiles
+ * retain the protective venue filter from business-personalization.
+ */
+export function rankTravelCatalogForMember(input: {
+  catalog: readonly GovernedKinfolkBusiness[];
+  message: string;
+  profile: KinfolkTravelProfile;
+}): RankedKinfolkBusiness[] {
+  const preferenceTerms = [
+    ...(input.profile.favoriteCategories ?? []),
+    ...(input.profile.tripStyle ?? []),
+    ...(input.profile.culturalInterests ?? []),
+    ...(input.profile.lifestyleServices ?? []),
+    ...(input.profile.budgetRange && input.profile.budgetRange !== "any"
+      ? [input.profile.budgetRange]
+      : []),
+    ...(input.profile.travelCompanion && input.profile.travelCompanion !== "solo"
+      ? [input.profile.travelCompanion]
+      : []),
+    ...(input.profile.dietaryNotes ? [input.profile.dietaryNotes] : []),
+  ];
+  return rankGovernedBusinessesForMember(input.catalog, {
+    ageBand: input.profile.ageBand,
+    preferenceTerms,
+    avoidTerms: input.profile.avoidCategories ?? [],
+    currentRequest: input.message,
+  });
 }
 
 function nonempty(value: unknown): string | null {
@@ -216,6 +265,7 @@ export function itineraryPromptInstruction(dayCount: number, destination: string
     `The itinerary.days array must contain exactly ${dayCount} entries. The server will replace day numbers with 1 through ${dayCount}.`,
     "Itinerary shape: {days:[{day,theme,activities:[{time,title,description,canonicalVenue?}],safetyNote?,packingTips?}],safetyNote?,packingTips?}.",
     "For a generic activity, omit canonicalVenue. To name a venue, canonicalVenue must be an exact catalog business name or its catalog ID; never invent or rename a venue.",
+    "The catalog is already ordered by the server using the member's explicit preferences and audience policy. Prefer its strongest relevant matches and explain the fit without stating or guessing the member's age, identity, or private profile values.",
     "Set recommendations:null. Return pure JSON without Markdown fences, and always include a concise conversational reply.",
   ].join("\n");
 }

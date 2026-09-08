@@ -69,6 +69,7 @@ import {
   itineraryPromptInstruction,
   normalizeKinfolkItinerary,
   parseKinfolkModelPayload,
+  rankTravelCatalogForMember,
   type KinfolkItinerary,
 } from "../kinfolk/itinerary-response";
 
@@ -123,7 +124,7 @@ import {
   updateOwnedAnswerPlanDepth,
 } from "../kinfolk/answer-plan-persistence";
 import { eligibleForDefaultLearning } from "../kinfolk/adaptive-delivery";
-import { loadAdaptiveDeliveryProfile } from "../kinfolk/adaptive-tone-and-audience-filter";
+import { getMemberAgeBand } from "../lib/audience-policy";
 import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
@@ -1613,7 +1614,7 @@ function getCityLocalTerms(destination: string): CityLocalData | null {
 }
 
 // ─── Build personalized system prompt ─────────────────────────────────────────
-type BusinessCatalogEntry = GovernedKinfolkBusiness;
+type BusinessCatalogEntry = GovernedKinfolkBusiness & { matchReasons?: string[] };
 
 type CrossCityMatch = {
   category: string;
@@ -2173,6 +2174,7 @@ ${businessCatalog.slice(0, 8).map(b => {
   if (b.vibes?.length) meta.push(`vibes: ${b.vibes.slice(0, 3).join(", ")}`);
   if (b.ownershipBadges?.length) meta.push(b.ownershipBadges.slice(0, 2).join(", "));
   if (b.audiencesServed?.length) meta.push(`for: ${b.audiencesServed.slice(0, 2).join(", ")}`);
+  if (b.matchReasons?.length) meta.push(`why it fits: ${b.matchReasons.slice(0, 2).join("; ")}`);
   if (meta.length) parts.push(`  [${meta.join(" | ")}]`);
   return parts.join("\n");
 }).join("\n\n")}
@@ -2732,11 +2734,11 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   } catch {
     return false;
   }
-  const [prefs, deliveryProfile] = await Promise.all([
+  const [prefs, assuredAgeBand] = await Promise.all([
     getCachedPrefs(input.req.user!.id),
-    loadAdaptiveDeliveryProfile(input.req.user!.id),
+    getMemberAgeBand(input.req.user!.id),
   ]);
-  const ageBand = temporaryBusinessAudienceBand(input.message) ?? deliveryProfile.ageBand;
+  const ageBand = temporaryBusinessAudienceBand(input.message) ?? assuredAgeBand;
   const clarificationSteps = businessDiscoveryClarification({
     message: input.message,
     subjectKey: subject.key,
@@ -4189,6 +4191,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const memberCtx = req.user?.id
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
       : { audienceBand: "unknown" as const, pronounMode: "none" as const };
+    const travelPlanning = isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning";
+    if (travelPlanning && businessCatalog.length > 0) {
+      businessCatalog = rankTravelCatalogForMember({
+        catalog: businessCatalog,
+        message,
+        profile: {
+          ageBand: memberCtx.audienceBand,
+          favoriteCategories: prefs?.favoriteCategories,
+          tripStyle: prefs?.tripStyle,
+          culturalInterests: prefs?.culturalInterests,
+          lifestyleServices: prefs?.lifestyleServices,
+          avoidCategories: prefs?.avoidCategories,
+          budgetRange: prefs?.budgetRange,
+          travelCompanion: prefs?.travelCompanion,
+          dietaryNotes: prefs?.dietaryNotes,
+        },
+      });
+    }
     const memberFirstName: string | null =
       (prefs as Record<string, unknown> | null)?.first_name as string | null
       ?? null;
@@ -4287,7 +4307,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Prepend intent policy block for any intent that requires special handling.
     // Also prepend any brunch/discovery instruction from the pre-classifier.
     // Empty string for low-consequence general knowledge queries (no overhead).
-    const travelPlanning = isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning";
     const itineraryInstruction = travelPlanning && destination
       ? itineraryPromptInstruction(extractItineraryDayCount(message), destination)
       : "";
