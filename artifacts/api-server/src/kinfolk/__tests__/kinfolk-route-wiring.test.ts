@@ -61,12 +61,15 @@ describe("Kinfolk chat static wiring", () => {
   it("reuses published Library knowledge before the model only for stable general questions", () => {
     const intentStart = chatRoute.indexOf("const intentClass: KinfolkIntent");
     const approvedLookup = chatRoute.indexOf("await findApprovedLibraryAnswer({");
+    const semanticPlanner = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan");
     const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
 
     expect(intentStart).toBeGreaterThan(-1);
     expect(approvedLookup).toBeGreaterThan(intentStart);
+    expect(approvedLookup).toBeLessThan(semanticPlanner);
     expect(approvedLookup).toBeLessThan(providerCall);
     expect(chatRoute).toContain('intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness');
+    expect(routeSource).toMatch(/CURRENT_RESEARCH_RE = \/.*as of.*\/i;/);
     expect(chatRoute).toContain('answerMode: "approved_library"');
     expect(chatRoute).toContain("usedInternal: true");
     expect(chatRoute).toContain("usedLiveWeb: false");

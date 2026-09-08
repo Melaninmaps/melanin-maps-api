@@ -338,8 +338,8 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              NULL::text AS icon_key,
              NULL::int AS entry_count,
              entry.body,
-             COALESCE(linked_topic.slug, owner_topic.slug) AS topic_slug,
-             COALESCE(linked_topic.title, owner_topic.title) AS topic_title,
+             owner_topic.slug AS topic_slug,
+             owner_topic.title AS topic_title,
              entry.source_count,
              COALESCE((
                SELECT jsonb_agg(
