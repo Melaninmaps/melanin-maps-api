@@ -109,9 +109,9 @@ const philadelphiaFamilyCatalog = [
     stateCode: "PA",
     category: "Food",
     subcategory: "Restaurants",
-    description: "Southern cuisine in Philadelphia. Unclaimed and not MWM verified.",
+    description: "American Southern cuisine and African-inspired culinary creations in Philadelphia. Unclaimed and not MWM verified.",
     website: "https://www.aminaphilly.com",
-    tags: ["Southern cuisine", "West African-inspired dishes", "dining"],
+    tags: ["American Southern cuisine", "African-inspired culinary creations", "Fun dining experience"],
     matchReasons: [],
   },
   {
@@ -196,7 +196,7 @@ describe("deterministic local business discovery", () => {
     const activity = deriveBusinessSubject("Find things to do in Philadelphia PA")!;
     const profiles = [
       { profile: "P21", ageBand: "18_plus" as const, terms: ["candle-making experiences"], expected: "Loomen Labs" },
-      { profile: "P45", ageBand: "18_plus" as const, terms: ["Southern and West African dining"], expected: "AMINA" },
+      { profile: "P45", ageBand: "18_plus" as const, terms: ["American Southern cuisine and African-inspired dining"], expected: "AMINA" },
       { profile: "P65", ageBand: "18_plus" as const, terms: ["independent bookstores and author events"], expected: "Uncle Bobbie's Coffee & Books" },
       { profile: "P14", ageBand: "13_15" as const, terms: ["video games and board games"], expected: "Queen & Rook Game Cafe" },
     ];

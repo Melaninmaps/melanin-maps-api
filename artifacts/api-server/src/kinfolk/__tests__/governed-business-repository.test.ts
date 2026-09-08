@@ -175,7 +175,7 @@ describe("governed Kinfolk business repository", () => {
 
     const result = await repository.findByPreferenceTerms(
       { city: " Philadelphia ", stateCode: "pa" },
-      ["Southern and West African inspired dining", "trip", "and"],
+      ["American Southern cuisine and African-inspired dining", "trip", "and"],
       50,
     );
 
@@ -194,7 +194,7 @@ describe("governed Kinfolk business repository", () => {
     expect(params).toEqual([
       "Philadelphia",
       "PA",
-      ["southern", "west", "african", "dining"],
+      ["american", "southern", "cuisine", "african", "dining"],
       50,
     ]);
   });

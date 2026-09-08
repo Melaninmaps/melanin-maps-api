@@ -58,7 +58,7 @@ const PHILADELPHIA_ACTIVITIES = [
     "Guided custom perfume experiences", "Custom eco-friendly candle-making experiences",
   ]),
   business("amina", "Amina", "Food & Drink", "Restaurants", [
-    "Southern-inspired dishes", "West African-inspired dishes", "Brunch and dinner",
+    "American Southern cuisine", "African-inspired culinary creations", "Fun dining experience",
   ]),
   business("bobbies", "Uncle Bobbie's Coffee & Books", "Food & Drink", "Cafés & Coffee", [
     "Independent bookstore", "Coffee and espresso bar", "Author events and workshops",
@@ -81,7 +81,7 @@ const PHILADELPHIA_ACTIVITIES = [
 describe("Kinfolk business personalization", () => {
   it.each([
     { profile: "P21", statedAge: 21, ageBand: "18_plus" as const, preferenceTerms: ["hands-on candle-making experiences"], expected: "Loomen Labs" },
-    { profile: "P45", statedAge: 45, ageBand: "18_plus" as const, preferenceTerms: ["Southern and West African inspired dining"], expected: "Amina" },
+    { profile: "P45", statedAge: 45, ageBand: "18_plus" as const, preferenceTerms: ["American Southern cuisine and African-inspired dining"], expected: "Amina" },
     { profile: "P65", statedAge: 65, ageBand: "18_plus" as const, preferenceTerms: ["independent bookstores and author events"], expected: "Uncle Bobbie's Coffee & Books" },
     { profile: "P14", statedAge: 14, ageBand: "13_15" as const, preferenceTerms: ["video games and board games"], expected: "Queen & Rook Game Cafe" },
   ])("ranks a different explainable top result for $profile (age $statedAge)", ({ ageBand, preferenceTerms, expected }) => {

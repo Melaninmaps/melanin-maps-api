@@ -1,0 +1,33 @@
+{
+  "evidenceVersion": "2026-09-07-family-profile-acceptance-v1",
+  "reviewedAt": "2026-09-08T01:45:04Z",
+  "target": {
+    "businessId": "1ac1fa6f-379e-441f-b8f6-5b1d1ef56851",
+    "name": "AMINA",
+    "city": "Philadelphia",
+    "state": "PA",
+    "listingStatusMustRemain": "live_unclaimed",
+    "verifiedMustRemain": false
+  },
+  "officialSource": {
+    "title": "AMINA — About",
+    "url": "https://www.aminaphilly.com/about",
+    "publisher": "AMINA",
+    "evidence": [
+      "Amina Restaurant is a restaurant and bar in No Libs Philadelphia, serving up American Southern cuisine.",
+      "With African-inspired culinary creations, Amina introduces a unique and unparalleled flavor experience to the area.",
+      "Amina is a destination for a fun dining experience."
+    ]
+  },
+  "approvedSearchSignals": [
+    "American Southern cuisine",
+    "African-inspired culinary creations",
+    "Fun dining experience"
+  ],
+  "prohibitedInferences": [
+    "MWM verification",
+    "business claim or ownership verification",
+    "member race, nationality, gender, or identity",
+    "current menu-item availability beyond the official published description"
+  ]
+}

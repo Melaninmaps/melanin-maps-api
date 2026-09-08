@@ -26,7 +26,7 @@ const AMINA: GovernedKinfolkBusiness = {
   verified: false,
   claimed: false,
   blackOwned: false,
-  tags: ["restaurant", "Southern-inspired dishes", "West African-inspired dishes"],
+  tags: ["restaurant", "American Southern cuisine", "African-inspired culinary creations", "Fun dining experience"],
   specialties: [],
   profileStatus: "community_listed",
   story: null,
@@ -186,7 +186,7 @@ describe("Kinfolk itinerary normalization", () => {
         profile: "P45",
         statedAge: 45,
         expected: "AMINA",
-        settings: { ageBand: "18_plus" as const, favoriteCategories: ["Southern and West African inspired dining"], tripStyle: ["date night"], travelCompanion: "partner" },
+        settings: { ageBand: "18_plus" as const, favoriteCategories: ["American Southern cuisine and African-inspired dining"], tripStyle: ["date night"], travelCompanion: "partner" },
       },
       {
         profile: "P65",

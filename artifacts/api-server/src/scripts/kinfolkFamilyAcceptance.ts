@@ -33,7 +33,7 @@ const profiles = [
     ageBand: "18_plus",
     expectedBusiness: "AMINA",
     preferences: {
-      favoriteCategories: ["Southern and West African dining"],
+      favoriteCategories: ["American Southern cuisine and African-inspired dining"],
       favoriteCities: ["Philadelphia"],
       avoidCategories: ["nightclubs"],
       budgetRange: "moderate",
