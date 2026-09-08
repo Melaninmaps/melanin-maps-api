@@ -50,10 +50,18 @@ function scanFile(filePath, relative) {
 function scanAllArchiveFiles(root) {
   const canonicalRoot = fs.realpathSync(root);
   const scannedTargets = new Set();
+  const containsWebStatic = (relative) => {
+    const parts = relative.split("/");
+    return parts.some((part, index) => part === "artifacts" && parts[index + 1] === "web-static");
+  };
   const visit = (directory) => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const absolute = path.join(directory, entry.name);
       const relative = path.relative(canonicalRoot, absolute).split(path.sep).join("/");
+      assert(
+        !containsWebStatic(relative),
+        `mobile-irrelevant web-static entered EAS archive: ${relative}`,
+      );
       if (entry.isDirectory()) {
         visit(absolute);
         continue;

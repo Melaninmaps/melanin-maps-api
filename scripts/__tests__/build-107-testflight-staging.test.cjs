@@ -232,6 +232,46 @@ test("rejects signing files, logs, environment files, and credential literals in
   }
 });
 
+test("excludes the compiled website bundle at any depth from the mobile EAS archive", () => {
+  for (const relative of [".easignore", "artifacts/mobile/.easignore"]) {
+    const contents = fs.readFileSync(path.join(ROOT, relative), "utf8");
+    assert.match(contents, /^artifacts\/web-static$/m);
+  }
+  const tracked = execFileSync("git", ["ls-files", "artifacts/web-static"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  }).trim().split("\n").filter(Boolean);
+  const removedByEasGitRule = execFileSync("git", [
+    "ls-files",
+    "--exclude-from", ".easignore",
+    "--ignored",
+    "--cached",
+    "--",
+    "artifacts/web-static",
+  ], { cwd: ROOT, encoding: "utf8" }).trim().split("\n").filter(Boolean);
+  assert(tracked.length > 0);
+  assert.deepEqual(removedByEasGitRule, tracked);
+
+  for (const wrapper of ["", "repo-root", "inspection/output/repo-root"]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "mwm-build107-web-static-"));
+    const archiveRoot = path.join(root, wrapper);
+    const mobile = path.join(archiveRoot, "artifacts/mobile");
+    fs.mkdirSync(path.join(mobile, "lib"), { recursive: true });
+    fs.writeFileSync(path.join(mobile, "app.json"), "{}\n");
+    fs.writeFileSync(path.join(mobile, "lib/api.ts"), `export const api = '${STAGING_ORIGIN}';\n`);
+    fs.mkdirSync(path.join(archiveRoot, "artifacts/web-static/assets"), { recursive: true });
+    fs.writeFileSync(path.join(archiveRoot, "artifacts/web-static/assets/index.js"), "const harmless = true;\n");
+    try {
+      assert.throws(
+        () => validateBuild107Archive(root),
+        /mobile-irrelevant web-static entered EAS archive/,
+      );
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
 test("accepts exact Expo staging proof and rejects production/OTA/audio drift", () => {
   withExport(`const api=${JSON.stringify(STAGING_ORIGIN)};`, (directory) => {
     assert.equal(validateBuild107ExpoOutput(publicConfig(), introspectConfig(), directory, SHA).stagingHits, 1);
