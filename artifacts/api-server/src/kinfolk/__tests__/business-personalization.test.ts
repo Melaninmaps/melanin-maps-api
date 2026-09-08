@@ -115,7 +115,7 @@ describe("Kinfolk business personalization", () => {
     expect(rankGovernedBusinessesForMember([misleading], { ageBand: "13_15" })).toEqual([]);
   });
 
-  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+  it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "hard-blocks adult-entertainment classifications for protective band %s even with false youth text",
     (ageBand) => {
       const adultEntertainment = {
@@ -128,9 +128,14 @@ describe("Kinfolk business personalization", () => {
     },
   );
 
-  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
-    "blocks standalone 21+ and restrictions stored outside tags for protective band %s",
+  it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+    "blocks standalone 18+/21+ and restrictions stored outside tags for protective band %s",
     (ageBand) => {
+      const onlyEighteenPlus = {
+        ...business("eighteen-plus", "Evening Venue", "Entertainment", "Shows", []),
+        audiencesServed: ["family friendly"],
+        specialties: ["Venue 18+"],
+      };
       const onlyTwentyOnePlus = {
         ...business("twenty-one", "Late Show", "Entertainment", "Shows", []),
         audiencesServed: ["family friendly"],
@@ -147,9 +152,10 @@ describe("Kinfolk business personalization", () => {
         whatCustomersShouldKnow: "This is a gentlemen's club.",
       };
       expect(rankGovernedBusinessesForMember(
-        [onlyTwentyOnePlus, adultAudienceType, adultNarrative],
+        [onlyEighteenPlus, onlyTwentyOnePlus, adultAudienceType, adultNarrative],
         { ageBand },
       )).toEqual([]);
+      expect(audienceAllowsBusinessText({ ageBand, text: "Venue 18+" })).toBe(false);
       expect(audienceAllowsBusinessText({ ageBand, text: "Venue 21+" })).toBe(false);
     },
   );
@@ -163,7 +169,7 @@ describe("Kinfolk business personalization", () => {
     expect(rankedForBar[0]?.matchReasons).toEqual([]);
   });
 
-  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+  it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "holds adult-leaning venues from %s results without explicit youth evidence",
     (ageBand) => {
     const adultLeaning = [
@@ -267,7 +273,7 @@ describe("Kinfolk business personalization", () => {
     expect(temporaryBusinessAudienceBand("things to do for mixed ages")).toBe("mixed_all_ages");
   });
 
-  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+  it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "never upgrades persisted protective band %s when the prompt says adults",
     (persistedBand) => {
       expect(effectiveBusinessAudienceBand(persistedBand, "18_plus")).toBe(persistedBand);

@@ -82,10 +82,10 @@ const QUEEN_AND_ROOK: GovernedKinfolkBusiness = {
 const ADULT_NIGHTCLUB: GovernedKinfolkBusiness = {
   ...AMINA,
   id: "adults-only-id",
-  name: "Adults Only Night Club",
+  name: "Evening Venue",
   category: "Arts, Culture & Entertainment",
-  subcategory: "Nightlife",
-  tags: ["Adult nightlife", "Cocktails", "21+"],
+  subcategory: "Shows",
+  tags: ["18+"],
 };
 
 const PHILADELPHIA_CATALOG = [AMINA, LOOMEN, UNCLE_BOBBIES, QUEEN_AND_ROOK, ADULT_NIGHTCLUB];
@@ -246,7 +246,7 @@ describe("Kinfolk itinerary normalization", () => {
       expect(ranked[0]?.claimed, `${profile} claim truth`).toBe(false);
       expect(ranked[0]?.verified, `${profile} verification truth`).toBe(false);
       if (profile === "P14") {
-        expect(ranked.some((entry) => entry.name === "Adults Only Night Club")).toBe(false);
+        expect(ranked.some((entry) => entry.name === "Evening Venue")).toBe(false);
       }
       return ranked[0]!.name;
     });

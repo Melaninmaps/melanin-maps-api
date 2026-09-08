@@ -373,13 +373,13 @@ describe("deterministic local business discovery", () => {
     ]));
   });
 
-  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+  it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "removes adult content from every emitted discovery channel for %s",
     async (ageBand) => {
       const adultBusiness = {
         ...governedBusiness,
         name: "Adult Entertainment Bookstore",
-        specialties: ["Venue 21+"],
+        specialties: ["Venue 18+"],
         audiencesServed: ["all ages"],
       };
       const adultMapPlace: GovernedKinfolkMapPlace = {
@@ -412,7 +412,7 @@ describe("deterministic local business discovery", () => {
       expect(result.discovery.webFindings).toEqual([]);
       expect(result.sources).toEqual([]);
       expect(result.resultView.cards).toEqual([]);
-      expect(serialized).not.toMatch(/adult entertainment|strip club|gentlemen's club|cabaret|21\+/i);
+      expect(serialized).not.toMatch(/adult entertainment|strip club|gentlemen's club|cabaret|18\+|21\+/i);
     },
   );
 

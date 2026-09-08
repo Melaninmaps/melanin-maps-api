@@ -24,7 +24,7 @@ const PROTECTIVE_BANDS = new Set<BusinessAudienceBand>([
   "16_17",
   "mixed_all_ages",
 ]);
-const MINOR_HARD_EXCLUDED = /(?:\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|age[- ]restricted|mature audiences? only)\b|(?:^|[^a-z0-9])21\+(?=$|[^a-z0-9]))/i;
+const MINOR_HARD_EXCLUDED = /(?:\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|age[- ]restricted|mature audiences? only)\b|(?:^|[^a-z0-9])(?:18|21)\s*\+(?=$|[^a-z0-9]))/i;
 const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
 const MINOR_POSITIVE = /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
 const STOP_WORDS = new Set([
