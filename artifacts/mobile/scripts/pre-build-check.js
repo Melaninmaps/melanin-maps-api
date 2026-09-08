@@ -190,7 +190,7 @@ if (blocked) {
   console.log("\n  All checks passed. Safe to run:\n");
   if (checkIos) {
     console.log(
-      `    scripts/release-build-106.sh ios-testflight-staging`
+      `    scripts/release-build-107.sh ios-testflight-staging`
     );
     console.log(
       `\n  After the build completes, record the submitted number:\n`
@@ -200,6 +200,6 @@ if (blocked) {
     );
   }
   if (checkAndroid) {
-    console.log("    Android release builds are hard-blocked by the Build 106 entrypoint.\n");
+    console.log("    Android release builds are hard-blocked by the Build 107 entrypoint.\n");
   }
 }

@@ -19,7 +19,7 @@ if (environment === "staging") {
     throw new Error("Staging Expo config requires the reviewed staging API origin");
   }
   if (revenueCatEnabled) {
-    throw new Error("RevenueCat must remain disabled for Build 106 staging");
+    throw new Error("RevenueCat must remain disabled for Build 107 staging");
   }
 }
 if (releaseChannel === "testflight-staging" && environment !== "staging") {

@@ -32,10 +32,10 @@ export function getApiBase(): string {
   return origin;
 }
 
-export function assertBuild106StagingApiOrigin(): string {
+export function assertBuild107StagingApiOrigin(): string {
   const origin = getApiBase();
   if (origin !== STAGING_ORIGIN) {
-    throw new Error("Build 106 blocked: staging API origin mismatch");
+    throw new Error("Build 107 blocked: staging API origin mismatch");
   }
   return origin;
 }

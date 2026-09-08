@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mapping With Melanin",
     "slug": "mobile",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mappingwithmelanin",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "106",
+      "buildNumber": "107",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
@@ -169,7 +169,7 @@
       }
     },
     "owner": "tlindsay428",
-    "runtimeVersion": "1.1.6-native.1",
+    "runtimeVersion": "1.1.7-native.1",
     "updates": {
       "url": "https://u.expo.dev/0f873107-7787-46ab-9a04-685c2a6756b1"
     }
