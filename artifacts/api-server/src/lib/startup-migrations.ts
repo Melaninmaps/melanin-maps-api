@@ -72,6 +72,19 @@ const PUBLIC_BUSINESSES_VIEW_FILTER = "public.business_record_is_public(b.status
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "user_preferences_recommendation_life_stage_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS recommendation_life_stage VARCHAR(20) NOT NULL DEFAULT 'unspecified';
+      UPDATE user_preferences
+         SET recommendation_life_stage = 'unspecified'
+       WHERE recommendation_life_stage NOT IN ('unspecified','18_39','40_64','65_plus');
+      ALTER TABLE user_preferences
+        DROP CONSTRAINT IF EXISTS user_preferences_recommendation_life_stage_check;
+      ALTER TABLE user_preferences
+        ADD CONSTRAINT user_preferences_recommendation_life_stage_check
+        CHECK (recommendation_life_stage IN ('unspecified','18_39','40_64','65_plus'));`,
+  },
+  {
     name: "user_preferences_social_video_platforms_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS social_video_platforms JSONB DEFAULT '["youtube","tiktok","instagram","facebook","twitch","snapchat","vimeo"]'::jsonb`,

@@ -105,7 +105,8 @@ import {
   findMatchingPublishedLibraryNode,
 } from "../lib/library-growth-engine";
 import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
-import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
+import { loadKinfolkMemberContext, buildLifeStageInstruction, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
+import { resolveRecommendationLifeStage } from "../kinfolk/recommendation-life-stage";
 import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../kinfolk/four-purpose-enforcement";
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
 import { searchAllQueriesWithState, type WebSearchOutcome } from "../kinfolk/web-search";
@@ -2216,6 +2217,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     // On miss: getCachedPrefs issues a new Drizzle query and caches the promise.
     // On hit: returns the cached promise (may still be in-flight → single-flight coalescing).
     const prefs = await getCachedPrefs(userId);
+    const memberAgeBand = await getMemberAgeBand(userId);
 
     const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
     const deliveryRow = await pool.query(
@@ -2238,6 +2240,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
 
     const normalized = prefs ? {
       ...prefs,
+      recommendationLifeStage: resolveRecommendationLifeStage(prefs.recommendationLifeStage, memberAgeBand),
       favoriteCategories:    normalizeArr(prefs.favoriteCategories),
       favoriteCities:        normalizeArr(prefs.favoriteCities),
       avoidCategories:       normalizeArr(prefs.avoidCategories),
@@ -2253,6 +2256,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       regionalFlavor:        normalizeRegionalFlavor(prefs.regionalFlavor),
     } : {
       userId: req.user.id,
+      recommendationLifeStage: "unspecified",
       favoriteCategories: [], favoriteCities: [], avoidCategories: [],
       budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
       ownershipTypes: [], lifestyleServices: [],
@@ -2299,7 +2303,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
     preferredOwnershipTypes, ownershipTypes, diasporaCountries, lifestyleServices, personalityMode, kinfolkVoice,
-    autoSpeak, aaveLevel,
+    autoSpeak, aaveLevel, recommendationLifeStage,
   } = body;
   // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
   const rawOwnershipTypes = Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes
@@ -2311,11 +2315,27 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
       .map(ownershipDesignationFilterId)
       .filter((value) => allowedOwnershipIds.has(value)))].slice(0, 100)
     : undefined;
+  const memberAgeBand = recommendationLifeStage !== undefined
+    ? await getMemberAgeBand(req.user.id)
+    : null;
+  const resolvedRecommendationLifeStage = recommendationLifeStage !== undefined
+    ? resolveRecommendationLifeStage(recommendationLifeStage, memberAgeBand ?? "unknown")
+    : undefined;
+  if (recommendationLifeStage !== undefined
+      && recommendationLifeStage !== "unspecified"
+      && resolvedRecommendationLifeStage === "unspecified") {
+    res.status(400).json({
+      error: "ADULT_LIFE_STAGE_REQUIRES_ADULT_ASSURANCE",
+      message: "Complete adult age assurance before selecting an adult recommendation life stage.",
+    });
+    return;
+  }
   try {
     const [prefs] = await db
       .insert(userPreferencesTable)
       .values({
         userId: req.user.id,
+        recommendationLifeStage: resolvedRecommendationLifeStage,
         favoriteCategories: Array.isArray(favoriteCategories) ? favoriteCategories as string[] : undefined,
         favoriteCities: Array.isArray(favoriteCities) ? favoriteCities as string[] : undefined,
         avoidCategories: Array.isArray(avoidCategories) ? avoidCategories as string[] : undefined,
@@ -2340,6 +2360,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
         set: {
+          ...(resolvedRecommendationLifeStage !== undefined && { recommendationLifeStage: resolvedRecommendationLifeStage }),
           ...(Array.isArray(favoriteCategories) && { favoriteCategories: favoriteCategories as string[] }),
           ...(Array.isArray(favoriteCities) && { favoriteCities: favoriteCities as string[] }),
           ...(Array.isArray(avoidCategories) && { avoidCategories: avoidCategories as string[] }),
@@ -3330,7 +3351,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     ) ? "legal_regulated" : rawIntentClass;
     const memberCtx = req.user?.id
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
-      : { audienceBand: "unknown" as const, pronounMode: "none" as const };
+      : { audienceBand: "unknown" as const, recommendationLifeStage: "unspecified" as const, pronounMode: "none" as const };
     const effectiveAudienceBand = effectiveBusinessAudienceBand(
       memberCtx.audienceBand,
       temporaryBusinessAudienceBand(message),
@@ -4449,6 +4470,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ?? null;
     const pronounBlock = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
+    const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
     const activePrivateMemories = memoryEnabled && req.user?.id
       ? await db.select({ content: kinfolkPrivateMemoriesTable.content, purpose: kinfolkPrivateMemoriesTable.purpose, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
@@ -4559,6 +4581,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : baseSystemPrompt)
       + (pronounBlock       ? `\n\n${pronounBlock}`       : "")
       + (reproductiveBlock  ? `\n\n${reproductiveBlock}`  : "")
+      + (lifeStageBlock     ? `\n\n${lifeStageBlock}`     : "")
       + (!contextualHighConsequence && healthEvidenceBlock ? `\n\n${healthEvidenceBlock}` : "")
       + (!contextualHighConsequence && entityBlock ? `\n\n${entityBlock}` : "")
       + (educationBlock ? `\n\n${educationBlock}` : "")

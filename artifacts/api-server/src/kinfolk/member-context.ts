@@ -25,6 +25,11 @@
 
 import { pool } from "@workspace/db";
 import { resolveMemberAgeBand, type AgeBand } from "../lib/audience-policy";
+import {
+  buildRecommendationLifeStageInstruction,
+  resolveRecommendationLifeStage,
+  type RecommendationLifeStage,
+} from "./recommendation-life-stage";
 
 export type AudienceBand = AgeBand;
 
@@ -38,6 +43,7 @@ export type PronounMode =
 
 export type KinfolkMemberContext = {
   audienceBand: AudienceBand;
+  recommendationLifeStage: RecommendationLifeStage;
   pronounMode: PronounMode;
   customPronounsText?: string | null;
   // Only present when: allowMedicallyRelevantContext=true AND intentClass='medical_health'
@@ -59,6 +65,7 @@ interface IdentityContextRow {
 interface AgeAssuranceRow {
   age_band: AudienceBand | null;
   date_of_birth: Date | string | null;
+  recommendation_life_stage: string | null;
 }
 
 // Keywords that indicate the question is specifically about reproductive anatomy.
@@ -106,9 +113,10 @@ export async function loadKinfolkMemberContext(
   try {
     const [ageRow, identityRow] = await Promise.all([
       pool.query<AgeAssuranceRow>(
-        `SELECT uaa.age_band, u.date_of_birth
+        `SELECT uaa.age_band, u.date_of_birth, up.recommendation_life_stage
            FROM users u
            LEFT JOIN user_age_assurance uaa ON uaa.user_id = u.id
+           LEFT JOIN user_preferences up ON up.user_id = u.id
           WHERE u.id = $1
           LIMIT 1`,
         [userId],
@@ -131,6 +139,7 @@ export async function loadKinfolkMemberContext(
 
     const out: KinfolkMemberContext = {
       audienceBand,
+      recommendationLifeStage: resolveRecommendationLifeStage(ageRow?.recommendation_life_stage, audienceBand),
       pronounMode: "none",
     };
 
@@ -163,8 +172,12 @@ export async function loadKinfolkMemberContext(
     return out;
   } catch {
     // Non-fatal: return minimal context. Never expose errors to caller.
-    return { audienceBand: "unknown", pronounMode: "none" };
+    return { audienceBand: "unknown", recommendationLifeStage: "unspecified", pronounMode: "none" };
   }
+}
+
+export function buildLifeStageInstruction(ctx: KinfolkMemberContext): string {
+  return buildRecommendationLifeStageInstruction(ctx.recommendationLifeStage);
 }
 
 /**

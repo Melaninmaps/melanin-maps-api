@@ -30,21 +30,33 @@ const AVOID = [
 
 const BUDGET_OPTIONS = [
   { value: "budget", label: "Budget-friendly", sub: "$ deals & hidden gems" },
-  { value: "moderate", label: "Moderate", sub: "$$ everyday quality" },
-  { value: "upscale", label: "Upscale", sub: "$$$ elevated experiences" },
-  { value: "mix", label: "Mix it up", sub: "Depends on the occasion" },
+  { value: "mid", label: "Moderate", sub: "$$ everyday quality" },
+  { value: "luxury", label: "Upscale", sub: "$$$ elevated experiences" },
+  { value: "any", label: "Mix it up", sub: "Depends on the occasion" },
 ];
 
 const STYLE_OPTIONS = [
-  { value: "explorer", label: "Explorer", sub: "Find hidden gems" },
-  { value: "local", label: "Local guide", sub: "Where the community goes" },
-  { value: "planner", label: "Planner", sub: "Itineraries & schedules" },
-  { value: "spontaneous", label: "Spontaneous", sub: "Surprise me" },
+  { value: "solo", label: "Solo", sub: "Built around my pace" },
+  { value: "couple", label: "Couple", sub: "Time with a partner" },
+  { value: "family", label: "Family", sub: "Family-friendly planning" },
+  { value: "group", label: "Friend group", sub: "Something the group can enjoy" },
+  { value: "business", label: "Work trip", sub: "Useful around work plans" },
+  { value: "spiritual", label: "Spiritual", sub: "Reflective and meaningful" },
 ];
 
 const COMPANION_OPTIONS = [
-  "Solo", "Partner / Spouse", "Friends", "Family with kids",
-  "Family — no kids", "Colleagues", "It varies",
+  { value: "solo", label: "Solo" },
+  { value: "partner", label: "Partner / Spouse" },
+  { value: "friends", label: "Friends" },
+  { value: "family", label: "Family" },
+  { value: "colleagues", label: "Colleagues" },
+];
+
+const RECOMMENDATION_LIFE_STAGES = [
+  { value: "unspecified" as const, label: "Prefer not to say" },
+  { value: "18_39" as const, label: "18–39" },
+  { value: "40_64" as const, label: "40–64" },
+  { value: "65_plus" as const, label: "65+" },
 ];
 
 const ATMOSPHERE_OPTIONS = [
@@ -69,8 +81,8 @@ const LIFESTYLE_OPTIONS = [
 ];
 
 const PERSONALIZATION_OPTIONS = [
-  { value: "explorer", label: "High — learn everything about my taste" },
-  { value: "community", label: "Balanced — blend my prefs with community signals" },
+  { value: "detailed", label: "High — learn everything about my taste" },
+  { value: "friendly", label: "Balanced — blend my prefs with community signals" },
   { value: "concise", label: "Light — keep it simple, not too personalized" },
 ];
 
@@ -125,12 +137,15 @@ function CardOption({
 export function KinfolkOnboarding({ firstName, onComplete }: Props) {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Accumulated answers
   const [homeCity, setHomeCity] = useState("");
   const [favoriteCities, setFavoriteCities] = useState("");
   const [purposes, setPurposes] = useState<string[]>([]);
   const [favoriteCategories, setFavoriteCategories] = useState<string[]>([]);
+  const [specificInterests, setSpecificInterests] = useState("");
+  const [recommendationLifeStage, setRecommendationLifeStage] = useState<"unspecified" | "18_39" | "40_64" | "65_plus">("unspecified");
   const [avoidCategories, setAvoidCategories] = useState<string[]>([]);
   const [budgetRange, setBudgetRange] = useState("");
   const [tripStyle, setTripStyle] = useState<string[]>([]);
@@ -141,7 +156,7 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
   const [isCommunityOrg, setIsCommunityOrg] = useState(false);
   const [dietaryNotes, setDietaryNotes] = useState("");
   const [lifestyleServices, setLifestyleServices] = useState<string[]>([]);
-  const [personalizationLevel, setPersonalizationLevel] = useState("community");
+  const [personalizationLevel, setPersonalizationLevel] = useState("friendly");
 
   const TOTAL_STEPS = 15;
 
@@ -151,11 +166,42 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
 
   const saveAndComplete = useCallback(async () => {
     setSaving(true);
+    setSaveError(null);
     try {
       const cityList = favoriteCities.split(",").map(c => c.trim()).filter(Boolean);
+      const specificInterestList = specificInterests
+        .split(/[,\n]/)
+        .map(value => value.trim())
+        .filter(value => value.length >= 2 && value.length <= 80);
+      const savedCategories = [...new Set([...favoriteCategories, ...specificInterestList])].slice(0, 50);
+      const personalityMode = atmosphereMode === "cultural"
+        ? "cultural_curator"
+        : atmosphereMode === "explorer"
+          ? "neighborhood_guide"
+          : "community";
 
-      // 1. User profile fields
-      await fetch(`${BASE}api/auth/user/setup`, {
+      // Save preferences first. Profile setup is not marked complete if this fails.
+      const preferencesResponse = await fetch(`${BASE}api/kinfolk/preferences`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recommendationLifeStage,
+          favoriteCities: cityList.length > 0 ? cityList : undefined,
+          favoriteCategories: savedCategories.length > 0 ? savedCategories : undefined,
+          avoidCategories: avoidCategories.length > 0 ? avoidCategories : undefined,
+          budgetRange: budgetRange || undefined,
+          tripStyle: tripStyle.length > 0 ? tripStyle : undefined,
+          travelCompanion: travelCompanion || undefined,
+          personalityMode,
+          lifestyleServices: lifestyleServices.length > 0 ? lifestyleServices : undefined,
+          dietaryNotes: dietaryNotes.trim() || undefined,
+          communicationStyle: personalizationLevel,
+        }),
+      });
+      if (!preferencesResponse.ok) throw new Error("PREFERENCE_SAVE_FAILED");
+
+      const profileResponse = await fetch(`${BASE}api/auth/user/setup`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -168,38 +214,14 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
           profileSetupComplete: true,
         }),
       });
-
-      // 2. Kinfolk preferences
-      await fetch(`${BASE}api/kinfolk/preferences`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          favoriteCities: cityList.length > 0 ? cityList : undefined,
-          favoriteCategories: favoriteCategories.length > 0 ? favoriteCategories : undefined,
-          avoidCategories: avoidCategories.length > 0 ? avoidCategories : undefined,
-          budgetRange: budgetRange || undefined,
-          tripStyle: tripStyle.length > 0 ? tripStyle : undefined,
-          travelCompanion: travelCompanion || undefined,
-          personalityMode: atmosphereMode || personalizationLevel,
-          lifestyleServices: lifestyleServices.length > 0 ? lifestyleServices : undefined,
-          dietaryNotes: dietaryNotes.trim() || undefined,
-          communicationStyle: personalizationLevel,
-        }),
-      });
+      if (!profileResponse.ok) throw new Error("PROFILE_SAVE_FAILED");
+      onComplete();
     } catch {
-      // Non-blocking — mark complete even if pref save fails
-      await fetch(`${BASE}api/auth/user/setup`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileSetupComplete: true }),
-      });
+      setSaveError("Kinfolk could not save your preferences. Nothing was marked complete; please try again.");
     } finally {
       setSaving(false);
-      onComplete();
     }
-  }, [homeCity, favoriteCities, purposes, favoriteCategories, avoidCategories,
+  }, [homeCity, favoriteCities, purposes, favoriteCategories, specificInterests, recommendationLifeStage, avoidCategories,
       budgetRange, tripStyle, travelCompanion, atmosphereMode, ownershipPrefs,
       isBusinessOwner, isCommunityOrg, dietaryNotes, lifestyleServices,
       personalizationLevel, onComplete]);
@@ -309,11 +331,30 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
       title: "What do you most like to discover?",
       subtitle: "Kinfolk will emphasize these in your recommendations.",
       content: (
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map(c => (
-            <Chip key={c} label={c} selected={favoriteCategories.includes(c)}
-              onClick={() => toggle(favoriteCategories, c, setFavoriteCategories)} />
-          ))}
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map(c => (
+              <Chip key={c} label={c} selected={favoriteCategories.includes(c)}
+                onClick={() => toggle(favoriteCategories, c, setFavoriteCategories)} />
+            ))}
+          </div>
+          <div>
+            <label htmlFor="kinfolk-specific-interests" className="block text-xs font-bold text-[#2B1507] mb-1">Anything specific?</label>
+            <textarea id="kinfolk-specific-interests" value={specificInterests} onChange={event => setSpecificInterests(event.target.value)} rows={2}
+              placeholder="e.g. author events, candle making, board games"
+              className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30" />
+            <p className="mt-1 text-xs text-[#3A1F0E]/45">Separate items with commas. This is private taste data and can be removed later.</p>
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[#2B1507] mb-2">Recommendation life stage (optional)</p>
+            <div className="flex flex-wrap gap-2">
+              {RECOMMENDATION_LIFE_STAGES.map(option => (
+                <Chip key={option.value} label={option.label} selected={recommendationLifeStage === option.value}
+                  onClick={() => setRecommendationLifeStage(option.value)} />
+              ))}
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#3A1F0E]/45">Used only when life stage matters. This does not collect your birth date or infer health, income, mobility, or family status. Choose “Prefer not to say” to opt out.</p>
+          </div>
         </div>
       ),
     },
@@ -366,8 +407,8 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
       content: (
         <div className="flex flex-wrap gap-2">
           {COMPANION_OPTIONS.map(c => (
-            <Chip key={c} label={c} selected={travelCompanion === c}
-              onClick={() => setTravelCompanion(c)} />
+            <Chip key={c.value} label={c.label} selected={travelCompanion === c.value}
+              onClick={() => setTravelCompanion(c.value)} />
           ))}
         </div>
       ),
@@ -530,6 +571,12 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
         <div className="flex-1 overflow-y-auto px-6 pb-2">
           {currentStep.content}
         </div>
+
+        {saveError && (
+          <div role="alert" className="mx-6 mb-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {saveError}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-6 py-5 shrink-0 border-t border-[#E8DDD0]/60 flex items-center gap-3">

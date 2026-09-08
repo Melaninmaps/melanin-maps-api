@@ -22,6 +22,25 @@ export declare const userPreferencesTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             length: number | undefined;
         }>;
+        recommendationLifeStage: import("drizzle-orm/pg-core").PgColumn<{
+            name: "recommendation_life_stage";
+            tableName: "user_preferences";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 20;
+        }>;
         favoriteCategories: import("drizzle-orm/pg-core").PgColumn<{
             name: "favorite_categories";
             tableName: "user_preferences";
@@ -482,6 +501,25 @@ export declare const insertUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         length: number | undefined;
     }>;
+    recommendationLifeStage: import("drizzle-orm/pg-core").PgColumn<{
+        name: "recommendation_life_stage";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
+    }>;
     favoriteCategories: import("drizzle-orm/pg-core").PgColumn<{
         name: "favorite_categories";
         tableName: "user_preferences";
@@ -939,6 +977,25 @@ export declare const selectUserPreferencesSchema: import("drizzle-zod").BuildSch
         generated: undefined;
     }, {}, {
         length: number | undefined;
+    }>;
+    recommendationLifeStage: import("drizzle-orm/pg-core").PgColumn<{
+        name: "recommendation_life_stage";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
     }>;
     favoriteCategories: import("drizzle-orm/pg-core").PgColumn<{
         name: "favorite_categories";

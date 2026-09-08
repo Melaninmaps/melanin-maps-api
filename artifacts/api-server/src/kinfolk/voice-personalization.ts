@@ -114,6 +114,7 @@ export function buildLanguagePersonalizationPrompt(options: {
 }
 
 const ENUM_FIELDS: Record<string, readonly string[]> = {
+  recommendationLifeStage: ["unspecified", "18_39", "40_64", "65_plus"],
   budgetRange: ["budget", "mid", "luxury", "any"],
   travelCompanion: ["solo", "partner", "family", "friends", "colleagues"],
   communicationStyle: ["friendly", "concise", "detailed", "professional", "conversational"],

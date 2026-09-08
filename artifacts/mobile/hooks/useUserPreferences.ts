@@ -17,6 +17,7 @@ async function getToken(): Promise<string | null> {
 
 export interface UserPreferences {
   userId: string;
+  recommendationLifeStage: "unspecified" | "18_39" | "40_64" | "65_plus";
   favoriteCategories: string[];
   favoriteCities: string[];
   avoidCategories: string[];
@@ -37,6 +38,7 @@ export interface UserPreferences {
 }
 
 const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
+  recommendationLifeStage: "unspecified",
   favoriteCategories: [],
   favoriteCities: [],
   avoidCategories: [],
@@ -104,7 +106,14 @@ export function useUserPreferences() {
       });
       if (res.ok) {
         const data = (await res.json()) as { preferences: UserPreferences };
-        let prefs = data.preferences;
+        const raw = data.preferences;
+        let prefs: UserPreferences = {
+          ...DEFAULT_PREFS,
+          ...raw,
+          recommendationLifeStage: ["unspecified", "18_39", "40_64", "65_plus"].includes(raw.recommendationLifeStage)
+            ? raw.recommendationLifeStage
+            : "unspecified",
+        };
 
         // If the user has no ownership preferences yet, flush any draft saved during onboarding
         if (!prefs.preferredOwnershipTypes?.length) {

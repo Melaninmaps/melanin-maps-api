@@ -29,6 +29,7 @@ describe("Kinfolk voice preference defaults and validation", () => {
       aaveLevel: 3,
       regionalFlavor: "follow_destination",
       communicationStyle: "friendly",
+      recommendationLifeStage: "40_64",
     })).toEqual({ ok: true });
 
     const invalid = validateKinfolkPreferenceUpdate({
@@ -37,10 +38,11 @@ describe("Kinfolk voice preference defaults and validation", () => {
       aaveLevel: 4,
       regionalFlavor: "wherever",
       emojiLevel: "constant",
+      recommendationLifeStage: "45",
       favoriteCities: ["Memphis", 3],
     });
     expect(invalid.ok).toBe(false);
-    if (!invalid.ok) expect(invalid.issues).toHaveLength(6);
+    if (!invalid.ok) expect(invalid.issues).toHaveLength(7);
   });
 });
 

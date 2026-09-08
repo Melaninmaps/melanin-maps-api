@@ -161,6 +161,7 @@ interface Message {
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
+  recommendationLifeStage: "unspecified" | "18_39" | "40_64" | "65_plus";
   favoriteCategories: string[]; favoriteCities: string[];
   avoidCategories: string[]; budgetRange: string;
   tripStyle: string[]; travelCompanion: string; dietaryNotes: string | null;
@@ -173,6 +174,7 @@ interface Prefs {
 }
 
 const DEFAULT_PREFS: Prefs = {
+  recommendationLifeStage: "unspecified",
   favoriteCategories: [], favoriteCities: [], avoidCategories: [],
   budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
   ownershipTypes: [], lifestyleServices: [],
@@ -186,6 +188,12 @@ const AVOID_OPTS = ["Nightlife","Bars & Clubs","Loud venues","Crowded spaces","T
 const BUDGET_OPTS = [{ id: "budget", label: "Budget 💵" }, { id: "mid", label: "Mid-range 💳" }, { id: "luxury", label: "Luxury ✨" }, { id: "any", label: "No limit" }];
 const TRIP_STYLES = [{ id: "solo", label: "Solo" }, { id: "couple", label: "Couple" }, { id: "family", label: "Family" }, { id: "group", label: "Friend group" }, { id: "business", label: "Work trip" }, { id: "spiritual", label: "Spiritual" }];
 const COMPANIONS = [{ id: "solo", label: "Solo" }, { id: "partner", label: "Partner" }, { id: "family", label: "Family" }, { id: "friends", label: "Friends" }, { id: "colleagues", label: "Colleagues" }];
+const RECOMMENDATION_LIFE_STAGES = [
+  { id: "unspecified" as const, label: "Prefer not to say" },
+  { id: "18_39" as const, label: "18–39" },
+  { id: "40_64" as const, label: "40–64" },
+  { id: "65_plus" as const, label: "65+" },
+];
 const COMMUNICATION_STYLES = [{ id: "friendly", label: "Conversational" }, { id: "concise", label: "Concise" }, { id: "detailed", label: "Detailed" }, { id: "professional", label: "Professional" }];
 
 // ─── Response-style bridge: API "responseStyle" ↔ internal "communicationStyle" ──
@@ -330,6 +338,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
 }) {
   const [local, setLocal] = useState<Prefs>(prefs);
   const [cityInput, setCityInput] = useState("");
+  const [specificInterestInput, setSpecificInterestInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -339,6 +348,20 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
     const city = cityInput.trim();
     if (city && !local.favoriteCities.includes(city)) setLocal(p => ({ ...p, favoriteCities: [...p.favoriteCities, city] }));
     setCityInput("");
+  };
+
+  const addSpecificInterest = () => {
+    const interests = specificInterestInput
+      .split(/[,\n]/)
+      .map((value) => value.trim())
+      .filter((value) => value.length >= 2 && value.length <= 80);
+    if (interests.length) {
+      setLocal((current) => ({
+        ...current,
+        favoriteCategories: [...new Set([...current.favoriteCategories, ...interests])].slice(0, 50),
+      }));
+    }
+    setSpecificInterestInput("");
   };
 
   const save = async () => {
@@ -369,6 +392,37 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
           <ChipSet label="Favorite experiences" options={ALL_CATEGORIES} selected={local.favoriteCategories} onChange={v => setLocal(p => ({ ...p, favoriteCategories: v }))} />
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Something specific Kinfolk should look for</div>
+            <div className="flex gap-2">
+              <input value={specificInterestInput} onChange={e => setSpecificInterestInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addSpecificInterest()}
+                placeholder="e.g. author events, candle making, board games"
+                className="flex-1 h-9 px-3 text-xs bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/40" />
+              <button type="button" onClick={addSpecificInterest} className="px-3 h-9 bg-[#CA922B] text-white rounded-xl text-xs font-bold hover:bg-[#B38024] transition-colors">Add</button>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {local.favoriteCategories.filter(category => !ALL_CATEGORIES.includes(category)).map(category => (
+                <span key={category} className="flex items-center gap-1 bg-[#2B1507] text-[#F5EBD8] px-3 py-1 rounded-full text-xs font-medium">
+                  {category}
+                  <button type="button" aria-label={`Remove ${category}`} onClick={() => setLocal(p => ({ ...p, favoriteCategories: p.favoriteCategories.filter(value => value !== category) }))} className="hover:text-[#CA922B] ml-0.5"><X size={10} /></button>
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">Private taste data. Add only what you want Kinfolk to use, and remove it any time.</p>
+          </div>
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Recommendation life stage (optional)</div>
+            <div className="grid grid-cols-2 gap-2">
+              {RECOMMENDATION_LIFE_STAGES.map(option => (
+                <button key={option.id} type="button" onClick={() => setLocal(p => ({ ...p, recommendationLifeStage: option.id }))}
+                  aria-pressed={local.recommendationLifeStage === option.id}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-colors ${local.recommendationLifeStage === option.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">Used only when life stage matters to a recommendation. Kinfolk does not collect your birth date here or infer health, income, mobility, or family status. Choose “Prefer not to say” to opt out.</p>
+          </div>
           <ChipSet label="Skip these" options={AVOID_OPTS} selected={local.avoidCategories} onChange={v => setLocal(p => ({ ...p, avoidCategories: v }))} />
 
           <div>
@@ -952,6 +1006,9 @@ function TravelPage() {
         setPrefs({
           ...DEFAULT_PREFS,
           ...raw,
+          recommendationLifeStage: RECOMMENDATION_LIFE_STAGES.some(option => option.id === raw.recommendationLifeStage)
+            ? raw.recommendationLifeStage as Prefs["recommendationLifeStage"]
+            : "unspecified",
           // Guarantee every array field is always an array
           favoriteCategories: ensureArr(raw.favoriteCategories),
           favoriteCities:     ensureArr(raw.favoriteCities),

@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const userPreferencesTable = pgTable("user_preferences", {
   userId: varchar("user_id").primaryKey(),
+  recommendationLifeStage: varchar("recommendation_life_stage", { length: 20 }).notNull().default("unspecified"),
   favoriteCategories: jsonb("favorite_categories").$type<string[]>().default([]),
   favoriteCities: jsonb("favorite_cities").$type<string[]>().default([]),
   avoidCategories: jsonb("avoid_categories").$type<string[]>().default([]),

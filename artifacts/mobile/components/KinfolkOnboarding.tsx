@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  Alert, Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -45,6 +45,13 @@ const COMPANION_OPTIONS = [
   { id: "partner", label: "Me & my partner", emoji: "💑" },
   { id: "family", label: "The whole family", emoji: "👨🏾‍👩🏾‍👧🏾‍👦🏾" },
   { id: "friends", label: "The crew", emoji: "👥" },
+];
+
+const RECOMMENDATION_LIFE_STAGES = [
+  { id: "unspecified" as const, label: "Prefer not to say" },
+  { id: "18_39" as const, label: "18–39" },
+  { id: "40_64" as const, label: "40–64" },
+  { id: "65_plus" as const, label: "65+" },
 ];
 
 const LIFESTYLE_SERVICE_OPTIONS = [
@@ -95,6 +102,8 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
   const { update } = useUserPreferences();
   const [step, setStep] = useState(0);
   const [favCats, setFavCats] = useState<string[]>([]);
+  const [specificInterests, setSpecificInterests] = useState("");
+  const [recommendationLifeStage, setRecommendationLifeStage] = useState<"unspecified" | "18_39" | "40_64" | "65_plus">("unspecified");
   const [budget, setBudget] = useState("any");
   const [tripStyles, setTripStyles] = useState<string[]>([]);
   const [companion, setCompanion] = useState("solo");
@@ -115,10 +124,22 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 
   async function handleFinish() {
     setSaving(true);
-    await update({ favoriteCategories: favCats, budgetRange: budget, tripStyle: tripStyles, travelCompanion: companion, lifestyleServices });
-    await markKinfolkOnboardingDone();
+    const enteredInterests = specificInterests
+      .split(/[,\n]/)
+      .map(value => value.trim())
+      .filter(value => value.length >= 2 && value.length <= 80);
+    const saved = await update({
+      recommendationLifeStage,
+      favoriteCategories: [...new Set([...favCats, ...enteredInterests])].slice(0, 50),
+      budgetRange: budget,
+      tripStyle: tripStyles,
+      travelCompanion: companion,
+      lifestyleServices,
+    });
+    if (saved) await markKinfolkOnboardingDone();
     setSaving(false);
-    onComplete();
+    if (saved) onComplete();
+    else Alert.alert("Preferences not saved", "Kinfolk could not save those preferences. Nothing was marked complete; please try again.");
   }
 
   const totalSteps = 6;
@@ -172,6 +193,28 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
                   );
                 })}
               </View>
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Anything specific?</Text>
+              <TextInput
+                value={specificInterests}
+                onChangeText={setSpecificInterests}
+                placeholder="author events, candle making, board games"
+                placeholderTextColor={colors.mutedForeground}
+                multiline
+                style={[styles.specificInput, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
+              />
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Recommendation life stage (optional)</Text>
+              <View style={styles.catGrid}>
+                {RECOMMENDATION_LIFE_STAGES.map(option => (
+                  <TouchableOpacity key={option.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: recommendationLifeStage === option.id }}
+                    style={[styles.ageChip, { backgroundColor: recommendationLifeStage === option.id ? colors.primary : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
+                    onPress={() => setRecommendationLifeStage(option.id)}>
+                    <Text style={[styles.catLabel, { color: recommendationLifeStage === option.id ? "#fff" : colors.text }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={[styles.privacyNote, { color: colors.mutedForeground }]}>Used only when life stage matters. Kinfolk does not collect your birth date here or infer health, income, mobility, or family status. “Prefer not to say” opts out.</Text>
             </View>
           )}
 
@@ -326,6 +369,10 @@ const styles = StyleSheet.create({
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 20 },
   heading: { fontFamily: "Inter_700Bold", fontSize: 26, marginBottom: 12, textAlign: "center" },
   subheading: { fontFamily: "Inter_400Regular", fontSize: 15, lineHeight: 23, textAlign: "center", marginBottom: 8 },
+  fieldLabel: { fontFamily: "Inter_700Bold", fontSize: 14, marginTop: 20, marginBottom: 6 },
+  specificInput: { minHeight: 64, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 14, textAlignVertical: "top" },
+  ageChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 10 },
+  privacyNote: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 10 },
   catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
   catChip: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 10 },
   catEmoji: { fontSize: 16 },

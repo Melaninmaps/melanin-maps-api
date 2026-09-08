@@ -28,6 +28,7 @@ const profiles = [
     ageBand: "18_plus",
     expectedBusiness: "Loomen Labs",
     preferences: {
+      recommendationLifeStage: "18_39",
       favoriteCategories: ["candle-making experiences"],
       favoriteCities: ["Philadelphia"],
       avoidCategories: ["nightclubs"],
@@ -44,6 +45,7 @@ const profiles = [
     ageBand: "18_plus",
     expectedBusiness: "AMINA",
     preferences: {
+      recommendationLifeStage: "40_64",
       favoriteCategories: ["American Southern cuisine and African-inspired dining"],
       favoriteCities: ["Philadelphia"],
       avoidCategories: ["nightclubs"],
@@ -60,6 +62,7 @@ const profiles = [
     ageBand: "18_plus",
     expectedBusiness: "Uncle Bobbie's Coffee & Books",
     preferences: {
+      recommendationLifeStage: "65_plus",
       favoriteCategories: ["author events and workshops"],
       favoriteCities: ["Philadelphia"],
       avoidCategories: ["nightclubs"],
@@ -76,6 +79,7 @@ const profiles = [
     ageBand: "13_15",
     expectedBusiness: "Queen & Rook Game Cafe",
     preferences: {
+      recommendationLifeStage: "unspecified",
       favoriteCategories: ["video games and board games"],
       favoriteCities: ["Philadelphia"],
       avoidCategories: ["nightlife", "bars"],
@@ -96,6 +100,7 @@ const ADULT_ONLY_PATTERN = /(?:\b(?:night\s*club|nightclub|adult entertainment|s
 type AcceptanceResult = {
   profile: string;
   storedAgeBand: string;
+  storedRecommendationLifeStage: string;
   directoryClarificationPassed: boolean;
   directoryTopResult: string;
   directoryWhy: string;
@@ -271,6 +276,7 @@ async function run(): Promise<void> {
       const preferenceRead = await requestJson("/api/kinfolk/preferences", { method: "GET" }, cookie);
       assert.equal(preferenceRead.response.status, 200, `${profile.label} preference read`);
       const saved = preferenceRead.body.preferences as JsonObject;
+      assert.equal(saved.recommendationLifeStage, profile.preferences.recommendationLifeStage, `${profile.label} saved recommendation life stage`);
       assert.deepEqual(saved.favoriteCategories, profile.preferences.favoriteCategories, `${profile.label} saved categories`);
 
       const initialDirectory = await requestJson("/api/kinfolk/chat", {
@@ -366,6 +372,7 @@ async function run(): Promise<void> {
       results.push({
         profile: profile.label,
         storedAgeBand: String(ageRead.body.ageBand),
+        storedRecommendationLifeStage: String(saved.recommendationLifeStage),
         directoryClarificationPassed,
         directoryTopResult: String(top?.title),
         directoryWhy: String(top?.matchReason),

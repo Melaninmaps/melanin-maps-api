@@ -72,6 +72,12 @@ const COMPANION_OPTIONS = [
   { id: "friends", label: "Friends" },
   { id: "colleagues", label: "Colleagues" },
 ];
+const RECOMMENDATION_LIFE_STAGES = [
+  { id: "unspecified" as const, label: "Prefer not to say" },
+  { id: "18_39" as const, label: "18–39" },
+  { id: "40_64" as const, label: "40–64" },
+  { id: "65_plus" as const, label: "65+" },
+];
 const LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
   { emoji: "🏠", label: "I'm Moving", prompt: "I'm thinking about relocating" },
   { emoji: "✈️", label: "I'm Traveling", prompt: "I'm planning a trip" },
@@ -115,7 +121,7 @@ const KINFOLK_VOICES = [
 
 const COMM_STYLES = [
   { id: "friendly", label: "Friendly", example: "\"I found a few spots I think you'll love!\"" },
-  { id: "community", label: "Community", example: "\"The community really enjoys this one.\"" },
+  { id: "detailed", label: "Detailed", example: "\"Here is why each option may fit you.\"" },
   { id: "professional", label: "Professional", example: "\"Here are three options matching your criteria.\"" },
   { id: "conversational", label: "Conversational", example: "\"ok so there's this spot you gotta check out...\"" },
 ];
@@ -127,7 +133,7 @@ const EMOJI_LEVELS = [
 ];
 
 const HUMOR_LEVELS = [
-  { id: "off", label: "Just the facts" },
+  { id: "none", label: "Just the facts" },
   { id: "light", label: "Light warmth" },
   { id: "playful", label: "Playful — let's have fun" },
 ];
@@ -1179,6 +1185,8 @@ function TasteProfileSheet({
   const isPaid = !!subscription;
 
   const [favCats, setFavCats] = useState<string[]>(preferences?.favoriteCategories ?? []);
+  const [specificInterestInput, setSpecificInterestInput] = useState("");
+  const [recommendationLifeStage, setRecommendationLifeStage] = useState<"unspecified" | "18_39" | "40_64" | "65_plus">(preferences?.recommendationLifeStage ?? "unspecified");
   const [avoidCats, setAvoidCats] = useState<string[]>(preferences?.avoidCategories ?? []);
   const [budget, setBudget] = useState(preferences?.budgetRange ?? "any");
   const [tripStyles, setTripStyles] = useState<string[]>(preferences?.tripStyle ?? []);
@@ -1193,6 +1201,7 @@ function TasteProfileSheet({
   useEffect(() => {
     if (preferences) {
       queueMicrotask(() => { setFavCats(preferences.favoriteCategories ?? []); });
+      queueMicrotask(() => { setRecommendationLifeStage(preferences.recommendationLifeStage ?? "unspecified"); });
       queueMicrotask(() => { setAvoidCats(preferences.avoidCategories ?? []); });
       queueMicrotask(() => { setBudget(preferences.budgetRange ?? "any"); });
       queueMicrotask(() => { setTripStyles(preferences.tripStyle ?? []); });
@@ -1213,8 +1222,13 @@ function TasteProfileSheet({
 
   async function handleSave() {
     setSaving(true);
-    await update({
-      favoriteCategories: favCats,
+    const specificInterests = specificInterestInput
+      .split(/[,\n]/)
+      .map(value => value.trim())
+      .filter(value => value.length >= 2 && value.length <= 80);
+    const saved = await update({
+      recommendationLifeStage,
+      favoriteCategories: [...new Set([...favCats, ...specificInterests])].slice(0, 50),
       avoidCategories: avoidCats,
       budgetRange: budget,
       tripStyle: tripStyles,
@@ -1226,7 +1240,12 @@ function TasteProfileSheet({
       knowBeforeYouGo: kbyg,
     });
     setSaving(false);
-    onClose();
+    if (saved) {
+      setSpecificInterestInput("");
+      onClose();
+    } else {
+      Alert.alert("Preferences not saved", "Kinfolk could not save those preferences. Please try again.");
+    }
   }
 
   return (
@@ -1260,6 +1279,42 @@ function TasteProfileSheet({
               );
             })}
           </View>
+
+          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Anything specific?</Text>
+          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Add interests such as author events, candle making, or board games. Separate them with commas.</Text>
+          <TextInput
+            value={specificInterestInput}
+            onChangeText={setSpecificInterestInput}
+            placeholder="author events, candle making, board games"
+            placeholderTextColor={colors.mutedForeground}
+            style={[tpStyles.specificInput, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
+          />
+          <View style={tpStyles.chips}>
+            {favCats.filter(category => !ALL_CATEGORIES.includes(category)).map(category => (
+              <TouchableOpacity activeOpacity={0.85} key={category}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${category}`}
+                style={[tpStyles.chip, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                onPress={() => setFavCats(current => current.filter(value => value !== category))}>
+                <Text style={[tpStyles.chipText, { color: "#fff" }]}>{category} ×</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Private taste data. Add only what you want Kinfolk to use, and remove saved items by tapping their chips.</Text>
+
+          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Recommendation life stage (optional)</Text>
+          <View style={tpStyles.optionRow}>
+            {RECOMMENDATION_LIFE_STAGES.map(option => (
+              <TouchableOpacity activeOpacity={0.85} key={option.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: recommendationLifeStage === option.id }}
+                style={[tpStyles.optionBtn, { backgroundColor: recommendationLifeStage === option.id ? colors.primary : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
+                onPress={() => setRecommendationLifeStage(option.id)}>
+                <Text style={[tpStyles.optionText, { color: recommendationLifeStage === option.id ? "#fff" : colors.text }]}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Used only when life stage matters. Kinfolk does not collect your birth date here or infer health, income, mobility, or family status. “Prefer not to say” opts out.</Text>
 
           <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>What do you want to avoid?</Text>
           <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>We&apos;ll skip these unless you ask</Text>
@@ -1426,6 +1481,7 @@ const tpStyles = StyleSheet.create({
   profileBadgeText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, flex: 1 },
   sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
   sectionSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginBottom: 10 },
+  specificInput: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 8 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7 },
   chipText: { fontFamily: "Inter_400Regular", fontSize: 13 },
