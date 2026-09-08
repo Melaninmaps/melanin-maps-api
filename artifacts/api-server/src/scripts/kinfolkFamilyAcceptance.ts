@@ -96,6 +96,7 @@ const ADULT_ONLY_PATTERN = /(?:\b(?:night\s*club|nightclub|adult entertainment|s
 type AcceptanceResult = {
   profile: string;
   storedAgeBand: string;
+  directoryClarificationPassed: boolean;
   directoryTopResult: string;
   directoryWhy: string;
   directoryActions: string[];
@@ -272,9 +273,23 @@ async function run(): Promise<void> {
       const saved = preferenceRead.body.preferences as JsonObject;
       assert.deepEqual(saved.favoriteCategories, profile.preferences.favoriteCategories, `${profile.label} saved categories`);
 
-      const directory = await requestJson("/api/kinfolk/chat", {
+      const directoryClarification = await requestJson("/api/kinfolk/chat", {
         method: "POST",
         body: JSON.stringify({ message: "Find things to do in Philadelphia PA" }),
+      }, cookie);
+      assert.equal(directoryClarification.response.status, 200, `${profile.label} directory clarification`);
+      assert.equal(directoryClarification.body.needsClarification, true, `${profile.label} audience clarification required`);
+      const clarificationSteps = (directoryClarification.body.clarificationSteps as Array<{
+        options?: Array<{ label?: string }>;
+      }> | undefined) ?? [];
+      assert.ok(
+        clarificationSteps.some((step) => (step.options ?? []).some((option) => /keep this search broad/i.test(option.label ?? ""))),
+        `${profile.label} skip option`,
+      );
+
+      const directory = await requestJson("/api/kinfolk/chat", {
+        method: "POST",
+        body: JSON.stringify({ message: "Find things to do in Philadelphia PA — keep this search broad" }),
       }, cookie);
       assert.equal(directory.response.status, 200, `${profile.label} directory search`);
       const resultView = directory.body.resultView as { cards?: Array<Record<string, unknown>> } | undefined;
@@ -342,6 +357,7 @@ async function run(): Promise<void> {
       results.push({
         profile: profile.label,
         storedAgeBand: String(ageRead.body.ageBand),
+        directoryClarificationPassed: true,
         directoryTopResult: String(top?.title),
         directoryWhy: String(top?.matchReason),
         directoryActions: actions.map((action) => String(action.label)),
