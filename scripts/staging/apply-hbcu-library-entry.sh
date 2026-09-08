@@ -42,14 +42,27 @@ COLLISION_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
   WHERE id = '$ENTRY_ID'
     AND normalized_question <> '$NORMALIZED_QUESTION'
 ")"
+SOURCE_COLLISION_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
+  SELECT COUNT(*)
+  FROM public.library_entry_sources
+  WHERE id IN ('$ED_SOURCE_ID', '$PEW_SOURCE_ID')
+    AND NOT (
+      entry_id = '$ENTRY_ID'
+      AND (
+        (id = '$ED_SOURCE_ID' AND url = 'https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/')
+        OR
+        (id = '$PEW_SOURCE_ID' AND url = 'https://www.pewresearch.org/short-reads/2024/10/02/a-look-at-historically-black-colleges-and-universities-in-the-u-s/')
+      )
+    )
+")"
 
-if [[ "$TOPIC_COUNT" != "2" || "$COLLISION_COUNT" != "0" ]]; then
+if [[ "$TOPIC_COUNT" != "2" || "$COLLISION_COUNT" != "0" || "$SOURCE_COLLISION_COUNT" != "0" ]]; then
   echo "HBCU_LIBRARY_BLOCKED: required topics or entry identity precondition failed" >&2
   exit 1
 fi
 
 if [[ "$APPLY" != "1" ]]; then
-  echo "HBCU_LIBRARY_DRY_RUN_OK topics=2 collision=0 apply_required=true"
+  echo "HBCU_LIBRARY_DRY_RUN_OK topics=2 entry_collision=0 source_collision=0 apply_required=true"
   exit 0
 fi
 
