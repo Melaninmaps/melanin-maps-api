@@ -30,6 +30,33 @@ function explicitBusinessName(message: string): string | null {
   return candidate;
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function exactBusinessNameCandidates(
+  rawName: string,
+  scope: ValidatedKinfolkCityScope,
+  scopeIsCurrentTurn: boolean,
+): string[] {
+  let scopedName = rawName.trim();
+  if (scopeIsCurrentTurn) {
+    const city = escapeRegex(scope.city);
+    const state = scope.stateCode ? escapeRegex(scope.stateCode) : null;
+    const locationSuffix = state
+      ? new RegExp(`\\s+(?:in|near|around|at)\\s+${city}(?:\\s*,?\\s*${state})?$`, "i")
+      : new RegExp(`\\s+(?:in|near|around|at)\\s+${city}$`, "i");
+    scopedName = scopedName.replace(locationSuffix, "").trim();
+  }
+
+  const withoutArticle = scopedName.replace(/^the\s+/i, "").trim();
+  const withoutBusinessType = withoutArticle.replace(
+    /\s+(?:business|restaurant|place|spot|venue|shop|store|caf[eé]|bar|salon|barbershop)$/i,
+    "",
+  ).trim();
+  return [...new Set([scopedName, withoutArticle, withoutBusinessType].filter(Boolean))];
+}
+
 function previousCanonicalBusiness(messages: SessionMessage[]): { id: string | null; name: string; city: string | null } | null {
   const last = messages.at(-1);
   if (!last || last.role !== "assistant" || !last.recommendations || typeof last.recommendations !== "object") return null;
@@ -69,11 +96,13 @@ export async function resolveNamedBusinessTurn(input: {
           }
         : { state: "not_named" };
     }
-    const business = await input.repository.findExactByNormalizedName({
-      name: explicitName,
-      ...input.scope,
-    });
-    if (business) return { state: "resolved", business, source: "explicit" };
+    for (const candidate of exactBusinessNameCandidates(explicitName, input.scope, hasCurrentTurnLocation)) {
+      const business = await input.repository.findExactByNormalizedName({
+        name: candidate,
+        ...input.scope,
+      });
+      if (business) return { state: "resolved", business, source: "explicit" };
+    }
     return hasBusinessCue ? { state: "not_found", name: explicitName } : { state: "not_named" };
   }
 

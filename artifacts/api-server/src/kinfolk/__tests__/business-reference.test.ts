@@ -55,6 +55,16 @@ function repository(result: GovernedKinfolkBusiness | null) {
   } as unknown as GovernedKinfolkBusinessRepository;
 }
 
+function exactAminaRepository() {
+  return {
+    findExactByNormalizedName: vi.fn().mockImplementation(async ({ name }: { name: string }) =>
+      name.toLowerCase() === "amina" ? AMINA : null),
+    findDestinationCatalog: vi.fn(),
+    findHomeFallback: vi.fn(),
+    findWithinRadius: vi.fn(),
+  } as unknown as GovernedKinfolkBusinessRepository;
+}
+
 describe("named Kinfolk business resolution", () => {
   it("resolves Tell me about Amina to canonical AMINA in a Philadelphia session", async () => {
     const repo = repository(AMINA);
@@ -75,6 +85,27 @@ describe("named Kinfolk business resolution", () => {
     expect(namedBusinessPromptBlock(AMINA)).toContain(
       `Any recommendation must use businessId "${AMINA.id}" and exact name "AMINA".`,
     );
+  });
+
+  it.each([
+    "Tell me about AMINA in Philadelphia",
+    "Tell me about the AMINA restaurant in Philadelphia",
+  ])("extracts canonical AMINA from a route-realistic current-turn request: %s", async (message) => {
+    const repo = exactAminaRepository();
+    const result = await resolveNamedBusinessTurn({
+      message,
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      scopeIsCurrentTurn: true,
+      existingMessages: [],
+      repository: repo,
+    });
+
+    expect(result).toEqual({ state: "resolved", business: AMINA, source: "explicit" });
+    expect(repo.findExactByNormalizedName).toHaveBeenCalledWith({
+      name: "AMINA",
+      city: "Philadelphia",
+      stateCode: "PA",
+    });
   });
 
   it("keeps a contextless proper name in general knowledge when no business cue or location exists", async () => {

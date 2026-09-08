@@ -19,9 +19,9 @@ if [[ "${DEPLOYMENT_TIER:-}" != "local_staging" || "${DIRECTORY_IMPORT_LOCAL_STA
   echo "HBCU_LIBRARY_BLOCKED: isolated staging environment markers are required" >&2
   exit 1
 fi
-DATABASE_IDENTITY="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc \
-  "SELECT current_database() || '|' || COALESCE(inet_server_addr()::text, '')")"
-if [[ "$DATABASE_IDENTITY" != "mwm_directory_staging|127.0.0.1/32" ]]; then
+DATABASE_NAME="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "SELECT current_database()")"
+DATABASE_HOST="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "SELECT COALESCE(host(inet_server_addr()), '')")"
+if [[ "$DATABASE_NAME" != "mwm_directory_staging" || "$DATABASE_HOST" != "127.0.0.1" ]]; then
   echo "HBCU_LIBRARY_BLOCKED: database identity is not approved isolated staging" >&2
   exit 1
 fi
@@ -42,6 +42,13 @@ COLLISION_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
   WHERE id = '$ENTRY_ID'
     AND normalized_question <> '$NORMALIZED_QUESTION'
 ")"
+NATURAL_KEY_COLLISION_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
+  SELECT COUNT(*)
+  FROM public.library_entries
+  WHERE normalized_question = '$NORMALIZED_QUESTION'
+    AND domain = 'education'
+    AND id <> '$ENTRY_ID'
+")"
 SOURCE_COLLISION_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
   SELECT COUNT(*)
   FROM public.library_entry_sources
@@ -56,13 +63,13 @@ SOURCE_COLLISION_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
     )
 ")"
 
-if [[ "$TOPIC_COUNT" != "2" || "$COLLISION_COUNT" != "0" || "$SOURCE_COLLISION_COUNT" != "0" ]]; then
+if [[ "$TOPIC_COUNT" != "2" || "$COLLISION_COUNT" != "0" || "$NATURAL_KEY_COLLISION_COUNT" != "0" || "$SOURCE_COLLISION_COUNT" != "0" ]]; then
   echo "HBCU_LIBRARY_BLOCKED: required topics or entry identity precondition failed" >&2
   exit 1
 fi
 
 if [[ "$APPLY" != "1" ]]; then
-  echo "HBCU_LIBRARY_DRY_RUN_OK topics=2 entry_collision=0 source_collision=0 apply_required=true"
+  echo "HBCU_LIBRARY_DRY_RUN_OK topics=2 entry_collision=0 natural_key_collision=0 source_collision=0 apply_required=true"
   exit 0
 fi
 
@@ -71,6 +78,21 @@ psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 \
   --set=ed_source_id="$ED_SOURCE_ID" \
   --set=pew_source_id="$PEW_SOURCE_ID" <<'SQL'
 BEGIN;
+SELECT pg_advisory_xact_lock(hashtextextended('mwm-hbcu-library-entry-v1', 0));
+
+DO $guard$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM public.library_entries
+    WHERE normalized_question = 'what are historically black colleges and universities hbcus'
+      AND domain = 'education'
+      AND id <> '52c30b42-cd57-42dd-8c2a-d5d09a16512e'
+  ) THEN
+    RAISE EXCEPTION 'HBCU_LIBRARY_BLOCKED: natural-key collision';
+  END IF;
+END
+$guard$;
 
 INSERT INTO public.library_entries (
   id, topic_id, question, normalized_question, title, summary, body, domain,
@@ -146,6 +168,10 @@ SELECT (
    JOIN public.library_topics t ON t.id=e.topic_id
    WHERE e.id=:'entry_id' AND e.publication_status='published'
      AND e.source_count=2 AND t.slug='education-learning') = 1
+  AND
+  (SELECT COUNT(*) FROM public.library_entries e
+   WHERE e.normalized_question='what are historically black colleges and universities hbcus'
+     AND e.domain='education') = 1
   AND
   (SELECT COUNT(*) FROM public.library_entry_sources s
    WHERE s.entry_id=:'entry_id' AND s.url LIKE 'https://%') = 2
