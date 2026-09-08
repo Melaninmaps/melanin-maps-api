@@ -4,13 +4,16 @@ import { writeFile } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import { pool } from "@workspace/db";
 
-const origin = "http://127.0.0.1:3080";
+const origin = process.env.KINFOLK_ACCEPTANCE_ORIGIN?.trim() || "http://127.0.0.1:3080";
 const outputPath = process.env.KINFOLK_ACCEPTANCE_OUTPUT?.trim() || null;
 const expectedSha = process.env.KINFOLK_ACCEPTANCE_EXPECTED_SHA?.trim() ?? "";
 const expectedBundleSha256 = process.env.KINFOLK_ACCEPTANCE_EXPECTED_BUNDLE_SHA256?.trim() ?? "";
 
 if (!/^[a-f0-9]{40}$/.test(expectedSha)) {
   throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact expected SHA is required");
+}
+if (!/^http:\/\/127\.0\.0\.1:308[01]$/.test(origin)) {
+  throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: origin must be exact loopback staging");
 }
 if (!/^[a-f0-9]{64}$/.test(expectedBundleSha256)) {
   throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact expected bundle fingerprint is required");
