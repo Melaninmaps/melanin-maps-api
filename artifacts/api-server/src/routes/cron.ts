@@ -39,6 +39,7 @@ import {
 } from "../lib/email";
 import { logger } from "../lib/logger";
 import { sendPushToUser } from "../lib/pushNotifications";
+import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
 
 const router: IRouter = Router();
 
@@ -1187,13 +1188,7 @@ router.post("/cron/grant-admin-tester-roles", async (req: any, res: any): Promis
     results.push(`admin granted: [${adminResult.rows.map((r: any) => r.email).join(", ") || "already set"}]`);
 
     // 3. Grant tester to all known testers (never demotes admins)
-    const testerEmails = [
-      "cardwellkayla219@gmail.com","kcardwell17@yahoo.com","kaylacardwell3@gmail.com",
-      "taleisham.saunders@gmail.com","trinalindsayhairston@gmail.com","trinalindsayhairston@gmail..com",
-      "bigdot6017@gmail.com","zykiral.morton@yahoo.com","kyleisha.m.morton@gmail.com",
-      "kyleisha.m.fisher@gmail.com","taleisha.fisher@gmail.com","lilanarich@gmail.com",
-      "jordanwtester@gmail.com","joshuabierd99@gmail.com",
-    ];
+    const testerEmails = FOUNDER_APPROVED_TESTER_EMAILS;
     const testerResult = await pool.query(
       `UPDATE users SET role='tester', updated_at=NOW()
        WHERE LOWER(TRIM(email))=ANY($1) AND role='user'
@@ -1203,18 +1198,7 @@ router.post("/cron/grant-admin-tester-roles", async (req: any, res: any): Promis
     results.push(`tester granted: [${testerResult.rows.map((r: any) => r.email).join(", ") || "already set"}]`);
 
     // 4. Seed pre-approved tester emails
-    const preApproved = [
-      // Founder test personas — no admin approval required
-      "tlindsay428@gmail.com","tlindsay428@aol.com",
-      // Approved testers
-      "zykiral.morton@yahoo.com","kyleisha.m.morton@gmail.com","kyleisha.m.fisher@gmail.com",
-      "taleisha.fisher@gmail.com","lilanarich@gmail.com","jordanwtester@gmail.com",
-      "joshuabierd99@gmail.com","kaylacardwelltester@gmail.com","kevinctester@gmail.com",
-      "kevkaytester@gmail.com","teiannaltester@gmail.com","trinalindsaytester@gmail.com",
-      "jross215@gmail.com","kaylathomas20011@gmail.com","kansesdwilliams@gmail.com",
-      "fatimccoy@icloud.com","jordanwyatt117@icloud.com","nydiahholly12@gmail.com",
-      "meaparks@gmail.com","melody.brown1988@gmail.com","owcforyouth@gmail.com",
-    ];
+    const preApproved = FOUNDER_APPROVED_TESTER_EMAILS;
     let seeded = 0;
     for (const email of preApproved) {
       const r = await pool.query(
@@ -1287,4 +1271,3 @@ router.post("/cron/create-monitor-account", async (req: any, res: any) => {
 });
 
 export default router;
-
