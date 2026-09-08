@@ -38,6 +38,7 @@ describe("Kinfolk chat static wiring", () => {
     const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
     const audienceFilter = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
     const ownerContext = chatRoute.indexOf("let ownerBusinessContext");
+    const travelCandidateMerge = chatRoute.indexOf("const favoriteMatches = await governedBusinessRepository.findByPreferenceTerms(");
     const travelRanking = chatRoute.indexOf("businessCatalog = rankTravelCatalogForMember({");
     const promptBuild = chatRoute.indexOf("const baseSystemPrompt = buildSystemPrompt({");
     const itinerarySelection = chatRoute.indexOf("buildValidatedOrRankedItinerary({");
@@ -45,6 +46,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(ageContext).toBeGreaterThan(-1);
     expect(audienceFilter).toBeGreaterThan(ageContext);
     expect(audienceFilter).toBeLessThan(ownerContext);
+    expect(travelCandidateMerge).toBeGreaterThan(ageContext);
+    expect(travelCandidateMerge).toBeLessThan(travelRanking);
     expect(travelRanking).toBeGreaterThan(ageContext);
     expect(travelRanking).toBeLessThan(promptBuild);
     expect(travelRanking).toBeLessThan(itinerarySelection);

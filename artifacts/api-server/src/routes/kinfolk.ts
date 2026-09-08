@@ -4325,6 +4325,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // non-business member affordances. Explicit cultural/population context still
     // comes only from the current turn through permittedIdentity above.
     const travelPlanning = isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning";
+    if (
+      travelPlanning
+      && broadCatalogAllowed
+      && destinationScope
+      && (prefs?.favoriteCategories?.length ?? 0) > 0
+    ) {
+      try {
+        const favoriteMatches = await governedBusinessRepository.findByPreferenceTerms(
+          destinationScope,
+          prefs?.favoriteCategories ?? [],
+          50,
+        );
+        businessCatalog = [...new Map(
+          [...businessCatalog, ...favoriteMatches].map((business) => [business.id, business]),
+        ).values()];
+      } catch { /* non-critical — retain the governed city catalog */ }
+    }
     if (travelPlanning && businessCatalog.length > 0) {
       businessCatalog = rankTravelCatalogForMember({
         catalog: businessCatalog,
