@@ -57,7 +57,7 @@ router.put("/age-assurance", async (req, res) => {
   }
 
   try {
-    await pool.query(
+    const result = await pool.query(
       `INSERT INTO user_age_assurance
          (user_id, age_band, assurance_method, policy_version, assured_at)
        VALUES ($1, $2, 'self_attested_band', 'age-assurance-v1', now())
@@ -66,9 +66,17 @@ router.put("/age-assurance", async (req, res) => {
          assurance_method = EXCLUDED.assurance_method,
          policy_version = EXCLUDED.policy_version,
          assured_at = EXCLUDED.assured_at,
-         updated_at = now()`,
+         updated_at = now()
+       WHERE user_age_assurance.age_band = EXCLUDED.age_band
+       RETURNING age_band`,
       [userId, ageBand],
     );
+    if (result.rowCount !== 1) {
+      return res.status(409).json({
+        error: "AGE_ASSURANCE_CHANGE_REQUIRES_SUPPORT",
+        message: "A saved age-safety range cannot be changed in this self-service flow.",
+      });
+    }
     return res.json({ ok: true, ageBand });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "unknown";
