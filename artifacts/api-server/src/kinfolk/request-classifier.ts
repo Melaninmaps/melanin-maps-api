@@ -13,7 +13,7 @@
  *      through to general_knowledge so the existing LLM handles them.
  */
 
-import { hasBusinessSubject } from "./business-subject";
+import { deriveBusinessSubject } from "./business-subject";
 
 export type DiscoveryKind =
   | "food"
@@ -78,7 +78,8 @@ export function classifyKinfolkRequest(
 ): KinfolkRequestDecision {
   const text = message.trim();
   const lower = text.toLowerCase();
-  const normalizedBusinessSubject = hasBusinessSubject(text);
+  const businessSubject = deriveBusinessSubject(text);
+  const normalizedBusinessSubject = businessSubject !== null;
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination
     ? resolvedDestination
@@ -176,6 +177,13 @@ export function classifyKinfolkRequest(
       TRAVEL_RE.test(lower)) &&
     !location
   ) {
+    const missingLocationClarification = businessSubject?.key === "salon"
+      ? "I can help find a stylist or salon. Which city or neighborhood should I search? Then I can narrow it to locs, braids or protective styles, natural hair, cut or color, or keep the search broad."
+      : FOOD_RE.test(lower)
+        ? "I can help find places to eat. Which city or neighborhood should I search? You can also share the cuisine, budget, date, or community preferences that matter to you."
+        : NIGHTLIFE_RE.test(lower)
+          ? "I can help find nightlife. Which city or neighborhood should I search? You can also share the atmosphere, music, budget, date, or age-appropriate needs that matter."
+          : "I can search real businesses, but I need a location first. What city, neighborhood, or metro area should I use? You can also share the service, specialty, budget, timing, or community preferences that matter.";
     return {
       route: "clarification",
       discoveryKind: FOOD_RE.test(lower)
@@ -186,8 +194,7 @@ export function classifyKinfolkRequest(
       location: null,
       ownershipPreference,
       culturalContext,
-      clarification:
-        "I can search real businesses, but I need a location first. What city, neighborhood, or metro area should I use? You can also tell me the cuisine, budget, date, and whether you want minority-owned or other community preferences.",
+      clarification: missingLocationClarification,
       reason: "discovery_request_missing_location",
     };
   }
