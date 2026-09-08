@@ -43,7 +43,10 @@ import {
 } from "../kinfolk/heritage-city-registry";
 import { normalizeTranscript, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
-import { answerWithLivingLibrary } from "../kinfolk/kinfolkLibraryBridge";
+import {
+  answerWithLivingLibrary,
+  findApprovedLibraryAnswer,
+} from "../kinfolk/kinfolkLibraryBridge";
 import { createPostgresLibraryRepository } from "../library/postgresLibraryRepository";
 import { createTavilyResearchProvider } from "../library/tavilyResearchProvider";
 import { createOpenAiWebResearchProvider } from "../library/openAiWebResearchProvider";
@@ -3400,6 +3403,101 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const shouldResearchInLibrary = intentClass === "medical_health"
       || intentClass === "legal_regulated"
       || (intentClass === "general_knowledge" && CURRENT_RESEARCH_RE.test(message));
+
+    // Kinfolk is the member's conversational companion; the Library is shared,
+    // curator-approved community knowledge. For stable general questions, reuse
+    // a published, cited Library entry before asking a model. This is the same
+    // governed search used by the Library UI, so aliases such as “HBCUs” work
+    // without turning the question into a business search. Pending entries are
+    // never eligible, and current/high-consequence questions continue through
+    // their stricter research policies below.
+    if (intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness) {
+      const approvedLibraryAnswer = await findApprovedLibraryAnswer({
+        memberQuestion: message,
+        repository: getLivingLibraryDeps().repository,
+      }).catch((error) => {
+        req.log.warn({
+          event: "KINFOLK_APPROVED_LIBRARY_LOOKUP_FAILED",
+          pgCode: pgCode(error),
+        }, "approved Library lookup failed closed");
+        return null;
+      });
+
+      if (approvedLibraryAnswer) {
+        const approvedSessionId = await persistDeterministicDiscoveryTurn({
+          userId: req.user.id,
+          memoryEnabled,
+          sessionId,
+          message,
+          reply: approvedLibraryAnswer.message,
+          recommendations: null,
+          resultView: null,
+          followUpSuggestions: [
+            `Open ${approvedLibraryAnswer.topicTitle} in the Library`,
+          ],
+          sources: approvedLibraryAnswer.sources,
+          destination: destination ?? "",
+          vibes,
+        });
+        recordKinfolkTelemetry({
+          requestId: _kinfolkReqId,
+          questionClass: intentClass,
+          status: 200,
+          degraded: false,
+          degradedReason: null,
+          providerStatus: null,
+          latencyMs: Date.now() - _kinfolkStartedAt,
+          taskMode: null,
+          retrievalState: "internal",
+          sourceCount: approvedLibraryAnswer.sourceCount,
+        });
+        res.json({
+          sessionId: approvedSessionId,
+          reply: approvedLibraryAnswer.message,
+          recommendations: null,
+          itinerary: null,
+          followUpSuggestions: [
+            `Open ${approvedLibraryAnswer.topicTitle} in the Library`,
+          ],
+          smartPromotion: null,
+          taskAction: null,
+          libraryAction: {
+            type: "open_topic",
+            topicId: approvedLibraryAnswer.topicSlug,
+            topicName: approvedLibraryAnswer.topicTitle,
+          },
+          libraryEntry: {
+            id: approvedLibraryAnswer.entryId,
+            topicSlug: approvedLibraryAnswer.topicSlug,
+            url: `/library/topics/${encodeURIComponent(approvedLibraryAnswer.topicSlug)}#entry-${approvedLibraryAnswer.entryId}`,
+            readMoreLabel: "Read the full source-cited entry",
+          },
+          intentClass,
+          sources: approvedLibraryAnswer.sources,
+          needsClarification: false,
+          originalQuery: message,
+          answerMode: "approved_library",
+          structuredContent: null,
+          mediaLinks: [],
+          relatedConnections: [],
+          researchStatus: {
+            usedInternal: true,
+            usedLiveWeb: false,
+            degraded: false,
+            web: {
+              attempted: false,
+              state: "not_needed",
+              provider: null,
+              fallbackUsed: false,
+              partial: false,
+            },
+            asOf: approvedLibraryAnswer.refreshedAt.toISOString(),
+          },
+        });
+        return;
+      }
+    }
+
     if (shouldResearchInLibrary && !contextualIntelligenceEnabled && !destination && message.trim().length > 15) {
       try {
         const deps = getLivingLibraryDeps();
