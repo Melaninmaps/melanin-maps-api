@@ -84,6 +84,21 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).not.toContain("openai.chat.completions.create");
   });
 
+  it("reuses published Library knowledge before the model only for stable general questions", () => {
+    const intentStart = chatRoute.indexOf("const intentClass: KinfolkIntent");
+    const approvedLookup = chatRoute.indexOf("await findApprovedLibraryAnswer({");
+    const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
+
+    expect(intentStart).toBeGreaterThan(-1);
+    expect(approvedLookup).toBeGreaterThan(intentStart);
+    expect(approvedLookup).toBeLessThan(providerCall);
+    expect(chatRoute).toContain('intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness');
+    expect(chatRoute).toContain('answerMode: "approved_library"');
+    expect(chatRoute).toContain("usedInternal: true");
+    expect(chatRoute).toContain("usedLiveWeb: false");
+    expect(chatRoute).toContain("await persistDeterministicDiscoveryTurn({");
+  });
+
   it("does not turn the platform mission or saved services into a member identity assumption", () => {
     expect(routeSource).toContain('use "your community" when relational community language is helpful');
     expect(routeSource).not.toContain("built for the Black community");
