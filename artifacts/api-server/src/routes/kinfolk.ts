@@ -2725,6 +2725,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     const namedBusiness = await resolveNamedBusinessTurn({
       message: input.message,
       scope,
+      scopeIsCurrentTurn: location.currentTurn,
       existingMessages: currentSession?.messages ?? [],
       repository: governedBusinessRepository,
     });
@@ -3186,6 +3187,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const namedBusinessResolution = await resolveNamedBusinessTurn({
       message,
       scope: destinationScope,
+      scopeIsCurrentTurn: turnGeography?.currentTurn === true,
       existingMessages,
       repository: governedBusinessRepository,
     });

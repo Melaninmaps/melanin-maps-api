@@ -73,6 +73,22 @@ describe("Library internal-first vocabulary", () => {
     );
   });
 
+  it.each(["hbcu", "hbcus", "hbcu's", "historically black colleges and universities"])(
+    "maps %s to education/history and all HBCU search forms",
+    (query) => {
+      const vocabulary = resolveLibrarySearchVocabulary(query);
+      expect(vocabulary.preferredTopicSlugs).toEqual([
+        "education-learning",
+        "places-our-history",
+      ]);
+      expect(vocabulary.patterns).toEqual(expect.arrayContaining([
+        "%hbcu%",
+        "%hbcus%",
+        "%historically black college%",
+      ]));
+    },
+  );
+
   it("escapes LIKE wildcards from member input", () => {
     expect(resolveLibrarySearchVocabulary("100%_ready").patterns).toEqual([
       "%100\\%\\_ready%",
@@ -137,5 +153,32 @@ describe("Library internal-first vocabulary", () => {
       { query: "HVAC", normalizedQuery: "hvac", limit: 6, offset: 0 },
     );
     expect(response.webResearch).toMatchObject({ status: "available" });
+  });
+
+  it("treats a sourced HBCU entry as approved reusable coverage", async () => {
+    const response = await searchLivingLibrary(
+      repositoryStub(vi.fn().mockResolvedValue({
+        results: [{
+          kind: "entry",
+          id: "entry-hbcu",
+          title: "What Are Historically Black Colleges and Universities (HBCUs)?",
+          summary: "A source-backed foundation.",
+          body: "HBCUs are accredited institutions with a historic mission.",
+          topicSlug: "education-learning",
+          topicTitle: "Education & Learning",
+          sourceCount: 2,
+          sources: [
+            { url: "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/", title: "What is an HBCU?", publisher: "U.S. Department of Education" },
+            { url: "https://www.pewresearch.org/short-reads/2024/10/02/a-look-at-historically-black-colleges-and-universities-in-the-u-s/", title: "A look at HBCUs", publisher: "Pew Research Center" },
+          ],
+          refreshedAt: new Date("2026-09-08T02:36:47.000Z"),
+        }],
+        total: 1,
+      })),
+      { query: "HBCUs", normalizedQuery: "hbcus", limit: 6, offset: 0 },
+    );
+
+    expect(response.results[0]).toMatchObject({ kind: "entry", sourceCount: 2 });
+    expect(response.webResearch.status).toBe("not_needed");
   });
 });

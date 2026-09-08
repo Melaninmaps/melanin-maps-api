@@ -61,6 +61,7 @@ describe("named Kinfolk business resolution", () => {
     const result = await resolveNamedBusinessTurn({
       message: "Tell me about Amina",
       scope: { city: "Philadelphia", stateCode: "PA" },
+      scopeIsCurrentTurn: true,
       existingMessages: [],
       repository: repo,
     });
@@ -76,7 +77,7 @@ describe("named Kinfolk business resolution", () => {
     );
   });
 
-  it("asks for location for contextless Amina and does not query the repository", async () => {
+  it("keeps a contextless proper name in general knowledge when no business cue or location exists", async () => {
     const repo = repository(AMINA);
     const result = await resolveNamedBusinessTurn({
       message: "Tell me about Amina",
@@ -85,8 +86,58 @@ describe("named Kinfolk business resolution", () => {
       repository: repo,
     });
 
+    expect(result).toEqual({ state: "not_named" });
+    expect(repo.findExactByNormalizedName).not.toHaveBeenCalled();
+  });
+
+  it("asks for location when the member explicitly identifies a business", async () => {
+    const repo = repository(AMINA);
+    const result = await resolveNamedBusinessTurn({
+      message: "Tell me about the AMINA restaurant",
+      scope: null,
+      existingMessages: [],
+      repository: repo,
+    });
+
     expect(result).toMatchObject({ state: "needs_location" });
     expect(result.state === "needs_location" ? result.reply : "").toMatch(/what city/i);
+    expect(repo.findExactByNormalizedName).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "Tell me about HBCUs",
+    "Tell me about HBCU's",
+    "What can you tell me about historically Black colleges and universities?",
+  ])("keeps general HBCU knowledge out of named-business resolution: %s", async (message) => {
+    const repo = repository(AMINA);
+    const result = await resolveNamedBusinessTurn({
+      message,
+      scope: null,
+      existingMessages: [],
+      repository: repo,
+    });
+
+    expect(result).toEqual({ state: "not_named" });
+    expect(repo.findExactByNormalizedName).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "Tell me about HBCUs",
+    "Tell me about The Odyssey",
+    "Tell me about credit scores",
+    "What do you know about current interest rates?",
+    "Tell me about Selena Quintanilla",
+  ])("defaults a general question to knowledge/research despite inherited city scope: %s", async (message) => {
+    const repo = repository(AMINA);
+    const result = await resolveNamedBusinessTurn({
+      message,
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      scopeIsCurrentTurn: false,
+      existingMessages: [],
+      repository: repo,
+    });
+
+    expect(result).toEqual({ state: "not_named" });
     expect(repo.findExactByNormalizedName).not.toHaveBeenCalled();
   });
 

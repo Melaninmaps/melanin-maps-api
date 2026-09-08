@@ -15,10 +15,18 @@ const EXPLICIT_BUSINESS_GRAMMAR = /^\s*(?:tell me about|what (?:can you tell me|
 const IMMEDIATE_REFERENCE_GRAMMAR = /^\s*the\s+(?:restaurant|business|place|spot|venue|shop|store|cafe|bar|salon|barbershop)\s+(?:in|at)\s+(.+?)\s*[?.!]*\s*$/i;
 const GENERIC_REFERENTS = /^(?:it|that|this|the (?:restaurant|business|place|spot|venue|shop|store|cafe|bar|salon|barbershop))$/i;
 const GENERIC_DISCOVERY_SUBJECT = /^(?:book[ -]?stores?|bookshops?|books|restaurants?|caf[eé]s?|coffee shops?|barbers?|barber[ -]?shops?|salons?|grocer(?:y|ies)|grocery stores?|laundromats?|laundr(?:y|ies)|hotels?|night[ -]?life|bars?|clubs?|lounges?)(?:\s+(?:in|near|around|at)\b|$)/i;
+const GENERAL_KNOWLEDGE_SUBJECT = /^(?:HBCUs?|historically black colleges?(?: and universities)?|historically black universities?)\b/i;
+const EXPLICIT_BUSINESS_CUE = /\b(?:business|restaurant|place|spot|venue|shop|store|caf[eé]|bar|salon|barbershop)\b/i;
 
 function explicitBusinessName(message: string): string | null {
   const candidate = message.match(EXPLICIT_BUSINESS_GRAMMAR)?.[1]?.trim() ?? null;
-  if (!candidate || candidate.length > 120 || GENERIC_REFERENTS.test(candidate) || GENERIC_DISCOVERY_SUBJECT.test(candidate)) return null;
+  if (
+    !candidate
+    || candidate.length > 120
+    || GENERIC_REFERENTS.test(candidate)
+    || GENERIC_DISCOVERY_SUBJECT.test(candidate)
+    || GENERAL_KNOWLEDGE_SUBJECT.test(candidate)
+  ) return null;
   return candidate;
 }
 
@@ -44,24 +52,29 @@ function previousCanonicalBusiness(messages: SessionMessage[]): { id: string | n
 export async function resolveNamedBusinessTurn(input: {
   message: string;
   scope: ValidatedKinfolkCityScope | null;
+  scopeIsCurrentTurn?: boolean;
   existingMessages: SessionMessage[];
   repository: GovernedKinfolkBusinessRepository;
 }): Promise<NamedBusinessResolution> {
   const explicitName = explicitBusinessName(input.message);
   if (explicitName) {
+    const hasBusinessCue = EXPLICIT_BUSINESS_CUE.test(input.message);
+    const hasCurrentTurnLocation = input.scopeIsCurrentTurn === true;
+    if (!hasBusinessCue && !hasCurrentTurnLocation) return { state: "not_named" };
     if (!input.scope) {
-      return {
-        state: "needs_location",
-        reply: `Which “${explicitName}” do you mean, and what city is the business in?`,
-      };
+      return hasBusinessCue
+        ? {
+            state: "needs_location",
+            reply: `Which “${explicitName}” do you mean, and what city is the business in?`,
+          }
+        : { state: "not_named" };
     }
     const business = await input.repository.findExactByNormalizedName({
       name: explicitName,
       ...input.scope,
     });
-    return business
-      ? { state: "resolved", business, source: "explicit" }
-      : { state: "not_found", name: explicitName };
+    if (business) return { state: "resolved", business, source: "explicit" };
+    return hasBusinessCue ? { state: "not_found", name: explicitName } : { state: "not_named" };
   }
 
   if (!IMMEDIATE_REFERENCE_GRAMMAR.test(input.message) || !input.scope) return { state: "not_named" };
