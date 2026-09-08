@@ -16,6 +16,7 @@ const chatRoute = routeSource.slice(
 describe("Kinfolk chat static wiring", () => {
   it("uses the governed public repository for every chat catalog and fallback read", () => {
     expect(chatRoute).toContain("resolveNamedBusinessTurn({");
+    expect(chatRoute).toContain("scopeIsCurrentTurn: turnGeography?.currentTurn === true");
     expect(chatRoute).toContain("repository: governedBusinessRepository");
     expect(chatRoute).toContain("governedBusinessRepository.findDestinationCatalog");
     expect(chatRoute).toContain("governedBusinessRepository.findWithinRadius");
@@ -48,6 +49,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(deterministicStart).toBeLessThan(quotaCheck);
     expect(deterministicStart).toBeLessThan(providerCall);
     expect(helper).toContain("resolveTurnGeography(input.message, currentSession?.destination ?? null)");
+    expect(helper).toContain("scopeIsCurrentTurn: location.currentTurn");
     expect(helper).toContain('decision.route !== "business_discovery"');
     expect(helper).toContain('namedBusiness.state !== "not_named"');
     expect(helper).toContain("await discoverLocalBusinesses({");
