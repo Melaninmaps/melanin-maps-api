@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { GovernedKinfolkBusiness } from "../governedBusinessRepository";
 import {
   SAFE_MODEL_RESPONSE_FALLBACK,
+  buildValidatedItineraryReply,
   extractItineraryDayCount,
   itineraryPromptInstruction,
   normalizeKinfolkItinerary,
@@ -128,13 +129,16 @@ describe("Kinfolk itinerary normalization", () => {
     expect(itinerary.days).toHaveLength(3);
     expect(itinerary.days.map((day) => day.day)).toEqual([1, 2, 3]);
     expect(itinerary.days[0].activities[0].canonicalVenue).toBe("AMINA");
+    expect(itinerary.days[0].activities[0].title).toBe("AMINA");
+    expect(itinerary.days[0].activities[0].description).toBe(AMINA.description);
     expect(itinerary.days[1].activities[0]).not.toHaveProperty("canonicalVenue");
     expect(itinerary.days[2].activities[0]).toMatchObject({
       time: "Flexible",
       title: "Explore at your own pace",
     });
-    expect(itinerary.safetyNote).toBe("Check official transit notices.");
-    expect(itinerary.packingTips).toEqual(["Walking shoes"]);
+    expect(itinerary.days[0].theme).toBe("Arrival and local highlights");
+    expect(itinerary).not.toHaveProperty("safetyNote");
+    expect(itinerary).not.toHaveProperty("packingTips");
   });
 
   it("replaces a non-catalog venue proposal with a server-authored generic activity", () => {
@@ -162,6 +166,34 @@ describe("Kinfolk itinerary normalization", () => {
     });
     expect(JSON.stringify(itinerary)).not.toContain("Invented Cafe");
     expect(JSON.stringify(itinerary)).not.toContain("invented-id");
+  });
+
+  it("removes invented venue names hidden in activity text and replaces the model reply", () => {
+    const itinerary = normalizeKinfolkItinerary({
+      message: "Plan a 1-day trip in Philadelphia",
+      catalog: [],
+      modelValue: {
+        reply: "Dinner at Invented Moon Cafe will be perfect.",
+        itinerary: {
+          safetyNote: "Meet at Invented Moon Cafe.",
+          packingTips: ["Coupon for Invented Moon Cafe"],
+          days: [{
+            theme: "Invented Moon Cafe night",
+            safetyNote: "Wait outside Invented Moon Cafe.",
+            activities: [{
+              time: "Invented Moon Cafe o'clock",
+              title: "Dinner at Invented Moon Cafe",
+              description: "Book a table at Invented Moon Cafe.",
+            }],
+          }],
+        },
+      },
+    });
+    const reply = buildValidatedItineraryReply("Philadelphia", itinerary);
+
+    expect(JSON.stringify(itinerary)).not.toContain("Invented Moon Cafe");
+    expect(reply).not.toContain("Invented Moon Cafe");
+    expect(reply).toMatch(/could not validate a specific venue/i);
   });
 
   it("requires recommendations null and canonical-or-generic activities in the model instruction", () => {

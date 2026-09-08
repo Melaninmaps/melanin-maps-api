@@ -64,6 +64,7 @@ import {
   evidenceRoutePromptBlock,
 } from "../kinfolk/evidence-runtime";
 import {
+  buildValidatedItineraryReply,
   extractItineraryDayCount,
   isTravelPlanningPrompt,
   itineraryPromptInstruction,
@@ -113,6 +114,7 @@ import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
 import { buildConversationalBusinessResultView } from "../kinfolk/business-result-view";
 import {
   businessDiscoveryClarification,
+  effectiveBusinessAudienceBand,
   temporaryBusinessAudienceBand,
 } from "../kinfolk/business-discovery-clarification";
 import { createPostgresDiscoverySignalRepository } from "../discovery/postgresFlywheelRepository";
@@ -2738,7 +2740,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     getCachedPrefs(input.req.user!.id),
     getMemberAgeBand(input.req.user!.id),
   ]);
-  const ageBand = temporaryBusinessAudienceBand(input.message) ?? assuredAgeBand;
+  const ageBand = effectiveBusinessAudienceBand(
+    assuredAgeBand,
+    temporaryBusinessAudienceBand(input.message),
+  );
   const clarificationSteps = businessDiscoveryClarification({
     message: input.message,
     subjectKey: subject.key,
@@ -4503,6 +4508,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           modelValue: parsed,
           catalog: businessCatalog,
         });
+        reply = buildValidatedItineraryReply(destination, itinerary);
         recommendations = null;
       }
     }

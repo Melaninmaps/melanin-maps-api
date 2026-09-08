@@ -13,6 +13,21 @@ fi
 TARGET_ID="665781f0-3144-4c06-815a-81dd63c824a9"
 OFFICIAL_SOURCE="https://www.queenandrookcafe.com/youth-programs/"
 
+if [[ "${DEPLOYMENT_TIER:-}" != "local_staging" || "${DIRECTORY_IMPORT_LOCAL_STAGING:-}" != "1" ]]; then
+  echo "QUEEN_ROOK_EVIDENCE_BLOCKED: isolated staging environment markers are required" >&2
+  exit 1
+fi
+DATABASE_IDENTITY="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc \
+  "SELECT current_database() || '|' || COALESCE(inet_server_addr()::text, '')")"
+if [[ "$DATABASE_IDENTITY" != "mwm_directory_staging|127.0.0.1" ]]; then
+  echo "QUEEN_ROOK_EVIDENCE_BLOCKED: database identity is not approved isolated staging" >&2
+  exit 1
+fi
+if [[ "$APPLY" == "1" && "${KINFOLK_FAMILY_EVIDENCE_APPLY_ACK:-}" != "isolated-staging-reviewed" ]]; then
+  echo "QUEEN_ROOK_EVIDENCE_BLOCKED: explicit isolated-staging apply acknowledgment is required" >&2
+  exit 1
+fi
+
 TARGET_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
   SELECT COUNT(*)
   FROM public.public_businesses

@@ -3,6 +3,7 @@ import { rankGovernedBusinessesForMember } from "../business-personalization";
 import { deriveBusinessSubject } from "../business-subject";
 import {
   businessDiscoveryClarification,
+  effectiveBusinessAudienceBand,
   temporaryBusinessAudienceBand,
 } from "../business-discovery-clarification";
 import type { GovernedKinfolkBusiness } from "../governedBusinessRepository";
@@ -115,6 +116,28 @@ describe("Kinfolk business personalization", () => {
   });
 
   it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+    "hard-blocks adult-entertainment classifications for protective band %s even with false youth text",
+    (ageBand) => {
+      const adultEntertainment = {
+        ...business("adult", "Late Show Cabaret", "Adult Entertainment", "Gentlemen's Club", [
+          "strip club", "mature audiences only",
+        ]),
+        audiencesServed: ["all ages", "family friendly"],
+      };
+      expect(rankGovernedBusinessesForMember([adultEntertainment], { ageBand })).toEqual([]);
+    },
+  );
+
+  it("does not turn substring collisions into preference reasons", () => {
+    const party = business("party", "Party Place", "Events", "Celebrations", []);
+    const barber = business("barber", "Neighborhood Barber", "Personal Care", "Barber", []);
+    const rankedForArt = rankGovernedBusinessesForMember([party], { ageBand: "18_plus", preferenceTerms: ["art"] });
+    const rankedForBar = rankGovernedBusinessesForMember([barber], { ageBand: "18_plus", preferenceTerms: ["bar"] });
+    expect(rankedForArt[0]?.matchReasons).toEqual([]);
+    expect(rankedForBar[0]?.matchReasons).toEqual([]);
+  });
+
+  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "holds adult-leaning venues from %s results without explicit youth evidence",
     (ageBand) => {
     const adultLeaning = [
@@ -216,5 +239,18 @@ describe("Kinfolk business personalization", () => {
     expect(temporaryBusinessAudienceBand("things to do for teens")).toBe("13_15");
     expect(temporaryBusinessAudienceBand("things to do for adults")).toBe("18_plus");
     expect(temporaryBusinessAudienceBand("things to do for mixed ages")).toBe("mixed_all_ages");
+  });
+
+  it.each(["13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
+    "never upgrades persisted protective band %s when the prompt says adults",
+    (persistedBand) => {
+      expect(effectiveBusinessAudienceBand(persistedBand, "18_plus")).toBe(persistedBand);
+    },
+  );
+
+  it("allows an assured adult to temporarily request a safer audience", () => {
+    expect(effectiveBusinessAudienceBand("18_plus", "13_15")).toBe("13_15");
+    expect(effectiveBusinessAudienceBand("18_plus", "mixed_all_ages")).toBe("mixed_all_ages");
+    expect(effectiveBusinessAudienceBand("18_plus", "18_plus")).toBe("18_plus");
   });
 });

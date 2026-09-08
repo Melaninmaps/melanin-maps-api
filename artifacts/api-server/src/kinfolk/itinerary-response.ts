@@ -123,15 +123,6 @@ function nonempty(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function stringList(value: unknown): string[] | null {
-  if (!Array.isArray(value)) return null;
-  const result = value
-    .map(nonempty)
-    .filter((item): item is string => item !== null)
-    .slice(0, 12);
-  return result.length > 0 ? result : null;
-}
-
 /**
  * Parse a model envelope strictly. Fenced, malformed, non-object, or reply-less
  * content is never reflected to a member as raw provider text.
@@ -158,7 +149,7 @@ function resolveCanonicalVenue(
   value: unknown,
   byId: ReadonlyMap<string, GovernedKinfolkBusiness>,
   byName: ReadonlyMap<string, GovernedKinfolkBusiness>,
-): string | null {
+): GovernedKinfolkBusiness | null {
   let proposedId: string | null = null;
   let proposedName: string | null = null;
   if (typeof value === "string") {
@@ -171,7 +162,7 @@ function resolveCanonicalVenue(
   }
   const match = (proposedId ? byId.get(proposedId) : undefined)
     ?? (proposedName ? byName.get(normalizeExactBusinessName(proposedName)) : undefined);
-  return match?.name ?? null;
+  return match ?? null;
 }
 
 function genericActivity(day: number): KinfolkItineraryActivity {
@@ -182,6 +173,12 @@ function genericActivity(day: number): KinfolkItineraryActivity {
       ? "Start with a relaxed walk in a central public area, note transit options, and leave room to adjust after arrival."
       : "Choose a museum, public market, park, or neighborhood walk that fits your energy and current opening hours.",
   };
+}
+
+function safeActivityTime(value: string): string {
+  return /^(?:morning|afternoon|evening|noon|midday|flexible|\d{1,2}(?::\d{2})?\s*(?:am|pm))$/i.test(value)
+    ? value
+    : "Flexible";
 }
 
 function normalizeActivities(
@@ -202,16 +199,17 @@ function normalizeActivities(
     const description = nonempty(row.description);
     if (!time || !title || !description) continue;
     const proposedVenue = row.canonicalVenue ?? row.venue;
-    const canonicalVenue = resolveCanonicalVenue(proposedVenue, byId, byName);
-    if (proposedVenue !== null && proposedVenue !== undefined && !canonicalVenue) {
+    const canonicalBusiness = resolveCanonicalVenue(proposedVenue, byId, byName);
+    if (!canonicalBusiness) {
       activities.push(genericActivity(day));
       continue;
     }
     activities.push({
-      time,
-      title,
-      description,
-      ...(canonicalVenue ? { canonicalVenue } : {}),
+      time: safeActivityTime(time),
+      title: canonicalBusiness.name,
+      description: canonicalBusiness.description
+        || `Visit ${canonicalBusiness.name} after confirming current hours and availability.`,
+      canonicalVenue: canonicalBusiness.name,
     });
   }
   return activities.length > 0 ? activities : [genericActivity(day)];
@@ -225,14 +223,10 @@ function normalizeDay(
   const row = value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
-  const safetyNote = nonempty(row.safetyNote);
-  const packingTips = stringList(row.packingTips);
   return {
     day,
-    theme: nonempty(row.theme) ?? `Day ${day} highlights`,
+    theme: day === 1 ? "Arrival and local highlights" : `Day ${day} highlights`,
     activities: normalizeActivities(row.activities, day, catalog),
-    ...(safetyNote ? { safetyNote } : {}),
-    ...(packingTips ? { packingTips } : {}),
   };
 }
 
@@ -247,15 +241,25 @@ export function normalizeKinfolkItinerary(input: {
     ? input.modelValue.itinerary as Record<string, unknown>
     : {};
   const proposedDays = Array.isArray(itinerary.days) ? itinerary.days : [];
-  const safetyNote = nonempty(itinerary.safetyNote);
-  const packingTips = stringList(itinerary.packingTips);
   return {
     days: Array.from({ length: dayCount }, (_, index) =>
       normalizeDay(proposedDays[index], index + 1, input.catalog),
     ),
-    ...(safetyNote ? { safetyNote } : {}),
-    ...(packingTips ? { packingTips } : {}),
   };
+}
+
+export function buildValidatedItineraryReply(
+  destination: string,
+  itinerary: KinfolkItinerary,
+): string {
+  const venues = [...new Set(itinerary.days.flatMap((day) => day.activities)
+    .map((activity) => activity.canonicalVenue)
+    .filter((value): value is string => typeof value === "string" && value.length > 0))];
+  const dayLabel = `${itinerary.days.length}-day`;
+  if (venues.length === 0) {
+    return `Here’s a flexible ${dayLabel} plan for ${destination}. I kept the activities general because I could not validate a specific venue from the MWM catalog; confirm current hours before you go.`;
+  }
+  return `Here’s a ${dayLabel} plan for ${destination}. I prioritized ${venues.join(", ")} from the MWM directory based on the preferences you chose; confirm current hours and availability before you go.`;
 }
 
 export function itineraryPromptInstruction(dayCount: number, destination: string): string {

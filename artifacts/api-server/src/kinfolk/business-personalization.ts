@@ -24,7 +24,7 @@ const PROTECTIVE_BANDS = new Set<BusinessAudienceBand>([
   "16_17",
   "mixed_all_ages",
 ]);
-const MINOR_HARD_EXCLUDED = /\b(?:night\s*club|nightclub|adult nightlife|21\+|adults? only|age[- ]restricted)\b/i;
+const MINOR_HARD_EXCLUDED = /\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|21\+|adults? only|age[- ]restricted|mature audiences? only)\b/i;
 const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
 const MINOR_POSITIVE = /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
 const STOP_WORDS = new Set([
@@ -62,6 +62,14 @@ function meaningfulTokens(value: string): string[] {
   return [...new Set(value.split(" ").filter((token) => token.length >= 3 && !STOP_WORDS.has(token)))];
 }
 
+function containsWholeTerm(text: string, term: string): boolean {
+  const pattern = term
+    .split(" ")
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("[^a-z0-9]+");
+  return new RegExp(`(?:^|[^a-z0-9])${pattern}(?=$|[^a-z0-9])`, "i").test(text);
+}
+
 function scoredBusiness(
   business: GovernedKinfolkBusiness,
   index: number,
@@ -85,20 +93,22 @@ function scoredBusiness(
   const reasons: string[] = [];
   const request = cleanTerm(personalization.currentRequest);
   if (request) {
-    const directRequestTokens = meaningfulTokens(request).filter((token) => text.includes(token));
+    const directRequestTokens = meaningfulTokens(request).filter((token) => containsWholeTerm(text, token));
     score += Math.min(8, directRequestTokens.length * 2);
   }
 
   for (const rawTerm of personalization.preferenceTerms ?? []) {
     const term = cleanTerm(rawTerm);
     if (!term) continue;
-    if (text.includes(term)) {
+    if (containsWholeTerm(text, term)) {
       score += 7;
       reasons.push(`Matches your saved preference: ${rawTerm.trim()}`);
       continue;
     }
-    const matchingTokens = meaningfulTokens(term).filter((token) => text.includes(token));
-    if (matchingTokens.length > 0) {
+    const termTokens = meaningfulTokens(term);
+    const matchingTokens = termTokens.filter((token) => containsWholeTerm(text, token));
+    const requiredTokenMatches = termTokens.length > 1 ? 2 : 1;
+    if (matchingTokens.length >= requiredTokenMatches) {
       score += Math.min(4, matchingTokens.length);
       reasons.push(`Related to your saved preference: ${rawTerm.trim()}`);
     }
@@ -106,7 +116,7 @@ function scoredBusiness(
 
   for (const rawTerm of personalization.avoidTerms ?? []) {
     const term = cleanTerm(rawTerm);
-    if (term && text.includes(term)) score -= 8;
+    if (term && containsWholeTerm(text, term)) score -= 8;
   }
 
   if (protectiveAudience && hasPublishedMinorAudienceSignal) {

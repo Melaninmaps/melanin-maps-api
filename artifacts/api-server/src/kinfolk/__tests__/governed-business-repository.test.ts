@@ -187,6 +187,8 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $2");
     expect(sql).toContain("CROSS JOIN LATERAL");
     expect(sql).toContain("FROM unnest($3::text[])");
+    expect(sql).toContain("~ ('(^|[^a-z0-9])' || preference.token || '([^a-z0-9]|$)')");
+    expect(sql).not.toContain("LIKE '%' || preference.token || '%'");
     expect(sql).toContain("COALESCE(bi.audiences_served, '[]'::jsonb)::text");
     expect(sql).toContain("ORDER BY preference_match.hit_count DESC");
     expect(sql).toContain("LIMIT $4");
@@ -208,6 +210,20 @@ describe("governed Kinfolk business repository", () => {
       ["and", "the", "trip"],
     )).resolves.toEqual([]);
     expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  it("passes short valid tokens as bounded whole-token inputs rather than substrings", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    await repository.findByPreferenceTerms(
+      { city: "Philadelphia", stateCode: "PA" },
+      ["art", "bar"],
+    );
+
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("[^a-z0-9]");
+    expect(params[2]).toEqual(["art", "bar"]);
   });
 
 

@@ -4,11 +4,15 @@ import { writeFile } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import { pool } from "@workspace/db";
 
-const origin = (process.env.KINFOLK_ACCEPTANCE_ORIGIN ?? "http://127.0.0.1:3080").replace(/\/$/, "");
+const origin = "http://127.0.0.1:3080";
 const outputPath = process.env.KINFOLK_ACCEPTANCE_OUTPUT?.trim() || null;
+const expectedSha = process.env.KINFOLK_ACCEPTANCE_EXPECTED_SHA?.trim() ?? "";
 
-if (!/^https:\/\/mwm-staging\.[a-z0-9.-]+\.nip\.io$/i.test(origin) && !/^http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/i.test(origin)) {
-  throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: origin must be isolated staging or loopback");
+if (!/^[a-f0-9]{40}$/.test(expectedSha)) {
+  throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact expected SHA is required");
+}
+if (process.env.DEPLOYMENT_TIER !== "local_staging" || process.env.DIRECTORY_IMPORT_LOCAL_STAGING !== "1") {
+  throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact isolated-staging markers are required");
 }
 
 const profiles = [
@@ -89,6 +93,7 @@ type AcceptanceResult = {
   directoryClaimed: boolean;
   directoryVerified: boolean;
   teenAdultOnlyExcluded: boolean;
+  teenAdultPhraseCouldNotWeakenSafety: boolean;
   tripExpectedVenuePresent: boolean;
   tripCanonicalVenues: string[];
   tripDayCount: number;
@@ -125,20 +130,29 @@ async function cleanupUsers(userIds: string[]): Promise<void> {
   await pool.query(
     `DELETE FROM sessions WHERE sess #>> '{user,id}' = ANY($1::text[])`,
     [userIds],
-  ).catch(() => undefined);
-
+  );
   const refs = await pool.query<{ table_schema: string; table_name: string; column_name: string }>(
-    `SELECT DISTINCT table_schema, table_name, column_name
-       FROM information_schema.columns
-      WHERE table_schema = 'public'
-        AND column_name = 'user_id'
-        AND table_name <> 'users'`,
+    `SELECT DISTINCT c.table_schema, c.table_name, c.column_name
+       FROM information_schema.columns c
+       JOIN information_schema.tables t
+         ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+      WHERE c.table_schema = 'public'
+        AND c.column_name = 'user_id'
+        AND c.table_name <> 'users'
+        AND t.table_type = 'BASE TABLE'`,
   );
   for (const ref of refs.rows) {
-    if (!/^[a-z_][a-z0-9_]*$/i.test(ref.table_name) || !/^[a-z_][a-z0-9_]*$/i.test(ref.column_name)) continue;
+    if (!/^[a-z_][a-z0-9_]*$/i.test(ref.table_name) || !/^[a-z_][a-z0-9_]*$/i.test(ref.column_name)) {
+      throw new Error("KINFOLK_FAMILY_ACCEPTANCE_CLEANUP_IDENTIFIER_INVALID");
+    }
     const table = `"${ref.table_schema}"."${ref.table_name}"`;
     const column = `"${ref.column_name}"`;
-    await pool.query(`DELETE FROM ${table} WHERE ${column}::text = ANY($1::text[])`, [userIds]).catch(() => undefined);
+    await pool.query(`DELETE FROM ${table} WHERE ${column}::text = ANY($1::text[])`, [userIds]);
+    const residue = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM ${table} WHERE ${column}::text = ANY($1::text[])`,
+      [userIds],
+    );
+    if (residue.rows[0]?.count !== "0") throw new Error("KINFOLK_FAMILY_ACCEPTANCE_CLEANUP_RELATED_ROWS_REMAIN");
   }
   await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [userIds]);
   const remainingUsers = await pool.query<{ count: string }>(
@@ -159,14 +173,19 @@ async function run(): Promise<void> {
     "SELECT current_database(), inet_server_addr()::text AS server_addr",
   );
   const databaseName = database.rows[0]?.current_database ?? "";
-  if (!databaseName.startsWith("mwm_directory_staging")) {
+  const serverAddress = database.rows[0]?.server_addr ?? "";
+  if (databaseName !== "mwm_directory_staging" || serverAddress !== "127.0.0.1") {
     throw new Error(`KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: database ${databaseName || "unknown"} is not isolated staging`);
   }
+  const version = await requestJson("/api/version", { method: "GET" });
+  assert.equal(version.response.status, 200, "version endpoint");
+  assert.equal(version.body.release, expectedSha, "running service exact SHA");
 
   const nonce = `${Date.now()}-${randomBytes(5).toString("hex")}`;
   const password = randomBytes(32).toString("base64url");
   const passwordHash = await bcrypt.hash(password, 8);
   const userIds: string[] = [];
+  const sessionCookies: string[] = [];
   const results: AcceptanceResult[] = [];
 
   try {
@@ -194,6 +213,7 @@ async function run(): Promise<void> {
       assert.equal(login.response.status, 200, `${profile.label} login`);
       const cookie = cookieHeader(login.response);
       assert.ok(cookie, `${profile.label} session cookie`);
+      sessionCookies.push(cookie);
 
       const ageSave = await requestJson("/api/age-assurance", {
         method: "PUT",
@@ -233,8 +253,19 @@ async function run(): Promise<void> {
       assert.deepEqual(actions.map((action) => action.label), ["View details", "Visit website"], `${profile.label} actions`);
       assert.ok(actions.every((action) => typeof action.url === "string" && action.url.length > 0), `${profile.label} action URLs`);
       const teenAdultOnlyExcluded = profile.label !== "P14"
-        || !/\b(?:night\s*club|nightclub|adults? only|21\+)\b/i.test(JSON.stringify(cards));
+        || !/\b(?:night\s*club|nightclub|adult entertainment|strip\s*club|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|21\+)\b/i.test(JSON.stringify(cards));
       assert.equal(teenAdultOnlyExcluded, true, `${profile.label} adult-only exclusion`);
+      let teenAdultPhraseCouldNotWeakenSafety = true;
+      if (profile.label === "P14") {
+        const adversarialAudience = await requestJson("/api/kinfolk/chat", {
+          method: "POST",
+          body: JSON.stringify({ message: "Find things to do for adults in Philadelphia PA" }),
+        }, cookie);
+        assert.equal(adversarialAudience.response.status, 200, "P14 adult-language route probe");
+        teenAdultPhraseCouldNotWeakenSafety = !/\b(?:night\s*club|nightclub|adult entertainment|strip\s*club|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|21\+)\b/i
+          .test(JSON.stringify(adversarialAudience.body.resultView ?? {}));
+        assert.equal(teenAdultPhraseCouldNotWeakenSafety, true, "P14 adult language cannot weaken persisted safety");
+      }
 
       const trip = await requestJson("/api/kinfolk/chat", {
         method: "POST",
@@ -253,7 +284,7 @@ async function run(): Promise<void> {
       if (profile.label === "P14") {
         assert.doesNotMatch(
           JSON.stringify(trip.body),
-          /\b(?:night\s*club|nightclub|adults? only|21\+)\b/i,
+          /\b(?:night\s*club|nightclub|adult entertainment|strip\s*club|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|21\+)\b/i,
           "P14 trip adult-only exclusion",
         );
       }
@@ -267,20 +298,32 @@ async function run(): Promise<void> {
         directoryClaimed: false,
         directoryVerified: false,
         teenAdultOnlyExcluded,
+        teenAdultPhraseCouldNotWeakenSafety,
         tripExpectedVenuePresent,
         tripCanonicalVenues: canonicalVenues,
         tripDayCount: days.length,
       });
     }
   } finally {
+    let logoutFailed = false;
+    for (const cookie of sessionCookies) {
+      try {
+        const logout = await requestJson("/api/auth/logout-all", { method: "POST" }, cookie);
+        if (logout.response.status !== 200 && logout.response.status !== 401) logoutFailed = true;
+      } catch {
+        logoutFailed = true;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await cleanupUsers(userIds);
+    if (logoutFailed) throw new Error("KINFOLK_FAMILY_ACCEPTANCE_LOGOUT_FAILED");
   }
 
   assert.equal(new Set(results.map((result) => result.directoryTopResult)).size, 4, "four distinct directory winners");
   const report = {
     ok: true,
     checkedAt: new Date().toISOString(),
-    sourceSha: process.env.APP_GIT_SHA ?? process.env.GIT_SHA ?? null,
+    sourceSha: expectedSha,
     origin,
     databaseClass: "isolated_staging",
     disposableAccountsRemoved: true,

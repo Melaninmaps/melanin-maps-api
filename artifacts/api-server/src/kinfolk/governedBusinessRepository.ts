@@ -560,7 +560,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
             COALESCE(bi.vibes, '[]'::jsonb)::text,
             COALESCE(bi.environment_tags, '[]'::jsonb)::text,
             COALESCE(bi.amenity_tags, '[]'::jsonb)::text
-          )) LIKE '%' || preference.token || '%'
+          )) ~ ('(^|[^a-z0-9])' || preference.token || '([^a-z0-9]|$)')
         ) AS preference_match
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2

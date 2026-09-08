@@ -12,6 +12,22 @@ export function temporaryBusinessAudienceBand(message: string): BusinessAudience
   return null;
 }
 
+export function effectiveBusinessAudienceBand(
+  persistedBand: BusinessAudienceBand,
+  temporaryBand: BusinessAudienceBand | null,
+): BusinessAudienceBand {
+  if (!temporaryBand) return persistedBand;
+  // Only an assured adult may temporarily request adult-oriented results.
+  // Adult language in a prompt must never weaken a persisted minor, unknown,
+  // or mixed-age audience policy.
+  if (temporaryBand === "18_plus" && persistedBand !== "18_plus") return persistedBand;
+  // A temporary younger/mixed audience always makes an adult search safer.
+  if (persistedBand === "18_plus") return temporaryBand;
+  if (persistedBand === "under_13") return persistedBand;
+  if (persistedBand === "13_15" && temporaryBand === "under_13") return temporaryBand;
+  return persistedBand;
+}
+
 export function businessDiscoveryClarification(input: {
   message: string;
   subjectKey: BusinessSubjectKey;

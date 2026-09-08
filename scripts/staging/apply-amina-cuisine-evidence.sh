@@ -13,6 +13,21 @@ fi
 TARGET_ID="1ac1fa6f-379e-441f-b8f6-5b1d1ef56851"
 OFFICIAL_SOURCE="https://www.aminaphilly.com/about"
 
+if [[ "${DEPLOYMENT_TIER:-}" != "local_staging" || "${DIRECTORY_IMPORT_LOCAL_STAGING:-}" != "1" ]]; then
+  echo "AMINA_EVIDENCE_BLOCKED: isolated staging environment markers are required" >&2
+  exit 1
+fi
+DATABASE_IDENTITY="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc \
+  "SELECT current_database() || '|' || COALESCE(inet_server_addr()::text, '')")"
+if [[ "$DATABASE_IDENTITY" != "mwm_directory_staging|127.0.0.1" ]]; then
+  echo "AMINA_EVIDENCE_BLOCKED: database identity is not approved isolated staging" >&2
+  exit 1
+fi
+if [[ "$APPLY" == "1" && "${KINFOLK_FAMILY_EVIDENCE_APPLY_ACK:-}" != "isolated-staging-reviewed" ]]; then
+  echo "AMINA_EVIDENCE_BLOCKED: explicit isolated-staging apply acknowledgment is required" >&2
+  exit 1
+fi
+
 TARGET_COUNT="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atqc "
   SELECT COUNT(*)
   FROM public.public_businesses

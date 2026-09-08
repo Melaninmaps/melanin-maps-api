@@ -49,6 +49,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
     expect(chatRoute).toContain("dietaryNotes: prefs?.dietaryNotes");
+    expect(chatRoute).toContain("reply = buildValidatedItineraryReply(destination, itinerary)");
   });
 
 
@@ -68,6 +69,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain('decision.route !== "business_discovery"');
     expect(helper).toContain('namedBusiness.state !== "not_named"');
     expect(helper).toContain("getMemberAgeBand(input.req.user!.id)");
+    expect(helper).toContain("effectiveBusinessAudienceBand(");
+    expect(helper).toContain("temporaryBusinessAudienceBand(input.message)");
     expect(helper).not.toContain("loadAdaptiveDeliveryProfile");
     expect(helper).toContain("await discoverLocalBusinesses({");
     expect(helper).toContain("await persistDeterministicDiscoveryTurn({");
