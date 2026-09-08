@@ -3197,6 +3197,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const namedBusinessResolution = await resolveNamedBusinessTurn({
       message,
       scope: destinationScope,
+      scopeIsCurrentTurn: turnGeography?.currentTurn === true,
       existingMessages,
       repository: governedBusinessRepository,
     });

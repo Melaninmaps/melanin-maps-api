@@ -61,6 +61,7 @@ describe("named Kinfolk business resolution", () => {
     const result = await resolveNamedBusinessTurn({
       message: "Tell me about Amina",
       scope: { city: "Philadelphia", stateCode: "PA" },
+      scopeIsCurrentTurn: true,
       existingMessages: [],
       repository: repo,
     });
@@ -121,15 +122,17 @@ describe("named Kinfolk business resolution", () => {
   });
 
   it.each([
+    "Tell me about HBCUs",
     "Tell me about The Odyssey",
     "Tell me about credit scores",
     "What do you know about current interest rates?",
     "Tell me about Selena Quintanilla",
-  ])("defaults an unscoped general question to knowledge/research: %s", async (message) => {
-    const repo = repository(null);
+  ])("defaults a general question to knowledge/research despite inherited city scope: %s", async (message) => {
+    const repo = repository(AMINA);
     const result = await resolveNamedBusinessTurn({
       message,
-      scope: null,
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      scopeIsCurrentTurn: false,
       existingMessages: [],
       repository: repo,
     });

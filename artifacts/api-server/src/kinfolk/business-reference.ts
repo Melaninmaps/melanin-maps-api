@@ -52,12 +52,15 @@ function previousCanonicalBusiness(messages: SessionMessage[]): { id: string | n
 export async function resolveNamedBusinessTurn(input: {
   message: string;
   scope: ValidatedKinfolkCityScope | null;
+  scopeIsCurrentTurn?: boolean;
   existingMessages: SessionMessage[];
   repository: GovernedKinfolkBusinessRepository;
 }): Promise<NamedBusinessResolution> {
   const explicitName = explicitBusinessName(input.message);
   if (explicitName) {
     const hasBusinessCue = EXPLICIT_BUSINESS_CUE.test(input.message);
+    const hasCurrentTurnLocation = input.scopeIsCurrentTurn === true;
+    if (!hasBusinessCue && !hasCurrentTurnLocation) return { state: "not_named" };
     if (!input.scope) {
       return hasBusinessCue
         ? {
