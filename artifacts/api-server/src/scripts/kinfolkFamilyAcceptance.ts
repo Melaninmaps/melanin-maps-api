@@ -141,6 +141,17 @@ async function cleanupUsers(userIds: string[]): Promise<void> {
     await pool.query(`DELETE FROM ${table} WHERE ${column}::text = ANY($1::text[])`, [userIds]).catch(() => undefined);
   }
   await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [userIds]);
+  const remainingUsers = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM users WHERE id = ANY($1::text[])`,
+    [userIds],
+  );
+  const remainingSessions = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM sessions WHERE sess #>> '{user,id}' = ANY($1::text[])`,
+    [userIds],
+  );
+  if (remainingUsers.rows[0]?.count !== "0" || remainingSessions.rows[0]?.count !== "0") {
+    throw new Error("KINFOLK_FAMILY_ACCEPTANCE_CLEANUP_FAILED");
+  }
 }
 
 async function run(): Promise<void> {
@@ -222,7 +233,7 @@ async function run(): Promise<void> {
       assert.deepEqual(actions.map((action) => action.label), ["View details", "Visit website"], `${profile.label} actions`);
       assert.ok(actions.every((action) => typeof action.url === "string" && action.url.length > 0), `${profile.label} action URLs`);
       const teenAdultOnlyExcluded = profile.label !== "P14"
-        || cards.every((card) => card.title !== "Adults Only Night Club");
+        || !/\b(?:night\s*club|nightclub|adults? only|21\+)\b/i.test(JSON.stringify(cards));
       assert.equal(teenAdultOnlyExcluded, true, `${profile.label} adult-only exclusion`);
 
       const trip = await requestJson("/api/kinfolk/chat", {
@@ -240,7 +251,11 @@ async function run(): Promise<void> {
         || String(trip.body.reply ?? "").toLowerCase().includes(profile.expectedBusiness.toLowerCase());
       assert.equal(tripExpectedVenuePresent, true, `${profile.label} profile-aware trip venue`);
       if (profile.label === "P14") {
-        assert.equal(JSON.stringify(trip.body).includes("Adults Only Night Club"), false, "P14 trip adult-only exclusion");
+        assert.doesNotMatch(
+          JSON.stringify(trip.body),
+          /\b(?:night\s*club|nightclub|adults? only|21\+)\b/i,
+          "P14 trip adult-only exclusion",
+        );
       }
 
       results.push({
