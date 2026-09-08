@@ -12,13 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-function getApiBase(): string {
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    const domain = process.env.EXPO_PUBLIC_DEV_API_URL ?? "";
-    if (domain) return domain;
-  }
-  return "";
-}
+import { getApiBase } from "@/lib/api";
 
 export default function BusinessPreviewScreen() {
   const colors = useColors();

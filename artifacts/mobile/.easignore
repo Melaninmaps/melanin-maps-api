@@ -5,6 +5,7 @@ node_modules
 dist
 .expo
 web-build
+web-static
 android
 ios
 __tests__
@@ -12,11 +13,13 @@ coverage
 .nyc_output
 *.map
 artifacts/web
+artifacts/web-static
 artifacts/pitch-deck
 artifacts/first-500
 artifacts/biz-onepager
 artifacts/api-server
 artifacts/mockup-sandbox
+data/founder-imports
 .local
 attached_assets
 .agents

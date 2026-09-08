@@ -14,13 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
-import Constants from "expo-constants";
-
-function getApiBase() {
-  const host = Constants.expoConfig?.hostUri?.split(":")[0] ?? "localhost";
-  return Platform.OS === "web" ? "" : `http://${host}:8080`;
-}
 
 async function authHeaders(): Promise<Record<string, string>> {
   try {

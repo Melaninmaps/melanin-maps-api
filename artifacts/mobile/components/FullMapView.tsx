@@ -1,13 +1,16 @@
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import * as SecureStore from "expo-secure-store";
 import { useRouter, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -17,16 +20,26 @@ import { CategoryPill } from "@/components/CategoryPill";
 import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
-import { useBusinesses } from "@/hooks/useBusinesses";
+import { useBusinessById, useBusinesses } from "@/hooks/useBusinesses";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { useAuth } from "@/lib/auth";
+import {
+  isCoordinateInRegion,
+  isDomesticMapCountry,
+  mapPinMatchesQuery,
+  normalizeMapCulturalSite,
+  validMapCoordinate,
+  type NormalizedMapCulturalSite,
+} from "@/lib/mapData";
 import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
 
 import { getApiBase } from "@/lib/api";
 
 const GOLD = "#CA922B";
+const AUTH_TOKEN_KEY = "auth_session_token";
+const MAX_BUSINESS_MARKERS = 350;
 // KinfolkAI restore tab lives at bottom: insets.bottom + 90 in the root layout.
 // FullMapView content area base is ~83px from raw screen bottom (tab bar).
 // Adding ~7px net = 90px clearance keeps cards and FAB above the widget.
@@ -63,6 +76,21 @@ const DEFAULT_REGION: Region = {
   longitudeDelta: 52,
 };
 
+async function memberHeaders(): Promise<Record<string, string>> {
+  const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY).catch(() => null);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function memberFetch(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    return await fetch(url, { headers: await memberHeaders(), signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 interface HeatmapPoint {
   city: string;
   state: string;
@@ -73,28 +101,7 @@ interface HeatmapPoint {
   tier: "safe" | "moderate" | "alert";
 }
 
-interface CulturalSite {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  heritageCategory: string;
-  subcategory?: string | null;
-  city: string;
-  state: string;
-  address?: string | null;
-  latitude: string;
-  longitude: string;
-  era: string | null;
-  significance: string | null;
-  externalUrl?: string | null;
-  yearEstablished?: number | null;
-  visitTip?: string | null;
-  contentNote?: string | null;
-  pinType?: string | null;
-  listingStatus?: string | null;
-  culturalCommunity?: string | null;
-}
+type CulturalSite = NormalizedMapCulturalSite;
 
 interface MapEventItem {
   id: string;
@@ -228,10 +235,14 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const mapRef = useRef<MapView>(null);
   const mapReadyRef = useRef(false);
   const pendingLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const pendingBusinessFocusRef = useRef<{ businessId: string; region: Region } | null>(null);
   const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once on load
+  const [visibleRegion, setVisibleRegion] = useState<Region>(DEFAULT_REGION);
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(true);
+  const [searchDraft, setSearchDraft] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
@@ -290,7 +301,31 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const { user } = useAuth();
   const pollingEnabled = isFocused && user !== null;
 
-  const { businesses } = useBusinesses();
+  const {
+    businesses: allBusinessPins,
+    isLoading: businessPinsLoading,
+    error: businessPinsError,
+    refetch: refetchBusinessPins,
+  } = useBusinesses({ mapPins: true });
+  const {
+    businesses: searchedBusinesses,
+    total: searchedBusinessTotal,
+    isLoading: businessSearchLoading,
+    error: businessSearchError,
+  } = useBusinesses({ search: submittedSearch, enabled: submittedSearch.length > 0 });
+  const businesses = useMemo(() => {
+    if (!submittedSearch) return allBusinessPins;
+    const byId = new Map<string, Business>();
+    for (const business of allBusinessPins) {
+      if (mapPinMatchesQuery(business, submittedSearch)) byId.set(business.id, business);
+    }
+    for (const business of searchedBusinesses) byId.set(business.id, business);
+    return [...byId.values()];
+  }, [allBusinessPins, searchedBusinesses, submittedSearch]);
+  const { business: selectedBusinessDetail } = useBusinessById(selectedBusiness?.id ?? "");
+  const activeBusiness = selectedBusinessDetail?.id === selectedBusiness?.id
+    ? selectedBusinessDetail
+    : selectedBusiness;
 
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
@@ -304,25 +339,68 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     }
   }, [selectedBusiness, selectedCulturalSite, selectedMapEvent, selectedOrg, selectedTourEvent, selectedTourSite]);
 
-  const mapped = businesses.filter(
+  const mapped = useMemo(() => businesses.filter(
     (b) =>
-      b.latitude != null &&
-      b.longitude != null &&
-      !isNaN(b.latitude) &&
-      !isNaN(b.longitude) &&
-      isFinite(b.latitude) &&
-      isFinite(b.longitude) &&
-      b.latitude >= -90 && b.latitude <= 90 &&
-      b.longitude >= -180 && b.longitude <= 180 &&
-      // Exclude "Null Island" (0,0) — means coordinates were never geocoded
-      (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001) &&
+      validMapCoordinate(b.latitude, b.longitude) &&
       (activeCategory === "All"
         || (activeCategory === "International"
-            ? (b.country && b.country !== "USA" && b.country !== "United States")
+            ? !isDomesticMapCountry(b.country)
             : activeCategory === "Healthcare"
             ? b.category === "Health & Wellness"
             : b.category === activeCategory)),
-  );
+  ), [businesses, activeCategory]);
+
+  const renderedBusinessPins = useMemo(() => {
+    const visible = mapped.filter((business) =>
+      isCoordinateInRegion(business.latitude, business.longitude, visibleRegion),
+    );
+    if (submittedSearch) return visible.slice(0, MAX_BUSINESS_MARKERS);
+    const domestic = visible.filter((business) => isDomesticMapCountry(business.country));
+    const international = visible.filter((business) => !isDomesticMapCountry(business.country));
+    return [...domestic, ...international].slice(0, MAX_BUSINESS_MARKERS);
+  }, [mapped, submittedSearch, visibleRegion]);
+
+  const submitMapSearch = useCallback((value = searchDraft) => {
+    const query = value.trim().replace(/\s+/g, " ");
+    pendingBusinessFocusRef.current = null;
+    setSearchDraft(query);
+    setSubmittedSearch(query);
+    setActiveCategory("All");
+    setSelectedBusiness(null);
+    Keyboard.dismiss();
+  }, [searchDraft]);
+
+  const clearMapSearch = useCallback(() => {
+    pendingBusinessFocusRef.current = null;
+    setSearchDraft("");
+    setSubmittedSearch("");
+    setSelectedBusiness(null);
+    Keyboard.dismiss();
+  }, []);
+
+  const focusBusiness = useCallback((business: Business) => {
+    setSelectedBusiness(business);
+    setSelectedCulturalSite(null);
+    setSelectedMapEvent(null);
+    setSelectedOrg(null);
+    setSelectedTourEvent(null);
+    setSelectedTourSite(null);
+    setSelectedTravelDestination(null);
+    if (validMapCoordinate(business.latitude, business.longitude)) {
+      const region = {
+        latitude: business.latitude,
+        longitude: business.longitude,
+        latitudeDelta: 0.045,
+        longitudeDelta: 0.045,
+      };
+      if (!mapReadyRef.current) {
+        pendingBusinessFocusRef.current = { businessId: business.id, region };
+        return;
+      }
+      pendingBusinessFocusRef.current = null;
+      mapRef.current?.animateToRegion(region, 650);
+    }
+  }, []);
 
   // ── Focus a specific heritage site when navigated from Kinfolk chat ─────────
   // Runs whenever mapReady, tourSites, or focusSiteId changes so it can resolve
@@ -367,27 +445,32 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     return () => clearTimeout(timer);
   }, [focusSiteId, focusLat, focusLng, mapReady, tourSites]);
 
-  // ── Auto-fit to business pins on first load ────────────────────────────────
+  // ── Fit only explicit search results ───────────────────────────────────────
   // Build 99 crash-blocker note: this effect previously sat ABOVE the
   // `mapped` declaration — a temporal-dead-zone ReferenceError (TS2448/
   // TS2454; Hermes throws at component mount). Moved below the declaration;
   // logic unchanged.
-  // Fires once when both the map is ready and businesses have loaded.
-  // Without this, the map opens at DEFAULT_REGION (US overview) which is fine,
-  // but if the user pans away before businesses arrive they'd miss the pins.
-  // Also handles the common case where the user's GPS location has no nearby
-  // businesses — the fit ensures something is always visible.
+  // The complete public pin feed is too large to fit on every load. Preserve the
+  // user's GPS/default region until they intentionally search.
   useEffect(() => {
-    if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current) return;
-    hasFitToBusinessesRef.current = true;
+    hasFitToBusinessesRef.current = false;
+  }, [submittedSearch]);
+
+  useEffect(() => {
+    if (!submittedSearch || !mapReady || mapped.length === 0 || hasFitToBusinessesRef.current) return;
     // Give the map a brief moment to finish rendering before fitting
-    setTimeout(() => {
+    const expectedSearch = submittedSearch;
+    const coordinates = mapped.slice(0, 200).map((b) => ({ latitude: b.latitude, longitude: b.longitude }));
+    const timer = setTimeout(() => {
+      if (expectedSearch !== submittedSearch || !mapReadyRef.current) return;
+      hasFitToBusinessesRef.current = true;
       mapRef.current?.fitToCoordinates(
-        mapped.map((b) => ({ latitude: b.latitude, longitude: b.longitude })),
+        coordinates,
         { edgePadding: { top: 80, right: 40, bottom: 100, left: 40 }, animated: true },
       );
     }, 600);
-  }, [mapReady, mapped]);
+    return () => clearTimeout(timer);
+  }, [submittedSearch, mapReady, mapped]);
 
   const filteredCulturalSites = activeCulturalCategory
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
@@ -448,10 +531,11 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     try {
       const base = getApiBase();
       if (!base) return;
-      const res = await fetch(`${base}/api/cultural-sites`);
+      const res = await memberFetch(`${base}/api/cultural-sites`);
       if (res.ok) {
-        const data = await res.json() as { sites: CulturalSite[] };
-        setCulturalSites(data.sites ?? []);
+        const data = await res.json() as { items?: unknown[]; sites?: unknown[] };
+        const rows = Array.isArray(data.items) ? data.items : Array.isArray(data.sites) ? data.sites : [];
+        setCulturalSites(rows.map(normalizeMapCulturalSite).filter((site): site is CulturalSite => site !== null));
         setCulturalSitesError(false);
       } else {
         // Preserve existing markers silently; only surface error when we have nothing
@@ -495,7 +579,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     isFetchingOrgs.current = true;
     const base = getApiBase();
     if (!base) { isFetchingOrgs.current = false; return; }
-    fetch(`${base}/api/community-orgs?limit=200`)
+    memberFetch(`${base}/api/community-orgs?limit=200`)
       .then((r) => r.ok ? r.json() as Promise<{ organizations: TourCommunityOrg[] }> : null)
       .then((d) => { if (d?.organizations) setCommunityOrgs(d.organizations.filter(o => o.latitude != null && o.longitude != null)); })
       .catch(() => {})
@@ -507,7 +591,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     isFetchingTourEvents.current = true;
     const base = getApiBase();
     if (!base) { isFetchingTourEvents.current = false; return; }
-    fetch(`${base}/api/recurring-events?limit=200`)
+    memberFetch(`${base}/api/recurring-events?limit=200`)
       .then((r) => r.ok ? r.json() as Promise<{ events: TourRecurringEvent[] }> : null)
       .then((d) => { if (d?.events) setTourEvents(d.events.filter(e => e.latitude != null && e.longitude != null)); })
       .catch(() => {})
@@ -519,9 +603,13 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     isFetchingTourSites.current = true;
     const base = getApiBase();
     if (!base) { isFetchingTourSites.current = false; return; }
-    fetch(`${base}/api/tour-cultural-sites?limit=300`)
-      .then((r) => r.ok ? r.json() as Promise<{ sites: TourHeritageSite[] }> : null)
-      .then((d) => { if (d?.sites) setTourSites(d.sites.filter(s => s.latitude != null && s.longitude != null)); })
+    memberFetch(`${base}/api/tour-cultural-sites?limit=300`)
+      .then((r) => r.ok ? r.json() as Promise<{ sites: (TourHeritageSite & { site_type?: string })[] }> : null)
+      .then((d) => {
+        if (d?.sites) setTourSites(d.sites
+          .filter((site) => validMapCoordinate(Number(site.latitude), Number(site.longitude)))
+          .map((site) => ({ ...site, siteType: site.siteType ?? site.site_type })));
+      })
       .catch(() => {})
       .finally(() => { isFetchingTourSites.current = false; });
   }, [showTourSites, mapReady, tourSites.length]);
@@ -556,7 +644,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     isFetchingMapEvents.current = true;
     const base = getApiBase();
     if (!base) { isFetchingMapEvents.current = false; return; }
-    fetch(`${base}/api/events`)
+    memberFetch(`${base}/api/events`)
       .then((r) => r.ok ? r.json() as Promise<{ events: MapEventItem[] }> : null)
       .then((d) => {
         if (d?.events) {
@@ -601,13 +689,19 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
         style={s.map}
         provider={PROVIDER_DEFAULT}
         initialRegion={DEFAULT_REGION}
+        onRegionChangeComplete={setVisibleRegion}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
         onMapReady={() => {
           mapReadyRef.current = true;
           setMapReady(true);
+          const pendingBusiness = pendingBusinessFocusRef.current;
           const pending = pendingLocationRef.current;
-          if (pending) {
+          if (pendingBusiness) {
+            pendingBusinessFocusRef.current = null;
+            pendingLocationRef.current = null;
+            mapRef.current?.animateToRegion(pendingBusiness.region, 650);
+          } else if (pending) {
             pendingLocationRef.current = null;
             mapRef.current?.animateToRegion({ ...pending, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 800);
           }
@@ -621,14 +715,14 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             "postOffice", "restroom",
           ],
         } : {})}
-        onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedOrg(null); setSelectedTourEvent(null); setSelectedTourSite(null); setSelectedTravelDestination(null); }}
+            onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedMapEvent(null); setSelectedOrg(null); setSelectedTourEvent(null); setSelectedTourSite(null); setSelectedTravelDestination(null); }}
       >
         {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
-        {mapped.map((biz) => (
+        {mapReady && renderedBusinessPins.map((biz) => (
           <Marker
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
-            onPress={() => { setSelectedBusiness(biz); setSelectedCulturalSite(null); }}
+            onPress={() => focusBusiness(biz)}
             tracksViewChanges={false}
             pinColor={GOLD}
           />
@@ -675,6 +769,10 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 setSelectedCulturalSite(site);
                 setSelectedBusiness(null);
                 setSelectedMapEvent(null);
+                setSelectedOrg(null);
+                setSelectedTourEvent(null);
+                setSelectedTourSite(null);
+                setSelectedTravelDestination(null);
               }}
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={false}
@@ -764,6 +862,10 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 setSelectedMapEvent(evt);
                 setSelectedBusiness(null);
                 setSelectedCulturalSite(null);
+                setSelectedOrg(null);
+                setSelectedTourEvent(null);
+                setSelectedTourSite(null);
+                setSelectedTravelDestination(null);
               }}
               tracksViewChanges={false}
               pinColor="#EA580C"
@@ -872,6 +974,101 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Search is native to the Map so members can find by business, service, or HBCU. */}
+        <View style={s.searchRow}>
+          <View style={[s.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="search" size={17} color={colors.mutedForeground} />
+            <TextInput
+              accessibilityLabel="Search map businesses, services, or HBCUs"
+              testID="map-search-input"
+              value={searchDraft}
+              onChangeText={setSearchDraft}
+              onSubmitEditing={() => submitMapSearch()}
+              placeholder="Business, service, city, or HBCU"
+              placeholderTextColor={colors.mutedForeground}
+              returnKeyType="search"
+              autoCapitalize="words"
+              style={[s.searchInput, { color: colors.foreground }]}
+            />
+            {searchDraft.length > 0 ? (
+              <TouchableOpacity
+                accessibilityLabel="Clear map search"
+                testID="map-search-clear"
+                onPress={clearMapSearch}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name="x-circle" size={17} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          <TouchableOpacity
+            accessibilityLabel="Search the map"
+            testID="map-search-submit"
+            style={s.searchSubmit}
+            onPress={() => submitMapSearch()}
+            activeOpacity={0.85}
+          >
+            {businessSearchLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="arrow-right" size={18} color="#fff" />}
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityLabel="Show HBCUs on the map"
+            testID="map-hbcu-search"
+            style={[s.hbcuSearch, submittedSearch.toLowerCase() === "hbcu" && s.hbcuSearchActive]}
+            onPress={() => submitMapSearch("HBCU")}
+            activeOpacity={0.85}
+          >
+            <Feather name="book-open" size={14} color="#fff" />
+            <Text style={s.hbcuSearchText}>HBCUs</Text>
+          </TouchableOpacity>
+        </View>
+
+        {businessPinsLoading && !submittedSearch ? (
+          <View style={s.mapResultStatus}>
+            <ActivityIndicator size="small" color={GOLD} />
+            <Text style={s.mapResultStatusText}>Loading public business pins…</Text>
+          </View>
+        ) : null}
+        {businessPinsError && !submittedSearch ? (
+          <TouchableOpacity style={s.mapResultError} onPress={refetchBusinessPins} activeOpacity={0.85}>
+            <Feather name="wifi-off" size={13} color="#fff" />
+            <Text style={s.mapResultErrorText}>Business pins could not load. Tap to retry.</Text>
+          </TouchableOpacity>
+        ) : null}
+        {!businessPinsLoading && !businessPinsError && !submittedSearch && mapped.length > renderedBusinessPins.length ? (
+          <View style={s.mapResultStatus}>
+            <Feather name="map-pin" size={13} color={GOLD} />
+            <Text style={s.mapResultStatusText}>
+              Showing {renderedBusinessPins.length} of {mapped.length} public pins in this view. Move, zoom, or search for the right listing.
+            </Text>
+          </View>
+        ) : null}
+        {submittedSearch ? (
+          <View style={[s.searchResultsPanel, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[s.searchResultsSummary, { color: businessSearchError ? "#B91C1C" : colors.foreground }]}>
+              {businessSearchError
+                ? "Search could not load. Check your connection and try again."
+                : businessSearchLoading
+                ? `Searching for “${submittedSearch}”…`
+                : `${mapped.length} coordinate-backed matches loaded · ${searchedBusinessTotal} searchable public ${searchedBusinessTotal === 1 ? "listing" : "listings"}`}
+            </Text>
+            {!businessSearchLoading && !businessSearchError && mapped.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.searchResultChips}>
+                {mapped.slice(0, 12).map((business) => (
+                  <TouchableOpacity
+                    key={`search-${business.id}`}
+                    accessibilityLabel={`Open ${business.name} on the map`}
+                    style={[s.searchResultChip, { borderColor: colors.border }]}
+                    onPress={() => focusBusiness(business)}
+                  >
+                    <Text style={[s.searchResultName, { color: colors.foreground }]} numberOfLines={1}>{business.name}</Text>
+                    <Text style={[s.searchResultPlace, { color: colors.mutedForeground }]} numberOfLines={1}>{business.city}, {business.state}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* Category filter pills */}
         <ScrollView
@@ -1444,7 +1641,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
       })()}
 
       {/* ── Business bottom card ── */}
-      {!selectedCulturalSite && !selectedMapEvent && selectedBusiness && (
+      {!selectedCulturalSite && !selectedMapEvent && selectedBusiness && activeBusiness && (
         <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
           <View style={s.cardHandle} />
           <TouchableOpacity style={s.cardClose} onPress={() => setSelectedBusiness(null)}>
@@ -1452,24 +1649,26 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
           </TouchableOpacity>
 
           <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={1}>
-            {selectedBusiness.name}
+            {activeBusiness.name}
           </Text>
           <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
-            {selectedBusiness.subcategory} · {selectedBusiness.city}, {selectedBusiness.state}
+            {activeBusiness.subcategory} · {activeBusiness.city}, {activeBusiness.state}
           </Text>
 
           <View style={s.cardRow}>
-            <View style={s.cardMeta}>
-              <Feather name="star" size={13} color={GOLD} />
-              <Text style={[s.cardMetaTxt, { color: colors.foreground }]}>
-                {selectedBusiness.rating.toFixed(1)}
-                <Text style={{ color: colors.mutedForeground }}> ({selectedBusiness.reviewCount})</Text>
-              </Text>
-            </View>
-            {selectedBusiness.priceRange ? (
-              <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>{selectedBusiness.priceRange}</Text>
+            {activeBusiness.reviewCount > 0 ? (
+              <View style={s.cardMeta}>
+                <Feather name="star" size={13} color={GOLD} />
+                <Text style={[s.cardMetaTxt, { color: colors.foreground }]}>
+                  {activeBusiness.rating.toFixed(1)}
+                  <Text style={{ color: colors.mutedForeground }}> ({activeBusiness.reviewCount})</Text>
+                </Text>
+              </View>
             ) : null}
-            {selectedBusiness.verified && (
+            {activeBusiness.priceRange ? (
+              <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>{activeBusiness.priceRange}</Text>
+            ) : null}
+            {activeBusiness.verified && (
               <View style={s.verifiedPill}>
                 <Feather name="check-circle" size={11} color="#2D7A4F" />
                 <Text style={s.verifiedTxt}>Verified</Text>
@@ -1477,10 +1676,40 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             )}
           </View>
 
+          {!activeBusiness.verified ? (
+            <View style={[s.unclaimedBanner, { borderColor: `${GOLD}50` }]}>
+              <Feather name="info" size={13} color={GOLD} />
+              <Text style={[s.unclaimedTxt, { color: colors.mutedForeground }]}>Community-listed or public-source listing. Ownership and location are not shown as verified.</Text>
+            </View>
+          ) : null}
+
+          <View style={s.cardBtnRow}>
+            <TouchableOpacity
+              accessibilityLabel={`Directions to ${activeBusiness.name}`}
+              style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: GOLD }]}
+              activeOpacity={0.85}
+              onPress={() => void openMapDirections(activeBusiness.latitude, activeBusiness.longitude, activeBusiness.name)}
+            >
+              <Feather name="navigation" size={14} color={GOLD} />
+              <Text style={[s.cardBtnTxt, { color: GOLD }]}>Directions</Text>
+            </TouchableOpacity>
+            {activeBusiness.website ? (
+              <TouchableOpacity
+                accessibilityLabel={`Open ${activeBusiness.name} website`}
+                style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: GOLD }]}
+                activeOpacity={0.85}
+                onPress={() => void openExternalUrl(activeBusiness.website)}
+              >
+                <Feather name="external-link" size={14} color={GOLD} />
+                <Text style={[s.cardBtnTxt, { color: GOLD }]}>Website</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
           <TouchableOpacity
+            accessibilityLabel={`View ${activeBusiness.name} business details`}
             style={[s.cardBtn, { backgroundColor: GOLD }]}
             activeOpacity={0.85}
-            onPress={() => router.push({ pathname: "/business/[id]", params: { id: selectedBusiness.id } })}
+            onPress={() => router.push({ pathname: "/business/[id]", params: { id: activeBusiness.id } })}
           >
             <Feather name="briefcase" size={14} color="#fff" />
             <Text style={s.cardBtnTxt}>View Business</Text>
@@ -1511,6 +1740,43 @@ const s = StyleSheet.create({
 
   navRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, marginHorizontal: 12, borderRadius: 8, paddingVertical: 4 },
   navTxt: { fontFamily: "Inter_500Medium", fontSize: 11 },
+
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12 },
+  searchBox: {
+    flex: 1, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8,
+    borderRadius: 14, borderWidth: 1, paddingHorizontal: 12,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12, shadowRadius: 5, elevation: 4,
+  },
+  searchInput: { flex: 1, minHeight: 42, fontFamily: "Inter_400Regular", fontSize: 14, paddingVertical: 8 },
+  searchSubmit: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: GOLD,
+    justifyContent: "center", alignItems: "center",
+  },
+  hbcuSearch: {
+    minHeight: 44, flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 11, borderRadius: 14, backgroundColor: "#4C1D95",
+  },
+  hbcuSearchActive: { backgroundColor: "#7C3AED" },
+  hbcuSearchText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#fff" },
+  mapResultStatus: {
+    flexDirection: "row", alignItems: "center", gap: 7,
+    marginHorizontal: 12, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 6,
+    backgroundColor: "rgba(255,255,255,0.94)",
+  },
+  mapResultStatusText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 11, color: "#3F3F46" },
+  mapResultError: {
+    flexDirection: "row", alignItems: "center", gap: 7,
+    marginHorizontal: 12, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 7,
+    backgroundColor: "rgba(185,28,28,0.92)",
+  },
+  mapResultErrorText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#fff" },
+  searchResultsPanel: { marginHorizontal: 12, borderRadius: 12, borderWidth: 1, paddingVertical: 7 },
+  searchResultsSummary: { fontFamily: "Inter_600SemiBold", fontSize: 11, paddingHorizontal: 10, marginBottom: 5 },
+  searchResultChips: { gap: 7, paddingHorizontal: 9 },
+  searchResultChip: { width: 150, borderWidth: 1, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 },
+  searchResultName: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  searchResultPlace: { fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 2 },
 
   catRow: { paddingHorizontal: 12, paddingVertical: 4, gap: 8 },
 

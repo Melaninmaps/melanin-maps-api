@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
 interface Post {
   id: string;
@@ -38,12 +39,6 @@ function videoSource(url: string): { label: string; icon: "youtube" | "instagram
   if (/tiktok\.com/i.test(url))  return { label: "Watch on TikTok",    icon: "link" };
   if (/twitter\.com|x\.com/i.test(url)) return { label: "Watch on X",  icon: "twitter" };
   return { label: "Watch Video", icon: "link" };
-}
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN)
-    return `https://${process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN}`;
-  return "";
 }
 
 function timeAgo(iso: string): string {

@@ -22,10 +22,10 @@ const buildRecord = JSON.parse(
 describe("iOS App Review background-audio configuration", () => {
   it("uses the next build after the last submitted TestFlight binary", () => {
     expect(Number(appJson.expo.ios.buildNumber)).toBe(buildRecord.lastIosSubmitted + 1);
-    expect(appJson.expo.ios.buildNumber).toBe("106");
+    expect(appJson.expo.ios.buildNumber).toBe("107");
     expect(appJson.expo.android.versionCode).toBe(80);
-    expect(appJson.expo.version).toBe("1.1.6");
-    expect(appJson.expo.runtimeVersion).toBe("1.1.6-native.1");
+    expect(appJson.expo.version).toBe("1.1.7");
+    expect(appJson.expo.runtimeVersion).toBe("1.1.7-native.1");
   });
 
   it("keeps the foreground microphone permission but disables persistent audio modes", () => {
