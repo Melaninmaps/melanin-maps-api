@@ -62,6 +62,20 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("reply = buildValidatedItineraryReply(destination, itinerary)");
   });
 
+  it("returns a basic governed-catalog itinerary before any provider call", () => {
+    const deterministicTravel = chatRoute.indexOf("const deterministicTravelEligible = travelPlanning");
+    const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
+    expect(deterministicTravel).toBeGreaterThan(-1);
+    expect(deterministicTravel).toBeLessThan(providerCall);
+    expect(chatRoute).toContain("const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog })");
+    expect(chatRoute).toContain("&& !contextualEvidence");
+    expect(chatRoute).toContain("&& !sensitiveTopicDetected");
+    expect(chatRoute).toContain("&& !bodyCircleId");
+    expect(chatRoute).toContain("&& verifiedImageUrls.length === 0");
+    expect(chatRoute).toContain('intentClass: "travel_planning"');
+    expect(chatRoute).toContain("usedLiveWeb: false");
+  });
+
 
 
   it("short-circuits category discovery before quota/model calls while preserving session context", () => {

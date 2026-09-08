@@ -67,6 +67,7 @@ import {
   evidenceRoutePromptBlock,
 } from "../kinfolk/evidence-runtime";
 import {
+  buildRankedCatalogItinerary,
   buildValidatedOrRankedItinerary,
   buildValidatedItineraryReply,
   extractItineraryDayCount,
@@ -4345,7 +4346,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (travelPlanning && businessCatalog.length > 0) {
       businessCatalog = rankTravelCatalogForMember({
         catalog: businessCatalog,
-        message,
+        message: [message, ...vibes].join(" "),
         profile: {
           ageBand: effectiveAudienceBand,
           favoriteCategories: prefs?.favoriteCategories,
@@ -4358,6 +4359,88 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           dietaryNotes: prefs?.dietaryNotes,
         },
       });
+    }
+
+    // A basic itinerary from the governed MWM catalog must remain available even
+    // when the language-model provider is unavailable. Rich/current research,
+    // Circle planning, and image-aware trips continue through the provider path.
+    const deterministicTravelEligible = travelPlanning
+      && Boolean(destination)
+      && businessCatalog.length > 0
+      && !contextualEvidence
+      && !sensitiveTopicDetected
+      && !bodyCircleId
+      && verifiedImageUrls.length === 0;
+    if (deterministicTravelEligible && destination) {
+      const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog });
+      const reply = buildValidatedItineraryReply(destination, itinerary);
+      const sources = [...new Map(
+        businessCatalog
+          .filter((business) => typeof business.website === "string" && /^https?:\/\//i.test(business.website))
+          .map((business) => [business.website!, {
+            id: business.website!,
+            label: "mwm_public_business",
+            title: business.name,
+            url: business.website!,
+          }]),
+      ).values()].slice(0, 8);
+      const finalSessionId = await persistDeterministicDiscoveryTurn({
+        userId: req.user.id,
+        memoryEnabled,
+        sessionId,
+        message,
+        reply,
+        recommendations: null,
+        resultView: null,
+        followUpSuggestions: ["Show me more options", "Plan another day", "Find restaurants nearby"],
+        sources: sources.map(({ title, url }) => ({ title, url })),
+        destination,
+        vibes,
+      });
+      recordKinfolkTelemetry({
+        requestId: _kinfolkReqId,
+        questionClass: _kinfolkQClass || "travel_planning",
+        status: 200,
+        degraded: false,
+        degradedReason: null,
+        providerStatus: null,
+        latencyMs: Date.now() - _kinfolkStartedAt,
+        taskMode: null,
+        retrievalState: "internal",
+        sourceCount: sources.length,
+      });
+      res.status(200).json({
+        sessionId: finalSessionId,
+        reply,
+        recommendations: null,
+        itinerary,
+        followUpSuggestions: ["Show me more options", "Plan another day", "Find restaurants nearby"],
+        resultView: null,
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "travel_planning",
+        sources,
+        sourceNote: "Itinerary venues come from public MWM listings; confirm current hours and availability before visiting.",
+        educationalStatus: "complete",
+        needsClarification: false,
+        originalQuery: message,
+        location: {
+          city: destinationScope?.city ?? destination,
+          state: destinationScope?.stateCode ?? null,
+          source: turnGeography?.source ?? "current_turn",
+        },
+        locationSource: turnGeography?.source ?? "current_turn",
+        degraded: false,
+        researchStatus: {
+          usedInternal: true,
+          usedLiveWeb: false,
+          degraded: false,
+          web: { attempted: false, state: "not_used", provider: null, fallbackUsed: false, partial: false },
+          asOf: new Date().toISOString(),
+        },
+      });
+      return;
     }
     const memberFirstName: string | null =
       (prefs as Record<string, unknown> | null)?.first_name as string | null
