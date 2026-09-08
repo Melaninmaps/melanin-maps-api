@@ -185,8 +185,10 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("LEFT JOIN public.business_identity AS bi");
     expect(sql).toContain("LOWER(BTRIM(b.city)) = LOWER($1)");
     expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $2");
+    expect(sql).toContain("CROSS JOIN LATERAL");
     expect(sql).toContain("FROM unnest($3::text[])");
     expect(sql).toContain("COALESCE(bi.audiences_served, '[]'::jsonb)::text");
+    expect(sql).toContain("ORDER BY preference_match.hit_count DESC");
     expect(sql).toContain("LIMIT $4");
     expect(sql).not.toContain("promotion_eligible");
     expect(params).toEqual([

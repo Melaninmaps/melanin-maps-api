@@ -546,26 +546,28 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         SELECT ${CANONICAL_SELECT}, NULL::double precision AS distance_miles
         FROM public.public_businesses AS b
         LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
+        CROSS JOIN LATERAL (
+          SELECT COUNT(*)::integer AS hit_count
+          FROM unnest($3::text[]) AS preference(token)
+          WHERE LOWER(CONCAT_WS(' ',
+            b.name,
+            b.category,
+            b.subcategory,
+            b.description,
+            COALESCE(b.tags, '[]'::jsonb)::text,
+            COALESCE(bi.community_values, '[]'::jsonb)::text,
+            COALESCE(bi.audiences_served, '[]'::jsonb)::text,
+            COALESCE(bi.vibes, '[]'::jsonb)::text,
+            COALESCE(bi.environment_tags, '[]'::jsonb)::text,
+            COALESCE(bi.amenity_tags, '[]'::jsonb)::text
+          )) LIKE '%' || preference.token || '%'
+        ) AS preference_match
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND EXISTS (
-            SELECT 1
-            FROM unnest($3::text[]) AS preference(token)
-            WHERE LOWER(CONCAT_WS(' ',
-              b.name,
-              b.category,
-              b.subcategory,
-              b.description,
-              COALESCE(b.tags, '[]'::jsonb)::text,
-              COALESCE(bi.community_values, '[]'::jsonb)::text,
-              COALESCE(bi.audiences_served, '[]'::jsonb)::text,
-              COALESCE(bi.vibes, '[]'::jsonb)::text,
-              COALESCE(bi.environment_tags, '[]'::jsonb)::text,
-              COALESCE(bi.amenity_tags, '[]'::jsonb)::text
-            )) LIKE '%' || preference.token || '%'
-          )
-        ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
+          AND preference_match.hit_count > 0
+        ORDER BY preference_match.hit_count DESC,
+          b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT $4
       `,
         [location.city, location.stateCode, tokens, resultLimit],
