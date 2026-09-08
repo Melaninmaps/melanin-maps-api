@@ -46,6 +46,7 @@ import {
   shouldAutoSpeakNewReply,
 } from "@/lib/kinfolkVoicePreferences";
 import { createVoicePlaybackGuard } from "@/lib/voicePlaybackGuard";
+import { useAgeAssurance } from "@/hooks/useAgeAssurance";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -336,6 +337,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
   /** True once loadPrefs has resolved; gates the buttons and save action. */
   hydrated: boolean;
 }) {
+  const ageAssurance = useAgeAssurance(open);
   const [local, setLocal] = useState<Prefs>(prefs);
   const [cityInput, setCityInput] = useState("");
   const [specificInterestInput, setSpecificInterestInput] = useState("");
@@ -343,6 +345,13 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => { setLocal(prefs); }, [prefs]);
+  useEffect(() => {
+    if (!ageAssurance.loading && ageAssurance.ageBand !== "18_plus") {
+      setLocal(current => current.recommendationLifeStage === "unspecified"
+        ? current
+        : { ...current, recommendationLifeStage: "unspecified" });
+    }
+  }, [ageAssurance.ageBand, ageAssurance.loading]);
 
   const addCity = () => {
     const city = cityInput.trim();
@@ -412,14 +421,33 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
           </div>
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Recommendation life stage (optional)</div>
+            {ageAssurance.loading ? (
+              <p className="mb-2 text-[10px] text-[#3A1F0E]/45">Checking your age-safety setting…</p>
+            ) : ageAssurance.ageBand === "unknown" ? (
+              <div className="mb-3 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3">
+                <p className="text-[10px] leading-relaxed text-[#3A1F0E]/60">Adult brackets require a one-time 18+ self-attestation. We store only the range, never your birth date.</p>
+                <button type="button" disabled={ageAssurance.saving} onClick={() => void ageAssurance.attest("18_plus")}
+                  className="mt-2 rounded-full bg-[#2B1507] px-3 py-2 text-[10px] font-bold text-white disabled:opacity-50">
+                  {ageAssurance.saving ? "Saving…" : "I confirm I am 18 or older"}
+                </button>
+              </div>
+            ) : ageAssurance.ageBand === "18_plus" ? (
+              <p className="mb-2 text-[10px] font-semibold text-emerald-700">18+ self-attestation confirmed.</p>
+            ) : (
+              <p className="mb-2 text-[10px] leading-relaxed text-[#3A1F0E]/60">This account remains youth-protected, so adult recommendation brackets are unavailable.</p>
+            )}
+            {ageAssurance.error && <p role="alert" className="mb-2 text-[10px] text-red-700">{ageAssurance.error}</p>}
             <div className="grid grid-cols-2 gap-2">
-              {RECOMMENDATION_LIFE_STAGES.map(option => (
-                <button key={option.id} type="button" onClick={() => setLocal(p => ({ ...p, recommendationLifeStage: option.id }))}
+              {RECOMMENDATION_LIFE_STAGES.map(option => {
+                const disabled = option.id !== "unspecified" && ageAssurance.ageBand !== "18_plus";
+                return (
+                <button key={option.id} type="button" disabled={disabled} onClick={() => setLocal(p => ({ ...p, recommendationLifeStage: option.id }))}
                   aria-pressed={local.recommendationLifeStage === option.id}
-                  className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-colors ${local.recommendationLifeStage === option.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                  className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${local.recommendationLifeStage === option.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
                   {option.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
             <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">Used only when life stage matters to a recommendation. Kinfolk does not collect your birth date here or infer health, income, mobility, or family status. Choose “Prefer not to say” to opt out.</p>
           </div>

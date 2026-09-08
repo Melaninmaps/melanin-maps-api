@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { X, ChevronRight, ChevronLeft, Check, MapPin, Heart, Coffee, Users, Briefcase, Leaf, Zap } from "lucide-react";
+import { useAgeAssurance } from "@/hooks/useAgeAssurance";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -135,6 +136,7 @@ function CardOption({
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function KinfolkOnboarding({ firstName, onComplete }: Props) {
+  const ageAssurance = useAgeAssurance(true);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -157,6 +159,10 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
   const [dietaryNotes, setDietaryNotes] = useState("");
   const [lifestyleServices, setLifestyleServices] = useState<string[]>([]);
   const [personalizationLevel, setPersonalizationLevel] = useState("friendly");
+
+  useEffect(() => {
+    if (ageAssurance.ageBand !== "18_plus") setRecommendationLifeStage("unspecified");
+  }, [ageAssurance.ageBand]);
 
   const TOTAL_STEPS = 15;
 
@@ -347,11 +353,33 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
           </div>
           <div>
             <p className="text-xs font-bold text-[#2B1507] mb-2">Recommendation life stage (optional)</p>
+            {ageAssurance.loading ? (
+              <p className="mb-2 text-xs text-[#3A1F0E]/50">Checking your age-safety setting…</p>
+            ) : ageAssurance.ageBand === "unknown" ? (
+              <div className="mb-3 rounded-xl border border-[#E8DDD0] bg-[#FAF6EF] p-3">
+                <p className="text-xs leading-relaxed text-[#3A1F0E]/70">Adult brackets require a one-time 18+ self-attestation. We store only the range, never your birth date.</p>
+                <button type="button" disabled={ageAssurance.saving} onClick={() => void ageAssurance.attest("18_plus")}
+                  className="mt-2 rounded-full bg-[#2B1507] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+                  {ageAssurance.saving ? "Saving…" : "I confirm I am 18 or older"}
+                </button>
+              </div>
+            ) : ageAssurance.ageBand === "18_plus" ? (
+              <p className="mb-2 text-xs font-semibold text-emerald-700">18+ self-attestation confirmed.</p>
+            ) : (
+              <p className="mb-2 text-xs leading-relaxed text-[#3A1F0E]/60">This account remains youth-protected, so adult recommendation brackets are unavailable.</p>
+            )}
+            {ageAssurance.error && <p role="alert" className="mb-2 text-xs text-red-700">{ageAssurance.error}</p>}
             <div className="flex flex-wrap gap-2">
-              {RECOMMENDATION_LIFE_STAGES.map(option => (
-                <Chip key={option.value} label={option.label} selected={recommendationLifeStage === option.value}
-                  onClick={() => setRecommendationLifeStage(option.value)} />
-              ))}
+              {RECOMMENDATION_LIFE_STAGES.map(option => {
+                const disabled = option.value !== "unspecified" && ageAssurance.ageBand !== "18_plus";
+                return (
+                  <button key={option.value} type="button" disabled={disabled} aria-pressed={recommendationLifeStage === option.value}
+                    onClick={() => setRecommendationLifeStage(option.value)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all disabled:cursor-not-allowed disabled:opacity-40 ${recommendationLifeStage === option.value ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#2B1507] border-[#E8DDD0] hover:border-[#CA922B]/60"}`}>
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-[#3A1F0E]/45">Used only when life stage matters. This does not collect your birth date or infer health, income, mobility, or family status. Choose “Prefer not to say” to opt out.</p>
           </div>

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const onboarding = readFileSync(new URL("../components/KinfolkOnboarding.tsx", import.meta.url), "utf8");
 const kinfolkPage = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
+const ageAssuranceHook = readFileSync(new URL("../hooks/useAgeAssurance.ts", import.meta.url), "utf8");
 
 describe("web Kinfolk preference attainability", () => {
   it("uses API-valid budget, companion, communication, and personality values", () => {
@@ -23,6 +24,18 @@ describe("web Kinfolk preference attainability", () => {
       expect(source).toContain("65+");
       expect(source).toMatch(/author events, candle making, board games/);
       expect(source).toMatch(/does not collect your birth date|does not collect your birth date here/);
+    }
+  });
+
+  it("provides an attainable no-DOB 18+ self-attestation before adult brackets enable", () => {
+    expect(ageAssuranceHook).toContain("api/age-assurance");
+    expect(ageAssuranceHook).toContain("JSON.stringify({ ageBand: band, attested: true })");
+    expect(ageAssuranceHook).not.toMatch(/dateOfBirth|date_of_birth|birthDate/);
+    for (const source of [onboarding, kinfolkPage]) {
+      expect(source).toContain('ageAssurance.attest("18_plus")');
+      expect(source).toContain('ageAssurance.ageBand !== "18_plus"');
+      expect(source).toContain("I confirm I am 18 or older");
+      expect(source).toContain("youth-protected");
     }
   });
 
