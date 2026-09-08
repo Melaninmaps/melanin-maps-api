@@ -26,6 +26,7 @@ describe("current research routing", () => {
     "weekend",
     "as of",
     "as-of",
+    "as of now",
     "live travel",
     "live trip",
     "live recommendation",
