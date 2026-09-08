@@ -69,11 +69,15 @@ describe("Kinfolk chat static wiring", () => {
     expect(deterministicTravel).toBeLessThan(providerCall);
     expect(chatRoute).toContain("const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog })");
     expect(chatRoute).toContain("&& !contextualEvidence");
+    expect(chatRoute).toContain("&& !CURRENT_RESEARCH_RE.test(message)");
     expect(chatRoute).toContain("&& !sensitiveTopicDetected");
     expect(chatRoute).toContain("&& !bodyCircleId");
     expect(chatRoute).toContain("&& verifiedImageUrls.length === 0");
     expect(chatRoute).toContain('intentClass: "travel_planning"');
     expect(chatRoute).toContain("usedLiveWeb: false");
+    expect(chatRoute).toContain('const detailUrl = `/businesses/${encodeURIComponent(business.id)}`');
+    expect(chatRoute).toContain('label: "mwm_public_business"');
+    expect(chatRoute).not.toContain('id: business.website!');
   });
 
 

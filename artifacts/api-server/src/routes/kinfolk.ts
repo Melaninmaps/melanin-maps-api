@@ -838,7 +838,7 @@ function normalizeTopicText(value: string): string {
     .trim();
 }
 
-const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this month|this year|right now|as of|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
+const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this weekend|next weekend|this month|this year|right now|as of|open now|what(?:'s| is) open|hours?|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
 
 function isLibraryTopicQuestion(message: string): boolean {
   const text = normalizeTopicText(message);
@@ -4368,6 +4368,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       && Boolean(destination)
       && businessCatalog.length > 0
       && !contextualEvidence
+      && !CURRENT_RESEARCH_RE.test(message)
       && !sensitiveTopicDetected
       && !bodyCircleId
       && verifiedImageUrls.length === 0;
@@ -4375,14 +4376,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog });
       const reply = buildValidatedItineraryReply(destination, itinerary);
       const sources = [...new Map(
-        businessCatalog
-          .filter((business) => typeof business.website === "string" && /^https?:\/\//i.test(business.website))
-          .map((business) => [business.website!, {
-            id: business.website!,
+        businessCatalog.map((business) => {
+          const detailUrl = `/businesses/${encodeURIComponent(business.id)}`;
+          return [detailUrl, {
+            id: detailUrl,
             label: "mwm_public_business",
             title: business.name,
-            url: business.website!,
-          }]),
+            url: detailUrl,
+          }] as const;
+        }),
       ).values()].slice(0, 8);
       const finalSessionId = await persistDeterministicDiscoveryTurn({
         userId: req.user.id,
