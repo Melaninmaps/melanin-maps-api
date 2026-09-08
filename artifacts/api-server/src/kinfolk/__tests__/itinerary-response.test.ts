@@ -3,6 +3,7 @@ import type { GovernedKinfolkBusiness } from "../governedBusinessRepository";
 import {
   SAFE_MODEL_RESPONSE_FALLBACK,
   buildRankedCatalogItinerary,
+  buildValidatedOrRankedItinerary,
   buildValidatedItineraryReply,
   extractItineraryDayCount,
   itineraryPromptInstruction,
@@ -219,6 +220,22 @@ describe("Kinfolk itinerary normalization", () => {
       canonicalVenue: "AMINA",
     });
     expect(buildValidatedItineraryReply("Philadelphia", itinerary)).toMatch(/prioritized AMINA/i);
+  });
+
+  it.each([
+    ["missing itinerary", {}],
+    ["empty itinerary object", { itinerary: {} }],
+    ["empty days", { itinerary: { days: [] } }],
+    ["malformed days", { itinerary: { days: "bad" } }],
+    ["days without activities", { itinerary: { days: [{}] } }],
+  ])("uses the ranked governed catalog for %s", (_label, modelValue) => {
+    const itinerary = buildValidatedOrRankedItinerary({
+      message: "Plan a one-day trip in Philadelphia",
+      modelValue,
+      catalog: [AMINA],
+    });
+    expect(itinerary.days).toHaveLength(1);
+    expect(itinerary.days[0]?.activities[0]?.canonicalVenue).toBe("AMINA");
   });
 
   it("ranks distinct, explainable Philadelphia trip options for the four attainable family profiles", () => {

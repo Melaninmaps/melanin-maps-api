@@ -28,7 +28,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");
     expect(chatRoute).toContain("evidenceFailureReply({");
     expect(chatRoute).toContain("parseKinfolkModelPayload(rawContent)");
-    expect(chatRoute).toContain("normalizeKinfolkItinerary({");
+    expect(chatRoute).toContain("buildValidatedOrRankedItinerary({");
     expect(chatRoute).toContain("recommendations = enforced.recommendations");
     expect(chatRoute).toContain("if (travelPlanning) recommendations = null");
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
@@ -40,14 +40,14 @@ describe("Kinfolk chat static wiring", () => {
     const ownerContext = chatRoute.indexOf("let ownerBusinessContext");
     const travelRanking = chatRoute.indexOf("businessCatalog = rankTravelCatalogForMember({");
     const promptBuild = chatRoute.indexOf("const baseSystemPrompt = buildSystemPrompt({");
-    const itineraryNormalization = chatRoute.indexOf("normalizeKinfolkItinerary({");
+    const itinerarySelection = chatRoute.indexOf("buildValidatedOrRankedItinerary({");
 
     expect(ageContext).toBeGreaterThan(-1);
     expect(audienceFilter).toBeGreaterThan(ageContext);
     expect(audienceFilter).toBeLessThan(ownerContext);
     expect(travelRanking).toBeGreaterThan(ageContext);
     expect(travelRanking).toBeLessThan(promptBuild);
-    expect(travelRanking).toBeLessThan(itineraryNormalization);
+    expect(travelRanking).toBeLessThan(itinerarySelection);
     expect(chatRoute).toContain("ageBand: effectiveAudienceBand");
     expect(chatRoute).toContain("audienceAllowsBusinessText({ ageBand: effectiveAudienceBand, text: message })");
     expect(chatRoute).toContain("businessCatalog.some((business) => business.id === namedBusiness.id)");
@@ -55,7 +55,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
     expect(chatRoute).toContain("dietaryNotes: prefs?.dietaryNotes");
-    expect(chatRoute).toContain("buildRankedCatalogItinerary({ message, catalog: businessCatalog })");
+    expect(chatRoute).toContain("buildValidatedOrRankedItinerary({");
     expect(chatRoute).toContain("reply = buildValidatedItineraryReply(destination, itinerary)");
   });
 

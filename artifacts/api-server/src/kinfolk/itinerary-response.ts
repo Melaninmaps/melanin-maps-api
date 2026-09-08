@@ -280,6 +280,33 @@ export function normalizeKinfolkItinerary(input: {
   };
 }
 
+export function hasUsableModelItinerary(modelValue: Record<string, unknown>): boolean {
+  const itinerary = modelValue.itinerary;
+  if (!itinerary || typeof itinerary !== "object" || Array.isArray(itinerary)) return false;
+  const days = (itinerary as Record<string, unknown>).days;
+  return Array.isArray(days)
+    && days.length > 0
+    && days.some((day) => {
+      if (!day || typeof day !== "object" || Array.isArray(day)) return false;
+      const activities = (day as Record<string, unknown>).activities;
+      return Array.isArray(activities) && activities.length > 0;
+    });
+}
+
+export function buildValidatedOrRankedItinerary(input: {
+  message: string;
+  modelValue: Record<string, unknown> | null;
+  catalog: GovernedKinfolkBusiness[];
+}): KinfolkItinerary {
+  return input.modelValue && hasUsableModelItinerary(input.modelValue)
+    ? normalizeKinfolkItinerary({
+        message: input.message,
+        modelValue: input.modelValue,
+        catalog: input.catalog,
+      })
+    : buildRankedCatalogItinerary({ message: input.message, catalog: input.catalog });
+}
+
 export function buildValidatedItineraryReply(
   destination: string,
   itinerary: KinfolkItinerary,
