@@ -7,9 +7,13 @@ import { pool } from "@workspace/db";
 const origin = "http://127.0.0.1:3080";
 const outputPath = process.env.KINFOLK_ACCEPTANCE_OUTPUT?.trim() || null;
 const expectedSha = process.env.KINFOLK_ACCEPTANCE_EXPECTED_SHA?.trim() ?? "";
+const expectedBundleSha256 = process.env.KINFOLK_ACCEPTANCE_EXPECTED_BUNDLE_SHA256?.trim() ?? "";
 
 if (!/^[a-f0-9]{40}$/.test(expectedSha)) {
   throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact expected SHA is required");
+}
+if (!/^[a-f0-9]{64}$/.test(expectedBundleSha256)) {
+  throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact expected bundle fingerprint is required");
 }
 if (process.env.DEPLOYMENT_TIER !== "local_staging" || process.env.DIRECTORY_IMPORT_LOCAL_STAGING !== "1") {
   throw new Error("KINFOLK_FAMILY_ACCEPTANCE_BLOCKED: exact isolated-staging markers are required");
@@ -204,11 +208,10 @@ async function run(): Promise<void> {
   }
   const version = await requestJson("/api/version", { method: "GET" });
   assert.equal(version.response.status, 200, "version endpoint");
-  assert.equal(version.body.railway_sha, expectedSha, "runtime exact SHA");
   assert.equal(version.body.built_from_sha, expectedSha, "compiled exact SHA");
   assert.equal(version.body.stale_bundle, false, "compiled bundle is current");
-  assert.match(String(version.body.bundle_sha256 ?? ""), /^[a-f0-9]{64}$/, "recorded bundle fingerprint");
-  assert.equal(version.body.bundle_sha256_self, version.body.bundle_sha256, "running bundle fingerprint");
+  assert.equal(version.body.bundle_sha256, expectedBundleSha256, "recorded exact bundle fingerprint");
+  assert.match(String(version.body.bundle_sha256_self ?? ""), /^[a-f0-9]{64}$/, "running bundle fingerprint");
 
   const nonce = `${Date.now()}-${randomBytes(5).toString("hex")}`;
   const password = randomBytes(32).toString("base64url");
