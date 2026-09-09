@@ -21,8 +21,13 @@ export function registerUniversalMapEntityRoutes(app: Express, pool: Pool): void
       }
       const { rows } = await pool.query(`
         SELECT id::text, entity_kind, title, slug, summary, city, state_region,
-               country_code, latitude, longitude, source_url, detail_url
-        FROM public.published_map_entities
+               country_code, latitude, longitude, source_url,
+               to_jsonb(entity)->>'significance' AS significance,
+               CASE WHEN to_jsonb(entity)->>'founded_year' ~ '^[0-9]{4}$'
+                 THEN (to_jsonb(entity)->>'founded_year')::integer END AS founded_year,
+               to_jsonb(entity)->>'institution_control' AS institution_control,
+               detail_url
+        FROM public.published_map_entities AS entity
         WHERE ($1::text IS NULL OR entity_kind = $1)
           AND ($2::text IS NULL OR lower(city) = lower($2))
         ORDER BY title ASC
@@ -42,8 +47,12 @@ export function registerUniversalMapEntityRoutes(app: Express, pool: Pool): void
       const { rows } = await pool.query(`
         SELECT id::text, entity_kind, title, slug, summary, address_line1, city, state_region,
                postal_code, country_code, latitude, longitude, website_url, source_url, source_label,
+               to_jsonb(entity)->>'significance' AS significance,
+               CASE WHEN to_jsonb(entity)->>'founded_year' ~ '^[0-9]{4}$'
+                 THEN (to_jsonb(entity)->>'founded_year')::integer END AS founded_year,
+               to_jsonb(entity)->>'institution_control' AS institution_control,
                '/places/' || id::text || '/' || slug AS detail_url
-        FROM public.map_entities
+        FROM public.map_entities AS entity
         WHERE id = $1::uuid
           AND published = TRUE
           AND geocode_status = 'resolved'
@@ -66,9 +75,11 @@ export function registerUniversalMapEntityRoutes(app: Express, pool: Pool): void
           AND entity.published = TRUE
           AND entity.geocode_status = 'resolved'
         LIMIT 1
-      `, [request.params.legacyKind, request.params.legacyId]);
-      if (!rows[0]) return response.status(404).json({ code: "LEGACY_PLACE_NOT_FOUND" });
-      return response.redirect(308, `/places/${rows[0].id}/${rows[0].slug}`);
+       `, [request.params.legacyKind, request.params.legacyId]);
+       if (!rows[0]) return response.status(404).json({ code: "LEGACY_PLACE_NOT_FOUND" });
+       const detailUrl = `/places/${rows[0].id}/${rows[0].slug}`;
+       if (request.query["format"] === "json") return response.json({ detailUrl });
+       return response.redirect(308, detailUrl);
     } catch (error) {
       return next(error);
     }

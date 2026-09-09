@@ -15,6 +15,7 @@ import {
   normalizePoliceEncounterType,
   normalizeReportTarget,
   reportMustBeAnonymous,
+  type IncidentLocation,
 } from "../safety/reportContract";
 
 const router: IRouter = Router();
@@ -69,6 +70,43 @@ const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
   "There may be an immediate danger": "critical",
 };
 const INCIDENT_THRESHOLD = 3;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export async function canonicalSensitiveIncidentLocation(
+  queryable: Pick<typeof pool, "query">,
+  body: Record<string, unknown>,
+  fallback: IncidentLocation,
+): Promise<IncidentLocation> {
+  const raw = body.incidentLocation;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return fallback;
+  const locationId = typeof (raw as Record<string, unknown>).locationId === "string"
+    ? String((raw as Record<string, unknown>).locationId).trim()
+    : "";
+  if (!UUID_PATTERN.test(locationId)) return fallback;
+
+  const { rows } = await queryable.query<{
+    city_name: string;
+    state_code: string | null;
+    neighborhood_name: string | null;
+  }>(
+    `SELECT city_name, state_code, neighborhood_name
+     FROM community_locations
+     WHERE id = $1::uuid
+     LIMIT 1`,
+    [locationId],
+  );
+  const area = rows[0];
+  if (!area) return fallback;
+  const cityRegion = [area.city_name, area.state_code].filter(Boolean).join(", ");
+  return {
+    city: area.city_name,
+    region: area.state_code,
+    area: area.neighborhood_name,
+    source: fallback.source,
+    precision: area.neighborhood_name ? "neighborhood" : "city",
+    label: area.neighborhood_name ? `${area.neighborhood_name}, ${cityRegion}` : cityRegion,
+  };
+}
 
 function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
   const sensitive = reportMustBeAnonymous(report.category);
@@ -76,7 +114,9 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
     ? [report.incidentCity, report.incidentRegion].filter(Boolean).join(", ")
     : null;
   const safeLocation = sensitive
-    ? (cityRegion || "Location withheld")
+    ? (report.incidentArea && cityRegion
+      ? `${report.incidentArea}, ${cityRegion}`
+      : cityRegion || "Location withheld")
     : (report.incidentArea && cityRegion
       ? `${report.incidentArea}, ${cityRegion}`
       : cityRegion || report.targetName);
@@ -158,6 +198,9 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   }
 
   try {
+    const storedIncidentLocation = sensitiveReport
+      ? await canonicalSensitiveIncidentLocation(pool, body, incidentLocation)
+      : incidentLocation;
     const [report] = await db
       .insert(safetyReportsTable)
       .values({
@@ -166,13 +209,13 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         category: resolvedCategory as string,
         targetType: resolvedTargetType,
         targetId: resolvedTargetId,
-        targetName: incidentLocation.label,
+        targetName: storedIncidentLocation.label,
         encounterType: resolvedEncounterType,
-        incidentCity: incidentLocation.city,
-        incidentRegion: incidentLocation.region,
-        incidentArea: incidentLocation.area,
-        incidentLocationSource: incidentLocation.source,
-        incidentLocationPrecision: incidentLocation.precision,
+        incidentCity: storedIncidentLocation.city,
+        incidentRegion: storedIncidentLocation.region,
+        incidentArea: storedIncidentLocation.area,
+        incidentLocationSource: storedIncidentLocation.source,
+        incidentLocationPrecision: storedIncidentLocation.precision,
         description: typeof description === "string" ? description.slice(0, 2000) : null,
         severity: resolvedSeverity,
         routingType:

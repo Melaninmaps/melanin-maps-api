@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, CheckCircle, EyeOff, ChevronRight, ChevronLeft, Shield, Search, X } from "lucide-react";
 import { Link } from "wouter";
+import { SafetyLocationPicker } from "@/features/location/SafetyLocationPicker";
+import type { ResolvedArea } from "@/features/location/useLocationResolver";
 
 const CITIES = [
   "Atlanta", "Houston", "Chicago", "Washington DC", "New York",
@@ -114,6 +116,7 @@ export default function RateNeighborhood() {
   const [step, setStep] = useState(1);
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [resolvedArea, setResolvedArea] = useState<ResolvedArea | null>(null);
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessResults, setBusinessResults] = useState<{ id: string; name: string; category: string; city: string }[]>([]);
   const [linkedBusiness, setLinkedBusiness] = useState<{ id: string; name: string; category: string; city: string } | null>(null);
@@ -237,7 +240,7 @@ export default function RateNeighborhood() {
               <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11">View Safety Scores</Button>
             </Link>
             <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] px-8 h-11"
-              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setBusinessSearch(""); setLinkedBusiness(null); setNominateMode(false); setNominateName(""); setNominateCategory(""); setNominateSocialLink(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
+              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setResolvedArea(null); setBusinessSearch(""); setLinkedBusiness(null); setNominateMode(false); setNominateName(""); setNominateCategory(""); setNominateSocialLink(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
               Rate Another
             </Button>
           </div>
@@ -298,11 +301,23 @@ export default function RateNeighborhood() {
                 <p className="text-[#3A1F0E]/60 text-sm">City and visit type are required — neighborhood is optional</p>
               </div>
 
+              <SafetyLocationPicker
+                helpText="Use your current location if you are rating where you are now, or search the city, neighborhood, address, or ZIP you visited."
+                label="Neighborhood location"
+                onCleared={() => { setResolvedArea(null); setCity(""); setNeighborhood(""); }}
+                onResolved={(area) => {
+                  setResolvedArea(area);
+                  setCity([area.cityName, area.stateCode].filter(Boolean).join(", "));
+                  setNeighborhood(area.neighborhoodName ?? "");
+                }}
+                value={resolvedArea}
+              />
+
               <div>
                 <label className="block text-sm font-bold text-[#3A1F0E] mb-3">City</label>
                 <div className="flex flex-wrap gap-2">
                   {CITIES.map((c) => (
-                    <button key={c} type="button" onClick={() => setCity(c)}
+                    <button key={c} type="button" onClick={() => { setCity(c); setResolvedArea(null); }}
                       className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                         city === c ? "bg-[#2B1507] border-[#2B1507] text-white" : "bg-white border-[#3A1F0E]/15 text-[#3A1F0E] hover:border-[#CA922B]/50"
                       }`}>
@@ -319,7 +334,7 @@ export default function RateNeighborhood() {
                 <input
                   type="text"
                   value={neighborhood}
-                  onChange={(e) => setNeighborhood(e.target.value)}
+                  onChange={(e) => { setNeighborhood(e.target.value); setResolvedArea(null); }}
                   placeholder="e.g. Old Fourth Ward, Harlem, Hyde Park…"
                   className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-[#FAF6EF]"
                 />

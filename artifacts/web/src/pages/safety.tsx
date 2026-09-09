@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { SafetyLocationPicker, type SafetyLocationSource } from "@/features/location/SafetyLocationPicker";
+import type { ResolvedArea } from "@/features/location/useLocationResolver";
 import {
   Shield, AlertTriangle, Radio, Users, MapPin, Phone, ChevronRight,
   X, CheckCircle, Loader2, Eye, EyeOff, Navigation, Flag, Building2,
@@ -54,6 +56,26 @@ const EXPERIENCE_CHIPS = [
   "The space felt inclusive", "I'd go back", "I'd warn others", "Something else happened",
 ];
 
+function cityRegionLabel(area: ResolvedArea): string {
+  return [area.cityName, area.stateCode].filter(Boolean).join(", ");
+}
+
+function incidentLocationPayload(area: ResolvedArea, source: SafetyLocationSource) {
+  return {
+    locationId: area.id,
+    city: cityRegionLabel(area),
+    area: area.neighborhoodName,
+    source,
+    precision: area.neighborhoodName ? "neighborhood" : "city",
+  };
+}
+
+function experienceReportCategory(chip: string): "positive" | "safety" | "discrimination" {
+  if (/racially profiled/i.test(chip)) return "discrimination";
+  if (/unsafe|followed|hostile|warn others/i.test(chip)) return "safety";
+  return "positive";
+}
+
 // Context-specific spoken severity options — map to internal API severity values
 const SEVERITY_GENERAL = [
   { label: "Something felt off", desc: "Uncomfortable, suspicious, or something the community should know", value: "low" },
@@ -84,18 +106,41 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
   const [severity, setSeverity] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [resolvedArea, setResolvedArea] = useState<ResolvedArea | null>(null);
+  const [locationSource, setLocationSource] = useState<SafetyLocationSource>("manual_area");
   const [description, setDescription] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const applyResolvedArea = (area: ResolvedArea, source: SafetyLocationSource) => {
+    setResolvedArea(area);
+    setLocationSource(source);
+    setCity(cityRegionLabel(area));
+    setNeighborhood(area.neighborhoodName ?? "");
+  };
+
   const submit = async () => {
+    if (description.trim().length < 10) {
+      toast({ title: "Please describe what happened (at least 10 characters)", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await authenticatedFetch(`${BASE}api/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: SAFETY_CATEGORY_VALUES[type] ?? "safety", targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium", isAnonymous }),
+        body: JSON.stringify({
+          category: SAFETY_CATEGORY_VALUES[type] ?? "safety",
+          targetType: "neighborhood",
+          targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`,
+          incidentLocation: resolvedArea
+            ? incidentLocationPayload(resolvedArea, locationSource)
+            : { city, area: neighborhood || null, source: "manual_area", precision: neighborhood ? "neighborhood" : "city" },
+          description,
+          severity: severity || "medium",
+          isAnonymous: type === "Discrimination" ? true : isAnonymous,
+        }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else { toast({ title: "Could not submit", description: "Please try again.", variant: "destructive" }); }
@@ -151,33 +196,40 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
               ))}
             </div>
           </div>
+          <SafetyLocationPicker
+            helpText="Choose where this happened. Use your location only if you are at the incident area now; otherwise search the city, neighborhood, address, or ZIP."
+            label="Incident location"
+            onCleared={() => { setResolvedArea(null); setCity(""); setNeighborhood(""); setLocationSource("manual_area"); }}
+            onResolved={applyResolvedArea}
+            value={resolvedArea}
+          />
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">City *</label>
-            <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State"
+            <input value={city} onChange={e => { setCity(e.target.value); setResolvedArea(null); setLocationSource("manual_area"); }} placeholder="City, State"
               className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
           </div>
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">Neighborhood (optional)</label>
-            <input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="Neighborhood or street"
+            <input value={neighborhood} onChange={e => { setNeighborhood(e.target.value); setResolvedArea(null); setLocationSource("manual_area"); }} placeholder="Neighborhood or street"
               className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
           </div>
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">Description (optional)</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">Description *</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
-              placeholder="Describe what happened..."
+              placeholder="Describe what happened (at least 10 characters)..."
               className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
           </div>
-          <button onClick={() => setIsAnonymous(a => !a)}
+          <button disabled={type === "Discrimination"} onClick={() => setIsAnonymous(a => !a)}
             className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl border transition-colors ${isAnonymous ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white"}`}>
-            {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
+            {type === "Discrimination" || isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
             <div className="text-left">
-              <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous report"}</p>
-              <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Hidden from public views; moderators can still review the report" : "Moderators may use your account to follow up"}</p>
+              <p className="text-sm font-bold text-[#2B1507]">{type === "Discrimination" || isAnonymous ? "Anonymous report" : "Non-anonymous report"}</p>
+              <p className="text-xs text-[#3A1F0E]/50">{type === "Discrimination" ? "Discrimination reports are always anonymous." : isAnonymous ? "Hidden from public views; moderators can still review the report" : "Moderators may use your account to follow up"}</p>
             </div>
           </button>
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="flex-1 py-3 border border-[#3A1F0E]/10 rounded-2xl text-sm font-bold text-[#3A1F0E]/60 hover:bg-[#FAF6EF]">Back</button>
-            <button disabled={!city || !severity || submitting} onClick={submit}
+            <button disabled={!resolvedArea || !severity || description.trim().length < 10 || submitting} onClick={submit}
               className="flex-2 flex-1 py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] flex items-center justify-center gap-2">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
               Submit Report
@@ -196,10 +248,18 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
   const [severity, setSeverity] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [resolvedArea, setResolvedArea] = useState<ResolvedArea | null>(null);
+  const [locationSource, setLocationSource] = useState<SafetyLocationSource>("manual_area");
   const [description, setDescription] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const applyResolvedArea = (area: ResolvedArea, source: SafetyLocationSource) => {
+    setResolvedArea(area);
+    setLocationSource(source);
+    setCity(cityRegionLabel(area));
+    setNeighborhood(area.neighborhoodName ?? "");
+  };
 
   const submit = async () => {
     if (!description || description.length < 10) { toast({ title: "Please provide a description (min 10 chars)", variant: "destructive" }); return; }
@@ -208,7 +268,18 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
       const res = await authenticatedFetch(`${BASE}api/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "police", encounterType, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium", isAnonymous }),
+        body: JSON.stringify({
+          category: "police",
+          encounterType,
+          targetType: "neighborhood",
+          targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`,
+          incidentLocation: resolvedArea
+            ? incidentLocationPayload(resolvedArea, locationSource)
+            : { city, area: neighborhood || null, source: "manual_area", precision: neighborhood ? "neighborhood" : "city" },
+          description,
+          severity: severity || "medium",
+          isAnonymous: true,
+        }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else toast({ title: "Could not submit", variant: "destructive" });
@@ -255,9 +326,16 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
           ))}
         </div>
       </div>
-      <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State *"
+      <SafetyLocationPicker
+        helpText="Choose where the encounter or ICE activity happened. Use your location only if you are there now; otherwise search the city, neighborhood, cross street, address, or ZIP."
+        label="Encounter location"
+        onCleared={() => { setResolvedArea(null); setCity(""); setNeighborhood(""); setLocationSource("manual_area"); }}
+        onResolved={applyResolvedArea}
+        value={resolvedArea}
+      />
+      <input value={city} onChange={e => { setCity(e.target.value); setResolvedArea(null); setLocationSource("manual_area"); }} placeholder="City, State *"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
-      <input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="Neighborhood or cross street (optional)"
+      <input value={neighborhood} onChange={e => { setNeighborhood(e.target.value); setResolvedArea(null); setLocationSource("manual_area"); }} placeholder="Neighborhood or cross street (optional)"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
       <div>
         <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">What happened? *</label>
@@ -266,15 +344,14 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
           className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
         <p className="text-[10px] text-[#3A1F0E]/35 mt-1">{description.length} characters</p>
       </div>
-      <button onClick={() => setIsAnonymous(a => !a)}
-        className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl border ${isAnonymous ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white"}`}>
-        {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
+      <div className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl border border-[#CA922B] bg-[#CA922B]/8">
+        <EyeOff className="w-4 h-4 text-[#CA922B]" />
         <div className="text-left">
-          <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous"}</p>
-          <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Hidden from public views; moderators can still review the report" : "Moderators may use your account to follow up"}</p>
+          <p className="text-sm font-bold text-[#2B1507]">Anonymous report</p>
+          <p className="text-xs text-[#3A1F0E]/50">Police and ICE reports are always anonymous. Moderators review them before any public alert.</p>
         </div>
-      </button>
-      <button disabled={!encounterType || !city || !severity || description.length < 10 || submitting} onClick={submit}
+      </div>
+      <button disabled={!encounterType || !resolvedArea || !severity || description.length < 10 || submitting} onClick={submit}
         className="w-full py-3 bg-[#DC2626] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-red-700 flex items-center justify-center gap-2">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
         Submit Encounter Report
@@ -289,12 +366,19 @@ function SpaceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucces
   const [spaceName, setSpaceName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [resolvedArea, setResolvedArea] = useState<ResolvedArea | null>(null);
   const [category, setCategory] = useState("");
   const [concerns, setConcerns] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const applyResolvedArea = (area: ResolvedArea) => {
+    setResolvedArea(area);
+    setCity(cityRegionLabel(area));
+    setAddress((current) => current || area.neighborhoodName || "");
+  };
 
   const toggleConcern = (c: string) => setConcerns(cs => cs.includes(c) ? cs.filter(x => x !== c) : [...cs, c]);
 
@@ -334,11 +418,18 @@ function SpaceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucces
           ))}
         </div>
       </div>
+      <SafetyLocationPicker
+        helpText="Choose the business or venue location. Use your current location when you are there, or search the address, neighborhood, city, or ZIP."
+        label="Unsafe space location"
+        onCleared={() => { setResolvedArea(null); setAddress(""); setCity(""); }}
+        onResolved={(area) => applyResolvedArea(area)}
+        value={resolvedArea}
+      />
       <input value={spaceName} onChange={e => setSpaceName(e.target.value)} placeholder="Business or venue name *"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
       <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Address (optional)"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
-      <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State *"
+      <input value={city} onChange={e => { setCity(e.target.value); setResolvedArea(null); }} placeholder="City, State *"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">What happened? (select all that apply)</p>
@@ -359,7 +450,7 @@ function SpaceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucces
         {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
         <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous"}</p>
       </button>
-      <button disabled={!spaceName || !city || description.length < 10 || submitting} onClick={submit}
+      <button disabled={!spaceName || !resolvedArea || description.length < 10 || submitting} onClick={submit}
         className="w-full py-3 bg-[#DC2626] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-red-700 flex items-center justify-center gap-2">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
         Submit Space Report
@@ -374,16 +465,34 @@ function ExperienceReportForm({ onClose, onSuccess }: { onClose: () => void; onS
   const [chip, setChip] = useState("");
   const [description, setDescription] = useState("");
   const [city, setCity] = useState("");
+  const [resolvedArea, setResolvedArea] = useState<ResolvedArea | null>(null);
+  const [locationSource, setLocationSource] = useState<SafetyLocationSource>("manual_area");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const applyResolvedArea = (area: ResolvedArea, source: SafetyLocationSource) => {
+    setResolvedArea(area);
+    setLocationSource(source);
+    setCity(cityRegionLabel(area));
+  };
 
   const submit = async () => {
     setSubmitting(true);
     try {
-      const res = await authenticatedFetch(`${BASE}api/safety-tips`, {
+      const res = await authenticatedFetch(`${BASE}api/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experienceChip: chip, city, description: description || undefined }),
+        body: JSON.stringify({
+          category: experienceReportCategory(chip),
+          targetType: "neighborhood",
+          targetName: resolvedArea?.label ?? city,
+          incidentLocation: resolvedArea
+            ? incidentLocationPayload(resolvedArea, locationSource)
+            : { city, area: null, source: "manual_area", precision: "city" },
+          description: [chip, description.trim()].filter(Boolean).join(" — "),
+          severity: /unsafe|followed|hostile|warn others|racially profiled/i.test(chip) ? "medium" : "low",
+          isAnonymous: true,
+        }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else toast({ title: "Could not submit", variant: "destructive" });
@@ -412,13 +521,18 @@ function ExperienceReportForm({ onClose, onSuccess }: { onClose: () => void; onS
           ))}
         </div>
       </div>
-      <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State (optional)"
-        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <SafetyLocationPicker
+        helpText="Choose where this experience happened. Use your location only if you are there now; otherwise search the place, neighborhood, city, or ZIP."
+        label="Experience location"
+        onCleared={() => { setResolvedArea(null); setCity(""); setLocationSource("manual_area"); }}
+        onResolved={applyResolvedArea}
+        value={resolvedArea}
+      />
       <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
         placeholder="Want to add more detail? (optional)"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
-      <p className="text-xs text-[#3A1F0E]/40">Your name is not shown on the community alert. Moderators retain the account record for safety and abuse review.</p>
-      <button disabled={!chip || submitting} onClick={submit}
+      <p className="text-xs text-[#3A1F0E]/40">Shared experiences are reviewed before any community alert. Your name is not shown publicly; moderators retain the account record for safety and abuse review.</p>
+      <button disabled={!chip || !resolvedArea || submitting} onClick={submit}
         className="w-full py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] flex items-center justify-center gap-2">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
         Share Experience
@@ -466,14 +580,32 @@ type FeatureCard = { icon: React.ElementType; label: string; color: string; bg: 
 // ── Main Safety Hub ────────────────────────────────────────────────────────
 export default function Safety() {
   const [activeSheet, setActiveSheet] = useState<ReportSheet>("none");
-  const [alerts, setAlerts] = useState<Array<{id:string; type:string; description?:string; city?:string; createdAt:string; confirmCount:number}>>([]);
+  const [safetyArea, setSafetyArea] = useState<ResolvedArea | null>(null);
+  const [alerts, setAlerts] = useState<Array<{id:string; type:string; description?:string; createdAt:string; confirmCount:number; distanceKm:number}>>([]);
+  const [alertsState, setAlertsState] = useState<"idle" | "loading" | "ready" | "error">("idle");
 
   useEffect(() => {
-    authenticatedFetch(`${BASE}api/community-alerts/nearby?lat=39.9526&lng=-75.1652&radius=50`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.alerts) setAlerts(d.alerts.slice(0, 5)); })
-      .catch(() => {});
-  }, []);
+    if (safetyArea?.latitude == null || safetyArea?.longitude == null) {
+      setAlerts([]);
+      setAlertsState("idle");
+      return;
+    }
+    const controller = new AbortController();
+    setAlertsState("loading");
+    authenticatedFetch(`${BASE}api/community-alerts/nearby?lat=${encodeURIComponent(safetyArea.latitude)}&lng=${encodeURIComponent(safetyArea.longitude)}&radius=16.09`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json() as Promise<{ alerts?: Array<{id:string; type:string; description?:string; createdAt:string; confirmCount:number; distanceKm:number}> }>;
+      })
+      .then((data) => {
+        setAlerts((data.alerts ?? []).slice(0, 5));
+        setAlertsState("ready");
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") setAlertsState("error");
+      });
+    return () => controller.abort();
+  }, [safetyArea]);
 
   const FEATURE_CARDS: FeatureCard[] = [
     { icon: Radio, label: "Community Intelligence", color: "#CA922B", bg: "#CA922B18", href: "#alerts" },
@@ -566,11 +698,37 @@ export default function Safety() {
               <Radio className="w-3 h-3" /> Live
             </div>
           </div>
-          {alerts.length === 0 ? (
+          <div className="mb-3 rounded-2xl border border-[#3A1F0E]/8 bg-white p-4">
+            <SafetyLocationPicker
+              helpText="Choose the area you want to check. Mapping With Melanin will not assume Philadelphia or request your location until you choose to share it."
+              label="Check safety near"
+              onCleared={() => setSafetyArea(null)}
+              onResolved={(area) => setSafetyArea(area)}
+              value={safetyArea}
+            />
+          </div>
+          {alertsState === "idle" ? (
+            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
+              <MapPin className="w-8 h-8 text-[#CA922B] mx-auto mb-2" />
+              <p className="text-sm font-bold text-[#2B1507]">Choose a location to check nearby alerts</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-1">Search an area or use your current location above.</p>
+            </div>
+          ) : alertsState === "loading" ? (
+            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
+              <Loader2 className="w-8 h-8 text-[#CA922B] mx-auto mb-2 animate-spin" />
+              <p className="text-sm font-bold text-[#2B1507]">Checking approved community alerts…</p>
+            </div>
+          ) : alertsState === "error" ? (
+            <div className="bg-white rounded-2xl border border-red-200 p-6 text-center">
+              <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+              <p className="text-sm font-bold text-[#2B1507]">We could not check this area</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-1">Please choose the location again or try another area.</p>
+            </div>
+          ) : alerts.length === 0 ? (
             <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
               <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-              <p className="text-sm font-bold text-[#2B1507]">All clear nearby</p>
-              <p className="text-xs text-[#3A1F0E]/50 mt-1">No active community alerts in your area</p>
+              <p className="text-sm font-bold text-[#2B1507]">No active community alerts found nearby</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-1">No active community alerts were found within 10 miles of {safetyArea?.label}. This is not a guarantee that the area is risk-free.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -590,7 +748,7 @@ export default function Safety() {
                       {alert.description && <p className="text-xs text-[#3A1F0E]/60 mt-0.5 line-clamp-2">{alert.description}</p>}
                       <div className="flex items-center gap-2 text-[10px] text-[#3A1F0E]/35 mt-1">
                         <span>{timeAgo(alert.createdAt)}</span>
-                        {alert.city && <><span>·</span><span>{alert.city}</span></>}
+                        <span>· {alert.distanceKm.toFixed(1)} km away</span>
                         <span>· {alert.confirmCount} confirmed</span>
                       </div>
                     </div>

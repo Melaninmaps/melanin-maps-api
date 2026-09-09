@@ -56,11 +56,13 @@ describe("bounded cross-platform website repairs", () => {
     expect(submitEvent).not.toContain("toISOString().slice(0, 10)");
   });
 
-  it("keeps Safety categories canonical and sends the anonymity choice", () => {
+  it("keeps Safety categories canonical, locations structured, and sensitive reports anonymous", () => {
     const safety = source("../pages/safety.tsx");
     expect(safety).toContain("SAFETY_CATEGORY_VALUES[type] ?? \"safety\"");
-    expect(safety).toMatch(/severity: severity \|\| "medium", isAnonymous/);
+    expect(safety).toContain('isAnonymous: type === "Discrimination" ? true : isAnonymous');
+    expect(safety).toContain("incidentLocationPayload(resolvedArea, locationSource)");
     expect(safety).toContain('category: "police"');
+    expect(safety).toContain("isAnonymous: true");
     expect(safety).not.toMatch(/\bfetch\(/);
     expect(safety).not.toContain("No account needed to report");
     expect(safety).toContain("You control report privacy");
