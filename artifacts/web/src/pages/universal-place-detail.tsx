@@ -16,6 +16,9 @@ type Place = {
   website_url: string | null;
   source_url: string | null;
   source_label: string | null;
+  significance: string | null;
+  founded_year: number | null;
+  institution_control: "public" | "private" | null;
   detail_url: string;
 };
 
@@ -87,14 +90,39 @@ export default function UniversalPlaceDetailPage() {
   const address = [place.address_line1, place.city, place.state_region, place.postal_code].filter(Boolean).join(", ");
   const website = safePublicUrl(place.website_url);
   const source = safePublicUrl(place.source_url);
+  const isHbcu = place.entity_kind === "hbcu";
+  const kindLabel = isHbcu ? "Historically Black College or University" : titleCase(place.entity_kind);
 
   return (
     <main className="min-h-[68vh] bg-[#FBF6EC] py-10 text-[#2B1507]">
       <article className="mx-auto max-w-3xl rounded-3xl border border-[#3A1F0E]/10 bg-white px-6 py-8 shadow-[0_18px_60px_rgba(58,31,14,0.08)] sm:px-10 sm:py-12">
         <Link href="/map" className="text-sm font-bold text-[#8D5C17] hover:underline">← Back to Map</Link>
-        <p className="mt-8 text-xs font-bold uppercase tracking-[0.16em] text-[#8D5C17]">{titleCase(place.entity_kind)}</p>
+        <p className="mt-8 text-xs font-bold uppercase tracking-[0.16em] text-[#8D5C17]">{kindLabel}</p>
         <h1 className="mt-2 font-serif text-4xl font-bold leading-tight sm:text-5xl">{place.title}</h1>
         {place.summary && <p className="mt-6 max-w-2xl text-base leading-8 text-[#3A1F0E]/75">{place.summary}</p>}
+        {isHbcu && (place.founded_year || place.institution_control) && (
+          <section className="mt-8 grid gap-4 sm:grid-cols-2" aria-label="Institution facts">
+            {place.founded_year && (
+              <div className="rounded-2xl border border-[#CA922B]/20 bg-[#FAF6EF] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#3A1F0E]/50">Founded</p>
+                <p className="mt-1 font-serif text-2xl font-bold text-[#3A1F0E]">{place.founded_year}</p>
+              </div>
+            )}
+            {place.institution_control && (
+              <div className="rounded-2xl border border-[#CA922B]/20 bg-[#FAF6EF] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#3A1F0E]/50">Institution</p>
+                <p className="mt-1 font-serif text-2xl font-bold capitalize text-[#3A1F0E]">{place.institution_control} HBCU</p>
+              </div>
+            )}
+          </section>
+        )}
+        {isHbcu && place.significance && (
+          <section className="mt-8 rounded-2xl border border-[#CA922B]/25 bg-[#CA922B]/[0.08] p-5" aria-labelledby="hbcu-significance-heading">
+            <h2 id="hbcu-significance-heading" className="font-serif text-2xl font-bold text-[#3A1F0E]">Why this HBCU matters</h2>
+            <p className="mt-2 leading-7 text-[#3A1F0E]/75">{place.significance}</p>
+            <p className="mt-3 text-xs leading-5 text-[#3A1F0E]/55">Curated institutional history. Use the official university website for current institution information; the federal reference below confirms HBCU list status.</p>
+          </section>
+        )}
         <section className="mt-8 border-t border-[#3A1F0E]/10 pt-6">
           <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#3A1F0E]/50">Location</p>
           <p className="mt-2 text-sm leading-6 text-[#3A1F0E]/80">{address}</p>
@@ -108,7 +136,7 @@ export default function UniversalPlaceDetailPage() {
             )}
             {source && (
               <a href={source} target="_blank" rel="noreferrer" className="rounded-full border border-[#8D5C17]/35 px-5 py-2.5 text-sm font-bold text-[#8D5C17] hover:bg-[#8D5C17]/[0.07]">
-                Source: {place.source_label ?? "Learn more"} ↗
+                {isHbcu ? "HBCU list reference" : "Source"}: {place.source_label ?? "Learn more"} ↗
               </a>
             )}
           </section>
@@ -121,5 +149,32 @@ export default function UniversalPlaceDetailPage() {
 export function LegacyPlaceRedirect() {
   const [location] = useLocation();
   const id = location.split("?")[0].split("/").filter(Boolean)[1];
-  return <Redirect to={id ? `/places/${encodeURIComponent(id)}` : "/map"} />;
+  const [state, setState] = useState<"loading" | "missing" | "ready">(id ? "loading" : "missing");
+  const [detailUrl, setDetailUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    const controller = new AbortController();
+    fetch(`${BASE}api/legacy-place/education_institution/${encodeURIComponent(id)}?format=json`, {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json() as Promise<{ detailUrl?: string }>;
+      })
+      .then((result) => {
+        if (!result.detailUrl?.startsWith("/places/")) throw new Error("Invalid place redirect");
+        setDetailUrl(result.detailUrl);
+        setState("ready");
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") setState("missing");
+      });
+    return () => controller.abort();
+  }, [id]);
+
+  if (state === "ready" && detailUrl) return <Redirect to={detailUrl} />;
+  if (state === "missing") return <Redirect to="/map" />;
+  return <main className="mx-auto min-h-[58vh] max-w-3xl px-5 py-16 text-[#2B1507]"><p>Finding this HBCU…</p></main>;
 }

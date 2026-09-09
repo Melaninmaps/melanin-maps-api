@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ensureRequiredSafetyReportSchema } from "../safety/ensureSafetyReportSchema";
 import { projectApprovedIncident } from "../safety/approvedIncidentAlerts";
 import { updateBusinessSafetyRating } from "../safety/businessSafetyRating";
+import { canonicalSensitiveIncidentLocation } from "../routes/reports";
 import {
   getCachedProximityWarnings,
   invalidateProximityWarningCache,
@@ -29,7 +30,7 @@ describe("safety report location and privacy contract", () => {
     expect(normalizePoliceEncounterType("unknown type")).toBeNull();
   });
 
-  it("stores a coarse selected incident area without accepting coordinates", () => {
+  it("drops untrusted sensitive area text and all coordinates before server validation", () => {
     expect(normalizeIncidentLocation({
       incidentLocation: {
         city: "Philadelphia, PA",
@@ -50,7 +51,7 @@ describe("safety report location and privacy contract", () => {
     expect(normalizeIncidentLocation({
       incidentLocation: {
         city: "123 Germantown Ave, Philadelphia, PA",
-        area: "Exact storefront",
+        area: "123 Germantown Ave",
         source: "selected_place",
       },
     }, { sensitive: true })).toMatchObject({
@@ -83,6 +84,47 @@ describe("safety report location and privacy contract", () => {
       city: "Philadelphia",
       region: "PA",
     });
+  });
+
+  it("restores a sensitive neighborhood only from its canonical community location ID", async () => {
+    const fallback = normalizeIncidentLocation({
+      incidentLocation: {
+        city: "Philadelphia, PA",
+        area: "Jefferson Station",
+        source: "selected_place",
+      },
+    }, { sensitive: true });
+    expect(fallback).not.toBeNull();
+    const query = vi.fn().mockResolvedValue({
+      rows: [{ city_name: "Philadelphia", state_code: "PA", neighborhood_name: "Germantown" }],
+    });
+    await expect(canonicalSensitiveIncidentLocation({ query } as never, {
+      incidentLocation: { locationId: "89f14ab4-0f8d-4f52-97be-f12617191919" },
+    }, fallback!)).resolves.toEqual({
+      city: "Philadelphia",
+      region: "PA",
+      area: "Germantown",
+      source: "selected_place",
+      precision: "neighborhood",
+      label: "Germantown, Philadelphia, PA",
+    });
+    expect(query).toHaveBeenCalledOnce();
+  });
+
+  it("does not query or retain a sensitive area for a forged location ID", async () => {
+    const fallback = normalizeIncidentLocation({
+      incidentLocation: {
+        city: "Philadelphia, PA",
+        area: "City Hall",
+        source: "selected_place",
+      },
+    }, { sensitive: true });
+    expect(fallback).toMatchObject({ area: null, label: "Philadelphia, PA" });
+    const query = vi.fn();
+    await expect(canonicalSensitiveIncidentLocation({ query } as never, {
+      incidentLocation: { locationId: "not-a-canonical-id" },
+    }, fallback!)).resolves.toEqual(fallback);
+    expect(query).not.toHaveBeenCalled();
   });
 
   it("forces Police/ICE and discrimination reports anonymous", () => {
@@ -211,7 +253,10 @@ describe("safety report location and privacy contract", () => {
     expect(route).toContain("reportMustBeAnonymous(resolvedCategory as string)");
     expect(route).toContain("targetId: sensitive ? null : report.targetId");
     expect(route).toContain("normalizeReportTarget(targetType, targetId, sensitiveReport)");
-    expect(route).toContain("incidentLocationSource: incidentLocation.source");
+    expect(route).toContain("FROM community_locations");
+    expect(route).toContain("storedIncidentLocation = sensitiveReport");
+    expect(route).toContain("incidentLocationSource: storedIncidentLocation.source");
+    expect(route).toContain("`${report.incidentArea}, ${cityRegion}`");
     expect(route).toContain("encounterType: resolvedEncounterType");
     expect(requiredSchema).toContain("ADD COLUMN IF NOT EXISTS incident_location_source");
     expect(requiredSchema).toContain("ADD COLUMN IF NOT EXISTS region");

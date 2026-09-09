@@ -143,6 +143,9 @@ export function normalizeIncidentLocation(
     const cityInput = options.sensitive ? sensitiveCityOnlyInput(rawCity) : rawCity;
     if (!cityInput) return null;
     const { city, region } = splitCityRegion(cityInput);
+    // Sensitive area text is not trusted at this pure parsing boundary. The
+    // route may restore a canonical neighborhood only after validating its
+    // locationId against community_locations; raw coordinates are never read.
     const area = options.sensitive ? null : coarseArea(location.area);
     const requestedSource = cleanText(location.source, 30) as IncidentLocationSource;
     const source = LOCATION_SOURCES.has(requestedSource) ? requestedSource : "manual_area";

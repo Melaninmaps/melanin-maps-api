@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Pool } from "pg";
 import { ATLANTA_HBCU_SEED } from "./atlantaHbcuSeed";
+import { findHbcuMapDetails } from "./hbcuDetails";
 
 export const UNIVERSAL_MAP_ENTITY_KINDS = [
   "cultural_site",
@@ -32,6 +33,9 @@ type EntityInput = {
   sourceUrl: string | null;
   sourceLabel: string | null;
   sourceRecordId: string | null;
+  significance?: string | null;
+  foundedYear?: number | null;
+  institutionControl?: "public" | "private" | null;
 };
 
 type SourceRow = {
@@ -132,6 +136,9 @@ async function ensureSchema(pool: Pool): Promise<void> {
       source_url TEXT,
       source_label TEXT,
       source_record_id UUID,
+      significance TEXT,
+      founded_year INTEGER,
+      institution_control TEXT CHECK (institution_control IS NULL OR institution_control IN ('public', 'private')),
       published BOOLEAN NOT NULL DEFAULT FALSE,
       geocode_status TEXT NOT NULL DEFAULT 'queued' CHECK (geocode_status IN ('queued','resolved','failed')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -139,6 +146,23 @@ async function ensureSchema(pool: Pool): Promise<void> {
       UNIQUE (entity_kind, slug),
       CHECK ((latitude IS NULL AND longitude IS NULL) OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180))
     )
+  `);
+  await pool.query(`ALTER TABLE public.map_entities ADD COLUMN IF NOT EXISTS significance TEXT`);
+  await pool.query(`ALTER TABLE public.map_entities ADD COLUMN IF NOT EXISTS founded_year INTEGER`);
+  await pool.query(`ALTER TABLE public.map_entities ADD COLUMN IF NOT EXISTS institution_control TEXT`);
+  await pool.query(`
+    DO $migration$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid='public.map_entities'::regclass
+          AND conname='map_entities_institution_control_check'
+      ) THEN
+        ALTER TABLE public.map_entities ADD CONSTRAINT map_entities_institution_control_check
+          CHECK (institution_control IS NULL OR institution_control IN ('public', 'private'));
+      END IF;
+    END
+    $migration$;
   `);
   await pool.query(`
     DO $migration$
@@ -178,7 +202,8 @@ async function ensureSchema(pool: Pool): Promise<void> {
     CREATE OR REPLACE VIEW public.published_map_entities AS
     SELECT id, entity_kind, title, slug, summary, address_line1, city, state_region, postal_code,
            country_code, latitude, longitude, website_url, source_url, source_label,
-           '/places/' || id::text || '/' || slug AS detail_url
+           '/places/' || id::text || '/' || slug AS detail_url,
+           significance, founded_year, institution_control
     FROM public.map_entities
     WHERE published = TRUE
       AND geocode_status = 'resolved'
@@ -193,10 +218,10 @@ async function upsertEntity(pool: Pool, entity: EntityInput): Promise<string> {
     INSERT INTO public.map_entities (
       id, entity_kind, title, slug, summary, address_line1, city, state_region, postal_code,
       country_code, latitude, longitude, website_url, source_url, source_label, source_record_id,
-      published, geocode_status
+      significance, founded_year, institution_control, published, geocode_status
     ) VALUES (
       $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-      $16::uuid, $17, $18
+      $16::uuid, $17, $18, $19, $20, $21
     )
     ON CONFLICT (entity_kind, slug) DO UPDATE SET
       title = EXCLUDED.title,
@@ -212,6 +237,9 @@ async function upsertEntity(pool: Pool, entity: EntityInput): Promise<string> {
       source_url = COALESCE(EXCLUDED.source_url, map_entities.source_url),
       source_label = COALESCE(EXCLUDED.source_label, map_entities.source_label),
       source_record_id = COALESCE(EXCLUDED.source_record_id, map_entities.source_record_id),
+      significance = COALESCE(EXCLUDED.significance, map_entities.significance),
+      founded_year = COALESCE(EXCLUDED.founded_year, map_entities.founded_year),
+      institution_control = COALESCE(EXCLUDED.institution_control, map_entities.institution_control),
       published = map_entities.published OR EXCLUDED.published,
       geocode_status = CASE
         WHEN EXCLUDED.geocode_status = 'resolved' THEN 'resolved'
@@ -236,6 +264,9 @@ async function upsertEntity(pool: Pool, entity: EntityInput): Promise<string> {
     entity.sourceUrl,
     entity.sourceLabel,
     entity.sourceRecordId && UUID_RE.test(entity.sourceRecordId) ? entity.sourceRecordId : null,
+    entity.significance ?? null,
+    entity.foundedYear ?? null,
+    entity.institutionControl ?? null,
     Boolean(coordinates),
     coordinates ? "resolved" : "queued",
   ]);
@@ -364,12 +395,13 @@ async function importExistingHbcus(pool: Pool): Promise<number> {
   `);
   for (const row of rows) {
     const slug = ATLANTA_HBCU_SLUGS.get(row.name.toLowerCase()) ?? slugify(`${row.name}-${row.city}`);
+    const details = findHbcuMapDetails(row.name, row.state);
     const entityId = await upsertEntity(pool, {
       id: stableUuid(`education_institution:${row.id}`),
       entityKind: "hbcu",
       title: row.name,
       slug,
-      summary: "Historically Black college or university.",
+      summary: details?.summary ?? "Historically Black college or university.",
       addressLine1: null,
       city: row.city,
       stateRegion: row.state,
@@ -377,12 +409,15 @@ async function importExistingHbcus(pool: Pool): Promise<number> {
       countryCode: countryCode(row.country),
       latitude: coordinate(row.latitude),
       longitude: coordinate(row.longitude),
-      websiteUrl: row.official_url ?? null,
-      sourceUrl: row.accreditation_source_url ?? null,
-      sourceLabel: row.accreditation_source_url ? "Institutional accreditation source" : "Institutional record",
+      websiteUrl: details?.websiteUrl ?? row.official_url ?? null,
+      sourceUrl: details?.sourceUrl ?? row.accreditation_source_url ?? null,
+      sourceLabel: details?.sourceLabel ?? (row.accreditation_source_url ? "Institutional accreditation source" : "Institutional record"),
       sourceRecordId: null,
+      significance: details?.significance ?? null,
+      foundedYear: details?.foundedYear ?? null,
+      institutionControl: details?.institutionControl ?? null,
     });
-    await addAlias(pool, entityId, "hbcu", slugify(row.id), null);
+    await addAlias(pool, entityId, "education_institution", slugify(row.id), row.id);
   }
   return rows.length;
 }
@@ -493,6 +528,7 @@ async function geocodeInstitutionAddress(address: string): Promise<{ latitude: n
 async function ensureAtlantaHbcus(pool: Pool, logger: Logger): Promise<number> {
   let resolved = 0;
   for (const institution of ATLANTA_HBCU_SEED) {
+    const details = findHbcuMapDetails(institution.title, institution.stateRegion);
     const existingCoordinates = await findInstitutionCoordinates(pool, institution.title, institution.city);
     const coordinates = existingCoordinates ?? await geocodeInstitutionAddress(
       `${institution.addressLine1}, ${institution.city}, ${institution.stateRegion} ${institution.postalCode}, USA`,
@@ -502,7 +538,7 @@ async function ensureAtlantaHbcus(pool: Pool, logger: Logger): Promise<number> {
       entityKind: "hbcu",
       title: institution.title,
       slug: institution.slug,
-      summary: "Institution-backed Atlanta HBCU record.",
+      summary: details?.summary ?? "Institution-backed Atlanta HBCU record.",
       addressLine1: institution.addressLine1,
       city: institution.city,
       stateRegion: institution.stateRegion,
@@ -510,10 +546,13 @@ async function ensureAtlantaHbcus(pool: Pool, logger: Logger): Promise<number> {
       countryCode: "US",
       latitude: coordinates?.latitude ?? null,
       longitude: coordinates?.longitude ?? null,
-      websiteUrl: institution.websiteUrl,
-      sourceUrl: institution.sourceUrl,
-      sourceLabel: institution.sourceLabel,
+      websiteUrl: details?.websiteUrl ?? institution.websiteUrl,
+      sourceUrl: details?.sourceUrl ?? institution.sourceUrl,
+      sourceLabel: details?.sourceLabel ?? institution.sourceLabel,
       sourceRecordId: null,
+      significance: details?.significance ?? null,
+      foundedYear: details?.foundedYear ?? null,
+      institutionControl: details?.institutionControl ?? null,
     });
     await addAlias(pool, entityId, "hbcu", institution.slug, null);
     if (coordinates) resolved++;
