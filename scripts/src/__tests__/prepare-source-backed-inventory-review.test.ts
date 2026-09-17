@@ -10,6 +10,14 @@ const linkChecker = readFileSync(
   resolve(import.meta.dirname, "../check-source-backed-review-destinations.mjs"),
   "utf8",
 );
+const cityAudit = readFileSync(
+  resolve(import.meta.dirname, "../audit-55-city-social-recovery.py"),
+  "utf8",
+);
+const cityFilter = readFileSync(
+  resolve(import.meta.dirname, "../filter-55-city-social-recovery.py"),
+  "utf8",
+);
 
 describe("source-backed inventory review builder", () => {
   it("requires address, source, and attributable official social destination", () => {
@@ -41,5 +49,12 @@ describe("source-backed inventory review builder", () => {
     expect(linkChecker).toContain('option("--manifest")');
     expect(linkChecker).toContain('option("--output")');
     expect(linkChecker).toContain("Review-only evidence");
+  });
+
+  it("provides auditable tooling for 55-city social-recovery source files", () => {
+    expect(cityAudit).toContain("cross_city_duplicate_dedupe_keys");
+    expect(cityAudit).toContain("schema_or_eligibility_issues");
+    expect(cityFilter).toContain("missing_attributable_official_social_destination");
+    expect(cityFilter).toContain("NOT PUBLISHED");
   });
 });

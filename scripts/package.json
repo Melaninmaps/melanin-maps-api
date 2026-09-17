@@ -14,6 +14,8 @@
     "prepare-source-backed-inventory-review": "tsx ./src/prepare-source-backed-inventory-review.ts",
     "check-source-backed-review-destinations": "node ./src/check-source-backed-review-destinations.mjs",
     "summarize-source-backed-review-health": "node ./src/summarize-source-backed-review-health.mjs",
+    "audit-55-city-social-recovery": "python3 ./src/audit-55-city-social-recovery.py",
+    "filter-55-city-social-recovery": "python3 ./src/filter-55-city-social-recovery.py",
     "stage-cumulative-content-global": "tsx ./src/stage-cumulative-content-global.ts",
     "stage-today-net-new-businesses": "tsx ./src/stage-today-net-new-businesses.ts",
     "stage-kinfolk-poc-businesses": "tsx ./src/stage-kinfolk-poc-businesses.ts",
