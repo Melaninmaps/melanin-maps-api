@@ -335,14 +335,14 @@ export default function FinancialHubScreen() {
               {/* Operation HOPE highlight */}
               <View style={[s.highlightCard, { backgroundColor: "#CA922B10", borderColor: "#CA922B30" }]}>
                 <Text style={[s.highlightTitle, { color: "#CA922B" }]}>Free Financial Coaching</Text>
-                <Text style={[s.highlightBody, { color: colors.mutedForeground }]}>Operation HOPE offers free 1:1 financial coaching for credit building, homeownership, and small business. Available in many cities.</Text>
+                <Text style={[s.highlightBody, { color: colors.mutedForeground }]}>Find active, reviewed financial coaching support here first. If there is no listed coach yet, the app will say so rather than sending you away.</Text>
                 <TouchableOpacity
                   style={[s.highlightBtn, { backgroundColor: "#CA922B" }]}
-                  onPress={() => { void (async () => { const { Linking } = await import("react-native"); Linking.openURL("https://www.operationhope.org").catch(() => {}); })(); }}
+                  onPress={() => router.push("/resource-providers?service=financial-coaching" as never)}
                   activeOpacity={0.85}
                 >
                   <Text style={s.highlightBtnText}>Find a Coach</Text>
-                  <Feather name="external-link" size={13} color="#1C0E06" />
+                  <Feather name="chevron-right" size={13} color="#1C0E06" />
                 </TouchableOpacity>
               </View>
             </>
