@@ -345,15 +345,28 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
 
   const handleLike = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const previous = liked;
     const next = !liked;
     setLiked(next);
     setLikeCount((c) => next ? c + 1 : c - 1);
     onLikeChange?.(next);
-    fetch(`${getApiBase()}/api/community/posts/${post.id}/vote`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ direction: next ? "up" : "down" }),
-    }).catch(() => {});
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        if (!token) throw new Error("Authentication required");
+        const response = await fetch(`${getApiBase()}/api/community/posts/${post.id}/vote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ direction: next ? "up" : "down" }),
+        });
+        if (!response.ok) throw new Error("Vote failed");
+      } catch {
+        setLiked(previous);
+        setLikeCount((c) => previous ? c + 1 : Math.max(0, c - 1));
+        onLikeChange?.(previous);
+        Alert.alert("Could not save your reaction", "Your reaction was not changed. Please try again.");
+      }
+    })();
   };
 
   const markAsRead = async (postId: string) => {
