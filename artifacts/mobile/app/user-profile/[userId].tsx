@@ -206,6 +206,32 @@ export default function UserProfileScreen() {
     finally { setActionLoading(false); }
   };
 
+  const handleStartMessage = async () => {
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    setActionLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          type: "dm",
+          participantId: userId,
+          title: profile?.username ? `@${profile.username}` : "Direct Message",
+        }),
+      });
+      const data = await res.json() as { conversation?: { id: number }; error?: string };
+      if (!res.ok || !data.conversation) {
+        Alert.alert("Message unavailable", data.error ?? "This member cannot receive direct messages right now.");
+        return;
+      }
+      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push({ pathname: "/chat/[id]", params: { id: String(data.conversation.id) } });
+    } catch {
+      Alert.alert("Message unavailable", "Could not start a conversation. Please try again.");
+    } finally { setActionLoading(false); }
+  };
+
   const handlePostTag = async () => {
     if (!tagInput.trim() || !isAuthenticated) return;
     setPostingTag(true);
@@ -331,27 +357,41 @@ export default function UserProfileScreen() {
                   </Text>
                 </View>
               )}
-              {/* Connect button */}
+              {/* Profile actions are server-authorized: connection changes and direct
+                  messages each respect the receiving member's preferences. */}
               {!isOwnProfile && isAuthenticated && (
-                <TouchableOpacity
-                  style={[s.connectBtn, { backgroundColor: connectionStatus === "pending_sent" ? colors.card : connectBtnColor(), borderColor: connectBtnColor() }]}
-                  onPress={() => void handleConnect()}
-                  disabled={actionLoading || connectionStatus === "pending_sent"}
-                  activeOpacity={0.85}
-                >
-                  {actionLoading ? <ActivityIndicator size="small" color={connectionStatus === "pending_sent" ? colors.mutedForeground : "#FFF"} /> : (
-                    <>
-                      <Feather
-                        name={connectionStatus === "connected" ? "user-check" : connectionStatus === "pending_sent" ? "clock" : "user-plus"}
-                        size={15}
-                        color={connectionStatus === "pending_sent" ? colors.mutedForeground : "#FFF"}
-                      />
-                      <Text style={[s.connectBtnText, { color: connectionStatus === "pending_sent" ? colors.mutedForeground : "#FFF" }]}>
-                        {connectBtnLabel()}
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <View style={s.profileActions}>
+                  <TouchableOpacity
+                    style={[s.connectBtn, { backgroundColor: connectionStatus === "pending_sent" ? colors.card : connectBtnColor(), borderColor: connectBtnColor() }]}
+                    onPress={() => void handleConnect()}
+                    disabled={actionLoading || connectionStatus === "pending_sent"}
+                    activeOpacity={0.85}
+                  >
+                    {actionLoading ? <ActivityIndicator size="small" color={connectionStatus === "pending_sent" ? colors.mutedForeground : "#FFF"} /> : (
+                      <>
+                        <Feather
+                          name={connectionStatus === "connected" ? "user-check" : connectionStatus === "pending_sent" ? "clock" : "user-plus"}
+                          size={15}
+                          color={connectionStatus === "pending_sent" ? colors.mutedForeground : "#FFF"}
+                        />
+                        <Text style={[s.connectBtnText, { color: connectionStatus === "pending_sent" ? colors.mutedForeground : "#FFF" }]}>
+                          {connectBtnLabel()}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[s.messageBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    onPress={() => void handleStartMessage()}
+                    disabled={actionLoading}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Message ${displayName}`}
+                  >
+                    <Feather name="message-circle" size={15} color={colors.primary} />
+                    <Text style={[s.messageBtnText, { color: colors.primary }]}>Message</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
 
@@ -534,8 +574,11 @@ const s = StyleSheet.create({
   heroBio: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22, textAlign: "center", paddingHorizontal: 20, marginTop: 4 },
   memberBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, marginTop: 4 },
   memberBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  connectBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, marginTop: 12 },
+  profileActions: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
+  connectBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5 },
   connectBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  messageBtn: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 12, borderWidth: 1 },
+  messageBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
   tagInputRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, margin: 14, borderRadius: 16, borderWidth: 1, padding: 12 },
   tagInput: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 80 },
   tagPostBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
