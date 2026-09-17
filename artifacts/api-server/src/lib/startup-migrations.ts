@@ -279,6 +279,30 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     `,
   },
   {
+    name: "allow_review_only_international_directory_candidates_v1",
+    sql: `
+      -- Review staging records may represent international places. A state or
+      -- province is therefore optional, while the country remains preserved in
+      -- raw_record for the reviewer and later country-aware publisher.
+      ALTER TABLE directory_import_candidates
+        ALTER COLUMN state DROP NOT NULL;
+
+      -- Cultural places are deliberately queued separately from commercial
+      -- listings. This adds a staging classification only; it does not create
+      -- any public map pin or publication path.
+      ALTER TABLE directory_import_candidates
+        DROP CONSTRAINT IF EXISTS directory_import_candidates_target_kind_check;
+      ALTER TABLE directory_import_candidates
+        ADD CONSTRAINT directory_import_candidates_target_kind_check
+        CHECK (target_kind IN (
+          'business', 'community_resource', 'cultural_place',
+          'regulated_review', 'manual_review', 'internal_only'
+        )) NOT VALID;
+      ALTER TABLE directory_import_candidates
+        VALIDATE CONSTRAINT directory_import_candidates_target_kind_check;
+    `,
+  },
+  {
     name: "extend_directory_publication_types_for_map_entities_v1",
     sql: `
       DO $migration$
