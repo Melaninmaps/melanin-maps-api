@@ -4,14 +4,24 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path("/home/ubuntu/melanin-maps-inventory-staging")
-RECOVERY = ROOT / "data/founder-imports/2026-09-17-55-city-social-recovery"
-AUDIT = RECOVERY / "city-social-recovery-audit.json"
-ACCEPTED = RECOVERY / "strict-city-social-recovery-candidates.jsonl"
-HELD = RECOVERY / "strict-city-social-recovery-held.jsonl"
-SUMMARY = RECOVERY / "strict-city-social-recovery-summary.json"
+
+
+def option(name: str, default: str | None = None) -> str | None:
+    try:
+        return sys.argv[sys.argv.index(name) + 1]
+    except (ValueError, IndexError):
+        return default
+
+
+RECOVERY = Path(option("--batch-dir", str(ROOT / "data/founder-imports/2026-09-17-55-city-social-recovery"))).resolve()
+AUDIT = RECOVERY / "city-inventory-audit.json"
+ACCEPTED = RECOVERY / "strict-city-candidates.jsonl"
+HELD = RECOVERY / "strict-city-held.jsonl"
+SUMMARY = RECOVERY / "strict-city-summary.json"
 FIELDS = {
     "name", "address", "city", "state", "postal_code", "country", "category",
     "subcategory", "services_search_terms", "description", "website", "phone",

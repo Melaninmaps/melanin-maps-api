@@ -36,13 +36,15 @@ The review-only manifest is checksum-pinned by `source-backed-inventory-review-s
 The city research collector writes one candidate file per market. Audit every city file before combining it with the baseline bundle. The audit rejects rows that lack a physical address, a source URL, a social destination, or an allowed record kind. The filter places rejected rows in a separate held manifest and never alters the original city files.
 
 ```bash
-pnpm --filter @workspace/scripts run audit-55-city-social-recovery
-pnpm --filter @workspace/scripts run filter-55-city-social-recovery
+pnpm --filter @workspace/scripts run audit-55-city-social-recovery -- \
+  --batch-dir "$PWD/data/founder-imports/2026-09-17-55-city-social-recovery"
+pnpm --filter @workspace/scripts run filter-55-city-social-recovery -- \
+  --batch-dir "$PWD/data/founder-imports/2026-09-17-55-city-social-recovery"
 
 pnpm --filter @workspace/scripts exec tsx ./src/prepare-source-backed-inventory-review.ts \
   --input "$PWD/data/founder-imports/2026-09-17-10k-expansion/source-backed-domestic-candidates.jsonl" \
   --input "$PWD/data/founder-imports/2026-09-17-international-2500-expansion/source-backed-international-candidates.jsonl" \
-  --input "$PWD/data/founder-imports/2026-09-17-55-city-social-recovery/strict-city-social-recovery-candidates.jsonl" \
+  --input "$PWD/data/founder-imports/2026-09-17-55-city-social-recovery/strict-city-candidates.jsonl" \
   --output-dir "$PWD/data/founder-imports/2026-09-17-all-source-backed-review"
 ```
 
