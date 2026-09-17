@@ -100,6 +100,14 @@ describe("Kinfolk provider readiness", () => {
     });
   });
 
+  it("accepts a standard OpenAI key without requiring duplicate integration variables", async () => {
+    const dependencies = passingDependencies();
+    await expect(probeKinfolkCoreChatReadiness({
+      OPENAI_API_KEY: "present",
+    }, dependencies as never)).resolves.toEqual({ ok: true });
+    expect(dependencies.chatCreate).toHaveBeenCalledTimes(1);
+  });
+
   it("fails every required row as missing configuration without calling a provider", async () => {
     const dependencies = passingDependencies();
     const rows = await probeKinfolkProviderReadiness({}, dependencies as never);

@@ -12,9 +12,11 @@ const EMBEDDING_MODELS = new Set(["text-embedding-3-small"]);
 export const KINFOLK_EMBEDDING_DIMENSIONS = 1536;
 
 const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string; allowed: ReadonlySet<string> }> = {
-  staffDemo: { env: "KINFOLK_STAFF_DEMO_MODEL", fallback: "gpt-5", allowed: CHAT_MODELS },
+  // The live default must be broadly available to a standard OpenAI API key.
+  // Higher-cost models remain an explicit, allowlisted operator choice.
+  staffDemo: { env: "KINFOLK_STAFF_DEMO_MODEL", fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
   fallback: { env: "KINFOLK_FALLBACK_MODEL", fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
-  webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-5", allowed: RESEARCH_MODELS },
+  webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
   libraryResearch: { env: "LIBRARY_RESEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
   transcription: { env: "KINFOLK_TRANSCRIPTION_MODEL", fallback: "gpt-4o-mini-transcribe", allowed: TRANSCRIPTION_MODELS },
   // Semantic retrieval is an existing optional internal path, not a configurable
