@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  classifyOpenAIReadinessError,
   kinfolkProviderReadinessHttpResult,
   probeKinfolkCoreChatReadiness,
   probeKinfolkProviderReadiness,
@@ -97,6 +98,24 @@ describe("Kinfolk provider readiness", () => {
     await expect(probeKinfolkCoreChatReadiness(configured, dependencies as never)).resolves.toEqual({
       ok: false,
       reason: "connection_failure",
+    });
+  });
+
+  it("publishes only safe operator categories for OpenAI failures", () => {
+    expect(classifyOpenAIReadinessError({ status: 401 })).toBe("invalid_credentials");
+    expect(classifyOpenAIReadinessError({ status: 429, code: "insufficient_quota" })).toBe("insufficient_quota");
+    expect(classifyOpenAIReadinessError({ status: 429 })).toBe("rate_limited");
+    expect(classifyOpenAIReadinessError({ status: 404, code: "model_not_found" })).toBe("model_unavailable");
+    expect(classifyOpenAIReadinessError({ status: 400 })).toBe("request_rejected");
+    expect(classifyOpenAIReadinessError(new Error("socket closed"))).toBe("connection_failure");
+  });
+
+  it("returns the safe credential category for a rejected core-chat request", async () => {
+    const dependencies = passingDependencies();
+    dependencies.chatCreate.mockRejectedValueOnce(Object.assign(new Error("redacted"), { status: 401 }));
+    await expect(probeKinfolkCoreChatReadiness(configured, dependencies as never)).resolves.toEqual({
+      ok: false,
+      reason: "invalid_credentials",
     });
   });
 

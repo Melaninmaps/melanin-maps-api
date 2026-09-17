@@ -12,7 +12,15 @@ import { createKinfolkEmbedding } from "./embedding-provider";
 import { kinfolkEmbeddingConfig, kinfolkModel } from "./model-config";
 import { kinfolkTavilyApiKey } from "./provider-config";
 
-export type ProviderReadinessCategory = "ok" | "missing_configuration" | "connection_failure";
+export type ProviderReadinessCategory =
+  | "ok"
+  | "missing_configuration"
+  | "invalid_credentials"
+  | "insufficient_quota"
+  | "rate_limited"
+  | "model_unavailable"
+  | "request_rejected"
+  | "connection_failure";
 export type ProviderReadinessCapability =
   | "staff_demo_chat"
   | "fallback_chat"
@@ -57,6 +65,36 @@ function readinessDependencies(
 
 function openAiConfigurationPresent(environment: NodeJS.ProcessEnv): boolean {
   return resolveOpenAIConfiguration(environment) !== null;
+}
+
+/**
+ * Converts a provider error into a stable, secret-free operator action. The
+ * public health route deliberately exposes only this category—not an upstream
+ * response body, endpoint, model identifier, or credential fragment.
+ */
+export function classifyOpenAIReadinessError(error: unknown): Exclude<ProviderReadinessCategory, "ok" | "missing_configuration"> {
+  if (!error || typeof error !== "object") return "connection_failure";
+  const record = error as Record<string, unknown>;
+  const nested = record.error && typeof record.error === "object"
+    ? record.error as Record<string, unknown>
+    : null;
+  const statusCandidate = record.status ?? record.statusCode ?? nested?.status;
+  const status = typeof statusCandidate === "number" ? statusCandidate : Number(statusCandidate);
+  const code = [record.code, record.type, nested?.code, nested?.type]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
+
+  if (status === 401 || code.includes("invalid_api_key") || code.includes("authentication")) {
+    return "invalid_credentials";
+  }
+  if (code.includes("insufficient_quota") || code.includes("billing_hard_limit")) {
+    return "insufficient_quota";
+  }
+  if (status === 429) return "rate_limited";
+  if (status === 404 || code.includes("model_not_found")) return "model_unavailable";
+  if (status >= 400 && status < 500) return "request_rejected";
+  return "connection_failure";
 }
 
 export const KINFOLK_READINESS_FIXTURE_RELATIVE_PATH = "assets/readiness/kinfolk-readiness-voice.wav";
@@ -279,8 +317,8 @@ export async function probeKinfolkCoreChatReadiness(
     return ready
       ? { ok: true }
       : { ok: false, reason: "connection_failure" };
-  } catch {
-    return { ok: false, reason: "connection_failure" };
+  } catch (error) {
+    return { ok: false, reason: classifyOpenAIReadinessError(error) };
   }
 }
 
