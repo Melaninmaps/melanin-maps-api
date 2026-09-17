@@ -211,7 +211,10 @@ router.use(businessesRouter);
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
 // checks) and the mobile app before showing the KinfolkAI chat UI.
-// It probes all required Kinfolk provider capabilities (cached 5 min) and returns ok/503.
+// It probes the configured core text-chat capability (cached 5 min) and returns ok/503.
+// Advanced web-research, audio, and embedding diagnostics stay in the authenticated,
+// development-only provider-readiness endpoint so an optional integration cannot hide
+// otherwise working basic chat.
 // Safe to expose publicly: no user data, no platform data, no session required.
 router.get("/kinfolk/health", async (_req, res) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {

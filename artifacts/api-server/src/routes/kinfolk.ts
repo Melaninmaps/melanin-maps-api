@@ -175,6 +175,7 @@ import {
 import { kinfolkModel } from "../kinfolk/model-config";
 import { kinfolkTavilyApiKey } from "../kinfolk/provider-config";
 import {
+  probeKinfolkCoreChatReadiness,
   probeKinfolkProviderReadiness,
   summarizeKinfolkProviderReadiness,
 } from "../kinfolk/provider-readiness";
@@ -266,6 +267,11 @@ import {
   normalizeRegionalFlavor,
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
+import {
+  buildLeanGeneralChatPrompt,
+  buildLeanGeneralHistory,
+  canUseLeanGeneralChat,
+} from "../kinfolk/lean-general-chat";
 import {
   canonicalVoiceFormat,
   inspectVoiceAudio,
@@ -1165,8 +1171,9 @@ function buildLibraryFallbackReply(topic: LibraryGrounding | null): string {
 }
 
 // ─── KinfolkAI readiness cache ───────────────────────────────────────────────
-// The explicit Kinfolk boundary checks every required provider capability at
-// most once every 5 minutes. Directory liveness/readiness remains independent.
+// The public Kinfolk boundary checks the configured text-chat capability at
+// most once every 5 minutes. Advanced provider capability checks remain in the
+// authenticated development-only readiness command.
 type KinfolkHealthResult = { ok: boolean; reason?: string; checkedAt: number };
 let _kinfolkHealthCache: KinfolkHealthResult | null = null;
 const KINFOLK_HEALTH_CACHE_MS = 5 * 60 * 1000;
@@ -1182,8 +1189,7 @@ export async function probeKinfolkAI(): Promise<{
   ) {
     return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
   }
-  const capabilities = await probeKinfolkProviderReadiness();
-  const result = summarizeKinfolkProviderReadiness(capabilities);
+  const result = await probeKinfolkCoreChatReadiness();
   _kinfolkHealthCache = { ...result, checkedAt: now };
   return result;
 }
@@ -7736,12 +7742,26 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       verifiedImageUrls.length > 0
         ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
         : "";
-    const systemPromptWithLibrary =
-      (!contextualHighConsequence && libraryGroundingBlock
-        ? `${systemPrompt}\n\n${libraryGroundingBlock}`
-        : systemPrompt) +
-      (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
-      (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
+    const leanGeneralChat = canUseLeanGeneralChat({
+      intentClass,
+      requiresCurrentEvidence: requiresCurrentResearch(message),
+      hasLocation: Boolean(destination),
+      hasImages: verifiedImageUrls.length > 0,
+      hasContextualResearch: Boolean(contextualEvidence),
+      hasNamedBusiness: Boolean(namedBusiness),
+      isTravelPlanning: travelPlanning,
+      hasCircleContext: Boolean(circleContext),
+      hasResolvedEntity: contextResolution.responseMode !== "no_entity",
+      hasLibraryGrounding: Boolean(libraryTopic),
+      hasRequestedVibes: vibes.length > 0,
+    });
+    const systemPromptWithLibrary = leanGeneralChat
+      ? buildLeanGeneralChatPrompt()
+      : (!contextualHighConsequence && libraryGroundingBlock
+          ? `${systemPrompt}\n\n${libraryGroundingBlock}`
+          : systemPrompt) +
+        (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
+        (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
 
     const currentUserText = `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
     const currentUserContent: Parameters<
@@ -7760,7 +7780,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       typeof openai.chat.completions.create
     >[0]["messages"] = [
       { role: "system", content: systemPromptWithLibrary },
-      ...historyMessages,
+      ...(leanGeneralChat ? buildLeanGeneralHistory(existingMessages) : historyMessages),
       { role: "user", content: currentUserContent },
     ];
 

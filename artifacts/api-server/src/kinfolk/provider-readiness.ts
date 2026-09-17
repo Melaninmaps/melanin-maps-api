@@ -36,6 +36,29 @@ type ReadinessDependencies = Readonly<{
   readFixture: (path: string) => Promise<Buffer>;
 }>;
 
+function readinessDependencies(
+  injected?: Partial<ReadinessDependencies>,
+): ReadinessDependencies {
+  return {
+    // Preserve SDK receivers. Capturing these methods directly loses client context.
+    chatCreate: (body) => openai.chat.completions.create(body as never),
+    responsesCreate: (body) => openai.responses.create(body as never),
+    transcriptionCreate: (body) => openai.audio.transcriptions.create(body as never),
+    tavilySearch: (url, init) => fetch(url, init),
+    tavilyTimeoutMilliseconds: 6_000,
+    textToSpeech,
+    readFixture: readFile,
+    ...injected,
+  };
+}
+
+function openAiConfigurationPresent(environment: NodeJS.ProcessEnv): boolean {
+  return Boolean(
+    environment.AI_INTEGRATIONS_OPENAI_API_KEY?.trim()
+    && environment.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim(),
+  );
+}
+
 export const KINFOLK_READINESS_FIXTURE_RELATIVE_PATH = "assets/readiness/kinfolk-readiness-voice.wav";
 const fixtureCandidates = [
   // Source execution (Vitest/tsx): src/kinfolk -> src/assets/readiness.
@@ -235,6 +258,32 @@ export function kinfolkProviderReadinessHttpResult(
   return { status: body.ok ? 200 : 503, body };
 }
 
+/**
+ * Verifies only the capability required for an ordinary member chat response.
+ * Advanced optional paths (web research, audio, and embeddings) remain checked
+ * by the development-only full provider-readiness command. They must not mark
+ * basic text chat unavailable when its configured fallback model is working.
+ */
+export async function probeKinfolkCoreChatReadiness(
+  environment: NodeJS.ProcessEnv = process.env,
+  injected?: Partial<ReadinessDependencies>,
+): Promise<{ ok: true } | { ok: false; reason: Exclude<ProviderReadinessCategory, "ok"> }> {
+  if (!openAiConfigurationPresent(environment)) {
+    return { ok: false, reason: "missing_configuration" };
+  }
+  try {
+    const ready = await chatProbe(
+      readinessDependencies(injected),
+      kinfolkModel("fallback", environment),
+    );
+    return ready
+      ? { ok: true }
+      : { ok: false, reason: "connection_failure" };
+  } catch {
+    return { ok: false, reason: "connection_failure" };
+  }
+}
+
 function requiredCapabilities(input: {
   tavilyConfigured: boolean;
   embeddingConfigured: boolean;
@@ -260,27 +309,14 @@ export async function probeKinfolkProviderReadiness(
   environment: NodeJS.ProcessEnv = process.env,
   injected?: Partial<ReadinessDependencies>,
 ): Promise<ProviderReadinessRow[]> {
-  const dependencies: ReadinessDependencies = {
-    // Preserve SDK receivers. Capturing these methods directly loses client context.
-    chatCreate: (body) => openai.chat.completions.create(body as never),
-    responsesCreate: (body) => openai.responses.create(body as never),
-    transcriptionCreate: (body) => openai.audio.transcriptions.create(body as never),
-    tavilySearch: (url, init) => fetch(url, init),
-    tavilyTimeoutMilliseconds: 6_000,
-    textToSpeech,
-    readFixture: readFile,
-    ...injected,
-  };
+  const dependencies = readinessDependencies(injected);
   const embeddingConfig = kinfolkEmbeddingConfig(environment);
   const tavilyApiKey = kinfolkTavilyApiKey(environment);
   const capabilities = requiredCapabilities({
     tavilyConfigured: Boolean(tavilyApiKey),
     embeddingConfigured: Boolean(embeddingConfig),
   });
-  const openAiConfigured = Boolean(
-    environment.AI_INTEGRATIONS_OPENAI_API_KEY?.trim()
-    && environment.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim(),
-  );
+  const openAiConfigured = openAiConfigurationPresent(environment);
   const fail = (capability: ProviderReadinessCapability, category: ProviderReadinessCategory): ProviderReadinessRow =>
     ({ capability, status: "FAIL", category });
   const run = async (
