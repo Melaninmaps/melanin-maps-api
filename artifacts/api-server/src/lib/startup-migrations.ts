@@ -5453,7 +5453,17 @@ export async function ensureRequiredPublicationSchema(
   );
 }
 
-const DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS = new Set([
+// A deploy must not create, delete, promote, or reset a person merely because
+// the process restarted. Account and access decisions remain operator actions.
+// Schema-only migrations, including users_must_change_password_col_v1, remain
+// safe to apply because they do not change an existing member's credentials.
+const DISABLED_RELEASE_USER_MUTATION_MIGRATIONS = new Set([
+  "founder_admin_promotion",
+  "ensure_apple_reviewer_account_v1",
+  "ensure_manus_tester_account_v1",
+  "ensure_manus_geo_audit_v1",
+  "ensure_manus_ai_tester_v1",
+  "ensure_manus_monitor_account_v1",
   "tester_universal_accounts_v1",
   "tester_password_force_reset_v1",
   "tester_accounts_restore_v1",
@@ -5475,8 +5485,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   let skipped = 0;
 
   for (const m of MIGRATIONS) {
-    if (DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS.has(m.name)) {
-      log(`  ↷ ${m.name} disabled: external tester access is operator-managed`);
+    if (DISABLED_RELEASE_USER_MUTATION_MIGRATIONS.has(m.name)) {
+      log(`  ↷ ${m.name} disabled: user and credential changes are operator-managed`);
       skipped++;
       continue;
     }
@@ -5521,9 +5531,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["geocode tour content", () => geocodeTourContent(log, warn)],
     ["knowledge topics", () => ensureKnowledgeTopics(log, warn)],
     ["knowledge graph", () => ensurePhiladelphiaKnowledgeGraph(log, warn)],
-    ["admin accounts", () => ensureAdminAccounts(log, warn)],
-    ["tester accounts", () => ensureTesterAccounts(log, warn)],
-    ["pending testers", () => ensurePendingTesterEmails(log, warn)],
+    // Do not mutate users, pending tester access, or member handles during
+    // application startup. Existing administrators use the web dashboard for
+    // deliberate access operations; this release performs no automatic grants.
     [
       "access entitlement ledger",
       () => ensureAccessEntitlementLedger(log, warn),
@@ -5637,8 +5647,6 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["library evidence batch B", () => ensureLibraryEvidenceBatchB(log, warn)],
     ["library evidence batch C", () => ensureLibraryEvidenceBatchC(log, warn)],
     ["library evidence batch D", () => ensureLibraryEvidenceBatchD(log, warn)],
-    // ── Capacity canary — 30 tagged load-test accounts ─────────────────────────
-    ["load-test accounts", () => ensureLoadTestAccounts(log, warn)],
     // ── Discoverability coordinate audit — validate + report per-collection counts ──
     [
       "discoverability coords v1",
@@ -5712,8 +5720,6 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["business dedup marking v1", () => ensureBusinessDeduplication(log, warn)],
     // ── Business review items — seeds 8 manual-review records + creates table ──────
     ["business review items v1", () => ensureBusinessReviewItems(log, warn)],
-    // ── User handles — short @mention identifier for community posts ──────────
-    ["user handles v1", () => ensureUserHandles(log, warn)],
     // ── Visibility hardening — public view + canonical dedupe index ───────────
     [
       "visibility and dedupe hardening v1",
@@ -5724,18 +5730,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "atlanta black grocery stores v1",
       () => ensureAtlantaBlackGroceryStores(log, warn),
     ],
-    // ── Manus audit tester accounts — 30 pre-seeded email/password accounts ─────
-    ["manus audit accounts v1", () => ensureManusAuditAccounts(log, warn)],
-    // ── Manus audit session revocation — clears all live sessions for audit accounts ─
-    // Runs once to invalidate tokens that were exposed in gate-result JSON (Aug 14 2026)
-    [
-      "manus audit session revocation v1",
-      () => revokeManusAuditSessions(log, warn),
-    ],
     // ── Beta safety columns — permanently_hidden boolean + public_businesses view ─
     ["beta safety columns v1", () => ensureBetaSafetyColumns(log, warn)],
-    // ── Dedicated monitoring account — health-check user; no-op until secrets set ─
-    ["monitoring account v1", () => ensureMonitoringAccount(log, warn)],
     // ── Hotel-stay ingestion schema — adds provider_place_id, postal_code ─────
     [
       "hotel stay ingestion schema v1",
