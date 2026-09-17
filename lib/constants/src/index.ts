@@ -34,8 +34,13 @@ export {
 export {
   OWNERSHIP_DESIGNATIONS,
   OWNERSHIP_FILTER_OPTIONS,
+  INTERSECTIONAL_SUPPORT_FILTER_IDS,
+  INTERSECTIONAL_SUPPORT_FILTER_OPTIONS,
   BLACK_OWNED_DESIGNATIONS,
   ownershipDesignationFilterId,
+  ownershipDesignationStorageValues,
+  normalizeOwnershipDesignationFilterIds,
+  extractExplicitOwnershipDesignationFilterIds,
   isBlackOwned,
 } from "./ownership-designations";
 export type { OwnershipDesignation } from "./ownership-designations";

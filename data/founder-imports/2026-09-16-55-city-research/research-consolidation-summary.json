@@ -1,0 +1,26 @@
+{
+  "candidateRowsAfterMandatoryPublicLocationAndSourceChecks": 588,
+  "citiesRepresented": 56,
+  "cityFiles": 56,
+  "duplicateRowsRemoved": 0,
+  "heldRows": {
+    "missing_public_business_destination": 12,
+    "missing_public_street_address": 12,
+    "missing_safe_source_url": 62
+  },
+  "maximumCandidatesPerCity": 27,
+  "minimumCandidatesPerCity": 2,
+  "researchedRows": 674,
+  "sha256": {
+    "sourceBackedCandidatesCsv": "ed87afbd09d2432db8486a0884747688fe970c9410b030624f8562535eb0a35f",
+    "sourceBackedCandidatesJsonl": "17989fde9abe577602e7b66c00439ac5f554b26073f87af78429b684e04a3cd6"
+  },
+  "statusCounts": {
+    "needs_research": 367,
+    "pending_review": 221
+  },
+  "targetKindCounts": {
+    "business": 370,
+    "regulated_review": 218
+  }
+}

@@ -89,7 +89,7 @@ function locationOf(item: UniversalSearchItem): string {
 
 function businessStatus(item: UniversalSearchItem): string {
   const listingStatus = item.listingStatus ?? item.listing_status;
-  if (listingStatus === "live_unclaimed") return "Community/founder-listed · Unclaimed · Not verified";
+  if (listingStatus === "live_unclaimed") return "Unclaimed · Not verified";
   if (item.verified) return "Verified business listing";
   return "Business listing · Not verified";
 }

@@ -11,9 +11,10 @@ export type KinfolkBusinessPersonalization = Readonly<{
   currentRequest?: string;
 }>;
 
-export type RankedKinfolkBusiness = GovernedKinfolkBusiness & Readonly<{
-  matchReasons: string[];
-}>;
+export type RankedKinfolkBusiness = GovernedKinfolkBusiness &
+  Readonly<{
+    matchReasons: string[];
+  }>;
 
 // Unknown and mixed-age requests stay as protective as the youngest supported
 // audience. Only the canonical persisted bands from audience-policy are valid;
@@ -25,18 +26,47 @@ const PROTECTIVE_BANDS = new Set<BusinessAudienceBand>([
   "16_17",
   "mixed_all_ages",
 ]);
-const MINOR_HARD_EXCLUDED = /(?:\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|age[- ]restricted|mature audiences? only)\b|(?:^|[^a-z0-9])(?:18|21)\s*\+(?=$|[^a-z0-9]))/i;
-const MINOR_SOFT_EXCLUDED = /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
-const MINOR_POSITIVE = /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
+const MINOR_HARD_EXCLUDED =
+  /(?:\b(?:night\s*club|nightclub|adult nightlife|adult entertainment|strip\s*club|stripclub|gentlemen(?:'s|s)?\s*club|cabaret|adults? only|age[- ]restricted|mature audiences? only)\b|(?:^|[^a-z0-9])(?:18|21)\s*\+(?=$|[^a-z0-9]))/i;
+const MINOR_SOFT_EXCLUDED =
+  /\b(?:nightlife|cocktails?|bars?|taverns?|pubs?|lounges?|social clubs?|beer|wine)\b/i;
+const MINOR_POSITIVE =
+  /\b(?:teens?|youth|children|child|families|family[- ]friendly|all ages|under (?:13|18|21))\b/i;
 const STOP_WORDS = new Set([
-  "and", "the", "for", "with", "this", "that", "from", "into", "near", "local",
-  "place", "places", "business", "businesses", "services", "service", "something",
-  "things", "looking", "want", "need", "find", "recommend", "philadelphia",
+  "and",
+  "the",
+  "for",
+  "with",
+  "this",
+  "that",
+  "from",
+  "into",
+  "near",
+  "local",
+  "place",
+  "places",
+  "business",
+  "businesses",
+  "services",
+  "service",
+  "something",
+  "things",
+  "looking",
+  "want",
+  "need",
+  "find",
+  "recommend",
+  "philadelphia",
 ]);
 
 function cleanTerm(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const clean = value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9+]+/g, " ").replace(/\s+/g, " ").trim();
+  const clean = value
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9+]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   return clean.length >= 2 && clean.length <= 100 ? clean : null;
 }
 
@@ -45,6 +75,7 @@ function searchableText(business: GovernedKinfolkBusiness): string {
     business.name,
     business.category,
     business.subcategory,
+    ...(business.ownershipDesignations ?? []),
     business.description,
     ...business.tags,
     ...business.specialties,
@@ -59,13 +90,19 @@ function searchableText(business: GovernedKinfolkBusiness): string {
     business.missionStatement,
     business.whyStarted,
     business.whatCustomersShouldKnow,
-  ].filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+  ]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    )
     .join(" ")
     .normalize("NFKD")
     .toLowerCase();
 }
 
-export function isProtectiveBusinessAudience(ageBand: BusinessAudienceBand | null | undefined): boolean {
+export function isProtectiveBusinessAudience(
+  ageBand: BusinessAudienceBand | null | undefined,
+): boolean {
   return PROTECTIVE_BANDS.has(ageBand ?? "unknown");
 }
 
@@ -76,12 +113,22 @@ export function audienceAllowsBusinessText(input: {
 }): boolean {
   if (!isProtectiveBusinessAudience(input.ageBand)) return true;
   if (MINOR_HARD_EXCLUDED.test(input.text)) return false;
-  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(input.publishedAudienceEvidence ?? "");
-  return !MINOR_SOFT_EXCLUDED.test(input.text) || hasPublishedMinorAudienceSignal;
+  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(
+    input.publishedAudienceEvidence ?? "",
+  );
+  return (
+    !MINOR_SOFT_EXCLUDED.test(input.text) || hasPublishedMinorAudienceSignal
+  );
 }
 
 function meaningfulTokens(value: string): string[] {
-  return [...new Set(value.split(" ").filter((token) => token.length >= 3 && !STOP_WORDS.has(token)))];
+  return [
+    ...new Set(
+      value
+        .split(" ")
+        .filter((token) => token.length >= 3 && !STOP_WORDS.has(token)),
+    ),
+  ];
 }
 
 function containsWholeTerm(text: string, term: string): boolean {
@@ -96,19 +143,36 @@ function scoredBusiness(
   business: GovernedKinfolkBusiness,
   index: number,
   personalization: KinfolkBusinessPersonalization,
-): { business: GovernedKinfolkBusiness; index: number; score: number; reasons: string[] } | null {
+): {
+  business: GovernedKinfolkBusiness;
+  index: number;
+  score: number;
+  reasons: string[];
+} | null {
   const text = searchableText(business);
   const publishedAudienceEvidence = [
     ...business.audiencesServed,
     business.audienceType,
-  ].filter((value): value is string => typeof value === "string" && value.trim().length > 0).join(" ");
-  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(publishedAudienceEvidence);
-  const protectiveAudience = isProtectiveBusinessAudience(personalization.ageBand);
-  if (!audienceAllowsBusinessText({
-    ageBand: personalization.ageBand,
-    text,
+  ]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    )
+    .join(" ");
+  const hasPublishedMinorAudienceSignal = MINOR_POSITIVE.test(
     publishedAudienceEvidence,
-  })) return null;
+  );
+  const protectiveAudience = isProtectiveBusinessAudience(
+    personalization.ageBand,
+  );
+  if (
+    !audienceAllowsBusinessText({
+      ageBand: personalization.ageBand,
+      text,
+      publishedAudienceEvidence,
+    })
+  )
+    return null;
 
   let score = 0;
   const reasons: string[] = [];
@@ -119,7 +183,9 @@ function scoredBusiness(
   );
   const request = cleanTerm(personalization.currentRequest);
   if (request) {
-    const directRequestTokens = meaningfulTokens(request).filter((token) => containsWholeTerm(text, token));
+    const directRequestTokens = meaningfulTokens(request).filter((token) =>
+      containsWholeTerm(text, token),
+    );
     score += Math.min(8, directRequestTokens.length * 2);
   }
 
@@ -133,7 +199,9 @@ function scoredBusiness(
       continue;
     }
     const termTokens = meaningfulTokens(term);
-    const matchingTokens = termTokens.filter((token) => containsWholeTerm(text, token));
+    const matchingTokens = termTokens.filter((token) =>
+      containsWholeTerm(text, token),
+    );
     const requiredTokenMatches = termTokens.length > 1 ? 2 : 1;
     if (matchingTokens.length >= requiredTokenMatches) {
       score += isPriority
@@ -150,7 +218,9 @@ function scoredBusiness(
 
   if (protectiveAudience && hasPublishedMinorAudienceSignal) {
     score += 8;
-    reasons.unshift("Includes a published youth, child, teen, or family audience signal");
+    reasons.unshift(
+      "Includes a published youth, child, teen, or family audience signal",
+    );
   }
 
   return { business, index, score, reasons: [...new Set(reasons)].slice(0, 3) };

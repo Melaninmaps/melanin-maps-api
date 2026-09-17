@@ -20,7 +20,10 @@ import {
 } from "./web-search";
 import type { SearchQuery } from "./lens-planner";
 import { canonicalizeContextualUrl } from "./contextual-url";
-import { buildConversationalBusinessResultView, type ConversationalBusinessResultView } from "./business-result-view";
+import {
+  buildConversationalBusinessResultView,
+  type ConversationalBusinessResultView,
+} from "./business-result-view";
 
 export type BusinessDiscoverySignalRepository = Readonly<{
   recordCoverageGap(input: {
@@ -155,7 +158,10 @@ function hostOf(value: string): string {
 }
 
 function displayText(value: string): string {
-  return value.replace(/[\[\]]/g, "").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/[\[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function concise(value: string, maxLength = 180): string {
@@ -179,12 +185,15 @@ function webQueries(
     {
       text: `${subject.label} ${location}`,
       role: "general",
-      reason: "Neutral local query retained for broad coverage and cross-checking.",
+      reason:
+        "Neutral local query retained for broad coverage and cross-checking.",
     },
   ];
 }
 
-function platformBusiness(business: GovernedKinfolkBusiness): BusinessDiscoveryPlatformBusiness {
+function platformBusiness(
+  business: GovernedKinfolkBusiness,
+): BusinessDiscoveryPlatformBusiness {
   return {
     id: business.id,
     recordType: "business",
@@ -199,9 +208,12 @@ function platformBusiness(business: GovernedKinfolkBusiness): BusinessDiscoveryP
     phone: business.phone,
     verified: business.verified,
     claimed: business.claimed,
-    matchReasons: "matchReasons" in business && Array.isArray(business.matchReasons)
-      ? business.matchReasons.filter((reason): reason is string => typeof reason === "string")
-      : [],
+    matchReasons:
+      "matchReasons" in business && Array.isArray(business.matchReasons)
+        ? business.matchReasons.filter(
+            (reason): reason is string => typeof reason === "string",
+          )
+        : [],
     provenance: "mwm_public_business",
   };
 }
@@ -259,17 +271,32 @@ function buildReply(input: {
   web: BusinessDiscoveryWebFinding[];
   webState: WebSearchState;
 }): string {
-  const { scope, subject, platformStatus, businesses, mapPlaces, web, webState } = input;
-  const lines = [`Here’s what I found for ${subject.label} in ${scope.city}, ${scope.stateCode}.`];
+  const {
+    scope,
+    subject,
+    platformStatus,
+    businesses,
+    mapPlaces,
+    web,
+    webState,
+  } = input;
+  const lines = [
+    `Here’s what I found for ${subject.label} in ${scope.city}, ${scope.stateCode}.`,
+  ];
 
   if (businesses.length > 0) {
     lines.push("", "**MWM public business listings**");
     for (const business of businesses.slice(0, 6)) {
       const name = displayText(business.name);
-      const status = business.verified ? "MWM-verified public business listing" : "MWM public business listing";
-      const detail = business.description ? ` — ${concise(business.description, 140)}` : "";
+      const status = business.verified
+        ? "MWM-verified public business listing"
+        : "MWM public business listing";
+      const detail = business.description
+        ? ` — ${concise(business.description, 140)}`
+        : "";
       lines.push(`• ${name} — ${status}${detail}`);
-      if (business.matchReasons.length > 0) lines.push(`  Why it surfaced: ${business.matchReasons.join("; ")}`);
+      if (business.matchReasons.length > 0)
+        lines.push(`  Why it surfaced: ${business.matchReasons.join("; ")}`);
     }
   }
 
@@ -277,30 +304,48 @@ function buildReply(input: {
     lines.push("", "**MWM cultural/place records**");
     for (const place of mapPlaces.slice(0, 6)) {
       const detail = place.summary ? ` — ${concise(place.summary, 140)}` : "";
-      lines.push(`• ${displayText(place.title)} — MWM cultural/place record, not a business listing${detail}`);
+      lines.push(
+        `• ${displayText(place.title)} — MWM cultural/place record, not a business listing${detail}`,
+      );
     }
   }
 
   if (web.length > 0) {
-    lines.push("", "**Current web findings** (external; not MWM-verified business listings)");
+    lines.push(
+      "",
+      "**Current web findings** (external; not MWM-verified business listings)",
+    );
     for (const finding of web.slice(0, 6)) {
       lines.push(`• ${finding.title} — ${finding.sourceHost}`);
     }
   }
 
   const total = businesses.length + mapPlaces.length + web.length;
-  if (total === 0 && platformStatus === "completed" && webState === "completed") {
-    lines.push("", `I couldn’t find matching MWM records or current web results for ${subject.label} in ${scope.city}, ${scope.stateCode}.`);
+  if (
+    total === 0 &&
+    platformStatus === "completed" &&
+    webState === "completed"
+  ) {
+    lines.push(
+      "",
+      `I couldn’t find matching MWM records or current web results for ${subject.label} in ${scope.city}, ${scope.stateCode}.`,
+    );
   } else if (businesses.length + mapPlaces.length === 0) {
-    lines.push("", platformStatus === "degraded"
-      ? "The MWM platform search could not be completed, so I can’t rule out matching platform records."
-      : "I did not find a matching MWM business or cultural/place record in this city.");
+    lines.push(
+      "",
+      platformStatus === "degraded"
+        ? "The MWM platform search could not be completed, so I can’t rule out matching platform records."
+        : "I did not find a matching MWM business or cultural/place record in this city.",
+    );
   }
 
   if (webState !== "completed") {
     lines.push("", providerMessage(webState, web.length));
   }
-  lines.push("", "The community/minority-owned search is part of MWM’s discovery mission and does not assume your race, sex, nationality, or identity. Verify current hours and ownership details directly with each external source.");
+  lines.push(
+    "",
+    "The community/minority-owned search is part of MWM’s discovery mission and does not assume your race, sex, nationality, or identity. Verify current hours and ownership details directly with each external source.",
+  );
   return lines.join("\n");
 }
 
@@ -326,17 +371,25 @@ async function recordSignals(input: {
     input.repository.recordFlywheelSignal({ ...base, action: "search" }),
   ];
   if (input.businessCount === 0) {
-    writes.push(input.repository.recordCoverageGap({
-      city: base.city,
-      stateCode: base.stateCode,
-      recordType: "business",
-      category: base.category,
-      specialty: base.specialty,
-      observedAt: new Date().toISOString(),
-    }));
+    writes.push(
+      input.repository.recordCoverageGap({
+        city: base.city,
+        stateCode: base.stateCode,
+        recordType: "business",
+        category: base.category,
+        specialty: base.specialty,
+        observedAt: new Date().toISOString(),
+      }),
+    );
   }
-  if (input.platformRecordCount === 0 && input.webState === "completed" && input.webCount === 0) {
-    writes.push(input.repository.recordFlywheelSignal({ ...base, action: "zero_result" }));
+  if (
+    input.platformRecordCount === 0 &&
+    input.webState === "completed" &&
+    input.webCount === 0
+  ) {
+    writes.push(
+      input.repository.recordFlywheelSignal({ ...base, action: "zero_result" }),
+    );
   }
   await Promise.allSettled(writes);
 }
@@ -353,39 +406,51 @@ export async function discoverLocalBusinesses(input: {
   signalRepository?: BusinessDiscoverySignalRepository;
   webSearch?: WebSearch;
   personalization?: KinfolkBusinessPersonalization;
+  /** Every value is an explicit owner-provided designation requirement. */
+  requiredDesignationIds?: readonly string[];
 }): Promise<DeterministicBusinessDiscoveryResponse> {
   let platformStatus: "completed" | "degraded" = "completed";
   let businessRows: GovernedKinfolkBusiness[] = [];
   let mapRows: GovernedKinfolkMapPlace[] = [];
 
-  const preferenceTerms = (input.personalization?.preferenceTerms ?? [])
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  const preferenceTerms = (input.personalization?.preferenceTerms ?? []).filter(
+    (value): value is string =>
+      typeof value === "string" && value.trim().length > 0,
+  );
   const subjectBusinessRead = input.repository.findBySubject(
     input.scope,
     input.subject,
     input.personalization ? 50 : 12,
+    input.requiredDesignationIds,
   );
-  const businessRead = input.subject.key === "activity" && preferenceTerms.length > 0
-    ? Promise.all([
-        subjectBusinessRead,
-        input.repository.findByPreferenceTerms(input.scope, preferenceTerms, 50),
-      ]).then(([subjectMatches, preferenceMatches]) => {
-        const unique = new Map<string, GovernedKinfolkBusiness>();
-        for (const business of [...subjectMatches, ...preferenceMatches]) {
-          if (!unique.has(business.id)) unique.set(business.id, business);
-        }
-        return [...unique.values()];
-      })
-    : subjectBusinessRead;
+  const businessRead =
+    input.subject.key === "activity" && preferenceTerms.length > 0
+      ? Promise.all([
+          subjectBusinessRead,
+          input.repository.findByPreferenceTerms(
+            input.scope,
+            preferenceTerms,
+            50,
+          ),
+        ]).then(([subjectMatches, preferenceMatches]) => {
+          const unique = new Map<string, GovernedKinfolkBusiness>();
+          for (const business of [...subjectMatches, ...preferenceMatches]) {
+            if (!unique.has(business.id)) unique.set(business.id, business);
+          }
+          return [...unique.values()];
+        })
+      : subjectBusinessRead;
 
   // Database first: both sources are exact-city/state and subject-focused.
   const platformResults = await Promise.allSettled([
     businessRead,
     input.repository.findPublishedMapEntities(input.scope, input.subject, 8),
   ]);
-  if (platformResults[0].status === "fulfilled") businessRows = platformResults[0].value;
+  if (platformResults[0].status === "fulfilled")
+    businessRows = platformResults[0].value;
   else platformStatus = "degraded";
-  if (platformResults[1].status === "fulfilled") mapRows = platformResults[1].value;
+  if (platformResults[1].status === "fulfilled")
+    mapRows = platformResults[1].value;
   else platformStatus = "degraded";
 
   // Web second, always, including when governed platform matches were found.
@@ -394,28 +459,46 @@ export async function discoverLocalBusinesses(input: {
     webOutcome = await (input.webSearch ?? searchLocalBusinessQueriesWithState)(
       webQueries(input.subject, input.scope),
       false,
-      { city: input.scope.city, stateCode: input.scope.stateCode, countryCode: "US" },
+      {
+        city: input.scope.city,
+        stateCode: input.scope.stateCode,
+        countryCode: "US",
+      },
     );
   } catch {
-    webOutcome = { state: "degraded", attempted: true, provider: null, fallbackUsed: false, partial: false, results: [] };
+    webOutcome = {
+      state: "degraded",
+      attempted: true,
+      provider: null,
+      fallbackUsed: false,
+      partial: false,
+      results: [],
+    };
   }
 
   const rankedWeb = rankLocalBusinessResults(webOutcome.results)
-    .filter((result) => audienceAllowsBusinessText({
-      ageBand: input.personalization?.ageBand,
-      text: `${result.title} ${result.content}`,
-    }))
+    .filter((result) =>
+      audienceAllowsBusinessText({
+        ageBand: input.personalization?.ageBand,
+        text: `${result.title} ${result.content}`,
+      }),
+    )
     .slice(0, 8)
     .map(webFinding)
     .filter((value): value is BusinessDiscoveryWebFinding => value !== null);
-  const businesses = rankGovernedBusinessesForMember(businessRows, input.personalization)
+  const businesses = rankGovernedBusinessesForMember(
+    businessRows,
+    input.personalization,
+  )
     .slice(0, 12)
     .map(platformBusiness);
   const mapPlaces = mapRows
-    .filter((place) => audienceAllowsBusinessText({
-      ageBand: input.personalization?.ageBand,
-      text: `${place.entityKind} ${place.title} ${place.summary}`,
-    }))
+    .filter((place) =>
+      audienceAllowsBusinessText({
+        ageBand: input.personalization?.ageBand,
+        text: `${place.entityKind} ${place.title} ${place.summary}`,
+      }),
+    )
     .map(mapPlace);
 
   await recordSignals({
@@ -429,17 +512,24 @@ export async function discoverLocalBusinesses(input: {
   });
 
   const sources: SafeSource[] = [
-    ...businesses.flatMap((business) => [{
-      id: business.detailUrl,
-      title: business.name,
-      url: business.detailUrl,
-      label: "mwM_database" as const,
-    }, ...(business.website ? [{
-      id: business.website,
-      title: `${business.name} website`,
-      url: business.website,
-      label: "mwM_database" as const,
-    }] : [])]),
+    ...businesses.flatMap((business) => [
+      {
+        id: business.detailUrl,
+        title: business.name,
+        url: business.detailUrl,
+        label: "mwM_database" as const,
+      },
+      ...(business.website
+        ? [
+            {
+              id: business.website,
+              title: `${business.name} website`,
+              url: business.website,
+              label: "mwM_database" as const,
+            },
+          ]
+        : []),
+    ]),
     ...mapPlaces.map((place) => ({
       id: place.detailUrl,
       title: place.title,
@@ -464,27 +554,30 @@ export async function discoverLocalBusinesses(input: {
       web: rankedWeb,
       webState: webOutcome.state,
     }),
-    recommendations: businesses.length > 0 ? {
-      destination: `${input.scope.city}, ${input.scope.stateCode}`,
-      summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${input.subject.label}.`,
-      businesses: businesses.slice(0, 6).map((business) => ({
-        id: business.id,
-        name: business.name,
-        category: business.category || input.subject.label,
-        description: business.description,
-        neighborhood: `${business.city}, ${business.stateCode ?? input.scope.stateCode}`,
-        mustTry: "",
-        website: business.website,
-        detailUrl: business.detailUrl,
-        verified: business.verified,
-        claimed: business.claimed,
-        matchReasons: business.matchReasons,
-      })),
-      neighborhoods: [],
-      events: [],
-      safetyTips: [],
-      localInsights: [],
-    } : null,
+    recommendations:
+      businesses.length > 0
+        ? {
+            destination: `${input.scope.city}, ${input.scope.stateCode}`,
+            summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${input.subject.label}.`,
+            businesses: businesses.slice(0, 6).map((business) => ({
+              id: business.id,
+              name: business.name,
+              category: business.category || input.subject.label,
+              description: business.description,
+              neighborhood: `${business.city}, ${business.stateCode ?? input.scope.stateCode}`,
+              mustTry: "",
+              website: business.website,
+              detailUrl: business.detailUrl,
+              verified: business.verified,
+              claimed: business.claimed,
+              matchReasons: business.matchReasons,
+            })),
+            neighborhoods: [],
+            events: [],
+            safetyTips: [],
+            localInsights: [],
+          }
+        : null,
     discovery: {
       subject: { key: input.subject.key, label: input.subject.label },
       location: { city: input.scope.city, state: input.scope.stateCode },

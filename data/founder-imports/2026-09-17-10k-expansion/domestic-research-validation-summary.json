@@ -1,0 +1,1404 @@
+{
+  "city_files_seen": 56,
+  "city_files_with_expected_schema": 56,
+  "rows_read": 2036,
+  "valid_candidate_rows_before_batch_dedupe": 1927,
+  "unique_candidate_rows": 1927,
+  "duplicate_rows_removed": 0,
+  "duplicate_groups": 0,
+  "unique_source_urls": 747,
+  "held_rows": 109,
+  "schema_failures": [],
+  "city_reports": [
+    {
+      "file": "01.csv",
+      "rows_read": 68,
+      "valid_candidate_rows": 2,
+      "held_rows": 66,
+      "failures": [
+        {
+          "row": 2,
+          "name": "AMG Hair Pro",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 3,
+          "name": "Aqua Salon and Spa",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 4,
+          "name": "B and M Hair Studio",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 5,
+          "name": "Beni Boo Styles",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 6,
+          "name": "Black Diamond Gallery and Business Centre",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 7,
+          "name": "Braiding Store",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 8,
+          "name": "Carib 21",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 9,
+          "name": "Celebrity Pure Vegetarian",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 10,
+          "name": "Chakula Tamu",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 11,
+          "name": "Cultureshare Market",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 12,
+          "name": "DJ Records and Clothing",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 13,
+          "name": "Deliverance in Christ Ministries",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 14,
+          "name": "Divine Hair Salon Supplies",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 15,
+          "name": "Eglinton Calvary Cross Church of the Apostolic Church",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 16,
+          "name": "Eglinton West Law Office",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 17,
+          "name": "Elegance Barber Salon and Spa",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 18,
+          "name": "Emeye’s Injera",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 19,
+          "name": "Family Food Mart Convenient Store",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 20,
+          "name": "Family Nails and Hair Salon",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 21,
+          "name": "Fantasia Unisex Salon",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 22,
+          "name": "Fresh Cutt Juice Bar",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 23,
+          "name": "Glamourama Hair",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 24,
+          "name": "Hair Blessings Salon",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 25,
+          "name": "Hair Experts Salon & Bar",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 26,
+          "name": "High Life",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 27,
+          "name": "Hot Pot",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 28,
+          "name": "Humble Heights Creations Juice & Tea Bar",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 29,
+          "name": "Irie Veggie Takeout",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 30,
+          "name": "Jacko’s Restaurant",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 31,
+          "name": "Jamaica National Canada Representative Office",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 32,
+          "name": "Judy’s Island Grill",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 33,
+          "name": "Just Incredible",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 34,
+          "name": "Lady Ann Superstore African Boutique",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 35,
+          "name": "Lavish House of Beauty",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 36,
+          "name": "McRoberts Cleaners",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 37,
+          "name": "Mello’s Cafe",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 38,
+          "name": "Michaels Barber Shop",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 39,
+          "name": "Miss Unity Beauty Salon",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 40,
+          "name": "Monica’s Cosmetic Supplies Ltd.",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 41,
+          "name": "Moorish Science Temple of America Museum",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 42,
+          "name": "Nadine Hair Studio",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 43,
+          "name": "New International Braiders and Barbers",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 44,
+          "name": "One Stop Restaurant",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 45,
+          "name": "Pure Vibes",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 46,
+          "name": "Randy’s Takeout",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 47,
+          "name": "Roman’s N Care, Dudley’s",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 48,
+          "name": "Roti King West Indian Restaurant",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 49,
+          "name": "Sankofa Lounge",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 50,
+          "name": "Say Jah Kitchen",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 51,
+          "name": "Smile Back",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 52,
+          "name": "Studio: Warrior Love Band",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 53,
+          "name": "Sunlight Bakery",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 54,
+          "name": "Sunny Photo Lab/ Foto",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 55,
+          "name": "Sunshine Sound and Lighting–Sales and Rental",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 56,
+          "name": "Super Smart Styles",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 57,
+          "name": "Team Taxman",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 58,
+          "name": "The Barbers of Eglinton",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 59,
+          "name": "The Entertainment Kitchen (Mainsha)",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 60,
+          "name": "Ther’s Beauty Salon",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 61,
+          "name": "Timbuktu Market",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 62,
+          "name": "Tinnel’s Patties",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 63,
+          "name": "Trea-jah- Isle",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 64,
+          "name": "U-2-Fly-Cuts",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 65,
+          "name": "Voquetique",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 66,
+          "name": "Wisdom’s Barber Shop",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 67,
+          "name": "Zac’s Convenience",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "02.csv",
+      "rows_read": 10,
+      "valid_candidate_rows": 10,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "03.csv",
+      "rows_read": 174,
+      "valid_candidate_rows": 174,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "04.csv",
+      "rows_read": 25,
+      "valid_candidate_rows": 24,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 15,
+          "name": "Dukem Ethiopian",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "05.csv",
+      "rows_read": 21,
+      "valid_candidate_rows": 21,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "06.csv",
+      "rows_read": 113,
+      "valid_candidate_rows": 113,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "07.csv",
+      "rows_read": 25,
+      "valid_candidate_rows": 25,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "08.csv",
+      "rows_read": 20,
+      "valid_candidate_rows": 20,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "09.csv",
+      "rows_read": 99,
+      "valid_candidate_rows": 99,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "10.csv",
+      "rows_read": 56,
+      "valid_candidate_rows": 56,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "11.csv",
+      "rows_read": 76,
+      "valid_candidate_rows": 76,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "12.csv",
+      "rows_read": 47,
+      "valid_candidate_rows": 46,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 14,
+          "name": "Las Palmas Mexican Restaurant",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "13.csv",
+      "rows_read": 39,
+      "valid_candidate_rows": 38,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 10,
+          "name": "The Char' Bar",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "14.csv",
+      "rows_read": 48,
+      "valid_candidate_rows": 48,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "15.csv",
+      "rows_read": 97,
+      "valid_candidate_rows": 97,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "16.csv",
+      "rows_read": 16,
+      "valid_candidate_rows": 16,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "17.csv",
+      "rows_read": 33,
+      "valid_candidate_rows": 33,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "18.csv",
+      "rows_read": 26,
+      "valid_candidate_rows": 26,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "19.csv",
+      "rows_read": 9,
+      "valid_candidate_rows": 9,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "20.csv",
+      "rows_read": 23,
+      "valid_candidate_rows": 23,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "21.csv",
+      "rows_read": 7,
+      "valid_candidate_rows": 5,
+      "held_rows": 2,
+      "failures": [
+        {
+          "row": 5,
+          "name": "1st Response CPR and First Aid",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 6,
+          "name": "1st Royal Love Services LLC",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "22.csv",
+      "rows_read": 19,
+      "valid_candidate_rows": 19,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "23.csv",
+      "rows_read": 59,
+      "valid_candidate_rows": 59,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "24.csv",
+      "rows_read": 12,
+      "valid_candidate_rows": 12,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "25.csv",
+      "rows_read": 21,
+      "valid_candidate_rows": 21,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "26.csv",
+      "rows_read": 23,
+      "valid_candidate_rows": 23,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "27.csv",
+      "rows_read": 91,
+      "valid_candidate_rows": 91,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "28.csv",
+      "rows_read": 53,
+      "valid_candidate_rows": 53,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "29.csv",
+      "rows_read": 23,
+      "valid_candidate_rows": 23,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "30.csv",
+      "rows_read": 3,
+      "valid_candidate_rows": 0,
+      "held_rows": 3,
+      "failures": [
+        {
+          "row": 2,
+          "name": "The Well Counseling and Consulting Group",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 3,
+          "name": "Splash Hair Salon and Spa",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 4,
+          "name": "tmalaw | the lawyer for brands™",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "31.csv",
+      "rows_read": 39,
+      "valid_candidate_rows": 39,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "32.csv",
+      "rows_read": 39,
+      "valid_candidate_rows": 38,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 4,
+          "name": "Baby Kakez",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "33.csv",
+      "rows_read": 13,
+      "valid_candidate_rows": 0,
+      "held_rows": 13,
+      "failures": [
+        {
+          "row": 2,
+          "name": "Twisted Plants",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 3,
+          "name": "1700 Pull Up",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 4,
+          "name": "Lush Popcorn",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 5,
+          "name": "Heaven's Table BBQ",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 6,
+          "name": "Rooted MKE",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 7,
+          "name": "BC Modern",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 8,
+          "name": "Sneex",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 9,
+          "name": "Sherman Park Grocery Store",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 10,
+          "name": "America's Black Holocaust Museum",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 11,
+          "name": "Nō Studios",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 12,
+          "name": "Wisconsin Black Historical Society",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 13,
+          "name": "Edessa School of Fashion",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 14,
+          "name": "Black Arts MKE",
+          "reason": {
+            "missing": [],
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "34.csv",
+      "rows_read": 35,
+      "valid_candidate_rows": 35,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "35.csv",
+      "rows_read": 28,
+      "valid_candidate_rows": 28,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "36.csv",
+      "rows_read": 25,
+      "valid_candidate_rows": 22,
+      "held_rows": 3,
+      "failures": [
+        {
+          "row": 13,
+          "name": "Mayor William Beardall Senior Center",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 14,
+          "name": "L. Claudia Allen Senior Center",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 26,
+          "name": "African American Chamber of Commerce of Central Florida",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "37.csv",
+      "rows_read": 13,
+      "valid_candidate_rows": 12,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 14,
+          "name": "Maceo Elks Lodge #8",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "38.csv",
+      "rows_read": 13,
+      "valid_candidate_rows": 13,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "39.csv",
+      "rows_read": 21,
+      "valid_candidate_rows": 21,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "40.csv",
+      "rows_read": 43,
+      "valid_candidate_rows": 43,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "41.csv",
+      "rows_read": 20,
+      "valid_candidate_rows": 8,
+      "held_rows": 12,
+      "failures": [
+        {
+          "row": 2,
+          "name": "AINAUTICS",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 3,
+          "name": "Ascend Studios, LLC",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 4,
+          "name": "Federation Center of the Blind",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 5,
+          "name": "GreenGuard Commercial Cleaning, LLC",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 6,
+          "name": "Oak Street Health",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 10,
+          "name": "Clean and Fresh, LLC Commercial Cleaning Company",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 11,
+          "name": "Complete Comfort Air",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 12,
+          "name": "CORE Clean",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 14,
+          "name": "Vino Sabor LLC",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 15,
+          "name": "Food Gallery",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 18,
+          "name": "Railroad BBQ",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 21,
+          "name": "Sunrise Artisan Bath & Body",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "42.csv",
+      "rows_read": 32,
+      "valid_candidate_rows": 31,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 29,
+          "name": "The Charleston Visitor Center",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "43.csv",
+      "rows_read": 32,
+      "valid_candidate_rows": 32,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "44.csv",
+      "rows_read": 12,
+      "valid_candidate_rows": 12,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "45.csv",
+      "rows_read": 11,
+      "valid_candidate_rows": 10,
+      "held_rows": 1,
+      "failures": [
+        {
+          "row": 12,
+          "name": "Mobile Area Black Chamber of Commerce",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "46.csv",
+      "rows_read": 21,
+      "valid_candidate_rows": 21,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "47.csv",
+      "rows_read": 12,
+      "valid_candidate_rows": 12,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "48.csv",
+      "rows_read": 18,
+      "valid_candidate_rows": 18,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "49.csv",
+      "rows_read": 22,
+      "valid_candidate_rows": 22,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "50.csv",
+      "rows_read": 18,
+      "valid_candidate_rows": 18,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "51.csv",
+      "rows_read": 19,
+      "valid_candidate_rows": 16,
+      "held_rows": 3,
+      "failures": [
+        {
+          "row": 15,
+          "name": "West Las Vegas Arts Center",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 16,
+          "name": "Doolittle Community Center",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 17,
+          "name": "Las Vegas Senior Center",
+          "reason": {
+            "missing": [],
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        }
+      ]
+    },
+    {
+      "file": "52.csv",
+      "rows_read": 24,
+      "valid_candidate_rows": 24,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "53.csv",
+      "rows_read": 30,
+      "valid_candidate_rows": 30,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "54.csv",
+      "rows_read": 53,
+      "valid_candidate_rows": 53,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "55.csv",
+      "rows_read": 14,
+      "valid_candidate_rows": 14,
+      "held_rows": 0,
+      "failures": []
+    },
+    {
+      "file": "56.csv",
+      "rows_read": 93,
+      "valid_candidate_rows": 93,
+      "held_rows": 0,
+      "failures": []
+    }
+  ],
+  "manifest": "/home/ubuntu/melanin-maps-api/data/founder-imports/2026-09-17-10k-expansion/source-backed-domestic-candidates.jsonl",
+  "manifest_sha256": "d505c0449234a205d61daa269b934fa4e09bced28f1907d86384af96a26ac16d",
+  "next_gate": "Run public-link validation, then stage only in the guarded directory-review environment. Existing-record matches must be address-enrichment review candidates, not duplicate creates."
+}

@@ -136,6 +136,7 @@ export function PrivacyPinModal({
       animationType="fade"
       onRequestClose={handleClose}
       statusBarTranslucent
+      navigationBarTranslucent
     >
       <Pressable style={styles.backdrop} onPress={handleClose}>
         <Pressable style={[styles.sheet, { backgroundColor: colors.card }]} onPress={() => {}}>

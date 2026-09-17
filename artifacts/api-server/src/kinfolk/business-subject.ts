@@ -3,6 +3,8 @@ export type BusinessSubjectKey =
   | "restaurant"
   | "cafe"
   | "barber"
+  | "braider"
+  | "childcare"
   | "salon"
   | "grocery"
   | "laundromat"
@@ -33,11 +35,12 @@ export type NormalizedBusinessSubject = Readonly<{
   searchTerms: readonly string[];
 }>;
 
-type SubjectDefinition = NormalizedBusinessSubject & Readonly<{
-  match: RegExp;
-  requiresDiscoveryContext?: boolean;
-  priority?: number;
-}>;
+type SubjectDefinition = NormalizedBusinessSubject &
+  Readonly<{
+    match: RegExp;
+    requiresDiscoveryContext?: boolean;
+    priority?: number;
+  }>;
 
 /**
  * Current-turn service vocabulary. Add a definition here to extend both intent
@@ -54,7 +57,8 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "restaurant",
     label: "restaurants",
-    match: /\b(?:restaurants?|dining|dinner|lunch|breakfast|food(?: spots?)?|cuisine|places to eat)\b/i,
+    match:
+      /\b(?:restaurants?|dining|dinner|lunch|breakfast|food(?: spots?)?|cuisine|places to eat)\b/i,
     searchTerms: ["restaurant", "restaurants", "dining", "food", "cuisine"],
   },
   {
@@ -70,10 +74,47 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     searchTerms: ["barber", "barbershop", "barber shop"],
   },
   {
+    key: "braider",
+    label: "braiders and protective-style specialists",
+    match:
+      /\b(?:braiders?|braiding|box braids?|knotless braids?|feed[ -]?in braids?|cornrows?|protective styles?)\b/i,
+    searchTerms: [
+      "braider",
+      "braiding",
+      "braids",
+      "protective styles",
+      "natural hair",
+    ],
+    priority: 20,
+  },
+  {
+    key: "childcare",
+    label: "daycares and childcare programs",
+    match:
+      /\b(?:day ?cares?|child ?cares?|childcare|early learning|preschools?|infant care|before(?:-| and )after school)\b/i,
+    searchTerms: [
+      "daycare",
+      "child care",
+      "childcare",
+      "early learning",
+      "preschool",
+      "infant care",
+      "before after school",
+    ],
+    priority: 24,
+  },
+  {
     key: "salon",
     label: "salons",
-    match: /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
-    searchTerms: ["salon", "hair salon", "hair stylist", "hair color", "wash and style"],
+    match:
+      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
+    searchTerms: [
+      "salon",
+      "hair salon",
+      "hair stylist",
+      "hair color",
+      "wash and style",
+    ],
   },
   {
     key: "grocery",
@@ -96,13 +137,15 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "nightlife",
     label: "nightlife venues",
-    match: /\b(?:night[ -]?life|bars?|clubs?|lounges?|late[ -]?night venues?)\b/i,
+    match:
+      /\b(?:night[ -]?life|bars?|clubs?|lounges?|late[ -]?night venues?)\b/i,
     searchTerms: ["nightlife", "bar", "club", "lounge", "late night"],
   },
   {
     key: "hvac",
     label: "HVAC services",
-    match: /\b(?:hvac|heating and (?:air|cooling)|air conditioning|a\/c repair)\b/i,
+    match:
+      /\b(?:hvac|heating and (?:air|cooling)|air conditioning|a\/c repair)\b/i,
     searchTerms: ["hvac", "heating", "air conditioning", "cooling"],
   },
   {
@@ -114,8 +157,15 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "locs",
     label: "loc and natural-hair care",
-    match: /\b(?:locs?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
-    searchTerms: ["locs", "loc maintenance", "natural hair", "protective styles", "braids"],
+    match:
+      /\b(?:locs?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
+    searchTerms: [
+      "locs",
+      "loc maintenance",
+      "natural hair",
+      "protective styles",
+      "braids",
+    ],
     priority: 10,
   },
   {
@@ -133,7 +183,8 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "wellness",
     label: "wellness businesses",
-    match: /\b(?:wellness (?:businesses?|centers?|shops?)|apothecar(?:y|ies)|holistic wellness)\b/i,
+    match:
+      /\b(?:wellness (?:businesses?|centers?|shops?)|apothecar(?:y|ies)|holistic wellness)\b/i,
     searchTerms: ["wellness", "wellness center", "apothecary", "holistic"],
   },
   {
@@ -153,28 +204,53 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "medical",
     label: "medical practices",
-    match: /\b(?:ob[\/-]?gyn|gynecologists?|medical practices?|primary care practices?)\b/i,
+    match:
+      /\b(?:ob[\/-]?gyn|gynecologists?|medical practices?|primary care practices?)\b/i,
     searchTerms: ["OB/GYN", "gynecologist", "medical practice", "primary care"],
     requiresDiscoveryContext: true,
   },
   {
     key: "travel_advisor",
     label: "travel advisors and tour services",
-    match: /\b(?:travel agents?|travel advisors?|tour operators?|tour guides?)\b/i,
-    searchTerms: ["travel advisor", "travel agent", "tour operator", "tour guide"],
+    match:
+      /\b(?:travel agents?|travel advisors?|tour operators?|tour guides?)\b/i,
+    searchTerms: [
+      "travel advisor",
+      "travel agent",
+      "tour operator",
+      "tour guide",
+    ],
   },
   {
     key: "gaming",
     label: "gaming and recreation",
-    match: /\b(?:gaming|game caf[eé]s?|arcades?|board games?|virtual reality|vr experiences?)\b/i,
-    searchTerms: ["gaming", "game cafe", "arcade", "board game", "virtual reality", "recreation"],
+    match:
+      /\b(?:gaming|game caf[eé]s?|arcades?|board games?|virtual reality|vr experiences?)\b/i,
+    searchTerms: [
+      "gaming",
+      "game cafe",
+      "arcade",
+      "board game",
+      "virtual reality",
+      "recreation",
+    ],
     priority: 10,
   },
   {
     key: "activity",
     label: "things to do",
-    match: /\b(?:things to do|something to do|activities|places to go|local experiences|bookable experiences)\b/i,
-    searchTerms: ["attractions", "arts", "entertainment", "gaming", "recreation", "gallery", "museum", "tour experience"],
+    match:
+      /\b(?:things to do|something to do|activities|places to go|local experiences|bookable experiences)\b/i,
+    searchTerms: [
+      "attractions",
+      "arts",
+      "entertainment",
+      "gaming",
+      "recreation",
+      "gallery",
+      "museum",
+      "tour experience",
+    ],
   },
   {
     key: "museum",
@@ -206,8 +282,21 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "fashion",
     label: "fashion and clothing businesses",
-    match: /\b(?:fashion|wardrobe|personal styl(?:ists?|ing)|product styl(?:ists?|ing)|clothing|apparel|boutiques?|lingerie|vintage shops?|thrift shops?)\b/i,
-    searchTerms: ["fashion", "wardrobe stylist", "personal stylist", "personal styling", "product stylist", "clothing", "apparel", "boutique", "lingerie", "vintage", "thrift"],
+    match:
+      /\b(?:fashion|wardrobe|personal styl(?:ists?|ing)|product styl(?:ists?|ing)|clothing|apparel|boutiques?|lingerie|vintage shops?|thrift shops?)\b/i,
+    searchTerms: [
+      "fashion",
+      "wardrobe stylist",
+      "personal stylist",
+      "personal styling",
+      "product stylist",
+      "clothing",
+      "apparel",
+      "boutique",
+      "lingerie",
+      "vintage",
+      "thrift",
+    ],
   },
   {
     key: "dessert",
@@ -217,25 +306,49 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   },
 ] as const;
 
-export function deriveBusinessSubject(message: string): NormalizedBusinessSubject | null {
-  if (/\b(?:hair loss|alopecia|thinning hair|scalp (?:condition|pain|infection|disease))\b/i.test(message)) return null;
-  const discoveryContext = /\b(?:find|looking for|need|recommend|where|near|in|book|appointment|shop|go|visit|local)\b/i.test(message);
-  const subject = SUBJECTS
-    .filter((candidate) => candidate.match.test(message) && (!candidate.requiresDiscoveryContext || discoveryContext))
-    .sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0))[0];
+export function deriveBusinessSubject(
+  message: string,
+): NormalizedBusinessSubject | null {
+  if (
+    /\b(?:hair loss|alopecia|thinning hair|scalp (?:condition|pain|infection|disease))\b/i.test(
+      message,
+    )
+  )
+    return null;
+  const discoveryContext =
+    /\b(?:find|looking for|need|recommend|where|near|in|book|appointment|shop|go|visit|local)\b/i.test(
+      message,
+    );
+  const subject = SUBJECTS.filter(
+    (candidate) =>
+      candidate.match.test(message) &&
+      (!candidate.requiresDiscoveryContext || discoveryContext),
+  ).sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0))[0];
   if (!subject) {
-    const bareStylistDiscovery = discoveryContext
-      && /\bstylists?\b/i.test(message)
-      && !/\b(?:fashion|wardrobe|clothing|apparel|editorial|photos?|photography|photo\s+shoots?|products?|personal styl(?:ists?|ing))\b/i.test(message)
-      && !/\b(?:what does|what is|how (?:do|can|should) I|career|training|school|become|recommends? this|said this)\b/i.test(message);
+    const bareStylistDiscovery =
+      discoveryContext &&
+      /\bstylists?\b/i.test(message) &&
+      !/\b(?:fashion|wardrobe|clothing|apparel|editorial|photos?|photography|photo\s+shoots?|products?|personal styl(?:ists?|ing))\b/i.test(
+        message,
+      ) &&
+      !/\b(?:what does|what is|how (?:do|can|should) I|career|training|school|become|recommends? this|said this)\b/i.test(
+        message,
+      );
     if (bareStylistDiscovery) {
       const salon = SUBJECTS.find((candidate) => candidate.key === "salon")!;
-      return { key: salon.key, label: salon.label, searchTerms: salon.searchTerms };
+      return {
+        key: salon.key,
+        label: salon.label,
+        searchTerms: salon.searchTerms,
+      };
     }
-    const booksAsShoppingRequest = /\bbooks\b/i.test(message)
-      && /\b(?:find|buy|shop|shopping|store|near|where)\b/i.test(message);
+    const booksAsShoppingRequest =
+      /\bbooks\b/i.test(message) &&
+      /\b(?:find|buy|shop|shopping|store|near|where)\b/i.test(message);
     if (!booksAsShoppingRequest) return null;
-    const bookstore = SUBJECTS.find((candidate) => candidate.key === "bookstore")!;
+    const bookstore = SUBJECTS.find(
+      (candidate) => candidate.key === "bookstore",
+    )!;
     return {
       key: bookstore.key,
       label: bookstore.label,
@@ -253,7 +366,9 @@ export function hasBusinessSubject(message: string): boolean {
   return deriveBusinessSubject(message) !== null;
 }
 
-export function businessSubjectSearchPatterns(subject: NormalizedBusinessSubject): string[] {
+export function businessSubjectSearchPatterns(
+  subject: NormalizedBusinessSubject,
+): string[] {
   // PostgreSQL regex patterns with word boundaries. These are used only for
   // governed directory fields, never arbitrary descriptive copy, so "books
   // fast" does not qualify a restaurant as a bookstore while "bookstore-cafe"
@@ -261,9 +376,19 @@ export function businessSubjectSearchPatterns(subject: NormalizedBusinessSubject
   return subject.searchTerms
     .map((term) => term.trim().toLowerCase())
     .filter(Boolean)
-    .map((term) => `\\m${term
-      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-      .replace(/[\s-]+/g, "[[:space:]-]+")}\\M`);
+    .map(
+      (term) =>
+        `\\m${term
+          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/[\s-]+/g, "[[:space:]-]+")}\\M`,
+    );
 }
 
-export const BUSINESS_SUBJECTS = SUBJECTS.map(({ match: _match, requiresDiscoveryContext: _requiresDiscoveryContext, priority: _priority, ...subject }) => subject);
+export const BUSINESS_SUBJECTS = SUBJECTS.map(
+  ({
+    match: _match,
+    requiresDiscoveryContext: _requiresDiscoveryContext,
+    priority: _priority,
+    ...subject
+  }) => subject,
+);

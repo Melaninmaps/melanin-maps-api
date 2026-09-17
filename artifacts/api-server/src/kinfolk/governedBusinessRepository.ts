@@ -4,6 +4,10 @@ import {
   type NormalizedBusinessSubject,
 } from "./business-subject";
 import { canonicalizeContextualUrl } from "./contextual-url";
+import {
+  normalizeOwnershipDesignationFilterIds,
+  ownershipDesignationStorageValues,
+} from "@workspace/constants";
 
 export type QueryPool = {
   query<T = Record<string, unknown>>(
@@ -42,6 +46,7 @@ export type GovernedKinfolkBusiness = Readonly<{
   claimed: boolean;
   blackOwned: boolean;
   ownershipClaim?: string | null;
+  ownershipDesignations?: string[];
   tags: string[];
   specialties: string[];
   profileStatus: string | null;
@@ -64,7 +69,6 @@ export type GovernedKinfolkBusiness = Readonly<{
   /** Non-destructive identity evidence retained when likely duplicates are suppressed. */
   identityReasons: string[];
 }>;
-
 
 export type GovernedKinfolkMapPlace = Readonly<{
   id: string;
@@ -96,6 +100,7 @@ type BusinessRow = {
   claimed: unknown;
   black_owned: unknown;
   ownership_claim: unknown;
+  ownership_designations: unknown;
   tags: unknown;
   specialties: unknown;
   profile_status: unknown;
@@ -131,8 +136,22 @@ const DEFAULT_CATALOG_LIMIT = 25;
 const MAX_CATALOG_LIMIT = 50;
 const MAX_RADIUS_MILES = 100;
 const PREFERENCE_STOP_WORDS = new Set([
-  "and", "the", "for", "with", "from", "into", "near", "local", "style",
-  "things", "places", "travel", "trip", "experiences", "experience", "inspired",
+  "and",
+  "the",
+  "for",
+  "with",
+  "from",
+  "into",
+  "near",
+  "local",
+  "style",
+  "things",
+  "places",
+  "travel",
+  "trip",
+  "experiences",
+  "experience",
+  "inspired",
 ]);
 
 const CANONICAL_SELECT = `
@@ -152,6 +171,7 @@ const CANONICAL_SELECT = `
   (COALESCE(b.listing_status, '') = 'live_claimed') AS claimed,
   COALESCE(b.black_owned, false) AS black_owned,
   b.ownership_claim,
+  COALESCE(b.ownership_designations, '[]'::jsonb) AS ownership_designations,
   COALESCE(b.tags, '[]'::jsonb) AS tags,
   COALESCE((
     SELECT array_agg(bs.specialty_slug ORDER BY bs.specialty_slug)
@@ -219,11 +239,13 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     phone: nullableText(row.phone),
     // A published listing may contain a stale or malformed URL. Keep only a
     // canonical navigable URL; this is never synthesized from free text.
-    website: nullableText(row.website) && canonicalizeContextualUrl(text(row.website)),
+    website:
+      nullableText(row.website) && canonicalizeContextualUrl(text(row.website)),
     verified: row.verified === true,
     claimed: row.claimed === true,
     blackOwned: row.black_owned === true,
     ownershipClaim: nullableText(row.ownership_claim),
+    ownershipDesignations: stringArray(row.ownership_designations),
     tags: stringArray(row.tags),
     specialties: stringArray(row.specialties),
     profileStatus: nullableText(row.profile_status),
@@ -268,14 +290,21 @@ function boundedLimit(limit: number | undefined): number {
 }
 
 function preferenceSearchTokens(values: readonly string[]): string[] {
-  return [...new Set(values.flatMap((value) => value
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter((token) => token.length >= 3 && !PREFERENCE_STOP_WORDS.has(token))))]
-    .slice(0, 32);
+  return [
+    ...new Set(
+      values.flatMap((value) =>
+        value
+          .normalize("NFKD")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim()
+          .split(/\s+/)
+          .filter(
+            (token) => token.length >= 3 && !PREFERENCE_STOP_WORDS.has(token),
+          ),
+      ),
+    ),
+  ].slice(0, 32);
 }
 
 function normalizedIdentityText(value: string | null | undefined): string {
@@ -300,24 +329,34 @@ function subjectMatchReasons(
     business.category,
     business.subcategory,
     ...business.specialties,
-  ].join(" ").toLowerCase();
+  ]
+    .join(" ")
+    .toLowerCase();
   if (
-    subject.key === "hvac"
-    && /\b(?:auto|automotive|car|vehicle)\b/.test(structuredText)
-    && !/\b(?:hvac|heating|furnace|heat pump)\b/.test(structuredText)
-  ) return [];
+    subject.key === "hvac" &&
+    /\b(?:auto|automotive|car|vehicle)\b/.test(structuredText) &&
+    !/\b(?:hvac|heating|furnace|heat pump)\b/.test(structuredText)
+  )
+    return [];
   const fieldMatches = (value: string | null, field: string) => {
-    const normalized = ` ${text(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+    const normalized = ` ${text(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()} `;
     return terms.some((term) => {
       const phrase = term.replace(/[^a-z0-9]+/g, " ").trim();
       return phrase && normalized.includes(` ${phrase} `);
-    }) ? [field] : [];
+    })
+      ? [field]
+      : [];
   };
   return [
     ...fieldMatches(business.category, "category"),
     ...fieldMatches(business.subcategory, "subcategory"),
     ...fieldMatches(business.name, "name"),
-    ...business.specialties.flatMap((specialty) => fieldMatches(specialty, "specialty")),
+    ...business.specialties.flatMap((specialty) =>
+      fieldMatches(specialty, "specialty"),
+    ),
   ];
 }
 
@@ -335,7 +374,10 @@ export type GovernedDuplicateSuppression = Readonly<{
  */
 export function suppressProbableDuplicateBusinesses(
   businesses: readonly GovernedKinfolkBusiness[],
-): { businesses: GovernedKinfolkBusiness[]; suppressed: GovernedDuplicateSuppression[] } {
+): {
+  businesses: GovernedKinfolkBusiness[];
+  suppressed: GovernedDuplicateSuppression[];
+} {
   const groups = new Map<string, GovernedKinfolkBusiness[]>();
   for (const business of businesses) {
     const key = [
@@ -349,23 +391,35 @@ export function suppressProbableDuplicateBusinesses(
   const canonical: GovernedKinfolkBusiness[] = [];
   const suppressed: GovernedDuplicateSuppression[] = [];
   for (const group of groups.values()) {
-    const ordered = [...group].sort((left, right) =>
-      Number(right.verified) - Number(left.verified)
-      || Number(right.claimed) - Number(left.claimed)
-      || left.id.localeCompare(right.id));
+    const ordered = [...group].sort(
+      (left, right) =>
+        Number(right.verified) - Number(left.verified) ||
+        Number(right.claimed) - Number(left.claimed) ||
+        left.id.localeCompare(right.id),
+    );
     const winner = ordered[0]!;
     canonical.push({
       ...winner,
-      identityReasons: group.length > 1
-        ? ["same normalized name and city/state", "deterministic canonical selection"]
-        : winner.identityReasons,
+      identityReasons:
+        group.length > 1
+          ? [
+              "same normalized name and city/state",
+              "deterministic canonical selection",
+            ]
+          : winner.identityReasons,
     });
     for (const duplicate of ordered.slice(1)) {
       const reasons = ["same normalized name and city/state"];
       const phone = normalizedPhone(winner.phone);
-      if (phone && phone === normalizedPhone(duplicate.phone)) reasons.push("same phone");
-      if (winner.website && winner.website === duplicate.website) reasons.push("same approved website");
-      suppressed.push({ suppressedId: duplicate.id, canonicalId: winner.id, reasons });
+      if (phone && phone === normalizedPhone(duplicate.phone))
+        reasons.push("same phone");
+      if (winner.website && winner.website === duplicate.website)
+        reasons.push("same approved website");
+      suppressed.push({
+        suppressedId: duplicate.id,
+        canonicalId: winner.id,
+        reasons,
+      });
     }
   }
   return { businesses: canonical, suppressed };
@@ -461,11 +515,26 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       scope: ValidatedKinfolkCityScope,
       subject: NormalizedBusinessSubject,
       limit = 12,
+      requiredDesignationIds: readonly string[] = [],
     ): Promise<GovernedKinfolkBusiness[]> {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
       const patterns = businessSubjectSearchPatterns(subject);
       if (!patterns.length) return [];
+      const designationValueGroups = normalizeOwnershipDesignationFilterIds(
+        requiredDesignationIds,
+      ).map((id) => ownershipDesignationStorageValues(id).values);
+      const designationClauses = designationValueGroups
+        .map((_, index) => {
+          const parameter = 6 + index;
+          return `
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements_text(COALESCE(b.ownership_designations, '[]'::jsonb)) AS designation(value)
+            WHERE designation.value = ANY($${parameter}::text[])
+          )`;
+        })
+        .join("");
       const { rows } = await pool.query<BusinessRow>(
         `
         SELECT ${CANONICAL_SELECT}, NULL::double precision AS distance_miles
@@ -506,6 +575,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
               )
             )
           )
+          ${designationClauses}
         ORDER BY
           CASE
             WHEN LOWER(COALESCE(b.category, '')) ~ ANY($3::text[]) THEN 0
@@ -521,12 +591,22 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT $4
       `,
-        [location.city, location.stateCode, patterns, resultLimit, subject.key],
+        [
+          location.city,
+          location.stateCode,
+          patterns,
+          resultLimit,
+          subject.key,
+          ...designationValueGroups,
+        ],
       );
       return suppressProbableDuplicateBusinesses(
         rows
           .map(mapBusiness)
-          .map((business) => ({ ...business, matchReasons: subjectMatchReasons(business, subject) }))
+          .map((business) => ({
+            ...business,
+            matchReasons: subjectMatchReasons(business, subject),
+          }))
           // Defense in depth if a legacy DB collation differs from JS/regex.
           .filter((business) => business.matchReasons.length > 0),
       ).businesses;
@@ -572,7 +652,8 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       `,
         [location.city, location.stateCode, tokens, resultLimit],
       );
-      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness)).businesses;
+      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness))
+        .businesses;
     },
 
     async findPublishedMapEntities(
@@ -634,7 +715,8 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       `,
         [radius.latitude, radius.longitude, radius.radiusMiles, resultLimit],
       );
-      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness)).businesses;
+      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness))
+        .businesses;
     },
 
     async findExactByNormalizedName(input: {

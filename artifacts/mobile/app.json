@@ -39,6 +39,7 @@
     },
     "android": {
       "package": "com.melaninmaps.app",
+      "edgeToEdgeEnabled": true,
       "intentFilters": [
         {
           "action": "VIEW",
@@ -82,6 +83,9 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.WRITE_CONTACTS"
       ]
+    },
+    "androidNavigationBar": {
+      "enforceContrast": false
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -158,6 +162,7 @@
         }
       ],
       "./plugins/withChromebookSupport",
+      "./plugins/withAndroidAdaptiveLayout",
       "./plugins/withAudioFrameworks"
     ],
     "experiments": {

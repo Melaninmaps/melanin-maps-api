@@ -2,8 +2,22 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
-import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
-import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, incrementVoiceChars, getVoiceUsage, TIER_LIMITS, hasActiveTesterEntitlement } from "../constants/membershipTiers";
+import {
+  OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationFilterId,
+  extractExplicitOwnershipDesignationFilterIds,
+  normalizeOwnershipDesignationFilterIds,
+} from "@workspace/constants";
+import {
+  checkAiPool,
+  incrementAiUsage,
+  getTierFromMemberType,
+  checkVoiceUsage,
+  incrementVoiceChars,
+  getVoiceUsage,
+  TIER_LIMITS,
+  hasActiveTesterEntitlement,
+} from "../constants/membershipTiers";
 import crypto from "crypto";
 import {
   db,
@@ -27,21 +41,37 @@ import {
   type JourneyPhase,
 } from "@workspace/db";
 import { eq, desc, and, ilike, or, inArray, isNull, gt } from "drizzle-orm";
-import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
-import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
+import {
+  getKnowledgeGraphContext,
+  renderKnowledgeGraphContext,
+  type KnowledgeGraphContext,
+} from "../lib/knowledge-graph-context";
+import {
+  classifyIntent,
+  getEvidencePolicy,
+  buildIntentPolicyPrompt,
+  getQueryClass,
+  type KinfolkIntent,
+} from "../kinfolk/intent-router";
 import {
   RESPONSE_STYLES,
   deliveryToResponseStyle,
   responseStyleToDelivery,
   type ResponseStyle,
 } from "../kinfolk/delivery-profile";
-import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
+import {
+  classifyKinfolkRequest,
+  buildDiscoveryInstruction,
+} from "../kinfolk/request-classifier";
 import {
   destinationForEnabledSession,
   getHeritageCity,
   resolveTurnGeography,
 } from "../kinfolk/heritage-city-registry";
-import { normalizeTranscript, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
+import {
+  normalizeTranscript,
+  VOICE_MAX_DURATION_SECONDS,
+} from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
 import {
   answerWithLivingLibrary,
@@ -81,19 +111,30 @@ import {
 
 // ── Living Library lazy singleton instances ────────────────────────────────────
 // Created once on first research request; degrade gracefully when Tavily key is absent.
-let _libraryRepo: ReturnType<typeof createPostgresLibraryRepository> | null = null;
-let _researchProvider: ReturnType<typeof createTavilyResearchProvider> | null = null;
+let _libraryRepo: ReturnType<typeof createPostgresLibraryRepository> | null =
+  null;
+let _researchProvider: ReturnType<typeof createTavilyResearchProvider> | null =
+  null;
 let _libraryWriter: ReturnType<typeof createOpenAiLibraryWriter> | null = null;
 function getLivingLibraryDeps() {
   const tavilyApiKey = kinfolkTavilyApiKey();
   if (!_libraryRepo) _libraryRepo = createPostgresLibraryRepository(pool);
-  if (!_researchProvider && tavilyApiKey) _researchProvider = createTavilyResearchProvider(tavilyApiKey);
-  if (!_libraryWriter) _libraryWriter = createOpenAiLibraryWriter({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-    baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
-    model: kinfolkModel("libraryResearch"),
-  });
-  return { repository: _libraryRepo, researchProvider: _researchProvider, writer: _libraryWriter };
+  if (!_researchProvider && tavilyApiKey)
+    _researchProvider = createTavilyResearchProvider(tavilyApiKey);
+  if (!_libraryWriter)
+    _libraryWriter = createOpenAiLibraryWriter({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+      baseUrl: (
+        process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ??
+        "https://api.openai.com/v1"
+      ).replace(/\/$/, ""),
+      model: kinfolkModel("libraryResearch"),
+    });
+  return {
+    repository: _libraryRepo,
+    researchProvider: _researchProvider,
+    writer: _libraryWriter,
+  };
 }
 import { resolveKinfolkContext } from "../kinfolk/context-resolver";
 import { storage } from "../storage";
@@ -104,15 +145,39 @@ import {
   deriveGrowthSubject,
   findMatchingPublishedLibraryNode,
 } from "../lib/library-growth-engine";
-import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
-import { loadKinfolkMemberContext, buildLifeStageInstruction, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
+import {
+  buildHealthRetrievalContext,
+  extractHealthTopic,
+} from "../kinfolk/health-retrieval";
+import {
+  loadKinfolkMemberContext,
+  buildLifeStageInstruction,
+  buildPronounInstruction,
+  buildReproductiveContextInstruction,
+} from "../kinfolk/member-context";
 import { resolveRecommendationLifeStage } from "../kinfolk/recommendation-life-stage";
-import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../kinfolk/four-purpose-enforcement";
-import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
-import { searchAllQueriesWithState, type WebSearchOutcome } from "../kinfolk/web-search";
+import {
+  enforceKinfolkResponse,
+  buildFlywheelEvent,
+  type SafeSource,
+} from "../kinfolk/four-purpose-enforcement";
+import {
+  buildMemberProfile,
+  buildSearchPlan,
+  activeLensDisclosure,
+  urgentHealthMessage,
+  normalize as normalizeLensQuery,
+} from "../kinfolk/lens-planner";
+import {
+  searchAllQueriesWithState,
+  type WebSearchOutcome,
+} from "../kinfolk/web-search";
 import { kinfolkModel } from "../kinfolk/model-config";
 import { kinfolkTavilyApiKey } from "../kinfolk/provider-config";
-import { probeKinfolkProviderReadiness, summarizeKinfolkProviderReadiness } from "../kinfolk/provider-readiness";
+import {
+  probeKinfolkProviderReadiness,
+  summarizeKinfolkProviderReadiness,
+} from "../kinfolk/provider-readiness";
 import { rankResults } from "../kinfolk/web-ranker";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
@@ -128,7 +193,13 @@ import {
   temporaryBusinessAudienceBand,
 } from "../kinfolk/business-discovery-clarification";
 import { createPostgresDiscoverySignalRepository } from "../discovery/postgresFlywheelRepository";
-import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
+import {
+  findReviewedResources,
+  findEntityCandidates,
+  ENTITY_INDEX,
+  type ResourceCard,
+  type EntityCandidate,
+} from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 import {
   answerPlanDomainForIntent,
@@ -210,16 +281,31 @@ function pgCode(err: unknown): string | undefined {
     ? String((err as { code?: unknown }).code ?? "") || undefined
     : undefined;
 }
-export function safeKinfolkErrorMetadata(err: unknown): Record<string, string | number | boolean | undefined> {
+export function safeKinfolkErrorMetadata(
+  err: unknown,
+): Record<string, string | number | boolean | undefined> {
   const rawCode = pgCode(err);
-  const errorCode = rawCode && /^[A-Z0-9_]{1,64}$/.test(rawCode) ? rawCode : undefined;
-  const statusValue = typeof err === "object" && err !== null
-    ? ((err as { status?: unknown; statusCode?: unknown }).status ?? (err as { statusCode?: unknown }).statusCode)
-    : undefined;
-  const providerStatus = typeof statusValue === "number" && Number.isInteger(statusValue) && statusValue >= 100 && statusValue <= 599
-    ? statusValue
-    : undefined;
-  return { errorCode, providerStatus, timeout: err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError") };
+  const errorCode =
+    rawCode && /^[A-Z0-9_]{1,64}$/.test(rawCode) ? rawCode : undefined;
+  const statusValue =
+    typeof err === "object" && err !== null
+      ? ((err as { status?: unknown; statusCode?: unknown }).status ??
+        (err as { statusCode?: unknown }).statusCode)
+      : undefined;
+  const providerStatus =
+    typeof statusValue === "number" &&
+    Number.isInteger(statusValue) &&
+    statusValue >= 100 &&
+    statusValue <= 599
+      ? statusValue
+      : undefined;
+  return {
+    errorCode,
+    providerStatus,
+    timeout:
+      err instanceof Error &&
+      (err.name === "AbortError" || err.name === "TimeoutError"),
+  };
 }
 function isOptionalSchemaGap(err: unknown): boolean {
   const code = pgCode(err);
@@ -236,7 +322,9 @@ async function optionalKinfolk<T>(
     return await work();
   } catch (err) {
     if (isOptionalSchemaGap(err)) {
-      console.warn(`[kinfolk-optional] stage=${stage} pgCode=${pgCode(err)} — enrichment unavailable, continuing`);
+      console.warn(
+        `[kinfolk-optional] stage=${stage} pgCode=${pgCode(err)} — enrichment unavailable, continuing`,
+      );
       return fallback;
     }
     throw err;
@@ -250,7 +338,9 @@ async function optionalKinfolk<T>(
 // a preferences update (tap-to-save) is reflected within the next turn.
 // Invalidated on any POST/PATCH that writes preferences (see invalidatePrefsCache export).
 interface PrefsCacheEntry {
-  promise: Promise<typeof import("@workspace/db").userPreferencesTable.$inferSelect | null>;
+  promise: Promise<
+    typeof import("@workspace/db").userPreferencesTable.$inferSelect | null
+  >;
   expiresAt: number;
 }
 const prefsCache = new Map<string, PrefsCacheEntry>();
@@ -267,7 +357,9 @@ setInterval(() => {
 
 async function getCachedPrefs(
   userId: string,
-): Promise<typeof import("@workspace/db").userPreferencesTable.$inferSelect | null> {
+): Promise<
+  typeof import("@workspace/db").userPreferencesTable.$inferSelect | null
+> {
   const now = Date.now();
   const cached = prefsCache.get(userId);
   if (cached && cached.expiresAt > now) return cached.promise;
@@ -288,7 +380,15 @@ async function getCachedPrefs(
 // fresh enough that a new session created in one browser tab appears quickly.
 // Invalidated after POST /kinfolk/sessions mutations.
 interface SessionsCacheEntry {
-  promise: Promise<Array<{ id: string; title: string | null; destination: string | null; createdAt: Date; updatedAt: Date }>>;
+  promise: Promise<
+    Array<{
+      id: string;
+      title: string | null;
+      destination: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>
+  >;
   expiresAt: number;
 }
 const sessionsCache = new Map<string, SessionsCacheEntry>();
@@ -300,10 +400,21 @@ export function invalidateSessionsCache(userId: string): void {
 
 setInterval(() => {
   const now = Date.now();
-  for (const [k, v] of sessionsCache) if (v.expiresAt <= now) sessionsCache.delete(k);
+  for (const [k, v] of sessionsCache)
+    if (v.expiresAt <= now) sessionsCache.delete(k);
 }, 60_000).unref();
 
-async function getCachedSessions(userId: string): Promise<Array<{ id: string; title: string | null; destination: string | null; createdAt: Date; updatedAt: Date }>> {
+async function getCachedSessions(
+  userId: string,
+): Promise<
+  Array<{
+    id: string;
+    title: string | null;
+    destination: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }>
+> {
   const now = Date.now();
   const cached = sessionsCache.get(userId);
   if (cached && cached.expiresAt > now) return cached.promise;
@@ -320,7 +431,10 @@ async function getCachedSessions(userId: string): Promise<Array<{ id: string; ti
     .orderBy(desc(kinfolkSessionsTable.updatedAt))
     .limit(30)
     .catch(() => []);
-  sessionsCache.set(userId, { promise, expiresAt: now + SESSIONS_CACHE_TTL_MS });
+  sessionsCache.set(userId, {
+    promise,
+    expiresAt: now + SESSIONS_CACHE_TTL_MS,
+  });
   return promise;
 }
 
@@ -337,10 +451,14 @@ function logCacheMetric(
     durationMs: number;
     responseStatus: number;
     poolStats: { total: number; idle: number; waiting: number };
-  }
+  },
 ): void {
   const userId = req.user?.id ?? "anon";
-  const userIdHash = crypto.createHash("sha256").update(userId).digest("hex").slice(0, 8);
+  const userIdHash = crypto
+    .createHash("sha256")
+    .update(userId)
+    .digest("hex")
+    .slice(0, 8);
   req.log?.info(
     {
       endpoint: opts.endpoint,
@@ -354,7 +472,7 @@ function logCacheMetric(
       poolWaiting: opts.poolStats.waiting,
       responseStatus: opts.responseStatus,
     },
-    "cache_metric"
+    "cache_metric",
   );
 }
 
@@ -365,20 +483,27 @@ function logCacheMetric(
 // priority over category matching — so a specific question about "African diaspora history"
 // returns the exact node even if the category alias list is broad.
 const INTENT_TO_CATEGORY_MAP: Record<string, string[]> = {
-  medical_health:         ["health"],
-  legal_regulated:        ["legal"],
-  financial_regulated:    ["financial"],
-  culture_entertainment:  ["culture", "diaspora", "heritage", "history", "community_culture"],
-  business_discovery:     ["business"],
-  education_discovery:    ["education", "hbcu", "history"],
-  hobby_lifestyle:        ["lifestyle"],
-  general_knowledge:      ["general", "history", "education", "geography"],
-  current_information:    ["general", "history", "education", "geography"],
-  safety_emergency:       ["safety"],
+  medical_health: ["health"],
+  legal_regulated: ["legal"],
+  financial_regulated: ["financial"],
+  culture_entertainment: [
+    "culture",
+    "diaspora",
+    "heritage",
+    "history",
+    "community_culture",
+  ],
+  business_discovery: ["business"],
+  education_discovery: ["education", "hbcu", "history"],
+  hobby_lifestyle: ["lifestyle"],
+  general_knowledge: ["general", "history", "education", "geography"],
+  current_information: ["general", "history", "education", "geography"],
+  safety_emergency: ["safety"],
 };
 
 const router: IRouter = Router();
-const governedBusinessRepository = createGovernedKinfolkBusinessRepository(pool);
+const governedBusinessRepository =
+  createGovernedKinfolkBusinessRepository(pool);
 const discoverySignalRepository = createPostgresDiscoverySignalRepository(pool);
 
 // ─── KinfolkAI Generation Queue ──────────────────────────────────────────────
@@ -413,15 +538,15 @@ const discoverySignalRepository = createPostgresDiscoverySignalRepository(pool);
 // ~11,100–12,300 tokens. 30 simultaneous = 333k–370k TPM vs 200k limit.
 // Fix: (1) reduce per-request budget to ≤4,500 tokens via prompt optimization,
 //     (2) replace concurrency-only gate with rolling token-bucket queue.
-const PROVIDER_TPM_LIMIT            = 200_000;
-const TOKEN_BUCKET_TARGET           = 160_000;  // 80% safety ceiling
-const MAX_REQUEST_TOKEN_RESERVATION = 4_500;    // hard cap per request
-const MAX_ACTIVE_GENERATIONS        = 4;        // down from 10
-const MAX_QUEUED_REQUESTS           = 30;       // down from 50
-const MAX_QUEUE_WAIT_MS             = 25_000;   // max queue wait (ms)
-const MAX_IN_FLIGHT_PER_USER        = 1;        // one active per user
-const KINFOLK_RETRY_MAX             = 1;        // max 1 retry (2 total attempts)
-const KINFOLK_RETRY_BASE_MS         = 500;      // exponential backoff base (ms)
+const PROVIDER_TPM_LIMIT = 200_000;
+const TOKEN_BUCKET_TARGET = 160_000; // 80% safety ceiling
+const MAX_REQUEST_TOKEN_RESERVATION = 4_500; // hard cap per request
+const MAX_ACTIVE_GENERATIONS = 4; // down from 10
+const MAX_QUEUED_REQUESTS = 30; // down from 50
+const MAX_QUEUE_WAIT_MS = 25_000; // max queue wait (ms)
+const MAX_IN_FLIGHT_PER_USER = 1; // one active per user
+const KINFOLK_RETRY_MAX = 1; // max 1 retry (2 total attempts)
+const KINFOLK_RETRY_BASE_MS = 500; // exponential backoff base (ms)
 
 /** Rough token estimate: 4 chars ≈ 1 token (GPT-4o mini English average). */
 function estimateTokens(text: string): number {
@@ -439,45 +564,66 @@ export let kinfolkQueuedGenerations = 0;
 // affect a meaningful portion of users.
 // NOTE: Railway runs one instance; if multi-instance, replace with Redis/metrics.
 type KinfolkTelemetry = {
-  requestId: string; questionClass: string; status: number;
-  degraded: boolean; degradedReason: string | null;
-  providerStatus: number | null; latencyMs: number;
+  requestId: string;
+  questionClass: string;
+  status: number;
+  degraded: boolean;
+  degradedReason: string | null;
+  providerStatus: number | null;
+  latencyMs: number;
   taskMode?: KinfolkTaskMode | null;
   retrievalState?: "not_used" | "internal" | "live" | "mixed" | "degraded";
   sourceCount?: number;
 };
 const _kinfolkDegradedWindow: Array<{ at: number; degraded: boolean }> = [];
 const _KINFOLK_DEGRADED_WINDOW_MS = 15 * 60 * 1000;
-const _KINFOLK_DEGRADED_MIN       = 20;
+const _KINFOLK_DEGRADED_MIN = 20;
 const _KINFOLK_DEGRADED_ALERT_PCT = 5;
 function recordKinfolkTelemetry(event: KinfolkTelemetry): void {
   const now = Date.now();
   _kinfolkDegradedWindow.push({ at: now, degraded: event.degraded });
   // Evict entries older than the rolling window
-  while (_kinfolkDegradedWindow.length && _kinfolkDegradedWindow[0].at < now - _KINFOLK_DEGRADED_WINDOW_MS) {
+  while (
+    _kinfolkDegradedWindow.length &&
+    _kinfolkDegradedWindow[0].at < now - _KINFOLK_DEGRADED_WINDOW_MS
+  ) {
     _kinfolkDegradedWindow.shift();
   }
-  const total          = _kinfolkDegradedWindow.length;
-  const degradedCount  = _kinfolkDegradedWindow.filter((e) => e.degraded).length;
-  const degradedPct    = total ? (degradedCount / total) * 100 : 0;
-  console.info("[kinfolk_generation_result]", JSON.stringify({
-    requestId: event.requestId, questionClass: event.questionClass,
-    status: event.status, degraded: event.degraded,
-    degradedReason: event.degradedReason, providerStatus: event.providerStatus,
-    latencyMs: event.latencyMs,
-    taskMode: event.taskMode ?? null,
-    retrievalState: event.retrievalState ?? "not_used",
-    sourceCount: event.sourceCount ?? 0,
-    degradedWindowRequests: total,
-    degradedWindowPercent: Number(degradedPct.toFixed(2)),
-  }));
-  if (total >= _KINFOLK_DEGRADED_MIN && degradedPct > _KINFOLK_DEGRADED_ALERT_PCT) {
-    console.warn("[kinfolk_degraded_rate_threshold_exceeded]", JSON.stringify({
-      requestId: event.requestId, windowMinutes: 15,
-      requestCount: total, degradedCount,
-      degradedPercent: Number(degradedPct.toFixed(2)),
-      thresholdPercent: _KINFOLK_DEGRADED_ALERT_PCT,
-    }));
+  const total = _kinfolkDegradedWindow.length;
+  const degradedCount = _kinfolkDegradedWindow.filter((e) => e.degraded).length;
+  const degradedPct = total ? (degradedCount / total) * 100 : 0;
+  console.info(
+    "[kinfolk_generation_result]",
+    JSON.stringify({
+      requestId: event.requestId,
+      questionClass: event.questionClass,
+      status: event.status,
+      degraded: event.degraded,
+      degradedReason: event.degradedReason,
+      providerStatus: event.providerStatus,
+      latencyMs: event.latencyMs,
+      taskMode: event.taskMode ?? null,
+      retrievalState: event.retrievalState ?? "not_used",
+      sourceCount: event.sourceCount ?? 0,
+      degradedWindowRequests: total,
+      degradedWindowPercent: Number(degradedPct.toFixed(2)),
+    }),
+  );
+  if (
+    total >= _KINFOLK_DEGRADED_MIN &&
+    degradedPct > _KINFOLK_DEGRADED_ALERT_PCT
+  ) {
+    console.warn(
+      "[kinfolk_degraded_rate_threshold_exceeded]",
+      JSON.stringify({
+        requestId: event.requestId,
+        windowMinutes: 15,
+        requestCount: total,
+        degradedCount,
+        degradedPercent: Number(degradedPct.toFixed(2)),
+        thresholdPercent: _KINFOLK_DEGRADED_ALERT_PCT,
+      }),
+    );
   }
 }
 
@@ -515,9 +661,14 @@ export function getKinfolkStats(): {
     queuedGenerations: kinfolkQueuedGenerations,
     tpmEventsLast60m: recent.length,
     tpmEventsMostRecentAt:
-      recent.length > 0 ? new Date(recent[recent.length - 1]).toISOString() : null,
+      recent.length > 0
+        ? new Date(recent[recent.length - 1]).toISOString()
+        : null,
     // Token-bucket stats — available after kinfolkQueue is initialized (see below)
-    rollingTpm60s: typeof kinfolkQueue !== "undefined" ? (kinfolkQueue as any).getRollingTpm?.() ?? 0 : 0, // populated after initialization
+    rollingTpm60s:
+      typeof kinfolkQueue !== "undefined"
+        ? ((kinfolkQueue as any).getRollingTpm?.() ?? 0)
+        : 0, // populated after initialization
     tokenBucketTarget: TOKEN_BUCKET_TARGET,
     maxActiveGenerations: MAX_ACTIVE_GENERATIONS,
   };
@@ -528,19 +679,22 @@ export function getKinfolkStats(): {
 // Before dispatching: checks that (rolling_tpm + estimated_tokens) ≤ TOKEN_BUCKET_TARGET.
 // Per-user limit: MAX_IN_FLIGHT_PER_USER prevents one user from holding all slots.
 // On deadline: returns KINFOLK_BUSY (not KINFOLK_OVERLOADED) so client can retain question.
-interface _LedgerEntry { tokens: number; expiresAt: number }
+interface _LedgerEntry {
+  tokens: number;
+  expiresAt: number;
+}
 
 class KinfolkTokenBucket {
   private ledger: _LedgerEntry[] = [];
   private activeByUser = new Map<string, number>();
   private waiters: Array<{
-    userId:          string;
+    userId: string;
     estimatedTokens: number;
-    resolve:         () => void;
-    reject:          (e: Error) => void;
-    timer:           ReturnType<typeof setTimeout>;
-    signal?:         AbortSignal;
-    onAbort?:        () => void;
+    resolve: () => void;
+    reject: (e: Error) => void;
+    timer: ReturnType<typeof setTimeout>;
+    signal?: AbortSignal;
+    onAbort?: () => void;
   }> = [];
 
   private _totalActive(): number {
@@ -551,12 +705,15 @@ class KinfolkTokenBucket {
 
   private _rollingTpm(): number {
     const now = Date.now();
-    while (this.ledger.length > 0 && this.ledger[0].expiresAt <= now) this.ledger.shift();
+    while (this.ledger.length > 0 && this.ledger[0].expiresAt <= now)
+      this.ledger.shift();
     return this.ledger.reduce((s, e) => s + e.tokens, 0);
   }
 
   /** Public accessor so health stats and response warnings can read rolling TPM. */
-  getRollingTpm(): number { return this._rollingTpm(); }
+  getRollingTpm(): number {
+    return this._rollingTpm();
+  }
 
   private _canDispatch(tokens: number): boolean {
     return (
@@ -583,7 +740,8 @@ class KinfolkTokenBucket {
       if (this._canDispatch(next.estimatedTokens)) {
         this.waiters.shift();
         clearTimeout(next.timer);
-        if (next.signal && next.onAbort) next.signal.removeEventListener("abort", next.onAbort);
+        if (next.signal && next.onAbort)
+          next.signal.removeEventListener("abort", next.onAbort);
         kinfolkQueuedGenerations = this.waiters.length;
         this._reserve(next.userId, next.estimatedTokens);
         next.resolve();
@@ -591,48 +749,81 @@ class KinfolkTokenBucket {
     }
   }
 
-  private async _acquire(userId: string, estimatedTokens: number, signal?: AbortSignal): Promise<void> {
+  private async _acquire(
+    userId: string,
+    estimatedTokens: number,
+    signal?: AbortSignal,
+  ): Promise<void> {
     signal?.throwIfAborted();
     // Per-user in-flight limit
     if ((this.activeByUser.get(userId) ?? 0) >= MAX_IN_FLIGHT_PER_USER) {
-      throw Object.assign(new Error("User already has a request in flight"), { code: "KINFOLK_BUSY" });
+      throw Object.assign(new Error("User already has a request in flight"), {
+        code: "KINFOLK_BUSY",
+      });
     }
     if (this._canDispatch(estimatedTokens)) {
       this._reserve(userId, estimatedTokens);
       return;
     }
     if (this.waiters.length >= MAX_QUEUED_REQUESTS) {
-      throw Object.assign(new Error("Generation queue is full"), { code: "KINFOLK_QUEUE_FULL" });
+      throw Object.assign(new Error("Generation queue is full"), {
+        code: "KINFOLK_QUEUE_FULL",
+      });
     }
     return new Promise<void>((resolve, reject) => {
       const onAbort = () => {
-        const idx = this.waiters.findIndex((waiter) => waiter.resolve === resolve);
+        const idx = this.waiters.findIndex(
+          (waiter) => waiter.resolve === resolve,
+        );
         if (idx !== -1) this.waiters.splice(idx, 1);
         clearTimeout(timer);
         kinfolkQueuedGenerations = this.waiters.length;
-        reject(signal?.reason instanceof Error ? signal.reason : new DOMException("Request aborted", "AbortError"));
+        reject(
+          signal?.reason instanceof Error
+            ? signal.reason
+            : new DOMException("Request aborted", "AbortError"),
+        );
       };
       const timer = setTimeout(() => {
         const idx = this.waiters.findIndex((w) => w.resolve === resolve);
         if (idx !== -1) this.waiters.splice(idx, 1);
         signal?.removeEventListener("abort", onAbort);
         kinfolkQueuedGenerations = this.waiters.length;
-        reject(Object.assign(new Error("Queue wait exceeded deadline"), { code: "KINFOLK_BUSY" }));
+        reject(
+          Object.assign(new Error("Queue wait exceeded deadline"), {
+            code: "KINFOLK_BUSY",
+          }),
+        );
       }, MAX_QUEUE_WAIT_MS);
-      this.waiters.push({ userId, estimatedTokens, resolve, reject, timer, signal, onAbort });
+      this.waiters.push({
+        userId,
+        estimatedTokens,
+        resolve,
+        reject,
+        timer,
+        signal,
+        onAbort,
+      });
       signal?.addEventListener("abort", onAbort, { once: true });
       kinfolkQueuedGenerations = this.waiters.length;
       if (signal?.aborted) onAbort();
     });
   }
 
-  async run<T>(userId: string, estimatedTokens: number, fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  async run<T>(
+    userId: string,
+    estimatedTokens: number,
+    fn: () => Promise<T>,
+    signal?: AbortSignal,
+  ): Promise<T> {
     const entered = Date.now();
     await this._acquire(userId, estimatedTokens, signal);
     const waitMs = Date.now() - entered;
     const rolling = this._rollingTpm();
     if (waitMs > 200 || rolling > TOKEN_BUCKET_TARGET * 0.7) {
-      console.log(`[kinfolk-queue] wait=${waitMs}ms active=${kinfolkActiveGenerations} queued=${kinfolkQueuedGenerations} rollingTpm=${rolling}`);
+      console.log(
+        `[kinfolk-queue] wait=${waitMs}ms active=${kinfolkActiveGenerations} queued=${kinfolkQueuedGenerations} rollingTpm=${rolling}`,
+      );
     }
     try {
       signal?.throwIfAborted();
@@ -672,17 +863,26 @@ function normalizeKinfolkImageUrls(value: unknown): string[] {
       if (parsed.protocol !== "https:") continue;
       parsed.hash = "";
       unique.add(parsed.toString());
-    } catch { /* invalid URL */ }
+    } catch {
+      /* invalid URL */
+    }
   }
   return [...unique].slice(0, 2);
 }
 
-function waitForKinfolkRetry(delayMs: number, signal: AbortSignal): Promise<void> {
+function waitForKinfolkRetry(
+  delayMs: number,
+  signal: AbortSignal,
+): Promise<void> {
   signal.throwIfAborted();
   return new Promise<void>((resolve, reject) => {
     const onAbort = () => {
       clearTimeout(timer);
-      reject(signal.reason instanceof Error ? signal.reason : new DOMException("Request aborted", "AbortError"));
+      reject(
+        signal.reason instanceof Error
+          ? signal.reason
+          : new DOMException("Request aborted", "AbortError"),
+      );
     };
     const timer = setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
@@ -701,7 +901,12 @@ async function callOpenAIWithRetry(
   maxOutputTokens: number,
   /** Temperature override for entity-factual (≤0.2) and culture-opinion (≤0.5) modes. */
   temperature?: number,
-): Promise<Extract<Awaited<ReturnType<typeof openai.chat.completions.create>>, { choices: unknown }>> {
+): Promise<
+  Extract<
+    Awaited<ReturnType<typeof openai.chat.completions.create>>,
+    { choices: unknown }
+  >
+> {
   // Transient provider conditions that can clear on retry
   const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
   // Connection-reset strings that may appear in error messages without a numeric status
@@ -726,22 +931,32 @@ async function callOpenAIWithRetry(
       return completion;
     } catch (err) {
       lastErr = err;
-      const status  = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
-      const errMsg  = err instanceof Error ? err.message : String(err);
-      const isAbort = err instanceof Error &&
+      const status =
+        (err as any)?.status ??
+        ((err as any)?.statusCode as number | undefined);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const isAbort =
+        err instanceof Error &&
         (err.name === "AbortError" || err.name === "TimeoutError");
 
       // Never retry: client disconnect, auth/policy errors, bad requests, timeouts
       const isNonRetryable =
         isAbort ||
-        status === 401 || status === 403 || status === 400 || status === 404 || status === 422;
+        status === 401 ||
+        status === 403 ||
+        status === 400 ||
+        status === 404 ||
+        status === 422;
 
       if (isNonRetryable || attempt >= KINFOLK_RETRY_MAX) {
         throw err;
       }
 
-      const isRetryableStatus = status !== undefined && RETRYABLE_STATUSES.has(status);
-      const isRetryableMsg    = RETRYABLE_MSG_PATTERNS.some((p) => errMsg.includes(p));
+      const isRetryableStatus =
+        status !== undefined && RETRYABLE_STATUSES.has(status);
+      const isRetryableMsg = RETRYABLE_MSG_PATTERNS.some((p) =>
+        errMsg.includes(p),
+      );
 
       if (!isRetryableStatus && !isRetryableMsg) {
         // Unknown error type — do not retry blindly; surface immediately
@@ -755,9 +970,9 @@ async function callOpenAIWithRetry(
       // reset before the next attempt. Without this, retries fire at ~1.1 s which
       // is still inside the exhausted window → all 3 attempts fail.
       const retryAfterMs = parseRetryAfterMs(errMsg) ?? 0;
-      const jitter       = Math.floor(Math.random() * 500);
-      const exponential  = KINFOLK_RETRY_BASE_MS * Math.pow(2, attempt) + jitter;
-      const backoffMs    = Math.max(retryAfterMs, exponential);
+      const jitter = Math.floor(Math.random() * 500);
+      const exponential = KINFOLK_RETRY_BASE_MS * Math.pow(2, attempt) + jitter;
+      const backoffMs = Math.max(retryAfterMs, exponential);
       console.log(
         `[kinfolk-retry] attempt=${attempt + 1}/${KINFOLK_RETRY_MAX}`,
         `providerStatus=${status ?? "?"}`,
@@ -803,9 +1018,16 @@ async function callOpenAIWithCompatibilityFallback(
 
     // Deliberately omit model names, error text, prompt/user content, endpoint,
     // credentials, and headers. This is compatibility telemetry only.
-    console.warn("[kinfolk-model-compatibility-fallback]", JSON.stringify(
-      buildCompatibilityFallbackLog({ requestId, policy, classification: fallback }),
-    ));
+    console.warn(
+      "[kinfolk-model-compatibility-fallback]",
+      JSON.stringify(
+        buildCompatibilityFallbackLog({
+          requestId,
+          policy,
+          classification: fallback,
+        }),
+      ),
+    );
 
     const completion = await callOpenAIWithRetry(
       messages,
@@ -840,26 +1062,39 @@ function normalizeTopicText(value: string): string {
     .trim();
 }
 
-
 function isLibraryTopicQuestion(message: string): boolean {
   const text = normalizeTopicText(message);
-  return /\b(library|learn|topic|history|what can i learn|tell me about)\b/.test(text)
-    || /\b(divine nine|alpha kappa alpha|alpha phi alpha|delta sigma theta|omega psi phi|kappa alpha psi|sigma gamma rho|zeta phi beta|iota phi theta|phi beta sigma)\b/.test(text);
+  return (
+    /\b(library|learn|topic|history|what can i learn|tell me about)\b/.test(
+      text,
+    ) ||
+    /\b(divine nine|alpha kappa alpha|alpha phi alpha|delta sigma theta|omega psi phi|kappa alpha psi|sigma gamma rho|zeta phi beta|iota phi theta|phi beta sigma)\b/.test(
+      text,
+    )
+  );
 }
 
-async function loadLibraryGrounding(message: string): Promise<LibraryGrounding | null> {
+async function loadLibraryGrounding(
+  message: string,
+): Promise<LibraryGrounding | null> {
   if (!isLibraryTopicQuestion(message)) return null;
   const normalized = normalizeTopicText(message);
   const tokens = normalized.split(" ").filter((t) => t.length >= 4);
-  const searchTerms = Array.from(new Set([
-    normalized,
-    ...tokens,
-    ...(normalized.includes("divine nine") ? ["divine nine", "divine"] : []),
-  ])).slice(0, 12);
+  const searchTerms = Array.from(
+    new Set([
+      normalized,
+      ...tokens,
+      ...(normalized.includes("divine nine") ? ["divine nine", "divine"] : []),
+    ]),
+  ).slice(0, 12);
   try {
     const result = await pool.query<{
-      id: string; topic_name: string; category: string | null;
-      description: string | null; keywords: unknown; trusted_sources: unknown;
+      id: string;
+      topic_name: string;
+      category: string | null;
+      description: string | null;
+      keywords: unknown;
+      trusted_sources: unknown;
     }>(
       `SELECT id, topic_name, category, description, keywords, trusted_sources
        FROM knowledge_topics
@@ -880,12 +1115,15 @@ async function loadLibraryGrounding(message: string): Promise<LibraryGrounding |
     );
     const row = result.rows[0];
     if (!row) return null;
-    const sources = Array.isArray(row.trusted_sources) ? row.trusted_sources : [];
-    const trustedSources = sources
-      .flatMap((s: any) => {
-        const url = canonicalizeContextualUrl(String(s?.url ?? ""));
-        return url ? [{ title: String(s?.title ?? s?.name ?? "Source"), url }] : [];
-      });
+    const sources = Array.isArray(row.trusted_sources)
+      ? row.trusted_sources
+      : [];
+    const trustedSources = sources.flatMap((s: any) => {
+      const url = canonicalizeContextualUrl(String(s?.url ?? ""));
+      return url
+        ? [{ title: String(s?.title ?? s?.name ?? "Source"), url }]
+        : [];
+    });
     return {
       id: row.id,
       topicName: row.topic_name,
@@ -896,7 +1134,10 @@ async function loadLibraryGrounding(message: string): Promise<LibraryGrounding |
     };
   } catch (err) {
     // Library grounding is enrichment. It must never convert a valid chat into HTTP 500.
-    console.warn("[kinfolk-library-grounding-failed]", safeKinfolkErrorMetadata(err));
+    console.warn(
+      "[kinfolk-library-grounding-failed]",
+      safeKinfolkErrorMetadata(err),
+    );
     return null;
   }
 }
@@ -932,9 +1173,15 @@ type KinfolkHealthResult = { ok: boolean; reason?: string; checkedAt: number };
 let _kinfolkHealthCache: KinfolkHealthResult | null = null;
 const KINFOLK_HEALTH_CACHE_MS = 5 * 60 * 1000;
 
-export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }> {
+export async function probeKinfolkAI(): Promise<{
+  ok: boolean;
+  reason?: string;
+}> {
   const now = Date.now();
-  if (_kinfolkHealthCache && now - _kinfolkHealthCache.checkedAt < KINFOLK_HEALTH_CACHE_MS) {
+  if (
+    _kinfolkHealthCache &&
+    now - _kinfolkHealthCache.checkedAt < KINFOLK_HEALTH_CACHE_MS
+  ) {
     return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
   }
   const capabilities = await probeKinfolkProviderReadiness();
@@ -953,31 +1200,46 @@ export async function runKinfolkCanary(): Promise<{
   latencyMs?: number;
   reason?: string;
 }> {
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
+  if (
+    !process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] ||
+    !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]
+  ) {
     return { ok: false, reason: "AI env vars not configured" };
   }
   const start = Date.now();
   try {
     const model = resolveKinfolkProbeModel(process.env);
-    const completion = await openai.chat.completions.create(buildKinfolkProbeRequest({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful assistant. Answer concisely and directly.",
-        },
-        { role: "user", content: "What is 2+2? Reply with only the number." },
-      ],
-      maxOutputTokens: 8,
-      temperature: 0,
-    }) as ChatCompletionCreateParamsNonStreaming);
+    const completion = await openai.chat.completions.create(
+      buildKinfolkProbeRequest({
+        model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a helpful assistant. Answer concisely and directly.",
+          },
+          { role: "user", content: "What is 2+2? Reply with only the number." },
+        ],
+        maxOutputTokens: 8,
+        temperature: 0,
+      }) as ChatCompletionCreateParamsNonStreaming,
+    );
     if (!("choices" in completion)) {
-      return { ok: false, reason: "Unexpected streaming response from AI provider", latencyMs: Date.now() - start };
+      return {
+        ok: false,
+        reason: "Unexpected streaming response from AI provider",
+        latencyMs: Date.now() - start,
+      };
     }
-    const answer = completion.choices[0]?.message?.content?.trim() ?? "(no content)";
+    const answer =
+      completion.choices[0]?.message?.content?.trim() ?? "(no content)";
     return { ok: true, answer, latencyMs: Date.now() - start };
   } catch {
-    return { ok: false, reason: "AI canary failed", latencyMs: Date.now() - start };
+    return {
+      ok: false,
+      reason: "AI canary failed",
+      latencyMs: Date.now() - start,
+    };
   }
 }
 
@@ -1007,14 +1269,30 @@ function classifySensitiveTopic(message: string): boolean {
 
 // ─── Live Weather Integration (Open-Meteo — free, no key required) ────────────
 const WMO_CODES: Record<number, string> = {
-  0: "clear sky", 1: "mainly clear", 2: "partly cloudy", 3: "overcast",
-  45: "foggy", 48: "rime fog",
-  51: "light drizzle", 53: "moderate drizzle", 55: "dense drizzle",
-  61: "slight rain", 63: "moderate rain", 65: "heavy rain",
-  71: "slight snow", 73: "moderate snow", 75: "heavy snow", 77: "snow grains",
-  80: "rain showers", 81: "moderate rain showers", 82: "violent rain showers",
-  85: "snow showers", 86: "heavy snow showers",
-  95: "thunderstorm", 96: "thunderstorm with hail", 99: "thunderstorm with heavy hail",
+  0: "clear sky",
+  1: "mainly clear",
+  2: "partly cloudy",
+  3: "overcast",
+  45: "foggy",
+  48: "rime fog",
+  51: "light drizzle",
+  53: "moderate drizzle",
+  55: "dense drizzle",
+  61: "slight rain",
+  63: "moderate rain",
+  65: "heavy rain",
+  71: "slight snow",
+  73: "moderate snow",
+  75: "heavy snow",
+  77: "snow grains",
+  80: "rain showers",
+  81: "moderate rain showers",
+  82: "violent rain showers",
+  85: "snow showers",
+  86: "heavy snow showers",
+  95: "thunderstorm",
+  96: "thunderstorm with hail",
+  99: "thunderstorm with heavy hail",
 };
 
 async function fetchWeatherContext(location: string): Promise<string | null> {
@@ -1024,24 +1302,43 @@ async function fetchWeatherContext(location: string): Promise<string | null> {
       { signal: AbortSignal.timeout(5000) },
     );
     if (!geoRes.ok) return null;
-    const geoData = await geoRes.json() as {
-      results?: Array<{ latitude: number; longitude: number; name: string; admin1?: string; timezone: string }>;
+    const geoData = (await geoRes.json()) as {
+      results?: Array<{
+        latitude: number;
+        longitude: number;
+        name: string;
+        admin1?: string;
+        timezone: string;
+      }>;
     };
     const place = geoData.results?.[0];
     if (!place) return null;
 
     const wRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}` +
-      `&current=temperature_2m,apparent_temperature,precipitation,rain,weathercode,windspeed_10m` +
-      `&hourly=temperature_2m,precipitation_probability,precipitation,weathercode` +
-      `&timezone=${encodeURIComponent(place.timezone)}&forecast_days=3` +
-      `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`,
+        `&current=temperature_2m,apparent_temperature,precipitation,rain,weathercode,windspeed_10m` +
+        `&hourly=temperature_2m,precipitation_probability,precipitation,weathercode` +
+        `&timezone=${encodeURIComponent(place.timezone)}&forecast_days=3` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`,
       { signal: AbortSignal.timeout(5000) },
     );
     if (!wRes.ok) return null;
-    const wd = await wRes.json() as {
-      current: { temperature_2m: number; apparent_temperature: number; precipitation: number; rain: number; weathercode: number; windspeed_10m: number };
-      hourly: { time: string[]; temperature_2m: number[]; precipitation_probability: number[]; precipitation: number[]; weathercode: number[] };
+    const wd = (await wRes.json()) as {
+      current: {
+        temperature_2m: number;
+        apparent_temperature: number;
+        precipitation: number;
+        rain: number;
+        weathercode: number;
+        windspeed_10m: number;
+      };
+      hourly: {
+        time: string[];
+        temperature_2m: number[];
+        precipitation_probability: number[];
+        precipitation: number[];
+        weathercode: number[];
+      };
     };
 
     const cur = wd.current;
@@ -1055,13 +1352,22 @@ async function fetchWeatherContext(location: string): Promise<string | null> {
       .filter(({ t }) => t > now && t <= new Date(now.getTime() + 24 * 3600000))
       .map(({ i }) => i);
 
-    const maxRainProb = next24Idx.length ? Math.max(...next24Idx.map((i) => wd.hourly.precipitation_probability[i] ?? 0)) : 0;
-    const totalRain24h = next24Idx.reduce((s, i) => s + (wd.hourly.precipitation[i] ?? 0), 0);
+    const maxRainProb = next24Idx.length
+      ? Math.max(
+          ...next24Idx.map((i) => wd.hourly.precipitation_probability[i] ?? 0),
+        )
+      : 0;
+    const totalRain24h = next24Idx.reduce(
+      (s, i) => s + (wd.hourly.precipitation[i] ?? 0),
+      0,
+    );
 
     const rainNote =
-      maxRainProb >= 60 ? `Rain very likely in the next 24 hours (${maxRainProb}% chance, ~${totalRain24h.toFixed(2)}" expected). Umbrella or rain jacket strongly recommended.` :
-      maxRainProb >= 35 ? `Possible rain in the next 24 hours (${maxRainProb}% chance). Light jacket or umbrella advisable.` :
-      "No significant rain expected in the next 24 hours.";
+      maxRainProb >= 60
+        ? `Rain very likely in the next 24 hours (${maxRainProb}% chance, ~${totalRain24h.toFixed(2)}" expected). Umbrella or rain jacket strongly recommended.`
+        : maxRainProb >= 35
+          ? `Possible rain in the next 24 hours (${maxRainProb}% chance). Light jacket or umbrella advisable.`
+          : "No significant rain expected in the next 24 hours.";
 
     // 3-day daily summary
     const dayMap = new Map<string, number[]>();
@@ -1070,14 +1376,23 @@ async function fetchWeatherContext(location: string): Promise<string | null> {
       if (!dayMap.has(d)) dayMap.set(d, []);
       dayMap.get(d)!.push(i);
     });
-    const forecastLines = [...dayMap.entries()].slice(0, 3).map(([day, idxs]) => {
-      const temps = idxs.map((i) => wd.hourly.temperature_2m[i] ?? 0);
-      const prob = Math.max(...idxs.map((i) => wd.hourly.precipitation_probability[i] ?? 0));
-      const midCode = wd.hourly.weathercode[idxs[Math.floor(idxs.length / 2)] ?? 0] ?? 0;
-      const cond = WMO_CODES[midCode] ?? "variable";
-      const label = new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-      return `${label}: ${Math.min(...temps).toFixed(0)}–${Math.max(...temps).toFixed(0)}°F, ${cond}${prob >= 30 ? `, ${prob}% rain chance` : ""}`;
-    });
+    const forecastLines = [...dayMap.entries()]
+      .slice(0, 3)
+      .map(([day, idxs]) => {
+        const temps = idxs.map((i) => wd.hourly.temperature_2m[i] ?? 0);
+        const prob = Math.max(
+          ...idxs.map((i) => wd.hourly.precipitation_probability[i] ?? 0),
+        );
+        const midCode =
+          wd.hourly.weathercode[idxs[Math.floor(idxs.length / 2)] ?? 0] ?? 0;
+        const cond = WMO_CODES[midCode] ?? "variable";
+        const label = new Date(day + "T12:00:00").toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        });
+        return `${label}: ${Math.min(...temps).toFixed(0)}–${Math.max(...temps).toFixed(0)}°F, ${cond}${prob >= 30 ? `, ${prob}% rain chance` : ""}`;
+      });
 
     return `LIVE WEATHER FOR ${cityLabel.toUpperCase()} (real data — use this, don't hedge):
 Right now: ${cur.temperature_2m.toFixed(0)}°F (feels like ${cur.apparent_temperature.toFixed(0)}°F), ${condition}, wind ${cur.windspeed_10m.toFixed(0)} mph
@@ -1096,7 +1411,10 @@ WEATHER ADVICE RULES:
   }
 }
 
-function extractLocationFromMessage(msg: string, fallbacks: (string | null | undefined)[]): string | null {
+function extractLocationFromMessage(
+  msg: string,
+  fallbacks: (string | null | undefined)[],
+): string | null {
   const patterns = [
     /(?:weather|forecast|rain|temperature|degrees|umbrella|hot|cold|snow|storm)\s+(?:in|for|at|around)\s+([A-Za-z][a-zA-Z ]{2,24}?)(?:[?.,;]|$)/i,
     /(?:in|to|for|at|visiting|going to)\s+([A-Za-z][a-zA-Z ]{2,24}?)(?:'s)?\s+weather/i,
@@ -1113,7 +1431,9 @@ function extractLocationFromMessage(msg: string, fallbacks: (string | null | und
 }
 
 function isWeatherQuery(msg: string): boolean {
-  return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|hot|cold|snow|snowing|storm|wind|windy|humid|sunny|cloudy|what to (wear|pack)|what should I (wear|bring|pack)|will it rain)\b/i.test(msg);
+  return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|hot|cold|snow|snowing|storm|wind|windy|humid|sunny|cloudy|what to (wear|pack)|what should I (wear|bring|pack)|will it rain)\b/i.test(
+    msg,
+  );
 }
 
 // ─── Canonical city extraction ────────────────────────────────────────────────
@@ -1126,32 +1446,127 @@ function isWeatherQuery(msg: string): boolean {
 // Returns the detected country/community name(s) or null if none found.
 // IMPORTANT: only acts on explicit statements — never infers from searches or behavior.
 const IDENTITY_PATTERNS = [
-  /\bi(?:'m| am)\s+(?:a\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/,                   // "I'm Ethiopian", "I'm Afro-Cuban"
+  /\bi(?:'m| am)\s+(?:a\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/, // "I'm Ethiopian", "I'm Afro-Cuban"
   /\bmy\s+(?:family\s+is|parents?\s+are|grandparents?\s+are|ancestors?\s+are|roots?\s+are)\s+from\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i, // "my family is from Ghana"
   /\bmy\s+(?:family|heritage|roots?|background|culture)\s+is\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i,
   /\bi\s+(?:grew up|was born|was raised)\s+(?:in\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i,
   /\bmy\s+(?:culture|community|people)\s+(?:is|are)\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i,
-  /\breconnect\s+with\s+my\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\s+roots?\b/i,        // "reconnect with my Nigerian roots"
+  /\breconnect\s+with\s+my\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\s+roots?\b/i, // "reconnect with my Nigerian roots"
   /\blearn\s+(?:more\s+)?about\s+(?:my\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\s+(?:roots?|heritage|culture|community)\b/i,
 ];
 
 // Countries/communities valid to save — prevents saving random nouns like "New" or "York"
 // This is a representative subset; the full canonical list comes from the spec
 const VALID_COMMUNITY_NAMES = new Set([
-  "Ethiopian","Eritrean","Nigerian","Ghanaian","Kenyan","Ugandan","Rwandan","Senegalese","Guinean",
-  "Congolese","Cameroonian","Malian","Ivorian","Togolese","Beninese","Burundian","Zambian","Zimbabwean",
-  "South African","Mozambican","Angolan","Namibian","Botswanan","Tanzanian","Somali","Sudanese",
-  "Jamaican","Haitian","Trinidadian","Barbadian","Bahamian","Grenadian","Dominican","Cuban","Puerto Rican",
-  "Afro-Caribbean","Indo-Caribbean","West Indian",
-  "Mexican","Colombian","Venezuelan","Ecuadorian","Peruvian","Brazilian","Chilean","Bolivian","Uruguayan",
-  "Argentinian","Guatemalan","Salvadoran","Honduran","Nicaraguan","Costa Rican","Panamanian","Belizean",
-  "Afro-Latino","Afro-Latina","Afro-Cuban",
-  "Indian","Pakistani","Bangladeshi","Sri Lankan","Nepali","Filipino","Indonesian","Vietnamese","Thai",
-  "Cambodian","Laotian","Burmese","Malaysian","Singaporean","Chinese","Japanese","Korean","Taiwanese",
-  "Lebanese","Palestinian","Syrian","Jordanian","Egyptian","Moroccan","Algerian","Tunisian","Iranian","Persian",
-  "Iraqi","Yemeni","Turkish","Emirati","Saudi","Kuwaiti",
-  "Gullah","Geechee","Gullah Geechee","Creole","Cajun","Afro-American","African American","Black American",
-  "Indigenous","Native American","Cherokee","Navajo","Lakota","Hawaiian","Samoan","Tongan","Chamorro",
+  "Ethiopian",
+  "Eritrean",
+  "Nigerian",
+  "Ghanaian",
+  "Kenyan",
+  "Ugandan",
+  "Rwandan",
+  "Senegalese",
+  "Guinean",
+  "Congolese",
+  "Cameroonian",
+  "Malian",
+  "Ivorian",
+  "Togolese",
+  "Beninese",
+  "Burundian",
+  "Zambian",
+  "Zimbabwean",
+  "South African",
+  "Mozambican",
+  "Angolan",
+  "Namibian",
+  "Botswanan",
+  "Tanzanian",
+  "Somali",
+  "Sudanese",
+  "Jamaican",
+  "Haitian",
+  "Trinidadian",
+  "Barbadian",
+  "Bahamian",
+  "Grenadian",
+  "Dominican",
+  "Cuban",
+  "Puerto Rican",
+  "Afro-Caribbean",
+  "Indo-Caribbean",
+  "West Indian",
+  "Mexican",
+  "Colombian",
+  "Venezuelan",
+  "Ecuadorian",
+  "Peruvian",
+  "Brazilian",
+  "Chilean",
+  "Bolivian",
+  "Uruguayan",
+  "Argentinian",
+  "Guatemalan",
+  "Salvadoran",
+  "Honduran",
+  "Nicaraguan",
+  "Costa Rican",
+  "Panamanian",
+  "Belizean",
+  "Afro-Latino",
+  "Afro-Latina",
+  "Afro-Cuban",
+  "Indian",
+  "Pakistani",
+  "Bangladeshi",
+  "Sri Lankan",
+  "Nepali",
+  "Filipino",
+  "Indonesian",
+  "Vietnamese",
+  "Thai",
+  "Cambodian",
+  "Laotian",
+  "Burmese",
+  "Malaysian",
+  "Singaporean",
+  "Chinese",
+  "Japanese",
+  "Korean",
+  "Taiwanese",
+  "Lebanese",
+  "Palestinian",
+  "Syrian",
+  "Jordanian",
+  "Egyptian",
+  "Moroccan",
+  "Algerian",
+  "Tunisian",
+  "Iranian",
+  "Persian",
+  "Iraqi",
+  "Yemeni",
+  "Turkish",
+  "Emirati",
+  "Saudi",
+  "Kuwaiti",
+  "Gullah",
+  "Geechee",
+  "Gullah Geechee",
+  "Creole",
+  "Cajun",
+  "Afro-American",
+  "African American",
+  "Black American",
+  "Indigenous",
+  "Native American",
+  "Cherokee",
+  "Navajo",
+  "Lakota",
+  "Hawaiian",
+  "Samoan",
+  "Tongan",
+  "Chamorro",
 ]);
 
 function detectCulturalIdentity(msg: string): string | null {
@@ -1160,7 +1575,14 @@ function detectCulturalIdentity(msg: string): string | null {
     if (match?.[1]) {
       const candidate = match[1].trim();
       // Validate against known community names or check length/capitalization
-      if (VALID_COMMUNITY_NAMES.has(candidate) || (candidate.length >= 4 && /^[A-Z]/.test(candidate) && !/^(New|Los|San|Saint|East|West|North|South|Port|Fort|Lake|Mount)$/.test(candidate))) {
+      if (
+        VALID_COMMUNITY_NAMES.has(candidate) ||
+        (candidate.length >= 4 &&
+          /^[A-Z]/.test(candidate) &&
+          !/^(New|Los|San|Saint|East|West|North|South|Port|Fort|Lake|Mount)$/.test(
+            candidate,
+          ))
+      ) {
         return candidate;
       }
     }
@@ -1169,45 +1591,840 @@ function detectCulturalIdentity(msg: string): string | null {
 }
 
 // ─── City Voice System (copied + shared from travel.ts) ───────────────────────
-type CityVoice = { slang: string[]; phrases: string[]; culturalTouchstones: string[]; writingGuidance: string };
+type CityVoice = {
+  slang: string[];
+  phrases: string[];
+  culturalTouchstones: string[];
+  writingGuidance: string;
+};
 
 const CITY_VOICES: Record<string, CityVoice> = {
-  "new york": { slang: ["deadass","no cap","mad","wildin","fam","bussin","lowkey","bet"], phrases: ["deadass this spot is legendary","no cap you need to pull up","mad vibes in this neighborhood"], culturalTouchstones: ["Harlem Renaissance","Brooklyn Black excellence","Bed-Stuy do or die"], writingGuidance: "Write like a proud New Yorker — direct, confident, a little fast-paced. Use 'deadass', 'no cap', 'mad' as an adjective, 'fam'. Reference Harlem, Brooklyn, the Bronx." },
-  "atlanta": { slang: ["slime","on gang","bussin","the A","ATLien","drip","lowkey","no cap","period"], phrases: ["on gang this spot is bussin","the A never misses","this is where the culture lives"], culturalTouchstones: ["Sweet Auburn","the BeltLine","Old Fourth Ward","Atlanta as the Black mecca","HBCUs","trap music origins"], writingGuidance: "Write with Atlanta swagger — confident, aspirational, culturally rich. ATL is the Black mecca. Use 'the A', 'slime', 'on gang', 'bussin'. Reference BeltLine, Sweet Auburn, HBCUs." },
-  "chicago": { slang: ["shorty","the chi","finna","lowkey","on me","no cap","drip","bro","gang"], phrases: ["this spot is cold on me","the Chi never misses","finna pull up to this jawn"], culturalTouchstones: ["Bronzeville Black Metropolis","South Side culture","Chicago blues roots","Kanye and Chance legacy","Harold Washington legacy"], writingGuidance: "Write with Chi-town pride — real, resilient, deeply rooted. Use 'the Chi', 'shorty', 'finna', 'on me', reference the South Side and Bronzeville." },
-  "houston": { slang: ["trill","H-Town","third coast","finna","bruh","what it do","screwed up"], phrases: ["trill vibes only in H-Town","what it do, this spot is everything"], culturalTouchstones: ["Third Ward","Emancipation Park","DJ Screw legacy","UGK","Juneteenth origins in Texas","Project Row Houses"], writingGuidance: "Write with Houston trill energy — slow, confident, layered. Use 'trill', 'H-Town', 'third coast', 'what it do'. Reference the screwed music legacy and Juneteenth origins." },
-  "los angeles": { slang: ["no cap","faded","saucy","dub","west side","lowkey","bussin","hard","fire","on god"], phrases: ["this spot hits different out west","no cap the west coast eats","lowkey this is the move"], culturalTouchstones: ["Crenshaw District","Leimert Park Village","Inglewood culture","Compton legacy","Central Avenue jazz history","Black Hollywood"], writingGuidance: "Write with West Coast cool — laid back but confident. Reference Leimert Park, Crenshaw, Inglewood. The vibe is sun-kissed excellence." },
-  "dc": { slang: ["junt","bama","DMV","no cap","go-go","move","finna","bruh","joint","hard"], phrases: ["this junt is everything in the DMV","go-go vibes all day","the District never misses"], culturalTouchstones: ["U Street Corridor","go-go music culture","Howard University legacy","Anacostia history","Chuck Brown legacy","Ben's Chili Bowl"], writingGuidance: "Write with DMV energy — sophisticated but with that go-go bounce. Reference U Street, Howard University, go-go culture." },
-  "new orleans": { slang: ["cher","lagniappe","making groceries","pass a good time","where y'at","laissez les bons temps rouler","NOLA"], phrases: ["cher this spot will make you pass a good time","lagniappe — a little something extra"], culturalTouchstones: ["Tremé neighborhood","Second Line traditions","Mardi Gras Indian culture","jazz origins","Dooky Chase legacy","Congo Square history"], writingGuidance: "Write with NOLA warmth and rhythm — joyful, deep-rooted, full of life. Use 'cher', 'lagniappe', 'pass a good time'. Reference the Tremé, Second Line, Mardi Gras Indians." },
-  "miami": { slang: ["305","no cap","drip","lit","Magic City","fam","fire","on god","bussin","lowkey"], phrases: ["305 always delivers","Magic City energy is unmatched"], culturalTouchstones: ["Little Haiti culture","Overtown Black history","Liberty City","Afro-Caribbean influence","Miami Bass music origins"], writingGuidance: "Write with Miami heat — vibrant, multicultural, bold. Reference the Afro-Caribbean influence, Overtown, Little Haiti." },
-  "philadelphia": { slang: ["jawn","iight","no cap","joint","wooder ice","young bull","ard"], phrases: ["this jawn is everything","iight pull up to this spot"], culturalTouchstones: ["Black Bottom history","North Philly culture","West Philly","Roots and Questlove","South Street"], writingGuidance: "Write with Philly energy — gritty, proud, loyal. Use 'jawn' liberally, 'iight', 'young bull', 'ard'." },
-  "detroit": { slang: ["finna","no cap","Motown","313","on me","hard","drip","bruh","slime","lowkey"], phrases: ["313 never misses","Motown energy in this spot","Detroit hard as ever"], culturalTouchstones: ["Motown Records legacy","Black Bottom neighborhood history","Paradise Valley","The Heidelberg Project","Detroit techno origins"], writingGuidance: "Write with Detroit resilience — proud, gritty, innovative. Use '313', 'Motown', reference Black Bottom, Paradise Valley." },
-  "memphis": { slang: ["no cap","bruh","finna","901","Bluff City","slime","hard","on god","lowkey","fam"], phrases: ["901 always delivers","Bluff City culture is everything"], culturalTouchstones: ["Beale Street heritage","Memphis blues origins","Civil Rights history (Lorraine Motel)","Three 6 Mafia legacy","soul food capital","Stax Records"], writingGuidance: "Write with Memphis soul — deep, soulful, historically rooted. Use '901', 'Bluff City', reference Beale Street, Stax Records, the Civil Rights legacy." },
-  "baltimore": { slang: ["no cap","fam","joint","hard","bruh","lowkey","Charm City","B-More","hon","on me"], phrases: ["Charm City holds it down","B-More never misses"], culturalTouchstones: ["Pennsylvania Avenue history","Upton neighborhood","Morgan State HBCU","Billie Holiday birthplace","Cab Calloway history"], writingGuidance: "Write with Baltimore realness — resilient, proud, underrated. Use 'B-More', 'Charm City', reference Pennsylvania Avenue, Morgan State, the deep musical history." },
-  "oakland": { slang: ["hella","the town","hyphy","ghost ride","mac dre","turf","slaps","no cap","fam","hard"], phrases: ["the Town always delivers","hella vibes in Oakland","this spot slaps"], culturalTouchstones: ["Black Panther Party birthplace","Harlem of the West (Seventh Street)","Mac Dre and hyphy movement","Oscar Grant legacy","Oakland Museum of California","Fruitvale neighborhood"], writingGuidance: "Write with Oakland pride — bold, unapologetic, deeply political. Use 'hella', 'the Town', 'slaps'. Reference the Black Panthers, the hyphy movement, the resilience of Fruitvale." },
-  "nashville": { slang: ["615","Music City","the Gulch","no cap","fam","lowkey","bruh","on me"], phrases: ["615 never misses","Music City has more soul than the stage"], culturalTouchstones: ["Fisk University (HBCU)","Tennessee State University (HBCU)","Jefferson Street cultural corridor","Nashville sit-ins (Civil Rights)","Jubilee Singers legacy","North Nashville history"], writingGuidance: "Write with Nashville depth — this city has more than country music. Lead with Jefferson Street, Fisk, Tennessee State. Use '615', 'Music City'. Reference the HBCU legacy and civil rights history." },
-  "charlotte": { slang: ["QC","the Queen City","704","no cap","lowkey","fam","bruh","on god"], phrases: ["the QC always comes through","704 energy is different"], culturalTouchstones: ["Johnson C. Smith University (HBCU)","Historically Black neighborhoods in west Charlotte","CIAA Basketball Tournament","the Beatties Ford Road corridor","Harvey Gantt legacy"], writingGuidance: "Write with Charlotte pride — growing city, deep roots. Use 'QC', 'the Queen City', '704'. Reference Beatties Ford Road, JCSU, the CIAA Tournament energy." },
-  "dallas": { slang: ["Big D","the Metroplex","DFW","214","no cap","lowkey","bruh","fam","hard"], phrases: ["Big D always delivers","the Metroplex is everything"], culturalTouchstones: ["Deep Ellum history","South Dallas culture","Fair Park and State Fair legacy","Bishop Arts District","Paul Quinn College (HBCU)","Juanita Craft legacy"], writingGuidance: "Write with Dallas scale and swagger — big city, big culture. Use 'Big D', 'the Metroplex', 'DFW'. Reference Deep Ellum, South Dallas, Fair Park." },
-  "st. louis": { slang: ["STL","the Lou","314","no cap","fam","lowkey","bruh","on me"], phrases: ["the Lou never misses","314 energy is real"], culturalTouchstones: ["The Ville neighborhood (historic Black district)","Scott Joplin birthplace","Delmar Divide (race and inequality)","St. Louis blues and jazz roots","Harris-Stowe State University (HBCU)","Dick Gregory legacy"], writingGuidance: "Write with St. Louis soul — deep roots, complex history, proud community. Use 'the Lou', 'STL', '314'. Reference The Ville, the Delmar Divide, the blues and ragtime legacy." },
-  "birmingham": { slang: ["the Magic City","205","B-ham","no cap","fam","lowkey","bruh","on me"], phrases: ["the Magic City always surprises","205 holds it down"], culturalTouchstones: ["16th Street Baptist Church (Civil Rights)","4th Avenue Historic District (Black Wall Street of the South)","Kelly Ingram Park","A.G. Gaston legacy","Miles College (HBCU)","Tuskegee University (nearby HBCU)"], writingGuidance: "Write with Birmingham gravity — this city carries the weight and the resilience of the Civil Rights movement. Use 'the Magic City', '205'. Always reference the 4th Avenue corridor and the historic significance respectfully." },
-  "richmond": { slang: ["RVA","804","no cap","fam","lowkey","bruh","the 804","on me"], phrases: ["RVA holds it down","804 energy is underrated"], culturalTouchstones: ["Jackson Ward (Harlem of the South)","Maggie L. Walker legacy","Virginia Union University (HBCU)","Black Wall Street of Richmond","Monument Avenue history","Arthur Ashe birthplace"], writingGuidance: "Write with Richmond pride — a city rewriting its story. Use 'RVA', '804'. Always reference Jackson Ward, Maggie Walker, Virginia Union. Richmond's Black history is extraordinary and underrated." },
-  "kansas city": { slang: ["KC","KCMO","816","no cap","fam","lowkey","bruh","the city"], phrases: ["KC always delivers","816 energy is everything"], culturalTouchstones: ["18th and Vine Jazz District","Charlie Parker birthplace","Kansas City jazz and blues legacy","Lincoln University (HBCU, nearby Jefferson City)","Bruce R. Watkins Cultural Heritage Center"], writingGuidance: "Write with Kansas City warmth and rhythm — this is jazz country. Use 'KC', 'KCMO', '816'. Reference 18th and Vine, Charlie Parker, the deep jazz and BBQ culture." },
-  "baton rouge": { slang: ["BR","the Red Stick","225","no cap","fam","lowkey","bruh","on me"], phrases: ["the Red Stick always delivers","225 energy is real","BR never misses"], culturalTouchstones: ["Southern University (HBCU — largest HBCU in the US)","Southern University Jaguars football","Scotlandville community","North Baton Rouge culture","Zydeco music tradition","Creole and Cajun cultural intersection","Juanita Moore legacy","Port Hudson battlefield (Civil War)"], writingGuidance: "Write with Baton Rouge pride — this city carries enormous HBCU energy and deep Creole roots. Use 'the Red Stick', 'BR', '225'. Southern University is a centerpiece — the largest HBCU in the country. Reference North Baton Rouge, zydeco, and the Creole cultural tradition." },
-  "tulsa": { slang: ["918","T-Town","no cap","fam","lowkey","bruh","on me"], phrases: ["918 holds it down","T-Town has a story to tell"], culturalTouchstones: ["Greenwood District — Black Wall Street","1921 Tulsa Race Massacre (one of the worst in US history)","Greenwood Cultural Center","John Hope Franklin Reconciliation Park","Vernon AME Church","Booker T. Washington High School (historic)"], writingGuidance: "Write with Tulsa reverence and pride — this city carries one of the most significant and painful chapters in Black American history, and also one of the most extraordinary examples of Black prosperity ever built. Use '918', 'T-Town'. Always acknowledge Greenwood and Black Wall Street with the gravity they deserve." },
-  "jackson": { slang: ["the City with Soul","601","J-Town","no cap","fam","lowkey","bruh","on me"], phrases: ["the City with Soul never misses","601 holds it down"], culturalTouchstones: ["Jackson State University (HBCU)","Alcorn State University (HBCU, nearby)","Medgar Evers legacy and home","Farish Street Historic District (Mississippi Black Wall Street)","Margaret Walker Alexander legacy","1970 Jackson State shootings","Fannie Lou Hamer legacy (nearby)"], writingGuidance: "Write with Jackson soul and pride — this is the largest majority-Black city in the South. Use 'the City with Soul', '601', 'J-Town'. Reference Jackson State, Farish Street, Medgar Evers. This city's history is central to American civil rights." },
-  "raleigh": { slang: ["the Triangle","919","RTF","no cap","fam","lowkey","bruh","the 919"], phrases: ["the Triangle is building something real","919 energy is different"], culturalTouchstones: ["Shaw University (first HBCU in the South, founded 1865)","NC Central University (HBCU, Durham)","Historically Black neighborhoods in southeast Raleigh","Hamlin Road corridor","HBCU college basketball (MEAC)","Research Triangle Park and Black tech professionals"], writingGuidance: "Write with Triangle energy — this is one of the fastest-growing Black professional communities in the country. Use 'the Triangle', '919'. Reference Shaw University (the first HBCU in the South), NC Central, and the growing Black tech and entrepreneurship scene." },
-  "durham": { slang: ["Bull City","919","the D","no cap","fam","lowkey","bruh"], phrases: ["Bull City never misses","the D holds it down"], culturalTouchstones: ["NC Central University (HBCU)","Parrish Street — 'Black Wall Street of Durham'","Durham's historic Hayti neighborhood","Bimbe Cultural Arts Festival","North Carolina Mutual Life Insurance (first major Black-owned insurer)","Nia Cultural Center"], writingGuidance: "Write with Durham pride — Bull City has extraordinary Black entrepreneurial and academic history. Use 'Bull City', '919', 'the D'. Reference Parrish Street, Hayti, NC Central. Durham's 'Black Wall Street' predates Tulsa's and deserves recognition." },
-  "indianapolis": { slang: ["Naptown","the 317","Indy","no cap","fam","lowkey","bruh","on me"], phrases: ["Naptown always delivers","317 energy is real"], culturalTouchstones: ["Indiana Black Expo (largest Black exposition in the US)","Crispus Attucks High School (legendary Black high school)","Indiana Avenue jazz district","Madame C.J. Walker Building (historic HQ of first Black female millionaire)","Marcus Mosiah Garvey Park","Fisk University connection"], writingGuidance: "Write with Indy pride — this city punches way above its weight in Black culture. Use 'Naptown', '317'. Always reference the Indiana Black Expo, Crispus Attucks, and the Madame C.J. Walker Building. Indianapolis has extraordinary HBCU energy even without one in the city." },
-  "savannah": { slang: ["the Hostess City","912","Savvy","no cap","fam","lowkey","bruh"], phrases: ["the Hostess City always delivers","912 holds it down","Savannah's got soul to spare"], culturalTouchstones: ["First African Baptist Church (oldest Black church in North America)","Beach Institute (historic HBCU predecessor)","Ralph Mark Gilbert Civil Rights Museum","Savannah State University (HBCU)","Gullah Geechee cultural corridor","Forsyth Park community history","SCAD and arts community"], writingGuidance: "Write with Savannah warmth and depth — this city is stunning and deeply rooted. Use 'the Hostess City', '912', 'Savvy'. Lead with Savannah State, the First African Baptist Church, and the Gullah Geechee heritage. This is one of America's most beautiful and historically rich cities for Black culture." },
-  "cleveland": { slang: ["the 216","the Land","CLE","no cap","fam","lowkey","bruh","on me"], phrases: ["the Land always delivers","216 holds it down","CLE never misses"], culturalTouchstones: ["Glenville neighborhood (historic Black community)","Hough neighborhood history","Rock & Roll Hall of Fame (Black artists built this genre)","League Park history","Carl B. Stokes legacy (first Black mayor of a major US city)","Karamu House (oldest Black theater in the US)","Central neighborhood"], writingGuidance: "Write with Cleveland realness — proud, resilient, culturally deep. Use '216', 'the Land', 'CLE'. Reference Glenville, Karamu House, and Carl B. Stokes — Cleveland has firsts that the whole country should know about." },
-  "tampa": { slang: ["813","the Bay","TPA","no cap","fam","lowkey","bruh","on me"], phrases: ["813 always delivers","the Bay holds it down"], culturalTouchstones: ["Central Avenue (St. Petersburg) — historic Black commercial corridor","Manhattan Casino (St. Pete, historic Black venue)","Robles Park history","Ybor City and Afro-Cuban community","Tampa Bay area HBCU community","James Weldon Johnson connection","Wimauma farming community history"], writingGuidance: "Write with Tampa Bay energy — vibrant, diverse, growing. Use '813', 'the Bay'. Reference Central Avenue in St. Pete (NOT downtown Tampa) as the historic Black corridor. Acknowledge the Afro-Cuban community in Ybor City and the deep Caribbean cultural influence throughout the Bay area." },
-  "montgomery": { slang: ["the Gump","334","no cap","fam","lowkey","bruh","on me"], phrases: ["the Gump holds it down","334 energy is real"], culturalTouchstones: ["Civil Rights Memorial Center","Dexter Avenue King Memorial Baptist Church","Rosa Parks Museum","National Memorial for Peace and Justice (Equal Justice Initiative)","Alabama State University (HBCU)","Freedom Riders Museum","Montgomery Bus Boycott history"], writingGuidance: "Write with Montgomery gravity and pride — this is the cradle of the Civil Rights Movement. Use 'the Gump', '334'. Every reference to Montgomery should honor its central role in the movement — King's church, Rosa Parks, the Bus Boycott, the EJI memorial. Alabama State University is a proud HBCU presence." },
-  "charleston": { slang: ["the Holy City","843","CHS","no cap","fam","lowkey","bruh"], phrases: ["the Holy City always surprises","843 holds it down"], culturalTouchstones: ["Gullah Geechee culture and language","Denmark Vesey legacy","AME Church No. 1 (Emanuel — Mother Emanuel)","Avery Research Center for African American History","McLeod Plantation Historic Site","Morris Brown AME Church","Slave Mart Museum","Sullivan's Island (major slave entry point)"], writingGuidance: "Write with Charleston depth and reverence — this city holds extraordinary and painful history that demands acknowledgment. Use 'the Holy City', '843'. Reference Mother Emanuel, the Slave Mart Museum, Sullivan's Island, and the living Gullah Geechee culture. This is a city where beauty and history are inseparable." },
-  "norfolk": { slang: ["757","the 757","Hampton Roads","no cap","fam","lowkey","bruh","on me"], phrases: ["757 always delivers","Hampton Roads holds it down"], culturalTouchstones: ["Hampton University (HBCU — one of the oldest and most prestigious)","Norfolk State University (HBCU)","Historic St. Joseph's neighborhood","Booker T. Washington's Hampton connection","Attucks Theatre (oldest Black theater in the mid-Atlantic)","the HBCU classic tradition"], writingGuidance: "Write with 757 pride — Hampton Roads is HBCU country. Use '757', 'Hampton Roads'. Hampton University and Norfolk State are cornerstones — always reference them with pride. The Attucks Theatre and the deep military and community history make this region underrated nationally." },
-  "tuskegee": { slang: ["334","the Institute","no cap","fam","lowkey","bruh"], phrases: ["Tuskegee is where it started","the Institute built a legacy"], culturalTouchstones: ["Tuskegee University (HBCU — Booker T. Washington's institution)","Tuskegee Airmen National Historic Site","George Washington Carver Museum","Tuskegee syphilis study history (acknowledge with sensitivity)","Legacy of Booker T. Washington","The Oaks (Washington's home)"], writingGuidance: "Write with Tuskegee reverence — this small city carries enormous historical weight. Use '334', 'the Institute'. Tuskegee University, the Tuskegee Airmen, and Booker T. Washington's legacy define this place nationally. Acknowledge the syphilis study as part of the city's complex history when relevant — it's essential context for health trust in Black communities." },
-  "columbus": { slang: ["614","CBus","no cap","fam","lowkey","bruh","on me"], phrases: ["614 always delivers","CBus holds it down"], culturalTouchstones: ["Near East Side (historic Black neighborhood)","King-Lincoln Bronzeville neighborhood","Columbus Museum of Art Black history collections","Ohio State NAACP chapter history","Short North arts district","Wil Haygood and cultural legacy"], writingGuidance: "Write with Columbus energy — growing, diverse, culturally evolving. Use '614', 'CBus'. Reference the Near East Side and King-Lincoln Bronzeville as the historic Black community anchors. Columbus is often overlooked nationally but has a strong and growing Black creative and professional community." },
-  "cincinnati": { slang: ["the Nasty Nati","513","Cincy","no cap","fam","lowkey","bruh"], phrases: ["the Nasty Nati holds it down","513 always delivers"], culturalTouchstones: ["Walnut Hills neighborhood (historic Black community)","Harriet Beecher Stowe House (Underground Railroad history)","National Underground Railroad Freedom Center","Cincinnati's role on the Ohio River freedom corridor","Over-the-Rhine history","Xavier University connection","Marian Spencer legacy (first Black woman elected to Cincinnati City Council)"], writingGuidance: "Write with Cincinnati depth — 'the Nasty Nati' has a rich and complex history. Use '513', 'Cincy', 'the Nasty Nati'. Lead with the National Underground Railroad Freedom Center and the Ohio River's role as a freedom corridor. Walnut Hills is the heart of Black Cincinnati." },
-  "jacksonville": { slang: ["Jax","904","the First Coast","no cap","fam","lowkey","bruh","on me"], phrases: ["Jax always holds it down","904 energy is real"], culturalTouchstones: ["Ritz Theatre and Museum (LaVilla neighborhood)","LaVilla — 'the Harlem of the South'","Historic Springfield neighborhood","Edward Waters University (HBCU — oldest in Florida)","James Weldon Johnson birthplace (wrote 'Lift Every Voice and Sing')","Durkeeville community history"], writingGuidance: "Write with Jacksonville pride — Jax has a heritage that's been consistently undersung. Use 'Jax', '904', 'the First Coast'. James Weldon Johnson was born here — he wrote Lift Every Voice and Sing. Edward Waters is Florida's oldest HBCU. LaVilla was the 'Harlem of the South.'" },
+  "new york": {
+    slang: [
+      "deadass",
+      "no cap",
+      "mad",
+      "wildin",
+      "fam",
+      "bussin",
+      "lowkey",
+      "bet",
+    ],
+    phrases: [
+      "deadass this spot is legendary",
+      "no cap you need to pull up",
+      "mad vibes in this neighborhood",
+    ],
+    culturalTouchstones: [
+      "Harlem Renaissance",
+      "Brooklyn Black excellence",
+      "Bed-Stuy do or die",
+    ],
+    writingGuidance:
+      "Write like a proud New Yorker — direct, confident, a little fast-paced. Use 'deadass', 'no cap', 'mad' as an adjective, 'fam'. Reference Harlem, Brooklyn, the Bronx.",
+  },
+  atlanta: {
+    slang: [
+      "slime",
+      "on gang",
+      "bussin",
+      "the A",
+      "ATLien",
+      "drip",
+      "lowkey",
+      "no cap",
+      "period",
+    ],
+    phrases: [
+      "on gang this spot is bussin",
+      "the A never misses",
+      "this is where the culture lives",
+    ],
+    culturalTouchstones: [
+      "Sweet Auburn",
+      "the BeltLine",
+      "Old Fourth Ward",
+      "Atlanta as the Black mecca",
+      "HBCUs",
+      "trap music origins",
+    ],
+    writingGuidance:
+      "Write with Atlanta swagger — confident, aspirational, culturally rich. ATL is the Black mecca. Use 'the A', 'slime', 'on gang', 'bussin'. Reference BeltLine, Sweet Auburn, HBCUs.",
+  },
+  chicago: {
+    slang: [
+      "shorty",
+      "the chi",
+      "finna",
+      "lowkey",
+      "on me",
+      "no cap",
+      "drip",
+      "bro",
+      "gang",
+    ],
+    phrases: [
+      "this spot is cold on me",
+      "the Chi never misses",
+      "finna pull up to this jawn",
+    ],
+    culturalTouchstones: [
+      "Bronzeville Black Metropolis",
+      "South Side culture",
+      "Chicago blues roots",
+      "Kanye and Chance legacy",
+      "Harold Washington legacy",
+    ],
+    writingGuidance:
+      "Write with Chi-town pride — real, resilient, deeply rooted. Use 'the Chi', 'shorty', 'finna', 'on me', reference the South Side and Bronzeville.",
+  },
+  houston: {
+    slang: [
+      "trill",
+      "H-Town",
+      "third coast",
+      "finna",
+      "bruh",
+      "what it do",
+      "screwed up",
+    ],
+    phrases: [
+      "trill vibes only in H-Town",
+      "what it do, this spot is everything",
+    ],
+    culturalTouchstones: [
+      "Third Ward",
+      "Emancipation Park",
+      "DJ Screw legacy",
+      "UGK",
+      "Juneteenth origins in Texas",
+      "Project Row Houses",
+    ],
+    writingGuidance:
+      "Write with Houston trill energy — slow, confident, layered. Use 'trill', 'H-Town', 'third coast', 'what it do'. Reference the screwed music legacy and Juneteenth origins.",
+  },
+  "los angeles": {
+    slang: [
+      "no cap",
+      "faded",
+      "saucy",
+      "dub",
+      "west side",
+      "lowkey",
+      "bussin",
+      "hard",
+      "fire",
+      "on god",
+    ],
+    phrases: [
+      "this spot hits different out west",
+      "no cap the west coast eats",
+      "lowkey this is the move",
+    ],
+    culturalTouchstones: [
+      "Crenshaw District",
+      "Leimert Park Village",
+      "Inglewood culture",
+      "Compton legacy",
+      "Central Avenue jazz history",
+      "Black Hollywood",
+    ],
+    writingGuidance:
+      "Write with West Coast cool — laid back but confident. Reference Leimert Park, Crenshaw, Inglewood. The vibe is sun-kissed excellence.",
+  },
+  dc: {
+    slang: [
+      "junt",
+      "bama",
+      "DMV",
+      "no cap",
+      "go-go",
+      "move",
+      "finna",
+      "bruh",
+      "joint",
+      "hard",
+    ],
+    phrases: [
+      "this junt is everything in the DMV",
+      "go-go vibes all day",
+      "the District never misses",
+    ],
+    culturalTouchstones: [
+      "U Street Corridor",
+      "go-go music culture",
+      "Howard University legacy",
+      "Anacostia history",
+      "Chuck Brown legacy",
+      "Ben's Chili Bowl",
+    ],
+    writingGuidance:
+      "Write with DMV energy — sophisticated but with that go-go bounce. Reference U Street, Howard University, go-go culture.",
+  },
+  "new orleans": {
+    slang: [
+      "cher",
+      "lagniappe",
+      "making groceries",
+      "pass a good time",
+      "where y'at",
+      "laissez les bons temps rouler",
+      "NOLA",
+    ],
+    phrases: [
+      "cher this spot will make you pass a good time",
+      "lagniappe — a little something extra",
+    ],
+    culturalTouchstones: [
+      "Tremé neighborhood",
+      "Second Line traditions",
+      "Mardi Gras Indian culture",
+      "jazz origins",
+      "Dooky Chase legacy",
+      "Congo Square history",
+    ],
+    writingGuidance:
+      "Write with NOLA warmth and rhythm — joyful, deep-rooted, full of life. Use 'cher', 'lagniappe', 'pass a good time'. Reference the Tremé, Second Line, Mardi Gras Indians.",
+  },
+  miami: {
+    slang: [
+      "305",
+      "no cap",
+      "drip",
+      "lit",
+      "Magic City",
+      "fam",
+      "fire",
+      "on god",
+      "bussin",
+      "lowkey",
+    ],
+    phrases: ["305 always delivers", "Magic City energy is unmatched"],
+    culturalTouchstones: [
+      "Little Haiti culture",
+      "Overtown Black history",
+      "Liberty City",
+      "Afro-Caribbean influence",
+      "Miami Bass music origins",
+    ],
+    writingGuidance:
+      "Write with Miami heat — vibrant, multicultural, bold. Reference the Afro-Caribbean influence, Overtown, Little Haiti.",
+  },
+  philadelphia: {
+    slang: [
+      "jawn",
+      "iight",
+      "no cap",
+      "joint",
+      "wooder ice",
+      "young bull",
+      "ard",
+    ],
+    phrases: ["this jawn is everything", "iight pull up to this spot"],
+    culturalTouchstones: [
+      "Black Bottom history",
+      "North Philly culture",
+      "West Philly",
+      "Roots and Questlove",
+      "South Street",
+    ],
+    writingGuidance:
+      "Write with Philly energy — gritty, proud, loyal. Use 'jawn' liberally, 'iight', 'young bull', 'ard'.",
+  },
+  detroit: {
+    slang: [
+      "finna",
+      "no cap",
+      "Motown",
+      "313",
+      "on me",
+      "hard",
+      "drip",
+      "bruh",
+      "slime",
+      "lowkey",
+    ],
+    phrases: [
+      "313 never misses",
+      "Motown energy in this spot",
+      "Detroit hard as ever",
+    ],
+    culturalTouchstones: [
+      "Motown Records legacy",
+      "Black Bottom neighborhood history",
+      "Paradise Valley",
+      "The Heidelberg Project",
+      "Detroit techno origins",
+    ],
+    writingGuidance:
+      "Write with Detroit resilience — proud, gritty, innovative. Use '313', 'Motown', reference Black Bottom, Paradise Valley.",
+  },
+  memphis: {
+    slang: [
+      "no cap",
+      "bruh",
+      "finna",
+      "901",
+      "Bluff City",
+      "slime",
+      "hard",
+      "on god",
+      "lowkey",
+      "fam",
+    ],
+    phrases: ["901 always delivers", "Bluff City culture is everything"],
+    culturalTouchstones: [
+      "Beale Street heritage",
+      "Memphis blues origins",
+      "Civil Rights history (Lorraine Motel)",
+      "Three 6 Mafia legacy",
+      "soul food capital",
+      "Stax Records",
+    ],
+    writingGuidance:
+      "Write with Memphis soul — deep, soulful, historically rooted. Use '901', 'Bluff City', reference Beale Street, Stax Records, the Civil Rights legacy.",
+  },
+  baltimore: {
+    slang: [
+      "no cap",
+      "fam",
+      "joint",
+      "hard",
+      "bruh",
+      "lowkey",
+      "Charm City",
+      "B-More",
+      "hon",
+      "on me",
+    ],
+    phrases: ["Charm City holds it down", "B-More never misses"],
+    culturalTouchstones: [
+      "Pennsylvania Avenue history",
+      "Upton neighborhood",
+      "Morgan State HBCU",
+      "Billie Holiday birthplace",
+      "Cab Calloway history",
+    ],
+    writingGuidance:
+      "Write with Baltimore realness — resilient, proud, underrated. Use 'B-More', 'Charm City', reference Pennsylvania Avenue, Morgan State, the deep musical history.",
+  },
+  oakland: {
+    slang: [
+      "hella",
+      "the town",
+      "hyphy",
+      "ghost ride",
+      "mac dre",
+      "turf",
+      "slaps",
+      "no cap",
+      "fam",
+      "hard",
+    ],
+    phrases: [
+      "the Town always delivers",
+      "hella vibes in Oakland",
+      "this spot slaps",
+    ],
+    culturalTouchstones: [
+      "Black Panther Party birthplace",
+      "Harlem of the West (Seventh Street)",
+      "Mac Dre and hyphy movement",
+      "Oscar Grant legacy",
+      "Oakland Museum of California",
+      "Fruitvale neighborhood",
+    ],
+    writingGuidance:
+      "Write with Oakland pride — bold, unapologetic, deeply political. Use 'hella', 'the Town', 'slaps'. Reference the Black Panthers, the hyphy movement, the resilience of Fruitvale.",
+  },
+  nashville: {
+    slang: [
+      "615",
+      "Music City",
+      "the Gulch",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["615 never misses", "Music City has more soul than the stage"],
+    culturalTouchstones: [
+      "Fisk University (HBCU)",
+      "Tennessee State University (HBCU)",
+      "Jefferson Street cultural corridor",
+      "Nashville sit-ins (Civil Rights)",
+      "Jubilee Singers legacy",
+      "North Nashville history",
+    ],
+    writingGuidance:
+      "Write with Nashville depth — this city has more than country music. Lead with Jefferson Street, Fisk, Tennessee State. Use '615', 'Music City'. Reference the HBCU legacy and civil rights history.",
+  },
+  charlotte: {
+    slang: [
+      "QC",
+      "the Queen City",
+      "704",
+      "no cap",
+      "lowkey",
+      "fam",
+      "bruh",
+      "on god",
+    ],
+    phrases: ["the QC always comes through", "704 energy is different"],
+    culturalTouchstones: [
+      "Johnson C. Smith University (HBCU)",
+      "Historically Black neighborhoods in west Charlotte",
+      "CIAA Basketball Tournament",
+      "the Beatties Ford Road corridor",
+      "Harvey Gantt legacy",
+    ],
+    writingGuidance:
+      "Write with Charlotte pride — growing city, deep roots. Use 'QC', 'the Queen City', '704'. Reference Beatties Ford Road, JCSU, the CIAA Tournament energy.",
+  },
+  dallas: {
+    slang: [
+      "Big D",
+      "the Metroplex",
+      "DFW",
+      "214",
+      "no cap",
+      "lowkey",
+      "bruh",
+      "fam",
+      "hard",
+    ],
+    phrases: ["Big D always delivers", "the Metroplex is everything"],
+    culturalTouchstones: [
+      "Deep Ellum history",
+      "South Dallas culture",
+      "Fair Park and State Fair legacy",
+      "Bishop Arts District",
+      "Paul Quinn College (HBCU)",
+      "Juanita Craft legacy",
+    ],
+    writingGuidance:
+      "Write with Dallas scale and swagger — big city, big culture. Use 'Big D', 'the Metroplex', 'DFW'. Reference Deep Ellum, South Dallas, Fair Park.",
+  },
+  "st. louis": {
+    slang: [
+      "STL",
+      "the Lou",
+      "314",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["the Lou never misses", "314 energy is real"],
+    culturalTouchstones: [
+      "The Ville neighborhood (historic Black district)",
+      "Scott Joplin birthplace",
+      "Delmar Divide (race and inequality)",
+      "St. Louis blues and jazz roots",
+      "Harris-Stowe State University (HBCU)",
+      "Dick Gregory legacy",
+    ],
+    writingGuidance:
+      "Write with St. Louis soul — deep roots, complex history, proud community. Use 'the Lou', 'STL', '314'. Reference The Ville, the Delmar Divide, the blues and ragtime legacy.",
+  },
+  birmingham: {
+    slang: [
+      "the Magic City",
+      "205",
+      "B-ham",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["the Magic City always surprises", "205 holds it down"],
+    culturalTouchstones: [
+      "16th Street Baptist Church (Civil Rights)",
+      "4th Avenue Historic District (Black Wall Street of the South)",
+      "Kelly Ingram Park",
+      "A.G. Gaston legacy",
+      "Miles College (HBCU)",
+      "Tuskegee University (nearby HBCU)",
+    ],
+    writingGuidance:
+      "Write with Birmingham gravity — this city carries the weight and the resilience of the Civil Rights movement. Use 'the Magic City', '205'. Always reference the 4th Avenue corridor and the historic significance respectfully.",
+  },
+  richmond: {
+    slang: [
+      "RVA",
+      "804",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "the 804",
+      "on me",
+    ],
+    phrases: ["RVA holds it down", "804 energy is underrated"],
+    culturalTouchstones: [
+      "Jackson Ward (Harlem of the South)",
+      "Maggie L. Walker legacy",
+      "Virginia Union University (HBCU)",
+      "Black Wall Street of Richmond",
+      "Monument Avenue history",
+      "Arthur Ashe birthplace",
+    ],
+    writingGuidance:
+      "Write with Richmond pride — a city rewriting its story. Use 'RVA', '804'. Always reference Jackson Ward, Maggie Walker, Virginia Union. Richmond's Black history is extraordinary and underrated.",
+  },
+  "kansas city": {
+    slang: ["KC", "KCMO", "816", "no cap", "fam", "lowkey", "bruh", "the city"],
+    phrases: ["KC always delivers", "816 energy is everything"],
+    culturalTouchstones: [
+      "18th and Vine Jazz District",
+      "Charlie Parker birthplace",
+      "Kansas City jazz and blues legacy",
+      "Lincoln University (HBCU, nearby Jefferson City)",
+      "Bruce R. Watkins Cultural Heritage Center",
+    ],
+    writingGuidance:
+      "Write with Kansas City warmth and rhythm — this is jazz country. Use 'KC', 'KCMO', '816'. Reference 18th and Vine, Charlie Parker, the deep jazz and BBQ culture.",
+  },
+  "baton rouge": {
+    slang: [
+      "BR",
+      "the Red Stick",
+      "225",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: [
+      "the Red Stick always delivers",
+      "225 energy is real",
+      "BR never misses",
+    ],
+    culturalTouchstones: [
+      "Southern University (HBCU — largest HBCU in the US)",
+      "Southern University Jaguars football",
+      "Scotlandville community",
+      "North Baton Rouge culture",
+      "Zydeco music tradition",
+      "Creole and Cajun cultural intersection",
+      "Juanita Moore legacy",
+      "Port Hudson battlefield (Civil War)",
+    ],
+    writingGuidance:
+      "Write with Baton Rouge pride — this city carries enormous HBCU energy and deep Creole roots. Use 'the Red Stick', 'BR', '225'. Southern University is a centerpiece — the largest HBCU in the country. Reference North Baton Rouge, zydeco, and the Creole cultural tradition.",
+  },
+  tulsa: {
+    slang: ["918", "T-Town", "no cap", "fam", "lowkey", "bruh", "on me"],
+    phrases: ["918 holds it down", "T-Town has a story to tell"],
+    culturalTouchstones: [
+      "Greenwood District — Black Wall Street",
+      "1921 Tulsa Race Massacre (one of the worst in US history)",
+      "Greenwood Cultural Center",
+      "John Hope Franklin Reconciliation Park",
+      "Vernon AME Church",
+      "Booker T. Washington High School (historic)",
+    ],
+    writingGuidance:
+      "Write with Tulsa reverence and pride — this city carries one of the most significant and painful chapters in Black American history, and also one of the most extraordinary examples of Black prosperity ever built. Use '918', 'T-Town'. Always acknowledge Greenwood and Black Wall Street with the gravity they deserve.",
+  },
+  jackson: {
+    slang: [
+      "the City with Soul",
+      "601",
+      "J-Town",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["the City with Soul never misses", "601 holds it down"],
+    culturalTouchstones: [
+      "Jackson State University (HBCU)",
+      "Alcorn State University (HBCU, nearby)",
+      "Medgar Evers legacy and home",
+      "Farish Street Historic District (Mississippi Black Wall Street)",
+      "Margaret Walker Alexander legacy",
+      "1970 Jackson State shootings",
+      "Fannie Lou Hamer legacy (nearby)",
+    ],
+    writingGuidance:
+      "Write with Jackson soul and pride — this is the largest majority-Black city in the South. Use 'the City with Soul', '601', 'J-Town'. Reference Jackson State, Farish Street, Medgar Evers. This city's history is central to American civil rights.",
+  },
+  raleigh: {
+    slang: [
+      "the Triangle",
+      "919",
+      "RTF",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "the 919",
+    ],
+    phrases: [
+      "the Triangle is building something real",
+      "919 energy is different",
+    ],
+    culturalTouchstones: [
+      "Shaw University (first HBCU in the South, founded 1865)",
+      "NC Central University (HBCU, Durham)",
+      "Historically Black neighborhoods in southeast Raleigh",
+      "Hamlin Road corridor",
+      "HBCU college basketball (MEAC)",
+      "Research Triangle Park and Black tech professionals",
+    ],
+    writingGuidance:
+      "Write with Triangle energy — this is one of the fastest-growing Black professional communities in the country. Use 'the Triangle', '919'. Reference Shaw University (the first HBCU in the South), NC Central, and the growing Black tech and entrepreneurship scene.",
+  },
+  durham: {
+    slang: ["Bull City", "919", "the D", "no cap", "fam", "lowkey", "bruh"],
+    phrases: ["Bull City never misses", "the D holds it down"],
+    culturalTouchstones: [
+      "NC Central University (HBCU)",
+      "Parrish Street — 'Black Wall Street of Durham'",
+      "Durham's historic Hayti neighborhood",
+      "Bimbe Cultural Arts Festival",
+      "North Carolina Mutual Life Insurance (first major Black-owned insurer)",
+      "Nia Cultural Center",
+    ],
+    writingGuidance:
+      "Write with Durham pride — Bull City has extraordinary Black entrepreneurial and academic history. Use 'Bull City', '919', 'the D'. Reference Parrish Street, Hayti, NC Central. Durham's 'Black Wall Street' predates Tulsa's and deserves recognition.",
+  },
+  indianapolis: {
+    slang: [
+      "Naptown",
+      "the 317",
+      "Indy",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["Naptown always delivers", "317 energy is real"],
+    culturalTouchstones: [
+      "Indiana Black Expo (largest Black exposition in the US)",
+      "Crispus Attucks High School (legendary Black high school)",
+      "Indiana Avenue jazz district",
+      "Madame C.J. Walker Building (historic HQ of first Black female millionaire)",
+      "Marcus Mosiah Garvey Park",
+      "Fisk University connection",
+    ],
+    writingGuidance:
+      "Write with Indy pride — this city punches way above its weight in Black culture. Use 'Naptown', '317'. Always reference the Indiana Black Expo, Crispus Attucks, and the Madame C.J. Walker Building. Indianapolis has extraordinary HBCU energy even without one in the city.",
+  },
+  savannah: {
+    slang: [
+      "the Hostess City",
+      "912",
+      "Savvy",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+    ],
+    phrases: [
+      "the Hostess City always delivers",
+      "912 holds it down",
+      "Savannah's got soul to spare",
+    ],
+    culturalTouchstones: [
+      "First African Baptist Church (oldest Black church in North America)",
+      "Beach Institute (historic HBCU predecessor)",
+      "Ralph Mark Gilbert Civil Rights Museum",
+      "Savannah State University (HBCU)",
+      "Gullah Geechee cultural corridor",
+      "Forsyth Park community history",
+      "SCAD and arts community",
+    ],
+    writingGuidance:
+      "Write with Savannah warmth and depth — this city is stunning and deeply rooted. Use 'the Hostess City', '912', 'Savvy'. Lead with Savannah State, the First African Baptist Church, and the Gullah Geechee heritage. This is one of America's most beautiful and historically rich cities for Black culture.",
+  },
+  cleveland: {
+    slang: [
+      "the 216",
+      "the Land",
+      "CLE",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: [
+      "the Land always delivers",
+      "216 holds it down",
+      "CLE never misses",
+    ],
+    culturalTouchstones: [
+      "Glenville neighborhood (historic Black community)",
+      "Hough neighborhood history",
+      "Rock & Roll Hall of Fame (Black artists built this genre)",
+      "League Park history",
+      "Carl B. Stokes legacy (first Black mayor of a major US city)",
+      "Karamu House (oldest Black theater in the US)",
+      "Central neighborhood",
+    ],
+    writingGuidance:
+      "Write with Cleveland realness — proud, resilient, culturally deep. Use '216', 'the Land', 'CLE'. Reference Glenville, Karamu House, and Carl B. Stokes — Cleveland has firsts that the whole country should know about.",
+  },
+  tampa: {
+    slang: [
+      "813",
+      "the Bay",
+      "TPA",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["813 always delivers", "the Bay holds it down"],
+    culturalTouchstones: [
+      "Central Avenue (St. Petersburg) — historic Black commercial corridor",
+      "Manhattan Casino (St. Pete, historic Black venue)",
+      "Robles Park history",
+      "Ybor City and Afro-Cuban community",
+      "Tampa Bay area HBCU community",
+      "James Weldon Johnson connection",
+      "Wimauma farming community history",
+    ],
+    writingGuidance:
+      "Write with Tampa Bay energy — vibrant, diverse, growing. Use '813', 'the Bay'. Reference Central Avenue in St. Pete (NOT downtown Tampa) as the historic Black corridor. Acknowledge the Afro-Cuban community in Ybor City and the deep Caribbean cultural influence throughout the Bay area.",
+  },
+  montgomery: {
+    slang: ["the Gump", "334", "no cap", "fam", "lowkey", "bruh", "on me"],
+    phrases: ["the Gump holds it down", "334 energy is real"],
+    culturalTouchstones: [
+      "Civil Rights Memorial Center",
+      "Dexter Avenue King Memorial Baptist Church",
+      "Rosa Parks Museum",
+      "National Memorial for Peace and Justice (Equal Justice Initiative)",
+      "Alabama State University (HBCU)",
+      "Freedom Riders Museum",
+      "Montgomery Bus Boycott history",
+    ],
+    writingGuidance:
+      "Write with Montgomery gravity and pride — this is the cradle of the Civil Rights Movement. Use 'the Gump', '334'. Every reference to Montgomery should honor its central role in the movement — King's church, Rosa Parks, the Bus Boycott, the EJI memorial. Alabama State University is a proud HBCU presence.",
+  },
+  charleston: {
+    slang: ["the Holy City", "843", "CHS", "no cap", "fam", "lowkey", "bruh"],
+    phrases: ["the Holy City always surprises", "843 holds it down"],
+    culturalTouchstones: [
+      "Gullah Geechee culture and language",
+      "Denmark Vesey legacy",
+      "AME Church No. 1 (Emanuel — Mother Emanuel)",
+      "Avery Research Center for African American History",
+      "McLeod Plantation Historic Site",
+      "Morris Brown AME Church",
+      "Slave Mart Museum",
+      "Sullivan's Island (major slave entry point)",
+    ],
+    writingGuidance:
+      "Write with Charleston depth and reverence — this city holds extraordinary and painful history that demands acknowledgment. Use 'the Holy City', '843'. Reference Mother Emanuel, the Slave Mart Museum, Sullivan's Island, and the living Gullah Geechee culture. This is a city where beauty and history are inseparable.",
+  },
+  norfolk: {
+    slang: [
+      "757",
+      "the 757",
+      "Hampton Roads",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["757 always delivers", "Hampton Roads holds it down"],
+    culturalTouchstones: [
+      "Hampton University (HBCU — one of the oldest and most prestigious)",
+      "Norfolk State University (HBCU)",
+      "Historic St. Joseph's neighborhood",
+      "Booker T. Washington's Hampton connection",
+      "Attucks Theatre (oldest Black theater in the mid-Atlantic)",
+      "the HBCU classic tradition",
+    ],
+    writingGuidance:
+      "Write with 757 pride — Hampton Roads is HBCU country. Use '757', 'Hampton Roads'. Hampton University and Norfolk State are cornerstones — always reference them with pride. The Attucks Theatre and the deep military and community history make this region underrated nationally.",
+  },
+  tuskegee: {
+    slang: ["334", "the Institute", "no cap", "fam", "lowkey", "bruh"],
+    phrases: ["Tuskegee is where it started", "the Institute built a legacy"],
+    culturalTouchstones: [
+      "Tuskegee University (HBCU — Booker T. Washington's institution)",
+      "Tuskegee Airmen National Historic Site",
+      "George Washington Carver Museum",
+      "Tuskegee syphilis study history (acknowledge with sensitivity)",
+      "Legacy of Booker T. Washington",
+      "The Oaks (Washington's home)",
+    ],
+    writingGuidance:
+      "Write with Tuskegee reverence — this small city carries enormous historical weight. Use '334', 'the Institute'. Tuskegee University, the Tuskegee Airmen, and Booker T. Washington's legacy define this place nationally. Acknowledge the syphilis study as part of the city's complex history when relevant — it's essential context for health trust in Black communities.",
+  },
+  columbus: {
+    slang: ["614", "CBus", "no cap", "fam", "lowkey", "bruh", "on me"],
+    phrases: ["614 always delivers", "CBus holds it down"],
+    culturalTouchstones: [
+      "Near East Side (historic Black neighborhood)",
+      "King-Lincoln Bronzeville neighborhood",
+      "Columbus Museum of Art Black history collections",
+      "Ohio State NAACP chapter history",
+      "Short North arts district",
+      "Wil Haygood and cultural legacy",
+    ],
+    writingGuidance:
+      "Write with Columbus energy — growing, diverse, culturally evolving. Use '614', 'CBus'. Reference the Near East Side and King-Lincoln Bronzeville as the historic Black community anchors. Columbus is often overlooked nationally but has a strong and growing Black creative and professional community.",
+  },
+  cincinnati: {
+    slang: [
+      "the Nasty Nati",
+      "513",
+      "Cincy",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+    ],
+    phrases: ["the Nasty Nati holds it down", "513 always delivers"],
+    culturalTouchstones: [
+      "Walnut Hills neighborhood (historic Black community)",
+      "Harriet Beecher Stowe House (Underground Railroad history)",
+      "National Underground Railroad Freedom Center",
+      "Cincinnati's role on the Ohio River freedom corridor",
+      "Over-the-Rhine history",
+      "Xavier University connection",
+      "Marian Spencer legacy (first Black woman elected to Cincinnati City Council)",
+    ],
+    writingGuidance:
+      "Write with Cincinnati depth — 'the Nasty Nati' has a rich and complex history. Use '513', 'Cincy', 'the Nasty Nati'. Lead with the National Underground Railroad Freedom Center and the Ohio River's role as a freedom corridor. Walnut Hills is the heart of Black Cincinnati.",
+  },
+  jacksonville: {
+    slang: [
+      "Jax",
+      "904",
+      "the First Coast",
+      "no cap",
+      "fam",
+      "lowkey",
+      "bruh",
+      "on me",
+    ],
+    phrases: ["Jax always holds it down", "904 energy is real"],
+    culturalTouchstones: [
+      "Ritz Theatre and Museum (LaVilla neighborhood)",
+      "LaVilla — 'the Harlem of the South'",
+      "Historic Springfield neighborhood",
+      "Edward Waters University (HBCU — oldest in Florida)",
+      "James Weldon Johnson birthplace (wrote 'Lift Every Voice and Sing')",
+      "Durkeeville community history",
+    ],
+    writingGuidance:
+      "Write with Jacksonville pride — Jax has a heritage that's been consistently undersung. Use 'Jax', '904', 'the First Coast'. James Weldon Johnson was born here — he wrote Lift Every Voice and Sing. Edward Waters is Florida's oldest HBCU. LaVilla was the 'Harlem of the South.'",
+  },
 };
 
 function getCityVoice(destination: string): CityVoice | null {
@@ -1228,393 +2445,1241 @@ type CityLocalData = {
 const CITY_LOCAL_TERMS: Record<string, CityLocalData> = {
   "new york": {
     terms: [
-      { term: "bodega", meaning: "corner convenience store — a neighborhood institution" },
-      { term: "chopped cheese", meaning: "NYC-specific sandwich (beef, cheese, onions on a hero roll) — distinct from a Philly cheesesteak", note: "If a user asks for a chopped cheese outside NYC, clarify: 'Chopped cheese is a NYC thing. In Philly, the closest equivalent is a cheesesteak — want me to find one?'" },
+      {
+        term: "bodega",
+        meaning: "corner convenience store — a neighborhood institution",
+      },
+      {
+        term: "chopped cheese",
+        meaning:
+          "NYC-specific sandwich (beef, cheese, onions on a hero roll) — distinct from a Philly cheesesteak",
+        note: "If a user asks for a chopped cheese outside NYC, clarify: 'Chopped cheese is a NYC thing. In Philly, the closest equivalent is a cheesesteak — want me to find one?'",
+      },
       { term: "the train", meaning: "the subway — locals rarely say 'subway'" },
       { term: "deadass", meaning: "seriously, for real" },
-      { term: "the city", meaning: "Manhattan specifically, even to Bronx and Brooklyn residents" },
+      {
+        term: "the city",
+        meaning: "Manhattan specifically, even to Bronx and Brooklyn residents",
+      },
       { term: "hero", meaning: "what NYC calls a sub or hoagie" },
     ],
     transit: ["the A/C/E", "the 2/3", "the L train", "the 4/5/6", "the Q"],
-    nicknames: ["BK (Brooklyn)", "the Bronx", "Harlem", "LES (Lower East Side)", "Bed-Stuy", "Fort Greene", "the Heights"],
-  },
-  "philadelphia": {
-    terms: [
-      { term: "jawn", meaning: "Philly's most versatile word — any person, place, or thing" },
-      { term: "hoagie", meaning: "what most cities call a sub or hero — Philly's term" },
-      { term: "water ice", meaning: "a Philly frozen dessert — denser and different from Italian ice" },
-      { term: "iight", meaning: "alright, okay" },
-      { term: "cheesesteak", meaning: "a Philly original — thinly sliced beef and cheese on a long roll; NOT the same as a NYC chopped cheese", note: "If a user in Philly asks for a chopped cheese, say: 'Chopped cheese is a NYC bodega thing — here in Philly, a cheesesteak is the local equivalent. Want me to find a great one?'" },
+    nicknames: [
+      "BK (Brooklyn)",
+      "the Bronx",
+      "Harlem",
+      "LES (Lower East Side)",
+      "Bed-Stuy",
+      "Fort Greene",
+      "the Heights",
     ],
-    transit: ["SEPTA", "the El (Market-Frankford Line)", "BSL", "PATCO to Jersey"],
-    nicknames: ["South Philly", "West Philly", "Fishtown", "Brewerytown", "Kensington", "the Main Line"],
+  },
+  philadelphia: {
+    terms: [
+      {
+        term: "jawn",
+        meaning: "Philly's most versatile word — any person, place, or thing",
+      },
+      {
+        term: "hoagie",
+        meaning: "what most cities call a sub or hero — Philly's term",
+      },
+      {
+        term: "water ice",
+        meaning:
+          "a Philly frozen dessert — denser and different from Italian ice",
+      },
+      { term: "iight", meaning: "alright, okay" },
+      {
+        term: "cheesesteak",
+        meaning:
+          "a Philly original — thinly sliced beef and cheese on a long roll; NOT the same as a NYC chopped cheese",
+        note: "If a user in Philly asks for a chopped cheese, say: 'Chopped cheese is a NYC bodega thing — here in Philly, a cheesesteak is the local equivalent. Want me to find a great one?'",
+      },
+    ],
+    transit: [
+      "SEPTA",
+      "the El (Market-Frankford Line)",
+      "BSL",
+      "PATCO to Jersey",
+    ],
+    nicknames: [
+      "South Philly",
+      "West Philly",
+      "Fishtown",
+      "Brewerytown",
+      "Kensington",
+      "the Main Line",
+    ],
   },
   "new orleans": {
     terms: [
-      { term: "lagniappe", meaning: "a little something extra, given freely — a NOLA cultural value" },
-      { term: "neutral ground", meaning: "the grass median strip in a boulevard — only NOLA calls it this" },
+      {
+        term: "lagniappe",
+        meaning:
+          "a little something extra, given freely — a NOLA cultural value",
+      },
+      {
+        term: "neutral ground",
+        meaning:
+          "the grass median strip in a boulevard — only NOLA calls it this",
+      },
       { term: "making groceries", meaning: "going grocery shopping" },
-      { term: "where y'at", meaning: "the classic NOLA greeting — 'How are you?'" },
-      { term: "po' boy", meaning: "a local sandwich on French bread — shrimp, oyster, roast beef and more" },
-      { term: "second line", meaning: "a parade tradition following jazz funerals or celebrations — a cultural cornerstone" },
+      {
+        term: "where y'at",
+        meaning: "the classic NOLA greeting — 'How are you?'",
+      },
+      {
+        term: "po' boy",
+        meaning:
+          "a local sandwich on French bread — shrimp, oyster, roast beef and more",
+      },
+      {
+        term: "second line",
+        meaning:
+          "a parade tradition following jazz funerals or celebrations — a cultural cornerstone",
+      },
     ],
     transit: ["the streetcar", "St. Charles line", "Canal line"],
-    nicknames: ["the Tremé", "the Marigny", "the Garden District", "Mid-City", "the 7th Ward", "Uptown", "the 9th Ward"],
+    nicknames: [
+      "the Tremé",
+      "the Marigny",
+      "the Garden District",
+      "Mid-City",
+      "the 7th Ward",
+      "Uptown",
+      "the 9th Ward",
+    ],
   },
-  "atlanta": {
+  atlanta: {
     terms: [
-      { term: "ITP", meaning: "Inside the Perimeter (I-285) — generally Atlanta proper" },
-      { term: "OTP", meaning: "Outside the Perimeter — suburbs, sometimes said with an Atlanta side-eye" },
-      { term: "the BeltLine", meaning: "a 22-mile urban trail connecting neighborhoods — THE place to walk, eat, and experience Atlanta" },
-      { term: "285", meaning: "I-285, the highway encircling Atlanta — constant geographic reference" },
-      { term: "ATLien", meaning: "a proud Atlanta native (from OutKast's classic album)" },
+      {
+        term: "ITP",
+        meaning: "Inside the Perimeter (I-285) — generally Atlanta proper",
+      },
+      {
+        term: "OTP",
+        meaning:
+          "Outside the Perimeter — suburbs, sometimes said with an Atlanta side-eye",
+      },
+      {
+        term: "the BeltLine",
+        meaning:
+          "a 22-mile urban trail connecting neighborhoods — THE place to walk, eat, and experience Atlanta",
+      },
+      {
+        term: "285",
+        meaning:
+          "I-285, the highway encircling Atlanta — constant geographic reference",
+      },
+      {
+        term: "ATLien",
+        meaning: "a proud Atlanta native (from OutKast's classic album)",
+      },
     ],
     transit: ["MARTA", "the Gold Line", "the Red Line", "the Green Line"],
-    nicknames: ["Old Fourth Ward", "East Atlanta Village (EAV)", "the West End", "College Park", "Bankhead", "Mechanicsville", "Vine City"],
+    nicknames: [
+      "Old Fourth Ward",
+      "East Atlanta Village (EAV)",
+      "the West End",
+      "College Park",
+      "Bankhead",
+      "Mechanicsville",
+      "Vine City",
+    ],
   },
-  "chicago": {
+  chicago: {
     terms: [
       { term: "gym shoes", meaning: "what Chicago calls sneakers" },
-      { term: "pop", meaning: "soda / soft drink — never say 'soda' in Chicago" },
+      {
+        term: "pop",
+        meaning: "soda / soft drink — never say 'soda' in Chicago",
+      },
       { term: "the L", meaning: "the CTA elevated train system" },
-      { term: "Jewels", meaning: "the Jewel-Osco grocery chain — always called 'Jewels'" },
-      { term: "the lakefront", meaning: "Lake Michigan shoreline — the geographic and social heart of the city" },
+      {
+        term: "Jewels",
+        meaning: "the Jewel-Osco grocery chain — always called 'Jewels'",
+      },
+      {
+        term: "the lakefront",
+        meaning:
+          "Lake Michigan shoreline — the geographic and social heart of the city",
+      },
     ],
-    transit: ["the L", "the Red Line", "the Blue Line", "the Green Line", "CTA"],
-    nicknames: ["Bronzeville", "Wicker Park", "Pilsen", "Hyde Park", "Chatham", "the South Side", "Chatham", "Bronzeville"],
+    transit: [
+      "the L",
+      "the Red Line",
+      "the Blue Line",
+      "the Green Line",
+      "CTA",
+    ],
+    nicknames: [
+      "Bronzeville",
+      "Wicker Park",
+      "Pilsen",
+      "Hyde Park",
+      "Chatham",
+      "the South Side",
+      "Chatham",
+      "Bronzeville",
+    ],
   },
-  "houston": {
+  houston: {
     terms: [
-      { term: "trill", meaning: "true + real — a Houston cultural value, popularized by UGK" },
-      { term: "third coast", meaning: "Houston and the Gulf Coast — a distinct regional identity" },
-      { term: "screwed music", meaning: "the slowed-down chopped-and-screwed sound invented by DJ Screw in H-Town" },
-      { term: "the Bayou City", meaning: "Houston's nickname, referencing Buffalo Bayou" },
+      {
+        term: "trill",
+        meaning: "true + real — a Houston cultural value, popularized by UGK",
+      },
+      {
+        term: "third coast",
+        meaning: "Houston and the Gulf Coast — a distinct regional identity",
+      },
+      {
+        term: "screwed music",
+        meaning:
+          "the slowed-down chopped-and-screwed sound invented by DJ Screw in H-Town",
+      },
+      {
+        term: "the Bayou City",
+        meaning: "Houston's nickname, referencing Buffalo Bayou",
+      },
     ],
     transit: ["Metro", "METRORail (Red Line)", "park and ride"],
-    nicknames: ["Third Ward", "Fifth Ward", "EaDo (East Downtown)", "the Heights", "Montrose", "Sunnyside"],
-  },
-  "dc": {
-    terms: [
-      { term: "go-go", meaning: "DC's original percussion-heavy music genre — essential cultural identity, not just music" },
-      { term: "junt", meaning: "DC's variant of jawn — refers to any person, place, or thing" },
-      { term: "bama", meaning: "someone unfashionable or out of touch — a DC-specific term" },
-      { term: "the District", meaning: "locals call it 'the District', not just DC" },
-      { term: "DMV", meaning: "DC-Maryland-Virginia — the full metro region, used as a collective identity" },
+    nicknames: [
+      "Third Ward",
+      "Fifth Ward",
+      "EaDo (East Downtown)",
+      "the Heights",
+      "Montrose",
+      "Sunnyside",
     ],
-    transit: ["the Metro", "the Red Line", "the Green Line", "Circulator", "WMATA"],
-    nicknames: ["U Street", "the Hill (Capitol Hill)", "Columbia Heights", "Anacostia", "Congress Heights", "NoMa", "Deanwood"],
   },
-  "miami": {
+  dc: {
     terms: [
-      { term: "305", meaning: "Miami's original area code — worn as a badge of pride" },
+      {
+        term: "go-go",
+        meaning:
+          "DC's original percussion-heavy music genre — essential cultural identity, not just music",
+      },
+      {
+        term: "junt",
+        meaning: "DC's variant of jawn — refers to any person, place, or thing",
+      },
+      {
+        term: "bama",
+        meaning: "someone unfashionable or out of touch — a DC-specific term",
+      },
+      {
+        term: "the District",
+        meaning: "locals call it 'the District', not just DC",
+      },
+      {
+        term: "DMV",
+        meaning:
+          "DC-Maryland-Virginia — the full metro region, used as a collective identity",
+      },
+    ],
+    transit: [
+      "the Metro",
+      "the Red Line",
+      "the Green Line",
+      "Circulator",
+      "WMATA",
+    ],
+    nicknames: [
+      "U Street",
+      "the Hill (Capitol Hill)",
+      "Columbia Heights",
+      "Anacostia",
+      "Congress Heights",
+      "NoMa",
+      "Deanwood",
+    ],
+  },
+  miami: {
+    terms: [
+      {
+        term: "305",
+        meaning: "Miami's original area code — worn as a badge of pride",
+      },
       { term: "Magic City", meaning: "Miami's nickname" },
-      { term: "calle ocho", meaning: "8th Street in Little Havana — the cultural heart of Cuban Miami" },
+      {
+        term: "calle ocho",
+        meaning:
+          "8th Street in Little Havana — the cultural heart of Cuban Miami",
+      },
       { term: "the Gables", meaning: "Coral Gables shorthand" },
     ],
     transit: ["Metrorail", "Metromover", "Tri-Rail", "the Brightline"],
-    nicknames: ["Wynwood", "Overtown", "Liberty City", "Little Haiti", "Little Havana", "the MiMo District", "Opa-locka"],
+    nicknames: [
+      "Wynwood",
+      "Overtown",
+      "Liberty City",
+      "Little Haiti",
+      "Little Havana",
+      "the MiMo District",
+      "Opa-locka",
+    ],
   },
-  "detroit": {
+  detroit: {
     terms: [
-      { term: "coney", meaning: "a Detroit-style hot dog with chili, mustard, and onions — a true Detroit institution" },
-      { term: "party store", meaning: "what Detroit calls a convenience store" },
-      { term: "313", meaning: "Detroit's area code — used as a badge of local pride" },
-      { term: "Motown", meaning: "both the legendary record label AND a nickname for Detroit itself" },
+      {
+        term: "coney",
+        meaning:
+          "a Detroit-style hot dog with chili, mustard, and onions — a true Detroit institution",
+      },
+      {
+        term: "party store",
+        meaning: "what Detroit calls a convenience store",
+      },
+      {
+        term: "313",
+        meaning: "Detroit's area code — used as a badge of local pride",
+      },
+      {
+        term: "Motown",
+        meaning:
+          "both the legendary record label AND a nickname for Detroit itself",
+      },
     ],
     transit: ["the QLINE", "SMART bus", "DDOT"],
-    nicknames: ["Corktown", "Eastern Market", "New Center", "Midtown", "Black Bottom (historic)", "Paradise Valley (historic)", "Boston-Edison"],
+    nicknames: [
+      "Corktown",
+      "Eastern Market",
+      "New Center",
+      "Midtown",
+      "Black Bottom (historic)",
+      "Paradise Valley (historic)",
+      "Boston-Edison",
+    ],
   },
-  "baltimore": {
+  baltimore: {
     terms: [
-      { term: "hon", meaning: "a term of endearment unique to Baltimore — 'How ya doin, hon?'" },
-      { term: "pit beef", meaning: "Baltimore's signature beef sandwich, served roadside" },
+      {
+        term: "hon",
+        meaning:
+          "a term of endearment unique to Baltimore — 'How ya doin, hon?'",
+      },
+      {
+        term: "pit beef",
+        meaning: "Baltimore's signature beef sandwich, served roadside",
+      },
       { term: "B-More", meaning: "Baltimore shorthand" },
       { term: "Charm City", meaning: "Baltimore's nickname" },
     ],
     transit: ["MTA", "the Light Rail", "the Metro SubwayLink"],
-    nicknames: ["Pigtown", "Hampden", "Fells Point", "Federal Hill", "Cherry Hill", "Upton", "Penn North"],
+    nicknames: [
+      "Pigtown",
+      "Hampden",
+      "Fells Point",
+      "Federal Hill",
+      "Cherry Hill",
+      "Upton",
+      "Penn North",
+    ],
   },
-  "memphis": {
+  memphis: {
     terms: [
       { term: "901", meaning: "Memphis area code — a mark of local pride" },
-      { term: "the Bluff City", meaning: "Memphis's nickname, for the bluffs above the Mississippi River" },
-      { term: "Beale Street", meaning: "the historic heart of Memphis blues — a must-experience, not just a tourist stop" },
+      {
+        term: "the Bluff City",
+        meaning:
+          "Memphis's nickname, for the bluffs above the Mississippi River",
+      },
+      {
+        term: "Beale Street",
+        meaning:
+          "the historic heart of Memphis blues — a must-experience, not just a tourist stop",
+      },
     ],
     transit: ["MATA", "the trolley (Riverfront Loop)"],
-    nicknames: ["Midtown", "South Memphis", "Cooper-Young", "Orange Mound", "the Heights (Binghampton)"],
+    nicknames: [
+      "Midtown",
+      "South Memphis",
+      "Cooper-Young",
+      "Orange Mound",
+      "the Heights (Binghampton)",
+    ],
   },
   "los angeles": {
     terms: [
-      { term: "the 405", meaning: "I-405 — the most infamous freeway in LA; 'take the 405' is a reflex" },
-      { term: "the valley", meaning: "San Fernando Valley, north of the Santa Monica Mountains" },
-      { term: "Crenshaw", meaning: "both a boulevard and a neighborhood carrying deep Black cultural history" },
+      {
+        term: "the 405",
+        meaning:
+          "I-405 — the most infamous freeway in LA; 'take the 405' is a reflex",
+      },
+      {
+        term: "the valley",
+        meaning: "San Fernando Valley, north of the Santa Monica Mountains",
+      },
+      {
+        term: "Crenshaw",
+        meaning:
+          "both a boulevard and a neighborhood carrying deep Black cultural history",
+      },
     ],
-    transit: ["the Metro", "the Blue Line (A Line)", "the Purple Line (D Line)", "Metro Rail"],
-    nicknames: ["Leimert Park", "Inglewood", "Crenshaw", "Compton", "South Central", "the Valley", "Watts", "View Park"],
+    transit: [
+      "the Metro",
+      "the Blue Line (A Line)",
+      "the Purple Line (D Line)",
+      "Metro Rail",
+    ],
+    nicknames: [
+      "Leimert Park",
+      "Inglewood",
+      "Crenshaw",
+      "Compton",
+      "South Central",
+      "the Valley",
+      "Watts",
+      "View Park",
+    ],
   },
-  "oakland": {
+  oakland: {
     terms: [
-      { term: "hella", meaning: "Oakland/Bay Area's signature intensifier — 'hella good', 'hella far'. Only Bay Area natives say this naturally." },
-      { term: "the town", meaning: "what Oakland locals call their city — a term of deep pride" },
-      { term: "hyphy", meaning: "the Bay Area music and cultural movement — energetic, frenetic, joyful. Mac Dre invented it." },
-      { term: "slaps", meaning: "Bay Area term for music that hits hard — 'this song slaps'" },
-      { term: "ghost ride", meaning: "letting a car roll slowly while you dance next to or on it — a hyphy tradition" },
-      { term: "turf", meaning: "neighborhood, territory — used with deep pride in Oakland" },
+      {
+        term: "hella",
+        meaning:
+          "Oakland/Bay Area's signature intensifier — 'hella good', 'hella far'. Only Bay Area natives say this naturally.",
+      },
+      {
+        term: "the town",
+        meaning: "what Oakland locals call their city — a term of deep pride",
+      },
+      {
+        term: "hyphy",
+        meaning:
+          "the Bay Area music and cultural movement — energetic, frenetic, joyful. Mac Dre invented it.",
+      },
+      {
+        term: "slaps",
+        meaning: "Bay Area term for music that hits hard — 'this song slaps'",
+      },
+      {
+        term: "ghost ride",
+        meaning:
+          "letting a car roll slowly while you dance next to or on it — a hyphy tradition",
+      },
+      {
+        term: "turf",
+        meaning: "neighborhood, territory — used with deep pride in Oakland",
+      },
     ],
     transit: ["BART", "AC Transit", "the Fruitvale BART station"],
-    nicknames: ["Fruitvale", "West Oakland", "East Oakland", "Temescal", "the Dimond", "Rockridge", "Ghost Town"],
+    nicknames: [
+      "Fruitvale",
+      "West Oakland",
+      "East Oakland",
+      "Temescal",
+      "the Dimond",
+      "Rockridge",
+      "Ghost Town",
+    ],
   },
-  "nashville": {
+  nashville: {
     terms: [
-      { term: "Music City", meaning: "Nashville's nickname — but for the community, the real music is on Jefferson Street, not Broadway" },
-      { term: "Jefferson Street", meaning: "the historic Black cultural corridor — clubs, HBCUs, community history" },
-      { term: "the Gulch", meaning: "a trendy neighborhood close to downtown — locals know it as the gentrified zone" },
-      { term: "615", meaning: "Nashville's area code — used as a badge of local pride" },
+      {
+        term: "Music City",
+        meaning:
+          "Nashville's nickname — but for the community, the real music is on Jefferson Street, not Broadway",
+      },
+      {
+        term: "Jefferson Street",
+        meaning:
+          "the historic Black cultural corridor — clubs, HBCUs, community history",
+      },
+      {
+        term: "the Gulch",
+        meaning:
+          "a trendy neighborhood close to downtown — locals know it as the gentrified zone",
+      },
+      {
+        term: "615",
+        meaning: "Nashville's area code — used as a badge of local pride",
+      },
     ],
     transit: ["WeGo bus", "WeGo Star (commuter rail)"],
-    nicknames: ["North Nashville", "East Nashville", "Germantown", "Sylvan Park", "Antioch", "Madison"],
+    nicknames: [
+      "North Nashville",
+      "East Nashville",
+      "Germantown",
+      "Sylvan Park",
+      "Antioch",
+      "Madison",
+    ],
   },
-  "charlotte": {
+  charlotte: {
     terms: [
-      { term: "QC", meaning: "short for Queen City — Charlotte's go-to nickname among locals" },
-      { term: "704", meaning: "Charlotte's area code — a symbol of local pride" },
+      {
+        term: "QC",
+        meaning:
+          "short for Queen City — Charlotte's go-to nickname among locals",
+      },
+      {
+        term: "704",
+        meaning: "Charlotte's area code — a symbol of local pride",
+      },
       { term: "the Queen City", meaning: "Charlotte's formal nickname" },
-      { term: "Beatties Ford Road", meaning: "Charlotte's historic Black commercial and cultural corridor — the community's main street" },
-      { term: "CIAA", meaning: "Central Intercollegiate Athletic Association Tournament — a massive annual event that fills Charlotte with HBCU energy" },
+      {
+        term: "Beatties Ford Road",
+        meaning:
+          "Charlotte's historic Black commercial and cultural corridor — the community's main street",
+      },
+      {
+        term: "CIAA",
+        meaning:
+          "Central Intercollegiate Athletic Association Tournament — a massive annual event that fills Charlotte with HBCU energy",
+      },
     ],
     transit: ["CATS", "the Gold Line streetcar", "Lynx Blue Line light rail"],
-    nicknames: ["NoDa (North Davidson)","Plaza Midwood","South End","University City","Westside","Pineville"],
+    nicknames: [
+      "NoDa (North Davidson)",
+      "Plaza Midwood",
+      "South End",
+      "University City",
+      "Westside",
+      "Pineville",
+    ],
   },
-  "dallas": {
+  dallas: {
     terms: [
       { term: "Big D", meaning: "Dallas's classic nickname" },
-      { term: "the Metroplex", meaning: "the Dallas-Fort Worth metro area — DFW collectively" },
-      { term: "214", meaning: "Dallas's area code — the OG badge of local identity" },
-      { term: "Deep Ellum", meaning: "Dallas's historic blues and jazz neighborhood — deep cultural roots" },
-      { term: "the State Fair", meaning: "the State Fair of Texas at Fair Park — a massive annual event with deep community history" },
+      {
+        term: "the Metroplex",
+        meaning: "the Dallas-Fort Worth metro area — DFW collectively",
+      },
+      {
+        term: "214",
+        meaning: "Dallas's area code — the OG badge of local identity",
+      },
+      {
+        term: "Deep Ellum",
+        meaning:
+          "Dallas's historic blues and jazz neighborhood — deep cultural roots",
+      },
+      {
+        term: "the State Fair",
+        meaning:
+          "the State Fair of Texas at Fair Park — a massive annual event with deep community history",
+      },
     ],
-    transit: ["DART", "the Green Line", "the Red Line", "the Orange Line", "Trinity Railway Express (TRE)"],
-    nicknames: ["South Dallas", "Oak Cliff", "Deep Ellum", "Pleasant Grove", "Fair Park", "Bishop Arts District"],
+    transit: [
+      "DART",
+      "the Green Line",
+      "the Red Line",
+      "the Orange Line",
+      "Trinity Railway Express (TRE)",
+    ],
+    nicknames: [
+      "South Dallas",
+      "Oak Cliff",
+      "Deep Ellum",
+      "Pleasant Grove",
+      "Fair Park",
+      "Bishop Arts District",
+    ],
   },
   "st. louis": {
     terms: [
       { term: "the Lou", meaning: "St. Louis's local nickname" },
-      { term: "314", meaning: "St. Louis's area code — the classic local badge" },
-      { term: "The Ville", meaning: "St. Louis's historic Black neighborhood — once one of the most vibrant Black communities in the Midwest" },
-      { term: "the Delmar Divide", meaning: "Delmar Boulevard — the stark racial and economic dividing line of St. Louis. North is mostly Black, south is mostly white." },
-      { term: "toasted ravioli", meaning: "St. Louis's signature dish — breaded, fried ravioli. Locals call it 't-rav'." },
+      {
+        term: "314",
+        meaning: "St. Louis's area code — the classic local badge",
+      },
+      {
+        term: "The Ville",
+        meaning:
+          "St. Louis's historic Black neighborhood — once one of the most vibrant Black communities in the Midwest",
+      },
+      {
+        term: "the Delmar Divide",
+        meaning:
+          "Delmar Boulevard — the stark racial and economic dividing line of St. Louis. North is mostly Black, south is mostly white.",
+      },
+      {
+        term: "toasted ravioli",
+        meaning:
+          "St. Louis's signature dish — breaded, fried ravioli. Locals call it 't-rav'.",
+      },
     ],
     transit: ["MetroLink", "MetroBus"],
-    nicknames: ["The Ville", "Midtown", "The Grove", "Cherokee Street", "Tower Grove", "North St. Louis", "Wellston"],
+    nicknames: [
+      "The Ville",
+      "Midtown",
+      "The Grove",
+      "Cherokee Street",
+      "Tower Grove",
+      "North St. Louis",
+      "Wellston",
+    ],
   },
-  "birmingham": {
+  birmingham: {
     terms: [
-      { term: "the Magic City", meaning: "Birmingham's nickname — earned by its rapid industrial rise, now reclaimed as a symbol of resilience" },
+      {
+        term: "the Magic City",
+        meaning:
+          "Birmingham's nickname — earned by its rapid industrial rise, now reclaimed as a symbol of resilience",
+      },
       { term: "205", meaning: "Birmingham's area code — local pride badge" },
       { term: "B-ham", meaning: "shorthand for Birmingham among locals" },
-      { term: "4th Avenue", meaning: "the 4th Avenue Historic District — Birmingham's historic Black business corridor, called the Black Wall Street of the South" },
+      {
+        term: "4th Avenue",
+        meaning:
+          "the 4th Avenue Historic District — Birmingham's historic Black business corridor, called the Black Wall Street of the South",
+      },
     ],
     transit: ["MAX (Birmingham-Jefferson County Transit Authority)"],
-    nicknames: ["Southside", "Avondale", "Five Points South", "Ensley", "Woodlawn", "Titusville"],
+    nicknames: [
+      "Southside",
+      "Avondale",
+      "Five Points South",
+      "Ensley",
+      "Woodlawn",
+      "Titusville",
+    ],
   },
-  "richmond": {
+  richmond: {
     terms: [
-      { term: "RVA", meaning: "Richmond's city shorthand — widely used and proudly worn" },
+      {
+        term: "RVA",
+        meaning: "Richmond's city shorthand — widely used and proudly worn",
+      },
       { term: "804", meaning: "Richmond's area code — local identity marker" },
-      { term: "Jackson Ward", meaning: "Richmond's historic Black neighborhood, known as the 'Harlem of the South' and home to Black Wall Street" },
-      { term: "the Fan", meaning: "a popular residential neighborhood known for its fan-shaped street layout" },
+      {
+        term: "Jackson Ward",
+        meaning:
+          "Richmond's historic Black neighborhood, known as the 'Harlem of the South' and home to Black Wall Street",
+      },
+      {
+        term: "the Fan",
+        meaning:
+          "a popular residential neighborhood known for its fan-shaped street layout",
+      },
     ],
     transit: ["GRTC", "the Pulse BRT (Broad Street)"],
-    nicknames: ["Jackson Ward", "Church Hill", "Oregon Hill", "Manchester", "Scott's Addition", "Northside", "Randolph"],
+    nicknames: [
+      "Jackson Ward",
+      "Church Hill",
+      "Oregon Hill",
+      "Manchester",
+      "Scott's Addition",
+      "Northside",
+      "Randolph",
+    ],
   },
   "kansas city": {
     terms: [
-      { term: "KCMO", meaning: "Kansas City, Missouri — distinguishes it from Kansas City, Kansas across the state line" },
+      {
+        term: "KCMO",
+        meaning:
+          "Kansas City, Missouri — distinguishes it from Kansas City, Kansas across the state line",
+      },
       { term: "816", meaning: "KCMO's area code — the local pride badge" },
-      { term: "18th and Vine", meaning: "the historic heart of Kansas City's Black jazz district — Charlie Parker's world" },
-      { term: "burnt ends", meaning: "Kansas City BBQ's signature cut — the charred, caramelized point end of a brisket. Non-negotiable KC knowledge." },
+      {
+        term: "18th and Vine",
+        meaning:
+          "the historic heart of Kansas City's Black jazz district — Charlie Parker's world",
+      },
+      {
+        term: "burnt ends",
+        meaning:
+          "Kansas City BBQ's signature cut — the charred, caramelized point end of a brisket. Non-negotiable KC knowledge.",
+      },
     ],
     transit: ["KC Streetcar", "RideKC bus"],
-    nicknames: ["18th and Vine", "Troost Corridor", "Westport", "Crossroads Arts District", "Midtown", "Ruskin Heights"],
+    nicknames: [
+      "18th and Vine",
+      "Troost Corridor",
+      "Westport",
+      "Crossroads Arts District",
+      "Midtown",
+      "Ruskin Heights",
+    ],
   },
   "baton rouge": {
     terms: [
-      { term: "the Red Stick", meaning: "Baton Rouge's nickname — a direct translation of the French 'bâton rouge', referring to a historic red cypress pole marking tribal boundaries" },
-      { term: "225", meaning: "Baton Rouge's area code — the local identity marker" },
+      {
+        term: "the Red Stick",
+        meaning:
+          "Baton Rouge's nickname — a direct translation of the French 'bâton rouge', referring to a historic red cypress pole marking tribal boundaries",
+      },
+      {
+        term: "225",
+        meaning: "Baton Rouge's area code — the local identity marker",
+      },
       { term: "BR", meaning: "shorthand for Baton Rouge among locals" },
-      { term: "Southern", meaning: "Southern University — the largest HBCU in the United States, located in Scotlandville. When BR locals say 'Southern,' they mean SU, not LSU." },
-      { term: "Scotlandville", meaning: "the historically Black community on the north side of BR, home to Southern University — the cultural and educational heart of Black Baton Rouge" },
-      { term: "zydeco", meaning: "the Louisiana-born music blending Creole French, blues, and accordion — distinct from Cajun, rooted in Black Louisiana culture" },
-      { term: "lagniappe", meaning: "shared with New Orleans — a little something extra, a gift, a bonus. A Louisiana-wide cultural value." },
-      { term: "Creole", meaning: "in Louisiana context, refers to people and culture of mixed French, African, Spanish, and Native heritage — distinct identity from Cajun" },
+      {
+        term: "Southern",
+        meaning:
+          "Southern University — the largest HBCU in the United States, located in Scotlandville. When BR locals say 'Southern,' they mean SU, not LSU.",
+      },
+      {
+        term: "Scotlandville",
+        meaning:
+          "the historically Black community on the north side of BR, home to Southern University — the cultural and educational heart of Black Baton Rouge",
+      },
+      {
+        term: "zydeco",
+        meaning:
+          "the Louisiana-born music blending Creole French, blues, and accordion — distinct from Cajun, rooted in Black Louisiana culture",
+      },
+      {
+        term: "lagniappe",
+        meaning:
+          "shared with New Orleans — a little something extra, a gift, a bonus. A Louisiana-wide cultural value.",
+      },
+      {
+        term: "Creole",
+        meaning:
+          "in Louisiana context, refers to people and culture of mixed French, African, Spanish, and Native heritage — distinct identity from Cajun",
+      },
     ],
     transit: ["CATS (Capital Area Transit System)"],
-    nicknames: ["Scotlandville", "North Baton Rouge", "Mid City", "Broadmoor", "Gardere", "Shenandoah", "Baker"],
+    nicknames: [
+      "Scotlandville",
+      "North Baton Rouge",
+      "Mid City",
+      "Broadmoor",
+      "Gardere",
+      "Shenandoah",
+      "Baker",
+    ],
   },
-  "tulsa": {
+  tulsa: {
     terms: [
-      { term: "Black Wall Street", meaning: "the Greenwood District of Tulsa — the wealthiest Black community in US history before the 1921 Race Massacre destroyed it" },
-      { term: "Greenwood", meaning: "the historic Black neighborhood rebuilt after the 1921 Tulsa Race Massacre — a symbol of resilience and reclamation" },
+      {
+        term: "Black Wall Street",
+        meaning:
+          "the Greenwood District of Tulsa — the wealthiest Black community in US history before the 1921 Race Massacre destroyed it",
+      },
+      {
+        term: "Greenwood",
+        meaning:
+          "the historic Black neighborhood rebuilt after the 1921 Tulsa Race Massacre — a symbol of resilience and reclamation",
+      },
       { term: "918", meaning: "Tulsa's area code — local pride marker" },
       { term: "T-Town", meaning: "Tulsa's local nickname" },
-      { term: "the Massacre", meaning: "the 1921 Tulsa Race Massacre — one of the worst acts of racial violence in US history, when Greenwood was burned to the ground by a white mob" },
+      {
+        term: "the Massacre",
+        meaning:
+          "the 1921 Tulsa Race Massacre — one of the worst acts of racial violence in US history, when Greenwood was burned to the ground by a white mob",
+      },
     ],
     transit: ["Tulsa Transit", "MTTA"],
-    nicknames: ["Greenwood District", "North Tulsa", "Midtown", "Cherry Street", "the Brady District", "Brookside"],
+    nicknames: [
+      "Greenwood District",
+      "North Tulsa",
+      "Midtown",
+      "Cherry Street",
+      "the Brady District",
+      "Brookside",
+    ],
   },
-  "jackson": {
+  jackson: {
     terms: [
-      { term: "the City with Soul", meaning: "Jackson's nickname — a declaration of cultural and community depth" },
+      {
+        term: "the City with Soul",
+        meaning:
+          "Jackson's nickname — a declaration of cultural and community depth",
+      },
       { term: "601", meaning: "Jackson's area code — local pride badge" },
       { term: "J-Town", meaning: "Jackson shorthand among locals" },
-      { term: "Farish Street", meaning: "Jackson's historic Black commercial corridor — the Mississippi Black Wall Street, anchored by blues venues and Black-owned businesses" },
-      { term: "JSU", meaning: "Jackson State University — the HBCU that is the cultural and academic center of the city" },
+      {
+        term: "Farish Street",
+        meaning:
+          "Jackson's historic Black commercial corridor — the Mississippi Black Wall Street, anchored by blues venues and Black-owned businesses",
+      },
+      {
+        term: "JSU",
+        meaning:
+          "Jackson State University — the HBCU that is the cultural and academic center of the city",
+      },
     ],
     transit: ["JATRAN (Jackson Transit)"],
-    nicknames: ["Farish Street", "West Jackson", "North Jackson", "Fondren", "Belhaven", "South Jackson"],
+    nicknames: [
+      "Farish Street",
+      "West Jackson",
+      "North Jackson",
+      "Fondren",
+      "Belhaven",
+      "South Jackson",
+    ],
   },
-  "raleigh": {
+  raleigh: {
     terms: [
-      { term: "the Triangle", meaning: "Raleigh-Durham-Chapel Hill metro — named for the shape formed by the three cities, home to Research Triangle Park" },
-      { term: "919", meaning: "the Triangle's area code — local identity marker" },
-      { term: "Shaw", meaning: "Shaw University — the first HBCU founded in the South, established in 1865 in downtown Raleigh" },
-      { term: "Southeast Raleigh", meaning: "the historic Black community corridor of Raleigh — where the community roots run deepest" },
+      {
+        term: "the Triangle",
+        meaning:
+          "Raleigh-Durham-Chapel Hill metro — named for the shape formed by the three cities, home to Research Triangle Park",
+      },
+      {
+        term: "919",
+        meaning: "the Triangle's area code — local identity marker",
+      },
+      {
+        term: "Shaw",
+        meaning:
+          "Shaw University — the first HBCU founded in the South, established in 1865 in downtown Raleigh",
+      },
+      {
+        term: "Southeast Raleigh",
+        meaning:
+          "the historic Black community corridor of Raleigh — where the community roots run deepest",
+      },
     ],
     transit: ["GoTriangle", "Raleigh Transit Authority (RTA)", "GoRaleigh"],
-    nicknames: ["Southeast Raleigh", "Oakwood", "Five Points", "Downtown Raleigh", "North Hills", "Garner"],
+    nicknames: [
+      "Southeast Raleigh",
+      "Oakwood",
+      "Five Points",
+      "Downtown Raleigh",
+      "North Hills",
+      "Garner",
+    ],
   },
-  "durham": {
+  durham: {
     terms: [
-      { term: "Bull City", meaning: "Durham's nickname — from the Bull Durham tobacco brand that built the city" },
-      { term: "Parrish Street", meaning: "Durham's 'Black Wall Street' — a historic corridor of Black-owned banks, insurance companies, and businesses dating back to the early 1900s" },
-      { term: "Hayti", meaning: "Durham's historic Black neighborhood — 'the community that Black Wall Street built.' Partly demolished for highways but still a living symbol of pride." },
-      { term: "NCCU", meaning: "North Carolina Central University — the HBCU in Durham, known for its law and pharmacy schools" },
+      {
+        term: "Bull City",
+        meaning:
+          "Durham's nickname — from the Bull Durham tobacco brand that built the city",
+      },
+      {
+        term: "Parrish Street",
+        meaning:
+          "Durham's 'Black Wall Street' — a historic corridor of Black-owned banks, insurance companies, and businesses dating back to the early 1900s",
+      },
+      {
+        term: "Hayti",
+        meaning:
+          "Durham's historic Black neighborhood — 'the community that Black Wall Street built.' Partly demolished for highways but still a living symbol of pride.",
+      },
+      {
+        term: "NCCU",
+        meaning:
+          "North Carolina Central University — the HBCU in Durham, known for its law and pharmacy schools",
+      },
       { term: "919", meaning: "shared Triangle area code" },
     ],
     transit: ["DATA (Durham Area Transit Authority)", "GoTriangle"],
-    nicknames: ["Hayti", "Walltown", "Old North Durham", "Bucks", "Lakewood", "Lyon Park"],
+    nicknames: [
+      "Hayti",
+      "Walltown",
+      "Old North Durham",
+      "Bucks",
+      "Lakewood",
+      "Lyon Park",
+    ],
   },
-  "indianapolis": {
+  indianapolis: {
     terms: [
-      { term: "Naptown", meaning: "Indianapolis's nickname — originally used with irony about the slow pace, now worn with pride" },
-      { term: "317", meaning: "Indianapolis's area code — the local pride badge" },
-      { term: "Indiana Avenue", meaning: "the historic jazz and cultural corridor of Black Indianapolis — Wes Montgomery, Freddie Hubbard, and the Walker Theatre all called this home" },
-      { term: "Crispus Attucks", meaning: "Crispus Attucks High School — the all-Black school that became a civil rights landmark and produced generations of leaders and athletes" },
-      { term: "Indiana Black Expo", meaning: "the largest Black exposition in the United States, held annually in Indianapolis — a massive community and business gathering" },
+      {
+        term: "Naptown",
+        meaning:
+          "Indianapolis's nickname — originally used with irony about the slow pace, now worn with pride",
+      },
+      {
+        term: "317",
+        meaning: "Indianapolis's area code — the local pride badge",
+      },
+      {
+        term: "Indiana Avenue",
+        meaning:
+          "the historic jazz and cultural corridor of Black Indianapolis — Wes Montgomery, Freddie Hubbard, and the Walker Theatre all called this home",
+      },
+      {
+        term: "Crispus Attucks",
+        meaning:
+          "Crispus Attucks High School — the all-Black school that became a civil rights landmark and produced generations of leaders and athletes",
+      },
+      {
+        term: "Indiana Black Expo",
+        meaning:
+          "the largest Black exposition in the United States, held annually in Indianapolis — a massive community and business gathering",
+      },
     ],
     transit: ["IndyGo", "Red Line BRT", "Purple Line BRT"],
-    nicknames: ["Indiana Avenue", "Mapleton-Fall Creek", "Near Eastside", "Martindale-Brightwood", "Haughville", "Fountain Square"],
+    nicknames: [
+      "Indiana Avenue",
+      "Mapleton-Fall Creek",
+      "Near Eastside",
+      "Martindale-Brightwood",
+      "Haughville",
+      "Fountain Square",
+    ],
   },
-  "savannah": {
+  savannah: {
     terms: [
-      { term: "the Hostess City", meaning: "Savannah's nickname — known for legendary Southern hospitality" },
+      {
+        term: "the Hostess City",
+        meaning:
+          "Savannah's nickname — known for legendary Southern hospitality",
+      },
       { term: "912", meaning: "Savannah's area code — local pride marker" },
-      { term: "First African Baptist", meaning: "the First African Baptist Church — the oldest continuously operating Black church in North America, founded 1773" },
-      { term: "Gullah Geechee", meaning: "the distinct African-descended culture and language of the coastal Lowcountry — preserved in Savannah and the Sea Islands since the 18th century" },
-      { term: "Savannah State", meaning: "Savannah State University — the oldest public HBCU in Georgia, founded 1890" },
+      {
+        term: "First African Baptist",
+        meaning:
+          "the First African Baptist Church — the oldest continuously operating Black church in North America, founded 1773",
+      },
+      {
+        term: "Gullah Geechee",
+        meaning:
+          "the distinct African-descended culture and language of the coastal Lowcountry — preserved in Savannah and the Sea Islands since the 18th century",
+      },
+      {
+        term: "Savannah State",
+        meaning:
+          "Savannah State University — the oldest public HBCU in Georgia, founded 1890",
+      },
     ],
     transit: ["Chatham Area Transit (CAT)", "the DOT (free shuttle)"],
-    nicknames: ["the Victorian District", "Midtown Savannah", "Ardsley Park", "Cuyler-Brownville", "Beach Institute area", "Thunderbolt"],
+    nicknames: [
+      "the Victorian District",
+      "Midtown Savannah",
+      "Ardsley Park",
+      "Cuyler-Brownville",
+      "Beach Institute area",
+      "Thunderbolt",
+    ],
   },
-  "cleveland": {
+  cleveland: {
     terms: [
       { term: "the Land", meaning: "Cleveland's proud local nickname" },
-      { term: "216", meaning: "Cleveland's area code — worn with deep pride, especially on the east side" },
+      {
+        term: "216",
+        meaning:
+          "Cleveland's area code — worn with deep pride, especially on the east side",
+      },
       { term: "CLE", meaning: "Cleveland shorthand" },
-      { term: "Glenville", meaning: "the historic heart of Black Cleveland — a neighborhood that produced Carl Stokes and generations of leaders" },
-      { term: "Karamu", meaning: "Karamu House — the oldest Black theater in the United States, in Cleveland's Fairfax neighborhood" },
-      { term: "the east side", meaning: "where the Black community is rooted in Cleveland — the west side is a different world culturally" },
+      {
+        term: "Glenville",
+        meaning:
+          "the historic heart of Black Cleveland — a neighborhood that produced Carl Stokes and generations of leaders",
+      },
+      {
+        term: "Karamu",
+        meaning:
+          "Karamu House — the oldest Black theater in the United States, in Cleveland's Fairfax neighborhood",
+      },
+      {
+        term: "the east side",
+        meaning:
+          "where the Black community is rooted in Cleveland — the west side is a different world culturally",
+      },
     ],
-    transit: ["RTA", "the HealthLine (BRT)", "the Red Line", "the Blue/Green Line"],
-    nicknames: ["Glenville", "Hough", "Fairfax", "Central", "Mount Pleasant", "Lee-Harvard", "Kinsman"],
+    transit: [
+      "RTA",
+      "the HealthLine (BRT)",
+      "the Red Line",
+      "the Blue/Green Line",
+    ],
+    nicknames: [
+      "Glenville",
+      "Hough",
+      "Fairfax",
+      "Central",
+      "Mount Pleasant",
+      "Lee-Harvard",
+      "Kinsman",
+    ],
   },
-  "tampa": {
+  tampa: {
     terms: [
       { term: "813", meaning: "Tampa's area code — the local pride marker" },
-      { term: "the Bay", meaning: "the Tampa Bay area collectively — Tampa, St. Pete, Clearwater, Brandon" },
-      { term: "Central Avenue", meaning: "St. Petersburg's historic Black commercial corridor — Manhattan Casino, the Gas Plant District, the cultural heart of Black St. Pete" },
-      { term: "St. Pete", meaning: "St. Petersburg — its own city, culturally distinct from Tampa, with deeper Black historical roots on Central Avenue" },
-      { term: "Ybor City", meaning: "Tampa's historic Latin quarter with Afro-Cuban roots — cigar workers, social clubs, and a distinct multicultural heritage" },
+      {
+        term: "the Bay",
+        meaning:
+          "the Tampa Bay area collectively — Tampa, St. Pete, Clearwater, Brandon",
+      },
+      {
+        term: "Central Avenue",
+        meaning:
+          "St. Petersburg's historic Black commercial corridor — Manhattan Casino, the Gas Plant District, the cultural heart of Black St. Pete",
+      },
+      {
+        term: "St. Pete",
+        meaning:
+          "St. Petersburg — its own city, culturally distinct from Tampa, with deeper Black historical roots on Central Avenue",
+      },
+      {
+        term: "Ybor City",
+        meaning:
+          "Tampa's historic Latin quarter with Afro-Cuban roots — cigar workers, social clubs, and a distinct multicultural heritage",
+      },
     ],
-    transit: ["HART (Hillsborough Area Regional Transit)", "Pinellas Suncoast Transit (PSTA)", "SunRunner BRT (St. Pete)"],
-    nicknames: ["Ybor City", "West Tampa", "Sulphur Springs", "Robles Park", "Seminole Heights", "St. Pete's Midtown", "the Deuces (22nd Street, St. Pete)"],
+    transit: [
+      "HART (Hillsborough Area Regional Transit)",
+      "Pinellas Suncoast Transit (PSTA)",
+      "SunRunner BRT (St. Pete)",
+    ],
+    nicknames: [
+      "Ybor City",
+      "West Tampa",
+      "Sulphur Springs",
+      "Robles Park",
+      "Seminole Heights",
+      "St. Pete's Midtown",
+      "the Deuces (22nd Street, St. Pete)",
+    ],
   },
-  "montgomery": {
+  montgomery: {
     terms: [
-      { term: "the Gump", meaning: "Montgomery's local nickname — used by residents with affection" },
-      { term: "334", meaning: "Montgomery's area code — shared with the wider Alabama Black Belt region" },
-      { term: "Dexter Avenue", meaning: "the historic street in Montgomery — Dr. King's church (Dexter Avenue King Memorial Baptist) sits at one end, the State Capitol at the other" },
-      { term: "the Equal Justice Initiative", meaning: "EJI — Bryan Stevenson's organization in Montgomery, home to the National Memorial for Peace and Justice and the Legacy Museum" },
-      { term: "ASU", meaning: "Alabama State University — the HBCU in Montgomery, historically connected to the Civil Rights Movement" },
+      {
+        term: "the Gump",
+        meaning:
+          "Montgomery's local nickname — used by residents with affection",
+      },
+      {
+        term: "334",
+        meaning:
+          "Montgomery's area code — shared with the wider Alabama Black Belt region",
+      },
+      {
+        term: "Dexter Avenue",
+        meaning:
+          "the historic street in Montgomery — Dr. King's church (Dexter Avenue King Memorial Baptist) sits at one end, the State Capitol at the other",
+      },
+      {
+        term: "the Equal Justice Initiative",
+        meaning:
+          "EJI — Bryan Stevenson's organization in Montgomery, home to the National Memorial for Peace and Justice and the Legacy Museum",
+      },
+      {
+        term: "ASU",
+        meaning:
+          "Alabama State University — the HBCU in Montgomery, historically connected to the Civil Rights Movement",
+      },
     ],
     transit: ["MAX (Montgomery Area Transit System)"],
-    nicknames: ["Centennial Hill", "Capitol Heights", "Cloverdale", "West Montgomery", "Dalraida"],
+    nicknames: [
+      "Centennial Hill",
+      "Capitol Heights",
+      "Cloverdale",
+      "West Montgomery",
+      "Dalraida",
+    ],
   },
-  "charleston": {
+  charleston: {
     terms: [
-      { term: "the Holy City", meaning: "Charleston's nickname — from the steeples that once dominated the skyline, but the name carries spiritual weight for the Black community as well" },
+      {
+        term: "the Holy City",
+        meaning:
+          "Charleston's nickname — from the steeples that once dominated the skyline, but the name carries spiritual weight for the Black community as well",
+      },
       { term: "843", meaning: "Charleston's area code" },
-      { term: "Mother Emanuel", meaning: "Emanuel AME Church — one of the oldest Black churches in the South, site of the 2015 massacre. Sacred ground." },
-      { term: "Gullah Geechee", meaning: "the living culture and language of the Sea Islands and Lowcountry coast — descended directly from West African traditions, preserved by isolation and resilience" },
-      { term: "Sullivan's Island", meaning: "the island where an estimated 40% of all enslaved Africans brought to North America first arrived — described as 'the Ellis Island of Black America'" },
+      {
+        term: "Mother Emanuel",
+        meaning:
+          "Emanuel AME Church — one of the oldest Black churches in the South, site of the 2015 massacre. Sacred ground.",
+      },
+      {
+        term: "Gullah Geechee",
+        meaning:
+          "the living culture and language of the Sea Islands and Lowcountry coast — descended directly from West African traditions, preserved by isolation and resilience",
+      },
+      {
+        term: "Sullivan's Island",
+        meaning:
+          "the island where an estimated 40% of all enslaved Africans brought to North America first arrived — described as 'the Ellis Island of Black America'",
+      },
     ],
     transit: ["CARTA (Charleston Area Regional Transportation Authority)"],
-    nicknames: ["North Charleston", "Park Circle", "Avondale", "the Neck", "James Island", "West Ashley", "Johns Island"],
-  },
-  "norfolk": {
-    terms: [
-      { term: "757", meaning: "the Hampton Roads area code — used across Norfolk, Virginia Beach, Hampton, Portsmouth, and Newport News as a shared regional identity" },
-      { term: "Hampton Roads", meaning: "the collective name for the metro area — Norfolk, Hampton, Virginia Beach, Portsmouth, Chesapeake, Newport News" },
-      { term: "Hampton University", meaning: "one of the most prestigious HBCUs in the country — founded 1868, home of the Hampton Singers, located across the water in Hampton" },
-      { term: "Norfolk State", meaning: "Norfolk State University — the HBCU in Norfolk proper, known for its music program and community ties" },
-      { term: "the Attucks", meaning: "the Attucks Theatre in Norfolk — the oldest Black theater in the Mid-Atlantic, opened 1919, hosted Duke Ellington and Ella Fitzgerald" },
+    nicknames: [
+      "North Charleston",
+      "Park Circle",
+      "Avondale",
+      "the Neck",
+      "James Island",
+      "West Ashley",
+      "Johns Island",
     ],
-    transit: ["HRT (Hampton Roads Transit)", "the Tide light rail", "Norfolk NET trolley"],
-    nicknames: ["Berkley", "Huntersville", "Bramblewood", "Young's Park", "Lamberts Point", "Ocean View"],
   },
-  "tuskegee": {
+  norfolk: {
     terms: [
-      { term: "Tuskegee University", meaning: "one of the most historic HBCUs in America — founded by Booker T. Washington in 1881, home of George Washington Carver's lab" },
-      { term: "the Airmen", meaning: "the Tuskegee Airmen — the first Black military aviators in the US Armed Forces, trained here during WWII. The Tuskegee Airmen National Historic Site is on campus." },
-      { term: "the Institute", meaning: "what locals call Tuskegee University — 'the Institute' is how Washington referred to it and how the community still speaks of it" },
-      { term: "334", meaning: "the area code shared across the Alabama Black Belt" },
+      {
+        term: "757",
+        meaning:
+          "the Hampton Roads area code — used across Norfolk, Virginia Beach, Hampton, Portsmouth, and Newport News as a shared regional identity",
+      },
+      {
+        term: "Hampton Roads",
+        meaning:
+          "the collective name for the metro area — Norfolk, Hampton, Virginia Beach, Portsmouth, Chesapeake, Newport News",
+      },
+      {
+        term: "Hampton University",
+        meaning:
+          "one of the most prestigious HBCUs in the country — founded 1868, home of the Hampton Singers, located across the water in Hampton",
+      },
+      {
+        term: "Norfolk State",
+        meaning:
+          "Norfolk State University — the HBCU in Norfolk proper, known for its music program and community ties",
+      },
+      {
+        term: "the Attucks",
+        meaning:
+          "the Attucks Theatre in Norfolk — the oldest Black theater in the Mid-Atlantic, opened 1919, hosted Duke Ellington and Ella Fitzgerald",
+      },
+    ],
+    transit: [
+      "HRT (Hampton Roads Transit)",
+      "the Tide light rail",
+      "Norfolk NET trolley",
+    ],
+    nicknames: [
+      "Berkley",
+      "Huntersville",
+      "Bramblewood",
+      "Young's Park",
+      "Lamberts Point",
+      "Ocean View",
+    ],
+  },
+  tuskegee: {
+    terms: [
+      {
+        term: "Tuskegee University",
+        meaning:
+          "one of the most historic HBCUs in America — founded by Booker T. Washington in 1881, home of George Washington Carver's lab",
+      },
+      {
+        term: "the Airmen",
+        meaning:
+          "the Tuskegee Airmen — the first Black military aviators in the US Armed Forces, trained here during WWII. The Tuskegee Airmen National Historic Site is on campus.",
+      },
+      {
+        term: "the Institute",
+        meaning:
+          "what locals call Tuskegee University — 'the Institute' is how Washington referred to it and how the community still speaks of it",
+      },
+      {
+        term: "334",
+        meaning: "the area code shared across the Alabama Black Belt",
+      },
     ],
     transit: ["no major transit — car required"],
-    nicknames: ["Greenwood (Tuskegee)", "the University area", "Notasulga (nearby)"],
-  },
-  "columbus": {
-    terms: [
-      { term: "CBus", meaning: "Columbus shorthand — used by younger residents especially" },
-      { term: "614", meaning: "Columbus's area code — the local pride badge" },
-      { term: "the Short North", meaning: "a vibrant arts and dining neighborhood just north of downtown — historically a Black neighborhood that gentrified" },
-      { term: "King-Lincoln Bronzeville", meaning: "Columbus's historic Black neighborhood — named for Dr. King, Abraham Lincoln, and Chicago's Bronzeville. The cultural heart of Black Columbus." },
-      { term: "Near East Side", meaning: "the historic Black community east of downtown Columbus — where roots run deep" },
+    nicknames: [
+      "Greenwood (Tuskegee)",
+      "the University area",
+      "Notasulga (nearby)",
     ],
-    transit: ["COTA (Central Ohio Transit Authority)", "the High Street bus corridor"],
-    nicknames: ["Near East Side", "King-Lincoln Bronzeville", "Olde Towne East", "Weinland Park", "Linden", "Milo-Grogan"],
   },
-  "cincinnati": {
+  columbus: {
     terms: [
-      { term: "the Nasty Nati", meaning: "Cincinnati's local nickname — said with affection and grit by locals who know the city's full story" },
-      { term: "513", meaning: "Cincinnati's area code — the local identity badge" },
-      { term: "Walnut Hills", meaning: "the historic heart of Black Cincinnati — once called 'the Harlem of the Midwest,' still a center of Black arts and culture" },
-      { term: "the Freedom Center", meaning: "the National Underground Railroad Freedom Center on the Ohio River — one of the most important museums in America" },
-      { term: "the Ohio River", meaning: "for the Black community, crossing the Ohio River meant freedom — Cincinnati sits on the north bank of the line between slavery and liberty" },
+      {
+        term: "CBus",
+        meaning: "Columbus shorthand — used by younger residents especially",
+      },
+      { term: "614", meaning: "Columbus's area code — the local pride badge" },
+      {
+        term: "the Short North",
+        meaning:
+          "a vibrant arts and dining neighborhood just north of downtown — historically a Black neighborhood that gentrified",
+      },
+      {
+        term: "King-Lincoln Bronzeville",
+        meaning:
+          "Columbus's historic Black neighborhood — named for Dr. King, Abraham Lincoln, and Chicago's Bronzeville. The cultural heart of Black Columbus.",
+      },
+      {
+        term: "Near East Side",
+        meaning:
+          "the historic Black community east of downtown Columbus — where roots run deep",
+      },
+    ],
+    transit: [
+      "COTA (Central Ohio Transit Authority)",
+      "the High Street bus corridor",
+    ],
+    nicknames: [
+      "Near East Side",
+      "King-Lincoln Bronzeville",
+      "Olde Towne East",
+      "Weinland Park",
+      "Linden",
+      "Milo-Grogan",
+    ],
+  },
+  cincinnati: {
+    terms: [
+      {
+        term: "the Nasty Nati",
+        meaning:
+          "Cincinnati's local nickname — said with affection and grit by locals who know the city's full story",
+      },
+      {
+        term: "513",
+        meaning: "Cincinnati's area code — the local identity badge",
+      },
+      {
+        term: "Walnut Hills",
+        meaning:
+          "the historic heart of Black Cincinnati — once called 'the Harlem of the Midwest,' still a center of Black arts and culture",
+      },
+      {
+        term: "the Freedom Center",
+        meaning:
+          "the National Underground Railroad Freedom Center on the Ohio River — one of the most important museums in America",
+      },
+      {
+        term: "the Ohio River",
+        meaning:
+          "for the Black community, crossing the Ohio River meant freedom — Cincinnati sits on the north bank of the line between slavery and liberty",
+      },
     ],
     transit: ["Metro (SORTA)", "the Cincinnati Bell Connector streetcar"],
-    nicknames: ["Walnut Hills", "Avondale", "Bond Hill", "Evanston", "Roselawn", "Madisonville", "Over-the-Rhine"],
+    nicknames: [
+      "Walnut Hills",
+      "Avondale",
+      "Bond Hill",
+      "Evanston",
+      "Roselawn",
+      "Madisonville",
+      "Over-the-Rhine",
+    ],
   },
-  "jacksonville": {
+  jacksonville: {
     terms: [
       { term: "Jax", meaning: "Jacksonville's universal shorthand" },
-      { term: "904", meaning: "Jacksonville's area code — the badge of local pride" },
-      { term: "the First Coast", meaning: "Jacksonville's regional nickname — the first part of Florida that Spanish explorers reached" },
-      { term: "LaVilla", meaning: "Jacksonville's historic Black entertainment district — once called 'the Harlem of the South,' home to venues that hosted Ray Charles and James Brown" },
-      { term: "Edward Waters", meaning: "Edward Waters University — the oldest HBCU in Florida, founded in Jacksonville in 1866" },
-      { term: "Lift Every Voice", meaning: "James Weldon Johnson, born in Jacksonville, wrote 'Lift Every Voice and Sing' — known as the Black national anthem. Jax owns that legacy." },
+      {
+        term: "904",
+        meaning: "Jacksonville's area code — the badge of local pride",
+      },
+      {
+        term: "the First Coast",
+        meaning:
+          "Jacksonville's regional nickname — the first part of Florida that Spanish explorers reached",
+      },
+      {
+        term: "LaVilla",
+        meaning:
+          "Jacksonville's historic Black entertainment district — once called 'the Harlem of the South,' home to venues that hosted Ray Charles and James Brown",
+      },
+      {
+        term: "Edward Waters",
+        meaning:
+          "Edward Waters University — the oldest HBCU in Florida, founded in Jacksonville in 1866",
+      },
+      {
+        term: "Lift Every Voice",
+        meaning:
+          "James Weldon Johnson, born in Jacksonville, wrote 'Lift Every Voice and Sing' — known as the Black national anthem. Jax owns that legacy.",
+      },
     ],
-    transit: ["JTA (Jacksonville Transportation Authority)", "the Skyway monorail (downtown)"],
-    nicknames: ["LaVilla", "Springfield", "Durkeeville", "Mixon Town", "Murray Hill", "Northside", "Brentwood"],
+    transit: [
+      "JTA (Jacksonville Transportation Authority)",
+      "the Skyway monorail (downtown)",
+    ],
+    nicknames: [
+      "LaVilla",
+      "Springfield",
+      "Durkeeville",
+      "Mixon Town",
+      "Murray Hill",
+      "Northside",
+      "Brentwood",
+    ],
   },
 };
 
@@ -1627,23 +3692,37 @@ function getCityLocalTerms(destination: string): CityLocalData | null {
 }
 
 // ─── Build personalized system prompt ─────────────────────────────────────────
-type BusinessCatalogEntry = GovernedKinfolkBusiness & { matchReasons?: string[] };
+type BusinessCatalogEntry = GovernedKinfolkBusiness & {
+  matchReasons?: string[];
+};
 
 type CrossCityMatch = {
   category: string;
   fromCity: string;
   savedCount: number;
-  matches: Array<{ name: string; category: string; city: string; verified: boolean }>;
+  matches: Array<{
+    name: string;
+    category: string;
+    city: string;
+    verified: boolean;
+  }>;
 };
 
 // ── Cultural Phrases cache (6-hour TTL) ───────────────────────────────────────
-let _phrasesCache: Array<{ group_name: string; phrase: string; english_gloss: string }> | null = null;
+let _phrasesCache: Array<{
+  group_name: string;
+  phrase: string;
+  english_gloss: string;
+}> | null = null;
 let _phrasesCacheAt = 0;
 async function getCachedCulturalPhrases() {
   const now = Date.now();
-  if (_phrasesCache && now - _phrasesCacheAt < 6 * 60 * 60 * 1000) return _phrasesCache;
+  if (_phrasesCache && now - _phrasesCacheAt < 6 * 60 * 60 * 1000)
+    return _phrasesCache;
   try {
-    const r = await pool.query(`SELECT group_name, phrase, english_gloss FROM cultural_phrases WHERE is_sensitive = false ORDER BY group_name, phrase`);
+    const r = await pool.query(
+      `SELECT group_name, phrase, english_gloss FROM cultural_phrases WHERE is_sensitive = false ORDER BY group_name, phrase`,
+    );
     _phrasesCache = r.rows;
     _phrasesCacheAt = now;
     return _phrasesCache;
@@ -1661,14 +3740,36 @@ function buildSystemPrompt(opts: {
   voiceMode?: string;
   aaveLevel?: number;
   businessCatalog?: BusinessCatalogEntry[];
-  activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
+  activeJourney?: {
+    title: string;
+    city?: string | null;
+    journeyType: string;
+    phases: JourneyPhase[];
+    aiContext?: string | null;
+  } | null;
   crossCityBridge?: CrossCityMatch[] | null;
   weatherContext?: string | null;
   tier?: string | null;
-  twinRecs?: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }>;
+  twinRecs?: Array<{
+    businessName: string;
+    city: string;
+    state: string;
+    twinCount: number;
+    reason: string;
+  }>;
   topUserVibes?: string[];
-  cityContext?: { city_name: string; brief_context: string; historical_context: string | null; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
-  culturalPhrases?: Array<{ group_name: string; phrase: string; english_gloss: string }> | null;
+  cityContext?: {
+    city_name: string;
+    brief_context: string;
+    historical_context: string | null;
+    key_neighborhoods: string[];
+    cultural_anchors: string[];
+  } | null;
+  culturalPhrases?: Array<{
+    group_name: string;
+    phrase: string;
+    english_gloss: string;
+  }> | null;
   knowledgeGraphContext?: KnowledgeGraphContext | null;
   libraryInterests?: string[];
   circleContext?: {
@@ -1687,11 +3788,18 @@ function buildSystemPrompt(opts: {
   /** Intent classification — gates which optional prompt modules are injected. */
   intentClass?: string | null;
 }): string {
-  const { prefs, destination, voiceMode = "community", businessCatalog = [], activeJourney, crossCityBridge } = opts;
+  const {
+    prefs,
+    destination,
+    voiceMode = "community",
+    businessCatalog = [],
+    activeJourney,
+    crossCityBridge,
+  } = opts;
   // Cap context arrays to keep token budget tight
-  const likedSpots    = opts.likedSpots.slice(0, 3);
+  const likedSpots = opts.likedSpots.slice(0, 3);
   const dislikedSpots = opts.dislikedSpots.slice(0, 3);
-  const savedPlaces   = opts.savedPlaces.slice(0, 3);
+  const savedPlaces = opts.savedPlaces.slice(0, 3);
   const catalogSource = opts.catalogSource ?? "none";
   const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
@@ -1711,30 +3819,27 @@ function buildSystemPrompt(opts: {
   if (voiceMode === "professor") {
     voiceInstructions = `KINFOLK VOICES™ — PROFESSOR MODE:
 Teach with clarity and curiosity. Start with the direct answer, explain the why in plain language, define unfamiliar terms, and use examples or analogies when useful. Ask one thoughtful follow-up only when it would materially improve the answer. Sound like a brilliant college professor who wants the member to win — never condescending or stiff.`;
-
   } else if (voiceMode === "business_manager") {
     voiceInstructions = `KINFOLK VOICES™ — BUSINESS MANAGER MODE:
 Be practical, organized, and candid. Translate the answer into priorities, decisions, risks, owners, and next actions. Use concise tables or bullets when they improve execution. Protect the member from avoidable cost or exposure, but do not smother them in disclaimers.`;
-
   } else if (voiceMode === "best_friend") {
     voiceInstructions = `KINFOLK VOICES™ — BEST FRIEND MODE:
 Lead with human warmth and emotional awareness, then give an honest useful answer. Write naturally, with contractions and supportive phrasing. Do not manufacture intimacy, use stereotypes, or agree with something false just to sound affirming.`;
-
   } else if (voiceMode === "professional") {
     voiceInstructions = `KINFOLK VOICES™ — PROFESSIONAL MODE:
 Respond in a clear, structured, business-appropriate tone. Lead with facts. Use bullet points when listing options. No slang, no casual phrasing. Warm professionalism — helpful, never cold or robotic. Efficient and organized.`;
-
   } else if (voiceMode === "local") {
-    const localLang = localTerms ? `
+    const localLang = localTerms
+      ? `
 
 Transit locals use: ${localTerms.transit.join(", ")}
 Neighborhood names: ${localTerms.nicknames.join(", ")}
 
-ACCURACY RULE: Use accurate local place and transit names, but do not use local slang unless the member separately enabled Regional Language.` : "";
+ACCURACY RULE: Use accurate local place and transit names, but do not use local slang unless the member separately enabled Regional Language.`
+      : "";
 
     voiceInstructions = `KINFOLK VOICES™ — LOCAL GUIDE MODE:
 Share accurate local knowledge without imitating an accent or local identity.${localLang}`;
-
   } else if (voiceMode === "home") {
     const commStyle = (prefs?.communicationStyle ?? "friendly") as string;
     const emojiLvl = (prefs?.emojiLevel ?? "some") as string;
@@ -1742,10 +3847,14 @@ Share accurate local knowledge without imitating an accent or local identity.${l
     const culturalCtx = (prefs?.culturalInterests ?? []) as string[];
 
     const commStyleText: Record<string, string> = {
-      professional: "Lead with facts and structure. Precise but warm. Example: \"Here are three options that match your criteria.\"",
-      community: "Frame everything through community. Example: \"The community really enjoys this one — regulars come back every week.\"",
-      conversational: "Fully relaxed and casual. Write like texting a close friend. Short sentences, contractions, informal phrasing.",
-      friendly: "Warm, enthusiastic, personal. Example: \"I found a few spots I think you'll love!\"",
+      professional:
+        'Lead with facts and structure. Precise but warm. Example: "Here are three options that match your criteria."',
+      community:
+        'Frame everything through community. Example: "The community really enjoys this one — regulars come back every week."',
+      conversational:
+        "Fully relaxed and casual. Write like texting a close friend. Short sentences, contractions, informal phrasing.",
+      friendly:
+        'Warm, enthusiastic, personal. Example: "I found a few spots I think you\'ll love!"',
     };
 
     const emojiText: Record<string, string> = {
@@ -1756,7 +3865,8 @@ Share accurate local knowledge without imitating an accent or local identity.${l
 
     const humorText: Record<string, string> = {
       off: "Keep responses purely informative — zero humor.",
-      playful: "Be playfully funny when it fits naturally. Personality, wit, light humor — make them smile.",
+      playful:
+        "Be playfully funny when it fits naturally. Personality, wit, light humor — make them smile.",
       light: "Occasional warmth and wit is welcome, but keep it natural.",
     };
 
@@ -1770,7 +3880,6 @@ EMOJI: ${emojiText[emojiLvl] ?? emojiText.some}
 HUMOR: ${humorText[humorLvl] ?? humorText.light}${culturalText}
 
 This is the user's "take me home" experience — the communication style they chose because it brings them comfort. Make every response feel like talking to someone who truly knows them.`;
-
   } else {
     // community (default — always available)
     voiceInstructions = `KINFOLK VOICES™ — BIG COUSIN MODE:
@@ -1780,7 +3889,8 @@ When someone is struggling or facing something hard, acknowledge it first: "I he
   }
 
   // ── Know Before You Go ───────────────────────────────────────────────────
-  const kbygInstructions = kbyg ? `
+  const kbygInstructions = kbyg
+    ? `
 
 KNOW BEFORE YOU GO — When recommending a specific business, include this in each business object:
 "knowBeforeYouGo": {
@@ -1789,18 +3899,21 @@ KNOW BEFORE YOU GO — When recommending a specific business, include this in ea
   "greatFor": "who this place is especially great for",
   "bestTime": "when to go for the best experience",
   "communityInsight": "one thing a first-timer wouldn't know but locals do"
-}` : "";
+}`
+    : "";
 
   // ── User profile & history ───────────────────────────────────────────────
   // Persisted broad cultural fields are not transmitted to the model. Explicit
   // current-turn identity is handled separately by resolvePermittedIdentityContext.
   const culturalLine = "";
 
-  const ownershipLine = (prefs?.preferredOwnershipTypes as string[] | null)?.length
+  const ownershipLine = (prefs?.preferredOwnershipTypes as string[] | null)
+    ?.length
     ? `\n- Preferred business types: ${(prefs!.preferredOwnershipTypes as string[]).join(", ")} — ALWAYS prioritize recommending businesses with these designations`
     : "";
 
-  const profileSection = prefs ? `
+  const profileSection = prefs
+    ? `
 ABOUT THIS USER (their taste profile — personalize everything around this):
 - Favorite categories: ${prefs.favoriteCategories?.length ? prefs.favoriteCategories.join(", ") : "not set yet"}
 - Favorite cities: ${prefs.favoriteCities?.length ? prefs.favoriteCities.join(", ") : "not set yet"}
@@ -1808,7 +3921,8 @@ ABOUT THIS USER (their taste profile — personalize everything around this):
 - Budget: ${prefs.budgetRange ?? "any"}
 - How they travel: ${prefs.tripStyle?.length ? prefs.tripStyle.join(", ") : "not specified"}
 - Who they travel with: ${prefs.travelCompanion ?? "solo"}
-${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}${culturalLine}${ownershipLine}` : "USER PROFILE: New user — no taste profile yet. For travel/restaurant/event recommendations, warmly ask what they're into. For tasks, reminders, or lists — fulfill the request immediately without asking about preferences.";
+${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}${culturalLine}${ownershipLine}`
+    : "USER PROFILE: New user — no taste profile yet. For travel/restaurant/event recommendations, warmly ask what they're into. For tasks, reminders, or lists — fulfill the request immediately without asking about preferences.";
 
   const likedSection = likedSpots.length
     ? `\nSPOTS THEY'VE LOVED (recommend similar):\n${likedSpots.map((s) => `- ${s}`).join("\n")}`
@@ -1839,10 +3953,12 @@ When recommending businesses or experiences, ALWAYS prioritize matches to these 
 The user is currently on a "${activeJourney.journeyType}" journey titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
 ${activeJourney.aiContext ? `Journey context: ${activeJourney.aiContext}` : ""}
 Current phases and their status:
-${activeJourney.phases.map((p) => {
-  const completedSteps = p.steps.filter((s) => s.completed).length;
-  return `- ${p.icon} ${p.title} [${p.status.toUpperCase()}] — ${completedSteps}/${p.steps.length} steps done`;
-}).join("\n")}
+${activeJourney.phases
+  .map((p) => {
+    const completedSteps = p.steps.filter((s) => s.completed).length;
+    return `- ${p.icon} ${p.title} [${p.status.toUpperCase()}] — ${completedSteps}/${p.steps.length} steps done`;
+  })
+  .join("\n")}
 Active phase: ${activeJourney.phases.find((p) => p.status === "active")?.title ?? "none"}
 IMPORTANT: When they ask about any topic related to their journey, connect it back. Reference their journey naturally. Suggest next steps. Help them make progress. This is their guide — make every conversation feel connected to where they're going.`
     : "";
@@ -1851,14 +3967,19 @@ IMPORTANT: When they ask about any topic related to their journey, connect it ba
     ? `\nCROSS-CITY PREFERENCE BRIDGE — BE PROACTIVE WITH THIS:
 This user is heading to ${activeJourney?.city ?? "a new city"}. We matched their saved categories from previous cities to minority-owned businesses there:
 
-${crossCityBridge.map((bridge) =>
-  `• ${bridge.category} (they saved ${bridge.savedCount} in ${bridge.fromCity}):\n${bridge.matches.map((m) => `  - ${m.name}${m.verified ? " ✓ Verified" : ""}`).join("\n")}`
-).join("\n\n")}
+${crossCityBridge
+  .map(
+    (bridge) =>
+      `• ${bridge.category} (they saved ${bridge.savedCount} in ${bridge.fromCity}):\n${bridge.matches.map((m) => `  - ${m.name}${m.verified ? " ✓ Verified" : ""}`).join("\n")}`,
+  )
+  .join("\n\n")}
 
 CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like — "Since you were feeling ${crossCityBridge[0]?.category} spots in ${crossCityBridge[0]?.fromCity}, I already found you some great ones in ${activeJourney?.city}." Make the connection feel magical, like a friend who remembered exactly what you loved.`
     : "";
 
-  const weatherSection = opts.weatherContext ? `\n${opts.weatherContext}\n` : "";
+  const weatherSection = opts.weatherContext
+    ? `\n${opts.weatherContext}\n`
+    : "";
 
   // ── Cultural Phrases (MWM Community Language Taxonomy) ───────────────────
   // ── Knowledge Graph Context (Layer 3) ────────────────────────────────────
@@ -1869,22 +3990,27 @@ CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like
     ? `\n${renderKnowledgeGraphContext(opts.knowledgeGraphContext)}\n`
     : "";
 
-  const culturalPhrasesSection = opts.culturalPhrases?.length ? `
+  const culturalPhrasesSection = opts.culturalPhrases?.length
+    ? `
 COMMUNITY LANGUAGE TOOLKIT — MWM Cultural Phrases:
 These are authentic phrases used across specific cultural communities to express trust, home, and endorsement. Weave them naturally when recommending businesses from these communities. NEVER use a culture's phrase for a different culture.
 
-${opts.culturalPhrases.map(p => `• [${p.group_name}] "${p.phrase}" — ${p.english_gloss}`).join("\n")}
+${opts.culturalPhrases.map((p) => `• [${p.group_name}] "${p.phrase}" — ${p.english_gloss}`).join("\n")}
 
 SENSITIVITY RULES: Never cross cultures. When in doubt, use: "Community Loved," "People's Choice," or "Put Your People On." Indigenous phrases require community consultation before use.
-` : "";
+`
+    : "";
 
   // ── City cultural intelligence ────────────────────────────────────────────
-  const destinationSection = destination ? `
+  const destinationSection = destination
+    ? `
 SERVER-RESOLVED GEOGRAPHY — AUTHORITATIVE:
 The current city context is ${destination}. Treat it as a place, never as a person, work, group, or demographic signal. Answer city overview, history, heritage, and local-discovery questions about ${destination}; do not ask which person or work the member means.
-` : "";
+`
+    : "";
 
-  const cityContextSection = opts.cityContext ? `
+  const cityContextSection = opts.cityContext
+    ? `
 CITY CULTURAL INTELLIGENCE — ${opts.cityContext.city_name}:
 ${opts.cityContext.brief_context}
 ${opts.cityContext.historical_context ? `Historical context: ${opts.cityContext.historical_context}` : ""}
@@ -1893,7 +4019,8 @@ Key neighborhoods: ${(opts.cityContext.key_neighborhoods ?? []).slice(0, 8).join
 Cultural anchors: ${(opts.cityContext.cultural_anchors ?? []).slice(0, 8).join(", ") || "Coverage not available in the current city profile."}
 
 When the user asks about this city, let this cultural knowledge inform how you describe neighborhoods, history, and community life — weave it naturally, never recite it. This profile is MWM editorial context, not an external citation; if no provenance URL is attached, describe it as platform coverage rather than inventing one.
-` : "";
+`
+    : "";
 
   // ── Lifestyle services & tier-based depth ──────────────────────────────────
   const lifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
@@ -1906,17 +4033,22 @@ PROACTIVE LIFESTYLE RULE: When the member asks for local providers, use only gov
 
   // ── Library cross-pollination (user's followed topics) ───────────────────
   // Privacy Intelligence: suppress when sensitive topic detected (non-leakage rule)
-  const effectiveLibraryInterests = opts.privacySuppressed ? [] : (opts.libraryInterests ?? []);
-  const libraryInterestsSection = effectiveLibraryInterests.length > 0
-    ? `\nLIBRARY INTERESTS — CROSS-POLLINATION (what this user follows in the MWM Library):
+  const effectiveLibraryInterests = opts.privacySuppressed
+    ? []
+    : (opts.libraryInterests ?? []);
+  const libraryInterestsSection =
+    effectiveLibraryInterests.length > 0
+      ? `\nLIBRARY INTERESTS — CROSS-POLLINATION (what this user follows in the MWM Library):
 ${effectiveLibraryInterests.map((t) => `- ${t}`).join("\n")}
 
 CROSS-POLLINATION RULE: Surface these connections only when genuinely relevant to the conversation. If they follow "Ethiopia" and ask where to eat, surface Ethiopian restaurants. If they follow "Maternal Health" and ask for an OBGYN, lead with that context. Make the connection feel like a friend who pays attention — natural, never mechanical. DO NOT inject library interests when they are unrelated to the topic at hand (e.g. don't mention heart health when someone is planning a trip to Cancun).`
-    : "";
+      : "";
 
   // ── Circle Intelligence ──────────────────────────────────────────────────
   // Privacy Intelligence: suppress when sensitive topic detected (Circle data boundary rule)
-  const effectiveCircleContext = opts.privacySuppressed ? null : (opts.circleContext ?? null);
+  const effectiveCircleContext = opts.privacySuppressed
+    ? null
+    : (opts.circleContext ?? null);
   const circleSection = effectiveCircleContext
     ? `\nCIRCLE INTELLIGENCE — "${effectiveCircleContext.name}" (${effectiveCircleContext.type}):
 You are the silent, always-on member of this Circle. You know everyone's individual preferences AND the group's shared context.
@@ -1981,19 +4113,29 @@ A medical, emergency, legal, or financial question gets calm, precise plain lang
   // Smart promo: only inject for intents where cross-sell is genuinely useful.
   // Omitting from medical/legal/safety/knowledge intents saves ~300 tokens.
   const SMART_PROMO_INTENTS = new Set([
-    "business_discovery", "hobby_lifestyle", "culture_entertainment",
-    "education_discovery", "current_information", "general_knowledge",
+    "business_discovery",
+    "hobby_lifestyle",
+    "culture_entertainment",
+    "education_discovery",
+    "current_information",
+    "general_knowledge",
   ]);
-  const showSmartPromo = !opts.intentClass || SMART_PROMO_INTENTS.has(opts.intentClass) || !!destination;
-  const smartPromoSection = showSmartPromo ? `
+  const showSmartPromo =
+    !opts.intentClass ||
+    SMART_PROMO_INTENTS.has(opts.intentClass) ||
+    !!destination;
+  const smartPromoSection = showSmartPromo
+    ? `
 SMART PROMOTION ENGINE — contextual governed-business suggestion:
 Surface ONE highly relevant governed platform category they have not thought of yet, only when there is a confident fit and it respects their explicit preferences. Set null otherwise.
 Triggers: trip/packing→print shop | moving→home decor | restaurants→cooking class | salon→hair care | events→catering | fitness→athletic wear | new city→credit union | business→marketing | family→children's brands.
 Format: "smartPromotion": { "headline": "5-7 words", "body": "1-2 sentences", "businessCategory": "name", "cta": "3-5 words", "ctaQuery": "search term", "triggerReason": "travel_booking|relocation|restaurant|salon|events|fitness|new_city|business|family" }
-Set "smartPromotion": null when nothing clearly applies.` : "";
+Set "smartPromotion": null when nothing clearly applies.`
+    : "";
 
-  const tierSection = (tier === "trailblazer" || tier === "founding")
-    ? `\nTRAILBLAZER / FOUNDING EXPERIENCE — FULL LIFESTYLE BUNDLE (always on):
+  const tierSection =
+    tier === "trailblazer" || tier === "founding"
+      ? `\nTRAILBLAZER / FOUNDING EXPERIENCE — FULL LIFESTYLE BUNDLE (always on):
 Every city or trip response automatically includes ALL of the following without being asked:
 1. 🍽  Restaurants & cafes matching their taste, dietary notes, and budget
 2. 🎉  Events, nightlife, and live music — especially if dates are mentioned
@@ -2002,15 +4144,15 @@ Every city or trip response automatically includes ALL of the following without 
 5. 🛡  Quick neighborhood safety vibe + any relevant community notes
 6. 🌆  Cultural context — what makes this city feel alive, including communities and traditions relevant to their stated interests
 This is the VIP concierge experience. Research everything. Present it proactively. Make them feel like they have a well-connected friend in every city.`
-    : tier === "navigator"
-    ? `\nNAVIGATOR EXPERIENCE — ENRICHED RECOMMENDATIONS:
+      : tier === "navigator"
+        ? `\nNAVIGATOR EXPERIENCE — ENRICHED RECOMMENDATIONS:
 For any city or trip question, automatically include:
 1. 🍽  Restaurants matching their taste
 2. 🎉  Events or nightlife if a timeframe is mentioned
 3. 💈  2–3 of their explicitly saved lifestyle services mapped to governed local providers
 4. 💎  1 hidden gem recommendation
 Responses should feel warm, researched, and personalized — like a knowledgeable friend who already did the homework.`
-    : `\nEXPLORE TIER — FOCUSED & CURATED:
+        : `\nEXPLORE TIER — FOCUSED & CURATED:
 For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relevant lifestyle service. Quality over quantity. At the end, warmly mention: "Upgrade to Navigator or Trailblazer to unlock your full personalized lifestyle bundle — restaurants, events, your barber or nail tech already found — all in one place."`;
 
   return `You are KinfolkAI™ — an intuitive, knowledgeable life companion built to help people navigate culture, community, and everyday life across the diaspora. You are a warm, well-connected guide who helps with travel, weather, community, moving, business, family, health, finances, and everyday questions using the context and evidence available in this request.
@@ -2122,9 +4264,13 @@ SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - Lead with the finding: "I found three places nearby…" not "Based on your preferences I have identified…"
 - One sentence, one follow-up maximum when voice is likely: "Want relaxed, lively, or something more upscale?"
 
-${voiceInstructions}${languagePersonalization ? `
+${voiceInstructions}${
+    languagePersonalization
+      ? `
 
-${languagePersonalization}` : ""}${kbygInstructions}
+${languagePersonalization}`
+      : ""
+  }${kbygInstructions}
 
 TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Create it immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other.
 
@@ -2166,33 +4312,51 @@ BIOGRAPHY RULE — NON-NEGOTIABLE: If the member is asking about a named person,
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
 BUSINESSES ARRAY — PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the MWM PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business not explicitly listed in the MWM PLATFORM BUSINESSES section. When MWM PLATFORM BUSINESSES are listed above, populate the businesses array with the relevant ones and reference them by name in your reply. Only say "Mapping With Melanin doesn't have a listing for [city]" when the MWM PLATFORM BUSINESSES section above is COMPLETELY EMPTY. Never populate the businesses array with invented or hallucinated names.
 SAFETY TIPS RULE: "safetyTips" must contain practical logistics ONLY — parking, transit, neighborhood navigation, what to bring, business hours, accessibility. Never include danger assessments, crime rates, or unsupported safety judgments about a community. If a user asks directly about safety conditions, respond in the "reply" field with honest, grounded information; do not fabricate safety scores or current danger levels.
-Only recommend real community or culturally significant spots — no tourist traps, no chains.${destination ? `
+Only recommend real community or culturally significant spots — no tourist traps, no chains.${
+    destination
+      ? `
 
 ⚡ DIRECTORY RETRIEVAL — SERVER-AUTHORITATIVE (this is a machine-generated fact, never contradict it):
 • Requested location: ${destination}
 • MWM listings retrieved: ${businessCatalog.length}${catalogSource === "radius" ? " (nearest community businesses within 50 miles — these are the closest MWM-listed spots to this destination)" : catalogSource === "city" ? " (exact city match)" : ""}
-${businessCatalog.length > 0
-  ? `→ RULE: MWM DOES HAVE LISTINGS for this area. You MUST NOT say "I don't have listings for ${destination}", "no specific listings", or any equivalent disclaimer — it is factually WRONG. Surface the businesses below by name in your reply.`
-  : `→ RULE: MWM has no directory listings for this destination yet. You may offer helpful general travel context, but you MUST label it: "This is general travel guidance — not yet in the MWM community directory." Do NOT name specific restaurants or venues as though they are MWM-verified.`}` : ""}${businessCatalog?.length ? `
+${
+  businessCatalog.length > 0
+    ? `→ RULE: MWM DOES HAVE LISTINGS for this area. You MUST NOT say "I don't have listings for ${destination}", "no specific listings", or any equivalent disclaimer — it is factually WRONG. Surface the businesses below by name in your reply.`
+    : `→ RULE: MWM has no directory listings for this destination yet. You may offer helpful general travel context, but you MUST label it: "This is general travel guidance — not yet in the MWM community directory." Do NOT name specific restaurants or venues as though they are MWM-verified.`
+}`
+      : ""
+  }${
+    businessCatalog?.length
+      ? `
 
 MWM PLATFORM BUSINESSES${destination ? ` ${catalogSource === "radius" ? "NEAR" : "IN"} ${destination.toUpperCase()}` : ""} — ALWAYS SURFACE THESE FIRST:
 These are real businesses listed in the Mapping With Melanin™ community directory. When these are present, ALWAYS mention them by name in your reply: "Mapping With Melanin has [Name] listed in [City] — [brief description]." Do NOT require an exact category match. If the user asks for "restaurants" and MWM has food spots, cafes, or any dining-adjacent businesses listed, surface them. If the user asks for nightlife and MWM has bars, lounges, or entertainment spaces, surface them. Use every business's actual name. Unverified businesses are still real community spots — recommend them.
 
-${businessCatalog.slice(0, 8).map(b => {
-  // Compact format: ~80 tokens per entry vs ~200 previously. Keep story for cultural richness.
-  const parts: string[] = [`• ${b.name} | ${b.category}${b.verified ? " ✓" : ""}`];
-  if (b.description) parts.push(`  ${b.description.slice(0, 120)}`);
-  else if (b.story) parts.push(`  ${b.story.slice(0, 120)}`);
-  const meta: string[] = [];
-  if (b.vibes?.length) meta.push(`vibes: ${b.vibes.slice(0, 3).join(", ")}`);
-  if (b.ownershipBadges?.length) meta.push(b.ownershipBadges.slice(0, 2).join(", "));
-  if (b.audiencesServed?.length) meta.push(`for: ${b.audiencesServed.slice(0, 2).join(", ")}`);
-  if (b.matchReasons?.length) meta.push(`why it fits: ${b.matchReasons.slice(0, 2).join("; ")}`);
-  if (meta.length) parts.push(`  [${meta.join(" | ")}]`);
-  return parts.join("\n");
-}).join("\n\n")}
+${businessCatalog
+  .slice(0, 8)
+  .map((b) => {
+    // Compact format: ~80 tokens per entry vs ~200 previously. Keep story for cultural richness.
+    const parts: string[] = [
+      `• ${b.name} | ${b.category}${b.verified ? " ✓" : ""}`,
+    ];
+    if (b.description) parts.push(`  ${b.description.slice(0, 120)}`);
+    else if (b.story) parts.push(`  ${b.story.slice(0, 120)}`);
+    const meta: string[] = [];
+    if (b.vibes?.length) meta.push(`vibes: ${b.vibes.slice(0, 3).join(", ")}`);
+    if (b.ownershipBadges?.length)
+      meta.push(b.ownershipBadges.slice(0, 2).join(", "));
+    if (b.audiencesServed?.length)
+      meta.push(`for: ${b.audiencesServed.slice(0, 2).join(", ")}`);
+    if (b.matchReasons?.length)
+      meta.push(`why it fits: ${b.matchReasons.slice(0, 2).join("; ")}`);
+    if (meta.length) parts.push(`  [${meta.join(" | ")}]`);
+    return parts.join("\n");
+  })
+  .join("\n\n")}
 
-When you mention any of these businesses, be specific: use their actual name, share their story, and explain WHY they'd resonate with this particular user based on their preferences and vibe.` : ""}`;
+When you mention any of these businesses, be specific: use their actual name, share their story, and explain WHY they'd resonate with this particular user based on their preferences and vibe.`
+      : ""
+  }`;
 }
 
 // ─── GET /api/kinfolk/preferences ─────────────────────────────────────────────
@@ -2204,7 +4368,10 @@ When you mention any of these businesses, be specific: use their actual name, sh
 //    so the Taste Profile UI can restore the persisted style on hard-refresh.
 // Cache: 30-second per-user single-flight via getCachedPrefs(). Hit/miss logged.
 router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const t0 = Date.now();
   const userId = req.user.id;
   try {
@@ -2219,7 +4386,8 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     const prefs = await getCachedPrefs(userId);
     const memberAgeBand = await getMemberAgeBand(userId);
 
-    const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+    const normalizeArr = (v: unknown): string[] =>
+      Array.isArray(v) ? (v as string[]) : [];
     const deliveryRow = await pool.query(
       `SELECT detail_level, tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`,
       [userId],
@@ -2229,41 +4397,66 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     // Map delivery profile columns back to the legacy response-style label used by the UI
     let responseStyle = "conversational";
     if (dp) {
-      responseStyle = deliveryToResponseStyle(dp.detail_level, dp.tone_preference);
+      responseStyle = deliveryToResponseStyle(
+        dp.detail_level,
+        dp.tone_preference,
+      );
     } else if (prefs?.communicationStyle) {
       // Fall back to taste profile communicationStyle until delivery profile is saved
-      responseStyle = prefs.communicationStyle === "detailed" ? "detailed"
-        : prefs.communicationStyle === "professional" ? "professional"
-        : prefs.communicationStyle === "concise" ? "concise"
-        : "conversational";
+      responseStyle =
+        prefs.communicationStyle === "detailed"
+          ? "detailed"
+          : prefs.communicationStyle === "professional"
+            ? "professional"
+            : prefs.communicationStyle === "concise"
+              ? "concise"
+              : "conversational";
     }
 
-    const normalized = prefs ? {
-      ...prefs,
-      recommendationLifeStage: resolveRecommendationLifeStage(prefs.recommendationLifeStage, memberAgeBand),
-      favoriteCategories:    normalizeArr(prefs.favoriteCategories),
-      favoriteCities:        normalizeArr(prefs.favoriteCities),
-      avoidCategories:       normalizeArr(prefs.avoidCategories),
-      tripStyle:             normalizeArr(prefs.tripStyle),
-      culturalInterests:     normalizeArr(prefs.culturalInterests),
-      lifestyleServices:     normalizeArr(prefs.lifestyleServices),
-      diasporaCountries:     normalizeArr(prefs.diasporaCountries),
-      // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
-      ownershipTypes:        normalizeArr(prefs.preferredOwnershipTypes),
-      kinfolkVoice:          normalizeKinfolkVoice(prefs.kinfolkVoice),
-      autoSpeak:             prefs.autoSpeak === true,
-      aaveLevel:             Number.isInteger(prefs.aaveLevel) && prefs.aaveLevel! >= 0 && prefs.aaveLevel! <= 3 ? prefs.aaveLevel : 0,
-      regionalFlavor:        normalizeRegionalFlavor(prefs.regionalFlavor),
-    } : {
-      userId: req.user.id,
-      recommendationLifeStage: "unspecified",
-      favoriteCategories: [], favoriteCities: [], avoidCategories: [],
-      budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
-      ownershipTypes: [], lifestyleServices: [],
-      communicationStyle: "friendly", personalityMode: "neighborhood_guide",
-      emojiLevel: "some", humorLevel: "light",
-      ...defaultVoicePreferences(),
-    };
+    const normalized = prefs
+      ? {
+          ...prefs,
+          recommendationLifeStage: resolveRecommendationLifeStage(
+            prefs.recommendationLifeStage,
+            memberAgeBand,
+          ),
+          favoriteCategories: normalizeArr(prefs.favoriteCategories),
+          favoriteCities: normalizeArr(prefs.favoriteCities),
+          avoidCategories: normalizeArr(prefs.avoidCategories),
+          tripStyle: normalizeArr(prefs.tripStyle),
+          culturalInterests: normalizeArr(prefs.culturalInterests),
+          lifestyleServices: normalizeArr(prefs.lifestyleServices),
+          diasporaCountries: normalizeArr(prefs.diasporaCountries),
+          // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
+          ownershipTypes: normalizeArr(prefs.preferredOwnershipTypes),
+          kinfolkVoice: normalizeKinfolkVoice(prefs.kinfolkVoice),
+          autoSpeak: prefs.autoSpeak === true,
+          aaveLevel:
+            Number.isInteger(prefs.aaveLevel) &&
+            prefs.aaveLevel! >= 0 &&
+            prefs.aaveLevel! <= 3
+              ? prefs.aaveLevel
+              : 0,
+          regionalFlavor: normalizeRegionalFlavor(prefs.regionalFlavor),
+        }
+      : {
+          userId: req.user.id,
+          recommendationLifeStage: "unspecified",
+          favoriteCategories: [],
+          favoriteCities: [],
+          avoidCategories: [],
+          budgetRange: "any",
+          tripStyle: [],
+          travelCompanion: "solo",
+          dietaryNotes: null,
+          ownershipTypes: [],
+          lifestyleServices: [],
+          communicationStyle: "friendly",
+          personalityMode: "neighborhood_guide",
+          emojiLevel: "some",
+          humorLevel: "light",
+          ...defaultVoicePreferences(),
+        };
     const status = 200;
     res.json({
       preferences: normalized,
@@ -2292,41 +4485,81 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
 
 // ─── PUT /api/kinfolk/preferences ─────────────────────────────────────────────
 router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const body = req.body as Record<string, unknown>;
   const validation = validateKinfolkPreferenceUpdate(body);
   if (!validation.ok) {
-    res.status(400).json({ error: "INVALID_PREFERENCES", issues: validation.issues });
+    res
+      .status(400)
+      .json({ error: "INVALID_PREFERENCES", issues: validation.issues });
     return;
   }
   const {
-    favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
-    communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
-    preferredOwnershipTypes, ownershipTypes, diasporaCountries, lifestyleServices, personalityMode, kinfolkVoice,
-    autoSpeak, aaveLevel, recommendationLifeStage,
+    favoriteCategories,
+    favoriteCities,
+    avoidCategories,
+    budgetRange,
+    tripStyle,
+    travelCompanion,
+    dietaryNotes,
+    communicationStyle,
+    emojiLevel,
+    humorLevel,
+    culturalInterests,
+    knowBeforeYouGo,
+    regionalFlavor,
+    preferredOwnershipTypes,
+    ownershipTypes,
+    diasporaCountries,
+    lifestyleServices,
+    personalityMode,
+    kinfolkVoice,
+    autoSpeak,
+    aaveLevel,
+    recommendationLifeStage,
   } = body;
   // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
-  const rawOwnershipTypes = Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes
-    : Array.isArray(ownershipTypes) ? ownershipTypes : undefined;
-  const allowedOwnershipIds = new Set(OWNERSHIP_FILTER_OPTIONS.map((option) => option.id));
+  const rawOwnershipTypes = Array.isArray(preferredOwnershipTypes)
+    ? preferredOwnershipTypes
+    : Array.isArray(ownershipTypes)
+      ? ownershipTypes
+      : undefined;
+  const allowedOwnershipIds = new Set(
+    OWNERSHIP_FILTER_OPTIONS.map((option) => option.id),
+  );
   const resolvedOwnershipTypes = rawOwnershipTypes
-    ? [...new Set(rawOwnershipTypes
-      .filter((value): value is string => typeof value === "string")
-      .map(ownershipDesignationFilterId)
-      .filter((value) => allowedOwnershipIds.has(value)))].slice(0, 100)
+    ? [
+        ...new Set(
+          rawOwnershipTypes
+            .filter((value): value is string => typeof value === "string")
+            .map(ownershipDesignationFilterId)
+            .filter((value) => allowedOwnershipIds.has(value)),
+        ),
+      ].slice(0, 100)
     : undefined;
-  const memberAgeBand = recommendationLifeStage !== undefined
-    ? await getMemberAgeBand(req.user.id)
-    : null;
-  const resolvedRecommendationLifeStage = recommendationLifeStage !== undefined
-    ? resolveRecommendationLifeStage(recommendationLifeStage, memberAgeBand ?? "unknown")
-    : undefined;
-  if (recommendationLifeStage !== undefined
-      && recommendationLifeStage !== "unspecified"
-      && resolvedRecommendationLifeStage === "unspecified") {
+  const memberAgeBand =
+    recommendationLifeStage !== undefined
+      ? await getMemberAgeBand(req.user.id)
+      : null;
+  const resolvedRecommendationLifeStage =
+    recommendationLifeStage !== undefined
+      ? resolveRecommendationLifeStage(
+          recommendationLifeStage,
+          memberAgeBand ?? "unknown",
+        )
+      : undefined;
+  if (
+    recommendationLifeStage !== undefined &&
+    recommendationLifeStage !== "unspecified" &&
+    resolvedRecommendationLifeStage === "unspecified"
+  ) {
     res.status(400).json({
       error: "ADULT_LIFE_STAGE_REQUIRES_ADULT_ASSURANCE",
-      message: "Complete adult age assurance before selecting an adult recommendation life stage.",
+      message:
+        "Complete adult age assurance before selecting an adult recommendation life stage.",
     });
     return;
   }
@@ -2336,51 +4569,97 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
       .values({
         userId: req.user.id,
         recommendationLifeStage: resolvedRecommendationLifeStage,
-        favoriteCategories: Array.isArray(favoriteCategories) ? favoriteCategories as string[] : undefined,
-        favoriteCities: Array.isArray(favoriteCities) ? favoriteCities as string[] : undefined,
-        avoidCategories: Array.isArray(avoidCategories) ? avoidCategories as string[] : undefined,
+        favoriteCategories: Array.isArray(favoriteCategories)
+          ? (favoriteCategories as string[])
+          : undefined,
+        favoriteCities: Array.isArray(favoriteCities)
+          ? (favoriteCities as string[])
+          : undefined,
+        avoidCategories: Array.isArray(avoidCategories)
+          ? (avoidCategories as string[])
+          : undefined,
         budgetRange: typeof budgetRange === "string" ? budgetRange : undefined,
-        tripStyle: Array.isArray(tripStyle) ? tripStyle as string[] : undefined,
-        travelCompanion: typeof travelCompanion === "string" ? travelCompanion : undefined,
-        dietaryNotes: typeof dietaryNotes === "string" ? dietaryNotes : undefined,
-        communicationStyle: typeof communicationStyle === "string" ? communicationStyle : undefined,
-        personalityMode: typeof personalityMode === "string" ? personalityMode : undefined,
+        tripStyle: Array.isArray(tripStyle)
+          ? (tripStyle as string[])
+          : undefined,
+        travelCompanion:
+          typeof travelCompanion === "string" ? travelCompanion : undefined,
+        dietaryNotes:
+          typeof dietaryNotes === "string" ? dietaryNotes : undefined,
+        communicationStyle:
+          typeof communicationStyle === "string"
+            ? communicationStyle
+            : undefined,
+        personalityMode:
+          typeof personalityMode === "string" ? personalityMode : undefined,
         emojiLevel: typeof emojiLevel === "string" ? emojiLevel : undefined,
         humorLevel: typeof humorLevel === "string" ? humorLevel : undefined,
-        culturalInterests: Array.isArray(culturalInterests) ? culturalInterests as string[] : undefined,
-        knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
-        regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
-        kinfolkVoice: typeof kinfolkVoice === "string" ? normalizeKinfolkVoice(kinfolkVoice) : undefined,
+        culturalInterests: Array.isArray(culturalInterests)
+          ? (culturalInterests as string[])
+          : undefined,
+        knowBeforeYouGo:
+          typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
+        regionalFlavor:
+          typeof regionalFlavor === "string" ? regionalFlavor : undefined,
+        kinfolkVoice:
+          typeof kinfolkVoice === "string"
+            ? normalizeKinfolkVoice(kinfolkVoice)
+            : undefined,
         autoSpeak: typeof autoSpeak === "boolean" ? autoSpeak : undefined,
         aaveLevel: typeof aaveLevel === "number" ? aaveLevel : undefined,
         preferredOwnershipTypes: resolvedOwnershipTypes,
-        diasporaCountries: Array.isArray(diasporaCountries) ? diasporaCountries as string[] : undefined,
-        lifestyleServices: Array.isArray(lifestyleServices) ? lifestyleServices as string[] : undefined,
+        diasporaCountries: Array.isArray(diasporaCountries)
+          ? (diasporaCountries as string[])
+          : undefined,
+        lifestyleServices: Array.isArray(lifestyleServices)
+          ? (lifestyleServices as string[])
+          : undefined,
       })
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
         set: {
-          ...(resolvedRecommendationLifeStage !== undefined && { recommendationLifeStage: resolvedRecommendationLifeStage }),
-          ...(Array.isArray(favoriteCategories) && { favoriteCategories: favoriteCategories as string[] }),
-          ...(Array.isArray(favoriteCities) && { favoriteCities: favoriteCities as string[] }),
-          ...(Array.isArray(avoidCategories) && { avoidCategories: avoidCategories as string[] }),
+          ...(resolvedRecommendationLifeStage !== undefined && {
+            recommendationLifeStage: resolvedRecommendationLifeStage,
+          }),
+          ...(Array.isArray(favoriteCategories) && {
+            favoriteCategories: favoriteCategories as string[],
+          }),
+          ...(Array.isArray(favoriteCities) && {
+            favoriteCities: favoriteCities as string[],
+          }),
+          ...(Array.isArray(avoidCategories) && {
+            avoidCategories: avoidCategories as string[],
+          }),
           ...(typeof budgetRange === "string" && { budgetRange }),
           ...(Array.isArray(tripStyle) && { tripStyle: tripStyle as string[] }),
           ...(typeof travelCompanion === "string" && { travelCompanion }),
-          ...(dietaryNotes !== undefined && { dietaryNotes: typeof dietaryNotes === "string" ? dietaryNotes : null }),
+          ...(dietaryNotes !== undefined && {
+            dietaryNotes:
+              typeof dietaryNotes === "string" ? dietaryNotes : null,
+          }),
           ...(typeof communicationStyle === "string" && { communicationStyle }),
           ...(typeof personalityMode === "string" && { personalityMode }),
           ...(typeof emojiLevel === "string" && { emojiLevel }),
           ...(typeof humorLevel === "string" && { humorLevel }),
-          ...(Array.isArray(culturalInterests) && { culturalInterests: culturalInterests as string[] }),
+          ...(Array.isArray(culturalInterests) && {
+            culturalInterests: culturalInterests as string[],
+          }),
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
-          ...(typeof kinfolkVoice === "string" && { kinfolkVoice: normalizeKinfolkVoice(kinfolkVoice) }),
+          ...(typeof kinfolkVoice === "string" && {
+            kinfolkVoice: normalizeKinfolkVoice(kinfolkVoice),
+          }),
           ...(typeof autoSpeak === "boolean" && { autoSpeak }),
           ...(typeof aaveLevel === "number" && { aaveLevel }),
-          ...(resolvedOwnershipTypes && { preferredOwnershipTypes: resolvedOwnershipTypes }),
-          ...(Array.isArray(diasporaCountries) && { diasporaCountries: diasporaCountries as string[] }),
-          ...(Array.isArray(lifestyleServices) && { lifestyleServices: lifestyleServices as string[] }),
+          ...(resolvedOwnershipTypes && {
+            preferredOwnershipTypes: resolvedOwnershipTypes,
+          }),
+          ...(Array.isArray(diasporaCountries) && {
+            diasporaCountries: diasporaCountries as string[],
+          }),
+          ...(Array.isArray(lifestyleServices) && {
+            lifestyleServices: lifestyleServices as string[],
+          }),
           updatedAt: new Date(),
         },
       })
@@ -2388,12 +4667,18 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     // Mirror communicationStyle → kinfolk_delivery_profiles so the persisted
     // delivery profile survives hard-refresh (Manus audit fix #3).
     if (typeof communicationStyle === "string") {
-      const styleMap: Record<string, { detail_level: string; tone_preference: string }> = {
-        detailed:      { detail_level: "deep",     tone_preference: "default" },
-        concise:       { detail_level: "quick",    tone_preference: "default" },
-        professional:  { detail_level: "standard", tone_preference: "professional" },
-        friendly:      { detail_level: "standard", tone_preference: "warm" },
-        conversational:{ detail_level: "standard", tone_preference: "warm" },
+      const styleMap: Record<
+        string,
+        { detail_level: string; tone_preference: string }
+      > = {
+        detailed: { detail_level: "deep", tone_preference: "default" },
+        concise: { detail_level: "quick", tone_preference: "default" },
+        professional: {
+          detail_level: "standard",
+          tone_preference: "professional",
+        },
+        friendly: { detail_level: "standard", tone_preference: "warm" },
+        conversational: { detail_level: "standard", tone_preference: "warm" },
       };
       const dp = styleMap[communicationStyle];
       if (dp) {
@@ -2405,14 +4690,17 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
              detail_level   = EXCLUDED.detail_level,
              tone_preference = EXCLUDED.tone_preference,
              updated_at     = now()`,
-          [req.user.id, dp.detail_level, dp.tone_preference]
+          [req.user.id, dp.detail_level, dp.tone_preference],
         );
       }
     }
     invalidatePrefsCache(req.user.id);
     res.json({ preferences: prefs });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to update preferences");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to update preferences",
+    );
     res.status(500).json({ error: "Failed to update preferences" });
   }
 });
@@ -2421,41 +4709,66 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
 // Transitional endpoint: saves the selected response-style button directly to
 // kinfolk_delivery_profiles without requiring the full taste-profile form.
 // Acceptance test: select Detailed → save → hard-refresh → Detailed must remain.
-router.put("/kinfolk/preferences/response-style", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { responseStyle } = req.body as { responseStyle?: unknown };
-  if (!RESPONSE_STYLES.includes(responseStyle as ResponseStyle)) {
-    res.status(400).json({ error: "INVALID_RESPONSE_STYLE", valid: RESPONSE_STYLES });
-    return;
-  }
-  const delivery = responseStyleToDelivery(responseStyle as ResponseStyle);
-  const dp = {
-    detail_level: delivery.detailLevel,
-    tone_preference: delivery.tonePreference,
-  };
-  try {
-    await pool.query(
-      `INSERT INTO kinfolk_delivery_profiles
+router.put(
+  "/kinfolk/preferences/response-style",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    const { responseStyle } = req.body as { responseStyle?: unknown };
+    if (!RESPONSE_STYLES.includes(responseStyle as ResponseStyle)) {
+      res
+        .status(400)
+        .json({ error: "INVALID_RESPONSE_STYLE", valid: RESPONSE_STYLES });
+      return;
+    }
+    const delivery = responseStyleToDelivery(responseStyle as ResponseStyle);
+    const dp = {
+      detail_level: delivery.detailLevel,
+      tone_preference: delivery.tonePreference,
+    };
+    try {
+      await pool.query(
+        `INSERT INTO kinfolk_delivery_profiles
          (user_id, detail_level, tone_preference, updated_at)
        VALUES ($1, $2, $3, now())
        ON CONFLICT (user_id) DO UPDATE SET
          detail_level    = EXCLUDED.detail_level,
          tone_preference = EXCLUDED.tone_preference,
          updated_at      = now()`,
-      [req.user.id, dp.detail_level, dp.tone_preference]
-    );
-    res.json({ responseStyle, deliveryProfile: { detailLevel: dp.detail_level, tonePreference: dp.tone_preference } });
-  } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save response style");
-    res.status(500).json({ error: "KINFOLK_RESPONSE_STYLE_SAVE_FAILED" });
-  }
-});
+        [req.user.id, dp.detail_level, dp.tone_preference],
+      );
+      res.json({
+        responseStyle,
+        deliveryProfile: {
+          detailLevel: dp.detail_level,
+          tonePreference: dp.tone_preference,
+        },
+      });
+    } catch (err) {
+      req.log.error(
+        safeKinfolkErrorMetadata(err),
+        "Failed to save response style",
+      );
+      res.status(500).json({ error: "KINFOLK_RESPONSE_STYLE_SAVE_FAILED" });
+    }
+  },
+);
 
 // ─── POST /api/kinfolk/feedback ───────────────────────────────────────────────
 router.post("/kinfolk/feedback", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { sessionId, businessName, category, city, reaction } = req.body as Record<string, unknown>;
-  if (!businessName || !reaction || !["like", "dislike"].includes(reaction as string)) {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const { sessionId, businessName, category, city, reaction } =
+    req.body as Record<string, unknown>;
+  if (
+    !businessName ||
+    !reaction ||
+    !["like", "dislike"].includes(reaction as string)
+  ) {
     res.status(400).json({ error: "businessName and valid reaction required" });
     return;
   }
@@ -2478,7 +4791,10 @@ router.post("/kinfolk/feedback", async (req: Request, res: Response) => {
 // ─── GET /api/kinfolk/sessions ────────────────────────────────────────────────
 // Cache: 15-second per-user single-flight via getCachedSessions(). Hit/miss logged.
 router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const t0 = Date.now();
   const userId = req.user.id;
   try {
@@ -2507,17 +4823,29 @@ router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
 
 // ─── GET /api/kinfolk/sessions/:id ───────────────────────────────────────────
 router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const id = String(req.params.id);
   try {
     const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
-    if (!memoryEnabled) return void res.status(404).json({ error: "Session not found" });
+    if (!memoryEnabled)
+      return void res.status(404).json({ error: "Session not found" });
     const [session] = await db
       .select()
       .from(kinfolkSessionsTable)
-      .where(and(eq(kinfolkSessionsTable.id, id), eq(kinfolkSessionsTable.userId, req.user.id)))
+      .where(
+        and(
+          eq(kinfolkSessionsTable.id, id),
+          eq(kinfolkSessionsTable.userId, req.user.id),
+        ),
+      )
       .limit(1);
-    if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
     res.json({ session });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch session");
@@ -2529,115 +4857,226 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 const FREE_MONTHLY_LIMIT = 3;
 
 // ─── Kinfolk private memory — explicit consent and ownership only ──────────────
-const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{ key: string; pattern: RegExp }> = [
-  { key: "fertility", pattern: /\b(fertility|infertility|ivf|iui|egg freezing|pregnan(?:t|cy)|miscarriage|reproductive|ob[- ]?gyn)\b/i },
-  { key: "skin_health", pattern: /\b(rash|eczema|psoriasis|acne|skin condition|dermatolog(?:y|ist))\b/i },
-  { key: "mental_health", pattern: /\b(depression|anxiety|therapy|therapist|trauma|panic attack|mental health|suicid(?:e|al))\b/i },
-  { key: "sexual_health", pattern: /\b(sexual health|sti|std|hiv|aids|contraception|birth control)\b/i },
-  { key: "safety", pattern: /\b(assault|harass(?:ment|ed)|abuse|stalk(?:er|ing)|unsafe|discrimination|hate crime|domestic violence)\b/i },
-  { key: "financial", pattern: /\b(income|salary|debt|bankruptcy|credit score|foreclosure|eviction|financial hardship)\b/i },
-  { key: "identity", pattern: /\b(sexuality|sexual orientation|gender identity|transgender|nonbinary|religion|immigration status)\b/i },
-];
+const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{ key: string; pattern: RegExp }> =
+  [
+    {
+      key: "fertility",
+      pattern:
+        /\b(fertility|infertility|ivf|iui|egg freezing|pregnan(?:t|cy)|miscarriage|reproductive|ob[- ]?gyn)\b/i,
+    },
+    {
+      key: "skin_health",
+      pattern:
+        /\b(rash|eczema|psoriasis|acne|skin condition|dermatolog(?:y|ist))\b/i,
+    },
+    {
+      key: "mental_health",
+      pattern:
+        /\b(depression|anxiety|therapy|therapist|trauma|panic attack|mental health|suicid(?:e|al))\b/i,
+    },
+    {
+      key: "sexual_health",
+      pattern:
+        /\b(sexual health|sti|std|hiv|aids|contraception|birth control)\b/i,
+    },
+    {
+      key: "safety",
+      pattern:
+        /\b(assault|harass(?:ment|ed)|abuse|stalk(?:er|ing)|unsafe|discrimination|hate crime|domestic violence)\b/i,
+    },
+    {
+      key: "financial",
+      pattern:
+        /\b(income|salary|debt|bankruptcy|credit score|foreclosure|eviction|financial hardship)\b/i,
+    },
+    {
+      key: "identity",
+      pattern:
+        /\b(sexuality|sexual orientation|gender identity|transgender|nonbinary|religion|immigration status)\b/i,
+    },
+  ];
 
 function sensitiveMemoryTopic(value: string): string | null {
-  return SENSITIVE_MEMORY_TOPICS.find((topic) => topic.pattern.test(value))?.key ?? null;
+  return (
+    SENSITIVE_MEMORY_TOPICS.find((topic) => topic.pattern.test(value))?.key ??
+    null
+  );
 }
 
-function isSensitiveMemoryRelevant(memory: string, currentMessage: string): boolean {
+function isSensitiveMemoryRelevant(
+  memory: string,
+  currentMessage: string,
+): boolean {
   const memoryTopic = sensitiveMemoryTopic(memory);
   if (memoryTopic) return memoryTopic === sensitiveMemoryTopic(currentMessage);
-  const currentTokens = new Set(currentMessage.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []);
-  return (memory.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []).some((token) => currentTokens.has(token));
+  const currentTokens = new Set(
+    currentMessage.toLowerCase().match(/[a-z0-9]{5,}/g) ?? [],
+  );
+  return (memory.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []).some((token) =>
+    currentTokens.has(token),
+  );
 }
 
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled()) {
-    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+    return void res
+      .status(403)
+      .json({
+        error: "Kinfolk private memory is disabled.",
+        code: "PRIVATE_MEMORY_DISABLED",
+      });
   }
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
   try {
     const now = new Date();
-    const memories = await db.select({
-      id: kinfolkPrivateMemoriesTable.id,
-      content: kinfolkPrivateMemoriesTable.content,
-      purpose: kinfolkPrivateMemoriesTable.purpose,
-      isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
-      expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
-      createdAt: kinfolkPrivateMemoriesTable.createdAt,
-    }).from(kinfolkPrivateMemoriesTable)
-      .where(and(
-        eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-        isNull(kinfolkPrivateMemoriesTable.revokedAt),
-        or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, now)),
-      ))
+    const memories = await db
+      .select({
+        id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+        createdAt: kinfolkPrivateMemoriesTable.createdAt,
+      })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+          or(
+            isNull(kinfolkPrivateMemoriesTable.expiresAt),
+            gt(kinfolkPrivateMemoriesTable.expiresAt, now),
+          ),
+        ),
+      )
       .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
       .limit(50);
     res.json({ memories });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to load Kinfolk memories");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to load Kinfolk memories",
+    );
     res.status(500).json({ error: "Failed to load memories" });
   }
 });
 
 router.post("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled()) {
-    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+    return void res
+      .status(403)
+      .json({
+        error: "Kinfolk private memory is disabled.",
+        code: "PRIVATE_MEMORY_DISABLED",
+      });
   }
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
   try {
     const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
     if (!memoryEnabled) {
-      return void res.status(403).json({ error: "Kinfolk memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+      return void res
+        .status(403)
+        .json({
+          error: "Kinfolk memory is disabled.",
+          code: "PRIVATE_MEMORY_DISABLED",
+        });
     }
     const body = req.body as Record<string, unknown>;
     if (body.consent !== true) {
-      res.status(400).json({ error: "Explicit consent is required before Kinfolk remembers anything.", code: "MEMORY_CONSENT_REQUIRED" });
+      res
+        .status(400)
+        .json({
+          error:
+            "Explicit consent is required before Kinfolk remembers anything.",
+          code: "MEMORY_CONSENT_REQUIRED",
+        });
       return;
     }
     const content = String(body.content ?? "").trim();
     if (!content || content.length > 1000) {
-      res.status(400).json({ error: "Memory must be between 1 and 1,000 characters." });
+      res
+        .status(400)
+        .json({ error: "Memory must be between 1 and 1,000 characters." });
       return;
     }
-    const allowedPurposes = ["personalization", "preference", "goal", "ongoing_context"];
+    const allowedPurposes = [
+      "personalization",
+      "preference",
+      "goal",
+      "ongoing_context",
+    ];
     const requestedPurpose = String(body.purpose ?? "personalization");
-    const purpose = allowedPurposes.includes(requestedPurpose) ? requestedPurpose : "personalization";
+    const purpose = allowedPurposes.includes(requestedPurpose)
+      ? requestedPurpose
+      : "personalization";
     const requestedDays = Number(body.expiresInDays);
-    const expiresInDays = Number.isFinite(requestedDays) ? Math.min(3650, Math.max(1, Math.floor(requestedDays))) : null;
-    const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 86_400_000) : null;
+    const expiresInDays = Number.isFinite(requestedDays)
+      ? Math.min(3650, Math.max(1, Math.floor(requestedDays)))
+      : null;
+    const expiresAt = expiresInDays
+      ? new Date(Date.now() + expiresInDays * 86_400_000)
+      : null;
 
-    const [memory] = await db.insert(kinfolkPrivateMemoriesTable).values({
-      userId: req.user.id,
-      content,
-      purpose,
-      sourceSessionId: typeof body.sessionId === "string" ? body.sessionId : null,
-      isSensitive: body.isSensitive === true || sensitiveMemoryTopic(content) !== null,
-      expiresAt,
-    }).returning();
+    const [memory] = await db
+      .insert(kinfolkPrivateMemoriesTable)
+      .values({
+        userId: req.user.id,
+        content,
+        purpose,
+        sourceSessionId:
+          typeof body.sessionId === "string" ? body.sessionId : null,
+        isSensitive:
+          body.isSensitive === true || sensitiveMemoryTopic(content) !== null,
+        expiresAt,
+      })
+      .returning();
     res.status(201).json({
       memory,
       message: `I’ll remember that for ${purpose.replace("_", " ")}. You can view or forget it any time in Kinfolk settings.`,
     });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save Kinfolk memory");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to save Kinfolk memory",
+    );
     res.status(500).json({ error: "Failed to save memory" });
   }
 });
 
 router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled()) {
-    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+    return void res
+      .status(403)
+      .json({
+        error: "Kinfolk private memory is disabled.",
+        code: "PRIVATE_MEMORY_DISABLED",
+      });
   }
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
   try {
-    const [forgotten] = await db.update(kinfolkPrivateMemoriesTable)
+    const [forgotten] = await db
+      .update(kinfolkPrivateMemoriesTable)
       .set({ revokedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)), eq(kinfolkPrivateMemoriesTable.userId, req.user.id)))
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+        ),
+      )
       .returning({ id: kinfolkPrivateMemoriesTable.id });
-    if (!forgotten) { res.status(404).json({ error: "Memory not found" }); return; }
+    if (!forgotten) {
+      res.status(404).json({ error: "Memory not found" });
+      return;
+    }
     res.json({ ok: true, memoryId: forgotten.id });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to forget Kinfolk memory");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to forget Kinfolk memory",
+    );
     res.status(500).json({ error: "Failed to forget memory" });
   }
 });
@@ -2648,7 +5087,9 @@ async function resolveOwnerKinfolkMemoryAccess(userId: string) {
     authenticatedUserId: userId,
     readOwnerSetting: async () => {
       const [settings] = await db
-        .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
+        .select({
+          kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled,
+        })
         .from(userSettingsTable)
         .where(eq(userSettingsTable.userId, userId))
         .limit(1);
@@ -2676,14 +5117,18 @@ async function persistDeterministicDiscoveryTurn(input: {
       ? await db
           .select()
           .from(kinfolkSessionsTable)
-          .where(and(
-            eq(kinfolkSessionsTable.id, input.sessionId),
-            eq(kinfolkSessionsTable.userId, input.userId),
-          ))
+          .where(
+            and(
+              eq(kinfolkSessionsTable.id, input.sessionId),
+              eq(kinfolkSessionsTable.userId, input.userId),
+            ),
+          )
           .limit(1)
       : [];
     const timestamp = new Date().toISOString();
-    const messages: Array<SessionMessage & { resultView?: Record<string, unknown> | null }> = [
+    const messages: Array<
+      SessionMessage & { resultView?: Record<string, unknown> | null }
+    > = [
       ...(currentSession?.messages ?? []),
       { role: "user", content: input.message, timestamp },
       {
@@ -2700,7 +5145,11 @@ async function persistDeterministicDiscoveryTurn(input: {
     if (currentSession) {
       await db
         .update(kinfolkSessionsTable)
-        .set({ messages, destination: input.destination, updatedAt: new Date() })
+        .set({
+          messages,
+          destination: input.destination,
+          updatedAt: new Date(),
+        })
         .where(eq(kinfolkSessionsTable.id, currentSession.id));
       return currentSession.id;
     }
@@ -2709,7 +5158,10 @@ async function persistDeterministicDiscoveryTurn(input: {
       .insert(kinfolkSessionsTable)
       .values({
         userId: input.userId,
-        title: input.message.length > 40 ? `${input.message.slice(0, 40)}…` : input.message,
+        title:
+          input.message.length > 40
+            ? `${input.message.slice(0, 40)}…`
+            : input.message,
         destination: input.destination,
         vibes: input.vibes,
         messages,
@@ -2719,7 +5171,9 @@ async function persistDeterministicDiscoveryTurn(input: {
   } catch (error) {
     // Discovery results are still useful when optional conversation persistence
     // is unavailable. Log only the coarse database code; never raw member text.
-    console.warn(`[kinfolk-deterministic-session] save_failed pgCode=${pgCode(error)}`);
+    console.warn(
+      `[kinfolk-deterministic-session] save_failed pgCode=${pgCode(error)}`,
+    );
     return undefined;
   }
 }
@@ -2731,6 +5185,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   message: string;
   vibes: string[];
   memoryEnabled: boolean;
+  cityHint?: string;
 }): Promise<boolean> {
   let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
   if (input.memoryEnabled && input.sessionId && input.req.user?.id) {
@@ -2738,10 +5193,12 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       const [session] = await db
         .select()
         .from(kinfolkSessionsTable)
-        .where(and(
-          eq(kinfolkSessionsTable.id, input.sessionId),
-          eq(kinfolkSessionsTable.userId, input.req.user.id),
-        ))
+        .where(
+          and(
+            eq(kinfolkSessionsTable.id, input.sessionId),
+            eq(kinfolkSessionsTable.userId, input.req.user.id),
+          ),
+        )
         .limit(1);
       currentSession = session ?? null;
     } catch {
@@ -2750,10 +5207,19 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     }
   }
 
-  const location = resolveTurnGeography(input.message, currentSession?.destination ?? null);
+  // A mobile "near me" request can provide a reverse-geocoded city/region only.
+  // Coordinates never enter this chat route or the saved conversation payload.
+  const location = resolveTurnGeography(
+    input.message,
+    input.cityHint ?? currentSession?.destination ?? null,
+  );
   const subject = deriveBusinessSubject(input.message);
-  const decision = classifyKinfolkRequest(input.message, location?.city ?? null);
-  if (decision.route !== "business_discovery" || !location?.state || !subject) return false;
+  const decision = classifyKinfolkRequest(
+    input.message,
+    location?.city ?? null,
+  );
+  if (decision.route !== "business_discovery" || !location?.state || !subject)
+    return false;
 
   const scope = { city: location.city, stateCode: location.state };
   try {
@@ -2775,6 +5241,21 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     assuredAgeBand,
     temporaryBusinessAudienceBand(input.message),
   );
+  // Only a designation the member explicitly names becomes a strict filter.
+  // Saved support preferences still rank matching businesses higher below, so
+  // they never silently make Kinfolk's search narrower than the member asked.
+  const requiredDesignationIds = extractExplicitOwnershipDesignationFilterIds(
+    input.message,
+  );
+  const preferredDesignationLabels = normalizeOwnershipDesignationFilterIds(
+    Array.isArray(prefs?.preferredOwnershipTypes)
+      ? prefs.preferredOwnershipTypes
+      : [],
+  ).flatMap((id) =>
+    OWNERSHIP_FILTER_OPTIONS.filter((option) => option.id === id).map(
+      (option) => option.label,
+    ),
+  );
   const clarificationSteps = businessDiscoveryClarification({
     message: input.message,
     subjectKey: subject.key,
@@ -2782,9 +5263,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     city: scope.city,
   });
   if (clarificationSteps.length > 0) {
-    const reply = clarificationSteps[0]?.id === "business-hair-service"
-      ? `I can search MWM’s public listings and the current web for hair options in ${scope.city}. One detail will make the results much better.`
-      : `I can narrow the things to do in ${scope.city} without guessing who the activity is for.`;
+    const reply =
+      clarificationSteps[0]?.id === "business-hair-service"
+        ? `I can search MWM’s public listings and the current web for hair options in ${scope.city}. One detail will make the results much better.`
+        : `I can narrow the things to do in ${scope.city} without guessing who the activity is for.`;
     const clarificationSessionId = await persistDeterministicDiscoveryTurn({
       userId: input.req.user!.id,
       memoryEnabled: input.memoryEnabled,
@@ -2803,20 +5285,35 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       reply,
       recommendations: null,
       itinerary: null,
-      followUpSuggestions: clarificationSteps[0]!.options.map((option) => option.label),
+      followUpSuggestions: clarificationSteps[0]!.options.map(
+        (option) => option.label,
+      ),
       clarificationSteps,
       intentClass: "business_discovery",
       sources: [],
-      sourceNote: "No business result was selected before the optional clarification.",
+      sourceNote:
+        "No business result was selected before the optional clarification.",
       educationalStatus: "limited",
       needsClarification: true,
       originalQuery: input.message,
-      location: { city: location.city, state: location.state, source: location.source },
+      location: {
+        city: location.city,
+        state: location.state,
+        source: location.source,
+      },
       locationSource: location.source,
       degraded: false,
       researchStatus: {
-        usedInternal: false, usedLiveWeb: false, degraded: false,
-        web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
         asOf: new Date().toISOString(),
       },
     });
@@ -2827,18 +5324,23 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     subject,
     repository: governedBusinessRepository,
     signalRepository: discoverySignalRepository,
-      personalization: {
-        ageBand,
-        preferenceTerms: [
-          ...(prefs?.favoriteCategories ?? []),
+    personalization: {
+      ageBand,
+      preferenceTerms: [
+        ...(prefs?.favoriteCategories ?? []),
         ...(prefs?.tripStyle ?? []),
         ...(prefs?.culturalInterests ?? []),
-          ...(prefs?.lifestyleServices ?? []),
-        ],
-        priorityPreferenceTerms: prefs?.favoriteCategories ?? [],
-        avoidTerms: prefs?.avoidCategories ?? [],
-        currentRequest: input.message,
-      },
+        ...(prefs?.lifestyleServices ?? []),
+        ...preferredDesignationLabels,
+      ],
+      priorityPreferenceTerms: [
+        ...(prefs?.favoriteCategories ?? []),
+        ...preferredDesignationLabels,
+      ],
+      avoidTerms: prefs?.avoidCategories ?? [],
+      currentRequest: input.message,
+    },
+    requiredDesignationIds,
   });
   const resultView = buildConversationalBusinessResultView({
     businesses: discoveryResult.discovery.platformBusinesses,
@@ -2848,20 +5350,28 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const platformCount = discoveryResult.discovery.platformBusinesses.length;
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
-  const conciseReply = platformCount > 0
-    ? `I found ${platformCount} matching MWM ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
-    : discoveryResult.discovery.platformStatus === "degraded"
-      ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
-      : externalCount > 0
-        ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
-        : `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. Want me to widen the area or try a nearby city?`;
+  const supportScope =
+    requiredDesignationIds.length > 0
+      ? " that match every owner-provided support designation you named"
+      : "";
+  const conciseReply =
+    platformCount > 0
+      ? `I found ${platformCount} matching MWM ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      : discoveryResult.discovery.platformStatus === "degraded"
+        ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
+        : externalCount > 0
+          ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}${supportScope}. I did find current external sources below; they are not MWM-verified business listings.`
+          : `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}${supportScope}. Want me to widen the area or try a nearby city?`;
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
     sessionId: input.sessionId,
     message: input.message,
     reply: conciseReply,
-    recommendations: discoveryResult.recommendations as Record<string, unknown> | null,
+    recommendations: discoveryResult.recommendations as Record<
+      string,
+      unknown
+    > | null,
     resultView: resultView as unknown as Record<string, unknown>,
     followUpSuggestions: [resultView.followUp],
     sources: discoveryResult.sources.map(({ title, url }) => ({ title, url })),
@@ -2896,7 +5406,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       discoveryResult.discovery.platformStatus === "degraded" ||
       discoveryResult.discovery.webSearch.state !== "completed",
     researchStatus: {
-      usedInternal: discoveryResult.discovery.platformBusinesses.length + discoveryResult.discovery.mapPlaces.length > 0,
+      usedInternal:
+        discoveryResult.discovery.platformBusinesses.length +
+          discoveryResult.discovery.mapPlaces.length >
+        0,
       usedLiveWeb: discoveryResult.discovery.webFindings.length > 0,
       degraded: discoveryResult.discovery.webSearch.state === "degraded",
       web: {
@@ -2927,12 +5440,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (!res.writableEnded) abortDisconnectedRequest();
   });
 
-  const { sessionId, message, vibes = [], voiceMode = "community", imageUrls = [] } = req.body as {
+  const {
+    sessionId,
+    message,
+    vibes = [],
+    voiceMode = "community",
+    imageUrls = [],
+    cityHint,
+  } = req.body as {
     sessionId?: string;
     message: string;
     vibes?: string[];
     voiceMode?: string;
     imageUrls?: unknown;
+    cityHint?: unknown;
   };
 
   if (!message?.trim()) {
@@ -2941,7 +5462,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 
   if (message.length > 2000) {
-    res.status(400).json({ error: "Message is too long. Please keep it under 2,000 characters." });
+    res
+      .status(400)
+      .json({
+        error: "Message is too long. Please keep it under 2,000 characters.",
+      });
     return;
   }
 
@@ -2970,14 +5495,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       vibes,
     });
     return void res.json({
-      sessionId: arithmeticSessionId, reply: arithmetic, recommendations: null, itinerary: null,
-      followUpSuggestions: [], smartPromotion: null, taskAction: null,
-      libraryAction: null, intentClass: "general_knowledge", sources: [],
-      needsClarification: false, originalQuery: message, answerMode: "direct_answer",
-      structuredContent: null, mediaLinks: [], relatedConnections: [],
+      sessionId: arithmeticSessionId,
+      reply: arithmetic,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "direct_answer",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
       researchStatus: {
-        usedInternal: false, usedLiveWeb: false, degraded: false,
-        web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
         asOf: new Date().toISOString(),
       },
     });
@@ -2985,38 +5529,55 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
   const requestedImageUrls = normalizeKinfolkImageUrls(imageUrls);
   if (Array.isArray(imageUrls) && imageUrls.length > 2) {
-    res.status(400).json({ error: "Kinfolk can review up to two images at a time." });
+    res
+      .status(400)
+      .json({ error: "Kinfolk can review up to two images at a time." });
     return;
   }
   let verifiedImageUrls: string[] = [];
   if (requestedImageUrls.length > 0) {
-    const imageAssets = await pool.query<{ public_url: string }>(
-      `SELECT public_url
+    const imageAssets = await pool
+      .query<{ public_url: string }>(
+        `SELECT public_url
          FROM media_assets
         WHERE uploader_id = $1
           AND purpose = 'kinfolk_question'
           AND status = 'ready'
           AND mime_type LIKE 'image/%'
           AND public_url = ANY($2::text[])`,
-      [req.user.id, requestedImageUrls],
-    ).catch(() => ({ rows: [] as { public_url: string }[] }));
+        [req.user.id, requestedImageUrls],
+      )
+      .catch(() => ({ rows: [] as { public_url: string }[] }));
     const owned = new Set(imageAssets.rows.map((row) => row.public_url));
     if (contextualRequestAbort.signal.aborted) return;
     verifiedImageUrls = requestedImageUrls.filter((url) => owned.has(url));
     if (verifiedImageUrls.length !== requestedImageUrls.length) {
-      res.status(400).json({ error: "One or more images are invalid, expired, or do not belong to this account." });
+      res
+        .status(400)
+        .json({
+          error:
+            "One or more images are invalid, expired, or do not belong to this account.",
+        });
       return;
     }
   }
 
-  if (verifiedImageUrls.length === 0 && await tryAnswerDeterministicBusinessDiscovery({
-    req,
-    res,
-    sessionId,
-    message,
-    vibes,
-    memoryEnabled,
-  })) return;
+  if (
+    verifiedImageUrls.length === 0 &&
+    (await tryAnswerDeterministicBusinessDiscovery({
+      req,
+      res,
+      sessionId,
+      message,
+      vibes,
+      memoryEnabled,
+      cityHint:
+        typeof cityHint === "string" && cityHint.length <= 120
+          ? cityHint.trim()
+          : undefined,
+    }))
+  )
+    return;
   if (contextualRequestAbort.signal.aborted) return;
 
   // chatStage tracks which boundary the handler was crossing when an error is
@@ -3029,9 +5590,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   let recommendations: Record<string, unknown> | null = null;
   // Per-request telemetry identifiers — set once, used in all three recording
   // sites (success, library fallback, and rethrown provider error).
-  const _kinfolkReqId     = crypto.randomUUID();
+  const _kinfolkReqId = crypto.randomUUID();
   const _kinfolkStartedAt = Date.now();
-  let   _kinfolkQClass    = "unknown";
+  let _kinfolkQClass = "unknown";
   try {
     // Resolve staff-demo eligibility once from existing authenticated account state.
     // No request header, query parameter, public flag, or email literal can enable it.
@@ -3041,16 +5602,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // This is server configuration plus server-derived authorization only. Request
     // data can neither enable the feature nor elevate staff eligibility.
     const contextualIntelligenceEnabled = mayUseContextualIntelligence({
-      mode: resolveContextualIntelligenceMode(process.env.KINFOLK_CONTEXTUAL_INTELLIGENCE_V1),
+      mode: resolveContextualIntelligenceMode(
+        process.env.KINFOLK_CONTEXTUAL_INTELLIGENCE_V1,
+      ),
       authenticated: true,
       administrator: isAdmin(req),
       activeTester,
     });
-    const modelPolicy = resolveKinfolkModelPolicy(isStaffDemoEligible({
-      authenticated: true,
-      administrator: isAdmin(req),
-      activeTester,
-    }), process.env);
+    const modelPolicy = resolveKinfolkModelPolicy(
+      isStaffDemoEligible({
+        authenticated: true,
+        administrator: isAdmin(req),
+        activeTester,
+      }),
+      process.env,
+    );
     const experienceMarker = staffDemoResponseMarker(modelPolicy);
 
     // ── Enforce monthly query limits ──────────────────────────────────────────
@@ -3058,73 +5624,80 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let queriesUsedThisCall: number | null = null;
     let aiPoolCircleId: string | null = null;
     if (req.user?.id) {
-
       // ── Controlled staff-demo quota bypass ───────────────────────────────
       // The same authenticated administrator-or-active-tester policy that selects
       // the demo model also permits the controlled demo call. Standard users keep
       // their existing free and paid quota behavior unchanged.
       if (modelPolicy.mode !== "staff_demo") {
+        const resolvedTier = getTierFromMemberType(user?.memberType);
 
-      const resolvedTier = getTierFromMemberType(user?.memberType);
+        // A paid subscription or active trial with an unset/unknown memberType is
+        // a data gap — treat as legacy_member (unlimited) so we never show "pool of 0".
+        const hasPaidAccount =
+          !!user?.stripeSubscriptionId ||
+          !!(user?.trialEndsAt && user.trialEndsAt > new Date());
+        const effectiveTier: ReturnType<typeof getTierFromMemberType> =
+          hasPaidAccount && resolvedTier === "free"
+            ? "legacy_member"
+            : resolvedTier;
 
-      // A paid subscription or active trial with an unset/unknown memberType is
-      // a data gap — treat as legacy_member (unlimited) so we never show "pool of 0".
-      const hasPaidAccount =
-        !!user?.stripeSubscriptionId ||
-        !!(user?.trialEndsAt && user.trialEndsAt > new Date());
-      const effectiveTier: ReturnType<typeof getTierFromMemberType> =
-        hasPaidAccount && resolvedTier === "free" ? "legacy_member" : resolvedTier;
+        const isFree = effectiveTier === "free";
 
-      const isFree = effectiveTier === "free";
+        if (isFree) {
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          const sameMonth = user?.kinfolkQueryMonth === currentMonth;
+          const usedQueries = sameMonth
+            ? (user?.kinfolkQueriesThisMonth ?? 0)
+            : 0;
 
-      if (isFree) {
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const sameMonth = user?.kinfolkQueryMonth === currentMonth;
-        const usedQueries = sameMonth ? (user?.kinfolkQueriesThisMonth ?? 0) : 0;
-
-        if (usedQueries >= FREE_MONTHLY_LIMIT) {
-          res.status(429).json({
-            error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI conversations this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
-            code: "KINFOLK_LIMIT_REACHED",
-            used: usedQueries,
-            limit: FREE_MONTHLY_LIMIT,
-            upgradeUrl: "/membership",
-          });
-          return;
-        }
-
-        queriesUsedThisCall = sameMonth ? usedQueries + 1 : 1;
-        await db
-          .update(usersTable)
-          .set({
-            kinfolkQueryMonth: currentMonth,
-            kinfolkQueriesThisMonth: queriesUsedThisCall,
-          })
-          .where(eq(usersTable.id, req.user.id));
-      }
-
-      // ── Paid-tier AI pool check ────────────────────────────────────────────
-      if (!isFree) {
-        try {
-          const poolStatus = await checkAiPool(req.user.id, effectiveTier);
-          if (!poolStatus.allowed) {
-            const month = new Date().toLocaleDateString("en-US", { month: "long" });
+          if (usedQueries >= FREE_MONTHLY_LIMIT) {
             res.status(429).json({
-              error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
-              code: "AI_POOL_EXHAUSTED",
-              used: poolStatus.used,
-              limit: poolStatus.limit,
+              error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI conversations this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
+              code: "KINFOLK_LIMIT_REACHED",
+              used: usedQueries,
+              limit: FREE_MONTHLY_LIMIT,
               upgradeUrl: "/membership",
             });
             return;
           }
-          aiPoolCircleId = poolStatus.circleId;
-        } catch (poolErr) {
-          // family_ai_usage table may not exist on this deployment — treat as unlimited
-          // rather than blocking the user. The startup migration will create it on next boot.
-          console.error("[kinfolk-pool-check] checkAiPool failed, treating as unlimited", safeKinfolkErrorMetadata(poolErr));
+
+          queriesUsedThisCall = sameMonth ? usedQueries + 1 : 1;
+          await db
+            .update(usersTable)
+            .set({
+              kinfolkQueryMonth: currentMonth,
+              kinfolkQueriesThisMonth: queriesUsedThisCall,
+            })
+            .where(eq(usersTable.id, req.user.id));
         }
-      }
+
+        // ── Paid-tier AI pool check ────────────────────────────────────────────
+        if (!isFree) {
+          try {
+            const poolStatus = await checkAiPool(req.user.id, effectiveTier);
+            if (!poolStatus.allowed) {
+              const month = new Date().toLocaleDateString("en-US", {
+                month: "long",
+              });
+              res.status(429).json({
+                error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
+                code: "AI_POOL_EXHAUSTED",
+                used: poolStatus.used,
+                limit: poolStatus.limit,
+                upgradeUrl: "/membership",
+              });
+              return;
+            }
+            aiPoolCircleId = poolStatus.circleId;
+          } catch (poolErr) {
+            // family_ai_usage table may not exist on this deployment — treat as unlimited
+            // rather than blocking the user. The startup migration will create it on next boot.
+            console.error(
+              "[kinfolk-pool-check] checkAiPool failed, treating as unlimited",
+              safeKinfolkErrorMetadata(poolErr),
+            );
+          }
+        }
       } // closes: standard quota policy
     }
 
@@ -3140,7 +5713,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // never throws — falls back to null which Kinfolk handles gracefully.
       try {
         prefs = await getCachedPrefs(req.user.id);
-      } catch { /* non-critical — proceed without personalization prefs */ }
+      } catch {
+        /* non-critical — proceed without personalization prefs */
+      }
 
       // Feedback history
       try {
@@ -3153,11 +5728,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
         likedSpots = feedback
           .filter((f) => f.reaction === "like")
-          .map((f) => `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`);
+          .map(
+            (f) =>
+              `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`,
+          );
         dislikedSpots = feedback
           .filter((f) => f.reaction === "dislike")
-          .map((f) => `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`);
-      } catch { /* non-critical — proceed without feedback history */ }
+          .map(
+            (f) =>
+              `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`,
+          );
+      } catch {
+        /* non-critical — proceed without feedback history */
+      }
 
       // Saved places
       try {
@@ -3167,12 +5750,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           .where(eq(savedPlacesTable.userId, req.user.id))
           .limit(15);
         savedPlaces = saved.map((s) => s.businessId);
-      } catch { /* non-critical — proceed without saved places */ }
+      } catch {
+        /* non-critical — proceed without saved places */
+      }
 
       // Respect personalisedSuggestions setting — if false, strip all taste profile data
       try {
         const [uSettings] = await db
-          .select({ personalisedSuggestions: userSettingsTable.personalisedSuggestions })
+          .select({
+            personalisedSuggestions: userSettingsTable.personalisedSuggestions,
+          })
           .from(userSettingsTable)
           .where(eq(userSettingsTable.userId, req.user.id))
           .limit(1);
@@ -3182,7 +5769,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           dislikedSpots = [];
           savedPlaces = [];
         }
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
     }
 
     // Load or create session
@@ -3194,13 +5783,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         const [s] = await db
           .select()
           .from(kinfolkSessionsTable)
-          .where(and(eq(kinfolkSessionsTable.id, sessionId), eq(kinfolkSessionsTable.userId, req.user.id)))
+          .where(
+            and(
+              eq(kinfolkSessionsTable.id, sessionId),
+              eq(kinfolkSessionsTable.userId, req.user.id),
+            ),
+          )
           .limit(1);
         currentSession = s ?? null;
       } catch (err) {
         if (!isOptionalSchemaGap(err)) throw err;
         sessionPersistenceAvailable = false;
-        console.warn(`[kinfolk-optional] stage=session_read pgCode=${pgCode(err)} — answering without saved session`);
+        console.warn(
+          `[kinfolk-optional] stage=session_read pgCode=${pgCode(err)} — answering without saved session`,
+        );
       }
     }
 
@@ -3213,15 +5809,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const turnGeography = resolveTurnGeography(message, sessionDestination);
     const destination = turnGeography?.city ?? null;
     const locationSource = turnGeography?.source ?? null;
-    const destinationState = turnGeography?.state ?? getHeritageCity(destination)?.state ?? null;
+    const destinationState =
+      turnGeography?.state ?? getHeritageCity(destination)?.state ?? null;
 
     // Identity is permitted only from this current turn and is never persisted.
     const permittedIdentity = resolvePermittedIdentityContext(message);
     const evidenceRoute = classifyEvidenceRoute(message);
 
-    const destinationScope: ValidatedKinfolkCityScope | null = destination && destinationState
-      ? { city: destination, stateCode: destinationState }
-      : null;
+    const destinationScope: ValidatedKinfolkCityScope | null =
+      destination && destinationState
+        ? { city: destination, stateCode: destinationState }
+        : null;
     const namedBusinessResolution = await resolveNamedBusinessTurn({
       message,
       scope: destinationScope,
@@ -3229,11 +5827,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       existingMessages,
       repository: governedBusinessRepository,
     });
-    const namedBusiness = namedBusinessResolution.state === "resolved"
-      ? namedBusinessResolution.business
-      : null;
-    let businessCatalog: BusinessCatalogEntry[] = namedBusiness ? [namedBusiness] : [];
-    let catalogSource: "city" | "radius" | "home" | "named" | "none" = namedBusiness ? "named" : "none";
+    const namedBusiness =
+      namedBusinessResolution.state === "resolved"
+        ? namedBusinessResolution.business
+        : null;
+    let businessCatalog: BusinessCatalogEntry[] = namedBusiness
+      ? [namedBusiness]
+      : [];
+    let catalogSource: "city" | "radius" | "home" | "named" | "none" =
+      namedBusiness ? "named" : "none";
 
     if (namedBusinessResolution.state === "needs_location") {
       res.json({
@@ -3285,7 +5887,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // three consent-gated paths: educational context, optional dermatology search,
     // optional community hair-care professional search.
     // The client renders <KinfolkHairLossCarePaths> when it sees intentClass "hair_loss_care".
-    const HAIR_LOSS_RE = /\b(alopecia|hair[- ]?loss|losing[- ]my[- ]hair|losing[- ]hair|hair[- ]thinning|thinning[- ]hair|bald(?:ing|ness)|scalp[- ]condition|hair[- ]shedding|shedding[- ]hair|traction[- ]alopecia|central[- ]centrifugal|cicatricial|androgenetic[- ]alopecia|female[- ]pattern[- ](hair[- ])?loss|male[- ]pattern[- ](hair[- ])?loss)\b/i;
+    const HAIR_LOSS_RE =
+      /\b(alopecia|hair[- ]?loss|losing[- ]my[- ]hair|losing[- ]hair|hair[- ]thinning|thinning[- ]hair|bald(?:ing|ness)|scalp[- ]condition|hair[- ]shedding|shedding[- ]hair|traction[- ]alopecia|central[- ]centrifugal|cicatricial|androgenetic[- ]alopecia|female[- ]pattern[- ](hair[- ])?loss|male[- ]pattern[- ](hair[- ])?loss)\b/i;
     if (HAIR_LOSS_RE.test(message)) {
       const carePlan = buildHairLossCarePlan();
       res.json({
@@ -3335,23 +5938,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // raw result so the LLM never reclassifies back to pop culture.
     const evidenceIntentClass = evidenceRoute.domain;
     const rawIntentClass: KinfolkIntent =
-      earlyDecision.route === "business_discovery" && evidenceIntentClass !== "legal_regulated"
+      earlyDecision.route === "business_discovery" &&
+      evidenceIntentClass !== "legal_regulated"
         ? "business_discovery"
-        : earlyDecision.route === "travel_planning" && evidenceIntentClass !== "legal_regulated"
-        ? "business_discovery"
-        : evidenceIntentClass;
+        : earlyDecision.route === "travel_planning" &&
+            evidenceIntentClass !== "legal_regulated"
+          ? "business_discovery"
+          : evidenceIntentClass;
     // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
     // always resolve to legal_regulated even when hasDestination caused the keyword
     // classifier to return business_discovery. Catches live mis-routes without
     // requiring a classifier retrain.
-    const TRAVEL_POLICY_OVERRIDE = /\b(visa requirements?|entry requirements?|travel documents?|documentation requirements?|border requirements?|border crossing|entry policy|travel policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|passport requirements?|visa extension|visa extensions|extend my stay|extending (?:my |your |their )?stay|extension documents?|stay extension|overstay|overstaying|immigration requirements?|consulate appointment|embassy appointment)\b/i;
-    const intentClass: KinfolkIntent = (
+    const TRAVEL_POLICY_OVERRIDE =
+      /\b(visa requirements?|entry requirements?|travel documents?|documentation requirements?|border requirements?|border crossing|entry policy|travel policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|passport requirements?|visa extension|visa extensions|extend my stay|extending (?:my |your |their )?stay|extension documents?|stay extension|overstay|overstaying|immigration requirements?|consulate appointment|embassy appointment)\b/i;
+    const intentClass: KinfolkIntent =
       rawIntentClass === "business_discovery" &&
       TRAVEL_POLICY_OVERRIDE.test(message)
-    ) ? "legal_regulated" : rawIntentClass;
+        ? "legal_regulated"
+        : rawIntentClass;
     const memberCtx = req.user?.id
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
-      : { audienceBand: "unknown" as const, recommendationLifeStage: "unspecified" as const, pronounMode: "none" as const };
+      : {
+          audienceBand: "unknown" as const,
+          recommendationLifeStage: "unspecified" as const,
+          pronounMode: "none" as const,
+        };
     const effectiveAudienceBand = effectiveBusinessAudienceBand(
       memberCtx.audienceBand,
       temporaryBusinessAudienceBand(message),
@@ -3360,24 +5971,32 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
 
-    const shouldResearchInLibrary = intentClass === "medical_health"
-      || intentClass === "legal_regulated"
-      || (intentClass === "general_knowledge" && requiresCurrentResearch(message));
+    const shouldResearchInLibrary =
+      intentClass === "medical_health" ||
+      intentClass === "legal_regulated" ||
+      (intentClass === "general_knowledge" && requiresCurrentResearch(message));
 
     // Kinfolk is the member's conversational companion; the Library is shared,
     // curator-approved community knowledge. For stable general questions, reuse
     // a published, cited Library entry before asking any model. Pending entries
     // are never eligible, and current/high-consequence questions continue through
     // their stricter research policies below.
-    if (intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness) {
+    if (
+      intentClass === "general_knowledge" &&
+      !shouldResearchInLibrary &&
+      !namedBusiness
+    ) {
       const approvedLibraryAnswer = await findApprovedLibraryAnswer({
         memberQuestion: message,
         repository: getLivingLibraryDeps().repository,
       }).catch((error) => {
-        req.log.warn({
-          event: "KINFOLK_APPROVED_LIBRARY_LOOKUP_FAILED",
-          pgCode: pgCode(error),
-        }, "approved Library lookup failed closed");
+        req.log.warn(
+          {
+            event: "KINFOLK_APPROVED_LIBRARY_LOOKUP_FAILED",
+            pgCode: pgCode(error),
+          },
+          "approved Library lookup failed closed",
+        );
         return null;
       });
 
@@ -3464,27 +6083,38 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       contextualPlan = await planSemanticTurn({
         message,
         evidenceRoute,
-        history: buildKinfolkHistory(existingMessages, modelPolicy).map((entry) => ({
-          role: entry.role === "assistant" ? "assistant" : "user",
-          content: entry.content,
-        })),
+        history: buildKinfolkHistory(existingMessages, modelPolicy).map(
+          (entry) => ({
+            role: entry.role === "assistant" ? "assistant" : "user",
+            content: entry.content,
+          }),
+        ),
         // The planner is only called by planSemanticTurn for materially ambiguous
         // turns. It receives bounded turn text/history only, never preferences,
         // identity context, memories, location history, or business data.
         classify: async ({ message: plannerMessage, history }) => {
-          const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
-            model: kinfolkModel("fallback"),
-            maxOutputTokens: 220,
-            temperature: 0,
-            messages: [
-              {
-                role: "system",
-                content: "Classify only ambiguity. Return JSON with confidence (0..1), up to four candidateMeanings ({label,domain,confidence,evidenceQuery}), resolvedMeaning, clarificationQuestion, and up to three retrievalQueries. Do not answer the member. Do not infer identity or use demographics. If interpretations materially differ and confidence is below .75, ask one short clarification.",
-              },
-              ...history,
-              { role: "user", content: plannerMessage },
-            ],
-          }) as ChatCompletionCreateParamsNonStreaming, { signal: AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)]) });
+          const completion = await openai.chat.completions.create(
+            buildKinfolkChatCompletionRequest({
+              model: kinfolkModel("fallback"),
+              maxOutputTokens: 220,
+              temperature: 0,
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "Classify only ambiguity. Return JSON with confidence (0..1), up to four candidateMeanings ({label,domain,confidence,evidenceQuery}), resolvedMeaning, clarificationQuestion, and up to three retrievalQueries. Do not answer the member. Do not infer identity or use demographics. If interpretations materially differ and confidence is below .75, ask one short clarification.",
+                },
+                ...history,
+                { role: "user", content: plannerMessage },
+              ],
+            }) as ChatCompletionCreateParamsNonStreaming,
+            {
+              signal: AbortSignal.any([
+                contextualRequestAbort.signal,
+                AbortSignal.timeout(3_000),
+              ]),
+            },
+          );
           const content = completion.choices[0]?.message?.content ?? "{}";
           try {
             const parsedClassifierPayload = JSON.parse(content) as unknown;
@@ -3493,11 +6123,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               renderableValues: [parsedClassifierPayload],
               protectedValues: history.map((entry) => entry.content),
             });
-            return protectedClassifierPayload.blocked ? {} : parsedClassifierPayload;
-          } catch { return {}; }
+            return protectedClassifierPayload.blocked
+              ? {}
+              : parsedClassifierPayload;
+          } catch {
+            return {};
+          }
         },
       });
-      if (contextualPlan.needsClarification && contextualPlan.clarificationQuestion) {
+      if (
+        contextualPlan.needsClarification &&
+        contextualPlan.clarificationQuestion
+      ) {
         recordKinfolkTelemetry({
           requestId: _kinfolkReqId,
           questionClass: "clarification",
@@ -3511,14 +6148,34 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           sourceCount: 0,
         });
         res.json({
-          sessionId, reply: "I can help with that. Are you asking about food and cooking, a person or cultural topic, a place, or something else?", recommendations: null,
-          itinerary: null, followUpSuggestions: [], smartPromotion: null, taskAction: null,
-          libraryAction: null, intentClass: "clarification", sources: [],
-          needsClarification: true, originalQuery: message,
-          answerMode: "clarification", structuredContent: null, mediaLinks: [],
-          relatedConnections: [], researchStatus: {
-            usedInternal: false, usedLiveWeb: false, degraded: false,
-            web: { attempted: false, state: "unavailable", provider: null, fallbackUsed: false, partial: false },
+          sessionId,
+          reply:
+            "I can help with that. Are you asking about food and cooking, a person or cultural topic, a place, or something else?",
+          recommendations: null,
+          itinerary: null,
+          followUpSuggestions: [],
+          smartPromotion: null,
+          taskAction: null,
+          libraryAction: null,
+          intentClass: "clarification",
+          sources: [],
+          needsClarification: true,
+          originalQuery: message,
+          answerMode: "clarification",
+          structuredContent: null,
+          mediaLinks: [],
+          relatedConnections: [],
+          researchStatus: {
+            usedInternal: false,
+            usedLiveWeb: false,
+            degraded: false,
+            web: {
+              attempted: false,
+              state: "unavailable",
+              provider: null,
+              fallbackUsed: false,
+              partial: false,
+            },
             asOf: new Date().toISOString(),
           },
         });
@@ -3532,16 +6189,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // researchQuery replaces the raw message in external searches only —
     // it never changes Kinfolk's spoken answer or identifies the member.
     // clarification is an optional offer rendered AFTER the general answer.
-    const researchPlan = prepareKinfolkResearchPlan(message, { subject: "unknown" });
+    const researchPlan = prepareKinfolkResearchPlan(message, {
+      subject: "unknown",
+    });
 
     // ── Conversational research branch ─────────────────────────────────────────
     // Stable general knowledge should feel like a normal conversation. Search is
     // reserved for high-stakes or changing questions; Library publication remains
     // optional enrichment and may never block an in-chat answer.
-    if (shouldResearchInLibrary && !contextualIntelligenceEnabled && !destination && message.trim().length > 15) {
+    if (
+      shouldResearchInLibrary &&
+      !contextualIntelligenceEnabled &&
+      !destination &&
+      message.trim().length > 15
+    ) {
       try {
         const deps = getLivingLibraryDeps();
-        if (!deps.researchProvider) throw new Error("KINFOLK_LIBRARY_RESEARCH_NOT_CONFIGURED");
+        if (!deps.researchProvider)
+          throw new Error("KINFOLK_LIBRARY_RESEARCH_NOT_CONFIGURED");
         const result = await answerWithLivingLibrary({
           memberQuestion: researchPlan.researchQuery,
           locationLabel: null,
@@ -3550,7 +6215,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           writer: deps.writer,
         });
         if (!result.isReliable) {
-          req.log?.info({ intentClass, sourceCount: result.sourceCount }, "[kinfolk] research coverage insufficient — answering conversationally");
+          req.log?.info(
+            { intentClass, sourceCount: result.sourceCount },
+            "[kinfolk] research coverage insufficient — answering conversationally",
+          );
           throw new Error("KINFOLK_RESEARCH_COVERAGE_INSUFFICIENT");
         }
         res.json({
@@ -3568,7 +6236,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           needsClarification: false,
           originalQuery: message,
           // Optional personalization offer — rendered after the general answer, never a gate.
-          clarificationSteps: researchPlan.clarification.length > 0 ? researchPlan.clarification : undefined,
+          clarificationSteps:
+            researchPlan.clarification.length > 0
+              ? researchPlan.clarification
+              : undefined,
         });
         return;
       } catch (libraryErr: unknown) {
@@ -3594,7 +6265,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       permittedLocation: destination ? { city: destination } : null,
       preferences: resolverPrefs,
       intent: intentClass,
-      authoritativeDestination: namedBusiness ? destination : earlyDecision.location,
+      authoritativeDestination: namedBusiness
+        ? destination
+        : earlyDecision.location,
     });
     // Approved entity/Library sources are the first retrieval tier. The existing
     // OpenAI native-web provider is primary and the existing Tavily provider is
@@ -3602,56 +6275,92 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let contextualEvidence: ContextualEvidenceBundle | null = null;
     let liveWebOutcome: WebSearchOutcome | null = null;
     if (contextualPlan) {
-      const contextualTrace = { primaryAttempted: false, fallbackAttempted: false };
-      const openAiConfigured = Boolean(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
-      const nativeProvider = openAiConfigured ? createOpenAiWebResearchProvider({
-          apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-          baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
-          model: kinfolkModel("webSearch"),
-        }) : null;
+      const contextualTrace = {
+        primaryAttempted: false,
+        fallbackAttempted: false,
+      };
+      const openAiConfigured = Boolean(
+        process.env.AI_INTEGRATIONS_OPENAI_API_KEY &&
+        process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      );
+      const nativeProvider = openAiConfigured
+        ? createOpenAiWebResearchProvider({
+            apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+            baseUrl: (
+              process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ??
+              "https://api.openai.com/v1"
+            ).replace(/\/$/, ""),
+            model: kinfolkModel("webSearch"),
+          })
+        : null;
       const fallbackProvider = getLivingLibraryDeps().researchProvider;
       contextualEvidence = await orchestrateContextualResearch(contextualPlan, {
-          searchInternal: async (queries, signal) => [
-            // Context resolver sources are release-gated entity aliases/source links.
-            // Internal records without a public source URL remain synthesis-only and
-            // are never converted into invented member-facing evidence links.
-            ...contextResolution.sources.map((source) => ({
-                title: source.title, url: source.url, publisher: null,
-                kind: "reference" as const,
-                excerpt: "", publishedAt: null, retrievedAt: new Date().toISOString(), supports: [],
-            })),
-            ...await retrieveApprovedInternalLibrary({
-              repository: getLivingLibraryDeps().repository,
-              queries,
-              signal,
-            }),
-          ],
-          primaryProvider: nativeProvider ? {
-            ...nativeProvider,
-            search: async (input) => {
-              contextualTrace.primaryAttempted = true;
-              return nativeProvider.search(input);
-            },
-          } : undefined,
-          fallbackProvider: fallbackProvider ? {
-            ...fallbackProvider,
-            search: async (input) => {
-              contextualTrace.fallbackAttempted = true;
-              return fallbackProvider.search(input);
-            },
-          } : undefined,
-          timeoutMs: 8_000,
-          signal: contextualRequestAbort.signal,
-        });
-      const attempted = contextualTrace.primaryAttempted || contextualTrace.fallbackAttempted;
+        searchInternal: async (queries, signal) => [
+          // Context resolver sources are release-gated entity aliases/source links.
+          // Internal records without a public source URL remain synthesis-only and
+          // are never converted into invented member-facing evidence links.
+          ...contextResolution.sources.map((source) => ({
+            title: source.title,
+            url: source.url,
+            publisher: null,
+            kind: "reference" as const,
+            excerpt: "",
+            publishedAt: null,
+            retrievedAt: new Date().toISOString(),
+            supports: [],
+          })),
+          ...(await retrieveApprovedInternalLibrary({
+            repository: getLivingLibraryDeps().repository,
+            queries,
+            signal,
+          })),
+        ],
+        primaryProvider: nativeProvider
+          ? {
+              ...nativeProvider,
+              search: async (input) => {
+                contextualTrace.primaryAttempted = true;
+                return nativeProvider.search(input);
+              },
+            }
+          : undefined,
+        fallbackProvider: fallbackProvider
+          ? {
+              ...fallbackProvider,
+              search: async (input) => {
+                contextualTrace.fallbackAttempted = true;
+                return fallbackProvider.search(input);
+              },
+            }
+          : undefined,
+        timeoutMs: 8_000,
+        signal: contextualRequestAbort.signal,
+      });
+      const attempted =
+        contextualTrace.primaryAttempted || contextualTrace.fallbackAttempted;
       liveWebOutcome = {
         attempted,
-        state: attempted && contextualEvidence.degraded ? "degraded" : attempted ? "completed" : "unavailable",
-        provider: contextualTrace.primaryAttempted && contextualTrace.fallbackAttempted
-          ? "mixed"
-          : contextualTrace.fallbackAttempted ? "tavily" : contextualTrace.primaryAttempted ? "openai" : null,
-        fallbackUsed: contextualTrace.primaryAttempted && contextualTrace.fallbackAttempted,
-        partial: attempted && contextualEvidence.degraded && contextualEvidence.external.length + contextualEvidence.media.length > 0,
+        state:
+          attempted && contextualEvidence.degraded
+            ? "degraded"
+            : attempted
+              ? "completed"
+              : "unavailable",
+        provider:
+          contextualTrace.primaryAttempted && contextualTrace.fallbackAttempted
+            ? "mixed"
+            : contextualTrace.fallbackAttempted
+              ? "tavily"
+              : contextualTrace.primaryAttempted
+                ? "openai"
+                : null,
+        fallbackUsed:
+          contextualTrace.primaryAttempted && contextualTrace.fallbackAttempted,
+        partial:
+          attempted &&
+          contextualEvidence.degraded &&
+          contextualEvidence.external.length + contextualEvidence.media.length >
+            0,
         results: [],
       };
       if (contextualRequestAbort.signal.aborted) return;
@@ -3662,7 +6371,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Preserve the member's original query in the response so the client can offer retry.
     if (
       (contextResolution.responseMode === "needs_clarification" ||
-       contextResolution.responseMode === "unconfirmed") &&
+        contextResolution.responseMode === "unconfirmed") &&
       contextResolution.shortCircuitReply
     ) {
       res.json({
@@ -3678,15 +6387,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         sources: contextResolution.sources,
         resolution: {
           state: contextResolution.responseMode,
-          clarificationQuestion: contextResolution.clarificationQuestion ?? undefined,
+          clarificationQuestion:
+            contextResolution.clarificationQuestion ?? undefined,
           preferencesUsed: contextResolution.preferencesUsed,
         },
         // Return the original query so the client can preserve it for retry
         originalQuery: message,
         researchStatus: {
-          usedInternal: contextResolution.sources.length > 0 || (contextualEvidence?.internal.length ?? 0) > 0,
-          usedLiveWeb: (contextualEvidence?.external.length ?? 0) + (contextualEvidence?.media.length ?? 0) > 0,
-          degraded: liveWebOutcome?.state === "degraded" || (contextualEvidence?.degraded ?? false),
+          usedInternal:
+            contextResolution.sources.length > 0 ||
+            (contextualEvidence?.internal.length ?? 0) > 0,
+          usedLiveWeb:
+            (contextualEvidence?.external.length ?? 0) +
+              (contextualEvidence?.media.length ?? 0) >
+            0,
+          degraded:
+            liveWebOutcome?.state === "degraded" ||
+            (contextualEvidence?.degraded ?? false),
           web: {
             attempted: liveWebOutcome?.attempted ?? false,
             state: liveWebOutcome?.state ?? "unavailable",
@@ -3700,8 +6417,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    if (contextualPlan && contextualEvidence && contextualEvidenceNeedsFailClosedResponse(contextualPlan, contextualEvidence)) {
-      const acceptedEvidence = [...contextualEvidence.internal, ...contextualEvidence.external, ...contextualEvidence.media];
+    if (
+      contextualPlan &&
+      contextualEvidence &&
+      contextualEvidenceNeedsFailClosedResponse(
+        contextualPlan,
+        contextualEvidence,
+      )
+    ) {
+      const acceptedEvidence = [
+        ...contextualEvidence.internal,
+        ...contextualEvidence.external,
+        ...contextualEvidence.media,
+      ];
       recordKinfolkTelemetry({
         requestId: _kinfolkReqId,
         questionClass: intentClass,
@@ -3716,15 +6444,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       });
       res.status(200).json({
         sessionId,
-        reply: "I found some background information, but I could not verify the claim or consensus with enough independent, reliable sources. I would rather tell you that clearly than guess. Try again shortly or ask for the stable background instead.",
+        reply:
+          "I found some background information, but I could not verify the claim or consensus with enough independent, reliable sources. I would rather tell you that clearly than guess. Try again shortly or ask for the stable background instead.",
         recommendations: null,
         itinerary: null,
-        followUpSuggestions: ["Show me the stable background", "Try the current search again"],
+        followUpSuggestions: [
+          "Show me the stable background",
+          "Try the current search again",
+        ],
         smartPromotion: null,
         taskAction: null,
         libraryAction: null,
         intentClass,
-        sources: acceptedEvidence.map((source) => ({ id: source.url, label: source.kind, title: source.title, url: source.url })),
+        sources: acceptedEvidence.map((source) => ({
+          id: source.url,
+          label: source.kind,
+          title: source.title,
+          url: source.url,
+        })),
         needsClarification: false,
         originalQuery: message,
         answerMode: contextualPlan.taskMode,
@@ -3733,7 +6470,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         relatedConnections: [],
         researchStatus: {
           usedInternal: contextualEvidence.internal.length > 0,
-          usedLiveWeb: contextualEvidence.external.length + contextualEvidence.media.length > 0,
+          usedLiveWeb:
+            contextualEvidence.external.length +
+              contextualEvidence.media.length >
+            0,
           degraded: true,
           web: {
             attempted: liveWebOutcome?.attempted ?? false,
@@ -3751,16 +6491,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Temperature selection (spec §5.4) ────────────────────────────────────
     // Entity factual answers: ≤ 0.2. Cultural opinion: ≤ 0.5 max. Others: undefined (model default).
     const resolverTemperature: number | undefined =
-      contextResolution.isCultureOpinion ? 0.5 :
-      contextResolution.responseMode === "resolved" ? 0.2 :
-      undefined;
+      contextResolution.isCultureOpinion
+        ? 0.5
+        : contextResolution.responseMode === "resolved"
+          ? 0.2
+          : undefined;
 
     // ── Education discovery — structured institution results ──────────────────
     // When intent is education_discovery, query education_institutions table and build
     // a server-authoritative block so the LLM uses real school/HBCU names + sources.
     let educationResults: Array<{
-      id: string; name: string; institution_type: string; official_url: string | null;
-      city: string; state: string; hbcu_status: boolean; program_tags: string | null;
+      id: string;
+      name: string;
+      institution_type: string;
+      official_url: string | null;
+      city: string;
+      state: string;
+      hbcu_status: boolean;
+      program_tags: string | null;
     }> = [];
     let educationQueryCity: string | null = destination;
 
@@ -3776,8 +6524,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         }
         if (educationQueryCity) {
           const eduRes = await pool.query<{
-            id: string; name: string; institution_type: string; official_url: string | null;
-            city: string; state: string; hbcu_status: boolean; program_tags: string | null;
+            id: string;
+            name: string;
+            institution_type: string;
+            official_url: string | null;
+            city: string;
+            state: string;
+            hbcu_status: boolean;
+            program_tags: string | null;
           }>(
             `SELECT id, name, institution_type, official_url, city, state,
                     hbcu_status, program_tags
@@ -3790,7 +6544,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           );
           educationResults = eduRes.rows;
         }
-      } catch { /* education query failed — LLM will handle without structured data */ }
+      } catch {
+        /* education query failed — LLM will handle without structured data */
+      }
     }
 
     // ── Health Intelligence Retrieval (parallel, non-blocking) ───────────────
@@ -3798,15 +6554,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // and inject as a structured evidence block into the system prompt.
     // Times out in 6s — never delays the response; returns null on any error.
     let healthEvidenceBlock = "";
-    let healthRetrievalSources: Array<{ title: string; url: string; source: string }> = [];
+    let healthRetrievalSources: Array<{
+      title: string;
+      url: string;
+      source: string;
+    }> = [];
     if (intentClass === "medical_health") {
       try {
-        const healthCtx = await buildHealthRetrievalContext(message, intentClass);
+        const healthCtx = await buildHealthRetrievalContext(
+          message,
+          intentClass,
+        );
         if (healthCtx) {
           healthEvidenceBlock = healthCtx.contextBlock;
           healthRetrievalSources = healthCtx.sources;
         }
-      } catch { /* non-fatal — Kinfolk falls back to model knowledge */ }
+      } catch {
+        /* non-fatal — Kinfolk falls back to model knowledge */
+      }
     }
 
     // ── Consent-gated web search (Kinfolk lens layer) ─────────────────────────
@@ -3818,16 +6583,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let webSearchBlock = "";
     let webResourceCards: ResourceCard[] = [];
     let webEntityCandidates: EntityCandidate[] | undefined;
-    let webResearchSourceNote: string | null = liveWebOutcome?.state === "degraded"
-      ? "Current web research returned partial or fallback-supported coverage; Kinfolk kept that limitation visible."
-      : null;
+    let webResearchSourceNote: string | null =
+      liveWebOutcome?.state === "degraded"
+        ? "Current web research returned partial or fallback-supported coverage; Kinfolk kept that limitation visible."
+        : null;
     let kinfolkLensDisclosure = "";
     let kinfolkUrgentMessage: string | undefined;
-    const LENS_ELIGIBLE_INTENTS = new Set(["medical_health", "safety_emergency"]);
-    const lensEligible = LENS_ELIGIBLE_INTENTS.has(intentClass) ||
+    const LENS_ELIGIBLE_INTENTS = new Set([
+      "medical_health",
+      "safety_emergency",
+    ]);
+    const lensEligible =
+      LENS_ELIGIBLE_INTENTS.has(intentClass) ||
       evidenceRoute.retrievalRequirement !== "none" ||
-      /\b(image|picture|photo|show me|what does|eczema|dermatitis|rash|blood pressure|hypertension|preeclampsia|fibroids|lupus|sickle cell|mental health|depression|anxiety)\b/i.test(message);
-    const isEntityQuery = ENTITY_INDEX[normalizeLensQuery(message)] !== undefined;
+      /\b(image|picture|photo|show me|what does|eczema|dermatitis|rash|blood pressure|hypertension|preeclampsia|fibroids|lupus|sickle cell|mental health|depression|anxiety)\b/i.test(
+        message,
+      );
+    const isEntityQuery =
+      ENTITY_INDEX[normalizeLensQuery(message)] !== undefined;
 
     if (lensEligible || isEntityQuery) {
       try {
@@ -3835,31 +6608,62 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           userId: req.user?.id ?? "anon",
         });
 
-        const searchPlan = buildSearchPlan(message, memberProfile, ENTITY_INDEX);
+        const searchPlan = buildSearchPlan(
+          message,
+          memberProfile,
+          ENTITY_INDEX,
+        );
         kinfolkLensDisclosure = activeLensDisclosure(memberProfile);
         kinfolkUrgentMessage = urgentHealthMessage(searchPlan.urgentHealthFlag);
 
         // Entity disambiguation — culture-first candidate ranking
         if (isEntityQuery) {
-          const lensLabels = memberProfile.lenses.flatMap((l) => [l.label, ...l.searchTerms]);
-          webEntityCandidates = findEntityCandidates(normalizeLensQuery(message), lensLabels);
+          const lensLabels = memberProfile.lenses.flatMap((l) => [
+            l.label,
+            ...l.searchTerms,
+          ]);
+          webEntityCandidates = findEntityCandidates(
+            normalizeLensQuery(message),
+            lensLabels,
+          );
         }
 
         // Reviewed resource cards (no API key required)
-        const lensLabels = memberProfile.lenses.flatMap((l) => [l.label, ...l.searchTerms]);
-        const libraryIntent = searchPlan.intent === "image" ? "image" : searchPlan.intent;
+        const lensLabels = memberProfile.lenses.flatMap((l) => [
+          l.label,
+          ...l.searchTerms,
+        ]);
+        const libraryIntent =
+          searchPlan.intent === "image" ? "image" : searchPlan.intent;
         webResourceCards = [
-          ...findReviewedResources(normalizeLensQuery(message), libraryIntent, lensLabels),
+          ...findReviewedResources(
+            normalizeLensQuery(message),
+            libraryIntent,
+            lensLabels,
+          ),
           ...(searchPlan.imageRequested && libraryIntent !== "image"
-            ? findReviewedResources(normalizeLensQuery(message), "image", lensLabels)
+            ? findReviewedResources(
+                normalizeLensQuery(message),
+                "image",
+                lensLabels,
+              )
             : []),
-        ].filter((card, idx, arr) => arr.findIndex((c) => c.id === card.id) === idx);
+        ].filter(
+          (card, idx, arr) => arr.findIndex((c) => c.id === card.id) === idx,
+        );
 
         // Current-information search uses Responses web_search; optional Tavily
         // fallback is selected inside the adapter only after a provider failure.
         if (searchPlan.queries.length > 0 && !contextualEvidence) {
-          liveWebOutcome = await searchAllQueriesWithState(searchPlan.queries, searchPlan.imageRequested);
-          const ranked = rankResults(liveWebOutcome.results, memberProfile, searchPlan.activeLenses);
+          liveWebOutcome = await searchAllQueriesWithState(
+            searchPlan.queries,
+            searchPlan.imageRequested,
+          );
+          const ranked = rankResults(
+            liveWebOutcome.results,
+            memberProfile,
+            searchPlan.activeLenses,
+          );
           if (ranked.length === 0 && liveWebOutcome.state !== "completed") {
             webResearchSourceNote = liveWebOutcome.attempted
               ? "Current web research was attempted but did not return safe clickable citations. Kinfolk did not fill the gap from memory."
@@ -3869,18 +6673,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           if (ranked.length > 0) {
             const top = ranked.slice(0, 6);
             webSearchBlock = [
-              kinfolkUrgentMessage ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n` : "",
-              kinfolkLensDisclosure ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}` : "",
+              kinfolkUrgentMessage
+                ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n`
+                : "",
+              kinfolkLensDisclosure
+                ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}`
+                : "",
               `WEB SOURCES (ranked by evidence quality and permitted relevance):`,
-              top.map((r, i) =>
-                `[${i + 1}] ${r.title}\n    URL: ${r.url}\n    Score: ${r.finalScore} (credibility ${r.credibilityScore}, community ${r.communityScore})\n    ${r.content.slice(0, 300)}`
-              ).join("\n\n"),
+              top
+                .map(
+                  (r, i) =>
+                    `[${i + 1}] ${r.title}\n    URL: ${r.url}\n    Score: ${r.finalScore} (credibility ${r.credibilityScore}, community ${r.communityScore})\n    ${r.content.slice(0, 300)}`,
+                )
+                .join("\n\n"),
               `\nRULE: Lead with sources that match the member's active community lens. State population-level health data as context for the group, never as an individual diagnosis or prediction. For images, state they are educational only.`,
-            ].filter(Boolean).join("\n");
+            ]
+              .filter(Boolean)
+              .join("\n");
 
             // Add ranked web results to healthRetrievalSources so they appear in the response sources array
             for (const r of top) {
-              healthRetrievalSources.push({ title: r.title, url: r.url, source: "kinfolk_web" });
+              healthRetrievalSources.push({
+                title: r.title,
+                url: r.url,
+                source: "kinfolk_web",
+              });
             }
           }
         }
@@ -3888,33 +6705,54 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // Inject resource cards into the web block even without live search
         if (webResourceCards.length > 0 && !webSearchBlock) {
           webSearchBlock = [
-            kinfolkUrgentMessage ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n` : "",
-            kinfolkLensDisclosure ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}` : "",
+            kinfolkUrgentMessage
+              ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n`
+              : "",
+            kinfolkLensDisclosure
+              ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}`
+              : "",
             `REVIEWED KINFOLK RESOURCES (always surface these when relevant):`,
-            webResourceCards.map((c) =>
-              `- ${c.title}: ${c.url}${c.safetyNote ? `\n  NOTE: ${c.safetyNote}` : ""}`
-            ).join("\n"),
-          ].filter(Boolean).join("\n");
+            webResourceCards
+              .map(
+                (c) =>
+                  `- ${c.title}: ${c.url}${c.safetyNote ? `\n  NOTE: ${c.safetyNote}` : ""}`,
+              )
+              .join("\n"),
+          ]
+            .filter(Boolean)
+            .join("\n");
         }
 
         // Entity disambiguation block
         if (webEntityCandidates?.length) {
           const candidateBlock = [
             `ENTITY DISAMBIGUATION — community-lens candidate first:`,
-            webEntityCandidates.map((c, i) =>
-              `${i + 1}. "${c.disambiguator}" — ${c.verifiedSummary}`
-            ).join("\n"),
+            webEntityCandidates
+              .map(
+                (c, i) =>
+                  `${i + 1}. "${c.disambiguator}" — ${c.verifiedSummary}`,
+              )
+              .join("\n"),
             `RULE: Do not merge these candidates. Ask the member which person they mean if intent is unclear.`,
           ].join("\n");
-          webSearchBlock = webSearchBlock ? `${candidateBlock}\n\n${webSearchBlock}` : candidateBlock;
+          webSearchBlock = webSearchBlock
+            ? `${candidateBlock}\n\n${webSearchBlock}`
+            : candidateBlock;
         }
-      } catch { /* non-fatal — profile-first web layer degrades gracefully */ }
+      } catch {
+        /* non-fatal — profile-first web layer degrades gracefully */
+      }
     }
 
     // Medical and live/current claims fail closed when retrieval did not produce
     // claim-relevant authority. A model is never asked to fill these evidence gaps.
-    const hasLiveWebEvidence = healthRetrievalSources.some((source) => source.source === "kinfolk_web")
-      || (contextualEvidence?.external.length ?? 0) + (contextualEvidence?.media.length ?? 0) > 0;
+    const hasLiveWebEvidence =
+      healthRetrievalSources.some(
+        (source) => source.source === "kinfolk_web",
+      ) ||
+      (contextualEvidence?.external.length ?? 0) +
+        (contextualEvidence?.media.length ?? 0) >
+        0;
     const failClosedReply = evidenceFailureReply({
       route: evidenceRoute,
       medicalContextBlock: healthEvidenceBlock,
@@ -3938,7 +6776,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         researchStatus: {
           usedInternal: (contextualEvidence?.internal.length ?? 0) > 0,
           usedLiveWeb: hasLiveWebEvidence,
-          degraded: liveWebOutcome?.state === "degraded" || (contextualEvidence?.degraded ?? false),
+          degraded:
+            liveWebOutcome?.state === "degraded" ||
+            (contextualEvidence?.degraded ?? false),
           web: {
             attempted: liveWebOutcome?.attempted ?? false,
             state: liveWebOutcome?.state ?? "unavailable",
@@ -3958,15 +6798,29 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // data so Kinfolk names real sites, not hallucinated ones.
     // Pattern matches: mural(s), monument(s), museum(s), memorial, statue, landmark,
     // heritage site, cultural site, historical site, church, spiritual, sacred.
-    const TOUR_SITE_PATTERN = /\b(murals?|monuments?|museums?|memorial|memorials|statue|statues|landmark|landmarks|heritage\s+site|cultural\s+site|historical\s+site|historic\s+site|sacred\s+site|spiritual\s+site|historically\s+significant|black\s+history\s+museum|civil\s+rights\s+museum|art\s+museum|natural\s+history)\b/i;
+    const TOUR_SITE_PATTERN =
+      /\b(murals?|monuments?|museums?|memorial|memorials|statue|statues|landmark|landmarks|heritage\s+site|cultural\s+site|historical\s+site|historic\s+site|sacred\s+site|spiritual\s+site|historically\s+significant|black\s+history\s+museum|civil\s+rights\s+museum|art\s+museum|natural\s+history)\b/i;
     let tourSiteBlock = "";
-    let heritageSitePins: Array<{ id: string; name: string; siteType: string; address: string | null; latitude: number; longitude: number }> = [];
+    let heritageSitePins: Array<{
+      id: string;
+      name: string;
+      siteType: string;
+      address: string | null;
+      latitude: number;
+      longitude: number;
+    }> = [];
     if (TOUR_SITE_PATTERN.test(message) && destination) {
       try {
         const tsRes = await pool.query<{
-          id: string; name: string; city: string; state: string;
-          address: string | null; description: string | null;
-          site_type: string; latitude: string | null; longitude: string | null;
+          id: string;
+          name: string;
+          city: string;
+          state: string;
+          address: string | null;
+          description: string | null;
+          site_type: string;
+          latitude: string | null;
+          longitude: string | null;
         }>(
           `SELECT id, name, city, state, address, description,
                   COALESCE(site_type, 'landmark') AS site_type,
@@ -3981,7 +6835,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         if (tsRes.rows.length > 0) {
           // Populate heritageSitePins for the JSON response (client map links)
           heritageSitePins = tsRes.rows
-            .map(r => ({
+            .map((r) => ({
               id: r.id,
               name: r.name,
               siteType: r.site_type,
@@ -3989,7 +6843,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               latitude: parseFloat(r.latitude ?? ""),
               longitude: parseFloat(r.longitude ?? ""),
             }))
-            .filter(r => !isNaN(r.latitude) && !isNaN(r.longitude));
+            .filter((r) => !isNaN(r.latitude) && !isNaN(r.longitude));
 
           const lines = [
             `⚡ CULTURAL HERITAGE SITES — SERVER-AUTHORITATIVE for ${destination}:`,
@@ -4012,19 +6866,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             lines.push(TYPE_LABELS[type] ?? type.toUpperCase() + "S");
             for (const s of sites) {
               const addr = s.address ? ` — ${s.address}` : "";
-              const desc = s.description ? ` · ${s.description.slice(0, 120)}` : "";
+              const desc = s.description
+                ? ` · ${s.description.slice(0, 120)}`
+                : "";
               lines.push(`• ${s.name}${addr}${desc}`);
             }
             lines.push("");
           }
           lines.push(
             "RULE: When recommending cultural sites, use these names exactly. " +
-            "Do not invent addresses or descriptions beyond what is listed. " +
-            "Tell the member they can tap any of these on the MWM map to get directions."
+              "Do not invent addresses or descriptions beyond what is listed. " +
+              "Tell the member they can tap any of these on the MWM map to get directions.",
           );
           tourSiteBlock = lines.join("\n");
         }
-      } catch { /* non-fatal — Kinfolk answers from general knowledge */ }
+      } catch {
+        /* non-fatal — Kinfolk answers from general knowledge */
+      }
     }
 
     // Nearby nudges are disabled here until they can be derived from the already
@@ -4036,8 +6894,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
     if (req.user?.id) {
       const sensitivityTier = classifyGrowthSensitivity(message);
-      const growthSubject = deriveGrowthSubject(intentClass, destination ?? null);
-      const learningEligible = sensitivityTier !== "excluded" && growthSubject !== null;
+      const growthSubject = deriveGrowthSubject(
+        intentClass,
+        destination ?? null,
+      );
+      const learningEligible =
+        sensitivityTier !== "excluded" && growthSubject !== null;
       if (learningEligible && growthSubject) {
         captureLibraryGrowthSignal({
           ...growthSubject,
@@ -4045,8 +6907,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           userId: req.user.id,
           sensitivityTier,
           learningEligible: true,
-          isLoadTest: (req.user as { isLoadTest?: boolean }).isLoadTest === true,
-        }).catch(() => { /* non-fatal — never block or slow the response */ });
+          isLoadTest:
+            (req.user as { isLoadTest?: boolean }).isLoadTest === true,
+        }).catch(() => {
+          /* non-fatal — never block or slow the response */
+        });
       }
       // ── Idempotent flywheel event ─────────────────────────────────────────────────
       // ON CONFLICT DO NOTHING ensures repeated questions or retries produce
@@ -4059,20 +6924,30 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           canonicalSubject: growthSubject.canonicalSubject,
           sourceSurface: "kinfolk_chat",
           sensitive: sensitivityTier === "excluded",
-          isLoadTest: (req.user as { isLoadTest?: boolean }).isLoadTest === true,
+          isLoadTest:
+            (req.user as { isLoadTest?: boolean }).isLoadTest === true,
         });
-        pool.query(
-          `INSERT INTO kinfolk_flywheel_events
+        pool
+          .query(
+            `INSERT INTO kinfolk_flywheel_events
              (user_id, event_type, canonical_subject, source_surface, event_day, learning_eligible, is_load_test, created_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
            ON CONFLICT (user_id, event_type, canonical_subject, source_surface, event_day)
            DO NOTHING`,
-          [
-            flywheelEvent.userId, flywheelEvent.eventType, flywheelEvent.canonicalSubject,
-            flywheelEvent.sourceSurface, flywheelEvent.eventDay, flywheelEvent.learningEligible,
-            flywheelEvent.isLoadTest, flywheelEvent.createdAt,
-          ],
-        ).catch(() => { /* non-fatal */ });
+            [
+              flywheelEvent.userId,
+              flywheelEvent.eventType,
+              flywheelEvent.canonicalSubject,
+              flywheelEvent.sourceSurface,
+              flywheelEvent.eventDay,
+              flywheelEvent.learningEligible,
+              flywheelEvent.isLoadTest,
+              flywheelEvent.createdAt,
+            ],
+          )
+          .catch(() => {
+            /* non-fatal */
+          });
       }
     }
 
@@ -4082,38 +6957,84 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const broadCatalogAllowed = namedBusinessResolution.state === "not_named";
     if (broadCatalogAllowed && destination && destinationScope) {
       try {
-        businessCatalog = await governedBusinessRepository.findDestinationCatalog(destinationScope, 25);
+        businessCatalog =
+          await governedBusinessRepository.findDestinationCatalog(
+            destinationScope,
+            25,
+          );
         if (businessCatalog.length) catalogSource = "city";
-      } catch { /* non-critical — proceed without catalog */ }
+      } catch {
+        /* non-critical — proceed without catalog */
+      }
     }
 
-    if (broadCatalogAllowed && destination && !destinationScope && !businessCatalog.length) {
+    if (
+      broadCatalogAllowed &&
+      destination &&
+      !destinationScope &&
+      !businessCatalog.length
+    ) {
       try {
         const geoResp = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=3&addressdetails=0`,
           {
-            headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
+            headers: {
+              "User-Agent":
+                "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)",
+            },
             signal: AbortSignal.timeout(4000),
           },
         );
-        const geoHits = (await geoResp.json()) as Array<{ lat: string; lon: string; class: string; type: string }>;
-        const validGeo = new Set(["place", "boundary", "natural", "landuse", "administrative"]);
-        const invalidGeo = new Set(["restaurant", "bar", "hotel", "cafe", "hospital", "church", "shop"]);
-        const hit = geoHits.find((candidate) => validGeo.has(candidate.class) && !invalidGeo.has(candidate.type));
+        const geoHits = (await geoResp.json()) as Array<{
+          lat: string;
+          lon: string;
+          class: string;
+          type: string;
+        }>;
+        const validGeo = new Set([
+          "place",
+          "boundary",
+          "natural",
+          "landuse",
+          "administrative",
+        ]);
+        const invalidGeo = new Set([
+          "restaurant",
+          "bar",
+          "hotel",
+          "cafe",
+          "hospital",
+          "church",
+          "shop",
+        ]);
+        const hit = geoHits.find(
+          (candidate) =>
+            validGeo.has(candidate.class) && !invalidGeo.has(candidate.type),
+        );
         if (hit) {
-          businessCatalog = await governedBusinessRepository.findWithinRadius({
-            latitude: Number(hit.lat),
-            longitude: Number(hit.lon),
-            radiusMiles: 50,
-          }, 25);
+          businessCatalog = await governedBusinessRepository.findWithinRadius(
+            {
+              latitude: Number(hit.lat),
+              longitude: Number(hit.lon),
+              radiusMiles: 50,
+            },
+            25,
+          );
           if (businessCatalog.length) catalogSource = "radius";
         }
-      } catch { /* non-critical — geo-radius fallback failed */ }
+      } catch {
+        /* non-critical — geo-radius fallback failed */
+      }
     }
 
     // A home fallback requires an exact city plus two-letter state. Missing state
     // does not widen the query; a registered city may supply its canonical state.
-    if (broadCatalogAllowed && !destination && req.user?.id && !businessCatalog.length) {
+    if (
+      broadCatalogAllowed &&
+      !destination &&
+      req.user?.id &&
+      !businessCatalog.length
+    ) {
       try {
         const [userRow] = await db
           .select({ homeCity: usersTable.homeCity })
@@ -4123,28 +7044,44 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         const homeCity = userRow?.homeCity?.trim() ?? "";
         const homeState = getHeritageCity(homeCity)?.state ?? "";
         if (homeCity && /^[A-Z]{2}$/.test(homeState)) {
-          businessCatalog = await governedBusinessRepository.findHomeFallback({
-            city: homeCity,
-            stateCode: homeState,
-          }, 20);
+          businessCatalog = await governedBusinessRepository.findHomeFallback(
+            {
+              city: homeCity,
+              stateCode: homeState,
+            },
+            20,
+          );
           if (businessCatalog.length) catalogSource = "home";
         }
-      } catch { /* non-critical — proceed without catalog */ }
+      } catch {
+        /* non-critical — proceed without catalog */
+      }
     }
 
     businessCatalog = rankGovernedBusinessesForMember(businessCatalog, {
       ageBand: effectiveAudienceBand,
       currentRequest: message,
     });
-    if (!audienceAllowsBusinessText({ ageBand: effectiveAudienceBand, text: message })) {
+    if (
+      !audienceAllowsBusinessText({
+        ageBand: effectiveAudienceBand,
+        text: message,
+      })
+    ) {
       res.status(200).json({
         sessionId: memoryEnabled ? sessionId : undefined,
-        reply: "I can help you find an all-ages activity, restaurant, bookstore, museum, class, or another safe option instead. Tell me what kind of outing you want and where.",
+        reply:
+          "I can help you find an all-ages activity, restaurant, bookstore, museum, class, or another safe option instead. Tell me what kind of outing you want and where.",
         recommendations: null,
         itinerary: null,
-        followUpSuggestions: ["Find all-ages activities", "Find a museum", "Find a bookstore"],
+        followUpSuggestions: [
+          "Find all-ages activities",
+          "Find a museum",
+          "Find a bookstore",
+        ],
         sources: [],
-        sourceNote: "No adult-only business results were returned for this audience.",
+        sourceNote:
+          "No adult-only business results were returned for this audience.",
         educationalStatus: "limited",
         intentClass,
         degraded: false,
@@ -4153,13 +7090,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     // Fetch active life journey for this user (inject into system prompt)
-    let activeJourney: { title: string; city: string | null; journeyType: string; phases: JourneyPhase[]; aiContext: string | null } | null = null;
+    let activeJourney: {
+      title: string;
+      city: string | null;
+      journeyType: string;
+      phases: JourneyPhase[];
+      aiContext: string | null;
+    } | null = null;
     if (req.user?.id) {
       try {
         const [latestJourney] = await db
           .select()
           .from(lifeJourneysTable)
-          .where(and(eq(lifeJourneysTable.userId, req.user.id), eq(lifeJourneysTable.status, "active")))
+          .where(
+            and(
+              eq(lifeJourneysTable.userId, req.user.id),
+              eq(lifeJourneysTable.status, "active"),
+            ),
+          )
           .orderBy(desc(lifeJourneysTable.updatedAt))
           .limit(1);
         if (latestJourney) {
@@ -4171,7 +7119,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             aiContext: latestJourney.aiContext ?? null,
           };
         }
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
     }
 
     // Cross-city behavioral expansion is disabled pending a governed, consent-aware API.
@@ -4180,12 +7130,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Fetch live weather if the user is asking about weather/packing/conditions
     let weatherContext: string | null = null;
     if (isWeatherQuery(message)) {
-      const weatherLoc = extractLocationFromMessage(
-        message,
-        [destination, activeJourney?.city, (prefs?.favoriteCities as string[] | null)?.[0]],
-      );
+      const weatherLoc = extractLocationFromMessage(message, [
+        destination,
+        activeJourney?.city,
+        (prefs?.favoriteCities as string[] | null)?.[0],
+      ]);
       if (weatherLoc) {
-        weatherContext = await fetchWeatherContext(weatherLoc).catch(() => null);
+        weatherContext = await fetchWeatherContext(weatherLoc).catch(
+          () => null,
+        );
       }
       // If no location was found at all, inject a guidance note so the AI asks for one
       if (!weatherContext) {
@@ -4199,7 +7152,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // Taste-twin business expansion is disabled until candidates can be resolved
     // through the governed public business repository.
-    const twinRecs: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }> = [];
+    const twinRecs: Array<{
+      businessName: string;
+      city: string;
+      state: string;
+      twinCount: number;
+      reason: string;
+    }> = [];
 
     let topUserVibes: string[] = [];
     try {
@@ -4208,16 +7167,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           `SELECT vibe FROM business_vibe_tags WHERE user_id = $1 GROUP BY vibe ORDER BY COUNT(*) DESC LIMIT 5`,
           [req.user.id],
         );
-        topUserVibes = (vibeTagsRes.rows as { vibe: string }[]).map((r) => r.vibe);
+        topUserVibes = (vibeTagsRes.rows as { vibe: string }[]).map(
+          (r) => r.vibe,
+        );
       }
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
 
     // Fetch city cultural context for the destination (or user's first favourite city).
     // Lookup order: (1) exact city_name match, (2) slug match, (3) city_name prefix match.
     // This supports both domestic cities ("Philadelphia") and international slugs ("phuket",
     // "cancun", "negril", "jamaica") where city_name is "Phuket, Thailand" etc.
-    let cityContext: { city_name: string; brief_context: string; historical_context: string | null; key_neighborhoods: string[]; cultural_anchors: string[] } | null = null;
-    const cityLookup = destination ?? (prefs?.favoriteCities as string[] | null)?.[0] ?? null;
+    let cityContext: {
+      city_name: string;
+      brief_context: string;
+      historical_context: string | null;
+      key_neighborhoods: string[];
+      cultural_anchors: string[];
+    } | null = null;
+    const cityLookup =
+      destination ?? (prefs?.favoriteCities as string[] | null)?.[0] ?? null;
     if (cityLookup) {
       try {
         const cpRes = await pool.query(
@@ -4236,8 +7206,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
            LIMIT 1`,
           [cityLookup],
         );
-        if (cpRes.rows.length > 0) cityContext = cpRes.rows[0] as typeof cityContext;
-      } catch { /* non-fatal — city context is enrichment, not required */ }
+        if (cpRes.rows.length > 0)
+          cityContext = cpRes.rows[0] as typeof cityContext;
+      } catch {
+        /* non-fatal — city context is enrichment, not required */
+      }
     }
 
     // Preserve owner-advisor behavior without bypassing the governed public catalog.
@@ -4252,22 +7225,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           .where(eq(businessesTable.submittedById, req.user.id))
           .limit(1);
         const ownedBusiness = ownedBusinessId
-          ? businessCatalog.find((business) => business.id === ownedBusinessId.id)
+          ? businessCatalog.find(
+              (business) => business.id === ownedBusinessId.id,
+            )
           : null;
         if (ownedBusiness) {
-          const bizTierDepth = userTier === "navigator" || userTier === "trailblazer"
-            ? "Provide full-depth business guidance: detailed strategy, multi-step action plans, proactive growth recommendations."
-            : "Provide concise, actionable business guidance appropriate for the Explore tier. Cover the core need clearly — do not deliver premium-depth output such as full bundles, extensive multi-step strategy, or proactive enrichment reserved for paid tiers. Warmly mention that Navigator or Trailblazer unlocks deeper business tools if relevant.";
+          const bizTierDepth =
+            userTier === "navigator" || userTier === "trailblazer"
+              ? "Provide full-depth business guidance: detailed strategy, multi-step action plans, proactive growth recommendations."
+              : "Provide concise, actionable business guidance appropriate for the Explore tier. Cover the core need clearly — do not deliver premium-depth output such as full bundles, extensive multi-step strategy, or proactive enrichment reserved for paid tiers. Warmly mention that Navigator or Trailblazer unlocks deeper business tools if relevant.";
           ownerBusinessContext = `\n\n--- BUSINESS OWNER CONTEXT ---\nThis user owns the governed public listing "${ownedBusiness.name}" (${ownedBusiness.category}) in ${ownedBusiness.city}, ${ownedBusiness.stateCode ?? ""}.\n\nACTIVE CONTEXT RULE: Business context is available but should not dominate unless the user's question is clearly about their business. If the intent is ambiguous (e.g. "help me plan Saturday"), ask: "Are you thinking about this for yourself or for ${ownedBusiness.name}?" before proceeding.\n\nWhen business context IS active: shift into business advisor mode. Give concrete, actionable guidance for minority business owners. Reference their business name when relevant. Personal and business finances must never be merged without the user's explicit direction.\n\nTIER DEPTH FOR BUSINESS GUIDANCE: ${bizTierDepth}`;
         }
-      } catch { /* non-fatal — owner context is enrichment only */ }
+      } catch {
+        /* non-fatal — owner context is enrichment only */
+      }
     }
 
     // Cultural phrases — cached for 6 hours, loaded once per instance
     chatStage = "context_resolution";
     const culturalPhrases = await optionalKinfolk(
       "cultural_phrases",
-      [] as Array<{ group_name: string; phrase: string; english_gloss: string }>,
+      [] as Array<{
+        group_name: string;
+        phrase: string;
+        english_gloss: string;
+      }>,
       () => getCachedCulturalPhrases(),
     );
 
@@ -4275,10 +7257,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Resolves the user's message + active geography into structured, provenance-aware
     // graph context. Non-blocking — returns null if nothing relevant exists or on any error.
     // Never blocks a Kinfolk response.
-    const kgContext = await getKnowledgeGraphContext(message, destination).catch(() => null);
+    const kgContext = await getKnowledgeGraphContext(
+      message,
+      destination,
+    ).catch(() => null);
     const knowledgeGraphSources = (kgContext?.topics ?? [])
       .flatMap((topic) => topic.sources)
-      .filter((source): source is typeof source & { source_url: string } => Boolean(source.source_url))
+      .filter((source): source is typeof source & { source_url: string } =>
+        Boolean(source.source_url),
+      )
       .map((source) => ({
         title: source.source_name,
         url: source.source_url,
@@ -4301,12 +7288,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           [req.user.id],
         );
         libraryInterests = liRes.rows.map((row) => row.topic_name);
-      } catch { /* non-critical — table may not exist yet */ }
+      } catch {
+        /* non-critical — table may not exist yet */
+      }
     }
 
     // Circle context injection — when user chats from within a Circle
-    let circleContext: Parameters<typeof buildSystemPrompt>[0]["circleContext"] = null;
-    const bodyCircleId = typeof (req.body as any).circleId === "number" ? (req.body as any).circleId as number : null;
+    let circleContext: Parameters<
+      typeof buildSystemPrompt
+    >[0]["circleContext"] = null;
+    const bodyCircleId =
+      typeof (req.body as any).circleId === "number"
+        ? ((req.body as any).circleId as number)
+        : null;
     if (bodyCircleId && req.user?.id) {
       try {
         const cRes = await pool.query<{ name: string; type: string }>(
@@ -4319,50 +7313,74 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           const [mRes, sRes, dRes] = await Promise.all([
             pool.query<{ first_name: string | null; last_name: string | null }>(
               `SELECT u.first_name, u.last_name FROM circle_members cm
-               JOIN users u ON u.id = cm.user_id WHERE cm.circle_id = $1`, [bodyCircleId]),
+               JOIN users u ON u.id = cm.user_id WHERE cm.circle_id = $1`,
+              [bodyCircleId],
+            ),
             pool.query<{ reference_name: string }>(
-              `SELECT reference_name FROM circle_saves WHERE circle_id = $1 ORDER BY saved_at DESC LIMIT 20`, [bodyCircleId]),
+              `SELECT reference_name FROM circle_saves WHERE circle_id = $1 ORDER BY saved_at DESC LIMIT 20`,
+              [bodyCircleId],
+            ),
             pool.query<{ title: string; target_date: string }>(
               `SELECT title, target_date FROM circle_important_dates
-               WHERE circle_id = $1 AND target_date::date >= CURRENT_DATE ORDER BY target_date ASC LIMIT 10`, [bodyCircleId]),
+               WHERE circle_id = $1 AND target_date::date >= CURRENT_DATE ORDER BY target_date ASC LIMIT 10`,
+              [bodyCircleId],
+            ),
           ]);
           circleContext = {
             name: cRes.rows[0].name,
             type: cRes.rows[0].type,
-            members: mRes.rows.map((m) => ({ name: `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || "Member" })),
+            members: mRes.rows.map((m) => ({
+              name:
+                `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || "Member",
+            })),
             sharedSaves: sRes.rows.map((s) => s.reference_name),
-            upcomingDates: dRes.rows.map((d) => `${d.title} — ${d.target_date}`),
+            upcomingDates: dRes.rows.map(
+              (d) => `${d.title} — ${d.target_date}`,
+            ),
           };
         }
-      } catch { /* non-critical — circle tables may not exist yet on this instance */ }
+      } catch {
+        /* non-critical — circle tables may not exist yet on this instance */
+      }
     }
 
     // High-consequence intents (medical, legal, financial, emergency) suppress
     // Library cross-pollination and Circle context — same privacy boundary as
     // sensitiveTopicDetected. This prevents community data from being used as
     // authoritative evidence for regulated-domain queries.
-    const effectivePrivacySuppressed = sensitiveTopicDetected || intentPolicy.blockCommunityAsProof;
+    const effectivePrivacySuppressed =
+      sensitiveTopicDetected || intentPolicy.blockCommunityAsProof;
 
     // Minimum-use policy inside loadKinfolkMemberContext governs these existing,
     // non-business member affordances. Explicit cultural/population context still
     // comes only from the current turn through permittedIdentity above.
-    const travelPlanning = isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning";
+    const travelPlanning =
+      isTravelPlanningPrompt(message) ||
+      earlyDecision.route === "travel_planning";
     if (
-      travelPlanning
-      && broadCatalogAllowed
-      && destinationScope
-      && (prefs?.favoriteCategories?.length ?? 0) > 0
+      travelPlanning &&
+      broadCatalogAllowed &&
+      destinationScope &&
+      (prefs?.favoriteCategories?.length ?? 0) > 0
     ) {
       try {
-        const favoriteMatches = await governedBusinessRepository.findByPreferenceTerms(
-          destinationScope,
-          prefs?.favoriteCategories ?? [],
-          50,
-        );
-        businessCatalog = [...new Map(
-          [...businessCatalog, ...favoriteMatches].map((business) => [business.id, business]),
-        ).values()];
-      } catch { /* non-critical — retain the governed city catalog */ }
+        const favoriteMatches =
+          await governedBusinessRepository.findByPreferenceTerms(
+            destinationScope,
+            prefs?.favoriteCategories ?? [],
+            50,
+          );
+        businessCatalog = [
+          ...new Map(
+            [...businessCatalog, ...favoriteMatches].map((business) => [
+              business.id,
+              business,
+            ]),
+          ).values(),
+        ];
+      } catch {
+        /* non-critical — retain the governed city catalog */
+      }
     }
     if (travelPlanning && businessCatalog.length > 0) {
       businessCatalog = rankTravelCatalogForMember({
@@ -4385,28 +7403,37 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A basic itinerary from the governed MWM catalog must remain available even
     // when the language-model provider is unavailable. Rich/current research,
     // Circle planning, and image-aware trips continue through the provider path.
-    const deterministicTravelEligible = travelPlanning
-      && Boolean(destination)
-      && businessCatalog.length > 0
-      && !contextualEvidence
-      && !requiresCurrentResearch(message)
-      && !sensitiveTopicDetected
-      && !bodyCircleId
-      && verifiedImageUrls.length === 0;
+    const deterministicTravelEligible =
+      travelPlanning &&
+      Boolean(destination) &&
+      businessCatalog.length > 0 &&
+      !contextualEvidence &&
+      !requiresCurrentResearch(message) &&
+      !sensitiveTopicDetected &&
+      !bodyCircleId &&
+      verifiedImageUrls.length === 0;
     if (deterministicTravelEligible && destination) {
-      const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog });
+      const itinerary = buildRankedCatalogItinerary({
+        message,
+        catalog: businessCatalog,
+      });
       const reply = buildValidatedItineraryReply(destination, itinerary);
-      const sources = [...new Map(
-        businessCatalog.map((business) => {
-          const detailUrl = `/businesses/${encodeURIComponent(business.id)}`;
-          return [detailUrl, {
-            id: detailUrl,
-            label: "mwm_public_business",
-            title: business.name,
-            url: detailUrl,
-          }] as const;
-        }),
-      ).values()].slice(0, 8);
+      const sources = [
+        ...new Map(
+          businessCatalog.map((business) => {
+            const detailUrl = `/businesses/${encodeURIComponent(business.id)}`;
+            return [
+              detailUrl,
+              {
+                id: detailUrl,
+                label: "mwm_public_business",
+                title: business.name,
+                url: detailUrl,
+              },
+            ] as const;
+          }),
+        ).values(),
+      ].slice(0, 8);
       const finalSessionId = await persistDeterministicDiscoveryTurn({
         userId: req.user.id,
         memoryEnabled,
@@ -4415,7 +7442,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         reply,
         recommendations: null,
         resultView: null,
-        followUpSuggestions: ["Show me more options", "Plan another day", "Find restaurants nearby"],
+        followUpSuggestions: [
+          "Show me more options",
+          "Plan another day",
+          "Find restaurants nearby",
+        ],
         sources: sources.map(({ title, url }) => ({ title, url })),
         destination,
         vibes,
@@ -4437,14 +7468,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         reply,
         recommendations: null,
         itinerary,
-        followUpSuggestions: ["Show me more options", "Plan another day", "Find restaurants nearby"],
+        followUpSuggestions: [
+          "Show me more options",
+          "Plan another day",
+          "Find restaurants nearby",
+        ],
         resultView: null,
         smartPromotion: null,
         taskAction: null,
         libraryAction: null,
         intentClass: "travel_planning",
         sources,
-        sourceNote: "Itinerary venues come from public MWM listings; confirm current hours and availability before visiting.",
+        sourceNote:
+          "Itinerary venues come from public MWM listings; confirm current hours and availability before visiting.",
         educationalStatus: "complete",
         needsClarification: false,
         originalQuery: message,
@@ -4459,33 +7495,53 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           usedInternal: true,
           usedLiveWeb: false,
           degraded: false,
-          web: { attempted: false, state: "not_used", provider: null, fallbackUsed: false, partial: false },
+          web: {
+            attempted: false,
+            state: "not_used",
+            provider: null,
+            fallbackUsed: false,
+            partial: false,
+          },
           asOf: new Date().toISOString(),
         },
       });
       return;
     }
     const memberFirstName: string | null =
-      (prefs as Record<string, unknown> | null)?.first_name as string | null
-      ?? null;
+      ((prefs as Record<string, unknown> | null)?.first_name as
+        | string
+        | null) ?? null;
     const pronounBlock = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
     const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
-    const activePrivateMemories = memoryEnabled && req.user?.id
-      ? await db.select({ content: kinfolkPrivateMemoriesTable.content, purpose: kinfolkPrivateMemoriesTable.purpose, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
-          .from(kinfolkPrivateMemoriesTable)
-          .where(and(
-            eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-            isNull(kinfolkPrivateMemoriesTable.revokedAt),
-            or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, new Date())),
-          ))
-          .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
-          .limit(12)
-          .catch(() => [])
-      : [];
-    const relevantPrivateMemories = activePrivateMemories.filter((memory) =>
-      !memory.isSensitive || isSensitiveMemoryRelevant(memory.content, message),
+    const activePrivateMemories =
+      memoryEnabled && req.user?.id
+        ? await db
+            .select({
+              content: kinfolkPrivateMemoriesTable.content,
+              purpose: kinfolkPrivateMemoriesTable.purpose,
+              isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+            })
+            .from(kinfolkPrivateMemoriesTable)
+            .where(
+              and(
+                eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+                isNull(kinfolkPrivateMemoriesTable.revokedAt),
+                or(
+                  isNull(kinfolkPrivateMemoriesTable.expiresAt),
+                  gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
+                ),
+              ),
+            )
+            .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+            .limit(12)
+            .catch(() => [])
+        : [];
+    const relevantPrivateMemories = activePrivateMemories.filter(
+      (memory) =>
+        !memory.isSensitive ||
+        isSensitiveMemoryRelevant(memory.content, message),
     );
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
       memoryEnabled && !contextualEvidence,
@@ -4493,25 +7549,48 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     );
 
     const contextualEvidenceDataBlock = contextualEvidence
-      ? buildUntrustedEvidenceDataBlock([...contextualEvidence.internal, ...contextualEvidence.external, ...contextualEvidence.media])
+      ? buildUntrustedEvidenceDataBlock([
+          ...contextualEvidence.internal,
+          ...contextualEvidence.external,
+          ...contextualEvidence.media,
+        ])
       : "";
-    const baseSystemPrompt = buildSystemPrompt({
-      prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
-      aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
-      weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases,
-      knowledgeGraphContext: kgContext,
-      libraryInterests,
-      circleContext,
-      privacySuppressed: effectivePrivacySuppressed,
-      catalogSource,
-      intentClass,
-    }) + ownerBusinessContext + privateMemoryBlock + (contextualPlan ? [
-      "\nCONTEXTUAL ANSWER CONTRACT — SERVER CONTROLLED:",
-      `Task mode: ${contextualPlan.taskMode}; answer perspective: ${contextualPlan.answerPerspective}.`,
-      "Return reply as complete plain conversational text. Optional structuredContent, mediaLinks, and relatedConnections are additive proposals only.",
-      "Use only supplied evidence for material claims. Do not generate a media link, entity relationship, Library path, metric, or citation unless its exact URL is supplied by the server.",
-      "Never include personal profile, inferred identity, private memory, or raw history in structured fields.",
-    ].join("\n") : "");
+    const baseSystemPrompt =
+      buildSystemPrompt({
+        prefs,
+        likedSpots,
+        dislikedSpots,
+        savedPlaces,
+        destination,
+        voiceMode,
+        aaveLevel: prefs?.aaveLevel ?? 0,
+        businessCatalog,
+        activeJourney,
+        crossCityBridge,
+        weatherContext,
+        tier: userTier,
+        twinRecs,
+        topUserVibes,
+        cityContext,
+        culturalPhrases,
+        knowledgeGraphContext: kgContext,
+        libraryInterests,
+        circleContext,
+        privacySuppressed: effectivePrivacySuppressed,
+        catalogSource,
+        intentClass,
+      }) +
+      ownerBusinessContext +
+      privateMemoryBlock +
+      (contextualPlan
+        ? [
+            "\nCONTEXTUAL ANSWER CONTRACT — SERVER CONTROLLED:",
+            `Task mode: ${contextualPlan.taskMode}; answer perspective: ${contextualPlan.answerPerspective}.`,
+            "Return reply as complete plain conversational text. Optional structuredContent, mediaLinks, and relatedConnections are additive proposals only.",
+            "Use only supplied evidence for material claims. Do not generate a media link, entity relationship, Library path, metric, or citation unless its exact URL is supplied by the server.",
+            "Never include personal profile, inferred identity, private memory, or raw history in structured fields.",
+          ].join("\n")
+        : "");
 
     // Build server-authoritative supplemental blocks from context resolution
     const entityBlock = contextResolution.entityContextBlock;
@@ -4521,17 +7600,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (educationResults.length > 0) {
       const nearby = educationResults.filter((r) => !r.hbcu_status);
       const hbcus = educationResults.filter((r) => r.hbcu_status);
-      const lines = [`⚡ EDUCATION DISCOVERY — SERVER-AUTHORITATIVE for ${educationQueryCity ?? "this area"}:`];
+      const lines = [
+        `⚡ EDUCATION DISCOVERY — SERVER-AUTHORITATIVE for ${educationQueryCity ?? "this area"}:`,
+      ];
       if (nearby.length > 0) {
         lines.push("\nNEARBY INSTITUTIONS (use these exact names):");
         nearby.slice(0, 6).forEach((r) => {
           const url = r.official_url ? ` — ${r.official_url}` : "";
           const tags = r.program_tags ? ` [${r.program_tags}]` : "";
-          lines.push(`• ${r.name} — ${r.city}, ${r.state} (${r.institution_type})${tags}${url}`);
+          lines.push(
+            `• ${r.name} — ${r.city}, ${r.state} (${r.institution_type})${tags}${url}`,
+          );
         });
       }
       if (hbcus.length > 0) {
-        lines.push("\nHBCU OPTIONS TO EXPLORE (label these as 'worth exploring' — not necessarily nearby):");
+        lines.push(
+          "\nHBCU OPTIONS TO EXPLORE (label these as 'worth exploring' — not necessarily nearby):",
+        );
         hbcus.slice(0, 6).forEach((r) => {
           const url = r.official_url ? ` — ${r.official_url}` : "";
           lines.push(`• ${r.name} — ${r.city}, ${r.state}${url}`);
@@ -4539,9 +7624,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
       lines.push(
         "\nRULE: Use these institution names in your reply. Clearly distinguish 'nearby' " +
-        "from 'worth exploring further away'. Admissions requirements, tuition, and program " +
-        "availability change — always direct the user to verify directly with the institution. " +
-        "If no location was available, ask the user which city or ZIP code to search."
+          "from 'worth exploring further away'. Admissions requirements, tuition, and program " +
+          "availability change — always direct the user to verify directly with the institution. " +
+          "If no location was available, ask the user which city or ZIP code to search.",
       );
       educationBlock = lines.join("\n");
     }
@@ -4550,7 +7635,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // When an entity is resolved, the LLM may only state factual claims present in the block.
     // When in culture-opinion mode, the opinion envelope constraint replaces entity block.
     const resolvedContextConstraint =
-      contextResolution.responseMode === "resolved" || contextResolution.isCultureOpinion
+      contextResolution.responseMode === "resolved" ||
+      contextResolution.isCultureOpinion
         ? [
             `RESOLVED_CONTEXT CONSTRAINTS (non-negotiable):`,
             `You may only state factual entity, relationship, location, credential, school,`,
@@ -4564,9 +7650,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Prepend intent policy block for any intent that requires special handling.
     // Also prepend any brunch/discovery instruction from the pre-classifier.
     // Empty string for low-consequence general knowledge queries (no overhead).
-    const itineraryInstruction = travelPlanning && destination
-      ? itineraryPromptInstruction(extractItineraryDayCount(message), destination)
-      : "";
+    const itineraryInstruction =
+      travelPlanning && destination
+        ? itineraryPromptInstruction(
+            extractItineraryDayCount(message),
+            destination,
+          )
+        : "";
     const combinedPolicyPrompt = [
       _discoveryInstruction || null,
       intentPolicyPrompt || null,
@@ -4574,68 +7664,99 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       namedBusiness ? namedBusinessPromptBlock(namedBusiness) : null,
       itineraryInstruction || null,
       staffDemoPromptBlock(modelPolicy) || null,
-    ].filter(Boolean).join("\n\n");
-    const contextualHighConsequence = contextualPlan?.taskMode === "high_consequence";
-    const systemPrompt = (combinedPolicyPrompt
-      ? `${combinedPolicyPrompt}\n\n${baseSystemPrompt}`
-      : baseSystemPrompt)
-      + (pronounBlock       ? `\n\n${pronounBlock}`       : "")
-      + (reproductiveBlock  ? `\n\n${reproductiveBlock}`  : "")
-      + (lifeStageBlock     ? `\n\n${lifeStageBlock}`     : "")
-      + (!contextualHighConsequence && healthEvidenceBlock ? `\n\n${healthEvidenceBlock}` : "")
-      + (!contextualHighConsequence && entityBlock ? `\n\n${entityBlock}` : "")
-      + (educationBlock ? `\n\n${educationBlock}` : "")
-      + (tourSiteBlock  ? `\n\n${tourSiteBlock}`  : "")
-      + (!contextualHighConsequence && webSearchBlock ? `\n\n${webSearchBlock}` : "")
-      + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const contextualHighConsequence =
+      contextualPlan?.taskMode === "high_consequence";
+    const systemPrompt =
+      (combinedPolicyPrompt
+        ? `${combinedPolicyPrompt}\n\n${baseSystemPrompt}`
+        : baseSystemPrompt) +
+      (pronounBlock ? `\n\n${pronounBlock}` : "") +
+      (reproductiveBlock ? `\n\n${reproductiveBlock}` : "") +
+      (lifeStageBlock ? `\n\n${lifeStageBlock}` : "") +
+      (!contextualHighConsequence && healthEvidenceBlock
+        ? `\n\n${healthEvidenceBlock}`
+        : "") +
+      (!contextualHighConsequence && entityBlock ? `\n\n${entityBlock}` : "") +
+      (educationBlock ? `\n\n${educationBlock}` : "") +
+      (tourSiteBlock ? `\n\n${tourSiteBlock}` : "") +
+      (!contextualHighConsequence && webSearchBlock
+        ? `\n\n${webSearchBlock}`
+        : "") +
+      (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
 
     // Build bounded history according to the selected experience policy.
     // Standard remains exactly last 8 / 400 chars; staff demo uses last 12 / 1200.
-    const historyMessages = contextualEvidence ? [] : buildKinfolkHistory(existingMessages, modelPolicy);
+    const historyMessages = contextualEvidence
+      ? []
+      : buildKinfolkHistory(existingMessages, modelPolicy);
 
     // ── Library topic grounding (non-blocking enrichment) ────────────────────
     // Load structured Library topic data when the user asks about a library topic.
     // Returns null on any error — must never cause a 500.
     const libraryTopic = await loadLibraryGrounding(message);
     const libraryGroundingBlock = buildLibraryGroundingBlock(libraryTopic);
-    const visionSafetyBlock = verifiedImageUrls.length > 0
-      ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
-      : "";
-    const systemPromptWithLibrary = (!contextualHighConsequence && libraryGroundingBlock
-      ? `${systemPrompt}\n\n${libraryGroundingBlock}`
-      : systemPrompt)
-      + (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "")
-      + (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
+    const visionSafetyBlock =
+      verifiedImageUrls.length > 0
+        ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
+        : "";
+    const systemPromptWithLibrary =
+      (!contextualHighConsequence && libraryGroundingBlock
+        ? `${systemPrompt}\n\n${libraryGroundingBlock}`
+        : systemPrompt) +
+      (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
+      (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
 
     const currentUserText = `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
-    const currentUserContent: Parameters<typeof openai.chat.completions.create>[0]["messages"][number]["content"] = verifiedImageUrls.length > 0
-      ? [
-          { type: "text", text: currentUserText },
-          ...verifiedImageUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "auto" as const } })),
-        ]
-      : currentUserText;
-    const aiMessages: Parameters<typeof openai.chat.completions.create>[0]["messages"] = [
+    const currentUserContent: Parameters<
+      typeof openai.chat.completions.create
+    >[0]["messages"][number]["content"] =
+      verifiedImageUrls.length > 0
+        ? [
+            { type: "text", text: currentUserText },
+            ...verifiedImageUrls.map((url) => ({
+              type: "image_url" as const,
+              image_url: { url, detail: "auto" as const },
+            })),
+          ]
+        : currentUserText;
+    const aiMessages: Parameters<
+      typeof openai.chat.completions.create
+    >[0]["messages"] = [
       { role: "system", content: systemPromptWithLibrary },
       ...historyMessages,
       { role: "user", content: currentUserContent },
     ];
 
     // Token estimation for queue admission (chars/4 is a reliable GPT-4o-mini approximation)
-    const estimatedPromptTokens = estimateTokens(systemPromptWithLibrary) +
+    const estimatedPromptTokens =
+      estimateTokens(systemPromptWithLibrary) +
       historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
       estimateTokens(message);
-    const estimatedTotal = Math.min(estimatedPromptTokens + verifiedImageUrls.length * 1000 + modelPolicy.maxOutputTokens, MAX_REQUEST_TOKEN_RESERVATION);
-    req.log.info({
-      requestId: _kinfolkReqId,
-      estimatedPromptTokens,
-      estimatedTotalTokens: estimatedTotal,
-    }, "kinfolk token estimate");
+    const estimatedTotal = Math.min(
+      estimatedPromptTokens +
+        verifiedImageUrls.length * 1000 +
+        modelPolicy.maxOutputTokens,
+      MAX_REQUEST_TOKEN_RESERVATION,
+    );
+    req.log.info(
+      {
+        requestId: _kinfolkReqId,
+        estimatedPromptTokens,
+        estimatedTotalTokens: estimatedTotal,
+      },
+      "kinfolk token estimate",
+    );
 
     // Call AI — routed through KinfolkTokenBucket so neither the concurrency cap
     // (MAX_ACTIVE_GENERATIONS=4) nor rolling 60-second TPM budget (TOKEN_BUCKET_TARGET=160k)
     // is exceeded. callOpenAIWithRetry retries transient 429/5xx up to KINFOLK_RETRY_MAX
     // times with exponential backoff. AbortSignal.timeout(25000) caps stalled providers.
-    let completionResult: Awaited<ReturnType<typeof callOpenAIWithCompatibilityFallback>>;
+    let completionResult: Awaited<
+      ReturnType<typeof callOpenAIWithCompatibilityFallback>
+    >;
     try {
       completionResult = await kinfolkQueue.run(
         req.user?.id ?? "anon",
@@ -4644,7 +7765,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           chatStage = "provider_call";
           return callOpenAIWithCompatibilityFallback(
             aiMessages,
-            AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(25000)]),
+            AbortSignal.any([
+              contextualRequestAbort.signal,
+              AbortSignal.timeout(25000),
+            ]),
             modelPolicy,
             _kinfolkReqId,
             resolverTemperature,
@@ -4656,7 +7780,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       if (contextualRequestAbort.signal.aborted) return;
       // For library topic questions: if the provider fails with a retryable error,
       // return a useful 200 with library grounding instead of the generic 500.
-      const pStatus = (providerError as any)?.status ?? (providerError as any)?.statusCode;
+      const pStatus =
+        (providerError as any)?.status ?? (providerError as any)?.statusCode;
       const retryable = [429, 500, 502, 503, 504].includes(Number(pStatus));
       // When library topic grounding is available, use it as a fallback for ANY
       // provider error (not just retryable ones). A 400 context_length_exceeded or
@@ -4664,12 +7789,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       if (libraryTopic) {
         const fallbackReply = buildLibraryFallbackReply(libraryTopic);
         const fallbackSources = libraryTopic.trustedSources.map((s) => ({
-          id: s.url, label: "library_topic", title: s.title, url: s.url,
+          id: s.url,
+          label: "library_topic",
+          title: s.title,
+          url: s.url,
         }));
-        const _pStatus = (providerError as any)?.status ?? (providerError as any)?.statusCode;
+        const _pStatus =
+          (providerError as any)?.status ?? (providerError as any)?.statusCode;
         recordKinfolkTelemetry({
-          requestId: _kinfolkReqId, questionClass: _kinfolkQClass || "library",
-          status: 200, degraded: true,
+          requestId: _kinfolkReqId,
+          questionClass: _kinfolkQClass || "library",
+          status: 200,
+          degraded: true,
           degradedReason: "provider_transient_error_library_fallback",
           providerStatus: Number(_pStatus) || null,
           latencyMs: Date.now() - _kinfolkStartedAt,
@@ -4678,10 +7809,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           sessionId: sessionId ?? null,
           reply: fallbackReply,
           recommendations: null,
-          followUpSuggestions: ["Open this topic in the Library", "Follow this topic for updates"],
+          followUpSuggestions: [
+            "Open this topic in the Library",
+            "Follow this topic for updates",
+          ],
           smartPromotion: null,
           taskAction: null,
-          libraryAction: { type: "open_topic", topicId: libraryTopic.id, topicName: libraryTopic.topicName },
+          libraryAction: {
+            type: "open_topic",
+            topicId: libraryTopic.id,
+            topicName: libraryTopic.topicName,
+          },
           intentClass,
           sources: fallbackSources,
           resolution: { state: "resolved", preferencesUsed: [] },
@@ -4691,10 +7829,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         return;
       }
       // Non-library error — record as failed (status = provider status or 500)
-      const _pStatusFail = (providerError as any)?.status ?? (providerError as any)?.statusCode;
+      const _pStatusFail =
+        (providerError as any)?.status ?? (providerError as any)?.statusCode;
       recordKinfolkTelemetry({
-        requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
-        status: Number(_pStatusFail) || 500, degraded: false,
+        requestId: _kinfolkReqId,
+        questionClass: _kinfolkQClass,
+        status: Number(_pStatusFail) || 500,
+        degraded: false,
         degradedReason: null,
         providerStatus: Number(_pStatusFail) || null,
         latencyMs: Date.now() - _kinfolkStartedAt,
@@ -4705,7 +7846,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const completion = completionResult.completion;
     // The client quality badge is evidence about this answer, not merely account
     // eligibility. Omit it for compatibility-model and server-only fallbacks.
-    const completionExperienceMarker = completionResult.usedFallback ? {} : experienceMarker;
+    const completionExperienceMarker = completionResult.usedFallback
+      ? {}
+      : experienceMarker;
 
     // Track AI pool usage for paid tiers after successful generation
     if (aiPoolCircleId) {
@@ -4728,23 +7871,38 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     if (modelPayload.valid && modelPayload.value) {
       const parsed = modelPayload.value;
-      recommendations = parsed.recommendations && typeof parsed.recommendations === "object" && !Array.isArray(parsed.recommendations)
-        ? parsed.recommendations as Record<string, unknown>
-        : null;
+      recommendations =
+        parsed.recommendations &&
+        typeof parsed.recommendations === "object" &&
+        !Array.isArray(parsed.recommendations)
+          ? (parsed.recommendations as Record<string, unknown>)
+          : null;
       followUpSuggestions = Array.isArray(parsed.followUpSuggestions)
-        ? parsed.followUpSuggestions.filter((value): value is string => typeof value === "string").slice(0, 3)
+        ? parsed.followUpSuggestions
+            .filter((value): value is string => typeof value === "string")
+            .slice(0, 3)
         : [];
-      smartPromotion = parsed.smartPromotion && typeof parsed.smartPromotion === "object" && !Array.isArray(parsed.smartPromotion)
-        ? parsed.smartPromotion as Record<string, unknown>
-        : null;
-      taskAction = parsed.taskAction && typeof parsed.taskAction === "object" && !Array.isArray(parsed.taskAction)
-        ? parsed.taskAction as Record<string, unknown>
-        : null;
+      smartPromotion =
+        parsed.smartPromotion &&
+        typeof parsed.smartPromotion === "object" &&
+        !Array.isArray(parsed.smartPromotion)
+          ? (parsed.smartPromotion as Record<string, unknown>)
+          : null;
+      taskAction =
+        parsed.taskAction &&
+        typeof parsed.taskAction === "object" &&
+        !Array.isArray(parsed.taskAction)
+          ? (parsed.taskAction as Record<string, unknown>)
+          : null;
       if (contextualPlan) {
         try {
-          contextualStructuredContent = parseKinfolkStructuredContent(parsed.structuredContent);
+          contextualStructuredContent = parseKinfolkStructuredContent(
+            parsed.structuredContent,
+          );
           contextualMediaLinks = parseKinfolkMediaLinks(parsed.mediaLinks);
-          contextualRelatedConnections = parseKinfolkRelatedConnections(parsed.relatedConnections);
+          contextualRelatedConnections = parseKinfolkRelatedConnections(
+            parsed.relatedConnections,
+          );
         } catch {
           // Optional presentation data must never turn a complete answer into a 500.
           contextualStructuredContent = null;
@@ -4758,9 +7916,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     if (travelPlanning && destination) {
-      const parsedItinerary = modelPayload.valid && modelPayload.value
-        ? modelPayload.value
-        : null;
+      const parsedItinerary =
+        modelPayload.valid && modelPayload.value ? modelPayload.value : null;
       itinerary = buildValidatedOrRankedItinerary({
         message,
         modelValue: parsedItinerary,
@@ -4775,7 +7932,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       renderableValues: [modelPayload.valid ? modelPayload.value : rawContent],
       protectedValues: [
         ...activePrivateMemories.map((memory) => memory.content),
-        ...systemPromptWithLibrary.split("\n").map((line) => line.trim()).filter((line) => line.length >= 24),
+        ...systemPromptWithLibrary
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length >= 24),
       ],
     });
     if (protectedReply.blocked) {
@@ -4795,26 +7955,28 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Persisting this recommendation object safely retains its ID inside the existing
     // session messages JSON; no schema migration or new broad cultural field is used.
     if (
-      namedBusiness
-      && businessCatalog.some((business) => business.id === namedBusiness.id)
-      && modelPayload.valid
-      && !travelPlanning
+      namedBusiness &&
+      businessCatalog.some((business) => business.id === namedBusiness.id) &&
+      modelPayload.valid &&
+      !travelPlanning
     ) {
       recommendations = {
-        businesses: [{
-          businessId: namedBusiness.id,
-          id: namedBusiness.id,
-          name: namedBusiness.name,
-          city: namedBusiness.city,
-          category: namedBusiness.category,
-        }],
+        businesses: [
+          {
+            businessId: namedBusiness.id,
+            id: namedBusiness.id,
+            name: namedBusiness.name,
+            city: namedBusiness.city,
+            category: namedBusiness.category,
+          },
+        ],
       };
     }
 
     // Model geography is accepted only when it resolves through the server registry.
     // Invalid model destinations are neither returned nor persisted.
     const validatedModelDestination = proposedModelDestination
-      ? getHeritageCity(proposedModelDestination)?.city ?? null
+      ? (getHeritageCity(proposedModelDestination)?.city ?? null)
       : null;
     let detectedDestination = destinationForEnabledSession({
       turn: turnGeography,
@@ -4830,12 +7992,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       destination &&
       !travelPlanning &&
       !contextResolution.suppressBusinessRecommendations &&
-      (intentClass === "culture_entertainment" || intentClass === "business_discovery")
+      (intentClass === "culture_entertainment" ||
+        intentClass === "business_discovery")
     ) {
-      const discoveryPattern = /entertainment|bar|nightlife|music|restaurant|food|recreation/i;
-      const matches = businessCatalog.filter((business) =>
-        discoveryPattern.test(`${business.category} ${business.subcategory ?? ""} ${business.tags.join(" ")}`),
-      ).slice(0, 6);
+      const discoveryPattern =
+        /entertainment|bar|nightlife|music|restaurant|food|recreation/i;
+      const matches = businessCatalog
+        .filter((business) =>
+          discoveryPattern.test(
+            `${business.category} ${business.subcategory ?? ""} ${business.tags.join(" ")}`,
+          ),
+        )
+        .slice(0, 6);
       if (matches.length > 0) {
         recommendations = {
           businesses: matches.map((business) => ({
@@ -4851,7 +8019,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // Save/update session — skip if user has opted out of memory
     const timestamp = new Date().toISOString();
-    const newUserMsg: SessionMessage = { role: "user", content: message, timestamp };
+    const newUserMsg: SessionMessage = {
+      role: "user",
+      content: message,
+      timestamp,
+    };
     const newAiMsg: SessionMessage = {
       role: "assistant",
       content: reply,
@@ -4877,7 +8049,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         } else {
           const title = detectedDestination
             ? `${detectedDestination} Trip`
-            : message.length > 40 ? message.slice(0, 40) + "…" : message;
+            : message.length > 40
+              ? message.slice(0, 40) + "…"
+              : message;
           const [newSession] = await db
             .insert(kinfolkSessionsTable)
             .values({
@@ -4892,7 +8066,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         }
       } catch (err) {
         if (!isOptionalSchemaGap(err)) throw err;
-        console.warn(`[kinfolk-optional] stage=session_write pgCode=${pgCode(err)} — answered successfully but could not save session`);
+        console.warn(
+          `[kinfolk-optional] stage=session_write pgCode=${pgCode(err)} — answered successfully but could not save session`,
+        );
         finalSessionId = undefined;
       }
     }
@@ -4908,13 +8084,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let existingLibraryMatch: Record<string, unknown> | null = null;
     try {
       existingLibraryMatch = libraryActionCategories
-        ? await findMatchingPublishedLibraryNode(libraryActionCategories, destination ?? null, message).catch(() => null)
+        ? await findMatchingPublishedLibraryNode(
+            libraryActionCategories,
+            destination ?? null,
+            message,
+          ).catch(() => null)
         : null;
     } catch (libraryMatchErr) {
-      console.warn("[kinfolk-library-match-failed]", safeKinfolkErrorMetadata(libraryMatchErr));
+      console.warn(
+        "[kinfolk-library-match-failed]",
+        safeKinfolkErrorMetadata(libraryMatchErr),
+      );
       // Fall back to the DB-loaded grounding topic if the published-node lookup fails
       existingLibraryMatch = libraryTopic
-        ? { type: "open_topic", topicId: libraryTopic.id, topicName: libraryTopic.topicName }
+        ? {
+            type: "open_topic",
+            topicId: libraryTopic.id,
+            topicName: libraryTopic.topicName,
+          }
         : null;
     }
 
@@ -4922,30 +8109,52 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // If no Library topic exists yet AND the intent signals durable educational value
     // (health, education, civic) AND the growth signal was eligible (not sensitive)
     // → return suggest_to_library so the client can prompt the member.
-    const SUGGEST_ELIGIBLE_INTENTS = new Set(["medical_health", "education_discovery", "legal_regulated"]);
+    const SUGGEST_ELIGIBLE_INTENTS = new Set([
+      "medical_health",
+      "education_discovery",
+      "legal_regulated",
+    ]);
     let libraryAction: Record<string, unknown> | null = existingLibraryMatch;
-    if (!existingLibraryMatch && req.user?.id && SUGGEST_ELIGIBLE_INTENTS.has(intentClass)) {
+    if (
+      !existingLibraryMatch &&
+      req.user?.id &&
+      SUGGEST_ELIGIBLE_INTENTS.has(intentClass)
+    ) {
       const sensitivityTier = classifyGrowthSensitivity(message);
       if (sensitivityTier !== "excluded") {
-        const healthTopic = intentClass === "medical_health"
-          ? extractHealthTopic(message)
-          : null;
-        const growthSubj = deriveGrowthSubject(intentClass, destination ?? null);
+        const healthTopic =
+          intentClass === "medical_health" ? extractHealthTopic(message) : null;
+        const growthSubj = deriveGrowthSubject(
+          intentClass,
+          destination ?? null,
+        );
         const subjectLabel = healthTopic
-          ? healthTopic.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ").slice(0, 80)
-          : growthSubj?.canonicalSubject ?? null;
-        const category = intentClass === "medical_health"
-          ? "health"
-          : intentClass === "education_discovery"
-          ? "education"
-          : "general";
+          ? healthTopic
+              .split(" ")
+              .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" ")
+              .slice(0, 80)
+          : (growthSubj?.canonicalSubject ?? null);
+        const category =
+          intentClass === "medical_health"
+            ? "health"
+            : intentClass === "education_discovery"
+              ? "education"
+              : "general";
         if (subjectLabel) {
-          libraryAction = { type: "suggest_to_library", subject: subjectLabel, category };
+          libraryAction = {
+            type: "suggest_to_library",
+            subject: subjectLabel,
+            category,
+          };
         }
       }
     }
 
-    const trustedLibraryPaths = contextualEvidence?.internal.flatMap((source) => source.libraryPath ? [source.libraryPath] : []) ?? [];
+    const trustedLibraryPaths =
+      contextualEvidence?.internal.flatMap((source) =>
+        source.libraryPath ? [source.libraryPath] : [],
+      ) ?? [];
     const contextualBoundLinks = bindContextualLinksToEvidence({
       structuredContent: contextualStructuredContent,
       mediaLinks: contextualMediaLinks,
@@ -4954,7 +8163,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ...contextResolution.sources.map((source) => source.url),
         ...healthRetrievalSources.map((source) => source.url),
         ...knowledgeGraphSources.map((source) => source.url),
-        ...(contextualEvidence ? [...contextualEvidence.internal, ...contextualEvidence.external, ...contextualEvidence.media].map((source) => source.url) : []),
+        ...(contextualEvidence
+          ? [
+              ...contextualEvidence.internal,
+              ...contextualEvidence.external,
+              ...contextualEvidence.media,
+            ].map((source) => source.url)
+          : []),
       ],
       mediaEvidence: contextualEvidence?.media ?? [],
       libraryPaths: trustedLibraryPaths,
@@ -4968,25 +8183,38 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // have access to the same source list that will be returned to the client.
     const assembledSources: SafeSource[] = [
       ...contextResolution.sources.map((s) => ({
-        id: s.url, label: s.tier as SafeSource["label"], title: s.title, url: s.url,
+        id: s.url,
+        label: s.tier as SafeSource["label"],
+        title: s.title,
+        url: s.url,
       })),
       ...healthRetrievalSources.map((s) => ({
-        id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
+        id: s.url,
+        label: s.source as SafeSource["label"],
+        title: s.title,
+        url: s.url,
       })),
       ...knowledgeGraphSources.map((s) => ({
-        id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
+        id: s.url,
+        label: s.source as SafeSource["label"],
+        title: s.title,
+        url: s.url,
       })),
-      ...(contextualEvidence ? [
-        ...contextualEvidence.internal,
-        ...contextualEvidence.external,
-        ...contextualEvidence.media,
-      ].map((source) => ({
-        id: source.url,
-        label: (source.kind === "library_published" ? "library" : "web_search") as SafeSource["label"],
-        title: source.title,
-        url: source.url,
-        fetchedAt: source.retrievedAt,
-      })) : []),
+      ...(contextualEvidence
+        ? [
+            ...contextualEvidence.internal,
+            ...contextualEvidence.external,
+            ...contextualEvidence.media,
+          ].map((source) => ({
+            id: source.url,
+            label: (source.kind === "library_published"
+              ? "library"
+              : "web_search") as SafeSource["label"],
+            title: source.title,
+            url: source.url,
+            fetchedAt: source.retrievedAt,
+          }))
+        : []),
     ];
     const safeCatalog = businessCatalog.map((business) => ({
       id: business.id,
@@ -4999,8 +8227,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       phone: business.phone ?? undefined,
       verified: business.verified,
     }));
-    const localCoverageNote = webResearchSourceNote ?? (
-      assembledSources.length === 0 && destination
+    const localCoverageNote =
+      webResearchSourceNote ??
+      (assembledSources.length === 0 && destination
         ? tourSiteBlock
           ? "Coverage note: Heritage-site details come from MWM platform records; no external citation URLs are attached to this coverage."
           : cityContext
@@ -5008,18 +8237,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             : businessCatalog.length > 0
               ? "Coverage note: Local suggestions come from MWM platform listings; no external citation URLs are attached to these records."
               : "Coverage note: No source-backed local records were available for this city answer."
-        : null
-    );
+        : null);
     const enforced = enforceKinfolkResponse({
       reply,
-      modelRecommendations: (recommendations as { businesses?: unknown } | null)?.businesses ?? [],
+      modelRecommendations:
+        (recommendations as { businesses?: unknown } | null)?.businesses ?? [],
       catalog: safeCatalog,
       sources: assembledSources,
       libraryAction,
       intentClass,
     });
     reply = enforced.reply;
-    recommendations = enforced.recommendations as Record<string, unknown> | null;
+    recommendations = enforced.recommendations as Record<
+      string,
+      unknown
+    > | null;
     if (travelPlanning) recommendations = null;
 
     const answerPlanDomain = answerPlanDomainForIntent(intentClass);
@@ -5038,20 +8270,28 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // ── Telemetry: successful generation ──────────────────────────────────────
     recordKinfolkTelemetry({
-      requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
-      status: 200, degraded: contextualEvidence?.degraded ?? false,
-      degradedReason: contextualEvidence?.degradedReason ?? null, providerStatus: null,
+      requestId: _kinfolkReqId,
+      questionClass: _kinfolkQClass,
+      status: 200,
+      degraded: contextualEvidence?.degraded ?? false,
+      degradedReason: contextualEvidence?.degradedReason ?? null,
+      providerStatus: null,
       latencyMs: Date.now() - _kinfolkStartedAt,
       taskMode: contextualPlan?.taskMode ?? null,
       retrievalState: contextualEvidence?.degraded
         ? "degraded"
-        : contextualEvidence?.internal.length && contextualEvidence?.external.length
+        : contextualEvidence?.internal.length &&
+            contextualEvidence?.external.length
           ? "mixed"
           : contextualEvidence?.external.length
             ? "live"
-            : contextualEvidence?.internal.length ? "internal" : "not_used",
+            : contextualEvidence?.internal.length
+              ? "internal"
+              : "not_used",
       sourceCount: contextualEvidence
-        ? contextualEvidence.internal.length + contextualEvidence.external.length + contextualEvidence.media.length
+        ? contextualEvidence.internal.length +
+          contextualEvidence.external.length +
+          contextualEvidence.media.length
         : 0,
     });
     res.json({
@@ -5078,56 +8318,90 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // IMPORTANT: do not access `recommendations.length` here — recommendations is
       // Record<string,unknown>|null (not an array) and would throw a 500 for every
       // legal_regulated request if we tried to read .length on it.
-      provenanceNote: intentPolicy.consequence !== "low"
-        ? (intentClass === "legal_regulated"
+      provenanceNote:
+        intentPolicy.consequence !== "low"
+          ? intentClass === "legal_regulated"
             ? "General legal and travel information only. Entry and visa requirements can change — verify with an official government or embassy source before acting."
             : intentClass === "medical_health"
-            ? "General health information only. It is not medical advice or a diagnosis. Verify decisions with a qualified clinician."
-            : intentClass === "financial_regulated"
-            ? "General financial information only. It is not individualized investment, tax, or financial advice."
-            : intentClass === "safety_emergency"
-            ? "For an immediate emergency, contact local emergency services. Confirm current alerts with official local authorities."
-            : intentPolicy.provenanceLabel)
-        : undefined,
+              ? "General health information only. It is not medical advice or a diagnosis. Verify decisions with a qualified clinician."
+              : intentClass === "financial_regulated"
+                ? "General financial information only. It is not individualized investment, tax, or financial advice."
+                : intentClass === "safety_emergency"
+                  ? "For an immediate emergency, contact local emergency services. Confirm current alerts with official local authorities."
+                  : intentPolicy.provenanceLabel
+          : undefined,
       // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
-      sources: ([
-        ...contextResolution.sources.map((s) => ({ id: s.url, label: s.tier, title: s.title, url: s.url })),
-        ...healthRetrievalSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
-        ...knowledgeGraphSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
-        ...(contextualEvidence ? [
-          ...contextualEvidence.internal,
-          ...contextualEvidence.external,
-          ...contextualEvidence.media,
-        ].map((source) => ({
-          id: source.url,
-          label: source.kind === "library_published" ? "library" : "web_search",
-          title: source.title,
-          url: source.url,
-        })) : []),
-      ]) as { id: string; label: string; title?: string; url?: string }[],
+      sources: [
+        ...contextResolution.sources.map((s) => ({
+          id: s.url,
+          label: s.tier,
+          title: s.title,
+          url: s.url,
+        })),
+        ...healthRetrievalSources.map((s) => ({
+          id: s.url,
+          label: s.source,
+          title: s.title,
+          url: s.url,
+        })),
+        ...knowledgeGraphSources.map((s) => ({
+          id: s.url,
+          label: s.source,
+          title: s.title,
+          url: s.url,
+        })),
+        ...(contextualEvidence
+          ? [
+              ...contextualEvidence.internal,
+              ...contextualEvidence.external,
+              ...contextualEvidence.media,
+            ].map((source) => ({
+              id: source.url,
+              label:
+                source.kind === "library_published" ? "library" : "web_search",
+              title: source.title,
+              url: source.url,
+            }))
+          : []),
+      ] as { id: string; label: string; title?: string; url?: string }[],
       // Additive V1 fields are emitted only under the server-controlled gate.
       // `reply` remains the complete compatibility surface for Build 105.
-      ...(contextualPlan ? {
-        answerMode: contextualPlan.taskMode,
-        // Presentation proposals are accepted only if this response has supporting
-        // server evidence. Links must exactly match a normalized source URL.
-        structuredContent: contextualStructuredContent && (
-          contextResolution.sources.length
-          + healthRetrievalSources.length
-          + knowledgeGraphSources.length
-          + (contextualEvidence?.internal.length ?? 0)
-          + (contextualEvidence?.external.length ?? 0)
-          + (contextualEvidence?.media.length ?? 0) > 0
-        ) ? contextualStructuredContent : null,
-        mediaLinks: contextualMediaLinks,
-        relatedConnections: contextualRelatedConnections,
-      } : {}),
+      ...(contextualPlan
+        ? {
+            answerMode: contextualPlan.taskMode,
+            // Presentation proposals are accepted only if this response has supporting
+            // server evidence. Links must exactly match a normalized source URL.
+            structuredContent:
+              contextualStructuredContent &&
+              contextResolution.sources.length +
+                healthRetrievalSources.length +
+                knowledgeGraphSources.length +
+                (contextualEvidence?.internal.length ?? 0) +
+                (contextualEvidence?.external.length ?? 0) +
+                (contextualEvidence?.media.length ?? 0) >
+                0
+                ? contextualStructuredContent
+                : null,
+            mediaLinks: contextualMediaLinks,
+            relatedConnections: contextualRelatedConnections,
+          }
+        : {}),
       researchStatus: {
-        usedInternal: contextResolution.sources.length > 0 || knowledgeGraphSources.length > 0 || (contextualEvidence?.internal.length ?? 0) > 0,
-        usedLiveWeb: healthRetrievalSources.some((source) => source.source === "kinfolk_web")
-          || (contextualEvidence?.external.length ?? 0) + (contextualEvidence?.media.length ?? 0) > 0,
-        degraded: liveWebOutcome?.state === "degraded" || (contextualEvidence?.degraded ?? false),
+        usedInternal:
+          contextResolution.sources.length > 0 ||
+          knowledgeGraphSources.length > 0 ||
+          (contextualEvidence?.internal.length ?? 0) > 0,
+        usedLiveWeb:
+          healthRetrievalSources.some(
+            (source) => source.source === "kinfolk_web",
+          ) ||
+          (contextualEvidence?.external.length ?? 0) +
+            (contextualEvidence?.media.length ?? 0) >
+            0,
+        degraded:
+          liveWebOutcome?.state === "degraded" ||
+          (contextualEvidence?.degraded ?? false),
         web: {
           attempted: liveWebOutcome?.attempted ?? false,
           state: liveWebOutcome?.state ?? "unavailable",
@@ -5141,17 +8415,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         },
         asOf: new Date().toISOString(),
       },
-      resolution: contextResolution.responseMode !== "no_entity" ? {
-        state: contextResolution.responseMode,
-        entity: contextResolution.entityResolution?.state === "resolved"
+      resolution:
+        contextResolution.responseMode !== "no_entity"
           ? {
-              canonicalName: contextResolution.entityResolution.entity.canonicalName,
-              entityType: contextResolution.entityResolution.entity.entityType,
-              basis: contextResolution.entityResolution.basis,
+              state: contextResolution.responseMode,
+              entity:
+                contextResolution.entityResolution?.state === "resolved"
+                  ? {
+                      canonicalName:
+                        contextResolution.entityResolution.entity.canonicalName,
+                      entityType:
+                        contextResolution.entityResolution.entity.entityType,
+                      basis: contextResolution.entityResolution.basis,
+                    }
+                  : undefined,
+              preferencesUsed: contextResolution.preferencesUsed,
             }
           : undefined,
-        preferencesUsed: contextResolution.preferencesUsed,
-      } : undefined,
       ...(queriesUsedThisCall !== null && {
         queriesUsed: queriesUsedThisCall,
         queriesLimit: FREE_MONTHLY_LIMIT,
@@ -5172,11 +8452,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       educationalStatus: enforced.educationalStatus,
       sourceNote: localCoverageNote ?? enforced.sourceNote ?? undefined,
       safetyNotice: enforced.safetyNotice ?? undefined,
-      promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
-      rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,
+      promotionDisclosure:
+        enforced.promotionDisclosure.length > 0
+          ? enforced.promotionDisclosure
+          : undefined,
+      rejectedRecommendations:
+        enforced.rejectedRecommendations > 0
+          ? enforced.rejectedRecommendations
+          : undefined,
       // Optional personalization offer — present for health/travel domains, never for
       // business_discovery or legal. Rendered after the general answer, never a gate.
-      clarificationSteps: researchPlan.clarification.length > 0 ? researchPlan.clarification : undefined,
+      clarificationSteps:
+        researchPlan.clarification.length > 0
+          ? researchPlan.clarification
+          : undefined,
       // Local resolution metadata — present when a city was resolved from the message
       // or session. Lets clients and tests confirm alias resolution worked without
       // reading server logs (e.g. "Philly" → { city:"Philadelphia", state:"PA", source:"alias" }).
@@ -5196,9 +8485,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         if (pct < 80) return undefined;
         return {
           level: pct >= 95 ? "critical" : "warning",
-          message: pct >= 95
-            ? "KinfolkAI is at capacity — your next question may be queued briefly."
-            : "KinfolkAI is getting busy — responses may be slightly slower.",
+          message:
+            pct >= 95
+              ? "KinfolkAI is at capacity — your next question may be queued briefly."
+              : "KinfolkAI is getting busy — responses may be slightly slower.",
           utilization: pct,
         };
       })(),
@@ -5210,24 +8500,34 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // urgentSafetyMessage: immediate care instruction for pregnancy/danger language.
       ...(kinfolkLensDisclosure && { lensDisclosure: kinfolkLensDisclosure }),
       ...(webResourceCards.length > 0 && { resourceCards: webResourceCards }),
-      ...(webEntityCandidates?.length && { entityCandidates: webEntityCandidates }),
-      ...(kinfolkUrgentMessage && { urgentSafetyMessage: kinfolkUrgentMessage }),
+      ...(webEntityCandidates?.length && {
+        entityCandidates: webEntityCandidates,
+      }),
+      ...(kinfolkUrgentMessage && {
+        urgentSafetyMessage: kinfolkUrgentMessage,
+      }),
       ...completionExperienceMarker,
     });
   } catch (err) {
-    if (contextualRequestAbort.signal.aborted && (req.aborted || res.destroyed)) return;
-    const errCode        = (err as any)?.code as string | undefined;
-    const providerStatus = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
-    const isTimeout      = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-    const isQueueFull         = errCode === "KINFOLK_QUEUE_FULL";
-    const isKinfolkBusy       = errCode === "KINFOLK_BUSY";
-    const isOverload          = isQueueFull || isKinfolkBusy;
+    if (contextualRequestAbort.signal.aborted && (req.aborted || res.destroyed))
+      return;
+    const errCode = (err as any)?.code as string | undefined;
+    const providerStatus =
+      (err as any)?.status ?? ((err as any)?.statusCode as number | undefined);
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "TimeoutError" || err.name === "AbortError");
+    const isQueueFull = errCode === "KINFOLK_QUEUE_FULL";
+    const isKinfolkBusy = errCode === "KINFOLK_BUSY";
+    const isOverload = isQueueFull || isKinfolkBusy;
     // Provider rate-limit (OpenAI 429 / TPM exhaustion) that survived all retries.
     // Must return 503, not 500 — this is a temporary, self-resolving upstream condition.
     const isProviderRateLimit = !isOverload && providerStatus === 429;
-    const errMsg         = err instanceof Error ? err.message : String(err);
-    const is401          = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
-    const isConnRefused  = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND");
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const is401 =
+      errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
+    const isConnRefused =
+      errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND");
 
     // Plain console.error so the host log viewer surfaces only server-owned
     // categories. Never log exception messages/stacks, prompts, member data,
@@ -5247,8 +8547,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       `queued=${kinfolkQueuedGenerations}`,
     );
     req.log.error(
-      { ...safeError, isOverload, isTimeout, is401, isConnRefused,
-        kinfolkActiveGenerations, kinfolkQueuedGenerations },
+      {
+        ...safeError,
+        isOverload,
+        isTimeout,
+        is401,
+        isConnRefused,
+        kinfolkActiveGenerations,
+        kinfolkQueuedGenerations,
+      },
       "KinfolkAI chat failed",
     );
 
@@ -5264,8 +8571,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // 500: genuine unexpected server defect that is not overload, rate-limit, or timeout.
     if (isOverload) {
       res.status(503).set("Retry-After", "20").json({
-        error: "Kinfolk is helping a few people right now. Your question is saved — try again in about 20 seconds.",
-        code:  "KINFOLK_BUSY",
+        error:
+          "Kinfolk is helping a few people right now. Your question is saved — try again in about 20 seconds.",
+        code: "KINFOLK_BUSY",
         retryAfterSeconds: 20,
       });
       return;
@@ -5273,8 +8581,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     if (isProviderRateLimit) {
       res.status(503).set("Retry-After", "4").json({
-        error: "Kinfolk is a little busy right now. Please try again in a moment.",
-        code:  "KINFOLK_RATE_LIMITED",
+        error:
+          "Kinfolk is a little busy right now. Please try again in a moment.",
+        code: "KINFOLK_RATE_LIMITED",
         retryAfterSeconds: 4,
       });
       return;
@@ -5288,153 +8597,218 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : isConnRefused
             ? "KinfolkAI is temporarily unavailable — connection error. Our team has been notified."
             : "Kinfolk is having trouble answering that right now. Please try again in a moment.",
-      code: isTimeout       ? "KINFOLK_TIMEOUT"
-          : is401           ? "KINFOLK_AUTH_ERROR"
-          : isConnRefused   ? "KINFOLK_CONN_ERROR"
-          :                   "KINFOLK_ERROR",
+      code: isTimeout
+        ? "KINFOLK_TIMEOUT"
+        : is401
+          ? "KINFOLK_AUTH_ERROR"
+          : isConnRefused
+            ? "KINFOLK_CONN_ERROR"
+            : "KINFOLK_ERROR",
     });
   }
 });
 
 // ─── GET /api/kinfolk/business-action-plan/:businessId — fetch cached plan ──────
-router.get("/kinfolk/business-action-plan/:businessId", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
-  try {
-    const [cached] = await db
-      .select()
-      .from(businessAiPlanCacheTable)
-      .where(eq(businessAiPlanCacheTable.businessId, String(req.params["businessId"])))
-      .orderBy(desc(businessAiPlanCacheTable.createdAt))
-      .limit(1);
-    if (!cached) return void res.json({ plan: null });
-    res.json({ plan: { ...(cached.planData as object), _cached: true, _cachedAt: cached.createdAt.toISOString(), tier: cached.tier } });
-  } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "GET /kinfolk/business-action-plan error");
-    res.status(500).json({ error: "Failed to load plan" });
-  }
-});
-
-// ─── POST /api/kinfolk/business-action-plan ────────────────────────────────────
-router.post("/kinfolk/business-action-plan", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) return void res.status(503).json({ error: "AI service unavailable" });
-
-  // ── Tier gate ───────────────────────────────────────────────────────────────
-  const tier = await getUserTier(req.user.id);
-  if (tier === "free") {
-    return void res.status(403).json({
-      error: "AI Business Insights require a Navigator or Trailblazer membership.",
-      code: "TIER_LIMIT_REACHED",
-      upgradeUrl: "/membership",
-    });
-  }
-  const isTrailblazer = tier === "trailblazer";
-  const CACHE_DAYS = isTrailblazer ? 3 : 7;
-  const MAX_ITEMS = isTrailblazer ? 6 : 3;
-
-  const { businessId, businessName, businessCategory, businessCity } = req.body as {
-    businessId?: string;
-    businessName?: string;
-    businessCategory?: string;
-    businessCity?: string;
-  };
-
-  // ── Check cache ─────────────────────────────────────────────────────────────
-  if (businessId) {
+router.get(
+  "/kinfolk/business-action-plan/:businessId",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id)
+      return void res.status(401).json({ error: "Unauthorized" });
     try {
       const [cached] = await db
         .select()
         .from(businessAiPlanCacheTable)
-        .where(eq(businessAiPlanCacheTable.businessId, businessId))
+        .where(
+          eq(
+            businessAiPlanCacheTable.businessId,
+            String(req.params["businessId"]),
+          ),
+        )
         .orderBy(desc(businessAiPlanCacheTable.createdAt))
         .limit(1);
-      if (cached) {
-        const ageDays = (Date.now() - cached.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-        if (ageDays < CACHE_DAYS) {
-          return void res.json({
-            ...(cached.planData as object),
-            _cached: true,
-            _cachedAt: cached.createdAt.toISOString(),
-            tier,
-          });
+      if (!cached) return void res.json({ plan: null });
+      res.json({
+        plan: {
+          ...(cached.planData as object),
+          _cached: true,
+          _cachedAt: cached.createdAt.toISOString(),
+          tier: cached.tier,
+        },
+      });
+    } catch (err) {
+      req.log.error(
+        safeKinfolkErrorMetadata(err),
+        "GET /kinfolk/business-action-plan error",
+      );
+      res.status(500).json({ error: "Failed to load plan" });
+    }
+  },
+);
+
+// ─── POST /api/kinfolk/business-action-plan ────────────────────────────────────
+router.post(
+  "/kinfolk/business-action-plan",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id)
+      return void res.status(401).json({ error: "Unauthorized" });
+    if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"])
+      return void res.status(503).json({ error: "AI service unavailable" });
+
+    // ── Tier gate ───────────────────────────────────────────────────────────────
+    const tier = await getUserTier(req.user.id);
+    if (tier === "free") {
+      return void res.status(403).json({
+        error:
+          "AI Business Insights require a Navigator or Trailblazer membership.",
+        code: "TIER_LIMIT_REACHED",
+        upgradeUrl: "/membership",
+      });
+    }
+    const isTrailblazer = tier === "trailblazer";
+    const CACHE_DAYS = isTrailblazer ? 3 : 7;
+    const MAX_ITEMS = isTrailblazer ? 6 : 3;
+
+    const { businessId, businessName, businessCategory, businessCity } =
+      req.body as {
+        businessId?: string;
+        businessName?: string;
+        businessCategory?: string;
+        businessCity?: string;
+      };
+
+    // ── Check cache ─────────────────────────────────────────────────────────────
+    if (businessId) {
+      try {
+        const [cached] = await db
+          .select()
+          .from(businessAiPlanCacheTable)
+          .where(eq(businessAiPlanCacheTable.businessId, businessId))
+          .orderBy(desc(businessAiPlanCacheTable.createdAt))
+          .limit(1);
+        if (cached) {
+          const ageDays =
+            (Date.now() - cached.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+          if (ageDays < CACHE_DAYS) {
+            return void res.json({
+              ...(cached.planData as object),
+              _cached: true,
+              _cachedAt: cached.createdAt.toISOString(),
+              tier,
+            });
+          }
         }
-      }
-    } catch { /* non-critical */ }
-  }
-
-  // ── Fetch reviews from DB server-side ───────────────────────────────────────
-  let dbReviews: Array<{ rating: number; content: string | null; weight: string | null }> = [];
-  if (businessId) {
-    try {
-      dbReviews = await db
-        .select({ rating: reviewsTable.rating, content: reviewsTable.text, weight: reviewsTable.weight })
-        .from(reviewsTable)
-        .where(eq(reviewsTable.businessId, businessId))
-        .orderBy(desc(reviewsTable.createdAt))
-        .limit(isTrailblazer ? 30 : 10);
-    } catch { /* non-critical */ }
-  }
-
-  const verifiedReviews = dbReviews.filter((r) => parseFloat(r.weight ?? "1") >= 1.5);
-  const communityReviews = dbReviews.filter((r) => parseFloat(r.weight ?? "1") < 1.5);
-
-  const reviewsText = dbReviews.length === 0
-    ? "No community reviews yet."
-    : [
-        verifiedReviews.length > 0
-          ? `VERIFIED COMMUNITY MEMBERS (identity-confirmed, higher trust — ${verifiedReviews.length} review${verifiedReviews.length === 1 ? "" : "s"}):\n${verifiedReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")}`
-          : null,
-        communityReviews.length > 0
-          ? `GENERAL COMMUNITY MEMBERS (${communityReviews.length} review${communityReviews.length === 1 ? "" : "s"}):\n${communityReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")}`
-          : null,
-      ].filter(Boolean).join("\n\n");
-
-  // ── Skip feedback (Trailblazer only) ────────────────────────────────────────
-  let skipInsightsText = "";
-  if (businessId && isTrailblazer) {
-    try {
-      const skipRows = await db
-        .select({ message: businessSkipFeedbackTable.message })
-        .from(businessSkipFeedbackTable)
-        .where(eq(businessSkipFeedbackTable.businessId, businessId))
-        .limit(20);
-      if (skipRows.length > 0) {
-        skipInsightsText = `\nCOMMUNITY SKIP FEEDBACK (private — why people passed on visiting):\n${skipRows.map((r) => `- "${r.message}"`).join("\n")}`;
-      }
-    } catch { /* non-critical */ }
-  }
-
-  // ── Business identity ───────────────────────────────────────────────────────
-  let identityContext = "";
-  try {
-    const [ownerBiz] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, req.user.id))
-      .limit(1);
-    if (ownerBiz) {
-      const [identity] = await db
-        .select()
-        .from(businessIdentityTable)
-        .where(eq(businessIdentityTable.businessId, ownerBiz.id))
-        .limit(1);
-      if (identity) {
-        const parts: string[] = [];
-        if (identity.missionStatement) parts.push(`Mission: ${identity.missionStatement}`);
-        if (identity.businessStory) parts.push(`Story: ${identity.businessStory.slice(0, 300)}`);
-        if (identity.communityValues?.length) parts.push(`Core values: ${identity.communityValues.join(", ")}`);
-        if (identity.audiencesServed?.length) parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
-        if (identity.vibes?.length) parts.push(`Business vibe: ${identity.vibes.join(", ")}`);
-        if (identity.growthGoals?.length) parts.push(`Growth goals: ${identity.growthGoals.join(", ")}`);
-        if (identity.accessibilityFeatures?.length) parts.push(`Current accessibility: ${identity.accessibilityFeatures.join(", ")}`);
-        if (identity.communityInitiatives?.length) parts.push(`Community commitments: ${identity.communityInitiatives.join(", ")}`);
-        if (identity.isHiring) parts.push("Currently hiring");
-        if (parts.length) identityContext = `\nBUSINESS IDENTITY (owner-defined):\n${parts.join("\n")}`;
+      } catch {
+        /* non-critical */
       }
     }
-  } catch { /* non-critical */ }
 
-  const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build a feedback-based improvement action plan.${identityContext}
+    // ── Fetch reviews from DB server-side ───────────────────────────────────────
+    let dbReviews: Array<{
+      rating: number;
+      content: string | null;
+      weight: string | null;
+    }> = [];
+    if (businessId) {
+      try {
+        dbReviews = await db
+          .select({
+            rating: reviewsTable.rating,
+            content: reviewsTable.text,
+            weight: reviewsTable.weight,
+          })
+          .from(reviewsTable)
+          .where(eq(reviewsTable.businessId, businessId))
+          .orderBy(desc(reviewsTable.createdAt))
+          .limit(isTrailblazer ? 30 : 10);
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    const verifiedReviews = dbReviews.filter(
+      (r) => parseFloat(r.weight ?? "1") >= 1.5,
+    );
+    const communityReviews = dbReviews.filter(
+      (r) => parseFloat(r.weight ?? "1") < 1.5,
+    );
+
+    const reviewsText =
+      dbReviews.length === 0
+        ? "No community reviews yet."
+        : [
+            verifiedReviews.length > 0
+              ? `VERIFIED COMMUNITY MEMBERS (identity-confirmed, higher trust — ${verifiedReviews.length} review${verifiedReviews.length === 1 ? "" : "s"}):\n${verifiedReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")}`
+              : null,
+            communityReviews.length > 0
+              ? `GENERAL COMMUNITY MEMBERS (${communityReviews.length} review${communityReviews.length === 1 ? "" : "s"}):\n${communityReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join("\n\n");
+
+    // ── Skip feedback (Trailblazer only) ────────────────────────────────────────
+    let skipInsightsText = "";
+    if (businessId && isTrailblazer) {
+      try {
+        const skipRows = await db
+          .select({ message: businessSkipFeedbackTable.message })
+          .from(businessSkipFeedbackTable)
+          .where(eq(businessSkipFeedbackTable.businessId, businessId))
+          .limit(20);
+        if (skipRows.length > 0) {
+          skipInsightsText = `\nCOMMUNITY SKIP FEEDBACK (private — why people passed on visiting):\n${skipRows.map((r) => `- "${r.message}"`).join("\n")}`;
+        }
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    // ── Business identity ───────────────────────────────────────────────────────
+    let identityContext = "";
+    try {
+      const [ownerBiz] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(eq(businessesTable.submittedById, req.user.id))
+        .limit(1);
+      if (ownerBiz) {
+        const [identity] = await db
+          .select()
+          .from(businessIdentityTable)
+          .where(eq(businessIdentityTable.businessId, ownerBiz.id))
+          .limit(1);
+        if (identity) {
+          const parts: string[] = [];
+          if (identity.missionStatement)
+            parts.push(`Mission: ${identity.missionStatement}`);
+          if (identity.businessStory)
+            parts.push(`Story: ${identity.businessStory.slice(0, 300)}`);
+          if (identity.communityValues?.length)
+            parts.push(`Core values: ${identity.communityValues.join(", ")}`);
+          if (identity.audiencesServed?.length)
+            parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
+          if (identity.vibes?.length)
+            parts.push(`Business vibe: ${identity.vibes.join(", ")}`);
+          if (identity.growthGoals?.length)
+            parts.push(`Growth goals: ${identity.growthGoals.join(", ")}`);
+          if (identity.accessibilityFeatures?.length)
+            parts.push(
+              `Current accessibility: ${identity.accessibilityFeatures.join(", ")}`,
+            );
+          if (identity.communityInitiatives?.length)
+            parts.push(
+              `Community commitments: ${identity.communityInitiatives.join(", ")}`,
+            );
+          if (identity.isHiring) parts.push("Currently hiring");
+          if (parts.length)
+            identityContext = `\nBUSINESS IDENTITY (owner-defined):\n${parts.join("\n")}`;
+        }
+      }
+    } catch {
+      /* non-critical */
+    }
+
+    const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build a feedback-based improvement action plan.${identityContext}
 
 COMMUNITY FEEDBACK FROM REVIEWS (${dbReviews.length} total):
 ${reviewsText}${skipInsightsText}
@@ -5461,117 +8835,159 @@ Return EXACTLY this JSON (no markdown, pure valid JSON):
 
 Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA compliance, wheelchair access, signage) and safety first. Be specific with dollar estimates. Keep language warm, community-centered, and practical.`;
 
-  try {
-    const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
-      model: kinfolkModel("fallback"),
-      maxOutputTokens: isTrailblazer ? 2000 : 1000,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.6,
-    }) as ChatCompletionCreateParamsNonStreaming);
+    try {
+      const completion = await openai.chat.completions.create(
+        buildKinfolkChatCompletionRequest({
+          model: kinfolkModel("fallback"),
+          maxOutputTokens: isTrailblazer ? 2000 : 1000,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.6,
+        }) as ChatCompletionCreateParamsNonStreaming,
+      );
 
-    const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
-    const parsed = JSON.parse(raw) as { summary: string; actionItems: unknown[] };
+      const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+      const parsed = JSON.parse(raw) as {
+        summary: string;
+        actionItems: unknown[];
+      };
 
-    const result = {
-      ...parsed,
-      tier,
-      _cached: false,
-      _generatedAt: new Date().toISOString(),
-      _dataPoints: {
-        reviewsAnalyzed: dbReviews.length,
-        skipFeedbackIncluded: isTrailblazer,
-      },
-    };
+      const result = {
+        ...parsed,
+        tier,
+        _cached: false,
+        _generatedAt: new Date().toISOString(),
+        _dataPoints: {
+          reviewsAnalyzed: dbReviews.length,
+          skipFeedbackIncluded: isTrailblazer,
+        },
+      };
 
-    // Store in cache
-    if (businessId) {
-      db.insert(businessAiPlanCacheTable)
-        .values({ businessId, tier, planData: result })
-        .catch(() => {});
+      // Store in cache
+      if (businessId) {
+        db.insert(businessAiPlanCacheTable)
+          .values({ businessId, tier, planData: result })
+          .catch(() => {});
+      }
+
+      res.json(result);
+    } catch (err) {
+      req.log.error(
+        safeKinfolkErrorMetadata(err),
+        "Business action plan failed",
+      );
+      res.status(500).json({ error: "Failed to generate action plan" });
     }
-
-    res.json(result);
-  } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Business action plan failed");
-    res.status(500).json({ error: "Failed to generate action plan" });
-  }
-});
+  },
+);
 
 // ─── POST /api/kinfolk/expansion-analysis ─────────────────────────────────────
-router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
-  const expansionTier = await getUserTier(String(req.user!.id));
-  if (expansionTier === "free" || expansionTier === "navigator") {
-    return void res.status(403).json({ error: "Trailblazer membership required" });
-  }
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) return void res.status(503).json({ error: "AI service unavailable" });
+router.post(
+  "/kinfolk/expansion-analysis",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id)
+      return void res.status(401).json({ error: "Unauthorized" });
+    const expansionTier = await getUserTier(String(req.user!.id));
+    if (expansionTier === "free" || expansionTier === "navigator") {
+      return void res
+        .status(403)
+        .json({ error: "Trailblazer membership required" });
+    }
+    if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"])
+      return void res.status(503).json({ error: "AI service unavailable" });
 
-  const { businessName, businessCategory, businessCity, avgRating, reviewCount, savesCount } = req.body as {
-    businessName?: string;
-    businessCategory?: string;
-    businessCity?: string;
-    avgRating?: number;
-    reviewCount?: number;
-    savesCount?: number;
-  };
+    const {
+      businessName,
+      businessCategory,
+      businessCity,
+      avgRating,
+      reviewCount,
+      savesCount,
+    } = req.body as {
+      businessName?: string;
+      businessCategory?: string;
+      businessCity?: string;
+      avgRating?: number;
+      reviewCount?: number;
+      savesCount?: number;
+    };
 
-  // Fetch the owner's business identity for personalized expansion advice
-  let expansionIdentityContext = "";
-  try {
-    const [ownerBiz] = await db
-      .select({ id: businessesTable.id })
-      .from(businessesTable)
-      .where(eq(businessesTable.submittedById, req.user.id))
-      .limit(1);
-    if (ownerBiz) {
-      const [identity] = await db
-        .select()
-        .from(businessIdentityTable)
-        .where(eq(businessIdentityTable.businessId, ownerBiz.id))
+    // Fetch the owner's business identity for personalized expansion advice
+    let expansionIdentityContext = "";
+    try {
+      const [ownerBiz] = await db
+        .select({ id: businessesTable.id })
+        .from(businessesTable)
+        .where(eq(businessesTable.submittedById, req.user.id))
         .limit(1);
-      if (identity) {
-        const parts: string[] = [];
-        if (identity.missionStatement) parts.push(`Mission: ${identity.missionStatement}`);
-        if (identity.communityValues?.length) parts.push(`Core values: ${identity.communityValues.join(", ")}`);
-        if (identity.audiencesServed?.length) parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
-        if (identity.vibes?.length) parts.push(`Business vibe: ${identity.vibes.join(", ")}`);
-        if (identity.growthGoals?.length) parts.push(`Owner-stated growth goals: ${identity.growthGoals.join(", ")}`);
-        if (identity.ownershipBadges?.length) parts.push(`Identity: ${identity.ownershipBadges.join(", ")}`);
-        if (identity.communityInitiatives?.length) parts.push(`Community commitments: ${identity.communityInitiatives.join(", ")}`);
-        if (parts.length) expansionIdentityContext = `\nBUSINESS IDENTITY (owner-defined):\n${parts.join("\n")}`;
+      if (ownerBiz) {
+        const [identity] = await db
+          .select()
+          .from(businessIdentityTable)
+          .where(eq(businessIdentityTable.businessId, ownerBiz.id))
+          .limit(1);
+        if (identity) {
+          const parts: string[] = [];
+          if (identity.missionStatement)
+            parts.push(`Mission: ${identity.missionStatement}`);
+          if (identity.communityValues?.length)
+            parts.push(`Core values: ${identity.communityValues.join(", ")}`);
+          if (identity.audiencesServed?.length)
+            parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
+          if (identity.vibes?.length)
+            parts.push(`Business vibe: ${identity.vibes.join(", ")}`);
+          if (identity.growthGoals?.length)
+            parts.push(
+              `Owner-stated growth goals: ${identity.growthGoals.join(", ")}`,
+            );
+          if (identity.ownershipBadges?.length)
+            parts.push(`Identity: ${identity.ownershipBadges.join(", ")}`);
+          if (identity.communityInitiatives?.length)
+            parts.push(
+              `Community commitments: ${identity.communityInitiatives.join(", ")}`,
+            );
+          if (parts.length)
+            expansionIdentityContext = `\nBUSINESS IDENTITY (owner-defined):\n${parts.join("\n")}`;
+        }
       }
+    } catch {
+      /* non-critical */
     }
-  } catch { /* non-critical */ }
 
-  // Fetch platform survey data for context
-  let surveyContext = "";
-  try {
-    const surveys = await db
-      .select({
-        city: neighborhoodSurveysTable.city,
-        daytimeSafety: neighborhoodSurveysTable.daytimeSafety,
-        nighttimeSafety: neighborhoodSurveysTable.nighttimeSafety,
-        walkability: neighborhoodSurveysTable.walkability,
-        atmosphere: neighborhoodSurveysTable.atmosphere,
-      })
-      .from(neighborhoodSurveysTable)
-      .limit(50);
+    // Fetch platform survey data for context
+    let surveyContext = "";
+    try {
+      const surveys = await db
+        .select({
+          city: neighborhoodSurveysTable.city,
+          daytimeSafety: neighborhoodSurveysTable.daytimeSafety,
+          nighttimeSafety: neighborhoodSurveysTable.nighttimeSafety,
+          walkability: neighborhoodSurveysTable.walkability,
+          atmosphere: neighborhoodSurveysTable.atmosphere,
+        })
+        .from(neighborhoodSurveysTable)
+        .limit(50);
 
-    const cityMap: Record<string, { safetySum: number; count: number }> = {};
-    for (const s of surveys) {
-      const c = s.city;
-      if (!cityMap[c]) cityMap[c] = { safetySum: 0, count: 0 };
-      const avg = ((s.daytimeSafety ?? 0) + (s.nighttimeSafety ?? 0)) / 2;
-      cityMap[c].safetySum += avg;
-      cityMap[c].count += 1;
+      const cityMap: Record<string, { safetySum: number; count: number }> = {};
+      for (const s of surveys) {
+        const c = s.city;
+        if (!cityMap[c]) cityMap[c] = { safetySum: 0, count: 0 };
+        const avg = ((s.daytimeSafety ?? 0) + (s.nighttimeSafety ?? 0)) / 2;
+        cityMap[c].safetySum += avg;
+        cityMap[c].count += 1;
+      }
+      const citySummary = Object.entries(cityMap)
+        .map(
+          ([city, { safetySum, count }]) =>
+            `${city}: avg safety ${(safetySum / count).toFixed(1)}/5 (${count} community reports)`,
+        )
+        .join(", ");
+      if (citySummary)
+        surveyContext = `Platform Community Intelligence data by city (member-sourced context, not crime statistics): ${citySummary}`;
+    } catch {
+      /* non-critical */
     }
-    const citySummary = Object.entries(cityMap)
-      .map(([city, { safetySum, count }]) => `${city}: avg safety ${(safetySum / count).toFixed(1)}/5 (${count} community reports)`)
-      .join(", ");
-    if (citySummary) surveyContext = `Platform Community Intelligence data by city (member-sourced context, not crime statistics): ${citySummary}`;
-  } catch { /* non-critical */ }
 
-  const prompt = `You are a business expansion strategist advising a minority-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.${expansionIdentityContext}
+    const prompt = `You are a business expansion strategist advising a minority-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.${expansionIdentityContext}
 
 CURRENT PERFORMANCE:
 - Average rating: ${avgRating?.toFixed(1) ?? "N/A"}/5
@@ -5603,28 +9019,36 @@ Return EXACTLY this JSON (no markdown, pure valid JSON):
 
 Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities with strong Black communities: Atlanta, Houston, Chicago, DC, New York, New Orleans, LA, Miami, Dallas, Philadelphia, Detroit, Baltimore, Memphis, Charlotte. Prioritize cities near ${businessCity ?? "their base"}.`;
 
-  try {
-    const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
-      model: kinfolkModel("fallback"),
-      maxOutputTokens: 1500,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-    }) as ChatCompletionCreateParamsNonStreaming);
+    try {
+      const completion = await openai.chat.completions.create(
+        buildKinfolkChatCompletionRequest({
+          model: kinfolkModel("fallback"),
+          maxOutputTokens: 1500,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
+        }) as ChatCompletionCreateParamsNonStreaming,
+      );
 
-    const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
-    const parsed = JSON.parse(raw) as { summary: string; opportunities: unknown[]; insights: string[] };
-    res.json(parsed);
-  } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Expansion analysis failed");
-    res.status(500).json({ error: "Failed to generate expansion analysis" });
-  }
-});
+      const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+      const parsed = JSON.parse(raw) as {
+        summary: string;
+        opportunities: unknown[];
+        insights: string[];
+      };
+      res.json(parsed);
+    } catch (err) {
+      req.log.error(safeKinfolkErrorMetadata(err), "Expansion analysis failed");
+      res.status(500).json({ error: "Failed to generate expansion analysis" });
+    }
+  },
+);
 
 // ─── POST /kinfolk/relocation ─────────────────────────────────────────────────
 // AI-powered relocation concierge — walks through phases, proactively recommends
 // minority-owned businesses at every step of a move
 router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Unauthorized" });
   const {
     messages = [],
     fromCity,
@@ -5653,22 +9077,86 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
     interests?: string[];
   };
 
-  const RELOCATION_PHASES: Record<string, { title: string; icon: string; description: string; categories: string[] }> = {
-    neighborhoods: { title: "Neighborhood Research", icon: "🏘️", description: "Find the right community for your lifestyle", categories: ["Real Estate", "Community"] },
-    realtors:      { title: "Find a Realtor",        icon: "🏠", description: "Connect with minority-owned real estate agents",  categories: ["Real Estate"] },
-    mortgage:      { title: "Mortgage & Financing",   icon: "💰", description: "Get pre-approved with community lenders",      categories: ["Finance", "Banking"] },
-    movers:        { title: "Moving Companies",       icon: "🚚", description: "Book trustworthy movers",                     categories: ["Moving", "Transportation"] },
-    utilities:     { title: "Set Up Utilities",       icon: "⚡", description: "Electricity, internet, and home services",    categories: ["Home Services"] },
-    healthcare:    { title: "Find a Doctor",          icon: "🏥", description: "Primary care, specialists, and dentists",     categories: ["Healthcare", "Medical", "Health"] },
-    schools:       { title: "Schools & Education",    icon: "🎓", description: "Research schools and childcare options",      categories: ["Education", "Childcare"] },
-    salons:        { title: "Beauty & Grooming",      icon: "✂️", description: "Your go-to salon, barber, and spa",          categories: ["Beauty", "Salon", "Barbershop"] },
-    restaurants:   { title: "Restaurants & Food",     icon: "🍽️", description: "Build your regular spots",                   categories: ["Restaurant", "Food", "Café"] },
-    community:     { title: "Community & Events",     icon: "🤝🏾", description: "Find your people and local events",        categories: ["Community", "Events"] },
-    employment:    { title: "Career & Employment",    icon: "💼", description: "Job boards, networking, and local employers", categories: ["Employment", "Networking"] },
-    safety:        { title: "Safety & Security",      icon: "🛡️", description: "Understand your neighborhood safety profile", categories: ["Safety"] },
+  const RELOCATION_PHASES: Record<
+    string,
+    { title: string; icon: string; description: string; categories: string[] }
+  > = {
+    neighborhoods: {
+      title: "Neighborhood Research",
+      icon: "🏘️",
+      description: "Find the right community for your lifestyle",
+      categories: ["Real Estate", "Community"],
+    },
+    realtors: {
+      title: "Find a Realtor",
+      icon: "🏠",
+      description: "Connect with minority-owned real estate agents",
+      categories: ["Real Estate"],
+    },
+    mortgage: {
+      title: "Mortgage & Financing",
+      icon: "💰",
+      description: "Get pre-approved with community lenders",
+      categories: ["Finance", "Banking"],
+    },
+    movers: {
+      title: "Moving Companies",
+      icon: "🚚",
+      description: "Book trustworthy movers",
+      categories: ["Moving", "Transportation"],
+    },
+    utilities: {
+      title: "Set Up Utilities",
+      icon: "⚡",
+      description: "Electricity, internet, and home services",
+      categories: ["Home Services"],
+    },
+    healthcare: {
+      title: "Find a Doctor",
+      icon: "🏥",
+      description: "Primary care, specialists, and dentists",
+      categories: ["Healthcare", "Medical", "Health"],
+    },
+    schools: {
+      title: "Schools & Education",
+      icon: "🎓",
+      description: "Research schools and childcare options",
+      categories: ["Education", "Childcare"],
+    },
+    salons: {
+      title: "Beauty & Grooming",
+      icon: "✂️",
+      description: "Your go-to salon, barber, and spa",
+      categories: ["Beauty", "Salon", "Barbershop"],
+    },
+    restaurants: {
+      title: "Restaurants & Food",
+      icon: "🍽️",
+      description: "Build your regular spots",
+      categories: ["Restaurant", "Food", "Café"],
+    },
+    community: {
+      title: "Community & Events",
+      icon: "🤝🏾",
+      description: "Find your people and local events",
+      categories: ["Community", "Events"],
+    },
+    employment: {
+      title: "Career & Employment",
+      icon: "💼",
+      description: "Job boards, networking, and local employers",
+      categories: ["Employment", "Networking"],
+    },
+    safety: {
+      title: "Safety & Security",
+      icon: "🛡️",
+      description: "Understand your neighborhood safety profile",
+      categories: ["Safety"],
+    },
   };
 
-  const phase = RELOCATION_PHASES[currentPhase] ?? RELOCATION_PHASES["neighborhoods"]!;
+  const phase =
+    RELOCATION_PHASES[currentPhase] ?? RELOCATION_PHASES["neighborhoods"]!;
 
   // Load user lifestyle/interests from DB for interest-based area suggestions
   let userLifestyleServices: string[] = [];
@@ -5685,36 +9173,74 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
         .from(userPreferencesTable)
         .where(eq(userPreferencesTable.userId, req.user.id))
         .limit(1);
-      userLifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
-      userCulturalInterests = (prefs?.culturalInterests as string[] | null) ?? [];
-      userFavoriteCategories = (prefs?.favoriteCategories as string[] | null) ?? [];
-    } catch { /* non-critical */ }
+      userLifestyleServices =
+        (prefs?.lifestyleServices as string[] | null) ?? [];
+      userCulturalInterests =
+        (prefs?.culturalInterests as string[] | null) ?? [];
+      userFavoriteCategories =
+        (prefs?.favoriteCategories as string[] | null) ?? [];
+    } catch {
+      /* non-critical */
+    }
   }
-  const allInterests = [...new Set([
-    ...(interests as string[]),
-    ...userLifestyleServices,
-    ...userCulturalInterests,
-    ...userFavoriteCategories,
-  ])];
+  const allInterests = [
+    ...new Set([
+      ...(interests as string[]),
+      ...userLifestyleServices,
+      ...userCulturalInterests,
+      ...userFavoriteCategories,
+    ]),
+  ];
 
   // Pull minority-owned businesses across ALL relocation-relevant categories at once.
   // The AI picks which ones to surface per phase — we don't gate by currentPhase.
   let verifiedBusinesses: Array<{
-    id: number | string; name: string; category: string; description: string;
-    city: string; verified: boolean; phone: string | null; website: string | null;
+    id: number | string;
+    name: string;
+    category: string;
+    description: string;
+    city: string;
+    verified: boolean;
+    phone: string | null;
+    website: string | null;
   }> = [];
 
   if (toCity) {
     try {
       const allReloCategories = [
-        "Real Estate", "Realtor", "Moving", "Transportation", "Contractor", "Handyman",
-        "Restaurant", "Food", "Café", "Cafe", "Salon", "Barber", "Beauty",
-        "Healthcare", "Medical", "Health", "Fitness", "Gym", "Yoga", "Martial Arts",
-        "Finance", "Banking", "Community", "Childcare", "Education",
-        "Grocery", "Auto", "Home Services",
+        "Real Estate",
+        "Realtor",
+        "Moving",
+        "Transportation",
+        "Contractor",
+        "Handyman",
+        "Restaurant",
+        "Food",
+        "Café",
+        "Cafe",
+        "Salon",
+        "Barber",
+        "Beauty",
+        "Healthcare",
+        "Medical",
+        "Health",
+        "Fitness",
+        "Gym",
+        "Yoga",
+        "Martial Arts",
+        "Finance",
+        "Banking",
+        "Community",
+        "Childcare",
+        "Education",
+        "Grocery",
+        "Auto",
+        "Home Services",
         ...allInterests,
       ];
-      const catConditions = allReloCategories.map(cat => ilike(businessesTable.category, `%${cat}%`));
+      const catConditions = allReloCategories.map((cat) =>
+        ilike(businessesTable.category, `%${cat}%`),
+      );
       verifiedBusinesses = await db
         .select({
           id: businessesTable.id,
@@ -5727,39 +9253,66 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
           website: businessesTable.website,
         })
         .from(businessesTable)
-        .where(and(
-          ilike(businessesTable.city, `%${toCity}%`),
-          eq(businessesTable.blackOwned, true),
-          eq(businessesTable.status, "active"),
-          or(...catConditions),
-        ))
+        .where(
+          and(
+            ilike(businessesTable.city, `%${toCity}%`),
+            eq(businessesTable.blackOwned, true),
+            eq(businessesTable.status, "active"),
+            or(...catConditions),
+          ),
+        )
         .limit(20);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }
 
-  const isOutOfState = !!(fromCity && toState && fromCity.toLowerCase() !== (toCity ?? "").toLowerCase());
+  const isOutOfState = !!(
+    fromCity &&
+    toState &&
+    fromCity.toLowerCase() !== (toCity ?? "").toLowerCase()
+  );
 
   const proactiveFlags = [
-    hasKids  ? "They have children — proactively mention schools, childcare, and family-friendly neighborhoods." : "",
-    hasPets  ? "They have pets — mention pet-friendly buildings, local vets, and dog parks when relevant." : "",
-    isOutOfState ? "They're moving from out of state — proactively bring up transferring medical records, finding a new primary care doctor, and updating insurance networks." : "",
-    homeType === "buy" ? "They're buying — mention home inspectors, real estate attorneys, and the minority-owned realtor advantage." : "",
-    (needs as string[]).includes("Home Repair") ? "They flagged home repair — proactively mention minority-owned contractors and handymen." : "",
-    (needs as string[]).includes("Mental Health") ? "They flagged mental health — mention Black therapists and culturally affirming wellness providers." : "",
-  ].filter(Boolean).join("\n");
+    hasKids
+      ? "They have children — proactively mention schools, childcare, and family-friendly neighborhoods."
+      : "",
+    hasPets
+      ? "They have pets — mention pet-friendly buildings, local vets, and dog parks when relevant."
+      : "",
+    isOutOfState
+      ? "They're moving from out of state — proactively bring up transferring medical records, finding a new primary care doctor, and updating insurance networks."
+      : "",
+    homeType === "buy"
+      ? "They're buying — mention home inspectors, real estate attorneys, and the minority-owned realtor advantage."
+      : "",
+    (needs as string[]).includes("Home Repair")
+      ? "They flagged home repair — proactively mention minority-owned contractors and handymen."
+      : "",
+    (needs as string[]).includes("Mental Health")
+      ? "They flagged mental health — mention Black therapists and culturally affirming wellness providers."
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
-  const interestsSection = allInterests.length > 0
-    ? `\nTHEIR INTERESTS & LIFESTYLE SERVICES — use these for location AND business suggestions:
-${allInterests.map(i => `- ${i.replace(/_/g, " ")}`).join("\n")}
+  const interestsSection =
+    allInterests.length > 0
+      ? `\nTHEIR INTERESTS & LIFESTYLE SERVICES — use these for location AND business suggestions:
+${allInterests.map((i) => `- ${i.replace(/_/g, " ")}`).join("\n")}
 Prioritize neighborhoods near good ${allInterests.slice(0, 4).join(", ")} options.`
-    : "";
+      : "";
 
-  const businessCatalog = verifiedBusinesses.length > 0
-    ? `\n\nMINORITY-OWNED PLATFORM BUSINESSES IN ${toCity?.toUpperCase()} — pick the best fit per need (realtor, mover, contractor, food, salon, fitness, etc.):
-${verifiedBusinesses.map(b =>
-    `• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 140)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`
-  ).join("\n\n")}`
-    : `\n\nNo platform businesses yet for ${toCity ?? "this city"} — use your general knowledge and tell them to search Mapping With Melanin™ as new spots are added.`;
+  const businessCatalog =
+    verifiedBusinesses.length > 0
+      ? `\n\nMINORITY-OWNED PLATFORM BUSINESSES IN ${toCity?.toUpperCase()} — pick the best fit per need (realtor, mover, contractor, food, salon, fitness, etc.):
+${verifiedBusinesses
+  .map(
+    (b) =>
+      `• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 140)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`,
+  )
+  .join("\n\n")}`
+      : `\n\nNo platform businesses yet for ${toCity ?? "this city"} — use your general knowledge and tell them to search Mapping With Melanin™ as new spots are added.`;
 
   const systemPrompt = `You are KinfolkAI's Relocation Concierge — the most well-connected friend anyone could have when moving. You know minority-owned businesses, culturally affirming neighborhoods, and all the hidden knowledge that makes a new city feel like home fast.
 
@@ -5835,24 +9388,31 @@ Include 3-5 businesses from the PLATFORM LIST below. If none match, use general 
 ${businessCatalog}`;
 
   try {
-    const completion = await openai.chat.completions.create(buildKinfolkChatCompletionRequest({
-      model: kinfolkModel("fallback"),
-      maxOutputTokens: 2400,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...(messages as Array<{ role: string; content: string }>).map(m => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      ],
-      temperature: 0.75,
-    }) as ChatCompletionCreateParamsNonStreaming);
+    const completion = await openai.chat.completions.create(
+      buildKinfolkChatCompletionRequest({
+        model: kinfolkModel("fallback"),
+        maxOutputTokens: 2400,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...(messages as Array<{ role: string; content: string }>).map(
+            (m) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            }),
+          ),
+        ],
+        temperature: 0.75,
+      }) as ChatCompletionCreateParamsNonStreaming,
+    );
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
     let parsed: Record<string, unknown>;
     try {
       // Strip markdown fences first
-      let clean = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      let clean = raw
+        .replace(/^```json\s*/i, "")
+        .replace(/```\s*$/i, "")
+        .trim();
       // If AI wrapped JSON in prose, extract the first top-level JSON object
       const braceStart = clean.indexOf("{");
       const braceEnd = clean.lastIndexOf("}");
@@ -5861,22 +9421,43 @@ ${businessCatalog}`;
       }
       parsed = JSON.parse(clean) as Record<string, unknown>;
     } catch {
-      parsed = { reply: raw, businesses: [], locationSuggestions: null, proactiveSuggestions: [], insight: "", checklistItems: [], nextPhaseHint: "" };
+      parsed = {
+        reply: raw,
+        businesses: [],
+        locationSuggestions: null,
+        proactiveSuggestions: [],
+        insight: "",
+        checklistItems: [],
+        nextPhaseHint: "",
+      };
     }
 
     const mentionedNames = new Set<string>(
-      ((parsed.businesses as Array<{ name: string }>) ?? []).map(b => b.name.toLowerCase())
+      ((parsed.businesses as Array<{ name: string }>) ?? []).map((b) =>
+        b.name.toLowerCase(),
+      ),
     );
     const extraVerified = verifiedBusinesses
-      .filter(b => !mentionedNames.has(b.name.toLowerCase()))
+      .filter((b) => !mentionedNames.has(b.name.toLowerCase()))
       .slice(0, 2)
-      .map(b => ({
-        id: b.id, name: b.name, category: b.category, description: b.description,
-        neighborhood: b.city, whyForYou: `Verified on Mapping With Melanin™ in ${b.city}`,
-        phone: b.phone, website: b.website, verified: b.verified, platformVerified: true,
+      .map((b) => ({
+        id: b.id,
+        name: b.name,
+        category: b.category,
+        description: b.description,
+        neighborhood: b.city,
+        whyForYou: `Verified on Mapping With Melanin™ in ${b.city}`,
+        phone: b.phone,
+        website: b.website,
+        verified: b.verified,
+        platformVerified: true,
       }));
 
-    res.json({ ...parsed, phase: { id: currentPhase, ...phase }, extraVerified });
+    res.json({
+      ...parsed,
+      phase: { id: currentPhase, ...phase },
+      extraVerified,
+    });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Relocation concierge failed");
     res.status(500).json({ error: "Failed to generate relocation guidance" });
@@ -5884,43 +9465,55 @@ ${businessCatalog}`;
 });
 
 // ─── Share a trip ──────────────────────────────────────────────────────────────
-router.post("/kinfolk/sessions/:id/share", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
-  const { id } = req.params as { id: string };
-  const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
-  if (!memoryEnabled) {
-    return void res.status(403).json({ error: "Kinfolk memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
-  }
+router.post(
+  "/kinfolk/sessions/:id/share",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id)
+      return void res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params as { id: string };
+    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    if (!memoryEnabled) {
+      return void res
+        .status(403)
+        .json({
+          error: "Kinfolk memory is disabled.",
+          code: "PRIVATE_MEMORY_DISABLED",
+        });
+    }
 
-  const [session] = await db
-    .select()
-    .from(kinfolkSessionsTable)
-    .where(eq(kinfolkSessionsTable.id, id))
-    .limit(1);
+    const [session] = await db
+      .select()
+      .from(kinfolkSessionsTable)
+      .where(eq(kinfolkSessionsTable.id, id))
+      .limit(1);
 
-  if (!session || session.userId !== req.user.id) {
-    return void res.status(404).json({ error: "Trip not found" });
-  }
+    if (!session || session.userId !== req.user.id) {
+      return void res.status(404).json({ error: "Trip not found" });
+    }
 
-  let { shareId } = session;
-  if (!shareId) {
-    shareId = crypto.randomBytes(8).toString("hex");
-    await db
-      .update(kinfolkSessionsTable)
-      .set({ shareId })
-      .where(eq(kinfolkSessionsTable.id, id));
-  }
+    let { shareId } = session;
+    if (!shareId) {
+      shareId = crypto.randomBytes(8).toString("hex");
+      await db
+        .update(kinfolkSessionsTable)
+        .set({ shareId })
+        .where(eq(kinfolkSessionsTable.id, id));
+    }
 
-  return void res.json({ shareId, shareUrl: `/shared/trip/${shareId}` });
-});
+    return void res.json({ shareId, shareUrl: `/shared/trip/${shareId}` });
+  },
+);
 
 // ─── View a shared trip (public) ───────────────────────────────────────────────
 // ─── GET /kinfolk/skip-feedback — owner views why community skipped their business ──
 router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Unauthorized" });
   const skipTier = await getUserTier(String(req.user!.id));
   if (skipTier === "free" || skipTier === "navigator") {
-    return void res.status(403).json({ error: "Trailblazer membership required" });
+    return void res
+      .status(403)
+      .json({ error: "Trailblazer membership required" });
   }
   try {
     const [ownerBiz] = await db
@@ -5935,17 +9528,23 @@ router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
       .where(eq(businessSkipFeedbackTable.businessId, ownerBiz.id))
       .orderBy(desc(businessSkipFeedbackTable.createdAt))
       .limit(25);
-    const messages = rows.map((r) => r.message).filter((m): m is string => typeof m === "string" && m.trim().length > 0);
+    const messages = rows
+      .map((r) => r.message)
+      .filter((m): m is string => typeof m === "string" && m.trim().length > 0);
     res.json({ messages, total: messages.length });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch skip feedback");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to fetch skip feedback",
+    );
     res.status(500).json({ error: "Failed to fetch skip feedback" });
   }
 });
 
 // ─── GET /api/kinfolk/memory-summary ───────────────────────────────────────────
 router.get("/kinfolk/memory-summary", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Unauthorized" });
   try {
     const [prefs] = await db
       .select()
@@ -5971,7 +9570,10 @@ router.get("/kinfolk/memory-summary", async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch memory summary");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to fetch memory summary",
+    );
     res.status(500).json({ error: "Failed to fetch memory summary" });
   }
 });
@@ -5982,10 +9584,18 @@ router.get("/kinfolk/memory-summary", async (req: Request, res: Response) => {
 // automatically. The cultureAction in the chat response triggers a consent prompt;
 // this endpoint only fires when the member clicks "Yes, use when relevant".
 router.post("/kinfolk/roots", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { community, action } = req.body as { community?: string; action?: string };
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const { community, action } = req.body as {
+    community?: string;
+    action?: string;
+  };
   if (!community || !["add", "remove"].includes(action ?? "")) {
-    res.status(400).json({ error: "community and action (add|remove) required" });
+    res
+      .status(400)
+      .json({ error: "community and action (add|remove) required" });
     return;
   }
   try {
@@ -5995,9 +9605,10 @@ router.post("/kinfolk/roots", async (req: Request, res: Response) => {
       .where(eq(userPreferencesTable.userId, req.user.id))
       .limit(1);
     const current = (existing?.diasporaCountries as string[] | null) ?? [];
-    const updated = action === "add"
-      ? [...new Set([...current, community])]
-      : current.filter((c: string) => c !== community);
+    const updated =
+      action === "add"
+        ? [...new Set([...current, community])]
+        : current.filter((c: string) => c !== community);
     await db
       .insert(userPreferencesTable)
       .values({ userId: req.user.id, diasporaCountries: updated })
@@ -6007,14 +9618,18 @@ router.post("/kinfolk/roots", async (req: Request, res: Response) => {
       });
     res.json({ ok: true, diasporaCountries: updated });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save culture roots");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to save culture roots",
+    );
     res.status(500).json({ error: "Failed to save roots" });
   }
 });
 
 // ─── GET /api/kinfolk/proactive ─────────────────────────────────────────────
 router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Unauthorized" });
   try {
     const [prefs] = await db
       .select()
@@ -6025,12 +9640,20 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
     const cities = (prefs?.favoriteCities as string[] | null) ?? [];
     const categories = (prefs?.favoriteCategories as string[] | null) ?? [];
     const tripStyle = (prefs?.tripStyle as string[] | null) ?? [];
-    const lifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
+    const lifestyleServices =
+      (prefs?.lifestyleServices as string[] | null) ?? [];
 
     const dow = new Date().getDay();
     const isWeekend = dow === 0 || dow === 6;
 
-    let suggestion: { type: string; title: string; body: string; cta: string; ctaRoute: string; icon: string };
+    let suggestion: {
+      type: string;
+      title: string;
+      body: string;
+      cta: string;
+      ctaRoute: string;
+      icon: string;
+    };
 
     if (isWeekend && cities.length > 0) {
       const city = cities[0];
@@ -6052,7 +9675,10 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
         cta: "Ask KinfolkAI™",
         ctaRoute: "/(tabs)/index",
       };
-    } else if (tripStyle.includes("cultural") || lifestyleServices.includes("cultural_events")) {
+    } else if (
+      tripStyle.includes("cultural") ||
+      lifestyleServices.includes("cultural_events")
+    ) {
       suggestion = {
         type: "cultural",
         title: "Explore Cultural History",
@@ -6074,7 +9700,10 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
 
     res.json({ suggestion });
   } catch (err) {
-    req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch proactive suggestion");
+    req.log.error(
+      safeKinfolkErrorMetadata(err),
+      "Failed to fetch proactive suggestion",
+    );
     res.status(500).json({ error: "Failed to fetch proactive suggestion" });
   }
 });
@@ -6082,11 +9711,18 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
 // ─── POST /api/kinfolk/transcribe — hardened per Voice Audit spec ─────────────
 // Member-keyed rate limiter: 10 requests / 15 minutes per authenticated user.
 // IP fallback only for unauthenticated edge rejection (separate bucket).
-const transcribeUserBuckets = new Map<string, { count: number; resetAt: number }>();
+const transcribeUserBuckets = new Map<
+  string,
+  { count: number; resetAt: number }
+>();
 const TRANSCRIBE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const TRANSCRIBE_USER_LIMIT = 10;
 
-function checkTranscribeLimit(key: string, map: Map<string, { count: number; resetAt: number }>, limit: number): { allowed: boolean; retryAfterMs: number } {
+function checkTranscribeLimit(
+  key: string,
+  map: Map<string, { count: number; resetAt: number }>,
+  limit: number,
+): { allowed: boolean; retryAfterMs: number } {
   const now = Date.now();
   const bucket = map.get(key);
   if (!bucket || now > bucket.resetAt) {
@@ -6125,7 +9761,11 @@ function runMulter(req: Request, res: Response): Promise<void> {
   return new Promise((resolve, reject) => {
     transcribeUpload(req, res, (err) => {
       if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
-        reject(Object.assign(new Error("AUDIO_PAYLOAD_TOO_LARGE"), { isPayloadTooLarge: true }));
+        reject(
+          Object.assign(new Error("AUDIO_PAYLOAD_TOO_LARGE"), {
+            isPayloadTooLarge: true,
+          }),
+        );
       } else if (err) {
         reject(err);
       } else {
@@ -6139,18 +9779,40 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   // Authentication is checked before provider configuration so unauthenticated
   // requests never learn whether a backend credential is installed.
   if (!req.user?.id) {
-    return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED", message: "Sign in to use voice input.", audioRetained: false });
+    return void res
+      .status(401)
+      .json({
+        error: "AUTHENTICATION_REQUIRED",
+        message: "Sign in to use voice input.",
+        audioRetained: false,
+      });
   }
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription is temporarily unavailable.", audioRetained: false });
+    return void res
+      .status(503)
+      .json({
+        error: "TRANSCRIPTION_UNAVAILABLE",
+        message: "Transcription is temporarily unavailable.",
+        audioRetained: false,
+      });
   }
 
   // 2. Per-member rate limit (primary)
-  const memberCheck = checkTranscribeLimit(req.user.id, transcribeUserBuckets, TRANSCRIBE_USER_LIMIT);
+  const memberCheck = checkTranscribeLimit(
+    req.user.id,
+    transcribeUserBuckets,
+    TRANSCRIBE_USER_LIMIT,
+  );
   if (!memberCheck.allowed) {
     const retrySec = Math.ceil(memberCheck.retryAfterMs / 1000);
     res.set("Retry-After", String(retrySec));
-    return void res.status(429).json({ error: "VOICE_INPUT_RATE_LIMITED", message: `Voice input limit reached. Try again in ${retrySec} seconds.`, audioRetained: false });
+    return void res
+      .status(429)
+      .json({
+        error: "VOICE_INPUT_RATE_LIMITED",
+        message: `Voice input limit reached. Try again in ${retrySec} seconds.`,
+        audioRetained: false,
+      });
   }
 
   if (!req.is("multipart/form-data")) {
@@ -6166,43 +9828,85 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     if ((multerErr as { isPayloadTooLarge?: boolean }).isPayloadTooLarge) {
       return void res.status(413).json({
         error: "AUDIO_PAYLOAD_TOO_LARGE",
-        message: "This voice clip is too large to upload. Please try a shorter or lower-quality recording.",
+        message:
+          "This voice clip is too large to upload. Please try a shorter or lower-quality recording.",
         audioRetained: false,
       });
     }
-    return void res.status(400).json({ error: "AUDIO_UNREADABLE", message: "Kinfolk could not read that audio. Please try again or type your question.", audioRetained: false });
+    return void res
+      .status(400)
+      .json({
+        error: "AUDIO_UNREADABLE",
+        message:
+          "Kinfolk could not read that audio. Please try again or type your question.",
+        audioRetained: false,
+      });
   }
   if (!req.file?.buffer?.length) {
-    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
+    return void res
+      .status(400)
+      .json({
+        error: "AUDIO_REQUIRED",
+        message: "No audio data provided.",
+        audioRetained: false,
+      });
   }
   const buffer = req.file.buffer;
   const format = canonicalVoiceFormat(req.file.mimetype ?? "");
 
   if (!format || !ALLOWED_AUDIO_FORMATS.has(format.safeFormat)) {
-    return void res.status(400).json({ error: "UNSUPPORTED_AUDIO_FORMAT", message: "Use WebM, M4A, WAV, or MP3 audio.", audioRetained: false });
+    return void res
+      .status(400)
+      .json({
+        error: "UNSUPPORTED_AUDIO_FORMAT",
+        message: "Use WebM, M4A, WAV, or MP3 audio.",
+        audioRetained: false,
+      });
   }
   const { safeFormat, mimeType: canonicalMimeType } = format;
 
   if (buffer.length > MAX_VOICE_PAYLOAD_BYTES) {
-    return void res.status(413).json({ error: "AUDIO_PAYLOAD_TOO_LARGE", message: "This voice clip is too large. Please send a shorter recording.", audioRetained: false });
+    return void res
+      .status(413)
+      .json({
+        error: "AUDIO_PAYLOAD_TOO_LARGE",
+        message:
+          "This voice clip is too large. Please send a shorter recording.",
+        audioRetained: false,
+      });
   }
 
   if (buffer.length < 100) {
-    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio clip is too short.", audioRetained: false });
+    return void res
+      .status(400)
+      .json({
+        error: "AUDIO_REQUIRED",
+        message: "Audio clip is too short.",
+        audioRetained: false,
+      });
   }
 
   try {
     await inspectVoiceAudio(buffer, canonicalMimeType, MAX_VOICE_DURATION_MS);
   } catch (error) {
     if (error instanceof VoiceAudioInspectionError) {
-      const message = error.code === "AUDIO_DURATION_EXCEEDED"
-        ? `Keep voice messages under ${VOICE_MAX_DURATION_SECONDS} seconds.`
-        : error.code === "AUDIO_MIME_MISMATCH"
-          ? "The recording format did not match its file type. Please record again or type your question."
-          : "Kinfolk could not read that recording. Please try again or type your question.";
-      return void res.status(400).json({ error: error.code, message, audioRetained: false });
+      const message =
+        error.code === "AUDIO_DURATION_EXCEEDED"
+          ? `Keep voice messages under ${VOICE_MAX_DURATION_SECONDS} seconds.`
+          : error.code === "AUDIO_MIME_MISMATCH"
+            ? "The recording format did not match its file type. Please record again or type your question."
+            : "Kinfolk could not read that recording. Please try again or type your question.";
+      return void res
+        .status(400)
+        .json({ error: error.code, message, audioRetained: false });
     }
-    return void res.status(400).json({ error: "AUDIO_UNREADABLE", message: "Kinfolk could not read that recording.", audioRetained: false });
+    return void res
+      .status(400)
+      .json({
+        error: "AUDIO_UNREADABLE",
+        message: "Kinfolk could not read that recording.",
+        audioRetained: false,
+      });
   }
 
   // 7. Transcribe with 15-second timeout — never persist audio blob
@@ -6214,7 +9918,9 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   try {
     const audioBytes = new Uint8Array(buffer);
     const blob = new Blob([audioBytes], { type: canonicalMimeType });
-    const file = new File([blob], `voice.${safeFormat}`, { type: canonicalMimeType });
+    const file = new File([blob], `voice.${safeFormat}`, {
+      type: canonicalMimeType,
+    });
 
     const transcription = await openai.audio.transcriptions.create(
       { file, model: transcriptionModel },
@@ -6222,35 +9928,66 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     );
 
     // Log outcome + latency only — never log audio content, transcript text, or user context
-    req.log.info({
-      route: "kinfolk.transcribe", model: transcriptionModel,
-      latencyMs: Date.now() - startMs, audioBytes: buffer.length, status: 200,
-    }, "kinfolk provider");
+    req.log.info(
+      {
+        route: "kinfolk.transcribe",
+        model: transcriptionModel,
+        latencyMs: Date.now() - startMs,
+        audioBytes: buffer.length,
+        status: 200,
+      },
+      "kinfolk provider",
+    );
 
     // Empty transcript — provider returned no text (silence, background noise, etc.)
     const transcriptText = normalizeTranscript(transcription.text);
     if (!transcriptText) {
       return void res.status(422).json({
         error: "EMPTY_TRANSCRIPT",
-        message: "I couldn't hear any words. Please try again or type your question.",
+        message:
+          "I couldn't hear any words. Please try again or type your question.",
         audioRetained: false,
       });
     }
 
     // `text` is the mobile contract and `transcript` is the web contract.
-    return void res.json({ text: transcriptText, transcript: transcriptText, audioRetained: false });
+    return void res.json({
+      text: transcriptText,
+      transcript: transcriptText,
+      audioRetained: false,
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "";
     const isAbort = msg.includes("abort") || msg.includes("timeout");
-    req.log.warn({
-      route: "kinfolk.transcribe", model: transcriptionModel,
-      latencyMs: Date.now() - startMs, audioBytes: buffer.length, status: 503, aborted: isAbort,
-    }, "kinfolk provider");
+    req.log.warn(
+      {
+        route: "kinfolk.transcribe",
+        model: transcriptionModel,
+        latencyMs: Date.now() - startMs,
+        audioBytes: buffer.length,
+        status: 503,
+        aborted: isAbort,
+      },
+      "kinfolk provider",
+    );
 
     if (isAbort) {
-      return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription timed out. Please try again or type your question.", audioRetained: false });
+      return void res
+        .status(503)
+        .json({
+          error: "TRANSCRIPTION_UNAVAILABLE",
+          message:
+            "Transcription timed out. Please try again or type your question.",
+          audioRetained: false,
+        });
     }
-    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription failed. Please try again.", audioRetained: false });
+    return void res
+      .status(503)
+      .json({
+        error: "TRANSCRIPTION_UNAVAILABLE",
+        message: "Transcription failed. Please try again.",
+        audioRetained: false,
+      });
   } finally {
     clearTimeout(timeout);
   }
@@ -6259,35 +9996,51 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
 // ─── GET /api/kinfolk/provider-readiness — authenticated development command ──
 // This reports capability states, never environment values, credentials, URLs,
 // model IDs, prompts, or provider response content.
-router.get("/kinfolk/provider-readiness", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED" });
-  if (!isAdmin(req)) return void res.status(403).json({ error: "ADMIN_REQUIRED" });
-  if (process.env.NODE_ENV === "production") {
-    return void res.status(403).json({ error: "DEVELOPMENT_COMMAND_DISABLED" });
-  }
+router.get(
+  "/kinfolk/provider-readiness",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id)
+      return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED" });
+    if (!isAdmin(req))
+      return void res.status(403).json({ error: "ADMIN_REQUIRED" });
+    if (process.env.NODE_ENV === "production") {
+      return void res
+        .status(403)
+        .json({ error: "DEVELOPMENT_COMMAND_DISABLED" });
+    }
 
-  const capabilities = await probeKinfolkProviderReadiness();
-  const ready = capabilities.every((capability) => capability.status === "PASS");
-  res.status(ready ? 200 : 503).json({
-    status: ready ? "ready" : "degraded",
-    capabilities,
-  });
-});
+    const capabilities = await probeKinfolkProviderReadiness();
+    const ready = capabilities.every(
+      (capability) => capability.status === "PASS",
+    );
+    res.status(ready ? 200 : 503).json({
+      status: ready ? "ready" : "degraded",
+      capabilities,
+    });
+  },
+);
 
 // ─── POST /api/kinfolk/speak — TTS, gated by monthly char allowance ───────────
 router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
     return void res.status(503).json({ error: "AI service unavailable" });
   }
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
 
-  const { text, voice: requestedVoice } = req.body as { text?: string; voice?: string };
-  if (!text || typeof text !== "string") return void res.status(400).json({ error: "text is required" });
+  const { text, voice: requestedVoice } = req.body as {
+    text?: string;
+    voice?: string;
+  };
+  if (!text || typeof text !== "string")
+    return void res.status(400).json({ error: "text is required" });
   if (requestedVoice !== undefined && !isKinfolkVoice(requestedVoice)) {
     return void res.status(400).json({ error: "INVALID_VOICE" });
   }
   const savedPrefs = await getCachedPrefs(req.user.id);
-  const voice = normalizeKinfolkVoice(savedPrefs?.kinfolkVoice ?? requestedVoice);
+  const voice = normalizeKinfolkVoice(
+    savedPrefs?.kinfolkVoice ?? requestedVoice,
+  );
 
   const chars = Math.min(text.length, 600);
   const speakText = chars < text.length ? text.slice(0, 597) + "…" : text;
@@ -6325,20 +10078,25 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {
       return void res.status(503).json({
         error: "TTS_UNAVAILABLE",
-        message: "Kinfolk could not create audio for that response. Please try again or read the text instead.",
+        message:
+          "Kinfolk could not create audio for that response. Please try again or read the text instead.",
       });
     }
     await incrementVoiceChars(req.user.id, chars);
 
     const newUsed = usage.used + chars;
-    const percentRemaining = usage.limit === -1
-      ? 100
-      : Math.max(0, Math.round(((usage.limit - newUsed) / usage.limit) * 100));
+    const percentRemaining =
+      usage.limit === -1
+        ? 100
+        : Math.max(
+            0,
+            Math.round(((usage.limit - newUsed) / usage.limit) * 100),
+          );
 
     res.json({
       audio: audioBuffer.toString("base64"),
       format: "wav",
-      voice,          // returned so the UI can confirm which voice was used
+      voice, // returned so the UI can confirm which voice was used
       charsUsed: newUsed,
       charsLimit: usage.limit,
       percentRemaining,
@@ -6358,7 +10116,8 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
 
 // ─── GET /api/kinfolk/voice-usage — current monthly voice allowance ────────────
 router.get("/kinfolk/voice-usage", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
   try {
     const [userRow] = await db
       .select({ memberType: usersTable.memberType })
@@ -6367,9 +10126,13 @@ router.get("/kinfolk/voice-usage", async (req: Request, res: Response) => {
       .limit(1);
     const tier = getTierFromMemberType(userRow?.memberType);
     const usage = await getVoiceUsage(req.user.id, tier);
-    const percentRemaining = usage.limit === -1
-      ? 100
-      : Math.max(0, Math.round(((usage.limit - usage.used) / usage.limit) * 100));
+    const percentRemaining =
+      usage.limit === -1
+        ? 100
+        : Math.max(
+            0,
+            Math.round(((usage.limit - usage.used) / usage.limit) * 100),
+          );
     res.json({
       charsUsed: usage.used,
       charsLimit: usage.limit,
@@ -6384,10 +10147,16 @@ router.get("/kinfolk/voice-usage", async (req: Request, res: Response) => {
 
 // ─── PATCH /api/kinfolk/aave-level — save user's AAVE cultural voice level ────
 router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
 
   const { level } = req.body as { level?: number };
-  if (level === undefined || !Number.isInteger(level) || level < 0 || level > 3) {
+  if (
+    level === undefined ||
+    !Number.isInteger(level) ||
+    level < 0 ||
+    level > 3
+  ) {
     return void res.status(400).json({ error: "level must be an integer 0–3" });
   }
 
@@ -6411,42 +10180,58 @@ router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
 // Records a show_more / show_less event so we can learn the member's preferred
 // depth over time. The client updates the message state optimistically; this
 // endpoint just persists the signal. Never adapts sensitive domains silently.
-router.patch("/kinfolk/answer-plans/:answerPlanId/depth", async (req: Request, res: Response) => {
-  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
-  const { answerPlanId } = req.params as { answerPlanId: string };
-  const { action } = req.body as { action?: string };
-  if (action !== "show_more" && action !== "show_less") {
-    return void res.status(400).json({ error: "action must be show_more or show_less" });
-  }
-  try {
-    const plan = await updateOwnedAnswerPlanDepth({
-      query: pool,
-      answerPlanId,
-      userId: req.user.id,
-      action,
-    });
-    if (!plan) return void res.status(404).json({ error: "Answer plan not found" });
-
-    const eligible = !plan.isSensitive
-      && eligibleForDefaultLearning(plan.domainClass, plan.audienceBand);
-    let recorded = true;
+router.patch(
+  "/kinfolk/answer-plans/:answerPlanId/depth",
+  async (req: Request, res: Response) => {
+    if (!req.user?.id)
+      return void res.status(401).json({ error: "Authentication required" });
+    const { answerPlanId } = req.params as { answerPlanId: string };
+    const { action } = req.body as { action?: string };
+    if (action !== "show_more" && action !== "show_less") {
+      return void res
+        .status(400)
+        .json({ error: "action must be show_more or show_less" });
+    }
     try {
-      await pool.query(
-        `INSERT INTO kinfolk_depth_feedback_events
+      const plan = await updateOwnedAnswerPlanDepth({
+        query: pool,
+        answerPlanId,
+        userId: req.user.id,
+        action,
+      });
+      if (!plan)
+        return void res.status(404).json({ error: "Answer plan not found" });
+
+      const eligible =
+        !plan.isSensitive &&
+        eligibleForDefaultLearning(plan.domainClass, plan.audienceBand);
+      let recorded = true;
+      try {
+        await pool.query(
+          `INSERT INTO kinfolk_depth_feedback_events
            (user_id, domain_class, action, eligible_for_default_learning, age_band_at_action)
          VALUES ($1, $2, $3, $4, $5)`,
-        [req.user.id, plan.domainClass, action, eligible, plan.audienceBand],
-      );
+          [req.user.id, plan.domainClass, action, eligible, plan.audienceBand],
+        );
+      } catch (err) {
+        recorded = false;
+        req.log?.warn(
+          safeKinfolkErrorMetadata(err),
+          "Kinfolk depth feedback persistence unavailable",
+        );
+      }
+      res.json({ ok: true, recorded, eligibleForLearning: eligible });
     } catch (err) {
-      recorded = false;
-      req.log?.warn(safeKinfolkErrorMetadata(err), "Kinfolk depth feedback persistence unavailable");
+      req.log?.warn(
+        safeKinfolkErrorMetadata(err),
+        "Kinfolk answer-plan depth persistence unavailable",
+      );
+      res
+        .status(503)
+        .json({ error: "Answer-plan persistence is temporarily unavailable" });
     }
-    res.json({ ok: true, recorded, eligibleForLearning: eligible });
-  } catch (err) {
-    req.log?.warn(safeKinfolkErrorMetadata(err), "Kinfolk answer-plan depth persistence unavailable");
-    res.status(503).json({ error: "Answer-plan persistence is temporarily unavailable" });
-  }
-});
+  },
+);
 
 router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
   const { shareId } = req.params as { shareId: string };
@@ -6461,14 +10246,19 @@ router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
         })
         .from(kinfolkSessionsTable)
         .innerJoin(usersTable, eq(usersTable.id, kinfolkSessionsTable.userId))
-        .leftJoin(userSettingsTable, eq(userSettingsTable.userId, usersTable.id))
-        .where(and(
-          eq(kinfolkSessionsTable.shareId, shareId),
-          or(
-            isNull(userSettingsTable.userId),
-            eq(userSettingsTable.kinfolkMemoryEnabled, true),
+        .leftJoin(
+          userSettingsTable,
+          eq(userSettingsTable.userId, usersTable.id),
+        )
+        .where(
+          and(
+            eq(kinfolkSessionsTable.shareId, shareId),
+            or(
+              isNull(userSettingsTable.userId),
+              eq(userSettingsTable.kinfolkMemoryEnabled, true),
+            ),
           ),
-        ))
+        )
         .limit(1);
       return consentedSession;
     },
@@ -6477,7 +10267,9 @@ router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
   if (!session) return void res.status(404).json({ error: "Trip not found" });
 
   const msgs = session.messages ?? [];
-  const lastRec = [...msgs].reverse().find(m => m.role === "assistant" && m.recommendations);
+  const lastRec = [...msgs]
+    .reverse()
+    .find((m) => m.role === "assistant" && m.recommendations);
 
   return void res.json({
     title: session.title,

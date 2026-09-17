@@ -9,10 +9,22 @@
  */
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
-import { COVERAGE_EXPANSION, type SeedBiz } from "./seeds/coverage-expansion.js";
-import { LAUNDRY_SEED_V1, type LaundrySeedBiz } from "./seeds/laundry-seed-v1.js";
-import { MURALS_DIASPORA_V1, type MuralSite } from "./seeds/murals-diaspora-v1.js";
-import { MONUMENTS_CULTURAL_V1, type CulturalTourSite } from "./seeds/monuments-cultural-v1.js";
+import {
+  COVERAGE_EXPANSION,
+  type SeedBiz,
+} from "./seeds/coverage-expansion.js";
+import {
+  LAUNDRY_SEED_V1,
+  type LaundrySeedBiz,
+} from "./seeds/laundry-seed-v1.js";
+import {
+  MURALS_DIASPORA_V1,
+  type MuralSite,
+} from "./seeds/murals-diaspora-v1.js";
+import {
+  MONUMENTS_CULTURAL_V1,
+  type CulturalTourSite,
+} from "./seeds/monuments-cultural-v1.js";
 import { FOOD_TRUCKS_V1 } from "./seeds/food-trucks-v1.js";
 import { DISPENSARIES_V1 } from "./seeds/dispensaries-v1.js";
 import { GAP_COVERAGE_V2 } from "./seeds/gap-coverage-v2.js";
@@ -69,7 +81,8 @@ const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
      );
 `;
 
-const PUBLIC_BUSINESSES_VIEW_FILTER = "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)";
+const PUBLIC_BUSINESSES_VIEW_FILTER =
+  "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -4881,47 +4894,171 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
   },
 ];
 
-export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
+export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<
+  Record<string, readonly string[]>
+> = {
   businesses: [
-    "id", "name", "category", "subcategory", "description", "address", "city", "state", "country",
-    "postal_code", "latitude", "longitude", "phone", "website", "website_domain", "hours",
-    "price_range", "tags", "image_url", "photos", "pending_photos", "videos", "instagram", "tiktok",
-    "facebook", "youtube", "social_profiles", "source_evidence", "ownership_designations",
-    "verified_designations", "ownership_claim", "black_owned", "verified", "featured",
-    "promotion_eligible", "feedback_opt_in", "status", "listing_status", "business_status",
-    "profile_status", "owner_claim_status", "submitted_by_id", "added_by_member_id", "added_via",
-    "data_source", "provider_place_id", "normalized_name", "dedupe_key", "source_provider",
-    "source_record_id", "published_at", "permanently_hidden", "is_duplicate", "created_at", "updated_at",
+    "id",
+    "name",
+    "category",
+    "subcategory",
+    "description",
+    "address",
+    "city",
+    "state",
+    "country",
+    "postal_code",
+    "latitude",
+    "longitude",
+    "phone",
+    "website",
+    "website_domain",
+    "hours",
+    "price_range",
+    "tags",
+    "image_url",
+    "photos",
+    "pending_photos",
+    "videos",
+    "instagram",
+    "tiktok",
+    "facebook",
+    "youtube",
+    "social_profiles",
+    "source_evidence",
+    "ownership_designations",
+    "verified_designations",
+    "ownership_claim",
+    "black_owned",
+    "verified",
+    "featured",
+    "promotion_eligible",
+    "feedback_opt_in",
+    "status",
+    "listing_status",
+    "business_status",
+    "profile_status",
+    "owner_claim_status",
+    "submitted_by_id",
+    "added_by_member_id",
+    "added_via",
+    "data_source",
+    "provider_place_id",
+    "normalized_name",
+    "dedupe_key",
+    "source_provider",
+    "source_record_id",
+    "published_at",
+    "permanently_hidden",
+    "is_duplicate",
+    "created_at",
+    "updated_at",
   ],
   community_business_submissions: [
-    "id", "name", "category", "subcategory", "description", "address", "city", "state", "postal_code",
-    "country", "website", "phone", "social_profiles", "media_urls", "media_asset_ids",
-    "ownership_designations", "community_reported_ownership", "price_range", "hours", "tags", "latitude",
-    "longitude", "provider_place_id", "location_source", "source_campaign", "source_channel",
-    "submitter_note", "client_request_id", "request_payload_hash", "identity_key", "submitted_by_id",
-    "status", "reviewed_by_id", "review_note", "matched_business_id", "created_at", "updated_at",
+    "id",
+    "name",
+    "category",
+    "subcategory",
+    "description",
+    "address",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "website",
+    "phone",
+    "social_profiles",
+    "media_urls",
+    "media_asset_ids",
+    "ownership_designations",
+    "community_reported_ownership",
+    "price_range",
+    "hours",
+    "tags",
+    "latitude",
+    "longitude",
+    "provider_place_id",
+    "location_source",
+    "source_campaign",
+    "source_channel",
+    "submitter_note",
+    "client_request_id",
+    "request_payload_hash",
+    "identity_key",
+    "submitted_by_id",
+    "status",
+    "reviewed_by_id",
+    "review_note",
+    "matched_business_id",
+    "created_at",
+    "updated_at",
   ],
-  business_publication_identities: ["identity_key", "business_id", "created_at"],
+  business_publication_identities: [
+    "identity_key",
+    "business_id",
+    "created_at",
+  ],
   business_review_items: [
-    "id", "review_type", "status", "candidate_name", "candidate_address", "candidate_city",
-    "candidate_state", "candidate_website", "candidate_latitude", "candidate_longitude",
-    "candidate_category", "candidate_source_provider", "matched_business_id", "reason",
-    "created_at", "updated_at",
+    "id",
+    "review_type",
+    "status",
+    "candidate_name",
+    "candidate_address",
+    "candidate_city",
+    "candidate_state",
+    "candidate_website",
+    "candidate_latitude",
+    "candidate_longitude",
+    "candidate_category",
+    "candidate_source_provider",
+    "matched_business_id",
+    "reason",
+    "created_at",
+    "updated_at",
   ],
   canonical_record_locations: [
-    "id", "record_type", "record_id", "city_name", "state_code", "neighborhood_name", "latitude",
-    "longitude", "is_primary", "created_at", "updated_at",
+    "id",
+    "record_type",
+    "record_id",
+    "city_name",
+    "state_code",
+    "neighborhood_name",
+    "latitude",
+    "longitude",
+    "is_primary",
+    "created_at",
+    "updated_at",
   ],
-  business_submission_audit_events: ["id", "submission_id", "actor_id", "event_type", "note", "created_at"],
+  business_submission_audit_events: [
+    "id",
+    "submission_id",
+    "actor_id",
+    "event_type",
+    "note",
+    "created_at",
+  ],
   media_assets: [
-    "id", "uploader_id", "purpose", "mime_type", "byte_size", "object_key", "public_url", "status", "created_at",
+    "id",
+    "uploader_id",
+    "purpose",
+    "mime_type",
+    "byte_size",
+    "object_key",
+    "public_url",
+    "status",
+    "created_at",
   ],
 };
 
-export function missingCommunityPublicationColumns(presentColumns: Iterable<string>): string[] {
+export function missingCommunityPublicationColumns(
+  presentColumns: Iterable<string>,
+): string[] {
   const present = new Set(presentColumns);
-  return Object.entries(COMMUNITY_PUBLICATION_REQUIRED_COLUMNS).flatMap(([table, names]) =>
-    names.filter((name) => !present.has(`${table}.${name}`)).map((name) => `${table}.${name}`),
+  return Object.entries(COMMUNITY_PUBLICATION_REQUIRED_COLUMNS).flatMap(
+    ([table, names]) =>
+      names
+        .filter((name) => !present.has(`${table}.${name}`))
+        .map((name) => `${table}.${name}`),
   );
 }
 
@@ -4945,70 +5082,99 @@ function normalizeCatalogSql(value: string | null | undefined): string {
 }
 
 function normalizeStoredFunctionBody(value: string | null | undefined): string {
-  return (value ?? "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+  return (value ?? "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 export function malformedCommunityPublicationIndexes(
   definitions: readonly CommunityPublicationIndexDefinition[],
 ): string[] {
-  const byName = new Map(definitions.map((definition) => [definition.indexname, definition]));
-  const expected: Record<string, { table: string; keys: string[]; predicate: string }> = {
+  const byName = new Map(
+    definitions.map((definition) => [definition.indexname, definition]),
+  );
+  const expected: Record<
+    string,
+    { table: string; keys: string[]; predicate: string }
+  > = {
     businesses_canonical_dedupe_key_unique: {
       table: "businesses",
       keys: ["dedupe_key"],
-      predicate: "dedupe_key is not null and btrimdedupe_key <> '' and coalesceis_duplicate, false = false and coalescestatus, '' <> all array['duplicate', 'permanently_hidden', 'removed', 'deleted']",
+      predicate:
+        "dedupe_key is not null and btrimdedupe_key <> '' and coalesceis_duplicate, false = false and coalescestatus, '' <> all array['duplicate', 'permanently_hidden', 'removed', 'deleted']",
     },
     canonical_record_locations_unique_idx: {
       table: "canonical_record_locations",
-      keys: ["record_type", "record_id", "city_name", "coalescestate_code, ''", "coalesceneighborhood_name, ''"],
+      keys: [
+        "record_type",
+        "record_id",
+        "city_name",
+        "coalescestate_code, ''",
+        "coalesceneighborhood_name, ''",
+      ],
       predicate: "",
     },
     idx_community_business_submissions_owner_request: {
       table: "community_business_submissions",
       keys: ["submitted_by_id", "client_request_id"],
-      predicate: "submitted_by_id is not null and client_request_id is not null",
+      predicate:
+        "submitted_by_id is not null and client_request_id is not null",
     },
   };
   return Object.entries(expected).flatMap(([name, required]) => {
     const actual = byName.get(name);
     const keys = (actual?.key_expressions ?? []).map(normalizeCatalogSql);
-    const exactKeys = keys.length === required.keys.length
-      && keys.every((key, index) => key === required.keys[index]);
-    const exactPredicate = normalizeCatalogSql(actual?.predicate) === required.predicate;
-    return actual
-      && actual.table_name === required.table
-      && actual.is_unique
-      && actual.is_valid
-      && actual.is_ready
-      && exactKeys
-      && exactPredicate
+    const exactKeys =
+      keys.length === required.keys.length &&
+      keys.every((key, index) => key === required.keys[index]);
+    const exactPredicate =
+      normalizeCatalogSql(actual?.predicate) === required.predicate;
+    return actual &&
+      actual.table_name === required.table &&
+      actual.is_unique &&
+      actual.is_valid &&
+      actual.is_ready &&
+      exactKeys &&
+      exactPredicate
       ? []
       : [name];
   });
 }
 
-export function communityPublicViewDefinitionIsSafe(definition: string | null | undefined): boolean {
+export function communityPublicViewDefinitionIsSafe(
+  definition: string | null | undefined,
+): boolean {
   const sql = normalizeCatalogSql(definition);
   const whereAt = sql.lastIndexOf(" where ");
   if (whereAt < 0) return false;
-  const actualFilter = sql.slice(whereAt + " where ".length).replace(/;$/, "").replace(/^public\./, "");
-  const expectedFilter = normalizeCatalogSql(PUBLIC_BUSINESSES_VIEW_FILTER).replace(/^public\./, "");
+  const actualFilter = sql
+    .slice(whereAt + " where ".length)
+    .replace(/;$/, "")
+    .replace(/^public\./, "");
+  const expectedFilter = normalizeCatalogSql(
+    PUBLIC_BUSINESSES_VIEW_FILTER,
+  ).replace(/^public\./, "");
   return actualFilter === expectedFilter;
 }
 
-export function communityBusinessIsPublicFunctionIsSafe(definition: string | null | undefined): boolean {
-  return normalizeStoredFunctionBody(definition) === normalizeStoredFunctionBody(PUBLIC_BUSINESS_RECORD_FUNCTION_BODY);
+export function communityBusinessIsPublicFunctionIsSafe(
+  definition: string | null | undefined,
+): boolean {
+  return (
+    normalizeStoredFunctionBody(definition) ===
+    normalizeStoredFunctionBody(PUBLIC_BUSINESS_RECORD_FUNCTION_BODY)
+  );
 }
 
 export async function ensureRequiredPublicationSchema(
   directoryImportEnabled: boolean,
   logger?: Logger,
 ): Promise<void> {
-  const log = (msg: string) => logger ? logger.info(msg) : console.log(`[required-publication-schema] ${msg}`);
-  const fail = (msg: string): never => { throw new Error(msg); };
+  const log = (msg: string) =>
+    logger
+      ? logger.info(msg)
+      : console.log(`[required-publication-schema] ${msg}`);
+  const fail = (msg: string): never => {
+    throw new Error(msg);
+  };
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS business_publication_identities (
@@ -5019,9 +5185,13 @@ export async function ensureRequiredPublicationSchema(
     CREATE INDEX IF NOT EXISTS business_publication_identities_business_idx
       ON business_publication_identities (business_id);
   `);
-  const listingStatusMigration = MIGRATIONS.find((migration) => migration.name === "businesses_listing_status_col");
+  const listingStatusMigration = MIGRATIONS.find(
+    (migration) => migration.name === "businesses_listing_status_col",
+  );
   if (!listingStatusMigration) {
-    throw new Error("Required business listing-status migration is missing from source.");
+    throw new Error(
+      "Required business listing-status migration is missing from source.",
+    );
   }
   // The visibility view's proven-demo predicate reads data_source. A blank
   // Drizzle-created database does not have that operational column yet, so the
@@ -5029,10 +5199,18 @@ export async function ensureRequiredPublicationSchema(
   await pool.query(listingStatusMigration.sql);
 
   if (directoryImportEnabled) {
-    const stagingMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_import_staging_v1");
-    const publicationMigration = MIGRATIONS.find((migration) => migration.name === "create_governed_directory_publication_v2");
+    const stagingMigration = MIGRATIONS.find(
+      (migration) =>
+        migration.name === "create_governed_directory_import_staging_v1",
+    );
+    const publicationMigration = MIGRATIONS.find(
+      (migration) =>
+        migration.name === "create_governed_directory_publication_v2",
+    );
     if (!stagingMigration || !publicationMigration) {
-      throw new Error("Required directory publication migrations are missing from source.");
+      throw new Error(
+        "Required directory publication migrations are missing from source.",
+      );
     }
     await pool.query(stagingMigration.sql);
     await pool.query(publicationMigration.sql);
@@ -5063,19 +5241,30 @@ export async function ensureRequiredPublicationSchema(
       WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
     [sharedTables],
   );
-  const sharedPresentTables = new Set(sharedTableCheck.rows.map((row) => row.table_name));
-  const missingSharedTables = sharedTables.filter((table) => !sharedPresentTables.has(table));
+  const sharedPresentTables = new Set(
+    sharedTableCheck.rows.map((row) => row.table_name),
+  );
+  const missingSharedTables = sharedTables.filter(
+    (table) => !sharedPresentTables.has(table),
+  );
 
-  const sharedColumnCheck = await pool.query<{ table_name: string; column_name: string }>(
+  const sharedColumnCheck = await pool.query<{
+    table_name: string;
+    column_name: string;
+  }>(
     `SELECT table_name, column_name
        FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
     [Object.keys(COMMUNITY_PUBLICATION_REQUIRED_COLUMNS)],
   );
-  const sharedColumns = new Set(sharedColumnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`));
-  const missingSharedColumns = missingCommunityPublicationColumns(sharedColumns);
-  const sharedIndexCheck = await pool.query<CommunityPublicationIndexDefinition>(
-    `SELECT index_class.relname AS indexname,
+  const sharedColumns = new Set(
+    sharedColumnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`),
+  );
+  const missingSharedColumns =
+    missingCommunityPublicationColumns(sharedColumns);
+  const sharedIndexCheck =
+    await pool.query<CommunityPublicationIndexDefinition>(
+      `SELECT index_class.relname AS indexname,
             table_class.relname AS table_name,
             index_meta.indisunique AS is_unique,
             index_meta.indisvalid AS is_valid,
@@ -5092,20 +5281,28 @@ export async function ensureRequiredPublicationSchema(
        JOIN pg_namespace table_namespace ON table_namespace.oid = table_class.relnamespace
       WHERE table_namespace.nspname = 'public'
         AND index_class.relname = ANY($1::text[])`,
-    [[
-      "businesses_canonical_dedupe_key_unique",
-      "canonical_record_locations_unique_idx",
-      "idx_community_business_submissions_owner_request",
-    ]],
-  );
+      [
+        [
+          "businesses_canonical_dedupe_key_unique",
+          "canonical_record_locations_unique_idx",
+          "idx_community_business_submissions_owner_request",
+        ],
+      ],
+    );
   const sharedRequiredIndexes = [
     "businesses_canonical_dedupe_key_unique",
     "canonical_record_locations_unique_idx",
     "idx_community_business_submissions_owner_request",
   ];
-  const sharedPresentIndexes = new Set(sharedIndexCheck.rows.map((row) => row.indexname));
-  const missingSharedIndexes = sharedRequiredIndexes.filter((index) => !sharedPresentIndexes.has(index));
-  const malformedSharedIndexes = malformedCommunityPublicationIndexes(sharedIndexCheck.rows);
+  const sharedPresentIndexes = new Set(
+    sharedIndexCheck.rows.map((row) => row.indexname),
+  );
+  const missingSharedIndexes = sharedRequiredIndexes.filter(
+    (index) => !sharedPresentIndexes.has(index),
+  );
+  const malformedSharedIndexes = malformedCommunityPublicationIndexes(
+    sharedIndexCheck.rows,
+  );
   const sharedShapeCheck = await pool.query<{
     public_view: string | null;
     public_view_definition: string | null;
@@ -5130,22 +5327,28 @@ export async function ensureRequiredPublicationSchema(
   `);
   const sharedShape = sharedShapeCheck.rows[0];
   if (
-    missingSharedTables.length
-    || missingSharedColumns.length
-    || missingSharedIndexes.length
-    || malformedSharedIndexes.length
-    || !sharedShape?.public_view
-    || !communityBusinessIsPublicFunctionIsSafe(sharedShape?.public_function_definition)
-    || sharedShape?.public_function_immutable !== true
-    || sharedShape?.public_function_security_definer !== false
-    || sharedShape?.public_function_returns_boolean !== true
-    || !communityPublicViewDefinitionIsSafe(sharedShape?.public_view_definition)
-    || sharedShape.media_url_nullable !== "YES"
+    missingSharedTables.length ||
+    missingSharedColumns.length ||
+    missingSharedIndexes.length ||
+    malformedSharedIndexes.length ||
+    !sharedShape?.public_view ||
+    !communityBusinessIsPublicFunctionIsSafe(
+      sharedShape?.public_function_definition,
+    ) ||
+    sharedShape?.public_function_immutable !== true ||
+    sharedShape?.public_function_security_definer !== false ||
+    sharedShape?.public_function_returns_boolean !== true ||
+    !communityPublicViewDefinitionIsSafe(sharedShape?.public_view_definition) ||
+    sharedShape.media_url_nullable !== "YES"
   ) {
-    fail(`Community publication schema verification failed: missing tables [${missingSharedTables.join(", ")}], columns [${missingSharedColumns.join(", ")}], indexes [${missingSharedIndexes.join(", ")}], malformed indexes [${malformedSharedIndexes.join(", ")}], public view [${sharedShape?.public_view ?? "missing"}], safe public function [${communityBusinessIsPublicFunctionIsSafe(sharedShape?.public_function_definition) ? "yes" : "no"}], safe public view [${communityPublicViewDefinitionIsSafe(sharedShape?.public_view_definition) ? "yes" : "no"}], media public_url nullable [${sharedShape?.media_url_nullable ?? "unknown"}].`);
+    fail(
+      `Community publication schema verification failed: missing tables [${missingSharedTables.join(", ")}], columns [${missingSharedColumns.join(", ")}], indexes [${missingSharedIndexes.join(", ")}], malformed indexes [${malformedSharedIndexes.join(", ")}], public view [${sharedShape?.public_view ?? "missing"}], safe public function [${communityBusinessIsPublicFunctionIsSafe(sharedShape?.public_function_definition) ? "yes" : "no"}], safe public view [${communityPublicViewDefinitionIsSafe(sharedShape?.public_view_definition) ? "yes" : "no"}], media public_url nullable [${sharedShape?.media_url_nullable ?? "unknown"}].`,
+    );
   }
   if (!directoryImportEnabled) {
-    log("community publication schema and indexes verified before traffic acceptance");
+    log(
+      "community publication schema and indexes verified before traffic acceptance",
+    );
     return;
   }
 
@@ -5168,22 +5371,54 @@ export async function ensureRequiredPublicationSchema(
     [requiredTables],
   );
   const presentTables = new Set(tableCheck.rows.map((row) => row.table_name));
-  const missingTables = requiredTables.filter((table) => !presentTables.has(table));
+  const missingTables = requiredTables.filter(
+    (table) => !presentTables.has(table),
+  );
 
   const requiredColumns: Record<string, string[]> = {
-    directory_import_candidates: ["review_note", "review_evidence", "review_revision", "published_record_type", "published_record_id"],
-    businesses: ["dedupe_key", "listing_status", "social_profiles", "source_evidence", "owner_claim_status", "added_via", "published_at"],
-    resources: ["canonical_key", "normalized_title", "source_category", "source_subcategory", "source_address", "published_by", "published_at"],
+    directory_import_candidates: [
+      "review_note",
+      "review_evidence",
+      "review_revision",
+      "published_record_type",
+      "published_record_id",
+    ],
+    businesses: [
+      "dedupe_key",
+      "listing_status",
+      "social_profiles",
+      "source_evidence",
+      "owner_claim_status",
+      "added_via",
+      "published_at",
+    ],
+    resources: [
+      "canonical_key",
+      "normalized_title",
+      "source_category",
+      "source_subcategory",
+      "source_address",
+      "published_by",
+      "published_at",
+    ],
   };
-  const columnCheck = await pool.query<{ table_name: string; column_name: string }>(
+  const columnCheck = await pool.query<{
+    table_name: string;
+    column_name: string;
+  }>(
     `SELECT table_name, column_name
        FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
     [Object.keys(requiredColumns)],
   );
-  const columns = new Set(columnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`));
-  const missingColumns = Object.entries(requiredColumns).flatMap(([table, names]) =>
-    names.filter((name) => !columns.has(`${table}.${name}`)).map((name) => `${table}.${name}`),
+  const columns = new Set(
+    columnCheck.rows.map((row) => `${row.table_name}.${row.column_name}`),
+  );
+  const missingColumns = Object.entries(requiredColumns).flatMap(
+    ([table, names]) =>
+      names
+        .filter((name) => !columns.has(`${table}.${name}`))
+        .map((name) => `${table}.${name}`),
   );
 
   const requiredIndexes = [
@@ -5196,12 +5431,18 @@ export async function ensureRequiredPublicationSchema(
     [requiredIndexes],
   );
   const presentIndexes = new Set(indexCheck.rows.map((row) => row.indexname));
-  const missingIndexes = requiredIndexes.filter((index) => !presentIndexes.has(index));
+  const missingIndexes = requiredIndexes.filter(
+    (index) => !presentIndexes.has(index),
+  );
 
   if (missingTables.length || missingColumns.length || missingIndexes.length) {
-    fail(`Directory publication schema verification failed: missing tables [${missingTables.join(", ")}], columns [${missingColumns.join(", ")}], indexes [${missingIndexes.join(", ")}].`);
+    fail(
+      `Directory publication schema verification failed: missing tables [${missingTables.join(", ")}], columns [${missingColumns.join(", ")}], indexes [${missingIndexes.join(", ")}].`,
+    );
   }
-  log("directory publication schema and indexes verified before traffic acceptance");
+  log(
+    "directory publication schema and indexes verified before traffic acceptance",
+  );
 }
 
 const DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS = new Set([
@@ -5244,7 +5485,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   }
 
   log(
-    `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`
+    `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`,
   );
 
   // ── Seed Data Integrity Guards ────────────────────────────────────────────
@@ -5256,107 +5497,209 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   // Each guard uses a single bulk INSERT (not N individual INSERTs) to further
   // reduce round-trips. Any failure is caught and logged — never crashes the server.
   for (const [name, fn] of [
-    ["HBCUs",             () => ensureAllHBCUs(log, warn)],
-    ["cultural sites",    () => ensureCulturalSites(log, warn)],
-    ["festivals",         () => ensureNationalFestivals(log, warn)],
-    ["sundown towns",     () => ensureSundownTowns(log, warn)],
-    ["the_real_tags",     () => ensureTheRealTags(log, warn)],
+    ["HBCUs", () => ensureAllHBCUs(log, warn)],
+    ["cultural sites", () => ensureCulturalSites(log, warn)],
+    ["festivals", () => ensureNationalFestivals(log, warn)],
+    ["sundown towns", () => ensureSundownTowns(log, warn)],
+    ["the_real_tags", () => ensureTheRealTags(log, warn)],
     // Business inventory is community-fed and governed. Legacy directory,
     // tour, and curated fixtures remain available as reference data in source,
     // but startup must never publish or republish them automatically.
-    ["community orgs",    () => ensureCommunityOrganizations(log, warn)],
-    ["recurring events",  () => ensureRecurringEvents(log, warn)],
+    ["community orgs", () => ensureCommunityOrganizations(log, warn)],
+    ["recurring events", () => ensureRecurringEvents(log, warn)],
     ["tour cultural sites", () => ensureTourCulturalSites(log, warn)],
-    ["cultural phrases",  () => ensureCulturalPhrases(log, warn)],
+    ["cultural phrases", () => ensureCulturalPhrases(log, warn)],
     ["neighborhood timing", () => ensureNeighborhoodTiming(log, warn)],
     ["geocode tour content", () => geocodeTourContent(log, warn)],
-    ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
-    ["knowledge graph",   () => ensurePhiladelphiaKnowledgeGraph(log, warn)],
-    ["admin accounts",    () => ensureAdminAccounts(log, warn)],
-    ["tester accounts",   () => ensureTesterAccounts(log, warn)],
-    ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
+    ["knowledge topics", () => ensureKnowledgeTopics(log, warn)],
+    ["knowledge graph", () => ensurePhiladelphiaKnowledgeGraph(log, warn)],
+    ["admin accounts", () => ensureAdminAccounts(log, warn)],
+    ["tester accounts", () => ensureTesterAccounts(log, warn)],
+    ["pending testers", () => ensurePendingTesterEmails(log, warn)],
+    [
+      "access entitlement ledger",
+      () => ensureAccessEntitlementLedger(log, warn),
+    ],
     // ensureTesterUniversalAccounts() removed Aug 10 2026: per-boot account
     // creation conflicted with the tester_clean_slate_v1 migration. Approved
     // testers are now whitelisted in pending_tester_emails and must self-register.
     ["diaspora faith sites", () => ensureDiasporaFaithSites(log, warn)],
-    ["library collections",  () => ensureLibraryCollections(log, warn)],
-    ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
-    ["african geography",    () => ensureAfricanGeographyNodes_v1(log, warn)],
-    ["bangkok businesses",   () => ensureBangkokBusinesses(log, warn)],
-    ["LA businesses",        () => ensureLABusinesses(log, warn)],
-    ["confirmed test data containment", () => ensureTestDataContained(log, warn)],
-    ["coverage expansion",   () => ensureCoverageExpansion(log, warn)],
-    ["founder churches",     () => ensureFounderChurches(log, warn)],
-    ["phuket full layer",    () => ensurePhuketFullLayer(log, warn)],
-    ["category normalize",   () => ensureCategoryNormalization(log, warn)],
-    ["gap coverage v2",      () => ensureGapCoverageV2(log, warn)],
-    ["final micro seed",     () => ensureFinalMicroSeed(log, warn)],
+    ["library collections", () => ensureLibraryCollections(log, warn)],
+    ["library activation", () => ensureLibraryContentActivation_v1(log, warn)],
+    ["african geography", () => ensureAfricanGeographyNodes_v1(log, warn)],
+    ["bangkok businesses", () => ensureBangkokBusinesses(log, warn)],
+    ["LA businesses", () => ensureLABusinesses(log, warn)],
+    [
+      "confirmed test data containment",
+      () => ensureTestDataContained(log, warn),
+    ],
+    ["coverage expansion", () => ensureCoverageExpansion(log, warn)],
+    ["founder churches", () => ensureFounderChurches(log, warn)],
+    ["phuket full layer", () => ensurePhuketFullLayer(log, warn)],
+    ["category normalize", () => ensureCategoryNormalization(log, warn)],
+    ["gap coverage v2", () => ensureGapCoverageV2(log, warn)],
+    ["final micro seed", () => ensureFinalMicroSeed(log, warn)],
     // ── Demo containment — hide proven fixtures before discoverability work ──
-    ["demo containment",     () => ensureDemoContainment(log, warn)],
+    ["demo containment", () => ensureDemoContainment(log, warn)],
     // ── Business discoverability — promotes listing_status, sets tags + badges ──
-    ["business discoverability", () => ensureBusinessDiscoverability(log, warn)],
+    [
+      "business discoverability",
+      () => ensureBusinessDiscoverability(log, warn),
+    ],
     // ── Full diaspora expansion — every community, every city ──────────────────────
-    ["la diaspora v1",        () => runSeedBatch("LA Diaspora V1", LA_DIASPORA_V1, log, warn)],
-    ["east coast diaspora",   () => runSeedBatch("East Coast Diaspora", EAST_COAST_DIASPORA_V1, log, warn)],
-    ["south diaspora",        () => runSeedBatch("South Diaspora", SOUTH_DIASPORA_V1, log, warn)],
-    ["midwest west diaspora", () => runSeedBatch("Midwest/West Diaspora", MIDWEST_WEST_DIASPORA_V1, log, warn)],
+    [
+      "la diaspora v1",
+      () => runSeedBatch("LA Diaspora V1", LA_DIASPORA_V1, log, warn),
+    ],
+    [
+      "east coast diaspora",
+      () =>
+        runSeedBatch("East Coast Diaspora", EAST_COAST_DIASPORA_V1, log, warn),
+    ],
+    [
+      "south diaspora",
+      () => runSeedBatch("South Diaspora", SOUTH_DIASPORA_V1, log, warn),
+    ],
+    [
+      "midwest west diaspora",
+      () =>
+        runSeedBatch(
+          "Midwest/West Diaspora",
+          MIDWEST_WEST_DIASPORA_V1,
+          log,
+          warn,
+        ),
+    ],
     // ── Priority cities cultural heritage sites (Philly, DC, Richmond, Charlotte, etc.) ──
-    ["priority cultural sites", () => runTourCulturalSitesBatch("Priority Cultural V1", PRIORITY_CULTURAL_V1, log, warn)],
+    [
+      "priority cultural sites",
+      () =>
+        runTourCulturalSitesBatch(
+          "Priority Cultural V1",
+          PRIORITY_CULTURAL_V1,
+          log,
+          warn,
+        ),
+    ],
     // ── South cities cultural heritage sites (ATL, NOLA, Houston, Miami, Birmingham, etc.) ──
-    ["south cultural sites", () => runTourCulturalSitesBatch("South Cultural V1", SOUTH_CULTURAL_V1, log, warn)],
+    [
+      "south cultural sites",
+      () =>
+        runTourCulturalSitesBatch(
+          "South Cultural V1",
+          SOUTH_CULTURAL_V1,
+          log,
+          warn,
+        ),
+    ],
     // ── Priority practical services — dentists, daycares, plumbers, bars ───────
-    ["priority practical v1", () => runSeedBatch("Priority Practical V1", PRIORITY_PRACTICAL_V1, log, warn)],
+    [
+      "priority practical v1",
+      () =>
+        runSeedBatch("Priority Practical V1", PRIORITY_PRACTICAL_V1, log, warn),
+    ],
     // ── Phuket + International cultural heritage sites ──────────────────────────
-    ["phuket intl cultural sites", () => runTourCulturalSitesBatch("Phuket/Intl Cultural V1", PHUKET_INTERNATIONAL_CULTURAL_V1, log, warn)],
+    [
+      "phuket intl cultural sites",
+      () =>
+        runTourCulturalSitesBatch(
+          "Phuket/Intl Cultural V1",
+          PHUKET_INTERNATIONAL_CULTURAL_V1,
+          log,
+          warn,
+        ),
+    ],
     // ── Phuket + Thailand knowledge topics ────────────────────────────────────
-    ["phuket knowledge topics", () => runKnowledgeTopicsBatch("Phuket Knowledge Topics V1", PHUKET_KNOWLEDGE_TOPICS_V1, log, warn)],
+    [
+      "phuket knowledge topics",
+      () =>
+        runKnowledgeTopicsBatch(
+          "Phuket Knowledge Topics V1",
+          PHUKET_KNOWLEDGE_TOPICS_V1,
+          log,
+          warn,
+        ),
+    ],
     // ── Library evidence — 7 diaspora Books (P0 repair Aug 12 2026) ───────────
-    ["library diaspora evidence", () => ensureLibraryDiasporaEvidence(log, warn)],
+    [
+      "library diaspora evidence",
+      () => ensureLibraryDiasporaEvidence(log, warn),
+    ],
     // ── Library evidence — Batches B/C/D (remaining categories Aug 12 2026) ───
-    ["library evidence batch B",  () => ensureLibraryEvidenceBatchB(log, warn)],
-    ["library evidence batch C",  () => ensureLibraryEvidenceBatchC(log, warn)],
-    ["library evidence batch D",  () => ensureLibraryEvidenceBatchD(log, warn)],
+    ["library evidence batch B", () => ensureLibraryEvidenceBatchB(log, warn)],
+    ["library evidence batch C", () => ensureLibraryEvidenceBatchC(log, warn)],
+    ["library evidence batch D", () => ensureLibraryEvidenceBatchD(log, warn)],
     // ── Capacity canary — 30 tagged load-test accounts ─────────────────────────
-    ["load-test accounts",    () => ensureLoadTestAccounts(log, warn)],
+    ["load-test accounts", () => ensureLoadTestAccounts(log, warn)],
     // ── Discoverability coordinate audit — validate + report per-collection counts ──
-    ["discoverability coords v1", () => ensureDiscoverabilityCoordinatesV1(log, warn)],
+    [
+      "discoverability coords v1",
+      () => ensureDiscoverabilityCoordinatesV1(log, warn),
+    ],
     // ── Library source link health — marks known-stale URLs, runs initial sweep ──
     ["library link health", () => ensureLibraryLinkHealth(log, warn)],
     // ── Business claims v2 — conflict report + unique index attempt ─────────
-    ["business claims v2 indexes", () => ensureBusinessClaimsV2ConflictReport(log, warn)],
+    [
+      "business claims v2 indexes",
+      () => ensureBusinessClaimsV2ConflictReport(log, warn),
+    ],
     // ── Kinfolk entity registry tables — kinfolk_entities + kinfolk_entity_aliases ──
     ["kinfolk entity registry", () => ensureKinfolkEntityRegistry(log, warn)],
     // ── Education institutions — colleges, universities, HBCUs + seed data ──
-    ["education institutions",   () => ensureEducationInstitutions(log, warn)],
+    ["education institutions", () => ensureEducationInstitutions(log, warn)],
     // ── Philadelphia murals — site_type column, site_contributions table, 55 seed murals ──
-    ["philadelphia murals",      () => ensurePhiladelphiaMurals(log, warn)],
+    ["philadelphia murals", () => ensurePhiladelphiaMurals(log, warn)],
     // ── Kinfolk cultural context v1 — source registry, entity disambiguation, new columns ──
-    ["kinfolk cultural context v1", () => ensureKinfolkCulturalContextV1(log, warn)],
+    [
+      "kinfolk cultural context v1",
+      () => ensureKinfolkCulturalContextV1(log, warn),
+    ],
     // ── Minority-owned laundry businesses — every covered city ─────────────────
-    ["laundry businesses v1",    () => ensureLaundryBusinesses(log, warn)],
+    ["laundry businesses v1", () => ensureLaundryBusinesses(log, warn)],
     // ── Diaspora murals — all cities except Philadelphia (already seeded) ───────
-    ["murals diaspora v1",       () => ensureMuralsBatch(log, warn)],
+    ["murals diaspora v1", () => ensureMuralsBatch(log, warn)],
     // ── Monuments, museums, spiritual sites — all cities ───────────────────────
-    ["monuments cultural v1",    () => ensureCulturalTourSiteBatch(log, warn)],
+    ["monuments cultural v1", () => ensureCulturalTourSiteBatch(log, warn)],
     // ── Minority-owned food trucks — all cities ────────────────────────────────
-    ["food trucks v1",           () => ensureBusinessBatch("food-trucks-v1", FOOD_TRUCKS_V1, log, warn)],
+    [
+      "food trucks v1",
+      () => ensureBusinessBatch("food-trucks-v1", FOOD_TRUCKS_V1, log, warn),
+    ],
     // ── Minority-owned dispensaries — legal-cannabis jurisdictions only ─────────
-    ["dispensaries v1",          () => ensureBusinessBatch("dispensaries-v1", DISPENSARIES_V1, log, warn)],
+    [
+      "dispensaries v1",
+      () => ensureBusinessBatch("dispensaries-v1", DISPENSARIES_V1, log, warn),
+    ],
     // ── Allied partner applications table — 5-stage partner journey (#84) ────
-    ["allied partner applications v1", () => ensureAlliedPartnerApplications(log, warn)],
+    [
+      "allied partner applications v1",
+      () => ensureAlliedPartnerApplications(log, warn),
+    ],
     // ── City-centroid coordinate fallback for events with no address (#100) ──
-    ["recurring events city coords v1", () => ensureRecurringEventsCityCoords(log, warn)],
+    [
+      "recurring events city coords v1",
+      () => ensureRecurringEventsCityCoords(log, warn),
+    ],
     // ── Business contact completeness — provenance tracking + data-quality index ──
-    ["business contact completeness v1", () => ensureBusinessContactCompleteness(log, warn)],
+    [
+      "business contact completeness v1",
+      () => ensureBusinessContactCompleteness(log, warn),
+    ],
     // ── Sabor website correction — founder-confirmed official domain ───────────
-    ["sabor website correction v1", () => ensureSaborWebsiteCorrection(log, warn)],
+    [
+      "sabor website correction v1",
+      () => ensureSaborWebsiteCorrection(log, warn),
+    ],
     // ── Canonical place deduplication — website-aware, reversible, never deletes ─
     ["canonical places v1", () => ensureCanonicalPlacesV1(log, warn)],
     // ── Business dedup schema — adds dedupe_key, normalized_name, is_duplicate cols ─
     ["business dedup schema v1", () => ensureBusinessDedupSchema(log, warn)],
     // ── Social-first ingestion schema — adds social_profiles, source_evidence,
     //    ownership_claim, website_domain columns before the public view expands b.* ─
-    ["social first ingestion schema v1", () => ensureSocialFirstIngestionSchema(log, warn)],
+    [
+      "social first ingestion schema v1",
+      () => ensureSocialFirstIngestionSchema(log, warn),
+    ],
     // ── Business dedup marking — soft-marks 17 known duplicate groups by audit ID ─
     ["business dedup marking v1", () => ensureBusinessDeduplication(log, warn)],
     // ── Business review items — seeds 8 manual-review records + creates table ──────
@@ -5364,68 +5707,107 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // ── User handles — short @mention identifier for community posts ──────────
     ["user handles v1", () => ensureUserHandles(log, warn)],
     // ── Visibility hardening — public view + canonical dedupe index ───────────
-    ["visibility and dedupe hardening v1", () => ensureVisibilityAndDedupeHardening(log, warn)],
+    [
+      "visibility and dedupe hardening v1",
+      () => ensureVisibilityAndDedupeHardening(log, warn),
+    ],
     // ── Atlanta Black-owned grocery stores — 4 verified stores with full profiles ─
-    ["atlanta black grocery stores v1", () => ensureAtlantaBlackGroceryStores(log, warn)],
+    [
+      "atlanta black grocery stores v1",
+      () => ensureAtlantaBlackGroceryStores(log, warn),
+    ],
     // ── Manus audit tester accounts — 30 pre-seeded email/password accounts ─────
     ["manus audit accounts v1", () => ensureManusAuditAccounts(log, warn)],
     // ── Manus audit session revocation — clears all live sessions for audit accounts ─
     // Runs once to invalidate tokens that were exposed in gate-result JSON (Aug 14 2026)
-    ["manus audit session revocation v1", () => revokeManusAuditSessions(log, warn)],
+    [
+      "manus audit session revocation v1",
+      () => revokeManusAuditSessions(log, warn),
+    ],
     // ── Beta safety columns — permanently_hidden boolean + public_businesses view ─
     ["beta safety columns v1", () => ensureBetaSafetyColumns(log, warn)],
     // ── Dedicated monitoring account — health-check user; no-op until secrets set ─
     ["monitoring account v1", () => ensureMonitoringAccount(log, warn)],
     // ── Hotel-stay ingestion schema — adds provider_place_id, postal_code ─────
-    ["hotel stay ingestion schema v1", () => ensureHotelStayIngestionSchema(log, warn)],
+    [
+      "hotel stay ingestion schema v1",
+      () => ensureHotelStayIngestionSchema(log, warn),
+    ],
     // ── Tour hotel seed — 11 confirmed non-minority tour hotels ───────────────
     ["tour hotels v1", () => ensureTourHotels(log, warn)],
     // ── Kinfolk four-purpose schema — flywheel events, answer sources, promotion cols ─
-    ["kinfolk four-purpose schema v1", () => ensureKinfolkFourPurposeSchema(log, warn)],
+    [
+      "kinfolk four-purpose schema v1",
+      () => ensureKinfolkFourPurposeSchema(log, warn),
+    ],
     // ── Directory discovery schema — online_bookstores, directory_search_signals,
     //    lat/lng columns on businesses for location-first bookstore discovery ─────
-    ["directory discovery schema v1", () => ensureDirectoryDiscoverySchema(log, warn)],
+    [
+      "directory discovery schema v1",
+      () => ensureDirectoryDiscoverySchema(log, warn),
+    ],
     // ── Kinfolk nightlife retrieval telemetry — aggregate service-quality signal;
     //    never stores member ID, full transcript, or precise coordinates ──────────
-    ["kinfolk retrieval events v1", () => ensureKinfolkRetrievalEvents(log, warn)],
+    [
+      "kinfolk retrieval events v1",
+      () => ensureKinfolkRetrievalEvents(log, warn),
+    ],
     // ── Location-first discovery — canonical_record_locations, business_specialties,
     //    discovery_coverage_gaps, discovery_flywheel_daily_signals.
     //    Backfills from existing businesses, cultural sites, and events so that
     //    the Map, Businesses, Explore, and Events pages have a shared location index. ─
-    ["location first discovery v1", () => ensureLocationFirstDiscovery(log, warn)],
-    ["living library foundation topics v1", () => ensureLivingLibraryFoundationTopics(log, warn)],
+    [
+      "location first discovery v1",
+      () => ensureLocationFirstDiscovery(log, warn),
+    ],
+    [
+      "living library foundation topics v1",
+      () => ensureLivingLibraryFoundationTopics(log, warn),
+    ],
     // ── Community business intake — immediate eligible publication + holds ─
     // community_business_submissions + business_submission_audit_events tables.
     // Complete ordinary businesses publish unclaimed/not verified; objective
     // duplicate, location, evidence, resource, and regulated holds stay private.
-    ["community business submissions schema v1", () => ensureCommunityBusinessSubmissionsSchema(log, warn)],
+    [
+      "community business submissions schema v1",
+      () => ensureCommunityBusinessSubmissionsSchema(log, warn),
+    ],
     // ── Media assets + business claims schema ──────────────────────────────
     // media_assets, entity_media_assets, business_claim_requests tables +
     // owner_claim_status / added_via / added_by_member_id columns on businesses.
     ["media and claims schema v1", () => ensureMediaAndClaimsSchema(log, warn)],
     // ── Universal non-business map entities ────────────────────────────────
     // One published source supplies the map pin, panel row, and canonical place URL.
-    ["universal map entities v1", () => ensureUniversalMapEntities(pool, { log, warn })],
+    [
+      "universal map entities v1",
+      () => ensureUniversalMapEntities(pool, { log, warn }),
+    ],
     // Catch any proven fixture inserted by a later seed guard; safe as a no-op.
     ["demo containment final", () => ensureDemoContainment(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
     } catch (err: unknown) {
-      warn(`Seed guard "${name}" threw unexpectedly: ${err instanceof Error ? err.message : String(err)}`);
+      warn(
+        `Seed guard "${name}" threw unexpectedly: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }
 
 // ── Helper: bulk dedup key set from cultural_sites (name|state) ──────────────
 async function loadCulturalSiteKeys(): Promise<Set<string>> {
-  const r = await pool.query(`SELECT LOWER(name)||'|'||LOWER(state) AS k FROM cultural_sites`);
+  const r = await pool.query(
+    `SELECT LOWER(name)||'|'||LOWER(state) AS k FROM cultural_sites`,
+  );
   return new Set(r.rows.map((row: { k: string }) => row.k));
 }
 
 // ── Helper: bulk dedup key set from sundown_towns (name|state) ───────────────
 async function loadSundownTownKeys(): Promise<Set<string>> {
-  const r = await pool.query(`SELECT LOWER(name)||'|'||LOWER(state) AS k FROM sundown_towns`);
+  const r = await pool.query(
+    `SELECT LOWER(name)||'|'||LOWER(state) AS k FROM sundown_towns`,
+  );
   return new Set(r.rows.map((row: { k: string }) => row.k));
 }
 
@@ -5436,33 +5818,44 @@ async function loadSundownTownKeys(): Promise<Set<string>> {
  */
 async function ensureAllHBCUs(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const existing = await loadCulturalSiteKeys();
 
     const newHBCUs = HBCU_COMPLETE_SEED.filter(
-      (h) => !existing.has(`${h.name.toLowerCase()}|${h.state.toLowerCase()}`)
+      (h) => !existing.has(`${h.name.toLowerCase()}|${h.state.toLowerCase()}`),
     );
 
     if (newHBCUs.length === 0) {
-      log(`HBCU integrity guard: 0 inserted, ${HBCU_COMPLETE_SEED.length} already present`);
+      log(
+        `HBCU integrity guard: 0 inserted, ${HBCU_COMPLETE_SEED.length} already present`,
+      );
       return;
     }
 
     // Single bulk INSERT for all missing HBCUs (16 params per row)
     const COLS = 16;
     const placeholders = newHBCUs
-      .map((_, i) => `($${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4},$${i*COLS+5},$${i*COLS+6},$${i*COLS+7},$${i*COLS+8},$${i*COLS+9},$${i*COLS+10},$${i*COLS+11},$${i*COLS+12},$${i*COLS+13},$${i*COLS+14},$${i*COLS+15},$${i*COLS+16})`)
+      .map(
+        (_, i) =>
+          `($${i * COLS + 1},$${i * COLS + 2},$${i * COLS + 3},$${i * COLS + 4},$${i * COLS + 5},$${i * COLS + 6},$${i * COLS + 7},$${i * COLS + 8},$${i * COLS + 9},$${i * COLS + 10},$${i * COLS + 11},$${i * COLS + 12},$${i * COLS + 13},$${i * COLS + 14},$${i * COLS + 15},$${i * COLS + 16})`,
+      )
       .join(",");
     const params = newHBCUs.flatMap((h) => [
-      h.name, h.city, h.state,
-      h.latitude, h.longitude,
-      h.description, h.significance,
+      h.name,
+      h.city,
+      h.state,
+      h.latitude,
+      h.longitude,
+      h.description,
+      h.significance,
       "HBCU",
       h.control === "public" ? "Public HBCU" : "Private HBCU",
-      "HBCU", "hbcu",
-      h.externalUrl, h.founded,
+      "HBCU",
+      "hbcu",
+      h.externalUrl,
+      h.founded,
       "live_unclaimed",
       "U.S. Dept. of Education HBCU List · thehundred-seven.org",
       false,
@@ -5474,12 +5867,16 @@ async function ensureAllHBCUs(
           category, subcategory, heritage_category, pin_type,
           external_url, founded_year, status, source, is_featured)
        VALUES ${placeholders}`,
-      params
+      params,
     );
 
-    log(`HBCU integrity guard: ${newHBCUs.length} inserted, ${existing.size} already present (seed: ${HBCU_COMPLETE_SEED.length})`);
+    log(
+      `HBCU integrity guard: ${newHBCUs.length} inserted, ${existing.size} already present (seed: ${HBCU_COMPLETE_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`HBCU integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `HBCU integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5489,7 +5886,7 @@ async function ensureAllHBCUs(
  */
 async function ensureCulturalSites(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const existing = await loadCulturalSiteKeys();
@@ -5498,7 +5895,10 @@ async function ensureCulturalSites(
 
     for (const s of CULTURAL_SITES_SEED) {
       const key = `${s.name.toLowerCase()}|${s.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO cultural_sites
@@ -5509,10 +5909,16 @@ async function ensureCulturalSites(
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,false)`,
           [
             randomUUID(),
-            s.name, s.city, s.state,
-            parseFloat(s.latitude), parseFloat(s.longitude),
-            s.description, s.significance ?? null,
-            s.category, s.subcategory ?? null, s.heritageCategory,
+            s.name,
+            s.city,
+            s.state,
+            parseFloat(s.latitude),
+            parseFloat(s.longitude),
+            s.description,
+            s.significance ?? null,
+            s.category,
+            s.subcategory ?? null,
+            s.heritageCategory,
             s.heritageCategory === "HBCU" ? "hbcu" : "heritage_site",
             s.externalUrl ?? null,
             s.yearEstablished ?? null,
@@ -5521,17 +5927,23 @@ async function ensureCulturalSites(
             s.isAccessible ?? false,
             s.isFamilyFriendly ?? false,
             s.admissionFree ?? false,
-          ]
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Cultural sites guard: failed to insert ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Cultural sites guard: failed to insert ${s.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Cultural sites integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${CULTURAL_SITES_SEED.length})`);
+    log(
+      `Cultural sites integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${CULTURAL_SITES_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Cultural sites integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Cultural sites integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5541,7 +5953,7 @@ async function ensureCulturalSites(
  */
 async function ensureNationalFestivals(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const existing = await loadCulturalSiteKeys();
@@ -5550,7 +5962,10 @@ async function ensureNationalFestivals(
 
     for (const f of NATIONAL_FESTIVALS_SEED) {
       const key = `${f.name.toLowerCase()}|${f.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO cultural_sites
@@ -5563,25 +5978,38 @@ async function ensureNationalFestivals(
                    true,true,true,true,$16,NOW())`,
           [
             randomUUID(),
-            f.name, f.description,
-            "Cultural Celebration", f.heritageCategory, "Annual Festival",
+            f.name,
+            f.description,
+            "Cultural Celebration",
+            f.heritageCategory,
+            "Annual Festival",
             (f as any).ethnicCommunity ?? null,
-            f.city, f.state, f.latitude, f.longitude,
+            f.city,
+            f.state,
+            f.latitude,
+            f.longitude,
             (f as any).typicalMonth ?? null,
-            f.significance, (f as any).externalUrl ?? null,
+            f.significance,
+            (f as any).externalUrl ?? null,
             "heritage_festival",
             "Community Knowledge",
-          ]
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Festivals guard: failed to insert ${f.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Festivals guard: failed to insert ${f.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Festivals integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${NATIONAL_FESTIVALS_SEED.length})`);
+    log(
+      `Festivals integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${NATIONAL_FESTIVALS_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Festivals integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Festivals integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5591,7 +6019,7 @@ async function ensureNationalFestivals(
  */
 async function ensureSundownTowns(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Ensure table exists
@@ -5629,7 +6057,10 @@ async function ensureSundownTowns(
 
     for (const t of allSundown) {
       const key = `${t.name.toLowerCase()}|${t.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO sundown_towns
@@ -5639,26 +6070,35 @@ async function ensureSundownTowns(
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
           [
             randomUUID(),
-            t.name, t.city, t.state,
+            t.name,
+            t.city,
+            t.state,
             (t as any).county ?? null,
-            t.latitude, t.longitude,
+            t.latitude,
+            t.longitude,
             t.confidence_level,
             t.historical_evidence,
             t.time_period,
             (t as any).excluded_population ?? "African American",
             t.source_organization,
             "historical_neutral",
-          ]
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Sundown towns guard: failed to insert ${t.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Sundown towns guard: failed to insert ${t.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Sundown towns integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${allSundown.length})`);
+    log(
+      `Sundown towns integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${allSundown.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Sundown towns integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Sundown towns integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5668,10 +6108,12 @@ async function ensureSundownTowns(
  */
 async function ensureTheRealTags(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
-    const { rows: countRows } = await pool.query(`SELECT COUNT(*) as cnt FROM the_real_tags`);
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM the_real_tags`,
+    );
     const existing = parseInt(countRows[0]?.cnt ?? "0", 10);
     if (existing >= THE_REAL_TAGS.length) {
       log(`THE REAL tags: ${existing} already present, skipping seed`);
@@ -5684,13 +6126,25 @@ async function ensureTheRealTags(
            (tag_key, label, category, type, adaptive_family, subcategory_scope, helper_text, sort_weight)
          VALUES ($1,$2,$3,$4,$5,$6,$7,0)
          ON CONFLICT (tag_key) DO NOTHING`,
-        [t.tag_key, t.label, t.category, t.type, t.adaptive_family ?? null, t.subcategory_scope, t.helper_text]
+        [
+          t.tag_key,
+          t.label,
+          t.category,
+          t.type,
+          t.adaptive_family ?? null,
+          t.subcategory_scope,
+          t.helper_text,
+        ],
       );
       inserted += res.rowCount ?? 0;
     }
-    log(`THE REAL tags: ${inserted} inserted, ${existing} already present (seed: ${THE_REAL_TAGS.length})`);
+    log(
+      `THE REAL tags: ${inserted} inserted, ${existing} already present (seed: ${THE_REAL_TAGS.length})`,
+    );
   } catch (err: unknown) {
-    warn(`THE REAL tags seeding failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `THE REAL tags seeding failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5700,12 +6154,12 @@ async function ensureTheRealTags(
  */
 async function ensureDirectoryBusinesses(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Load existing keys (name|city|state)
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
 
@@ -5714,14 +6168,29 @@ async function ensureDirectoryBusinesses(
 
     for (const b of DIRECTORY_BUSINESSES_SEED) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         const isBlack = b.ownershipDesignations.some((d: string) =>
-          ["Black / African American-Owned","African-Owned","West African-Owned",
-           "Nigerian-Owned","Ghanaian-Owned","Liberian-Owned","Ethiopian-Owned",
-           "Somali-Owned","East African-Owned","Caribbean / West Indian-Owned",
-           "Afro-Caribbean-Owned","Jamaican-Owned","Haitian-Owned",
-           "Trinidadian & Tobagonian-Owned","Afro-Latino-Owned"].includes(d)
+          [
+            "Black / African American-Owned",
+            "African-Owned",
+            "West African-Owned",
+            "Nigerian-Owned",
+            "Ghanaian-Owned",
+            "Liberian-Owned",
+            "Ethiopian-Owned",
+            "Somali-Owned",
+            "East African-Owned",
+            "Caribbean / West Indian-Owned",
+            "Afro-Caribbean-Owned",
+            "Jamaican-Owned",
+            "Haitian-Owned",
+            "Trinidadian & Tobagonian-Owned",
+            "Afro-Latino-Owned",
+          ].includes(d),
         );
         await pool.query(
           `INSERT INTO businesses
@@ -5752,27 +6221,40 @@ async function ensureDirectoryBusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, (b as any).subcategory ?? null,
+            b.name,
+            b.category,
+            (b as any).subcategory ?? null,
             (b as any).address ?? `${b.city}, ${b.state}`,
-            b.city, b.state,
-            (b as any).description ?? `${b.name} — community-listed business in ${b.city}, ${b.state}.`,
-            (b as any).website ?? null, (b as any).instagram ?? null, (b as any).tiktok ?? null,
+            b.city,
+            b.state,
+            (b as any).description ??
+              `${b.name} — community-listed business in ${b.city}, ${b.state}.`,
+            (b as any).website ?? null,
+            (b as any).instagram ?? null,
+            (b as any).tiktok ?? null,
             (b as any).primarySocialPlatform ?? null,
             JSON.stringify(b.ownershipDesignations),
             JSON.stringify((b as any).vibes ?? []),
             isBlack,
-            (b as any).latitude ?? null, (b as any).longitude ?? null,
-          ]
+            (b as any).latitude ?? null,
+            (b as any).longitude ?? null,
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Directory businesses guard: failed to insert ${b.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Directory businesses guard: failed to insert ${b.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Directory businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${DIRECTORY_BUSINESSES_SEED.length})`);
+    log(
+      `Directory businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${DIRECTORY_BUSINESSES_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Directory businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Directory businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5783,11 +6265,11 @@ async function ensureDirectoryBusinesses(
  */
 async function ensureTourBusinesses(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
 
@@ -5799,15 +6281,18 @@ async function ensureTourBusinesses(
       // fixture previously reappeared after the reversible containment
       // migration because tour seeding runs later in startup.
       if (
-        b.name.trim().toLowerCase() === "duke's cafe"
-        && b.city.trim().toLowerCase() === "willow grove"
-        && b.state.trim().toLowerCase() === "pa"
+        b.name.trim().toLowerCase() === "duke's cafe" &&
+        b.city.trim().toLowerCase() === "willow grove" &&
+        b.state.trim().toLowerCase() === "pa"
       ) {
         skipped++;
         continue;
       }
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -5836,18 +6321,25 @@ async function ensureTourBusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory ?? b.category,
-            b.address, b.city, b.state,
+            b.name,
+            b.category,
+            b.subcategory ?? b.category,
+            b.address,
+            b.city,
+            b.state,
             b.description,
             JSON.stringify(b.ownershipDesignations),
             b.blackOwned,
-            b.latitude ?? null, b.longitude ?? null,
-          ]
+            b.latitude ?? null,
+            b.longitude ?? null,
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Tour businesses guard: failed to insert ${b.name} (${b.city}): ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Tour businesses guard: failed to insert ${b.name} (${b.city}): ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
@@ -5858,47 +6350,66 @@ async function ensureTourBusinesses(
         `UPDATE businesses SET listing_status = 'live_unclaimed'
          WHERE listing_status IN ('staged','pending')
            AND LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) = ANY($1::text[])`,
-        [TOUR_BUSINESSES_SEED.slice(0, 200).map(b =>
-          `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`
-        )]
+        [
+          TOUR_BUSINESSES_SEED.slice(0, 200).map(
+            (b) =>
+              `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`,
+          ),
+        ],
       );
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
 
-    log(`Tour businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_BUSINESSES_SEED.length})`);
+    log(
+      `Tour businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_BUSINESSES_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Tour businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Tour businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Cultural Phrases guard ────────────────────────────────────────────────────
 async function ensureCulturalPhrases(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const r = await pool.query(
-      `SELECT LOWER(group_name)||'|'||LOWER(phrase) AS k FROM cultural_phrases`
+      `SELECT LOWER(group_name)||'|'||LOWER(phrase) AS k FROM cultural_phrases`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0, skipped = 0;
+    let inserted = 0,
+      skipped = 0;
     for (const p of CULTURAL_PHRASES_SEED) {
       const key = `${p.group_name.toLowerCase()}|${p.phrase.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO cultural_phrases (group_name, phrase, english_gloss, is_sensitive)
            VALUES ($1,$2,$3,$4)`,
-          [p.group_name, p.phrase, p.english_gloss, p.is_sensitive]
+          [p.group_name, p.phrase, p.english_gloss, p.is_sensitive],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`Cultural phrases guard: failed to insert "${p.phrase}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `Cultural phrases guard: failed to insert "${p.phrase}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Cultural phrases guard: ${inserted} inserted, ${skipped} already present (seed: ${CULTURAL_PHRASES_SEED.length})`);
+    log(
+      `Cultural phrases guard: ${inserted} inserted, ${skipped} already present (seed: ${CULTURAL_PHRASES_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Cultural phrases guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Cultural phrases guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -5907,76 +6418,321 @@ async function ensureCulturalPhrases(
 // Only sets if the column is currently NULL/empty — never overwrites edited data.
 async function ensureNeighborhoodTiming(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   const TIMING: Record<string, object[]> = {
-    "philadelphia": [
-      { neighborhood: "West Philadelphia / University City", best_days: ["Saturday", "Sunday"], best_times: "Morning to afternoon", notes: "Highly active on weekends due to farmers markets and the African American Market at FDR Park (Saturdays 10am–5pm). Weekdays better for museum visits and interviews." },
-      { neighborhood: "Northern Liberties / Fishtown", best_days: ["Friday", "Saturday"], best_times: "Evening", notes: "Weekend evenings most vibrant for dining, galleries, and nightlife." },
-      { neighborhood: "South Street", best_days: ["Saturday", "Sunday"], best_times: "Daytime", notes: "Weekend daytime for shopping, murals, and community energy." },
-      { neighborhood: "North Philly / El Centro de Oro", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Afternoon", notes: "Weekday afternoons best for connecting with community organizations and cultural centers." },
+    philadelphia: [
+      {
+        neighborhood: "West Philadelphia / University City",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Morning to afternoon",
+        notes:
+          "Highly active on weekends due to farmers markets and the African American Market at FDR Park (Saturdays 10am–5pm). Weekdays better for museum visits and interviews.",
+      },
+      {
+        neighborhood: "Northern Liberties / Fishtown",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening",
+        notes:
+          "Weekend evenings most vibrant for dining, galleries, and nightlife.",
+      },
+      {
+        neighborhood: "South Street",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Daytime",
+        notes: "Weekend daytime for shopping, murals, and community energy.",
+      },
+      {
+        neighborhood: "North Philly / El Centro de Oro",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Afternoon",
+        notes:
+          "Weekday afternoons best for connecting with community organizations and cultural centers.",
+      },
     ],
     "washington-dc": [
-      { neighborhood: "U Street Corridor (Black Broadway)", best_days: ["Saturday","Friday"], best_times: "Friday/Saturday evenings for nightlife; weekdays for historical sites and daytime interviews", notes: "Weekdays: relaxed, good for capturing murals and interviewing business owners. Weekends: transforms into vibrant hub of live music, dining, and community culture." },
-      { neighborhood: "Anacostia", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Best visited during the day for historical tours and the Anacostia Arts Center. Weekdays are quieter and better for community connections." },
-      { neighborhood: "H Street NE", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Weekend evenings for nightlife and dining energy." },
-      { neighborhood: "Adams Morgan", best_days: ["Saturday","Sunday"], best_times: "Afternoon to evening", notes: "Weekend afternoons for multicultural food scene and community energy." },
+      {
+        neighborhood: "U Street Corridor (Black Broadway)",
+        best_days: ["Saturday", "Friday"],
+        best_times:
+          "Friday/Saturday evenings for nightlife; weekdays for historical sites and daytime interviews",
+        notes:
+          "Weekdays: relaxed, good for capturing murals and interviewing business owners. Weekends: transforms into vibrant hub of live music, dining, and community culture.",
+      },
+      {
+        neighborhood: "Anacostia",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Best visited during the day for historical tours and the Anacostia Arts Center. Weekdays are quieter and better for community connections.",
+      },
+      {
+        neighborhood: "H Street NE",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening",
+        notes: "Weekend evenings for nightlife and dining energy.",
+      },
+      {
+        neighborhood: "Adams Morgan",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Afternoon to evening",
+        notes:
+          "Weekend afternoons for multicultural food scene and community energy.",
+      },
     ],
-    "richmond": [
-      { neighborhood: "Arts District / Downtown", best_days: ["Friday"], best_times: "6pm–9pm", notes: "First Friday of every month: RVA First Fridays art walk (6pm–9pm) with gallery openings and pop-up markets. Saturdays also highly active with multiple markets." },
-      { neighborhood: "Scott's Addition", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Weekend evenings for breweries and dining." },
-      { neighborhood: "Church Hill", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime best for historical site visits and photographing the neighborhood." },
+    richmond: [
+      {
+        neighborhood: "Arts District / Downtown",
+        best_days: ["Friday"],
+        best_times: "6pm–9pm",
+        notes:
+          "First Friday of every month: RVA First Fridays art walk (6pm–9pm) with gallery openings and pop-up markets. Saturdays also highly active with multiple markets.",
+      },
+      {
+        neighborhood: "Scott's Addition",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening",
+        notes: "Weekend evenings for breweries and dining.",
+      },
+      {
+        neighborhood: "Church Hill",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekday daytime best for historical site visits and photographing the neighborhood.",
+      },
     ],
-    "raleigh": [
-      { neighborhood: "Downtown Raleigh", best_days: ["Saturday","Sunday"], best_times: "Morning to afternoon", notes: "Saturdays and Sundays most active — Raleigh Market and Black Farmers Market (Sundays). Weekdays better for scheduling interviews with chamber representatives." },
-      { neighborhood: "Five Points / Glenwood South", best_days: ["Friday"], best_times: "Evening", notes: "Friday evenings for dining and local scene energy." },
-      { neighborhood: "Hayti Heritage / Fayetteville St (Durham)", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime for museums, cultural centers, and organizational visits." },
+    raleigh: [
+      {
+        neighborhood: "Downtown Raleigh",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Morning to afternoon",
+        notes:
+          "Saturdays and Sundays most active — Raleigh Market and Black Farmers Market (Sundays). Weekdays better for scheduling interviews with chamber representatives.",
+      },
+      {
+        neighborhood: "Five Points / Glenwood South",
+        best_days: ["Friday"],
+        best_times: "Evening",
+        notes: "Friday evenings for dining and local scene energy.",
+      },
+      {
+        neighborhood: "Hayti Heritage / Fayetteville St (Durham)",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekday daytime for museums, cultural centers, and organizational visits.",
+      },
     ],
-    "charlotte": [
-      { neighborhood: "South End / NoDa (North Davidson)", best_days: ["Saturday","Sunday"], best_times: "Morning to evening", notes: "Weekends most vibrant. Farmers markets (Regional Market, Matthews Market) on Saturday mornings. Festivals and large events almost exclusively on weekends." },
-      { neighborhood: "Uptown Charlotte", best_days: ["Saturday","Sunday"], best_times: "Daytime", notes: "Museums (Gantt Center) accessible weekdays; weekend events most active." },
-      { neighborhood: "West End (Historic Greenville)", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday visits best for connecting with community organizations and historical sites." },
+    charlotte: [
+      {
+        neighborhood: "South End / NoDa (North Davidson)",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Morning to evening",
+        notes:
+          "Weekends most vibrant. Farmers markets (Regional Market, Matthews Market) on Saturday mornings. Festivals and large events almost exclusively on weekends.",
+      },
+      {
+        neighborhood: "Uptown Charlotte",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Daytime",
+        notes:
+          "Museums (Gantt Center) accessible weekdays; weekend events most active.",
+      },
+      {
+        neighborhood: "West End (Historic Greenville)",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekday visits best for connecting with community organizations and historical sites.",
+      },
     ],
     "columbia-sc": [
-      { neighborhood: "Main Street", best_days: ["Saturday"], best_times: "9am–1pm", notes: "Saturday mornings highly recommended — Soda City Market (9am–1pm) is a prime community gathering with local vendors. First Thursdays on Main is monthly." },
-      { neighborhood: "Meeting Street / West Columbia", best_days: ["Saturday"], best_times: "11am–3pm", notes: "Meeting Street Artisan Market on Saturdays (11am–3pm) makes this area particularly active." },
-      { neighborhood: "Five Points", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Friday–Saturday evenings for dining and nightlife." },
+      {
+        neighborhood: "Main Street",
+        best_days: ["Saturday"],
+        best_times: "9am–1pm",
+        notes:
+          "Saturday mornings highly recommended — Soda City Market (9am–1pm) is a prime community gathering with local vendors. First Thursdays on Main is monthly.",
+      },
+      {
+        neighborhood: "Meeting Street / West Columbia",
+        best_days: ["Saturday"],
+        best_times: "11am–3pm",
+        notes:
+          "Meeting Street Artisan Market on Saturdays (11am–3pm) makes this area particularly active.",
+      },
+      {
+        neighborhood: "Five Points",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening",
+        notes: "Friday–Saturday evenings for dining and nightlife.",
+      },
     ],
-    "atlanta": [
-      { neighborhood: "Sweet Auburn / MLK Historic District", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime best for historical touring: MLK National Historic Park, Ebenezer Baptist Church, APEX Museum. Less crowded on weekdays." },
-      { neighborhood: "Midtown", best_days: ["Saturday","Sunday"], best_times: "Morning to afternoon", notes: "Weekends for markets and festivals. Midtown Farmers Market active Saturdays. Parking is free after 6pm on weekends in most areas." },
-      { neighborhood: "West Atlanta / West End", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays for community organizations, cultural centers, and the HBCU cluster." },
-      { neighborhood: "Decatur", best_days: ["Saturday"], best_times: "Morning", notes: "Saturday morning farmers markets and community gathering." },
+    atlanta: [
+      {
+        neighborhood: "Sweet Auburn / MLK Historic District",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekday daytime best for historical touring: MLK National Historic Park, Ebenezer Baptist Church, APEX Museum. Less crowded on weekdays.",
+      },
+      {
+        neighborhood: "Midtown",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Morning to afternoon",
+        notes:
+          "Weekends for markets and festivals. Midtown Farmers Market active Saturdays. Parking is free after 6pm on weekends in most areas.",
+      },
+      {
+        neighborhood: "West Atlanta / West End",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekdays for community organizations, cultural centers, and the HBCU cluster.",
+      },
+      {
+        neighborhood: "Decatur",
+        best_days: ["Saturday"],
+        best_times: "Morning",
+        notes: "Saturday morning farmers markets and community gathering.",
+      },
     ],
-    "montgomery": [
-      { neighborhood: "Downtown Civil Rights District", best_days: ["Monday","Tuesday","Wednesday","Thursday","Friday"], best_times: "Daytime", notes: "Weekdays best for Legacy Museum, EJI National Memorial, Rosa Parks Museum — all have structured visiting hours. Less crowded than weekends." },
-      { neighborhood: "Dexter Avenue Historic District", best_days: ["Saturday","Sunday"], best_times: "Daytime to afternoon", notes: "Weekend community events and church services draw community together." },
+    montgomery: [
+      {
+        neighborhood: "Downtown Civil Rights District",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        best_times: "Daytime",
+        notes:
+          "Weekdays best for Legacy Museum, EJI National Memorial, Rosa Parks Museum — all have structured visiting hours. Less crowded than weekends.",
+      },
+      {
+        neighborhood: "Dexter Avenue Historic District",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Daytime to afternoon",
+        notes:
+          "Weekend community events and church services draw community together.",
+      },
     ],
-    "birmingham": [
-      { neighborhood: "Civil Rights District (4th Ave N)", best_days: ["Monday","Tuesday","Wednesday","Thursday","Friday"], best_times: "Daytime", notes: "Weekdays for Birmingham Civil Rights Institute, 16th Street Baptist Church, Kelly Ingram Park — structured museum hours work best on weekdays." },
-      { neighborhood: "Pepper Place / Lakeview", best_days: ["Saturday"], best_times: "Morning to afternoon", notes: "Pepper Place Market on Saturday mornings — a key community gathering point." },
-      { neighborhood: "Southside", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Weekend evenings for dining and nightlife." },
+    birmingham: [
+      {
+        neighborhood: "Civil Rights District (4th Ave N)",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        best_times: "Daytime",
+        notes:
+          "Weekdays for Birmingham Civil Rights Institute, 16th Street Baptist Church, Kelly Ingram Park — structured museum hours work best on weekdays.",
+      },
+      {
+        neighborhood: "Pepper Place / Lakeview",
+        best_days: ["Saturday"],
+        best_times: "Morning to afternoon",
+        notes:
+          "Pepper Place Market on Saturday mornings — a key community gathering point.",
+      },
+      {
+        neighborhood: "Southside",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening",
+        notes: "Weekend evenings for dining and nightlife.",
+      },
     ],
-    "mobile": [
-      { neighborhood: "Downtown Mobile (LODA)", best_days: ["Second Friday","Second Saturday"], best_times: "Friday 6pm–9pm; Saturday events", notes: "Every second weekend of the month is particularly active: LODA ArtWalk (Friday 6–9pm), Saturday community events. Downtown comes alive as a cultural hub." },
-      { neighborhood: "Africatown", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime best for visiting Africatown Heritage House and connecting with community members." },
-      { neighborhood: "Spring Hill / West Mobile", best_days: ["Saturday"], best_times: "Morning to afternoon", notes: "Saturday mornings for community engagement and local markets." },
+    mobile: [
+      {
+        neighborhood: "Downtown Mobile (LODA)",
+        best_days: ["Second Friday", "Second Saturday"],
+        best_times: "Friday 6pm–9pm; Saturday events",
+        notes:
+          "Every second weekend of the month is particularly active: LODA ArtWalk (Friday 6–9pm), Saturday community events. Downtown comes alive as a cultural hub.",
+      },
+      {
+        neighborhood: "Africatown",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekday daytime best for visiting Africatown Heritage House and connecting with community members.",
+      },
+      {
+        neighborhood: "Spring Hill / West Mobile",
+        best_days: ["Saturday"],
+        best_times: "Morning to afternoon",
+        notes: "Saturday mornings for community engagement and local markets.",
+      },
     ],
     "baton-rouge": [
-      { neighborhood: "Downtown / Spanish Town", best_days: ["Saturday"], best_times: "Morning", notes: "Saturdays highly recommended: Red Stick Farmers Market (every Saturday morning) + Baton Rouge Arts Market (first Saturday) make downtown vibrant." },
-      { neighborhood: "Mid-City", best_days: ["Saturday"], best_times: "Afternoon", notes: "Last Saturday of month for the Local Pop-Up. Also active during the Red Stick Farmers Market cycle." },
-      { neighborhood: "North Baton Rouge", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays for community organizations, the 1953 Bus Boycott Marker, and historical cultural visits." },
+      {
+        neighborhood: "Downtown / Spanish Town",
+        best_days: ["Saturday"],
+        best_times: "Morning",
+        notes:
+          "Saturdays highly recommended: Red Stick Farmers Market (every Saturday morning) + Baton Rouge Arts Market (first Saturday) make downtown vibrant.",
+      },
+      {
+        neighborhood: "Mid-City",
+        best_days: ["Saturday"],
+        best_times: "Afternoon",
+        notes:
+          "Last Saturday of month for the Local Pop-Up. Also active during the Red Stick Farmers Market cycle.",
+      },
+      {
+        neighborhood: "North Baton Rouge",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekdays for community organizations, the 1953 Bus Boycott Marker, and historical cultural visits.",
+      },
     ],
     "new-orleans": [
-      { neighborhood: "Tremé", best_days: ["Sunday"], best_times: "Morning to afternoon", notes: "Sunday mornings are significant for church services, often followed by traditional second-line parades in the afternoon. Daytime best for Backstreet Cultural Museum and historical tours." },
-      { neighborhood: "Central City / Broadmoor", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays ideal for visiting Ashé Cultural Arts Center and Black-owned businesses. Weekends host community events." },
-      { neighborhood: "Bywater / Marigny", best_days: ["Saturday","Sunday"], best_times: "Afternoon", notes: "Weekend afternoons for pop-up markets, street art, and eclectic vendors." },
-      { neighborhood: "French Quarter / Tremé adjacent", best_days: ["Friday","Saturday"], best_times: "Evening to late night", notes: "Late evenings for the full cultural fabric of music and community nightlife." },
+      {
+        neighborhood: "Tremé",
+        best_days: ["Sunday"],
+        best_times: "Morning to afternoon",
+        notes:
+          "Sunday mornings are significant for church services, often followed by traditional second-line parades in the afternoon. Daytime best for Backstreet Cultural Museum and historical tours.",
+      },
+      {
+        neighborhood: "Central City / Broadmoor",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekdays ideal for visiting Ashé Cultural Arts Center and Black-owned businesses. Weekends host community events.",
+      },
+      {
+        neighborhood: "Bywater / Marigny",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Afternoon",
+        notes:
+          "Weekend afternoons for pop-up markets, street art, and eclectic vendors.",
+      },
+      {
+        neighborhood: "French Quarter / Tremé adjacent",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening to late night",
+        notes:
+          "Late evenings for the full cultural fabric of music and community nightlife.",
+      },
     ],
-    "houston": [
-      { neighborhood: "Third Ward / Emancipation Park", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays for historical sites, community organizations, and Emancipation Park visits." },
-      { neighborhood: "Midtown / Museum District", best_days: ["Saturday","Sunday"], best_times: "Morning to afternoon", notes: "Weekends for farmers markets and pop-up markets. Houston Farmers Market open daily but busiest on Saturdays." },
-      { neighborhood: "Discovery Green / Downtown", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Evening events: Flea by Night at Discovery Green and M-K-T Sunset Market best in late afternoon to evening." },
+    houston: [
+      {
+        neighborhood: "Third Ward / Emancipation Park",
+        best_days: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        best_times: "Daytime",
+        notes:
+          "Weekdays for historical sites, community organizations, and Emancipation Park visits.",
+      },
+      {
+        neighborhood: "Midtown / Museum District",
+        best_days: ["Saturday", "Sunday"],
+        best_times: "Morning to afternoon",
+        notes:
+          "Weekends for farmers markets and pop-up markets. Houston Farmers Market open daily but busiest on Saturdays.",
+      },
+      {
+        neighborhood: "Discovery Green / Downtown",
+        best_days: ["Friday", "Saturday"],
+        best_times: "Evening",
+        notes:
+          "Evening events: Flea by Night at Discovery Green and M-K-T Sunset Market best in late afternoon to evening.",
+      },
     ],
   };
 
@@ -5990,16 +6746,22 @@ async function ensureNeighborhoodTiming(
            WHERE city_slug = $2
              AND (neighborhood_timing IS NULL OR neighborhood_timing = '[]'::jsonb)
            RETURNING city_slug`,
-          [JSON.stringify(timing), slug]
+          [JSON.stringify(timing), slug],
         );
         if (r.rowCount && r.rowCount > 0) updated++;
       } catch (err: unknown) {
-        warn(`Neighborhood timing: failed for ${slug}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `Neighborhood timing: failed for ${slug}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Neighborhood timing guard: ${updated} cities updated (${Object.keys(TIMING).length} in seed)`);
+    log(
+      `Neighborhood timing guard: ${updated} cities updated (${Object.keys(TIMING).length} in seed)`,
+    );
   } catch (err: unknown) {
-    warn(`Neighborhood timing guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Neighborhood timing guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6020,7 +6782,7 @@ async function ensureNeighborhoodTiming(
 // a boot-time loop.
 async function geocodeTourContent(
   log: (msg: string) => void,
-  _warn: (msg: string) => void
+  _warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const [sites, orgs, events] = await Promise.all([
@@ -6030,7 +6792,7 @@ async function geocodeTourContent(
                   AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180
                   AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
                 COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL) AS missing
-         FROM tour_cultural_sites`
+         FROM tour_cultural_sites`,
       ),
       pool.query<{ total: string; with_coords: string; missing: string }>(
         `SELECT COUNT(*) AS total,
@@ -6038,7 +6800,7 @@ async function geocodeTourContent(
                   AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180
                   AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
                 COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL) AS missing
-         FROM community_organizations`
+         FROM community_organizations`,
       ),
       pool.query<{ total: string; with_coords: string; missing: string }>(
         `SELECT COUNT(*) AS total,
@@ -6046,103 +6808,141 @@ async function geocodeTourContent(
                   AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180
                   AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
                 COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL) AS missing
-         FROM recurring_events`
+         FROM recurring_events`,
       ),
     ]);
     const s = sites.rows[0];
     const o = orgs.rows[0];
     const e = events.rows[0];
-    log(`Coordinate coverage audit — tour_cultural_sites: ${s.with_coords}/${s.total} valid (${s.missing} missing) | community_organizations: ${o.with_coords}/${o.total} valid (${o.missing} missing) | recurring_events: ${e.with_coords}/${e.total} valid (${e.missing} missing)`);
+    log(
+      `Coordinate coverage audit — tour_cultural_sites: ${s.with_coords}/${s.total} valid (${s.missing} missing) | community_organizations: ${o.with_coords}/${o.total} valid (${o.missing} missing) | recurring_events: ${e.with_coords}/${e.total} valid (${e.missing} missing)`,
+    );
   } catch (err: unknown) {
-    log(`Coordinate coverage audit skipped: ${err instanceof Error ? err.message : String(err)}`);
+    log(
+      `Coordinate coverage audit skipped: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Tour Cultural Sites guard ─────────────────────────────────────────────────
 async function ensureTourCulturalSites(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM tour_cultural_sites`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM tour_cultural_sites`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0, skipped = 0;
+    let inserted = 0,
+      skipped = 0;
 
     for (const s of TOUR_CULTURAL_SITES_SEED) {
       const key = `${s.name.toLowerCase()}|${s.city.toLowerCase()}|${s.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO tour_cultural_sites
             (name, city, state, address, description, is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5, true, true, NOW(), NOW())`,
-          [s.name, s.city, s.state, s.address, s.description]
+          [s.name, s.city, s.state, s.address, s.description],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`Tour cultural sites guard: failed to insert ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `Tour cultural sites guard: failed to insert ${s.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Tour cultural sites guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_CULTURAL_SITES_SEED.length})`);
+    log(
+      `Tour cultural sites guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_CULTURAL_SITES_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Tour cultural sites guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Tour cultural sites guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Community Organizations guard ─────────────────────────────────────────────
 async function ensureCommunityOrganizations(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM community_organizations`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM community_organizations`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0, skipped = 0;
+    let inserted = 0,
+      skipped = 0;
 
     for (const o of COMMUNITY_ORGANIZATIONS_SEED) {
       const key = `${o.name.toLowerCase()}|${o.city.toLowerCase()}|${o.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO community_organizations
             (name, city, state, category, mission, website, instagram, facebook, phone, address,
              is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, true, true, NOW(), NOW())`,
-          [o.name, o.city, o.state, o.category, o.mission,
-           o.website, o.instagram, o.facebook, o.phone, o.address]
+          [
+            o.name,
+            o.city,
+            o.state,
+            o.category,
+            o.mission,
+            o.website,
+            o.instagram,
+            o.facebook,
+            o.phone,
+            o.address,
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`Community orgs guard: failed to insert ${o.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `Community orgs guard: failed to insert ${o.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Community orgs guard: ${inserted} inserted, ${skipped} already present (seed: ${COMMUNITY_ORGANIZATIONS_SEED.length})`);
+    log(
+      `Community orgs guard: ${inserted} inserted, ${skipped} already present (seed: ${COMMUNITY_ORGANIZATIONS_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Community organizations guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Community organizations guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Recurring Events guard ────────────────────────────────────────────────────
 async function ensureRecurringEvents(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM recurring_events`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM recurring_events`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0, skipped = 0;
+    let inserted = 0,
+      skipped = 0;
 
     for (const e of RECURRING_EVENTS_SEED) {
       const key = `${e.name.toLowerCase()}|${e.city.toLowerCase()}|${e.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO recurring_events
@@ -6150,23 +6950,42 @@ async function ensureRecurringEvents(
              frequency, day_of_week, start_time, end_time, category,
              is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, true, true, NOW(), NOW())`,
-          [e.name, e.city, e.state, e.venue, e.address, e.description,
-           e.frequency, e.day_of_week, e.start_time, e.end_time, e.category]
+          [
+            e.name,
+            e.city,
+            e.state,
+            e.venue,
+            e.address,
+            e.description,
+            e.frequency,
+            e.day_of_week,
+            e.start_time,
+            e.end_time,
+            e.category,
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`Recurring events guard: failed to insert ${e.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `Recurring events guard: failed to insert ${e.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Recurring events guard: ${inserted} inserted, ${skipped} already present (seed: ${RECURRING_EVENTS_SEED.length})`);
+    log(
+      `Recurring events guard: ${inserted} inserted, ${skipped} already present (seed: ${RECURRING_EVENTS_SEED.length})`,
+    );
 
     // ── Community events expansion — multi-city festivals, markets, gatherings ──
     // ~200 additional events across 20+ cities to bring the map closer to 509 (#100).
-    let expInserted = 0; let expSkipped = 0;
+    let expInserted = 0;
+    let expSkipped = 0;
     for (const e of COMMUNITY_EVENTS_EXPANSION_SEED) {
       const key = `${e.name.toLowerCase()}|${e.city.toLowerCase()}|${e.state.toLowerCase()}`;
-      if (existing.has(key)) { expSkipped++; continue; }
+      if (existing.has(key)) {
+        expSkipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO recurring_events
@@ -6174,23 +6993,42 @@ async function ensureRecurringEvents(
              frequency, day_of_week, start_time, end_time, category,
              is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, true, true, NOW(), NOW())`,
-          [e.name, e.city, e.state, e.venue, e.address, e.description,
-           e.frequency, e.day_of_week, e.start_time, e.end_time, e.category]
+          [
+            e.name,
+            e.city,
+            e.state,
+            e.venue,
+            e.address,
+            e.description,
+            e.frequency,
+            e.day_of_week,
+            e.start_time,
+            e.end_time,
+            e.category,
+          ],
         );
         existing.add(key);
         expInserted++;
       } catch (err: unknown) {
-        warn(`Community events expansion: failed to insert ${e.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `Community events expansion: failed to insert ${e.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Community events expansion: ${expInserted} inserted, ${expSkipped} already present (seed: ${COMMUNITY_EVENTS_EXPANSION_SEED.length})`);
+    log(
+      `Community events expansion: ${expInserted} inserted, ${expSkipped} already present (seed: ${COMMUNITY_EVENTS_EXPANSION_SEED.length})`,
+    );
 
     // ── Community events expansion 2 — 324 events across 26 more cities (#100) ──
     // Brings total from ~211 → 535 (exceeds 509 goal).
-    let exp2Inserted = 0; let exp2Skipped = 0;
+    let exp2Inserted = 0;
+    let exp2Skipped = 0;
     for (const e of COMMUNITY_EVENTS_EXPANSION_2_SEED) {
       const key = `${e.name.toLowerCase()}|${e.city.toLowerCase()}|${e.state.toLowerCase()}`;
-      if (existing.has(key)) { exp2Skipped++; continue; }
+      if (existing.has(key)) {
+        exp2Skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO recurring_events
@@ -6198,18 +7036,35 @@ async function ensureRecurringEvents(
              frequency, day_of_week, start_time, end_time, category,
              is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, true, true, NOW(), NOW())`,
-          [e.name, e.city, e.state, e.venue, e.address, e.description,
-           e.frequency, e.day_of_week, e.start_time, e.end_time, e.category]
+          [
+            e.name,
+            e.city,
+            e.state,
+            e.venue,
+            e.address,
+            e.description,
+            e.frequency,
+            e.day_of_week,
+            e.start_time,
+            e.end_time,
+            e.category,
+          ],
         );
         existing.add(key);
         exp2Inserted++;
       } catch (err2: unknown) {
-        warn(`Community events expansion 2: failed to insert ${e.name}: ${err2 instanceof Error ? err2.message : String(err2)}`);
+        warn(
+          `Community events expansion 2: failed to insert ${e.name}: ${err2 instanceof Error ? err2.message : String(err2)}`,
+        );
       }
     }
-    log(`Community events expansion 2: ${exp2Inserted} inserted, ${exp2Skipped} already present (seed: ${COMMUNITY_EVENTS_EXPANSION_2_SEED.length})`);
+    log(
+      `Community events expansion 2: ${exp2Inserted} inserted, ${exp2Skipped} already present (seed: ${COMMUNITY_EVENTS_EXPANSION_2_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Recurring events guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Recurring events guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6220,9 +7075,9 @@ async function ensureRecurringEvents(
 // the same role='admin' column value. Access revocation is controlled at the
 // application level by the principal admin.
 const ADMIN_EMAILS = [
-  "tlindsay428@yahoo.com",          // Principal admin — founder / platform owner
-  "tlindsay428@gmail.com",          // Founder backup account
-  "tlindsay428@aol.com",            // Founder backup account
+  "tlindsay428@yahoo.com", // Principal admin — founder / platform owner
+  "tlindsay428@gmail.com", // Founder backup account
+  "tlindsay428@aol.com", // Founder backup account
 ];
 
 // ── Tester account grants ──────────────────────────────────────────────────────
@@ -6237,7 +7092,7 @@ const PRE_APPROVED_TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;
 
 async function ensureAdminAccounts(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const result = await pool.query(
@@ -6246,16 +7101,20 @@ async function ensureAdminAccounts(
        WHERE LOWER(TRIM(email)) = ANY($1)
          AND role != 'admin'
        RETURNING email`,
-      [ADMIN_EMAILS.map(e => e.toLowerCase())]
+      [ADMIN_EMAILS.map((e) => e.toLowerCase())],
     );
     const granted = result.rows.map((r: { email: string }) => r.email);
     if (granted.length > 0) {
       log(`Admin accounts granted to: ${granted.join(", ")}`);
     } else {
-      log(`Admin accounts already confirmed for all ${ADMIN_EMAILS.length} accounts`);
+      log(
+        `Admin accounts already confirmed for all ${ADMIN_EMAILS.length} accounts`,
+      );
     }
   } catch (err: unknown) {
-    warn(`Admin account grant failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Admin account grant failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6346,7 +7205,9 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "high",
     );
-    log("Library diaspora evidence: African Diaspora History — 3 sources seeded");
+    log(
+      "Library diaspora evidence: African Diaspora History — 3 sources seeded",
+    );
 
     // ── 2. Black & Diaspora Foodways ─────────────────────────────────────────
     await sd(
@@ -6376,7 +7237,9 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "verified",
     );
-    log("Library diaspora evidence: Black & Diaspora Foodways — 3 sources seeded");
+    log(
+      "Library diaspora evidence: Black & Diaspora Foodways — 3 sources seeded",
+    );
 
     // ── 3. Cultural Etiquette & Customs ──────────────────────────────────────
     await sd(
@@ -6397,7 +7260,9 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "high",
     );
-    log("Library diaspora evidence: Cultural Etiquette & Customs — 2 sources seeded");
+    log(
+      "Library diaspora evidence: Cultural Etiquette & Customs — 2 sources seeded",
+    );
 
     // ── 4. Cultural Preservation & Oral History ───────────────────────────────
     await sd(
@@ -6427,7 +7292,9 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "high",
     );
-    log("Library diaspora evidence: Cultural Preservation & Oral History — 3 sources seeded");
+    log(
+      "Library diaspora evidence: Cultural Preservation & Oral History — 3 sources seeded",
+    );
 
     // ── 5. Festivals & Cultural Celebrations ─────────────────────────────────
     await sd(
@@ -6448,7 +7315,9 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "high",
     );
-    log("Library diaspora evidence: Festivals & Cultural Celebrations — 2 sources seeded");
+    log(
+      "Library diaspora evidence: Festivals & Cultural Celebrations — 2 sources seeded",
+    );
 
     // ── 6. Genealogy & Family History ────────────────────────────────────────
     await sd(
@@ -6469,7 +7338,9 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "high",
     );
-    log("Library diaspora evidence: Genealogy & Family History — 2 sources seeded");
+    log(
+      "Library diaspora evidence: Genealogy & Family History — 2 sources seeded",
+    );
 
     // ── 7. Heritage Language Learning ────────────────────────────────────────
     await sd(
@@ -6490,12 +7361,17 @@ async function ensureLibraryDiasporaEvidence(
       false,
       "high",
     );
-    log("Library diaspora evidence: Heritage Language Learning — 2 sources seeded");
+    log(
+      "Library diaspora evidence: Heritage Language Learning — 2 sources seeded",
+    );
 
-    log(`Library diaspora evidence: total ${sourcesAdded} knowledge_sources inserted across 7 diaspora Books`);
-
+    log(
+      `Library diaspora evidence: total ${sourcesAdded} knowledge_sources inserted across 7 diaspora Books`,
+    );
   } catch (err: unknown) {
-    warn(`Library diaspora evidence seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Library diaspora evidence seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6506,39 +7382,56 @@ async function ensureLibraryDiasporaEvidence(
 // Cleanup: DELETE FROM users WHERE email LIKE '%@loadtest.mwm.internal%'
 async function ensureLoadTestAccounts(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
-  const HASH = '$2b$12$lh9y6/CoZwR57kjmd5RQ7.oB.of6YSL48XQ9RVHiXycxfz4Gs23zC';
+  const HASH = "$2b$12$lh9y6/CoZwR57kjmd5RQ7.oB.of6YSL48XQ9RVHiXycxfz4Gs23zC";
   const accounts = [
-    { n:'01', city:'Philadelphia' }, { n:'02', city:'Atlanta' },
-    { n:'03', city:'Houston' },      { n:'04', city:'Washington' },
-    { n:'05', city:'Los Angeles' },  { n:'06', city:'New York' },
-    { n:'07', city:'Chicago' },      { n:'08', city:'New Orleans' },
-    { n:'09', city:'Detroit' },      { n:'10', city:'Baltimore' },
-    { n:'11', city:'Memphis' },      { n:'12', city:'Dallas' },
-    { n:'13', city:'Miami' },        { n:'14', city:'Charlotte' },
-    { n:'15', city:'Columbia' },     { n:'16', city:'Birmingham' },
-    { n:'17', city:'Oakland' },      { n:'18', city:'Newark' },
-    { n:'19', city:'Richmond' },     { n:'20', city:'Nashville' },
-    { n:'21', city:'Phuket' },       { n:'22', city:'Phuket' },
-    { n:'23', city:'Philadelphia' }, { n:'24', city:'Atlanta' },
-    { n:'25', city:'Houston' },      { n:'26', city:'Washington' },
-    { n:'27', city:'Los Angeles' },  { n:'28', city:'New York' },
-    { n:'29', city:'Chicago' },      { n:'30', city:'Miami' },
+    { n: "01", city: "Philadelphia" },
+    { n: "02", city: "Atlanta" },
+    { n: "03", city: "Houston" },
+    { n: "04", city: "Washington" },
+    { n: "05", city: "Los Angeles" },
+    { n: "06", city: "New York" },
+    { n: "07", city: "Chicago" },
+    { n: "08", city: "New Orleans" },
+    { n: "09", city: "Detroit" },
+    { n: "10", city: "Baltimore" },
+    { n: "11", city: "Memphis" },
+    { n: "12", city: "Dallas" },
+    { n: "13", city: "Miami" },
+    { n: "14", city: "Charlotte" },
+    { n: "15", city: "Columbia" },
+    { n: "16", city: "Birmingham" },
+    { n: "17", city: "Oakland" },
+    { n: "18", city: "Newark" },
+    { n: "19", city: "Richmond" },
+    { n: "20", city: "Nashville" },
+    { n: "21", city: "Phuket" },
+    { n: "22", city: "Phuket" },
+    { n: "23", city: "Philadelphia" },
+    { n: "24", city: "Atlanta" },
+    { n: "25", city: "Houston" },
+    { n: "26", city: "Washington" },
+    { n: "27", city: "Los Angeles" },
+    { n: "28", city: "New York" },
+    { n: "29", city: "Chicago" },
+    { n: "30", city: "Miami" },
   ];
   try {
     // Remove any malformed rows created by the v1 bug (email = "Tester NN" instead of the address)
     const cleaned = await pool.query(
-      `DELETE FROM users WHERE email ~ '^Tester \\d+$' AND is_load_test = true RETURNING email`
+      `DELETE FROM users WHERE email ~ '^Tester \\d+$' AND is_load_test = true RETURNING email`,
     );
     if (cleaned.rowCount && cleaned.rowCount > 0) {
-      warn(`Load-test cleanup: removed ${cleaned.rowCount} malformed row(s) (email was "Tester NN")`);
+      warn(
+        `Load-test cleanup: removed ${cleaned.rowCount} malformed row(s) (email was "Tester NN")`,
+      );
     }
 
     let inserted = 0;
     for (const a of accounts) {
       const email = `mwm-loadtest-${a.n}@loadtest.mwm.internal`;
-      const username = `loadtest${a.n}_${a.city.toLowerCase().replace(/[^a-z]/g,'')}`;
+      const username = `loadtest${a.n}_${a.city.toLowerCase().replace(/[^a-z]/g, "")}`;
       // Param order matches column order: email, last_name, username, home_city, password_hash
       const result = await pool.query(
         `INSERT INTO users
@@ -6549,20 +7442,24 @@ async function ensureLoadTestAccounts(
          VALUES ($1,'Load',$2,$3,$4,$5,true,true,'free','active','admin_invite',true,NOW(),NOW())
          ON CONFLICT (email) DO UPDATE SET is_load_test = true, updated_at = NOW()
          RETURNING (xmax = 0) AS inserted`,
-        [email, `Tester ${a.n}`, username, a.city, HASH]
+        [email, `Tester ${a.n}`, username, a.city, HASH],
       );
       if (result.rows[0]?.inserted) inserted++;
     }
-    log(`Load-test accounts: ${inserted} created, ${accounts.length - inserted} already present`);
+    log(
+      `Load-test accounts: ${inserted} created, ${accounts.length - inserted} already present`,
+    );
   } catch (err: unknown) {
-    warn(`Load-test account seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Load-test account seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Tester account grants ──────────────────────────────────────────────────────
 async function ensureTesterAccounts(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Only promote to tester if currently role='user' — never demote admins
@@ -6572,7 +7469,7 @@ async function ensureTesterAccounts(
        WHERE LOWER(TRIM(email)) = ANY($1)
          AND role = 'user'
        RETURNING email`,
-      [TESTER_EMAILS.map(e => e.toLowerCase())]
+      [TESTER_EMAILS.map((e) => e.toLowerCase())],
     );
     const granted = result.rows.map((r: { email: string }) => r.email);
     if (granted.length > 0) {
@@ -6581,7 +7478,62 @@ async function ensureTesterAccounts(
       log(`Tester accounts already confirmed for all known testers`);
     }
   } catch (err: unknown) {
-    warn(`Tester account grant failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Tester account grant failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+// ── Access entitlement audit ledger ───────────────────────────────────────────
+// This is deliberately separate from Replit Auth and sessions. It records
+// administrator-managed pre-access and tester-access events without changing how
+// anyone logs in, signs up, or appears on the existing waitlist.
+async function ensureAccessEntitlementLedger(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS access_entitlement_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL,
+        user_id VARCHAR,
+        event_type TEXT NOT NULL CHECK (event_type IN ('granted', 'registered', 'revoked', 'backfilled_active')),
+        access_source TEXT,
+        granted_by VARCHAR,
+        entitlement_ends_at TIMESTAMPTZ,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS access_entitlement_events_email_created_idx
+      ON access_entitlement_events (LOWER(email), created_at DESC)
+    `);
+    // Preserve a current access trace for grants that happened before this
+    // release. This cannot reconstruct a prior deletion/revocation that was
+    // never logged; every later grant, registration, and revoke is immutable.
+    await pool.query(`
+      INSERT INTO access_entitlement_events
+        (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, created_at)
+      SELECT LOWER(TRIM(email)), id, 'backfilled_active', tester_access_source,
+             tester_granted_by, testing_entitlement_ends_at,
+             COALESCE(tester_granted_at, created_at)
+      FROM users
+      WHERE tester_status = 'active'
+        AND email IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM access_entitlement_events event
+          WHERE LOWER(event.email) = LOWER(TRIM(users.email))
+            AND event.event_type IN ('granted', 'registered', 'backfilled_active')
+        )
+    `);
+    log("ensureAccessEntitlementLedger: immutable access-event history ready");
+  } catch (err: unknown) {
+    warn(
+      `ensureAccessEntitlementLedger failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6590,7 +7542,7 @@ async function ensureTesterAccounts(
 // then seeds pre-approved emails so new registrations auto-get tester role.
 async function ensurePendingTesterEmails(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Create table if Railway never received this migration
@@ -6619,7 +7571,7 @@ async function ensurePendingTesterEmails(
          VALUES (gen_random_uuid(), $1, 'website_test')
          ON CONFLICT (email) DO NOTHING
          RETURNING id`,
-        [email.toLowerCase().trim()]
+        [email.toLowerCase().trim()],
       );
       if (r.rowCount && r.rowCount > 0) inserted++;
     }
@@ -6631,7 +7583,7 @@ async function ensurePendingTesterEmails(
        WHERE tester_access_source = 'website_test'
          AND granted_by IS NULL
          AND NOT (LOWER(TRIM(email)) = ANY($1::text[]))`,
-      [PRE_APPROVED_TESTER_EMAILS.map(e => e.toLowerCase().trim())]
+      [PRE_APPROVED_TESTER_EMAILS.map((e) => e.toLowerCase().trim())],
     );
 
     // Mark already-registered testers as applied
@@ -6646,10 +7598,12 @@ async function ensurePendingTesterEmails(
 
     log(
       `Pending tester emails: table ensured, ${inserted} new emails seeded, ` +
-      `${retired.rowCount ?? 0} stale system rows retired`
+        `${retired.rowCount ?? 0} stale system rows retired`,
     );
   } catch (err: unknown) {
-    warn(`Pending tester emails guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Pending tester emails guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6664,11 +7618,12 @@ async function ensurePendingTesterEmails(
 //      Safe because must_change_password=true means first login hasn't happened.
 async function ensureTesterUniversalAccounts(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   // bcrypt(cost=8) of "MWM-invite-2026!" — same hash used by tester_universal_accounts_v1
-  const UNIVERSAL_HASH = '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO';
-  const emails = PRE_APPROVED_TESTER_EMAILS.map(e => e.toLowerCase().trim());
+  const UNIVERSAL_HASH =
+    "$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO";
+  const emails = PRE_APPROVED_TESTER_EMAILS.map((e) => e.toLowerCase().trim());
   try {
     // A: create missing accounts
     let created = 0;
@@ -6685,7 +7640,7 @@ async function ensureTesterUniversalAccounts(
             true, true, false,
             'founding', true, 'tester', true)
          ON CONFLICT (email) DO NOTHING`,
-        [email, UNIVERSAL_HASH]
+        [email, UNIVERSAL_HASH],
       );
       if (r.rowCount && r.rowCount > 0) created++;
     }
@@ -6703,17 +7658,19 @@ async function ensureTesterUniversalAccounts(
          WHERE LOWER(TRIM(email))  = $2
            AND must_change_password = true
            AND (password_hash != $1 OR locked_until IS NOT NULL OR failed_login_attempts > 0)`,
-        [UNIVERSAL_HASH, email]
+        [UNIVERSAL_HASH, email],
       );
       if ((repairResult.rowCount ?? 0) > 0) repaired++;
     }
 
     log(
       `Tester universal accounts: ${created} created, ` +
-      `${repaired} hash/lock repaired`
+        `${repaired} hash/lock repaired`,
     );
   } catch (err: unknown) {
-    warn(`Tester universal accounts guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Tester universal accounts guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6723,18 +7680,22 @@ async function ensureTesterUniversalAccounts(
 
 async function ensureKnowledgeTopics(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
-    const r = await pool.query(`SELECT LOWER(topic_name) AS n FROM knowledge_topics`);
+    const r = await pool.query(
+      `SELECT LOWER(topic_name) AS n FROM knowledge_topics`,
+    );
     const existing = new Set(r.rows.map((row: { n: string }) => row.n));
 
     const newTopics = KNOWLEDGE_LIBRARY_SEED.filter(
-      (t) => !existing.has(t.topicName.toLowerCase())
+      (t) => !existing.has(t.topicName.toLowerCase()),
     );
 
     if (newTopics.length === 0) {
-      log(`Knowledge topics integrity guard: 0 inserted, ${KNOWLEDGE_LIBRARY_SEED.length} already present`);
+      log(
+        `Knowledge topics integrity guard: 0 inserted, ${KNOWLEDGE_LIBRARY_SEED.length} already present`,
+      );
       return;
     }
 
@@ -6743,13 +7704,16 @@ async function ensureKnowledgeTopics(
     // trusted_sources is jsonb — pass as JSON.stringify with ::jsonb cast.
     const COLS = 6;
     const placeholders = newTopics
-      .map((_, i) => `(gen_random_uuid(),$${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4},$${i*COLS+5},$${i*COLS+6}::jsonb,true,'free',NOW())`)
+      .map(
+        (_, i) =>
+          `(gen_random_uuid(),$${i * COLS + 1},$${i * COLS + 2},$${i * COLS + 3},$${i * COLS + 4},$${i * COLS + 5},$${i * COLS + 6}::jsonb,true,'free',NOW())`,
+      )
       .join(",");
     const params = newTopics.flatMap((t) => [
       t.topicName,
       t.category,
       t.description,
-      t.keywords,                       // text[] — pass array directly, no JSON.stringify
+      t.keywords, // text[] — pass array directly, no JSON.stringify
       t.notificationPriority,
       JSON.stringify(t.trustedSources), // jsonb — stringify required
     ]);
@@ -6759,12 +7723,16 @@ async function ensureKnowledgeTopics(
          (id, topic_name, category, description, keywords,
           notification_priority, trusted_sources, enabled, tier, created_at)
        VALUES ${placeholders}`,
-      params
+      params,
     );
 
-    log(`Knowledge topics integrity guard: ${newTopics.length} inserted, ${existing.size} already present (seed: ${KNOWLEDGE_LIBRARY_SEED.length})`);
+    log(
+      `Knowledge topics integrity guard: ${newTopics.length} inserted, ${existing.size} already present (seed: ${KNOWLEDGE_LIBRARY_SEED.length})`,
+    );
   } catch (err: unknown) {
-    warn(`Knowledge topics integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Knowledge topics integrity guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6773,11 +7741,11 @@ async function ensureKnowledgeTopics(
 // Deduplicates by lower(name)|lower(city)|lower(state) — safe to run on every boot.
 async function ensureFounderCuratedBusinesses(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
 
@@ -6786,7 +7754,10 @@ async function ensureFounderCuratedBusinesses(
 
     for (const b of FOUNDER_CURATED_BUSINESSES_SEED) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -6815,24 +7786,35 @@ async function ensureFounderCuratedBusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory ?? b.category,
-            b.address, b.city, b.state,
+            b.name,
+            b.category,
+            b.subcategory ?? b.category,
+            b.address,
+            b.city,
+            b.state,
             b.description,
             JSON.stringify(b.ownershipDesignations),
             b.blackOwned,
-            b.latitude ?? null, b.longitude ?? null,
-          ]
+            b.latitude ?? null,
+            b.longitude ?? null,
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Curated businesses guard: failed to insert ${b.name} (${b.city}): ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Curated businesses guard: failed to insert ${b.name} (${b.city}): ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Founder-curated businesses guard: ${inserted} inserted, ${skipped} already present`);
+    log(
+      `Founder-curated businesses guard: ${inserted} inserted, ${skipped} already present`,
+    );
   } catch (err: unknown) {
-    warn(`Founder-curated businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Founder-curated businesses guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -6872,48 +7854,60 @@ async function ensurePhiladelphiaKnowledgeGraph(
     }
 
     // ── 2. Seed 7 subject subtopics ─────────────────────────────────────────
-    const subtopics: Array<{ title: string; category: string; subcategory: string; description: string }> = [
+    const subtopics: Array<{
+      title: string;
+      category: string;
+      subcategory: string;
+      description: string;
+    }> = [
       {
         title: "Philadelphia History",
         category: "history",
         subcategory: "city_history",
-        description: "The full arc of Philadelphia history — from colonial founding and the Constitutional Convention to its role as a gateway city for Black Americans during Reconstruction and the Great Migration.",
+        description:
+          "The full arc of Philadelphia history — from colonial founding and the Constitutional Convention to its role as a gateway city for Black Americans during Reconstruction and the Great Migration.",
       },
       {
         title: "Philadelphia Black History",
         category: "history",
         subcategory: "black_history",
-        description: "The deep story of Black Philadelphia — from the Free African Society (1787) and Mother Bethel AME to the Harlem Renaissance figures who came through, the civil rights era, and the cultural institutions that preserved community memory.",
+        description:
+          "The deep story of Black Philadelphia — from the Free African Society (1787) and Mother Bethel AME to the Harlem Renaissance figures who came through, the civil rights era, and the cultural institutions that preserved community memory.",
       },
       {
         title: "Philadelphia Nightlife",
         category: "entertainment",
         subcategory: "nightlife",
-        description: "Philadelphia's music venues, jazz clubs, rooftop bars, and nightlife corridors — including the historic legacy of South Street, the Black club scene, and the city's current entertainment landscape.",
+        description:
+          "Philadelphia's music venues, jazz clubs, rooftop bars, and nightlife corridors — including the historic legacy of South Street, the Black club scene, and the city's current entertainment landscape.",
       },
       {
         title: "Philadelphia Employment",
         category: "business",
         subcategory: "employment",
-        description: "Jobs, workforce development, and economic opportunity in Philadelphia — including historically Black professional networks, union history, and the city's current labor market for community members.",
+        description:
+          "Jobs, workforce development, and economic opportunity in Philadelphia — including historically Black professional networks, union history, and the city's current labor market for community members.",
       },
       {
         title: "Philadelphia Real Estate",
         category: "housing",
         subcategory: "real_estate",
-        description: "Housing, homeownership, and real estate in Philadelphia — including gentrification patterns in historically Black neighborhoods, first-time homebuyer resources, and the history of redlining in the city.",
+        description:
+          "Housing, homeownership, and real estate in Philadelphia — including gentrification patterns in historically Black neighborhoods, first-time homebuyer resources, and the history of redlining in the city.",
       },
       {
         title: "Philadelphia Faith",
         category: "faith",
         subcategory: "religious_community",
-        description: "Philadelphia's rich tradition of Black religious life — from Mother Bethel AME (founded 1794) and the historic Baptist churches to contemporary megachurches and the city's diverse faith communities.",
+        description:
+          "Philadelphia's rich tradition of Black religious life — from Mother Bethel AME (founded 1794) and the historic Baptist churches to contemporary megachurches and the city's diverse faith communities.",
       },
       {
         title: "Philadelphia Businesses",
         category: "business",
         subcategory: "local_business",
-        description: "Minority-owned and community businesses in Philadelphia — the restaurants, salons, bookstores, health providers, and professional services that make up the economic backbone of Black Philadelphia.",
+        description:
+          "Minority-owned and community businesses in Philadelphia — the restaurants, salons, bookstores, health providers, and professional services that make up the economic backbone of Black Philadelphia.",
       },
     ];
 
@@ -6957,7 +7951,7 @@ async function ensurePhiladelphiaKnowledgeGraph(
 
     // Cross-link Black History ↔ Faith (both rooted in the same AME founding)
     const blackHistId = subtopicIds[1]; // Philadelphia Black History
-    const faithId     = subtopicIds[5]; // Philadelphia Faith
+    const faithId = subtopicIds[5]; // Philadelphia Faith
     await pool.query(
       `INSERT INTO topic_relationships
          (id, parent_topic_id, child_topic_id, relationship_type, weight)
@@ -6967,7 +7961,9 @@ async function ensurePhiladelphiaKnowledgeGraph(
     );
 
     log(`Knowledge graph: Philadelphia node confirmed (id=${phillyId})`);
-    log(`Knowledge graph: subtopics — ${topicsInserted} inserted, ${topicsSkipped} already present`);
+    log(
+      `Knowledge graph: subtopics — ${topicsInserted} inserted, ${topicsSkipped} already present`,
+    );
     log(`Knowledge graph: relationships — ${relsInserted + 1} upserted`);
 
     // ── 4. Connect Mother Bethel AME to multiple topics (no new entity row) ─
@@ -6998,9 +7994,13 @@ async function ensurePhiladelphiaKnowledgeGraph(
         );
         mbConnections++;
       }
-      log(`Knowledge graph: Mother Bethel AME connected to ${mbConnections} topics`);
+      log(
+        `Knowledge graph: Mother Bethel AME connected to ${mbConnections} topics`,
+      );
     } else {
-      warn("Knowledge graph: Mother Bethel AME not found in cultural_sites — skipping entity connections");
+      warn(
+        "Knowledge graph: Mother Bethel AME not found in cultural_sites — skipping entity connections",
+      );
     }
 
     // ── 5. Seed knowledge_sources — REAL sources only.
@@ -7039,13 +8039,16 @@ async function ensurePhiladelphiaKnowledgeGraph(
     // evidence_section explains exactly what the source page covers and how directly
     // it supports the specific claim — honest about any gap between URL and claim text.
     // This is the claim-to-source standard (Layer 3 provenance rule).
-    const sourceMetadata: Record<string, { evidence_section: string; confidence: string }> = {
-      "authoritative": {
+    const sourceMetadata: Record<
+      string,
+      { evidence_section: string; confidence: string }
+    > = {
+      authoritative: {
         evidence_section:
           "Slavery and Freedom exhibition — covers Free African Society (1787) and early Black institutional life; broader NMAAHC collection includes Mother Bethel AME artifacts. Claim accuracy: well-corroborated across NMAAHC, NPS Independence Park, and Library of Congress records. Specific page may not name Philadelphia institutions on its landing view — claim is accurate and institution-supported but not directly cited from a single paragraph on this URL.",
         confidence: "high",
       },
-      "professional": {
+      professional: {
         evidence_section:
           "Full digitized text available. The Philadelphia Negro (1899) Chapter 1 establishes the 7th Ward study scope; Chapters 2-4 document the history of the Black community in Philadelphia including institutional founding. Du Bois explicitly identifies Mother Bethel and the Free African Society as foundational institutions. This claim is directly and specifically supported by the primary source.",
         confidence: "verified",
@@ -7059,15 +8062,26 @@ async function ensurePhiladelphiaKnowledgeGraph(
          WHERE topic_id=$1 AND authority_tier=$2 AND source_name=$3 LIMIT 1`,
         [bhistId, s.tier, s.name],
       );
-      const meta = sourceMetadata[s.tier] ?? { evidence_section: null, confidence: "unverified" };
+      const meta = sourceMetadata[s.tier] ?? {
+        evidence_section: null,
+        confidence: "unverified",
+      };
       if (existing2.rows.length === 0) {
         await pool.query(
           `INSERT INTO knowledge_sources
              (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status,
               evidence_section, confidence, retrieved_at)
            VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, 'active', $7, $8, NOW())`,
-          [bhistId, s.tier, s.name, s.url, s.claim, s.is_primary,
-           meta.evidence_section, meta.confidence],
+          [
+            bhistId,
+            s.tier,
+            s.name,
+            s.url,
+            s.claim,
+            s.is_primary,
+            meta.evidence_section,
+            meta.confidence,
+          ],
         );
         sourcesInserted++;
       } else {
@@ -7082,10 +8096,13 @@ async function ensurePhiladelphiaKnowledgeGraph(
         );
       }
     }
-    log(`Knowledge graph: ${sourcesInserted} real knowledge_sources seeded (authoritative + professional; community/ambassador tiers populated only from real contributions)`);
-
+    log(
+      `Knowledge graph: ${sourcesInserted} real knowledge_sources seeded (authoritative + professional; community/ambassador tiers populated only from real contributions)`,
+    );
   } catch (err: unknown) {
-    warn(`Knowledge graph seeding failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Knowledge graph seeding failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -7112,8 +8129,13 @@ async function ensureLibraryContentActivation_v1(
 
     // Helper: seed source for a Book with stable short ID
     const sb = async (
-      topicId: string, tier: string, name: string, url: string | null,
-      claim: string | null, isPrimary: boolean, conf = "verified",
+      topicId: string,
+      tier: string,
+      name: string,
+      url: string | null,
+      claim: string | null,
+      isPrimary: boolean,
+      conf = "verified",
     ) => {
       const r = await pool.query(
         `INSERT INTO knowledge_sources
@@ -7127,8 +8149,13 @@ async function ensureLibraryContentActivation_v1(
 
     // Helper: seed source for a general topic looked up by name
     const st = async (
-      topicName: string, tier: string, name: string, url: string | null,
-      claim: string | null, isPrimary: boolean, conf = "verified",
+      topicName: string,
+      tier: string,
+      name: string,
+      url: string | null,
+      claim: string | null,
+      isPrimary: boolean,
+      conf = "verified",
     ) => {
       const r = await pool.query(
         `INSERT INTO knowledge_sources
@@ -7152,19 +8179,43 @@ async function ensureLibraryContentActivation_v1(
         AND category = 'country'
     `);
     // Bangkok and Phuket are cities, not countries
-    await pool.query(`UPDATE knowledge_topics SET geography_ref='Bangkok,Thailand',category='geography' WHERE topic_name='Bangkok' AND node_type='geography'`);
-    await pool.query(`UPDATE knowledge_topics SET geography_ref='Phuket,Thailand',category='geography' WHERE topic_name='Phuket' AND node_type='geography'`);
-    await pool.query(`UPDATE knowledge_topics SET geography_ref='Thailand' WHERE topic_name='Thailand' AND (geography_ref IS NULL OR geography_ref='')`);
+    await pool.query(
+      `UPDATE knowledge_topics SET geography_ref='Bangkok,Thailand',category='geography' WHERE topic_name='Bangkok' AND node_type='geography'`,
+    );
+    await pool.query(
+      `UPDATE knowledge_topics SET geography_ref='Phuket,Thailand',category='geography' WHERE topic_name='Phuket' AND node_type='geography'`,
+    );
+    await pool.query(
+      `UPDATE knowledge_topics SET geography_ref='Thailand' WHERE topic_name='Thailand' AND (geography_ref IS NULL OR geography_ref='')`,
+    );
     log("Library activation: geography_refs fixed");
 
     // ── Step 2: Connect general topics to parent Collections ─────────────────
     const catToCollection: [string, string][] = [
-      ["business","coll_business"],["financial","coll_business"],["digital","coll_business"],["skills_trades","coll_careers"],
-      ["employment","coll_careers"],["legal","coll_careers"],["community","coll_community"],["community_culture","coll_culture"],
-      ["diaspora","coll_culture"],["education","coll_education"],["faith","coll_faith"],["history","coll_history"],
-      ["health","coll_health"],["recovery","coll_health"],["travel","coll_travel"],["relocation","coll_travel"],
-      ["country","coll_places"],["geography","coll_places"],["safety","coll_community"],["home","coll_community"],
-      ["housing","coll_community"],["family","coll_community"],["entertainment","coll_community"],["lifestyle","coll_community"],
+      ["business", "coll_business"],
+      ["financial", "coll_business"],
+      ["digital", "coll_business"],
+      ["skills_trades", "coll_careers"],
+      ["employment", "coll_careers"],
+      ["legal", "coll_careers"],
+      ["community", "coll_community"],
+      ["community_culture", "coll_culture"],
+      ["diaspora", "coll_culture"],
+      ["education", "coll_education"],
+      ["faith", "coll_faith"],
+      ["history", "coll_history"],
+      ["health", "coll_health"],
+      ["recovery", "coll_health"],
+      ["travel", "coll_travel"],
+      ["relocation", "coll_travel"],
+      ["country", "coll_places"],
+      ["geography", "coll_places"],
+      ["safety", "coll_community"],
+      ["home", "coll_community"],
+      ["housing", "coll_community"],
+      ["family", "coll_community"],
+      ["entertainment", "coll_community"],
+      ["lifestyle", "coll_community"],
     ];
     for (const [cat, collId] of catToCollection) {
       await pool.query(
@@ -7187,181 +8238,905 @@ async function ensureLibraryContentActivation_v1(
     log("Library activation: general topics connected to Collections");
 
     // ── Step 3: Seed knowledge_sources for Divine Nine Books ─────────────────
-    await sb("book_d9_aka","authoritative","Alpha Kappa Alpha Sorority, Inc. — Official Site","https://aka1908.org","Alpha Kappa Alpha Sorority, Incorporated was founded January 15, 1908 at Howard University — the first intercollegiate Greek-letter sorority established by African American college women. Over 300,000 members in 1,042 chapters worldwide.",true);
-    await sb("book_d9_aka","authoritative","Smithsonian NMAAHC","https://nmaahc.si.edu","The Smithsonian documents AKA's century of service including healthcare initiatives, education advocacy, and civil rights leadership.",false);
+    await sb(
+      "book_d9_aka",
+      "authoritative",
+      "Alpha Kappa Alpha Sorority, Inc. — Official Site",
+      "https://aka1908.org",
+      "Alpha Kappa Alpha Sorority, Incorporated was founded January 15, 1908 at Howard University — the first intercollegiate Greek-letter sorority established by African American college women. Over 300,000 members in 1,042 chapters worldwide.",
+      true,
+    );
+    await sb(
+      "book_d9_aka",
+      "authoritative",
+      "Smithsonian NMAAHC",
+      "https://nmaahc.si.edu",
+      "The Smithsonian documents AKA's century of service including healthcare initiatives, education advocacy, and civil rights leadership.",
+      false,
+    );
 
-    await sb("book_d9_apa","authoritative","Alpha Phi Alpha Fraternity, Inc. — Official Site","https://www.alphaphialpha.net","Alpha Phi Alpha was founded December 4, 1906 at Cornell University — the first African American intercollegiate Greek-letter fraternity. Members include Dr. Martin Luther King Jr., Thurgood Marshall, and Jesse Owens.",true);
-    await sb("book_d9_apa","professional","Cornell University Library — Rare & Manuscript Collections","https://rmc.library.cornell.edu","Cornell's archives preserve the fraternity's founding documents, early correspondence, and historical records from its establishment at Cornell.",false,"high");
+    await sb(
+      "book_d9_apa",
+      "authoritative",
+      "Alpha Phi Alpha Fraternity, Inc. — Official Site",
+      "https://www.alphaphialpha.net",
+      "Alpha Phi Alpha was founded December 4, 1906 at Cornell University — the first African American intercollegiate Greek-letter fraternity. Members include Dr. Martin Luther King Jr., Thurgood Marshall, and Jesse Owens.",
+      true,
+    );
+    await sb(
+      "book_d9_apa",
+      "professional",
+      "Cornell University Library — Rare & Manuscript Collections",
+      "https://rmc.library.cornell.edu",
+      "Cornell's archives preserve the fraternity's founding documents, early correspondence, and historical records from its establishment at Cornell.",
+      false,
+      "high",
+    );
 
-    await sb("book_d9_kap","authoritative","Kappa Alpha Psi Fraternity, Inc. — Official Site","https://www.kappaalphapsi1911.com","Kappa Alpha Psi was founded January 5, 1911 at Indiana University. The fraternity's motto is Achievement in Every Field of Human Endeavor. Over 150,000 members in 700+ chapters.",true);
+    await sb(
+      "book_d9_kap",
+      "authoritative",
+      "Kappa Alpha Psi Fraternity, Inc. — Official Site",
+      "https://www.kappaalphapsi1911.com",
+      "Kappa Alpha Psi was founded January 5, 1911 at Indiana University. The fraternity's motto is Achievement in Every Field of Human Endeavor. Over 150,000 members in 700+ chapters.",
+      true,
+    );
 
-    await sb("book_d9_oop","authoritative","Omega Psi Phi Fraternity, Inc. — Official Site","https://www.omegapsiphifraternity.org","Omega Psi Phi was founded November 17, 1911 at Howard University by Edgar Amos Love, Oscar James Cooper, Frank Coleman, and Dr. Ernest Everett Just. The first Greek-letter fraternity founded at an HBCU.",true);
+    await sb(
+      "book_d9_oop",
+      "authoritative",
+      "Omega Psi Phi Fraternity, Inc. — Official Site",
+      "https://www.omegapsiphifraternity.org",
+      "Omega Psi Phi was founded November 17, 1911 at Howard University by Edgar Amos Love, Oscar James Cooper, Frank Coleman, and Dr. Ernest Everett Just. The first Greek-letter fraternity founded at an HBCU.",
+      true,
+    );
 
-    await sb("book_d9_dst","authoritative","Delta Sigma Theta Sorority, Inc. — Official Site","https://www.deltasigmatheta.org","Delta Sigma Theta was founded January 13, 1913 at Howard University by 22 collegiate women. A sisterhood of predominantly Black, college-educated women committed to public service. Over 350,000 members worldwide.",true);
+    await sb(
+      "book_d9_dst",
+      "authoritative",
+      "Delta Sigma Theta Sorority, Inc. — Official Site",
+      "https://www.deltasigmatheta.org",
+      "Delta Sigma Theta was founded January 13, 1913 at Howard University by 22 collegiate women. A sisterhood of predominantly Black, college-educated women committed to public service. Over 350,000 members worldwide.",
+      true,
+    );
 
-    await sb("book_d9_pbs","authoritative","Phi Beta Sigma Fraternity, Inc. — Official Site","https://www.phibetasigma1914.org","Phi Beta Sigma was founded January 9, 1914 at Howard University on the ideals of Brotherhood, Scholarship, and Service. The only fraternity constitutionally bound to a sorority (Zeta Phi Beta).",true);
+    await sb(
+      "book_d9_pbs",
+      "authoritative",
+      "Phi Beta Sigma Fraternity, Inc. — Official Site",
+      "https://www.phibetasigma1914.org",
+      "Phi Beta Sigma was founded January 9, 1914 at Howard University on the ideals of Brotherhood, Scholarship, and Service. The only fraternity constitutionally bound to a sorority (Zeta Phi Beta).",
+      true,
+    );
 
-    await sb("book_d9_zpb","authoritative","Zeta Phi Beta Sorority, Inc. — Official Site","https://www.zphib1920.org","Zeta Phi Beta was founded January 16, 1920 at Howard University — the first sorority to charter a chapter in Africa, establish auxiliary groups, and be constitutionally bound to a fraternity (Phi Beta Sigma).",true);
+    await sb(
+      "book_d9_zpb",
+      "authoritative",
+      "Zeta Phi Beta Sorority, Inc. — Official Site",
+      "https://www.zphib1920.org",
+      "Zeta Phi Beta was founded January 16, 1920 at Howard University — the first sorority to charter a chapter in Africa, establish auxiliary groups, and be constitutionally bound to a fraternity (Phi Beta Sigma).",
+      true,
+    );
 
-    await sb("book_d9_sgr","authoritative","Sigma Gamma Rho Sorority, Inc. — Official Site","https://www.sgrho1922.org","Sigma Gamma Rho was founded November 12, 1922 at Butler University in Indianapolis — the only Divine Nine sorority not founded at an HBCU. Over 100,000 members across 500+ chapters.",true);
+    await sb(
+      "book_d9_sgr",
+      "authoritative",
+      "Sigma Gamma Rho Sorority, Inc. — Official Site",
+      "https://www.sgrho1922.org",
+      "Sigma Gamma Rho was founded November 12, 1922 at Butler University in Indianapolis — the only Divine Nine sorority not founded at an HBCU. Over 100,000 members across 500+ chapters.",
+      true,
+    );
 
-    await sb("book_d9_ipt","authoritative","Iota Phi Theta Fraternity, Inc. — Official Site","https://www.iotaphitheta.org","Iota Phi Theta was founded September 19, 1963 at Morgan State University — the youngest of the Divine Nine organizations, founded during the height of the Civil Rights Movement.",true);
+    await sb(
+      "book_d9_ipt",
+      "authoritative",
+      "Iota Phi Theta Fraternity, Inc. — Official Site",
+      "https://www.iotaphitheta.org",
+      "Iota Phi Theta was founded September 19, 1963 at Morgan State University — the youngest of the Divine Nine organizations, founded during the height of the Civil Rights Movement.",
+      true,
+    );
 
     log("Library activation: Divine Nine sources seeded");
 
     // ── Step 4: Seed knowledge_sources for Health Books ──────────────────────
-    await sb("book_h_diabetes","authoritative","CDC — Diabetes and African Americans","https://www.cdc.gov/diabetes/library/features/diabetes-african-americans.html","Black adults are 60% more likely to be diagnosed with diabetes compared to non-Hispanic white adults, and face higher rates of kidney disease, blindness, and amputation as complications.",true);
-    await sb("book_h_diabetes","authoritative","National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)","https://www.niddk.nih.gov","NIDDK supports research and provides evidence-based information on diabetes prevention, management, and treatment — including culturally tailored resources.",false);
-    await sb("book_h_diabetes","professional","American Diabetes Association","https://www.diabetes.org","The ADA funds research, advocates for people with diabetes, and publishes clinical guidelines for care. The Standards of Medical Care in Diabetes is the field's definitive reference.",false,"high");
+    await sb(
+      "book_h_diabetes",
+      "authoritative",
+      "CDC — Diabetes and African Americans",
+      "https://www.cdc.gov/diabetes/library/features/diabetes-african-americans.html",
+      "Black adults are 60% more likely to be diagnosed with diabetes compared to non-Hispanic white adults, and face higher rates of kidney disease, blindness, and amputation as complications.",
+      true,
+    );
+    await sb(
+      "book_h_diabetes",
+      "authoritative",
+      "National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)",
+      "https://www.niddk.nih.gov",
+      "NIDDK supports research and provides evidence-based information on diabetes prevention, management, and treatment — including culturally tailored resources.",
+      false,
+    );
+    await sb(
+      "book_h_diabetes",
+      "professional",
+      "American Diabetes Association",
+      "https://www.diabetes.org",
+      "The ADA funds research, advocates for people with diabetes, and publishes clinical guidelines for care. The Standards of Medical Care in Diabetes is the field's definitive reference.",
+      false,
+      "high",
+    );
 
-    await sb("book_h_maternal","authoritative","CDC — Racial and Ethnic Disparities in Pregnancy-Related Deaths","https://www.cdc.gov/reproductivehealth/maternal-mortality/disparities.html","Black women are approximately 2.6 times more likely to die from pregnancy-related causes than white women. This disparity persists across income and education levels.",true);
-    await sb("book_h_maternal","authoritative","HHS Office of Minority Health — Black/African American Women's Health","https://minorityhealth.hhs.gov/omh/browse.aspx?lvl=4&lvlid=19","The Office of Minority Health provides data and resources on maternal mortality, prenatal care disparities, doula access, and programs addressing the Black maternal health crisis.",false);
-    await sb("book_h_maternal","professional","American College of Obstetricians and Gynecologists (ACOG)","https://www.acog.org","ACOG's equity work addresses persistent disparities in maternal outcomes faced by Black women, including initiatives on implicit bias training and expanded doula reimbursement.",false,"high");
+    await sb(
+      "book_h_maternal",
+      "authoritative",
+      "CDC — Racial and Ethnic Disparities in Pregnancy-Related Deaths",
+      "https://www.cdc.gov/reproductivehealth/maternal-mortality/disparities.html",
+      "Black women are approximately 2.6 times more likely to die from pregnancy-related causes than white women. This disparity persists across income and education levels.",
+      true,
+    );
+    await sb(
+      "book_h_maternal",
+      "authoritative",
+      "HHS Office of Minority Health — Black/African American Women's Health",
+      "https://minorityhealth.hhs.gov/omh/browse.aspx?lvl=4&lvlid=19",
+      "The Office of Minority Health provides data and resources on maternal mortality, prenatal care disparities, doula access, and programs addressing the Black maternal health crisis.",
+      false,
+    );
+    await sb(
+      "book_h_maternal",
+      "professional",
+      "American College of Obstetricians and Gynecologists (ACOG)",
+      "https://www.acog.org",
+      "ACOG's equity work addresses persistent disparities in maternal outcomes faced by Black women, including initiatives on implicit bias training and expanded doula reimbursement.",
+      false,
+      "high",
+    );
 
-    await sb("book_h_mental","authoritative","SAMHSA — Behavioral Health Among African Americans","https://www.samhsa.gov/behavioral-health-equity/racial-ethnic-minority-populations/african-american-behavioral-health","Black Americans face unique mental health challenges tied to historical trauma and ongoing discrimination, yet are less likely to receive mental health care due to stigma, cost, and access barriers.",true);
-    await sb("book_h_mental","authoritative","National Institute of Mental Health (NIMH)","https://www.nimh.nih.gov","NIMH provides evidence-based information on mental health conditions, culturally informed treatment approaches, and resources for finding culturally competent therapists.",false);
-    await sb("book_h_mental","professional","American Psychological Association — Racism and Mental Health","https://www.apa.org/topics/racism-bias-discrimination/ptsd-racial-ethnic-minorities","The APA documents the psychological impacts of racism and discrimination and publishes guidelines for culturally responsive mental health care.",false,"high");
+    await sb(
+      "book_h_mental",
+      "authoritative",
+      "SAMHSA — Behavioral Health Among African Americans",
+      "https://www.samhsa.gov/behavioral-health-equity/racial-ethnic-minority-populations/african-american-behavioral-health",
+      "Black Americans face unique mental health challenges tied to historical trauma and ongoing discrimination, yet are less likely to receive mental health care due to stigma, cost, and access barriers.",
+      true,
+    );
+    await sb(
+      "book_h_mental",
+      "authoritative",
+      "National Institute of Mental Health (NIMH)",
+      "https://www.nimh.nih.gov",
+      "NIMH provides evidence-based information on mental health conditions, culturally informed treatment approaches, and resources for finding culturally competent therapists.",
+      false,
+    );
+    await sb(
+      "book_h_mental",
+      "professional",
+      "American Psychological Association — Racism and Mental Health",
+      "https://www.apa.org/topics/racism-bias-discrimination/ptsd-racial-ethnic-minorities",
+      "The APA documents the psychological impacts of racism and discrimination and publishes guidelines for culturally responsive mental health care.",
+      false,
+      "high",
+    );
 
-    await sb("book_h_fertility","authoritative","American Society for Reproductive Medicine (ASRM)","https://www.reproductivefacts.org","ASRM provides patient-centered information on fertility evaluation, causes of infertility, and the full range of treatment options. Its fact sheets are the field's standard patient resources.",true);
-    await sb("book_h_fertility","authoritative","NICHD — Infertility Research","https://www.nichd.nih.gov/health/topics/infertility","The Eunice Kennedy Shriver National Institute of Child Health and Human Development conducts and funds research on causes of infertility and factors affecting reproductive health across communities.",false);
+    await sb(
+      "book_h_fertility",
+      "authoritative",
+      "American Society for Reproductive Medicine (ASRM)",
+      "https://www.reproductivefacts.org",
+      "ASRM provides patient-centered information on fertility evaluation, causes of infertility, and the full range of treatment options. Its fact sheets are the field's standard patient resources.",
+      true,
+    );
+    await sb(
+      "book_h_fertility",
+      "authoritative",
+      "NICHD — Infertility Research",
+      "https://www.nichd.nih.gov/health/topics/infertility",
+      "The Eunice Kennedy Shriver National Institute of Child Health and Human Development conducts and funds research on causes of infertility and factors affecting reproductive health across communities.",
+      false,
+    );
 
-    await sb("book_h_ivf","authoritative","RESOLVE: The National Infertility Association","https://resolve.org","RESOLVE provides comprehensive resources on IVF and assisted reproductive technology, including a clinic finder, cost guides, insurance navigation support, and community forums.",true);
-    await sb("book_h_ivf","authoritative","ASRM — In Vitro Fertilization Patient Guide","https://www.reproductivefacts.org","ASRM's patient guide explains the IVF process step by step — from ovarian stimulation through embryo transfer — including success rates by age, costs, and what to ask your clinic.",false);
+    await sb(
+      "book_h_ivf",
+      "authoritative",
+      "RESOLVE: The National Infertility Association",
+      "https://resolve.org",
+      "RESOLVE provides comprehensive resources on IVF and assisted reproductive technology, including a clinic finder, cost guides, insurance navigation support, and community forums.",
+      true,
+    );
+    await sb(
+      "book_h_ivf",
+      "authoritative",
+      "ASRM — In Vitro Fertilization Patient Guide",
+      "https://www.reproductivefacts.org",
+      "ASRM's patient guide explains the IVF process step by step — from ovarian stimulation through embryo transfer — including success rates by age, costs, and what to ask your clinic.",
+      false,
+    );
 
-    await sb("book_h_fibroids","authoritative","NICHD — Uterine Fibroids","https://www.nichd.nih.gov/health/topics/uterine","Black women are 2 to 3 times more likely to develop uterine fibroids, tend to develop them earlier, have more numerous fibroids, and experience more severe symptoms than white women.",true);
-    await sb("book_h_fibroids","authoritative","HHS Office on Women's Health — Uterine Fibroids","https://www.womenshealth.gov/a-z-topics/uterine-fibroids","The OWH provides comprehensive patient information on fibroid symptoms, diagnosis methods, and the full range of treatment options from medication to surgery.",false);
+    await sb(
+      "book_h_fibroids",
+      "authoritative",
+      "NICHD — Uterine Fibroids",
+      "https://www.nichd.nih.gov/health/topics/uterine",
+      "Black women are 2 to 3 times more likely to develop uterine fibroids, tend to develop them earlier, have more numerous fibroids, and experience more severe symptoms than white women.",
+      true,
+    );
+    await sb(
+      "book_h_fibroids",
+      "authoritative",
+      "HHS Office on Women's Health — Uterine Fibroids",
+      "https://www.womenshealth.gov/a-z-topics/uterine-fibroids",
+      "The OWH provides comprehensive patient information on fibroid symptoms, diagnosis methods, and the full range of treatment options from medication to surgery.",
+      false,
+    );
 
-    await sb("book_h_endometriosis","authoritative","Endometriosis Foundation of America","https://www.endofound.org","The Endometriosis Foundation educates, advocates, and funds research on endometriosis — a condition affecting ~1 in 10 women of reproductive age that causes chronic pain and fertility challenges.",true);
-    await sb("book_h_endometriosis","authoritative","HHS Office on Women's Health — Endometriosis","https://www.womenshealth.gov/a-z-topics/endometriosis","OWH provides evidence-based information on endometriosis symptoms, diagnostic challenges (average 7-year diagnosis delay), and treatment options.",false);
+    await sb(
+      "book_h_endometriosis",
+      "authoritative",
+      "Endometriosis Foundation of America",
+      "https://www.endofound.org",
+      "The Endometriosis Foundation educates, advocates, and funds research on endometriosis — a condition affecting ~1 in 10 women of reproductive age that causes chronic pain and fertility challenges.",
+      true,
+    );
+    await sb(
+      "book_h_endometriosis",
+      "authoritative",
+      "HHS Office on Women's Health — Endometriosis",
+      "https://www.womenshealth.gov/a-z-topics/endometriosis",
+      "OWH provides evidence-based information on endometriosis symptoms, diagnostic challenges (average 7-year diagnosis delay), and treatment options.",
+      false,
+    );
 
-    await sb("book_h_sickle_cell","authoritative","CDC — Sickle Cell Disease","https://www.cdc.gov/ncbddd/sicklecell/index.html","Sickle cell disease affects approximately 100,000 Americans — predominantly Black Americans. About 1 in 365 Black children is born with SCD. About 1 in 13 Black Americans is born with sickle cell trait.",true);
-    await sb("book_h_sickle_cell","authoritative","National Heart, Lung, and Blood Institute (NHLBI)","https://www.nhlbi.nih.gov/health/sickle-cell-disease","NHLBI provides research-backed information on SCD causes, symptoms, diagnosis, treatment advances including hydroxyurea and gene therapy, and resources for patients and families.",false);
+    await sb(
+      "book_h_sickle_cell",
+      "authoritative",
+      "CDC — Sickle Cell Disease",
+      "https://www.cdc.gov/ncbddd/sicklecell/index.html",
+      "Sickle cell disease affects approximately 100,000 Americans — predominantly Black Americans. About 1 in 365 Black children is born with SCD. About 1 in 13 Black Americans is born with sickle cell trait.",
+      true,
+    );
+    await sb(
+      "book_h_sickle_cell",
+      "authoritative",
+      "National Heart, Lung, and Blood Institute (NHLBI)",
+      "https://www.nhlbi.nih.gov/health/sickle-cell-disease",
+      "NHLBI provides research-backed information on SCD causes, symptoms, diagnosis, treatment advances including hydroxyurea and gene therapy, and resources for patients and families.",
+      false,
+    );
 
-    await sb("book_h_breast_cancer","authoritative","American Cancer Society — Breast Cancer in African American Women","https://www.cancer.org/cancer/breast-cancer/understanding-a-breast-cancer-diagnosis/breast-cancer-in-african-american-women.html","Black women have a higher rate of dying from breast cancer than white women. Triple-negative breast cancer — more aggressive and harder to treat — is more common among Black women.",true);
-    await sb("book_h_breast_cancer","authoritative","CDC — Breast Cancer Statistics","https://www.cdc.gov/cancer/breast/statistics/index.htm","CDC provides breast cancer statistics broken down by race and ethnicity, and publishes screening guidelines and resources for understanding individual risk.",false);
+    await sb(
+      "book_h_breast_cancer",
+      "authoritative",
+      "American Cancer Society — Breast Cancer in African American Women",
+      "https://www.cancer.org/cancer/breast-cancer/understanding-a-breast-cancer-diagnosis/breast-cancer-in-african-american-women.html",
+      "Black women have a higher rate of dying from breast cancer than white women. Triple-negative breast cancer — more aggressive and harder to treat — is more common among Black women.",
+      true,
+    );
+    await sb(
+      "book_h_breast_cancer",
+      "authoritative",
+      "CDC — Breast Cancer Statistics",
+      "https://www.cdc.gov/cancer/breast/statistics/index.htm",
+      "CDC provides breast cancer statistics broken down by race and ethnicity, and publishes screening guidelines and resources for understanding individual risk.",
+      false,
+    );
 
-    await sb("book_h_prostate","authoritative","CDC — Prostate Cancer and African American Men","https://www.cdc.gov/cancer/prostate/statistics/race.htm","Black men are 73% more likely to develop prostate cancer and more than twice as likely to die from it compared to non-Hispanic white men. Earlier screening conversations are critical.",true);
-    await sb("book_h_prostate","professional","American Cancer Society — Prostate Cancer Risk Factors","https://www.cancer.org/cancer/prostate-cancer/causes-risks-prevention/risk-factors.html","The ACS documents racial disparities in prostate cancer and provides guidance on when to begin screening discussions with your healthcare provider.",false,"high");
+    await sb(
+      "book_h_prostate",
+      "authoritative",
+      "CDC — Prostate Cancer and African American Men",
+      "https://www.cdc.gov/cancer/prostate/statistics/race.htm",
+      "Black men are 73% more likely to develop prostate cancer and more than twice as likely to die from it compared to non-Hispanic white men. Earlier screening conversations are critical.",
+      true,
+    );
+    await sb(
+      "book_h_prostate",
+      "professional",
+      "American Cancer Society — Prostate Cancer Risk Factors",
+      "https://www.cancer.org/cancer/prostate-cancer/causes-risks-prevention/risk-factors.html",
+      "The ACS documents racial disparities in prostate cancer and provides guidance on when to begin screening discussions with your healthcare provider.",
+      false,
+      "high",
+    );
 
-    await sb("book_h_hypertension","authoritative","CDC — High Blood Pressure and African Americans","https://www.cdc.gov/bloodpressure/about.htm","Black adults have among the highest rates of hypertension in the world — nearly 56% of Black adults have high blood pressure. They develop it earlier and more severely than white adults.",true);
-    await sb("book_h_hypertension","professional","American Heart Association — High Blood Pressure in African Americans","https://www.heart.org/en/health-topics/high-blood-pressure","The AHA provides clinical guidance on the unique cardiovascular risks Black Americans face and prevention and treatment recommendations including diet, medication, and monitoring.",false,"high");
+    await sb(
+      "book_h_hypertension",
+      "authoritative",
+      "CDC — High Blood Pressure and African Americans",
+      "https://www.cdc.gov/bloodpressure/about.htm",
+      "Black adults have among the highest rates of hypertension in the world — nearly 56% of Black adults have high blood pressure. They develop it earlier and more severely than white adults.",
+      true,
+    );
+    await sb(
+      "book_h_hypertension",
+      "professional",
+      "American Heart Association — High Blood Pressure in African Americans",
+      "https://www.heart.org/en/health-topics/high-blood-pressure",
+      "The AHA provides clinical guidance on the unique cardiovascular risks Black Americans face and prevention and treatment recommendations including diet, medication, and monitoring.",
+      false,
+      "high",
+    );
 
-    await sb("book_h_menopause","authoritative","The Menopause Society (formerly NAMS)","https://www.menopause.org","The Menopause Society is the leading nonprofit scientific organization dedicated to promoting the health of women during midlife and beyond — including evidence on racial disparities in menopause experience.",true);
-    await sb("book_h_menopause","authoritative","NICHD — Menopause and Racial/Ethnic Health","https://www.nichd.nih.gov/health/topics/menopause","Research shows Black women experience more severe hot flashes, higher rates of sleep disturbances, and higher reporting of depression during perimenopause compared to white women.",false);
+    await sb(
+      "book_h_menopause",
+      "authoritative",
+      "The Menopause Society (formerly NAMS)",
+      "https://www.menopause.org",
+      "The Menopause Society is the leading nonprofit scientific organization dedicated to promoting the health of women during midlife and beyond — including evidence on racial disparities in menopause experience.",
+      true,
+    );
+    await sb(
+      "book_h_menopause",
+      "authoritative",
+      "NICHD — Menopause and Racial/Ethnic Health",
+      "https://www.nichd.nih.gov/health/topics/menopause",
+      "Research shows Black women experience more severe hot flashes, higher rates of sleep disturbances, and higher reporting of depression during perimenopause compared to white women.",
+      false,
+    );
 
-    await sb("book_h_pcos","authoritative","NICHD — Polycystic Ovary Syndrome (PCOS)","https://www.nichd.nih.gov/health/topics/pcos","PCOS affects approximately 6–12% of U.S. women of reproductive age, making it one of the most common hormonal disorders. The NICHD funds research on its causes, symptoms, and treatments.",true);
-    await sb("book_h_pcos","professional","PCOS Awareness Association","https://www.pcosaa.org","The PCOS Awareness Association provides education and peer support resources for individuals living with polycystic ovary syndrome, including symptom tracking and treatment guidance.",false,"high");
+    await sb(
+      "book_h_pcos",
+      "authoritative",
+      "NICHD — Polycystic Ovary Syndrome (PCOS)",
+      "https://www.nichd.nih.gov/health/topics/pcos",
+      "PCOS affects approximately 6–12% of U.S. women of reproductive age, making it one of the most common hormonal disorders. The NICHD funds research on its causes, symptoms, and treatments.",
+      true,
+    );
+    await sb(
+      "book_h_pcos",
+      "professional",
+      "PCOS Awareness Association",
+      "https://www.pcosaa.org",
+      "The PCOS Awareness Association provides education and peer support resources for individuals living with polycystic ovary syndrome, including symptom tracking and treatment guidance.",
+      false,
+      "high",
+    );
 
     log("Library activation: Health Book sources seeded");
 
     // ── Step 5: Seed knowledge_sources for Faith Books ────────────────────────
-    await sb("book_f_ame","authoritative","African Methodist Episcopal Church — Official Site","https://www.ame-church.com","The African Methodist Episcopal Church was founded in 1816 by Bishop Richard Allen in Philadelphia, PA — the first independent Black denomination in the United States. The AME Church has played a central role in civil rights, education, and community life.",true);
-    await sb("book_f_ame","authoritative","Smithsonian NMAAHC — AME Church History","https://nmaahc.si.edu","The Smithsonian documents the AME Church's founding at Mother Bethel in Philadelphia and its pivotal role in the abolition movement, Underground Railroad, and civil rights.",false);
-    await sb("book_f_ame","professional","Library of Congress — AME Church Records","https://www.loc.gov","The Library of Congress holds historical AME records including early convention proceedings, missionary documentation, and correspondence from the church's founding era.",false,"high");
+    await sb(
+      "book_f_ame",
+      "authoritative",
+      "African Methodist Episcopal Church — Official Site",
+      "https://www.ame-church.com",
+      "The African Methodist Episcopal Church was founded in 1816 by Bishop Richard Allen in Philadelphia, PA — the first independent Black denomination in the United States. The AME Church has played a central role in civil rights, education, and community life.",
+      true,
+    );
+    await sb(
+      "book_f_ame",
+      "authoritative",
+      "Smithsonian NMAAHC — AME Church History",
+      "https://nmaahc.si.edu",
+      "The Smithsonian documents the AME Church's founding at Mother Bethel in Philadelphia and its pivotal role in the abolition movement, Underground Railroad, and civil rights.",
+      false,
+    );
+    await sb(
+      "book_f_ame",
+      "professional",
+      "Library of Congress — AME Church Records",
+      "https://www.loc.gov",
+      "The Library of Congress holds historical AME records including early convention proceedings, missionary documentation, and correspondence from the church's founding era.",
+      false,
+      "high",
+    );
 
-    await sb("book_f_baptist","authoritative","National Baptist Convention, USA, Inc. — Official Site","https://www.nationalbaptist.com","The National Baptist Convention is the largest Black religious denomination in the United States, with over 31,000 member churches and 7.5 million members. It was instrumental in the civil rights movement.",true);
-    await sb("book_f_baptist","professional","PBS — This Far by Faith Documentary","https://www.pbs.org/thisfarbyfaith","PBS This Far by Faith documents the Black Baptist tradition and its role in shaping African American community, culture, and the civil rights movement from slavery through the present.",false,"high");
+    await sb(
+      "book_f_baptist",
+      "authoritative",
+      "National Baptist Convention, USA, Inc. — Official Site",
+      "https://www.nationalbaptist.com",
+      "The National Baptist Convention is the largest Black religious denomination in the United States, with over 31,000 member churches and 7.5 million members. It was instrumental in the civil rights movement.",
+      true,
+    );
+    await sb(
+      "book_f_baptist",
+      "professional",
+      "PBS — This Far by Faith Documentary",
+      "https://www.pbs.org/thisfarbyfaith",
+      "PBS This Far by Faith documents the Black Baptist tradition and its role in shaping African American community, culture, and the civil rights movement from slavery through the present.",
+      false,
+      "high",
+    );
 
-    await sb("book_f_cogic","authoritative","Church of God in Christ — Official Site","https://www.cogic.org","COGIC is the largest Pentecostal denomination in the United States, founded in 1907 by Bishop Charles Harrison Mason in Memphis, TN. Known for worship culture, gospel music, and global community.",true);
+    await sb(
+      "book_f_cogic",
+      "authoritative",
+      "Church of God in Christ — Official Site",
+      "https://www.cogic.org",
+      "COGIC is the largest Pentecostal denomination in the United States, founded in 1907 by Bishop Charles Harrison Mason in Memphis, TN. Known for worship culture, gospel music, and global community.",
+      true,
+    );
 
-    await sb("book_f_black_cath","authoritative","National Black Catholic Congress","https://www.nbccongress.org","The National Black Catholic Congress is the representative voice for Black Catholics in America, tracing its roots to a series of congresses beginning in 1889. Over 3 million Black Catholics in the U.S.",true);
-    await sb("book_f_black_cath","professional","USCCB — Black Catholic History","https://www.usccb.org","The USCCB documents Black Catholic history and the contributions of historically Black Catholic institutions, parishes, and schools to African American community life.",false,"high");
+    await sb(
+      "book_f_black_cath",
+      "authoritative",
+      "National Black Catholic Congress",
+      "https://www.nbccongress.org",
+      "The National Black Catholic Congress is the representative voice for Black Catholics in America, tracing its roots to a series of congresses beginning in 1889. Over 3 million Black Catholics in the U.S.",
+      true,
+    );
+    await sb(
+      "book_f_black_cath",
+      "professional",
+      "USCCB — Black Catholic History",
+      "https://www.usccb.org",
+      "The USCCB documents Black Catholic history and the contributions of historically Black Catholic institutions, parishes, and schools to African American community life.",
+      false,
+      "high",
+    );
 
-    await sb("book_f_eth_orth","authoritative","Ethiopian Orthodox Tewahedo Church — Official Documentation","https://www.ethiopianorthodox.org","The Ethiopian Orthodox Tewahedo Church is one of the oldest Christian churches in the world, established in the 4th century AD. It uses the ancient Ge'ez liturgical language and follows the Alexandrian Rite.",true);
-    await sb("book_f_eth_orth","professional","Library of Congress — Ethiopian & Eritrean Collections","https://www.loc.gov/research-centers/african-and-middle-eastern-division","The Library of Congress African and Middle Eastern Division holds extensive resources on Ethiopian Orthodox history, canonical scripture, and diaspora communities in the U.S.",false,"high");
+    await sb(
+      "book_f_eth_orth",
+      "authoritative",
+      "Ethiopian Orthodox Tewahedo Church — Official Documentation",
+      "https://www.ethiopianorthodox.org",
+      "The Ethiopian Orthodox Tewahedo Church is one of the oldest Christian churches in the world, established in the 4th century AD. It uses the ancient Ge'ez liturgical language and follows the Alexandrian Rite.",
+      true,
+    );
+    await sb(
+      "book_f_eth_orth",
+      "professional",
+      "Library of Congress — Ethiopian & Eritrean Collections",
+      "https://www.loc.gov/research-centers/african-and-middle-eastern-division",
+      "The Library of Congress African and Middle Eastern Division holds extensive resources on Ethiopian Orthodox history, canonical scripture, and diaspora communities in the U.S.",
+      false,
+      "high",
+    );
 
-    await sb("book_f_islam","authoritative","Islamic Society of North America (ISNA)","https://www.isna.net","ISNA is one of the largest Muslim organizations in North America, serving as a platform for presenting Islam and providing resources connecting Muslims across communities.",true);
-    await sb("book_f_islam","professional","Smithsonian — Islam in African American History","https://www.smithsonianmag.com","Smithsonian documents Islam in the Black American experience — from the estimated 15–30% of enslaved Africans who were Muslim, through the Nation of Islam, to mainstream Sunni and Shia communities today.",false,"high");
+    await sb(
+      "book_f_islam",
+      "authoritative",
+      "Islamic Society of North America (ISNA)",
+      "https://www.isna.net",
+      "ISNA is one of the largest Muslim organizations in North America, serving as a platform for presenting Islam and providing resources connecting Muslims across communities.",
+      true,
+    );
+    await sb(
+      "book_f_islam",
+      "professional",
+      "Smithsonian — Islam in African American History",
+      "https://www.smithsonianmag.com",
+      "Smithsonian documents Islam in the Black American experience — from the estimated 15–30% of enslaved Africans who were Muslim, through the Nation of Islam, to mainstream Sunni and Shia communities today.",
+      false,
+      "high",
+    );
 
-    await sb("book_f_judaism","authoritative","Union for Reform Judaism — Black Jewish Communities","https://www.urj.org","The URJ provides resources on Black Jewish identity, the history of Hebrew Israelite communities, Lemba and Ethiopian Jewish traditions, and the experiences of African American Jews.",true);
+    await sb(
+      "book_f_judaism",
+      "authoritative",
+      "Union for Reform Judaism — Black Jewish Communities",
+      "https://www.urj.org",
+      "The URJ provides resources on Black Jewish identity, the history of Hebrew Israelite communities, Lemba and Ethiopian Jewish traditions, and the experiences of African American Jews.",
+      true,
+    );
 
-    await sb("book_f_sikh","authoritative","Sikh Coalition","https://www.sikhcoalition.org","The Sikh Coalition is the largest Sikh civil rights organization in the United States and provides educational resources on Sikh heritage, the Guru Granth Sahib, and the langar tradition of community feeding.",true);
+    await sb(
+      "book_f_sikh",
+      "authoritative",
+      "Sikh Coalition",
+      "https://www.sikhcoalition.org",
+      "The Sikh Coalition is the largest Sikh civil rights organization in the United States and provides educational resources on Sikh heritage, the Guru Granth Sahib, and the langar tradition of community feeding.",
+      true,
+    );
 
-    await sb("book_f_buddhism","authoritative","Soka Gakkai International-USA","https://www.sgi-usa.org","SGI-USA has a significant African American membership and has been an important gateway for Black Americans to engage with Buddhist practice, Nichiren Buddhism, and interfaith dialogue.",true);
+    await sb(
+      "book_f_buddhism",
+      "authoritative",
+      "Soka Gakkai International-USA",
+      "https://www.sgi-usa.org",
+      "SGI-USA has a significant African American membership and has been an important gateway for Black Americans to engage with Buddhist practice, Nichiren Buddhism, and interfaith dialogue.",
+      true,
+    );
 
-    await sb("book_f_african_sp","professional","Smithsonian — African Diasporic Religious Traditions","https://www.smithsonianmag.com","Smithsonian provides historical and cultural context for Yoruba, Vodou, Candomblé, Santería, and other African spiritual traditions preserved and transformed across the diaspora.",true,"high");
-    await sb("book_f_african_sp","professional","Library of Congress — African Diaspora Collection","https://www.loc.gov","The Library of Congress holds extensive documentation on African diaspora spiritual traditions, their West African origins, and their evolution in the Americas under enslavement and freedom.",false,"high");
+    await sb(
+      "book_f_african_sp",
+      "professional",
+      "Smithsonian — African Diasporic Religious Traditions",
+      "https://www.smithsonianmag.com",
+      "Smithsonian provides historical and cultural context for Yoruba, Vodou, Candomblé, Santería, and other African spiritual traditions preserved and transformed across the diaspora.",
+      true,
+      "high",
+    );
+    await sb(
+      "book_f_african_sp",
+      "professional",
+      "Library of Congress — African Diaspora Collection",
+      "https://www.loc.gov",
+      "The Library of Congress holds extensive documentation on African diaspora spiritual traditions, their West African origins, and their evolution in the Americas under enslavement and freedom.",
+      false,
+      "high",
+    );
 
-    await sb("book_f_interfaith","professional","Interfaith America","https://www.interfaithamerica.org","Interfaith America (formerly Interfaith Youth Core) advances religious diversity and bridges communities across faith traditions through education, civic dialogue, and campus initiatives.",true,"high");
+    await sb(
+      "book_f_interfaith",
+      "professional",
+      "Interfaith America",
+      "https://www.interfaithamerica.org",
+      "Interfaith America (formerly Interfaith Youth Core) advances religious diversity and bridges communities across faith traditions through education, civic dialogue, and campus initiatives.",
+      true,
+      "high",
+    );
 
     log("Library activation: Faith Book sources seeded");
 
     // ── Step 6: Priority general topics — Education ───────────────────────────
-    await st("HBCU Admissions & Scholarships","authoritative","Federal Student Aid — HBCUs","https://studentaid.gov/understand-aid/types/grants","Federal Student Aid provides information on HBCU-specific scholarships, grants, and financial aid programs. The federal government provides more than $3.4 billion annually to support the 101 federally recognized HBCUs.",true);
-    await st("HBCU Admissions & Scholarships","authoritative","U.S. Department of Education — White House HBCU Initiative","https://www2.ed.gov/about/inits/ed/whhbcu/index.html","The White House Initiative on HBCUs coordinates federal resources, tracks accountability data, and supports students seeking admission and scholarships at Historically Black Colleges and Universities.",false);
-    await st("HBCU Admissions & Scholarships","professional","NAFEO — National Association for Equal Opportunity","https://www.nafeo.org","NAFEO advocates for HBCUs and provides scholarship databases, enrollment support, and policy resources for students applying to and attending Historically Black Colleges and Universities.",false,"high");
+    await st(
+      "HBCU Admissions & Scholarships",
+      "authoritative",
+      "Federal Student Aid — HBCUs",
+      "https://studentaid.gov/understand-aid/types/grants",
+      "Federal Student Aid provides information on HBCU-specific scholarships, grants, and financial aid programs. The federal government provides more than $3.4 billion annually to support the 101 federally recognized HBCUs.",
+      true,
+    );
+    await st(
+      "HBCU Admissions & Scholarships",
+      "authoritative",
+      "U.S. Department of Education — White House HBCU Initiative",
+      "https://www2.ed.gov/about/inits/ed/whhbcu/index.html",
+      "The White House Initiative on HBCUs coordinates federal resources, tracks accountability data, and supports students seeking admission and scholarships at Historically Black Colleges and Universities.",
+      false,
+    );
+    await st(
+      "HBCU Admissions & Scholarships",
+      "professional",
+      "NAFEO — National Association for Equal Opportunity",
+      "https://www.nafeo.org",
+      "NAFEO advocates for HBCUs and provides scholarship databases, enrollment support, and policy resources for students applying to and attending Historically Black Colleges and Universities.",
+      false,
+      "high",
+    );
 
-    await st("FAFSA & Financial Aid Navigation","authoritative","Federal Student Aid — FAFSA","https://studentaid.gov/h/apply-for-aid/fafsa","The Free Application for Federal Student Aid (FAFSA) is the official federal application that determines eligibility for grants (including Pell), work-study, and federal student loans. It is the starting point for all federal college financial aid.",true);
-    await st("FAFSA & Financial Aid Navigation","authoritative","Federal Student Aid — Understanding Aid Types","https://studentaid.gov/understand-aid/types","Federal Student Aid explains the four types of aid (grants, scholarships, work-study, loans), how Expected Family Contribution is calculated, and how to compare financial aid packages.",false);
-    await st("FAFSA & Financial Aid Navigation","professional","College Board — BigFuture Paying for College","https://bigfuture.collegeboard.org/pay-for-college","College Board's BigFuture provides tools for estimating college costs, understanding financial aid award letters, and comparing net prices across institutions.",false,"high");
+    await st(
+      "FAFSA & Financial Aid Navigation",
+      "authoritative",
+      "Federal Student Aid — FAFSA",
+      "https://studentaid.gov/h/apply-for-aid/fafsa",
+      "The Free Application for Federal Student Aid (FAFSA) is the official federal application that determines eligibility for grants (including Pell), work-study, and federal student loans. It is the starting point for all federal college financial aid.",
+      true,
+    );
+    await st(
+      "FAFSA & Financial Aid Navigation",
+      "authoritative",
+      "Federal Student Aid — Understanding Aid Types",
+      "https://studentaid.gov/understand-aid/types",
+      "Federal Student Aid explains the four types of aid (grants, scholarships, work-study, loans), how Expected Family Contribution is calculated, and how to compare financial aid packages.",
+      false,
+    );
+    await st(
+      "FAFSA & Financial Aid Navigation",
+      "professional",
+      "College Board — BigFuture Paying for College",
+      "https://bigfuture.collegeboard.org/pay-for-college",
+      "College Board's BigFuture provides tools for estimating college costs, understanding financial aid award letters, and comparing net prices across institutions.",
+      false,
+      "high",
+    );
 
-    await st("First-Generation College Students","authoritative","Federal TRIO Programs — U.S. Department of Education","https://www2.ed.gov/about/offices/list/ope/trio/index.html","The Federal TRIO Programs support first-generation and low-income students from middle school through graduate school — including Upward Bound, Talent Search, Student Support Services, and McNair Scholars.",true);
-    await st("First-Generation College Students","professional","Pell Institute for the Study of Opportunity in Higher Education","https://www.pellinstitute.org","The Pell Institute conducts research on barriers faced by first-generation and low-income college students and advocates for evidence-based policies to improve access and completion.",false,"high");
+    await st(
+      "First-Generation College Students",
+      "authoritative",
+      "Federal TRIO Programs — U.S. Department of Education",
+      "https://www2.ed.gov/about/offices/list/ope/trio/index.html",
+      "The Federal TRIO Programs support first-generation and low-income students from middle school through graduate school — including Upward Bound, Talent Search, Student Support Services, and McNair Scholars.",
+      true,
+    );
+    await st(
+      "First-Generation College Students",
+      "professional",
+      "Pell Institute for the Study of Opportunity in Higher Education",
+      "https://www.pellinstitute.org",
+      "The Pell Institute conducts research on barriers faced by first-generation and low-income college students and advocates for evidence-based policies to improve access and completion.",
+      false,
+      "high",
+    );
 
-    await st("HBCUs","authoritative","U.S. Department of Education — HBCU List and Data","https://www2.ed.gov/about/inits/ed/whhbcu/hbcu-list.html","The U.S. Department of Education maintains the official list of 101 federally recognized HBCUs, with enrollment data, graduation rates, and information on federal funding by institution.",true);
-    await st("HBCUs","authoritative","Smithsonian NMAAHC — HBCU Legacy","https://nmaahc.si.edu","The Smithsonian documents the founding of HBCUs after the Civil War, their role in educating generations of Black Americans during segregation, and their ongoing cultural significance to Black identity.",false);
+    await st(
+      "HBCUs",
+      "authoritative",
+      "U.S. Department of Education — HBCU List and Data",
+      "https://www2.ed.gov/about/inits/ed/whhbcu/hbcu-list.html",
+      "The U.S. Department of Education maintains the official list of 101 federally recognized HBCUs, with enrollment data, graduation rates, and information on federal funding by institution.",
+      true,
+    );
+    await st(
+      "HBCUs",
+      "authoritative",
+      "Smithsonian NMAAHC — HBCU Legacy",
+      "https://nmaahc.si.edu",
+      "The Smithsonian documents the founding of HBCUs after the Civil War, their role in educating generations of Black Americans during segregation, and their ongoing cultural significance to Black identity.",
+      false,
+    );
 
     // ── Step 7: Priority general topics — Philadelphia ───────────────────────
-    await st("Philadelphia Faith","authoritative","Mother Bethel AME Church — Official Site","https://www.motherbethel.org","Mother Bethel AME Church, founded 1793 by Bishop Richard Allen, is the oldest parcel of land continuously owned by Black Americans in the United States and a National Historic Landmark in Philadelphia.",true);
-    await st("Philadelphia Faith","professional","Visit Philadelphia — Historic Black Churches","https://www.visitphilly.com","Philadelphia's Black religious landscape spans the oldest AME congregation in the world, historic Black Catholic parishes, mosques, and diverse faith communities rooted in the city's African American history.",false,"high");
+    await st(
+      "Philadelphia Faith",
+      "authoritative",
+      "Mother Bethel AME Church — Official Site",
+      "https://www.motherbethel.org",
+      "Mother Bethel AME Church, founded 1793 by Bishop Richard Allen, is the oldest parcel of land continuously owned by Black Americans in the United States and a National Historic Landmark in Philadelphia.",
+      true,
+    );
+    await st(
+      "Philadelphia Faith",
+      "professional",
+      "Visit Philadelphia — Historic Black Churches",
+      "https://www.visitphilly.com",
+      "Philadelphia's Black religious landscape spans the oldest AME congregation in the world, historic Black Catholic parishes, mosques, and diverse faith communities rooted in the city's African American history.",
+      false,
+      "high",
+    );
 
-    await st("Philadelphia Nightlife","professional","Visit Philadelphia — Nightlife & Entertainment","https://www.visitphilly.com","Visit Philadelphia is the official tourism organization providing guides to live music venues, jazz clubs, comedy shows, and neighborhood nightlife scenes across the city.",true,"high");
+    await st(
+      "Philadelphia Nightlife",
+      "professional",
+      "Visit Philadelphia — Nightlife & Entertainment",
+      "https://www.visitphilly.com",
+      "Visit Philadelphia is the official tourism organization providing guides to live music venues, jazz clubs, comedy shows, and neighborhood nightlife scenes across the city.",
+      true,
+      "high",
+    );
 
-    await st("Philadelphia History","authoritative","Historical Society of Pennsylvania","https://hsp.org","The HSP holds millions of primary documents on Philadelphia and Pennsylvania history, including one of the largest collections of African American historical records on the East Coast.",true);
+    await st(
+      "Philadelphia History",
+      "authoritative",
+      "Historical Society of Pennsylvania",
+      "https://hsp.org",
+      "The HSP holds millions of primary documents on Philadelphia and Pennsylvania history, including one of the largest collections of African American historical records on the East Coast.",
+      true,
+    );
 
-    await st("Philadelphia Employment","professional","Philadelphia Works — Workforce Development","https://www.philaworks.org","Philadelphia Works is the workforce development board for the city of Philadelphia, providing job training, career resources, and employer connections for residents seeking employment.",true,"high");
+    await st(
+      "Philadelphia Employment",
+      "professional",
+      "Philadelphia Works — Workforce Development",
+      "https://www.philaworks.org",
+      "Philadelphia Works is the workforce development board for the city of Philadelphia, providing job training, career resources, and employer connections for residents seeking employment.",
+      true,
+      "high",
+    );
 
     // ── Step 8: International — Thailand / Southeast Asia ────────────────────
-    await st("Thailand","authoritative","Tourism Authority of Thailand — Official Site","https://www.tourismthailand.org","Thailand's official tourism organization provides destination guides, cultural information, visa requirements, and travel resources across all regions of Thailand.",true);
-    await st("Thailand","authoritative","Royal Thai Embassy — U.S. Visitor Information","https://thaiembdc.org","The Royal Thai Embassy provides official visa information, entry requirements, health advisories, and practical information for Americans planning travel to Thailand.",false);
+    await st(
+      "Thailand",
+      "authoritative",
+      "Tourism Authority of Thailand — Official Site",
+      "https://www.tourismthailand.org",
+      "Thailand's official tourism organization provides destination guides, cultural information, visa requirements, and travel resources across all regions of Thailand.",
+      true,
+    );
+    await st(
+      "Thailand",
+      "authoritative",
+      "Royal Thai Embassy — U.S. Visitor Information",
+      "https://thaiembdc.org",
+      "The Royal Thai Embassy provides official visa information, entry requirements, health advisories, and practical information for Americans planning travel to Thailand.",
+      false,
+    );
 
-    await st("Bangkok","authoritative","Tourism Authority of Thailand — Bangkok","https://www.tourismthailand.org/Destinations/Provinces/Bangkok/149","Bangkok is Thailand's capital and largest city — known for ornate temples (Wat Phra Kaew, Wat Arun), floating markets, world-class street food, vibrant nightlife, and as Southeast Asia's major travel gateway.",true);
-    await st("Bangkok","professional","Lonely Planet — Bangkok City Guide","https://www.lonelyplanet.com/thailand/bangkok","Lonely Planet provides neighborhood guides, transportation info, cultural tips, and curated recommendations for experiencing Bangkok as an international traveler.",false,"high");
+    await st(
+      "Bangkok",
+      "authoritative",
+      "Tourism Authority of Thailand — Bangkok",
+      "https://www.tourismthailand.org/Destinations/Provinces/Bangkok/149",
+      "Bangkok is Thailand's capital and largest city — known for ornate temples (Wat Phra Kaew, Wat Arun), floating markets, world-class street food, vibrant nightlife, and as Southeast Asia's major travel gateway.",
+      true,
+    );
+    await st(
+      "Bangkok",
+      "professional",
+      "Lonely Planet — Bangkok City Guide",
+      "https://www.lonelyplanet.com/thailand/bangkok",
+      "Lonely Planet provides neighborhood guides, transportation info, cultural tips, and curated recommendations for experiencing Bangkok as an international traveler.",
+      false,
+      "high",
+    );
 
-    await st("Phuket","authoritative","Tourism Authority of Thailand — Phuket","https://www.tourismthailand.org/Destinations/Provinces/Phuket/170","Phuket is Thailand's largest island province in the Andaman Sea — known for beaches, the historic Old Town, Phi Phi Islands, and as one of Southeast Asia's most visited destinations.",true);
-    await st("Phuket","professional","Lonely Planet — Phuket Province Guide","https://www.lonelyplanet.com/thailand/phuket-province","Lonely Planet covers Phuket's beaches, Old Town walking tours, island-hopping day trips, and practical transport information from the airport.",false,"high");
+    await st(
+      "Phuket",
+      "authoritative",
+      "Tourism Authority of Thailand — Phuket",
+      "https://www.tourismthailand.org/Destinations/Provinces/Phuket/170",
+      "Phuket is Thailand's largest island province in the Andaman Sea — known for beaches, the historic Old Town, Phi Phi Islands, and as one of Southeast Asia's most visited destinations.",
+      true,
+    );
+    await st(
+      "Phuket",
+      "professional",
+      "Lonely Planet — Phuket Province Guide",
+      "https://www.lonelyplanet.com/thailand/phuket-province",
+      "Lonely Planet covers Phuket's beaches, Old Town walking tours, island-hopping day trips, and practical transport information from the airport.",
+      false,
+      "high",
+    );
 
     // ── Step 9: International — Africa ───────────────────────────────────────
-    await st("Kenya","authoritative","Kenya Tourism Board — Magical Kenya","https://www.magicalkenya.com","Kenya's official tourism authority provides destination guides for Maasai Mara safari experiences, coastal Mombasa culture, Nairobi city life, and the country's 47 counties.",true);
-    await st("Kenya","professional","Smithsonian — East African Heritage","https://www.smithsonianmag.com","Smithsonian provides cultural and historical context on Kenya, including the Swahili Coast trading networks, Maasai and Kikuyu communities, and Kenya's role in human evolutionary history.",false,"high");
+    await st(
+      "Kenya",
+      "authoritative",
+      "Kenya Tourism Board — Magical Kenya",
+      "https://www.magicalkenya.com",
+      "Kenya's official tourism authority provides destination guides for Maasai Mara safari experiences, coastal Mombasa culture, Nairobi city life, and the country's 47 counties.",
+      true,
+    );
+    await st(
+      "Kenya",
+      "professional",
+      "Smithsonian — East African Heritage",
+      "https://www.smithsonianmag.com",
+      "Smithsonian provides cultural and historical context on Kenya, including the Swahili Coast trading networks, Maasai and Kikuyu communities, and Kenya's role in human evolutionary history.",
+      false,
+      "high",
+    );
 
-    await st("Ethiopia","authoritative","Ethiopian Tourism Organization","https://www.tourismethiopia.org","Ethiopia's official tourism organization provides guides to Lalibela's rock-hewn churches, the Omo Valley, Simien Mountains, Axum obelisks, and the country's extraordinary cultural heritage.",true);
-    await st("Ethiopia","authoritative","UNESCO — Ethiopian World Heritage Sites","https://whc.unesco.org/en/statesparties/et","Ethiopia has 9 UNESCO World Heritage Sites — including the rock-hewn churches of Lalibela, the ruins of Aksum, and the Lower Omo Valley, among the oldest archaeological sites in the world.",false);
+    await st(
+      "Ethiopia",
+      "authoritative",
+      "Ethiopian Tourism Organization",
+      "https://www.tourismethiopia.org",
+      "Ethiopia's official tourism organization provides guides to Lalibela's rock-hewn churches, the Omo Valley, Simien Mountains, Axum obelisks, and the country's extraordinary cultural heritage.",
+      true,
+    );
+    await st(
+      "Ethiopia",
+      "authoritative",
+      "UNESCO — Ethiopian World Heritage Sites",
+      "https://whc.unesco.org/en/statesparties/et",
+      "Ethiopia has 9 UNESCO World Heritage Sites — including the rock-hewn churches of Lalibela, the ruins of Aksum, and the Lower Omo Valley, among the oldest archaeological sites in the world.",
+      false,
+    );
 
-    await st("Ghana","authoritative","Ghana Tourism Authority — Ghana.travel","https://www.ghana.travel","Ghana's official tourism authority provides destination guides including Cape Coast Castle, Kakum National Park, Kumasi Ashanti cultural sites, and the country's role as a leading Diaspora travel destination.",true);
-    await st("Ghana","professional","Smithsonian — Ghana's Year of Return and Diaspora Heritage","https://www.smithsonianmag.com","Ghana's Year of Return (2019) and Beyond the Return initiative have made Ghana a key destination for African Americans reconnecting with ancestral roots — marking 400 years since the transatlantic slave trade.",false,"high");
+    await st(
+      "Ghana",
+      "authoritative",
+      "Ghana Tourism Authority — Ghana.travel",
+      "https://www.ghana.travel",
+      "Ghana's official tourism authority provides destination guides including Cape Coast Castle, Kakum National Park, Kumasi Ashanti cultural sites, and the country's role as a leading Diaspora travel destination.",
+      true,
+    );
+    await st(
+      "Ghana",
+      "professional",
+      "Smithsonian — Ghana's Year of Return and Diaspora Heritage",
+      "https://www.smithsonianmag.com",
+      "Ghana's Year of Return (2019) and Beyond the Return initiative have made Ghana a key destination for African Americans reconnecting with ancestral roots — marking 400 years since the transatlantic slave trade.",
+      false,
+      "high",
+    );
 
-    await st("Nigeria","authoritative","Nigeria Tourism Development Corporation","https://www.tourism.gov.ng","Nigeria's official tourism corporation provides destination information for Lagos, Abuja, the Niger Delta, and northern historical sites including Kano and Zaria.",true);
-    await st("Nigeria","professional","Smithsonian — Nigerian Arts, Culture, and Nollywood","https://www.smithsonianmag.com","Nigeria is Africa's largest economy with over 250 ethnic groups, a rich cultural landscape including Nollywood (world's 2nd-largest film industry), Afrobeats, and the ancient Benin bronze tradition.",false,"high");
+    await st(
+      "Nigeria",
+      "authoritative",
+      "Nigeria Tourism Development Corporation",
+      "https://www.tourism.gov.ng",
+      "Nigeria's official tourism corporation provides destination information for Lagos, Abuja, the Niger Delta, and northern historical sites including Kano and Zaria.",
+      true,
+    );
+    await st(
+      "Nigeria",
+      "professional",
+      "Smithsonian — Nigerian Arts, Culture, and Nollywood",
+      "https://www.smithsonianmag.com",
+      "Nigeria is Africa's largest economy with over 250 ethnic groups, a rich cultural landscape including Nollywood (world's 2nd-largest film industry), Afrobeats, and the ancient Benin bronze tradition.",
+      false,
+      "high",
+    );
 
-    await st("South Africa","authoritative","South African Tourism — Official Site","https://www.southafrica.net","South Africa's official tourism site provides guides to Cape Town, Johannesburg, the Garden Route, Kruger National Park, and Robben Island where Nelson Mandela was imprisoned for 18 years.",true);
-    await st("South Africa","professional","Smithsonian — South Africa and the End of Apartheid","https://www.smithsonianmag.com","Smithsonian documents South Africa's history under apartheid, the 1994 democratic transition led by Nelson Mandela, and the country's ongoing social and economic transformation.",false,"high");
+    await st(
+      "South Africa",
+      "authoritative",
+      "South African Tourism — Official Site",
+      "https://www.southafrica.net",
+      "South Africa's official tourism site provides guides to Cape Town, Johannesburg, the Garden Route, Kruger National Park, and Robben Island where Nelson Mandela was imprisoned for 18 years.",
+      true,
+    );
+    await st(
+      "South Africa",
+      "professional",
+      "Smithsonian — South Africa and the End of Apartheid",
+      "https://www.smithsonianmag.com",
+      "Smithsonian documents South Africa's history under apartheid, the 1994 democratic transition led by Nelson Mandela, and the country's ongoing social and economic transformation.",
+      false,
+      "high",
+    );
 
     // ── Step 10: Caribbean ───────────────────────────────────────────────────
-    await st("Jamaica","authoritative","Jamaica Tourist Board — Visit Jamaica","https://www.visitjamaica.com","Jamaica's official tourism board provides destination guides to Kingston, Montego Bay, Negril, Ocho Rios, and the Blue Mountains. Jamaica is the birthplace of reggae, dancehall, and Rastafari.",true);
-    await st("Jamaica","professional","Smithsonian — Jamaican Culture and African Diaspora","https://www.smithsonianmag.com","Jamaican culture — from reggae and Bob Marley to Rastafari, jerk cuisine, and the Blue Lagoon — reflects a vibrant African diaspora heritage that has shaped global music and culture.",false,"high");
+    await st(
+      "Jamaica",
+      "authoritative",
+      "Jamaica Tourist Board — Visit Jamaica",
+      "https://www.visitjamaica.com",
+      "Jamaica's official tourism board provides destination guides to Kingston, Montego Bay, Negril, Ocho Rios, and the Blue Mountains. Jamaica is the birthplace of reggae, dancehall, and Rastafari.",
+      true,
+    );
+    await st(
+      "Jamaica",
+      "professional",
+      "Smithsonian — Jamaican Culture and African Diaspora",
+      "https://www.smithsonianmag.com",
+      "Jamaican culture — from reggae and Bob Marley to Rastafari, jerk cuisine, and the Blue Lagoon — reflects a vibrant African diaspora heritage that has shaped global music and culture.",
+      false,
+      "high",
+    );
 
-    await st("Haiti","authoritative","Haiti — Cultural and Historical Resources","https://www.haiti.org","Haiti was the first Black republic in the world, achieving independence in 1804 after the only successful slave revolt in history. Citadelle Laferrière is a UNESCO World Heritage Site.",true);
+    await st(
+      "Haiti",
+      "authoritative",
+      "Haiti — Cultural and Historical Resources",
+      "https://www.haiti.org",
+      "Haiti was the first Black republic in the world, achieving independence in 1804 after the only successful slave revolt in history. Citadelle Laferrière is a UNESCO World Heritage Site.",
+      true,
+    );
 
-    await st("Bahamas","authoritative","Bahamas Ministry of Tourism — Official Site","https://www.bahamas.com","The Bahamas' official tourism site covers Nassau, Paradise Island, the Exumas, and 700 islands known for world-class beaches, diving, and the Junkanoo cultural festival tradition.",true);
+    await st(
+      "Bahamas",
+      "authoritative",
+      "Bahamas Ministry of Tourism — Official Site",
+      "https://www.bahamas.com",
+      "The Bahamas' official tourism site covers Nassau, Paradise Island, the Exumas, and 700 islands known for world-class beaches, diving, and the Junkanoo cultural festival tradition.",
+      true,
+    );
 
-    await st("Barbados","authoritative","Barbados Tourism Marketing Inc. — Visit Barbados","https://www.visitbarbados.org","Barbados is a sovereign island nation with a distinct Bajan identity — birthplace of Rihanna, with a rich rum heritage, the UNESCO-listed Bridgetown historic district, and coral-lined beaches.",true);
+    await st(
+      "Barbados",
+      "authoritative",
+      "Barbados Tourism Marketing Inc. — Visit Barbados",
+      "https://www.visitbarbados.org",
+      "Barbados is a sovereign island nation with a distinct Bajan identity — birthplace of Rihanna, with a rich rum heritage, the UNESCO-listed Bridgetown historic district, and coral-lined beaches.",
+      true,
+    );
 
-    await st("Trinidad and Tobago","authoritative","Tourism Trinidad Ltd. — Official Site","https://www.gotrinidadandtobago.com","Trinidad and Tobago is the birthplace of calypso and soca music and home to one of the world's largest Carnival celebrations. The twin-island nation has a rich African, Indian, and Creole heritage.",true);
+    await st(
+      "Trinidad and Tobago",
+      "authoritative",
+      "Tourism Trinidad Ltd. — Official Site",
+      "https://www.gotrinidadandtobago.com",
+      "Trinidad and Tobago is the birthplace of calypso and soca music and home to one of the world's largest Carnival celebrations. The twin-island nation has a rich African, Indian, and Creole heritage.",
+      true,
+    );
 
-    await st("Dominican Republic","authoritative","Ministry of Tourism Dominican Republic — Go Dominican Republic","https://www.godominicanrepublic.com","The Dominican Republic's official tourism site covers Punta Cana, Santo Domingo (the oldest continuously inhabited European settlement in the Americas), Samaná, and the country's Caribbean culture.",true);
+    await st(
+      "Dominican Republic",
+      "authoritative",
+      "Ministry of Tourism Dominican Republic — Go Dominican Republic",
+      "https://www.godominicanrepublic.com",
+      "The Dominican Republic's official tourism site covers Punta Cana, Santo Domingo (the oldest continuously inhabited European settlement in the Americas), Samaná, and the country's Caribbean culture.",
+      true,
+    );
 
-    await st("Cuba","authoritative","Cuba Travel — Official Tourism Resources","https://www.cubatravelusa.com","Cuba is home to 9 UNESCO World Heritage Sites including Old Havana, the Valley of Viñales, and Trinidad. Its Afro-Cuban culture — from Santería to Rumba and son music — is central to its identity.",true);
+    await st(
+      "Cuba",
+      "authoritative",
+      "Cuba Travel — Official Tourism Resources",
+      "https://www.cubatravelusa.com",
+      "Cuba is home to 9 UNESCO World Heritage Sites including Old Havana, the Valley of Viñales, and Trinidad. Its Afro-Cuban culture — from Santería to Rumba and son music — is central to its identity.",
+      true,
+    );
 
-    await st("Colombia","authoritative","ProColombia Tourism","https://colombia.travel","Colombia's official tourism promotion agency covers Cartagena (with its large Afro-Colombian population and UNESCO-listed old city), Medellín, Cali (salsa capital), the Amazon, and Caribbean coast.",true);
+    await st(
+      "Colombia",
+      "authoritative",
+      "ProColombia Tourism",
+      "https://colombia.travel",
+      "Colombia's official tourism promotion agency covers Cartagena (with its large Afro-Colombian population and UNESCO-listed old city), Medellín, Cali (salsa capital), the Amazon, and Caribbean coast.",
+      true,
+    );
 
-    await st("Brazil","authoritative","Brazilian Tourist Board (Embratur)","https://www.embratur.com.br","Brazil has the largest African diaspora population outside Africa. Salvador da Bahia is considered the cultural heart of Afro-Brazilian heritage — home to Candomblé, capoeira, and axé music.",true);
+    await st(
+      "Brazil",
+      "authoritative",
+      "Brazilian Tourist Board (Embratur)",
+      "https://www.embratur.com.br",
+      "Brazil has the largest African diaspora population outside Africa. Salvador da Bahia is considered the cultural heart of Afro-Brazilian heritage — home to Candomblé, capoeira, and axé music.",
+      true,
+    );
 
-    log(`Library activation: ${sourcesAdded} knowledge_sources seeded across all Tier 1 Books and general topics`);
+    log(
+      `Library activation: ${sourcesAdded} knowledge_sources seeded across all Tier 1 Books and general topics`,
+    );
     log("Library Content Activation v1: complete");
-
   } catch (err: unknown) {
-    warn(`Library activation v1 failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Library activation v1 failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -7375,54 +9150,246 @@ async function ensureAfricanGeographyNodes_v1(
 ): Promise<void> {
   try {
     const AFRICA = [
-      ["geo_af_algeria",    "Algeria",                   "North Africa's largest country — home to the Sahara Desert, ancient Roman ruins at Timgad and Djémila, and the UNESCO-listed Casbah of Algiers."],
-      ["geo_af_angola",     "Angola",                    "A nation of extraordinary natural diversity — from Kalandula Falls to the Namib Desert. Angola has one of Africa's fastest-growing economies."],
-      ["geo_af_benin",      "Benin",                     "Birthplace of Vodun (Voodoo) religion and home to the ancient Kingdom of Dahomey — a center of African cultural heritage and history."],
-      ["geo_af_botswana",   "Botswana",                  "Home to the Okavango Delta, one of the world's largest inland deltas and a UNESCO World Heritage Site, and the Chobe National Park."],
-      ["geo_af_bfaso",      "Burkina Faso",              "A landlocked West African nation known for its vibrant arts and crafts tradition and the FESPACO Pan-African Film Festival held in Ouagadougou."],
-      ["geo_af_burundi",    "Burundi",                   "One of Africa's smallest nations, situated at the northeastern shore of Lake Tanganyika — the world's longest freshwater lake."],
-      ["geo_af_capeverde",  "Cape Verde",                "An archipelago of 10 volcanic islands off West Africa's coast — known for morna music, Creole culture, and as a nexus of African, Portuguese, and diaspora identity."],
-      ["geo_af_cameroon",   "Cameroon",                  "Known as 'Africa in miniature' for its geographic and cultural diversity — spanning rainforest, savannah, mountains, and over 250 ethnic groups."],
-      ["geo_af_car",        "Central African Republic",  "A landlocked country with extraordinary biodiversity, including Dzanga-Sangha Reserve — one of the last refuges for forest elephants and western lowland gorillas."],
-      ["geo_af_chad",       "Chad",                      "Home to Lake Chad and the Tibesti Mountains, Chad straddles the Sahara and sub-Saharan Africa with a richly diverse culture of over 200 ethnic groups."],
-      ["geo_af_comoros",    "Comoros",                   "An archipelago nation between Madagascar and Mozambique — known as the Perfume Islands for their ylang-ylang and clove cultivation."],
-      ["geo_af_congo_brz",  "Republic of the Congo",     "Home to the Congo Basin rainforest — the world's second-largest tropical rainforest — and a rich tradition of Kongo kingdom heritage."],
-      ["geo_af_congo_drc",  "Democratic Republic of Congo","The DRC contains more than half of Africa's rainforest and the Congo River — Africa's deepest river. It is one of the most biodiverse places on Earth."],
-      ["geo_af_cotediv",    "Côte d'Ivoire",             "Côte d'Ivoire (Ivory Coast) is one of West Africa's most prosperous nations and a major center of Ivorian music, fashion, and contemporary African art."],
-      ["geo_af_djibouti",   "Djibouti",                  "A small East African nation at the strategic Bab-el-Mandeb Strait — where the Red Sea meets the Gulf of Aden — with salt lakes, volcanoes, and underwater coral reefs."],
-      ["geo_af_egypt",      "Egypt",                     "Home to one of humanity's oldest civilizations — the pyramids of Giza, the Sphinx, Luxor's temples, and the Nile — Egypt is both an African and Mediterranean heritage destination."],
-      ["geo_af_equatguinea","Equatorial Guinea",         "The only Spanish-speaking country in Africa — comprising a mainland region and islands including Bioko — with rich oil resources and tropical rainforest."],
-      ["geo_af_eritrea",    "Eritrea",                   "One of Africa's youngest nations, achieving independence in 1993. Home to the UNESCO-listed modernist city of Asmara and ancient Aksumite ruins."],
-      ["geo_af_eswatini",   "Eswatini",                  "One of the world's last absolute monarchies and landlocked between South Africa and Mozambique — known for the Incwala and Umhlanga Reed Dance ceremonies."],
-      ["geo_af_gabon",      "Gabon",                     "One of Africa's most forested countries — 88% forest cover — with national parks protecting gorillas, forest elephants, and hippos in Loango National Park."],
-      ["geo_af_gambia",     "Gambia",                    "Africa's smallest mainland nation — a narrow strip along the Gambia River — known as the Gateway to Africa and a major roots tourism destination for the African diaspora."],
-      ["geo_af_guinea",     "Guinea",                    "Home to the Fouta Djallon highlands — the 'water tower of West Africa' — and a significant Fulani and Mandinka cultural heritage."],
-      ["geo_af_guineabiss", "Guinea-Bissau",             "An archipelago of 88 islands and a mainland — known for the UNESCO-listed Bijagós Archipelago, one of West Africa's most pristine coastal ecosystems."],
-      ["geo_af_lesotho",    "Lesotho",                   "The only country in the world entirely above 1,000 meters elevation — a mountainous kingdom within South Africa known as the Kingdom in the Sky and for Basotho culture."],
-      ["geo_af_liberia",    "Liberia",                   "Founded in 1847 by free Black Americans and freed slaves — Liberia has a unique historical connection to the African American diaspora and is Africa's oldest republic."],
-      ["geo_af_libya",      "Libya",                     "Home to extraordinary Roman ruins at Leptis Magna and Sabratha — UNESCO World Heritage Sites along the Mediterranean — and ancient rock art in the Sahara."],
-      ["geo_af_madagascar", "Madagascar",                "The fourth-largest island in the world — home to 90% of endemic wildlife including lemurs and baobab avenues — a biodiversity treasure unlike anywhere on Earth."],
-      ["geo_af_malawi",     "Malawi",                    "Known as the Warm Heart of Africa — Malawi's culture of hospitality is legendary — with Lake Malawi (a UNESCO World Heritage Site) at its center."],
-      ["geo_af_mali",       "Mali",                      "Home to the ancient city of Timbuktu — once a global center of Islamic learning — and the Dogon cliffs with one of Africa's most distinctive living cultural landscapes."],
-      ["geo_af_mauritania", "Mauritania",                "A vast Saharan nation where ancient caravan cities like Chinguetti — a UNESCO World Heritage Site — served as gateways to Mecca for West African pilgrims."],
-      ["geo_af_mauritius",  "Mauritius",                 "A multicultural island nation in the Indian Ocean — with a blend of African, Indian, French, and Creole culture, UNESCO-listed Aapravasi Ghat, and pristine lagoons."],
-      ["geo_af_morocco",    "Morocco",                   "Where Africa meets the Arab world and the Mediterranean — the medinas of Marrakesh, Fès, and Chefchaouen are UNESCO World Heritage Sites drawing millions of visitors."],
-      ["geo_af_mozambique", "Mozambique",                "A long Indian Ocean coastline with extraordinary marine biodiversity, Portuguese colonial architecture in Maputo, and the Bazaruto Archipelago coral reefs."],
-      ["geo_af_namibia",    "Namibia",                   "Home to the oldest desert in the world — the Namib — and the red dunes of Sossusvlei, Etosha National Park, and the Himba people with their ochre-painted skin."],
-      ["geo_af_niger",      "Niger",                     "One of the world's largest countries by area — home to the Air Mountains, Ténéré Desert, and the ancient city of Agadez — a UNESCO World Heritage Site and traditional Tuareg hub."],
-      ["geo_af_rwanda",     "Rwanda",                    "Known as the Land of a Thousand Hills — Rwanda's remarkable post-genocide national reconciliation, mountain gorilla conservation, and Kigali's cleanliness are internationally recognized."],
-      ["geo_af_saotome",    "São Tomé and Príncipe",     "A small island nation in the Gulf of Guinea — one of Africa's smallest countries — with Portuguese Creole culture, cacao heritage, and tropical biodiversity."],
-      ["geo_af_seychelles", "Seychelles",                "A 115-island archipelago in the Indian Ocean — home to UNESCO-listed Vallée de Mai (where the legendary Coco de Mer palm grows), pristine coral reefs, and rare endemic species."],
-      ["geo_af_sierraleone","Sierra Leone",              "Home to Bunce Island — one of the most significant slave trading sites in West Africa — and a nation with a powerful connection to the African American roots journey."],
-      ["geo_af_somalia",    "Somalia",                   "One of the world's longest coastlines on the Horn of Africa — home to ancient Cushitic civilization, Somali poetry tradition, and the historic port of Mogadishu."],
-      ["geo_af_southsudan", "South Sudan",               "The world's youngest nation (independence 2011) — home to the Sudd, one of the world's largest freshwater ecosystems, and the Dinka and Nuer cattle culture."],
-      ["geo_af_sudan",      "Sudan",                     "Home to more ancient pyramids than Egypt — the Nubian pyramids of Meroe are UNESCO World Heritage Sites — and the ancient Nubian civilization along the Nile."],
-      ["geo_af_tanzania",   "Tanzania",                  "Home to Kilimanjaro (Africa's highest peak), the Serengeti, Zanzibar's Stone Town (UNESCO World Heritage Site), and the Ngorongoro Crater — East Africa's premier destination.",],
-      ["geo_af_togo",       "Togo",                      "A narrow West African nation with vibrant Ewe and Kabye cultures, Voodoo spiritual traditions, and the UNESCO-listed Koutammakou landscape."],
-      ["geo_af_tunisia",    "Tunisia",                   "Where Africa meets the Mediterranean — Carthage's ruins, the UNESCO-listed medina of Tunis, and the Sahara landscapes of Douz make Tunisia a cultural crossroads."],
-      ["geo_af_uganda",     "Uganda",                    "The Pearl of Africa — home to mountain gorillas in Bwindi, the source of the Nile at Jinja, and diverse cultures including the historic Buganda Kingdom."],
-      ["geo_af_zambia",     "Zambia",                    "Home to Victoria Falls — one of the world's largest waterfalls and a UNESCO World Heritage Site — and extraordinary Luangwa Valley wildlife reserves."],
-      ["geo_af_zimbabwe",   "Zimbabwe",                  "Home to Great Zimbabwe — the largest ancient stone structure in sub-Saharan Africa and a UNESCO World Heritage Site — and Victoria Falls on the Zambezi River."],
+      [
+        "geo_af_algeria",
+        "Algeria",
+        "North Africa's largest country — home to the Sahara Desert, ancient Roman ruins at Timgad and Djémila, and the UNESCO-listed Casbah of Algiers.",
+      ],
+      [
+        "geo_af_angola",
+        "Angola",
+        "A nation of extraordinary natural diversity — from Kalandula Falls to the Namib Desert. Angola has one of Africa's fastest-growing economies.",
+      ],
+      [
+        "geo_af_benin",
+        "Benin",
+        "Birthplace of Vodun (Voodoo) religion and home to the ancient Kingdom of Dahomey — a center of African cultural heritage and history.",
+      ],
+      [
+        "geo_af_botswana",
+        "Botswana",
+        "Home to the Okavango Delta, one of the world's largest inland deltas and a UNESCO World Heritage Site, and the Chobe National Park.",
+      ],
+      [
+        "geo_af_bfaso",
+        "Burkina Faso",
+        "A landlocked West African nation known for its vibrant arts and crafts tradition and the FESPACO Pan-African Film Festival held in Ouagadougou.",
+      ],
+      [
+        "geo_af_burundi",
+        "Burundi",
+        "One of Africa's smallest nations, situated at the northeastern shore of Lake Tanganyika — the world's longest freshwater lake.",
+      ],
+      [
+        "geo_af_capeverde",
+        "Cape Verde",
+        "An archipelago of 10 volcanic islands off West Africa's coast — known for morna music, Creole culture, and as a nexus of African, Portuguese, and diaspora identity.",
+      ],
+      [
+        "geo_af_cameroon",
+        "Cameroon",
+        "Known as 'Africa in miniature' for its geographic and cultural diversity — spanning rainforest, savannah, mountains, and over 250 ethnic groups.",
+      ],
+      [
+        "geo_af_car",
+        "Central African Republic",
+        "A landlocked country with extraordinary biodiversity, including Dzanga-Sangha Reserve — one of the last refuges for forest elephants and western lowland gorillas.",
+      ],
+      [
+        "geo_af_chad",
+        "Chad",
+        "Home to Lake Chad and the Tibesti Mountains, Chad straddles the Sahara and sub-Saharan Africa with a richly diverse culture of over 200 ethnic groups.",
+      ],
+      [
+        "geo_af_comoros",
+        "Comoros",
+        "An archipelago nation between Madagascar and Mozambique — known as the Perfume Islands for their ylang-ylang and clove cultivation.",
+      ],
+      [
+        "geo_af_congo_brz",
+        "Republic of the Congo",
+        "Home to the Congo Basin rainforest — the world's second-largest tropical rainforest — and a rich tradition of Kongo kingdom heritage.",
+      ],
+      [
+        "geo_af_congo_drc",
+        "Democratic Republic of Congo",
+        "The DRC contains more than half of Africa's rainforest and the Congo River — Africa's deepest river. It is one of the most biodiverse places on Earth.",
+      ],
+      [
+        "geo_af_cotediv",
+        "Côte d'Ivoire",
+        "Côte d'Ivoire (Ivory Coast) is one of West Africa's most prosperous nations and a major center of Ivorian music, fashion, and contemporary African art.",
+      ],
+      [
+        "geo_af_djibouti",
+        "Djibouti",
+        "A small East African nation at the strategic Bab-el-Mandeb Strait — where the Red Sea meets the Gulf of Aden — with salt lakes, volcanoes, and underwater coral reefs.",
+      ],
+      [
+        "geo_af_egypt",
+        "Egypt",
+        "Home to one of humanity's oldest civilizations — the pyramids of Giza, the Sphinx, Luxor's temples, and the Nile — Egypt is both an African and Mediterranean heritage destination.",
+      ],
+      [
+        "geo_af_equatguinea",
+        "Equatorial Guinea",
+        "The only Spanish-speaking country in Africa — comprising a mainland region and islands including Bioko — with rich oil resources and tropical rainforest.",
+      ],
+      [
+        "geo_af_eritrea",
+        "Eritrea",
+        "One of Africa's youngest nations, achieving independence in 1993. Home to the UNESCO-listed modernist city of Asmara and ancient Aksumite ruins.",
+      ],
+      [
+        "geo_af_eswatini",
+        "Eswatini",
+        "One of the world's last absolute monarchies and landlocked between South Africa and Mozambique — known for the Incwala and Umhlanga Reed Dance ceremonies.",
+      ],
+      [
+        "geo_af_gabon",
+        "Gabon",
+        "One of Africa's most forested countries — 88% forest cover — with national parks protecting gorillas, forest elephants, and hippos in Loango National Park.",
+      ],
+      [
+        "geo_af_gambia",
+        "Gambia",
+        "Africa's smallest mainland nation — a narrow strip along the Gambia River — known as the Gateway to Africa and a major roots tourism destination for the African diaspora.",
+      ],
+      [
+        "geo_af_guinea",
+        "Guinea",
+        "Home to the Fouta Djallon highlands — the 'water tower of West Africa' — and a significant Fulani and Mandinka cultural heritage.",
+      ],
+      [
+        "geo_af_guineabiss",
+        "Guinea-Bissau",
+        "An archipelago of 88 islands and a mainland — known for the UNESCO-listed Bijagós Archipelago, one of West Africa's most pristine coastal ecosystems.",
+      ],
+      [
+        "geo_af_lesotho",
+        "Lesotho",
+        "The only country in the world entirely above 1,000 meters elevation — a mountainous kingdom within South Africa known as the Kingdom in the Sky and for Basotho culture.",
+      ],
+      [
+        "geo_af_liberia",
+        "Liberia",
+        "Founded in 1847 by free Black Americans and freed slaves — Liberia has a unique historical connection to the African American diaspora and is Africa's oldest republic.",
+      ],
+      [
+        "geo_af_libya",
+        "Libya",
+        "Home to extraordinary Roman ruins at Leptis Magna and Sabratha — UNESCO World Heritage Sites along the Mediterranean — and ancient rock art in the Sahara.",
+      ],
+      [
+        "geo_af_madagascar",
+        "Madagascar",
+        "The fourth-largest island in the world — home to 90% of endemic wildlife including lemurs and baobab avenues — a biodiversity treasure unlike anywhere on Earth.",
+      ],
+      [
+        "geo_af_malawi",
+        "Malawi",
+        "Known as the Warm Heart of Africa — Malawi's culture of hospitality is legendary — with Lake Malawi (a UNESCO World Heritage Site) at its center.",
+      ],
+      [
+        "geo_af_mali",
+        "Mali",
+        "Home to the ancient city of Timbuktu — once a global center of Islamic learning — and the Dogon cliffs with one of Africa's most distinctive living cultural landscapes.",
+      ],
+      [
+        "geo_af_mauritania",
+        "Mauritania",
+        "A vast Saharan nation where ancient caravan cities like Chinguetti — a UNESCO World Heritage Site — served as gateways to Mecca for West African pilgrims.",
+      ],
+      [
+        "geo_af_mauritius",
+        "Mauritius",
+        "A multicultural island nation in the Indian Ocean — with a blend of African, Indian, French, and Creole culture, UNESCO-listed Aapravasi Ghat, and pristine lagoons.",
+      ],
+      [
+        "geo_af_morocco",
+        "Morocco",
+        "Where Africa meets the Arab world and the Mediterranean — the medinas of Marrakesh, Fès, and Chefchaouen are UNESCO World Heritage Sites drawing millions of visitors.",
+      ],
+      [
+        "geo_af_mozambique",
+        "Mozambique",
+        "A long Indian Ocean coastline with extraordinary marine biodiversity, Portuguese colonial architecture in Maputo, and the Bazaruto Archipelago coral reefs.",
+      ],
+      [
+        "geo_af_namibia",
+        "Namibia",
+        "Home to the oldest desert in the world — the Namib — and the red dunes of Sossusvlei, Etosha National Park, and the Himba people with their ochre-painted skin.",
+      ],
+      [
+        "geo_af_niger",
+        "Niger",
+        "One of the world's largest countries by area — home to the Air Mountains, Ténéré Desert, and the ancient city of Agadez — a UNESCO World Heritage Site and traditional Tuareg hub.",
+      ],
+      [
+        "geo_af_rwanda",
+        "Rwanda",
+        "Known as the Land of a Thousand Hills — Rwanda's remarkable post-genocide national reconciliation, mountain gorilla conservation, and Kigali's cleanliness are internationally recognized.",
+      ],
+      [
+        "geo_af_saotome",
+        "São Tomé and Príncipe",
+        "A small island nation in the Gulf of Guinea — one of Africa's smallest countries — with Portuguese Creole culture, cacao heritage, and tropical biodiversity.",
+      ],
+      [
+        "geo_af_seychelles",
+        "Seychelles",
+        "A 115-island archipelago in the Indian Ocean — home to UNESCO-listed Vallée de Mai (where the legendary Coco de Mer palm grows), pristine coral reefs, and rare endemic species.",
+      ],
+      [
+        "geo_af_sierraleone",
+        "Sierra Leone",
+        "Home to Bunce Island — one of the most significant slave trading sites in West Africa — and a nation with a powerful connection to the African American roots journey.",
+      ],
+      [
+        "geo_af_somalia",
+        "Somalia",
+        "One of the world's longest coastlines on the Horn of Africa — home to ancient Cushitic civilization, Somali poetry tradition, and the historic port of Mogadishu.",
+      ],
+      [
+        "geo_af_southsudan",
+        "South Sudan",
+        "The world's youngest nation (independence 2011) — home to the Sudd, one of the world's largest freshwater ecosystems, and the Dinka and Nuer cattle culture.",
+      ],
+      [
+        "geo_af_sudan",
+        "Sudan",
+        "Home to more ancient pyramids than Egypt — the Nubian pyramids of Meroe are UNESCO World Heritage Sites — and the ancient Nubian civilization along the Nile.",
+      ],
+      [
+        "geo_af_tanzania",
+        "Tanzania",
+        "Home to Kilimanjaro (Africa's highest peak), the Serengeti, Zanzibar's Stone Town (UNESCO World Heritage Site), and the Ngorongoro Crater — East Africa's premier destination.",
+      ],
+      [
+        "geo_af_togo",
+        "Togo",
+        "A narrow West African nation with vibrant Ewe and Kabye cultures, Voodoo spiritual traditions, and the UNESCO-listed Koutammakou landscape.",
+      ],
+      [
+        "geo_af_tunisia",
+        "Tunisia",
+        "Where Africa meets the Mediterranean — Carthage's ruins, the UNESCO-listed medina of Tunis, and the Sahara landscapes of Douz make Tunisia a cultural crossroads.",
+      ],
+      [
+        "geo_af_uganda",
+        "Uganda",
+        "The Pearl of Africa — home to mountain gorillas in Bwindi, the source of the Nile at Jinja, and diverse cultures including the historic Buganda Kingdom.",
+      ],
+      [
+        "geo_af_zambia",
+        "Zambia",
+        "Home to Victoria Falls — one of the world's largest waterfalls and a UNESCO World Heritage Site — and extraordinary Luangwa Valley wildlife reserves.",
+      ],
+      [
+        "geo_af_zimbabwe",
+        "Zimbabwe",
+        "Home to Great Zimbabwe — the largest ancient stone structure in sub-Saharan Africa and a UNESCO World Heritage Site — and Victoria Falls on the Zambezi River.",
+      ],
     ];
 
     let added = 0;
@@ -7460,10 +9427,13 @@ async function ensureAfricanGeographyNodes_v1(
       );
     }
 
-    log(`African geography nodes: ${added} new countries added, ${AFRICA.length} total checked`);
-
+    log(
+      `African geography nodes: ${added} new countries added, ${AFRICA.length} total checked`,
+    );
   } catch (err: unknown) {
-    warn(`African geography nodes v1 failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `African geography nodes v1 failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -7474,17 +9444,72 @@ async function ensureLibraryCollections(
   try {
     // ── 1. Seed top-level Collections ────────────────────────────────────────
     const COLLECTIONS = [
-      { id: "coll_places",    name: "Places",                  cat: "geography", desc: "Cities, neighborhoods, countries, HBCUs, and Living Legacy destinations" },
-      { id: "coll_culture",   name: "Culture & Community",     cat: "diaspora",  desc: "Cultural communities, diaspora identities, and shared heritage" },
-      { id: "coll_history",   name: "History",                 cat: "history",   desc: "Black history, civil rights, heritage sites, and historical context" },
-      { id: "coll_health",    name: "Health",                  cat: "health",    desc: "Health topics, medical conditions, maternal care, and wellness resources" },
-      { id: "coll_faith",     name: "Faith & Spirituality",    cat: "faith",     desc: "Faith traditions, denominations, and active spiritual communities" },
-      { id: "coll_careers",   name: "Careers & Professional",  cat: "employment",desc: "Jobs, trades, entrepreneurship, professional licensing, and financial literacy" },
-      { id: "coll_travel",    name: "Travel",                  cat: "travel",    desc: "Destination guides, cultural travel, safety, and travel resources" },
-      { id: "coll_community", name: "Community",               cat: "community", desc: "Civic engagement, organizations, community resources, and mutual aid" },
-      { id: "coll_education", name: "Education",               cat: "education", desc: "HBCUs, K-12, college prep, scholarships, and lifelong learning" },
-      { id: "coll_business",  name: "Business",                cat: "business",  desc: "Business resources, entrepreneurship, legal, and economic empowerment" },
-      { id: "coll_divine9",   name: "Divine Nine",             cat: "culture",   desc: "The nine historically Black Greek-letter organizations" },
+      {
+        id: "coll_places",
+        name: "Places",
+        cat: "geography",
+        desc: "Cities, neighborhoods, countries, HBCUs, and Living Legacy destinations",
+      },
+      {
+        id: "coll_culture",
+        name: "Culture & Community",
+        cat: "diaspora",
+        desc: "Cultural communities, diaspora identities, and shared heritage",
+      },
+      {
+        id: "coll_history",
+        name: "History",
+        cat: "history",
+        desc: "Black history, civil rights, heritage sites, and historical context",
+      },
+      {
+        id: "coll_health",
+        name: "Health",
+        cat: "health",
+        desc: "Health topics, medical conditions, maternal care, and wellness resources",
+      },
+      {
+        id: "coll_faith",
+        name: "Faith & Spirituality",
+        cat: "faith",
+        desc: "Faith traditions, denominations, and active spiritual communities",
+      },
+      {
+        id: "coll_careers",
+        name: "Careers & Professional",
+        cat: "employment",
+        desc: "Jobs, trades, entrepreneurship, professional licensing, and financial literacy",
+      },
+      {
+        id: "coll_travel",
+        name: "Travel",
+        cat: "travel",
+        desc: "Destination guides, cultural travel, safety, and travel resources",
+      },
+      {
+        id: "coll_community",
+        name: "Community",
+        cat: "community",
+        desc: "Civic engagement, organizations, community resources, and mutual aid",
+      },
+      {
+        id: "coll_education",
+        name: "Education",
+        cat: "education",
+        desc: "HBCUs, K-12, college prep, scholarships, and lifelong learning",
+      },
+      {
+        id: "coll_business",
+        name: "Business",
+        cat: "business",
+        desc: "Business resources, entrepreneurship, legal, and economic empowerment",
+      },
+      {
+        id: "coll_divine9",
+        name: "Divine Nine",
+        cat: "culture",
+        desc: "The nine historically Black Greek-letter organizations",
+      },
     ];
 
     for (const c of COLLECTIONS) {
@@ -7500,15 +9525,51 @@ async function ensureLibraryCollections(
 
     // ── 2. Seed canonical Books — Divine Nine ─────────────────────────────────
     const DIVINE_NINE_BOOKS = [
-      ["book_d9_apa",  "Alpha Phi Alpha",   "Founded 1906 at Cornell. The first intercollegiate Black fraternity. 'First of All, Servants of All, We Shall Transcend All.'"],
-      ["book_d9_aka",  "Alpha Kappa Alpha", "Founded 1908 at Howard University. The first Black sorority. 'By Culture and By Merit.'"],
-      ["book_d9_kap",  "Kappa Alpha Psi",   "Founded 1911 at Indiana University. 'Achievement in Every Field of Human Endeavor.'"],
-      ["book_d9_oop",  "Omega Psi Phi",     "Founded 1911 at Howard University. The first Black fraternity founded at a historically Black institution."],
-      ["book_d9_dst",  "Delta Sigma Theta", "Founded 1913 at Howard University. Public service sorority focused on social action and community development."],
-      ["book_d9_pbs",  "Phi Beta Sigma",    "Founded 1914 at Howard University. 'Culture for Service and Service for Humanity.'"],
-      ["book_d9_zpb",  "Zeta Phi Beta",     "Founded 1920 at Howard University. The first Greek-letter organization constitutionally bound to its founding fraternity (Phi Beta Sigma)."],
-      ["book_d9_sgr",  "Sigma Gamma Rho",   "Founded 1922 at Butler University. 'Greater Service, Greater Progress.'"],
-      ["book_d9_ipt",  "Iota Phi Theta",    "Founded 1963 at Morgan State University. 'Building a Tradition, Not Resting on One.'"],
+      [
+        "book_d9_apa",
+        "Alpha Phi Alpha",
+        "Founded 1906 at Cornell. The first intercollegiate Black fraternity. 'First of All, Servants of All, We Shall Transcend All.'",
+      ],
+      [
+        "book_d9_aka",
+        "Alpha Kappa Alpha",
+        "Founded 1908 at Howard University. The first Black sorority. 'By Culture and By Merit.'",
+      ],
+      [
+        "book_d9_kap",
+        "Kappa Alpha Psi",
+        "Founded 1911 at Indiana University. 'Achievement in Every Field of Human Endeavor.'",
+      ],
+      [
+        "book_d9_oop",
+        "Omega Psi Phi",
+        "Founded 1911 at Howard University. The first Black fraternity founded at a historically Black institution.",
+      ],
+      [
+        "book_d9_dst",
+        "Delta Sigma Theta",
+        "Founded 1913 at Howard University. Public service sorority focused on social action and community development.",
+      ],
+      [
+        "book_d9_pbs",
+        "Phi Beta Sigma",
+        "Founded 1914 at Howard University. 'Culture for Service and Service for Humanity.'",
+      ],
+      [
+        "book_d9_zpb",
+        "Zeta Phi Beta",
+        "Founded 1920 at Howard University. The first Greek-letter organization constitutionally bound to its founding fraternity (Phi Beta Sigma).",
+      ],
+      [
+        "book_d9_sgr",
+        "Sigma Gamma Rho",
+        "Founded 1922 at Butler University. 'Greater Service, Greater Progress.'",
+      ],
+      [
+        "book_d9_ipt",
+        "Iota Phi Theta",
+        "Founded 1963 at Morgan State University. 'Building a Tradition, Not Resting on One.'",
+      ],
     ];
 
     for (const [id, name, desc] of DIVINE_NINE_BOOKS) {
@@ -7530,20 +9591,76 @@ async function ensureLibraryCollections(
 
     // ── 3. Seed canonical Books — Health ─────────────────────────────────────
     const HEALTH_BOOKS = [
-      ["book_h_diabetes",    "Diabetes",             "Type 2 diabetes disproportionately affects Black Americans. Prevention, management, community resources, and culturally competent care."],
-      ["book_h_hypertension","Hypertension",         "High blood pressure — causes, prevention, treatment, and why Black Americans are affected at higher rates."],
-      ["book_h_fibroids",    "Fibroids",             "Uterine fibroids affect Black women at 2-3x the rate of white women. Symptoms, treatment options, and advocacy resources."],
-      ["book_h_endometriosis","Endometriosis",       "A painful chronic condition frequently underdiagnosed in Black women. Symptoms, diagnosis, treatment, and support communities."],
-      ["book_h_pcos",        "PCOS",                 "Polycystic ovary syndrome — hormonal disorder affecting fertility and long-term health. Diagnosis and management resources."],
-      ["book_h_fertility",   "Fertility",            "Fertility health, family planning, and resources for navigating fertility challenges and assisted reproduction."],
-      ["book_h_ivf",         "IVF",                  "In vitro fertilization — process, costs, success rates, emotional considerations, and finding culturally competent care providers."],
-      ["book_h_maternal",    "Maternal Health",      "Black maternal mortality rates and advocacy. Prenatal care, birth rights, midwifery, doulas, and postpartum support."],
-      ["book_h_sickle_cell", "Sickle Cell Disease",  "Genetic blood disorder affecting predominantly people of African descent. Treatment advances, support organizations, and carrier information."],
-      ["book_h_mental",      "Mental Health",        "Black mental health — therapy access, stigma, culturally competent therapists, crisis resources, and community support."],
-      ["book_h_hiv",         "HIV & AIDS",           "Prevention, treatment, community impact, PrEP access, and finding Black-affirming healthcare providers."],
-      ["book_h_breast_cancer","Breast Cancer",       "Prevention, screening, treatment, and why Black women face higher mortality rates. Advocacy and support organizations."],
-      ["book_h_prostate",    "Prostate Health",      "Prostate cancer affects Black men at higher rates. Screening recommendations, treatment options, and community resources."],
-      ["book_h_menopause",   "Menopause",            "Perimenopause and menopause — symptoms, treatment, and navigating this life stage with culturally informed care."],
+      [
+        "book_h_diabetes",
+        "Diabetes",
+        "Type 2 diabetes disproportionately affects Black Americans. Prevention, management, community resources, and culturally competent care.",
+      ],
+      [
+        "book_h_hypertension",
+        "Hypertension",
+        "High blood pressure — causes, prevention, treatment, and why Black Americans are affected at higher rates.",
+      ],
+      [
+        "book_h_fibroids",
+        "Fibroids",
+        "Uterine fibroids affect Black women at 2-3x the rate of white women. Symptoms, treatment options, and advocacy resources.",
+      ],
+      [
+        "book_h_endometriosis",
+        "Endometriosis",
+        "A painful chronic condition frequently underdiagnosed in Black women. Symptoms, diagnosis, treatment, and support communities.",
+      ],
+      [
+        "book_h_pcos",
+        "PCOS",
+        "Polycystic ovary syndrome — hormonal disorder affecting fertility and long-term health. Diagnosis and management resources.",
+      ],
+      [
+        "book_h_fertility",
+        "Fertility",
+        "Fertility health, family planning, and resources for navigating fertility challenges and assisted reproduction.",
+      ],
+      [
+        "book_h_ivf",
+        "IVF",
+        "In vitro fertilization — process, costs, success rates, emotional considerations, and finding culturally competent care providers.",
+      ],
+      [
+        "book_h_maternal",
+        "Maternal Health",
+        "Black maternal mortality rates and advocacy. Prenatal care, birth rights, midwifery, doulas, and postpartum support.",
+      ],
+      [
+        "book_h_sickle_cell",
+        "Sickle Cell Disease",
+        "Genetic blood disorder affecting predominantly people of African descent. Treatment advances, support organizations, and carrier information.",
+      ],
+      [
+        "book_h_mental",
+        "Mental Health",
+        "Black mental health — therapy access, stigma, culturally competent therapists, crisis resources, and community support.",
+      ],
+      [
+        "book_h_hiv",
+        "HIV & AIDS",
+        "Prevention, treatment, community impact, PrEP access, and finding Black-affirming healthcare providers.",
+      ],
+      [
+        "book_h_breast_cancer",
+        "Breast Cancer",
+        "Prevention, screening, treatment, and why Black women face higher mortality rates. Advocacy and support organizations.",
+      ],
+      [
+        "book_h_prostate",
+        "Prostate Health",
+        "Prostate cancer affects Black men at higher rates. Screening recommendations, treatment options, and community resources.",
+      ],
+      [
+        "book_h_menopause",
+        "Menopause",
+        "Perimenopause and menopause — symptoms, treatment, and navigating this life stage with culturally informed care.",
+      ],
     ];
 
     for (const [id, name, desc] of HEALTH_BOOKS) {
@@ -7565,17 +9682,61 @@ async function ensureLibraryCollections(
 
     // ── 4. Seed canonical Books — Faith & Spirituality ───────────────────────
     const FAITH_BOOKS = [
-      ["book_f_ame",        "African Methodist Episcopal",   "The AME Church — founded 1816 by Richard Allen. History, governance, social justice legacy, and locating AME congregations."],
-      ["book_f_baptist",    "Baptist",                       "Black Baptist churches — history, theology, civil rights leadership, conventions, and community role."],
-      ["book_f_cogic",      "Church of God in Christ",       "COGIC — the largest Pentecostal denomination. Founded by Charles H. Mason in 1907. Worship culture and global community."],
-      ["book_f_black_cath", "Black Catholic",                "The history of Black Catholics in America, historically Black Catholic institutions, and the movement for Black Catholic identity."],
-      ["book_f_eth_orth",   "Ethiopian Orthodox",            "One of the oldest Christian churches. Ge'ez liturgy, Coptic traditions, and the Ethiopian Orthodox diaspora."],
-      ["book_f_islam",      "Islam",                         "Islam in the Black American experience — from Malcolm X to the Nation of Islam to mainstream Sunni and Shia communities."],
-      ["book_f_judaism",    "Judaism",                       "Black Jewish communities — Hebrew Israelites, Ethiopian Jews (Beta Israel), and African American Jewish congregations."],
-      ["book_f_sikh",       "Sikhism",                       "Sikh traditions, the Guru Granth Sahib, the langar tradition of community feeding, and Sikh diaspora communities."],
-      ["book_f_buddhism",   "Buddhism",                      "Buddhism in the Black community — Thich Nhat Hanh's teachings, Soka Gakkai, and mindfulness traditions."],
-      ["book_f_african_sp", "African & Diaspora Spirituality","Yoruba, Vodou, Candomblé, Santería, and other African spiritual traditions in the diaspora."],
-      ["book_f_interfaith", "Interfaith",                    "Interfaith dialogue, multi-faith communities, and bridging spiritual traditions in the Black community."],
+      [
+        "book_f_ame",
+        "African Methodist Episcopal",
+        "The AME Church — founded 1816 by Richard Allen. History, governance, social justice legacy, and locating AME congregations.",
+      ],
+      [
+        "book_f_baptist",
+        "Baptist",
+        "Black Baptist churches — history, theology, civil rights leadership, conventions, and community role.",
+      ],
+      [
+        "book_f_cogic",
+        "Church of God in Christ",
+        "COGIC — the largest Pentecostal denomination. Founded by Charles H. Mason in 1907. Worship culture and global community.",
+      ],
+      [
+        "book_f_black_cath",
+        "Black Catholic",
+        "The history of Black Catholics in America, historically Black Catholic institutions, and the movement for Black Catholic identity.",
+      ],
+      [
+        "book_f_eth_orth",
+        "Ethiopian Orthodox",
+        "One of the oldest Christian churches. Ge'ez liturgy, Coptic traditions, and the Ethiopian Orthodox diaspora.",
+      ],
+      [
+        "book_f_islam",
+        "Islam",
+        "Islam in the Black American experience — from Malcolm X to the Nation of Islam to mainstream Sunni and Shia communities.",
+      ],
+      [
+        "book_f_judaism",
+        "Judaism",
+        "Black Jewish communities — Hebrew Israelites, Ethiopian Jews (Beta Israel), and African American Jewish congregations.",
+      ],
+      [
+        "book_f_sikh",
+        "Sikhism",
+        "Sikh traditions, the Guru Granth Sahib, the langar tradition of community feeding, and Sikh diaspora communities.",
+      ],
+      [
+        "book_f_buddhism",
+        "Buddhism",
+        "Buddhism in the Black community — Thich Nhat Hanh's teachings, Soka Gakkai, and mindfulness traditions.",
+      ],
+      [
+        "book_f_african_sp",
+        "African & Diaspora Spirituality",
+        "Yoruba, Vodou, Candomblé, Santería, and other African spiritual traditions in the diaspora.",
+      ],
+      [
+        "book_f_interfaith",
+        "Interfaith",
+        "Interfaith dialogue, multi-faith communities, and bridging spiritual traditions in the Black community.",
+      ],
     ];
 
     for (const [id, name, desc] of FAITH_BOOKS) {
@@ -7609,10 +9770,13 @@ async function ensureLibraryCollections(
     );
     log("Library: existing geography nodes linked to Places collection");
 
-    log("Library Collections: foundation complete — 11 Collections, 34 canonical Books");
-
+    log(
+      "Library Collections: foundation complete — 11 Collections, 34 canonical Books",
+    );
   } catch (err: unknown) {
-    warn(`Library collections seeding failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Library collections seeding failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -7621,29 +9785,194 @@ async function ensureLibraryCollections(
 // These complement the Phuket businesses already seeded.
 async function ensureBangkokBusinesses(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   const BANGKOK_BUSINESSES = [
-    { name: "Issaya Siamese Club", category: "Food", subcategory: "Fine Dining Thai", address: "4 Soi Si Akson, Chua Ploeng Rd", city: "Bangkok", country: "Thailand", lat: 13.7210, lng: 100.5476, description: "Award-winning Thai restaurant helmed by Chef Ian Kittichai, set in a restored colonial house. Known for reimagined traditional Thai dishes in a lush garden setting." },
-    { name: "Paste Restaurant", category: "Food", subcategory: "Fine Dining Thai", address: "Gaysorn Village, 999 Ploenchit Rd", city: "Bangkok", country: "Thailand", lat: 13.7435, lng: 100.5400, description: "Michelin-starred Thai restaurant celebrated for elevating ancient Thai recipes using modern technique. One of Bangkok's most respected dining destinations." },
-    { name: "Blue Elephant Royal Thai Cuisine", category: "Food", subcategory: "Fine Dining Thai", address: "233 South Sathorn Rd", city: "Bangkok", country: "Thailand", lat: 13.7213, lng: 100.5300, description: "Fine dining Thai cuisine in a landmark century-old colonial building. Famous for its Royal Thai tasting menus and highly regarded cooking school." },
-    { name: "Bo.lan Restaurant", category: "Food", subcategory: "Thai Cuisine", address: "24 Sukhumvit Soi 53, Klongtoey Nua", city: "Bangkok", country: "Thailand", lat: 13.7295, lng: 100.5680, description: "A pioneering sustainable fine-dining Thai restaurant committed to reviving heritage ingredients and cooking traditions. Beloved by food travelers worldwide." },
-    { name: "Soul Food Mahanakorn", category: "Food", subcategory: "Thai Tavern", address: "56/10 Sukhumvit Soi 55, Thonglor", city: "Bangkok", country: "Thailand", lat: 13.7290, lng: 100.5800, description: "A neighborhood Thai restaurant and bar known for honest Thai comfort food and creative cocktails. A local favorite for community dining in Thonglor." },
-    { name: "Vertigo & Moon Bar", category: "Entertainment & Recreation", subcategory: "Rooftop Bar", address: "Banyan Tree Bangkok, 21/100 South Sathorn Rd", city: "Bangkok", country: "Thailand", lat: 13.7199, lng: 100.5278, description: "Open-air rooftop restaurant and bar on the 61st floor of the Banyan Tree Hotel. Stunning panoramic views of the Bangkok skyline — one of the world's great rooftop experiences." },
-    { name: "Sirocco Sky Bar", category: "Entertainment & Recreation", subcategory: "Rooftop Bar", address: "Lebua at State Tower, 1055 Silom Rd", city: "Bangkok", country: "Thailand", lat: 13.7223, lng: 100.5140, description: "The world's highest open-air rooftop bar on the 63rd floor of the State Tower. An iconic Bangkok landmark featured in The Hangover Part II." },
-    { name: "Saxophone Pub & Restaurant", category: "Entertainment & Recreation", subcategory: "Live Music Venue", address: "3/8 Phetchaburi Rd, Victory Monument", city: "Bangkok", country: "Thailand", lat: 13.7617, lng: 100.5370, description: "Bangkok's beloved live music institution since 1987. Features nightly jazz, blues, and soul performances in an intimate setting near Victory Monument." },
-    { name: "Chatuchak Weekend Market", category: "Retail", subcategory: "Weekend Market", address: "587/10 Kampaeng Phet 2 Rd, Chatuchak", city: "Bangkok", country: "Thailand", lat: 13.7999, lng: 100.5505, description: "One of the world's largest weekend markets with over 8,000 stalls. Spanning 35 acres, it's the go-to destination for art, antiques, clothing, street food, and local crafts." },
-    { name: "Asiatique The Riverfront", category: "Entertainment & Recreation", subcategory: "Night Market", address: "2194 Charoen Krung Rd, Wat Phraya Krai", city: "Bangkok", country: "Thailand", lat: 13.7014, lng: 100.5095, description: "A sprawling riverside night market on the Chao Phraya River combining shopping, restaurants, bars, and live entertainment in a stunning open-air setting." },
-    { name: "Jim Thompson House", category: "Arts & Culture", subcategory: "Museum & Historic Site", address: "6 Kasem San 2, Wang Mai, Pathum Wan", city: "Bangkok", country: "Thailand", lat: 13.7480, lng: 100.5286, description: "The former home of American businessman and Thai silk entrepreneur Jim Thompson, now a museum showcasing a stunning collection of Southeast Asian art and antiques." },
-    { name: "MOCA Bangkok", category: "Arts & Culture", subcategory: "Museum & Art Gallery", address: "499 Kamphaeng Phet 6 Rd, Lat Yao", city: "Bangkok", country: "Thailand", lat: 13.8567, lng: 100.5695, description: "The Museum of Contemporary Art is Thailand's largest private contemporary art museum, home to over 800 works by Thai artists spanning the last 50 years." },
-    { name: "Lhong 1919", category: "Arts & Culture", subcategory: "Cultural Heritage Site", address: "248 Chiang Mai Rd, Khlong San", city: "Bangkok", country: "Thailand", lat: 13.7283, lng: 100.4972, description: "A beautifully restored 19th-century Chinese trading port on the Chao Phraya River, now a cultural center with galleries, weekend markets, and riverside dining." },
-    { name: "Mandarin Oriental Spa Bangkok", category: "Health & Wellness", subcategory: "Luxury Spa", address: "48 Oriental Ave, Bang Rak", city: "Bangkok", country: "Thailand", lat: 13.7213, lng: 100.5123, description: "The legendary spa at the Mandarin Oriental Hotel offering award-winning Thai massage, traditional healing rituals, and holistic wellness treatments since 1876." },
-    { name: "Roots Coffee Roasters", category: "Food", subcategory: "Specialty Coffee", address: "Ari neighborhood, Phahon Yothin Rd", city: "Bangkok", country: "Thailand", lat: 13.7759, lng: 100.5485, description: "Bangkok's beloved specialty coffee chain founded by Thai coffee enthusiasts. Known for meticulously sourced single-origin Thai beans and warm, welcoming cafés throughout the city." },
+    {
+      name: "Issaya Siamese Club",
+      category: "Food",
+      subcategory: "Fine Dining Thai",
+      address: "4 Soi Si Akson, Chua Ploeng Rd",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.721,
+      lng: 100.5476,
+      description:
+        "Award-winning Thai restaurant helmed by Chef Ian Kittichai, set in a restored colonial house. Known for reimagined traditional Thai dishes in a lush garden setting.",
+    },
+    {
+      name: "Paste Restaurant",
+      category: "Food",
+      subcategory: "Fine Dining Thai",
+      address: "Gaysorn Village, 999 Ploenchit Rd",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7435,
+      lng: 100.54,
+      description:
+        "Michelin-starred Thai restaurant celebrated for elevating ancient Thai recipes using modern technique. One of Bangkok's most respected dining destinations.",
+    },
+    {
+      name: "Blue Elephant Royal Thai Cuisine",
+      category: "Food",
+      subcategory: "Fine Dining Thai",
+      address: "233 South Sathorn Rd",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7213,
+      lng: 100.53,
+      description:
+        "Fine dining Thai cuisine in a landmark century-old colonial building. Famous for its Royal Thai tasting menus and highly regarded cooking school.",
+    },
+    {
+      name: "Bo.lan Restaurant",
+      category: "Food",
+      subcategory: "Thai Cuisine",
+      address: "24 Sukhumvit Soi 53, Klongtoey Nua",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7295,
+      lng: 100.568,
+      description:
+        "A pioneering sustainable fine-dining Thai restaurant committed to reviving heritage ingredients and cooking traditions. Beloved by food travelers worldwide.",
+    },
+    {
+      name: "Soul Food Mahanakorn",
+      category: "Food",
+      subcategory: "Thai Tavern",
+      address: "56/10 Sukhumvit Soi 55, Thonglor",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.729,
+      lng: 100.58,
+      description:
+        "A neighborhood Thai restaurant and bar known for honest Thai comfort food and creative cocktails. A local favorite for community dining in Thonglor.",
+    },
+    {
+      name: "Vertigo & Moon Bar",
+      category: "Entertainment & Recreation",
+      subcategory: "Rooftop Bar",
+      address: "Banyan Tree Bangkok, 21/100 South Sathorn Rd",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7199,
+      lng: 100.5278,
+      description:
+        "Open-air rooftop restaurant and bar on the 61st floor of the Banyan Tree Hotel. Stunning panoramic views of the Bangkok skyline — one of the world's great rooftop experiences.",
+    },
+    {
+      name: "Sirocco Sky Bar",
+      category: "Entertainment & Recreation",
+      subcategory: "Rooftop Bar",
+      address: "Lebua at State Tower, 1055 Silom Rd",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7223,
+      lng: 100.514,
+      description:
+        "The world's highest open-air rooftop bar on the 63rd floor of the State Tower. An iconic Bangkok landmark featured in The Hangover Part II.",
+    },
+    {
+      name: "Saxophone Pub & Restaurant",
+      category: "Entertainment & Recreation",
+      subcategory: "Live Music Venue",
+      address: "3/8 Phetchaburi Rd, Victory Monument",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7617,
+      lng: 100.537,
+      description:
+        "Bangkok's beloved live music institution since 1987. Features nightly jazz, blues, and soul performances in an intimate setting near Victory Monument.",
+    },
+    {
+      name: "Chatuchak Weekend Market",
+      category: "Retail",
+      subcategory: "Weekend Market",
+      address: "587/10 Kampaeng Phet 2 Rd, Chatuchak",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7999,
+      lng: 100.5505,
+      description:
+        "One of the world's largest weekend markets with over 8,000 stalls. Spanning 35 acres, it's the go-to destination for art, antiques, clothing, street food, and local crafts.",
+    },
+    {
+      name: "Asiatique The Riverfront",
+      category: "Entertainment & Recreation",
+      subcategory: "Night Market",
+      address: "2194 Charoen Krung Rd, Wat Phraya Krai",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7014,
+      lng: 100.5095,
+      description:
+        "A sprawling riverside night market on the Chao Phraya River combining shopping, restaurants, bars, and live entertainment in a stunning open-air setting.",
+    },
+    {
+      name: "Jim Thompson House",
+      category: "Arts & Culture",
+      subcategory: "Museum & Historic Site",
+      address: "6 Kasem San 2, Wang Mai, Pathum Wan",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.748,
+      lng: 100.5286,
+      description:
+        "The former home of American businessman and Thai silk entrepreneur Jim Thompson, now a museum showcasing a stunning collection of Southeast Asian art and antiques.",
+    },
+    {
+      name: "MOCA Bangkok",
+      category: "Arts & Culture",
+      subcategory: "Museum & Art Gallery",
+      address: "499 Kamphaeng Phet 6 Rd, Lat Yao",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.8567,
+      lng: 100.5695,
+      description:
+        "The Museum of Contemporary Art is Thailand's largest private contemporary art museum, home to over 800 works by Thai artists spanning the last 50 years.",
+    },
+    {
+      name: "Lhong 1919",
+      category: "Arts & Culture",
+      subcategory: "Cultural Heritage Site",
+      address: "248 Chiang Mai Rd, Khlong San",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7283,
+      lng: 100.4972,
+      description:
+        "A beautifully restored 19th-century Chinese trading port on the Chao Phraya River, now a cultural center with galleries, weekend markets, and riverside dining.",
+    },
+    {
+      name: "Mandarin Oriental Spa Bangkok",
+      category: "Health & Wellness",
+      subcategory: "Luxury Spa",
+      address: "48 Oriental Ave, Bang Rak",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7213,
+      lng: 100.5123,
+      description:
+        "The legendary spa at the Mandarin Oriental Hotel offering award-winning Thai massage, traditional healing rituals, and holistic wellness treatments since 1876.",
+    },
+    {
+      name: "Roots Coffee Roasters",
+      category: "Food",
+      subcategory: "Specialty Coffee",
+      address: "Ari neighborhood, Phahon Yothin Rd",
+      city: "Bangkok",
+      country: "Thailand",
+      lat: 13.7759,
+      lng: 100.5485,
+      description:
+        "Bangkok's beloved specialty coffee chain founded by Thai coffee enthusiasts. Known for meticulously sourced single-origin Thai beans and warm, welcoming cafés throughout the city.",
+    },
   ];
 
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(country,'')) AS k FROM businesses`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(country,'')) AS k FROM businesses`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
 
@@ -7652,7 +9981,10 @@ async function ensureBangkokBusinesses(
 
     for (const b of BANGKOK_BUSINESSES) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.country.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -7681,22 +10013,33 @@ async function ensureBangkokBusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
-            b.address, b.city, b.country,
+            b.name,
+            b.category,
+            b.subcategory,
+            b.address,
+            b.city,
+            b.country,
             b.description,
-            String(b.lat), String(b.lng),
-          ]
+            String(b.lat),
+            String(b.lng),
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Bangkok businesses: failed to insert ${b.name}: ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Bangkok businesses: failed to insert ${b.name}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Bangkok businesses guard: ${inserted} inserted, ${skipped} already present`);
+    log(
+      `Bangkok businesses guard: ${inserted} inserted, ${skipped} already present`,
+    );
   } catch (err: unknown) {
-    warn(`Bangkok businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Bangkok businesses guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -7708,81 +10051,501 @@ async function ensureBangkokBusinesses(
 // Guelaguetza, Flavors from Afar, Bossa Nova, Wi Spa, Ayara Thai.
 async function ensureLABusinesses(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   const LA_BUSINESSES = [
     // ── Soul Food & BBQ — Black American institutions ──────────────────────────
-    { name: "Dulan's Soul Food Kitchen", category: "Food", subcategory: "Soul Food", address: "4859 Crenshaw Blvd", city: "Los Angeles", lat: 33.9933, lng: -118.3359, description: "One of LA's most beloved soul food restaurants — Dulan's has fed the Crenshaw community for decades with smothered chicken, candied yams, and black-eyed peas that taste like a Sunday plate from home. A gathering place as much as a restaurant." },
-    { name: "Harold & Belle's Restaurant", category: "Food", subcategory: "Creole & Soul Food", address: "2920 W Jefferson Blvd", city: "Los Angeles", lat: 34.0140, lng: -118.3282, description: "A Los Angeles institution since 1969. Harold & Belle's brought the flavors of New Orleans Creole cooking to the West Adams neighborhood and never stopped. Gumbo, crawfish étouffée, and red beans and rice served with the warmth of family." },
-    { name: "Phillips Bar-B-Que", category: "Food", subcategory: "BBQ", address: "4307 Leimert Blvd", city: "Los Angeles", lat: 34.0072, lng: -118.3321, description: "Since 1971, Phillips has been the soul of Leimert Park BBQ. Hot links, ribs, and beef brisket slow-smoked over oak — the lines wrap around the corner every weekend and always have. A community pillar and a culinary landmark." },
-    { name: "Woody's Bar-B-Que", category: "Food", subcategory: "BBQ", address: "3446 W Slauson Ave", city: "Los Angeles", lat: 33.9930, lng: -118.3387, description: "Woody's has been slinging legendary BBQ on Slauson since 1975. Ribs, hot links, and sliced beef piled onto butcher paper — no-frills, pure flavor. A Hyde Park staple beloved across generations of South LA families." },
-    { name: "Bludso's Bar & Que", category: "Food", subcategory: "Texas BBQ", address: "609 N La Brea Ave", city: "Los Angeles", lat: 34.0806, lng: -118.3381, description: "Kevin Bludso brought his Compton roots and Texas BBQ traditions together at this La Brea landmark. Beef ribs, brisket, and Texas-style hot links in a bar setting that's as lively as the food is serious. One of LA's most celebrated pitmasters." },
-    { name: "Roscoe's House of Chicken & Waffles", category: "Food", subcategory: "Soul Food", address: "1518 N Gower St", city: "Los Angeles", lat: 34.0985, lng: -118.3262, description: "Herb Hudson opened the original Roscoe's in Hollywood in 1975 and created an LA legend. Chicken and waffles — crispy, golden, smothered — became the city's comfort food symbol. Beloved by the community, musicians, and every president who's passed through." },
-    { name: "The Serving Spoon", category: "Food", subcategory: "Soul Food Breakfast", address: "1403 Centinela Ave", city: "Inglewood", lat: 33.9636, lng: -118.3502, description: "Inglewood's favorite breakfast spot — a no-nonsense soul food diner serving grits, catfish and eggs, and the kind of smothered potatoes that make you close your eyes. The Serving Spoon is a community anchor that has never chased trends and never needed to." },
-    { name: "Big Mama's Rib Shack", category: "Food", subcategory: "BBQ & Soul Food", address: "1453 N Lake Ave", city: "Pasadena", lat: 34.1475, lng: -118.1123, description: "Big Mama's brought deep-South BBQ tradition to Pasadena and became the heartbeat of the city's Black community dining scene. Ribs, rib tips, and sides cooked with decades of muscle memory — the kind of place where regulars are known by name." },
-    { name: "Harriet's Cheesecakes Unlimited", category: "Food", subcategory: "Bakery & Desserts", address: "4440 W Slauson Ave", city: "Los Angeles", lat: 33.9890, lng: -118.3500, description: "For over 30 years, Harriet's has been baking the cheesecakes that show up at every South LA celebration — New York style, sweet potato, peach cobbler, and rotating seasonal flavors. Black-owned and deeply rooted in the community." },
-    { name: "Flossie's", category: "Food", subcategory: "Southern Cuisine", address: "2651 E 4th St", city: "Long Beach", lat: 33.7706, lng: -118.1574, description: "A Long Beach institution bringing Southern comfort food — fried catfish, collard greens, oxtails, and peach cobbler — to the heart of the city's historic Black community. Flossie's is the kind of place that makes you feel at home the moment you walk in." },
+    {
+      name: "Dulan's Soul Food Kitchen",
+      category: "Food",
+      subcategory: "Soul Food",
+      address: "4859 Crenshaw Blvd",
+      city: "Los Angeles",
+      lat: 33.9933,
+      lng: -118.3359,
+      description:
+        "One of LA's most beloved soul food restaurants — Dulan's has fed the Crenshaw community for decades with smothered chicken, candied yams, and black-eyed peas that taste like a Sunday plate from home. A gathering place as much as a restaurant.",
+    },
+    {
+      name: "Harold & Belle's Restaurant",
+      category: "Food",
+      subcategory: "Creole & Soul Food",
+      address: "2920 W Jefferson Blvd",
+      city: "Los Angeles",
+      lat: 34.014,
+      lng: -118.3282,
+      description:
+        "A Los Angeles institution since 1969. Harold & Belle's brought the flavors of New Orleans Creole cooking to the West Adams neighborhood and never stopped. Gumbo, crawfish étouffée, and red beans and rice served with the warmth of family.",
+    },
+    {
+      name: "Phillips Bar-B-Que",
+      category: "Food",
+      subcategory: "BBQ",
+      address: "4307 Leimert Blvd",
+      city: "Los Angeles",
+      lat: 34.0072,
+      lng: -118.3321,
+      description:
+        "Since 1971, Phillips has been the soul of Leimert Park BBQ. Hot links, ribs, and beef brisket slow-smoked over oak — the lines wrap around the corner every weekend and always have. A community pillar and a culinary landmark.",
+    },
+    {
+      name: "Woody's Bar-B-Que",
+      category: "Food",
+      subcategory: "BBQ",
+      address: "3446 W Slauson Ave",
+      city: "Los Angeles",
+      lat: 33.993,
+      lng: -118.3387,
+      description:
+        "Woody's has been slinging legendary BBQ on Slauson since 1975. Ribs, hot links, and sliced beef piled onto butcher paper — no-frills, pure flavor. A Hyde Park staple beloved across generations of South LA families.",
+    },
+    {
+      name: "Bludso's Bar & Que",
+      category: "Food",
+      subcategory: "Texas BBQ",
+      address: "609 N La Brea Ave",
+      city: "Los Angeles",
+      lat: 34.0806,
+      lng: -118.3381,
+      description:
+        "Kevin Bludso brought his Compton roots and Texas BBQ traditions together at this La Brea landmark. Beef ribs, brisket, and Texas-style hot links in a bar setting that's as lively as the food is serious. One of LA's most celebrated pitmasters.",
+    },
+    {
+      name: "Roscoe's House of Chicken & Waffles",
+      category: "Food",
+      subcategory: "Soul Food",
+      address: "1518 N Gower St",
+      city: "Los Angeles",
+      lat: 34.0985,
+      lng: -118.3262,
+      description:
+        "Herb Hudson opened the original Roscoe's in Hollywood in 1975 and created an LA legend. Chicken and waffles — crispy, golden, smothered — became the city's comfort food symbol. Beloved by the community, musicians, and every president who's passed through.",
+    },
+    {
+      name: "The Serving Spoon",
+      category: "Food",
+      subcategory: "Soul Food Breakfast",
+      address: "1403 Centinela Ave",
+      city: "Inglewood",
+      lat: 33.9636,
+      lng: -118.3502,
+      description:
+        "Inglewood's favorite breakfast spot — a no-nonsense soul food diner serving grits, catfish and eggs, and the kind of smothered potatoes that make you close your eyes. The Serving Spoon is a community anchor that has never chased trends and never needed to.",
+    },
+    {
+      name: "Big Mama's Rib Shack",
+      category: "Food",
+      subcategory: "BBQ & Soul Food",
+      address: "1453 N Lake Ave",
+      city: "Pasadena",
+      lat: 34.1475,
+      lng: -118.1123,
+      description:
+        "Big Mama's brought deep-South BBQ tradition to Pasadena and became the heartbeat of the city's Black community dining scene. Ribs, rib tips, and sides cooked with decades of muscle memory — the kind of place where regulars are known by name.",
+    },
+    {
+      name: "Harriet's Cheesecakes Unlimited",
+      category: "Food",
+      subcategory: "Bakery & Desserts",
+      address: "4440 W Slauson Ave",
+      city: "Los Angeles",
+      lat: 33.989,
+      lng: -118.35,
+      description:
+        "For over 30 years, Harriet's has been baking the cheesecakes that show up at every South LA celebration — New York style, sweet potato, peach cobbler, and rotating seasonal flavors. Black-owned and deeply rooted in the community.",
+    },
+    {
+      name: "Flossie's",
+      category: "Food",
+      subcategory: "Southern Cuisine",
+      address: "2651 E 4th St",
+      city: "Long Beach",
+      lat: 33.7706,
+      lng: -118.1574,
+      description:
+        "A Long Beach institution bringing Southern comfort food — fried catfish, collard greens, oxtails, and peach cobbler — to the heart of the city's historic Black community. Flossie's is the kind of place that makes you feel at home the moment you walk in.",
+    },
 
     // ── Ethiopian & East African — Little Ethiopia corridor ─────────────────────
-    { name: "Rahel Ethiopian Vegan Cuisine", category: "Food", subcategory: "Ethiopian Vegan", address: "1047 S Fairfax Ave", city: "Los Angeles", lat: 34.0523, lng: -118.3609, description: "The crown jewel of LA's Little Ethiopia neighborhood — Rahel serves a fully vegan Ethiopian menu of injera, tibs, misir, and gomen that is as ceremonially prepared as it is deeply flavorful. A landmark for plant-based eating that predates the trend by decades." },
-    { name: "Awash Ethiopian Restaurant", category: "Food", subcategory: "Ethiopian Cuisine", address: "1012 S Fairfax Ave", city: "Los Angeles", lat: 34.0515, lng: -118.3601, description: "A beloved stalwart of Little Ethiopia — Awash serves generous communal platters of lamb tibs, doro wot, and ayib on hand-made injera. The kind of place where first-timers become regulars and regulars become family." },
+    {
+      name: "Rahel Ethiopian Vegan Cuisine",
+      category: "Food",
+      subcategory: "Ethiopian Vegan",
+      address: "1047 S Fairfax Ave",
+      city: "Los Angeles",
+      lat: 34.0523,
+      lng: -118.3609,
+      description:
+        "The crown jewel of LA's Little Ethiopia neighborhood — Rahel serves a fully vegan Ethiopian menu of injera, tibs, misir, and gomen that is as ceremonially prepared as it is deeply flavorful. A landmark for plant-based eating that predates the trend by decades.",
+    },
+    {
+      name: "Awash Ethiopian Restaurant",
+      category: "Food",
+      subcategory: "Ethiopian Cuisine",
+      address: "1012 S Fairfax Ave",
+      city: "Los Angeles",
+      lat: 34.0515,
+      lng: -118.3601,
+      description:
+        "A beloved stalwart of Little Ethiopia — Awash serves generous communal platters of lamb tibs, doro wot, and ayib on hand-made injera. The kind of place where first-timers become regulars and regulars become family.",
+    },
 
     // ── Caribbean & Jamaican ───────────────────────────────────────────────────
-    { name: "Coley's Jamaican Restaurant", category: "Food", subcategory: "Jamaican Cuisine", address: "4335 Crenshaw Blvd", city: "Los Angeles", lat: 34.0028, lng: -118.3388, description: "Coley's has been feeding the Crenshaw corridor with authentic Jamaican cooking for years — jerk chicken, curry goat, oxtail, and plantain cooked low and slow with the island's full flavor spectrum. A cornerstone of LA's Caribbean community." },
-    { name: "Bridgetown Roti", category: "Food", subcategory: "Trinidadian Caribbean", address: "4556 Eagle Rock Blvd", city: "Los Angeles", lat: 34.1326, lng: -118.2186, description: "Bridgetown brings the flavors of Trinidad and Tobago to Eagle Rock — curry chicken roti, doubles, and pholourie from a kitchen that takes Caribbean food as seriously as any white-tablecloth restaurant. One of the most exciting diaspora kitchens in the city." },
+    {
+      name: "Coley's Jamaican Restaurant",
+      category: "Food",
+      subcategory: "Jamaican Cuisine",
+      address: "4335 Crenshaw Blvd",
+      city: "Los Angeles",
+      lat: 34.0028,
+      lng: -118.3388,
+      description:
+        "Coley's has been feeding the Crenshaw corridor with authentic Jamaican cooking for years — jerk chicken, curry goat, oxtail, and plantain cooked low and slow with the island's full flavor spectrum. A cornerstone of LA's Caribbean community.",
+    },
+    {
+      name: "Bridgetown Roti",
+      category: "Food",
+      subcategory: "Trinidadian Caribbean",
+      address: "4556 Eagle Rock Blvd",
+      city: "Los Angeles",
+      lat: 34.1326,
+      lng: -118.2186,
+      description:
+        "Bridgetown brings the flavors of Trinidad and Tobago to Eagle Rock — curry chicken roti, doubles, and pholourie from a kitchen that takes Caribbean food as seriously as any white-tablecloth restaurant. One of the most exciting diaspora kitchens in the city.",
+    },
 
     // ── Afro-Mexican & Latin Diaspora ─────────────────────────────────────────
-    { name: "Chichen Itza", category: "Food", subcategory: "Oaxacan Mexican", address: "3655 S Grand Ave", city: "Los Angeles", lat: 34.0266, lng: -118.2853, description: "Tucked inside the Mercado La Paloma community market, Chichen Itza serves Yucatecan Mayan cuisine — cochinita pibil, panuchos, and sopa de lima — representing the Indigenous and African-descended communities of southern Mexico. James Beard-nominated and deeply community-rooted." },
+    {
+      name: "Chichen Itza",
+      category: "Food",
+      subcategory: "Oaxacan Mexican",
+      address: "3655 S Grand Ave",
+      city: "Los Angeles",
+      lat: 34.0266,
+      lng: -118.2853,
+      description:
+        "Tucked inside the Mercado La Paloma community market, Chichen Itza serves Yucatecan Mayan cuisine — cochinita pibil, panuchos, and sopa de lima — representing the Indigenous and African-descended communities of southern Mexico. James Beard-nominated and deeply community-rooted.",
+    },
 
     // ── Coffee, Café & Brunch ──────────────────────────────────────────────────
-    { name: "Hilltop Coffee + Kitchen", category: "Food", subcategory: "Coffee & Brunch", address: "3237 W Jefferson Blvd", city: "Los Angeles", lat: 34.0235, lng: -118.3264, description: "A Black-owned coffee shop and brunch destination rooted in the West Adams neighborhood — a community that has resisted displacement for decades. Hilltop is the kind of third place that anchors a block: good coffee, real food, familiar faces." },
-    { name: "Highly Likely", category: "Food", subcategory: "Café & Brunch", address: "5011 W Adams Blvd", city: "Los Angeles", lat: 34.0280, lng: -118.3547, description: "A Black-owned café in West Adams that quickly became one of LA's most talked-about brunch spots. Highly Likely is as warm in its welcome as it is creative in its kitchen — the neighborhood's living room, open to everyone." },
+    {
+      name: "Hilltop Coffee + Kitchen",
+      category: "Food",
+      subcategory: "Coffee & Brunch",
+      address: "3237 W Jefferson Blvd",
+      city: "Los Angeles",
+      lat: 34.0235,
+      lng: -118.3264,
+      description:
+        "A Black-owned coffee shop and brunch destination rooted in the West Adams neighborhood — a community that has resisted displacement for decades. Hilltop is the kind of third place that anchors a block: good coffee, real food, familiar faces.",
+    },
+    {
+      name: "Highly Likely",
+      category: "Food",
+      subcategory: "Café & Brunch",
+      address: "5011 W Adams Blvd",
+      city: "Los Angeles",
+      lat: 34.028,
+      lng: -118.3547,
+      description:
+        "A Black-owned café in West Adams that quickly became one of LA's most talked-about brunch spots. Highly Likely is as warm in its welcome as it is creative in its kitchen — the neighborhood's living room, open to everyone.",
+    },
 
     // ── Health Food & Organic ──────────────────────────────────────────────────
-    { name: "Simply Wholesome", category: "Health & Wellness", subcategory: "Organic Health Food", address: "4508 W Slauson Ave", city: "Los Angeles", lat: 33.9898, lng: -118.3493, description: "South LA's pioneering health food store and café — Simply Wholesome has been serving organic, vegan, and Caribbean-inspired health food to the Crenshaw community since 1989. A true institution that proved healthy food and Black community have always belonged together." },
+    {
+      name: "Simply Wholesome",
+      category: "Health & Wellness",
+      subcategory: "Organic Health Food",
+      address: "4508 W Slauson Ave",
+      city: "Los Angeles",
+      lat: 33.9898,
+      lng: -118.3493,
+      description:
+        "South LA's pioneering health food store and café — Simply Wholesome has been serving organic, vegan, and Caribbean-inspired health food to the Crenshaw community since 1989. A true institution that proved healthy food and Black community have always belonged together.",
+    },
 
     // ── Arts, Culture & Community Institutions ────────────────────────────────
-    { name: "World Stage Performance Gallery", category: "Arts & Culture", subcategory: "Jazz & Performing Arts", address: "4321 Degnan Blvd", city: "Los Angeles", lat: 34.0052, lng: -118.3316, description: "Founded by jazz drummer Billy Higgins in 1989, the World Stage is the cultural soul of Leimert Park — a workshop, gallery, and performance space where LA's Black artistic tradition of jazz, poetry, and visual art lives and breathes. The stage where Kamasi Washington came up." },
-    { name: "Eso Won Books", category: "Arts & Culture", subcategory: "Black Bookstore", address: "4327 Degnan Blvd", city: "Los Angeles", lat: 34.0052, lng: -118.3319, description: "Eso Won — meaning 'water over stone' — has been LA's premier Black bookstore since 1988. Every major Black author who has passed through Los Angeles has read here. A gathering place for ideas, community, and the literature that sustains both." },
-    { name: "The Underground Museum", category: "Arts & Culture", subcategory: "Contemporary Art Gallery", address: "3508 W Washington Blvd", city: "Los Angeles", lat: 34.0183, lng: -118.3354, description: "Founded by artist Noah Davis in 2012, the Underground Museum is a free contemporary art space in the Arlington Heights neighborhood that brought world-class art — including shows from MoMA's collection — to a community that deserved it. Now stewarded by his estate." },
-    { name: "Destination Crenshaw", category: "Arts & Culture", subcategory: "Open-Air Art Museum", address: "4100 Crenshaw Blvd", city: "Los Angeles", lat: 34.0010, lng: -118.3380, description: "A 1.3-mile open-air museum celebrating Black Los Angeles — 100 works of art by Black artists installed along Crenshaw Boulevard as the Metro K Line was built. Destination Crenshaw is LA's answer to displacement: a permanent cultural declaration that this corridor belongs to its community." },
-    { name: "Museum of African American Art", category: "Arts & Culture", subcategory: "Museum", address: "4005 Crenshaw Blvd", city: "Los Angeles", lat: 34.0033, lng: -118.3363, description: "Founded in 1977, the Museum of African American Art inside Baldwin Hills Crenshaw Plaza houses a significant permanent collection of African American fine art and hosts rotating exhibitions celebrating Black creativity across generations. One of the few museums of its kind west of the Mississippi." },
-    { name: "Watts Towers Arts Center", category: "Arts & Culture", subcategory: "Cultural Center", address: "1727 E 107th St", city: "Los Angeles", lat: 33.9393, lng: -118.2416, description: "Adjacent to Simon Rodia's landmark Watts Towers, the Arts Center has been a community hub for creative expression in South LA since 1961. Classes, exhibitions, and the annual Watts Towers Jazz Festival make this one of LA's most beloved community institutions." },
+    {
+      name: "World Stage Performance Gallery",
+      category: "Arts & Culture",
+      subcategory: "Jazz & Performing Arts",
+      address: "4321 Degnan Blvd",
+      city: "Los Angeles",
+      lat: 34.0052,
+      lng: -118.3316,
+      description:
+        "Founded by jazz drummer Billy Higgins in 1989, the World Stage is the cultural soul of Leimert Park — a workshop, gallery, and performance space where LA's Black artistic tradition of jazz, poetry, and visual art lives and breathes. The stage where Kamasi Washington came up.",
+    },
+    {
+      name: "Eso Won Books",
+      category: "Arts & Culture",
+      subcategory: "Black Bookstore",
+      address: "4327 Degnan Blvd",
+      city: "Los Angeles",
+      lat: 34.0052,
+      lng: -118.3319,
+      description:
+        "Eso Won — meaning 'water over stone' — has been LA's premier Black bookstore since 1988. Every major Black author who has passed through Los Angeles has read here. A gathering place for ideas, community, and the literature that sustains both.",
+    },
+    {
+      name: "The Underground Museum",
+      category: "Arts & Culture",
+      subcategory: "Contemporary Art Gallery",
+      address: "3508 W Washington Blvd",
+      city: "Los Angeles",
+      lat: 34.0183,
+      lng: -118.3354,
+      description:
+        "Founded by artist Noah Davis in 2012, the Underground Museum is a free contemporary art space in the Arlington Heights neighborhood that brought world-class art — including shows from MoMA's collection — to a community that deserved it. Now stewarded by his estate.",
+    },
+    {
+      name: "Destination Crenshaw",
+      category: "Arts & Culture",
+      subcategory: "Open-Air Art Museum",
+      address: "4100 Crenshaw Blvd",
+      city: "Los Angeles",
+      lat: 34.001,
+      lng: -118.338,
+      description:
+        "A 1.3-mile open-air museum celebrating Black Los Angeles — 100 works of art by Black artists installed along Crenshaw Boulevard as the Metro K Line was built. Destination Crenshaw is LA's answer to displacement: a permanent cultural declaration that this corridor belongs to its community.",
+    },
+    {
+      name: "Museum of African American Art",
+      category: "Arts & Culture",
+      subcategory: "Museum",
+      address: "4005 Crenshaw Blvd",
+      city: "Los Angeles",
+      lat: 34.0033,
+      lng: -118.3363,
+      description:
+        "Founded in 1977, the Museum of African American Art inside Baldwin Hills Crenshaw Plaza houses a significant permanent collection of African American fine art and hosts rotating exhibitions celebrating Black creativity across generations. One of the few museums of its kind west of the Mississippi.",
+    },
+    {
+      name: "Watts Towers Arts Center",
+      category: "Arts & Culture",
+      subcategory: "Cultural Center",
+      address: "1727 E 107th St",
+      city: "Los Angeles",
+      lat: 33.9393,
+      lng: -118.2416,
+      description:
+        "Adjacent to Simon Rodia's landmark Watts Towers, the Arts Center has been a community hub for creative expression in South LA since 1961. Classes, exhibitions, and the annual Watts Towers Jazz Festival make this one of LA's most beloved community institutions.",
+    },
 
     // ── Nightlife, Music & Entertainment ──────────────────────────────────────
-    { name: "Catch One", category: "Entertainment & Recreation", subcategory: "Nightclub", address: "4067 W Pico Blvd", city: "Los Angeles", lat: 34.0376, lng: -118.3349, description: "Opened by Jewel Thais-Williams in 1973, Catch One is one of the longest-running Black LGBTQ+ nightclubs in America — a sanctuary on Pico Boulevard where the community could be fully itself. Through disco, house, R&B, and hip-hop, Catch One has been the heartbeat of Black queer LA for 50 years." },
-    { name: "The Lighthouse Café", category: "Entertainment & Recreation", subcategory: "Jazz & Live Music", address: "30 Pier Ave", city: "Hermosa Beach", lat: 33.8591, lng: -118.3995, description: "The Lighthouse has been a pillar of the West Coast jazz scene since 1949 — a venue where Miles Davis, Chet Baker, and Dexter Gordon played when jazz was defining LA's cultural identity. Still hosting live jazz nightly on the Hermosa Beach pier." },
-    { name: "Marcus Bar & Grille", category: "Entertainment & Recreation", subcategory: "Bar & Grill", address: "5100 W Century Blvd", city: "Los Angeles", lat: 33.9561, lng: -118.3694, description: "A Black-owned bar and grill near LAX that has become a go-to for travelers, locals, and industry professionals — good food, strong drinks, and the kind of energy that makes you stay longer than planned. A sophisticated gathering spot anchoring the Westchester community." },
+    {
+      name: "Catch One",
+      category: "Entertainment & Recreation",
+      subcategory: "Nightclub",
+      address: "4067 W Pico Blvd",
+      city: "Los Angeles",
+      lat: 34.0376,
+      lng: -118.3349,
+      description:
+        "Opened by Jewel Thais-Williams in 1973, Catch One is one of the longest-running Black LGBTQ+ nightclubs in America — a sanctuary on Pico Boulevard where the community could be fully itself. Through disco, house, R&B, and hip-hop, Catch One has been the heartbeat of Black queer LA for 50 years.",
+    },
+    {
+      name: "The Lighthouse Café",
+      category: "Entertainment & Recreation",
+      subcategory: "Jazz & Live Music",
+      address: "30 Pier Ave",
+      city: "Hermosa Beach",
+      lat: 33.8591,
+      lng: -118.3995,
+      description:
+        "The Lighthouse has been a pillar of the West Coast jazz scene since 1949 — a venue where Miles Davis, Chet Baker, and Dexter Gordon played when jazz was defining LA's cultural identity. Still hosting live jazz nightly on the Hermosa Beach pier.",
+    },
+    {
+      name: "Marcus Bar & Grille",
+      category: "Entertainment & Recreation",
+      subcategory: "Bar & Grill",
+      address: "5100 W Century Blvd",
+      city: "Los Angeles",
+      lat: 33.9561,
+      lng: -118.3694,
+      description:
+        "A Black-owned bar and grill near LAX that has become a go-to for travelers, locals, and industry professionals — good food, strong drinks, and the kind of energy that makes you stay longer than planned. A sophisticated gathering spot anchoring the Westchester community.",
+    },
 
     // ── Faith & Spiritual Community ───────────────────────────────────────────
-    { name: "Agape International Spiritual Center", category: "Faith & Spirituality", subcategory: "Spiritual Center", address: "5700 Buckingham Pkwy", city: "Culver City", lat: 33.9748, lng: -118.3950, description: "Founded by Rev. Michael Bernard Beckwith in 1986, Agape is one of the most influential spiritual communities in Los Angeles — a trans-denominational center that draws thousands weekly across race and background. Rooted in the New Thought tradition and deeply connected to the Black community that helped build it." },
+    {
+      name: "Agape International Spiritual Center",
+      category: "Faith & Spirituality",
+      subcategory: "Spiritual Center",
+      address: "5700 Buckingham Pkwy",
+      city: "Culver City",
+      lat: 33.9748,
+      lng: -118.395,
+      description:
+        "Founded by Rev. Michael Bernard Beckwith in 1986, Agape is one of the most influential spiritual communities in Los Angeles — a trans-denominational center that draws thousands weekly across race and background. Rooted in the New Thought tradition and deeply connected to the Black community that helped build it.",
+    },
 
     // ── Beauty & Personal Care ─────────────────────────────────────────────────
-    { name: "Deja Vu Beauty & Hair Salon", category: "Beauty & Personal Care", subcategory: "Black Hair Salon", address: "3815 Crenshaw Blvd", city: "Los Angeles", lat: 34.0096, lng: -118.3378, description: "A Crenshaw District institution for natural hair, relaxers, braids, and locs — Deja Vu is where South LA comes for their crown. The kind of salon where you come for a service and leave with community, conversation, and a style that turns heads." },
+    {
+      name: "Deja Vu Beauty & Hair Salon",
+      category: "Beauty & Personal Care",
+      subcategory: "Black Hair Salon",
+      address: "3815 Crenshaw Blvd",
+      city: "Los Angeles",
+      lat: 34.0096,
+      lng: -118.3378,
+      description:
+        "A Crenshaw District institution for natural hair, relaxers, braids, and locs — Deja Vu is where South LA comes for their crown. The kind of salon where you come for a service and leave with community, conversation, and a style that turns heads.",
+    },
 
     // ── Healthcare & Medical — covering South LA, Watts, Inglewood, Willowbrook ─
-    { name: "MLK Community Medical Center", category: "Health & Wellness", subcategory: "Medical Center", address: "1680 E 120th St", city: "Los Angeles", lat: 33.9311, lng: -118.2476, description: "MLK Community Medical Center was built to restore healthcare access to Willowbrook and South LA — a community that lost its hospital and demanded better. A full-service Level II trauma center with emergency care, surgery, and primary services rooted in the community it was built for. Accepting most insurance plans." },
-    { name: "Watts Healthcare Corporation", category: "Health & Wellness", subcategory: "Community Health Clinic", address: "10300 Compton Ave", city: "Los Angeles", lat: 33.9458, lng: -118.2473, description: "A federally qualified health center serving the Watts community since 1966 — the same year as the Watts Uprising that demanded dignity and better care. Primary care, dental, behavioral health, and pediatrics for patients regardless of ability to pay. Deeply rooted in the Black community it has served for six decades." },
-    { name: "UMMA Community Clinic", category: "Health & Wellness", subcategory: "Community Health Clinic", address: "1001 E 120th St", city: "Los Angeles", lat: 33.9312, lng: -118.2565, description: "UMMA (Unity Mercy Medical Associates) has provided free and low-cost healthcare to the Watts and South LA community since 2007. Primary care, women's health, pediatrics, and mental health services — with a deep commitment to health equity for Black and brown families. No patient is turned away." },
-    { name: "St. John's Well Child and Family Center", category: "Health & Wellness", subcategory: "Pediatric & Family Health", address: "5801 S Figueroa St", city: "Los Angeles", lat: 33.9986, lng: -118.2782, description: "St. John's has been providing pediatric primary care, dental, and behavioral health services to South LA children and families for over 40 years. A trusted partner for parents navigating the healthcare system — delivering culturally competent care to the youngest members of the community with deep roots in South LA." },
-    { name: "Kedren Community Health Center", category: "Health & Wellness", subcategory: "Mental Health & Counseling", address: "4211 S Avalon Blvd", city: "Los Angeles", lat: 33.9895, lng: -118.2732, description: "One of LA's longest-serving mental health centers — Kedren has provided psychiatric and behavioral health services to South LA's Black community since 1966. Therapy, crisis intervention, substance abuse treatment, and outpatient services delivered with cultural competence and decades of community trust." },
-    { name: "Charles R. Drew University Health Sciences Clinic", category: "Health & Wellness", subcategory: "Primary Care Clinic", address: "1731 E 120th St", city: "Los Angeles", lat: 33.9316, lng: -118.2464, description: "The clinical arm of Charles R. Drew University of Medicine and Science — a historically Black university founded after the Watts Uprising to bring medical education and care to South LA. Primary care, OB/GYN, and preventive services for underserved patients with a legacy of health equity research and community service." },
-    { name: "Centinela Hospital Medical Center", category: "Health & Wellness", subcategory: "Hospital", address: "555 E Hardy St", city: "Inglewood", lat: 33.9519, lng: -118.3484, description: "Inglewood's primary hospital serving the community with emergency care, maternity services, orthopedics, and cardiac care. A key healthcare anchor for the Inglewood and South Bay Black community — including maternity services for mothers delivering in the South LA area." },
-    { name: "Maternal Fetal Care Center at MLK", category: "Health & Wellness", subcategory: "OB/GYN & Maternal Health", address: "1680 E 120th St", city: "Los Angeles", lat: 33.9313, lng: -118.2475, description: "Specialized maternal and fetal care within MLK Community Medical Center — serving high-risk pregnancies and delivering culturally competent OB/GYN care to Black mothers in South LA. Part of a broader mission to close the Black maternal mortality gap through community-rooted care." },
-    { name: "The Sycamores South LA Family Resource Center", category: "Health & Wellness", subcategory: "Mental Health & Family Services", address: "10820 S Budlong Ave", city: "Los Angeles", lat: 33.9394, lng: -118.2941, description: "A community mental health organization providing therapy, crisis intervention, and family services to South LA children, teens, and families. Culturally affirming care for the Black community — therapy for kids, parenting support, and trauma-informed counseling for families who have faced systemic barriers to mental healthcare." },
-    { name: "QueensCare Health Centers — West Adams", category: "Health & Wellness", subcategory: "Community Health Clinic", address: "4500 W Adams Blvd", city: "Los Angeles", lat: 34.0280, lng: -118.3474, description: "A nonprofit community health center providing primary care, pediatrics, dental, and behavioral health services on a sliding-scale fee — making care accessible to West Adams and South LA families regardless of income or insurance status. Part of the QueensCare network serving LA's underserved communities." },
+    {
+      name: "MLK Community Medical Center",
+      category: "Health & Wellness",
+      subcategory: "Medical Center",
+      address: "1680 E 120th St",
+      city: "Los Angeles",
+      lat: 33.9311,
+      lng: -118.2476,
+      description:
+        "MLK Community Medical Center was built to restore healthcare access to Willowbrook and South LA — a community that lost its hospital and demanded better. A full-service Level II trauma center with emergency care, surgery, and primary services rooted in the community it was built for. Accepting most insurance plans.",
+    },
+    {
+      name: "Watts Healthcare Corporation",
+      category: "Health & Wellness",
+      subcategory: "Community Health Clinic",
+      address: "10300 Compton Ave",
+      city: "Los Angeles",
+      lat: 33.9458,
+      lng: -118.2473,
+      description:
+        "A federally qualified health center serving the Watts community since 1966 — the same year as the Watts Uprising that demanded dignity and better care. Primary care, dental, behavioral health, and pediatrics for patients regardless of ability to pay. Deeply rooted in the Black community it has served for six decades.",
+    },
+    {
+      name: "UMMA Community Clinic",
+      category: "Health & Wellness",
+      subcategory: "Community Health Clinic",
+      address: "1001 E 120th St",
+      city: "Los Angeles",
+      lat: 33.9312,
+      lng: -118.2565,
+      description:
+        "UMMA (Unity Mercy Medical Associates) has provided free and low-cost healthcare to the Watts and South LA community since 2007. Primary care, women's health, pediatrics, and mental health services — with a deep commitment to health equity for Black and brown families. No patient is turned away.",
+    },
+    {
+      name: "St. John's Well Child and Family Center",
+      category: "Health & Wellness",
+      subcategory: "Pediatric & Family Health",
+      address: "5801 S Figueroa St",
+      city: "Los Angeles",
+      lat: 33.9986,
+      lng: -118.2782,
+      description:
+        "St. John's has been providing pediatric primary care, dental, and behavioral health services to South LA children and families for over 40 years. A trusted partner for parents navigating the healthcare system — delivering culturally competent care to the youngest members of the community with deep roots in South LA.",
+    },
+    {
+      name: "Kedren Community Health Center",
+      category: "Health & Wellness",
+      subcategory: "Mental Health & Counseling",
+      address: "4211 S Avalon Blvd",
+      city: "Los Angeles",
+      lat: 33.9895,
+      lng: -118.2732,
+      description:
+        "One of LA's longest-serving mental health centers — Kedren has provided psychiatric and behavioral health services to South LA's Black community since 1966. Therapy, crisis intervention, substance abuse treatment, and outpatient services delivered with cultural competence and decades of community trust.",
+    },
+    {
+      name: "Charles R. Drew University Health Sciences Clinic",
+      category: "Health & Wellness",
+      subcategory: "Primary Care Clinic",
+      address: "1731 E 120th St",
+      city: "Los Angeles",
+      lat: 33.9316,
+      lng: -118.2464,
+      description:
+        "The clinical arm of Charles R. Drew University of Medicine and Science — a historically Black university founded after the Watts Uprising to bring medical education and care to South LA. Primary care, OB/GYN, and preventive services for underserved patients with a legacy of health equity research and community service.",
+    },
+    {
+      name: "Centinela Hospital Medical Center",
+      category: "Health & Wellness",
+      subcategory: "Hospital",
+      address: "555 E Hardy St",
+      city: "Inglewood",
+      lat: 33.9519,
+      lng: -118.3484,
+      description:
+        "Inglewood's primary hospital serving the community with emergency care, maternity services, orthopedics, and cardiac care. A key healthcare anchor for the Inglewood and South Bay Black community — including maternity services for mothers delivering in the South LA area.",
+    },
+    {
+      name: "Maternal Fetal Care Center at MLK",
+      category: "Health & Wellness",
+      subcategory: "OB/GYN & Maternal Health",
+      address: "1680 E 120th St",
+      city: "Los Angeles",
+      lat: 33.9313,
+      lng: -118.2475,
+      description:
+        "Specialized maternal and fetal care within MLK Community Medical Center — serving high-risk pregnancies and delivering culturally competent OB/GYN care to Black mothers in South LA. Part of a broader mission to close the Black maternal mortality gap through community-rooted care.",
+    },
+    {
+      name: "The Sycamores South LA Family Resource Center",
+      category: "Health & Wellness",
+      subcategory: "Mental Health & Family Services",
+      address: "10820 S Budlong Ave",
+      city: "Los Angeles",
+      lat: 33.9394,
+      lng: -118.2941,
+      description:
+        "A community mental health organization providing therapy, crisis intervention, and family services to South LA children, teens, and families. Culturally affirming care for the Black community — therapy for kids, parenting support, and trauma-informed counseling for families who have faced systemic barriers to mental healthcare.",
+    },
+    {
+      name: "QueensCare Health Centers — West Adams",
+      category: "Health & Wellness",
+      subcategory: "Community Health Clinic",
+      address: "4500 W Adams Blvd",
+      city: "Los Angeles",
+      lat: 34.028,
+      lng: -118.3474,
+      description:
+        "A nonprofit community health center providing primary care, pediatrics, dental, and behavioral health services on a sliding-scale fee — making care accessible to West Adams and South LA families regardless of income or insurance status. Part of the QueensCare network serving LA's underserved communities.",
+    },
 
     // ── Childcare & Early Education ────────────────────────────────────────────
-    { name: "LAUSD Head Start — Watts Learning Center", category: "Childcare & Early Education", subcategory: "Early Childhood Education", address: "1260 E 111th St", city: "Los Angeles", lat: 33.9434, lng: -118.2508, description: "A Head Start early childhood program in the Watts community providing free preschool education, health screenings, and family support services to children ages 3–5. One of LA's most important investments in Black children's early development — giving Watts families access to the same quality early education as any family in LA." },
+    {
+      name: "LAUSD Head Start — Watts Learning Center",
+      category: "Childcare & Early Education",
+      subcategory: "Early Childhood Education",
+      address: "1260 E 111th St",
+      city: "Los Angeles",
+      lat: 33.9434,
+      lng: -118.2508,
+      description:
+        "A Head Start early childhood program in the Watts community providing free preschool education, health screenings, and family support services to children ages 3–5. One of LA's most important investments in Black children's early development — giving Watts families access to the same quality early education as any family in LA.",
+    },
 
     // ── Professional Services ──────────────────────────────────────────────────
-    { name: "Conwell & Kirkpatrick LLP", category: "Professional Services", subcategory: "Law Firm", address: "3699 Wilshire Blvd", city: "Los Angeles", lat: 34.0608, lng: -118.3414, description: "A Black-owned law firm serving the Los Angeles community — specializing in civil rights, employment discrimination, personal injury, and family law. Dedicated to providing quality legal representation to clients who have historically been underrepresented in LA's legal system." },
-    { name: "Crenshaw Tax & Accounting Services", category: "Professional Services", subcategory: "Tax & Accounting", address: "3650 W Martin Luther King Jr Blvd", city: "Los Angeles", lat: 34.0006, lng: -118.3349, description: "A Black-owned accounting and tax preparation firm serving South LA families and small business owners — helping the community keep more of what they earn and build generational wealth. Individual returns, small business bookkeeping, and financial planning with a deep understanding of the community's needs." },
+    {
+      name: "Conwell & Kirkpatrick LLP",
+      category: "Professional Services",
+      subcategory: "Law Firm",
+      address: "3699 Wilshire Blvd",
+      city: "Los Angeles",
+      lat: 34.0608,
+      lng: -118.3414,
+      description:
+        "A Black-owned law firm serving the Los Angeles community — specializing in civil rights, employment discrimination, personal injury, and family law. Dedicated to providing quality legal representation to clients who have historically been underrepresented in LA's legal system.",
+    },
+    {
+      name: "Crenshaw Tax & Accounting Services",
+      category: "Professional Services",
+      subcategory: "Tax & Accounting",
+      address: "3650 W Martin Luther King Jr Blvd",
+      city: "Los Angeles",
+      lat: 34.0006,
+      lng: -118.3349,
+      description:
+        "A Black-owned accounting and tax preparation firm serving South LA families and small business owners — helping the community keep more of what they earn and build generational wealth. Individual returns, small business bookkeeping, and financial planning with a deep understanding of the community's needs.",
+    },
   ];
 
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(country,'')) AS k FROM businesses`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(country,'')) AS k FROM businesses`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
 
@@ -7791,7 +10554,10 @@ async function ensureLABusinesses(
 
     for (const b of LA_BUSINESSES) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|us`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -7820,29 +10586,39 @@ async function ensureLABusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
-            b.address, b.city,
+            b.name,
+            b.category,
+            b.subcategory,
+            b.address,
+            b.city,
             b.description,
-            String(b.lat), String(b.lng),
-          ]
+            String(b.lat),
+            String(b.lng),
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  LA businesses: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  LA businesses: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`LA businesses guard: ${inserted} inserted, ${skipped} already present`);
+    log(
+      `LA businesses guard: ${inserted} inserted, ${skipped} already present`,
+    );
   } catch (err: unknown) {
-    warn(`LA businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `LA businesses guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Hide confirmed test/demo/placeholder businesses ───────────────────────────
 async function ensureTestDataContained(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Only hide records we have POSITIVELY identified as test/demo fixtures.
@@ -7869,21 +10645,25 @@ async function ensureTestDataContained(
          )`,
       [CONFIRMED_TEST_IDS],
     );
-    log(`Confirmed test data containment: ${result.rowCount ?? 0} records hidden; linked data retained`);
+    log(
+      `Confirmed test data containment: ${result.rowCount ?? 0} records hidden; linked data retained`,
+    );
   } catch (err: unknown) {
-    warn(`Confirmed test data containment failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Confirmed test data containment failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Proof-of-concept coverage expansion — real businesses, all tour cities ────
 async function ensureCoverageExpansion(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Build a dedup set keyed by normalized name|city|country
     const existing = await pool.query(
-      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`,
     );
     const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
 
@@ -7892,7 +10672,10 @@ async function ensureCoverageExpansion(
 
     for (const b of COVERAGE_EXPANSION) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.country.toLowerCase()}`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -7921,31 +10704,41 @@ async function ensureCoverageExpansion(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
-            b.address, b.city,
+            b.name,
+            b.category,
+            b.subcategory,
+            b.address,
+            b.city,
             b.state || null,
             b.country,
             b.description,
-            String(b.lat), String(b.lng),
-          ]
+            String(b.lat),
+            String(b.lng),
+          ],
         );
         existingKeys.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  coverage-expansion: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  coverage-expansion: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Coverage expansion: ${inserted} inserted, ${skipped} already present (${COVERAGE_EXPANSION.length} total in seed)`);
+    log(
+      `Coverage expansion: ${inserted} inserted, ${skipped} already present (${COVERAGE_EXPANSION.length} total in seed)`,
+    );
   } catch (err: unknown) {
-    warn(`Coverage expansion failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Coverage expansion failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 // ── Founder-specified churches — confirmed addresses, official websites ────────
 async function ensureFounderChurches(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   const churches = [
     {
@@ -7988,7 +10781,7 @@ async function ensureFounderChurches(
 
   try {
     const existing = await pool.query(
-      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`,
     );
     const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
 
@@ -7997,7 +10790,10 @@ async function ensureFounderChurches(
 
     for (const c of churches) {
       const key = `${c.name.toLowerCase()}|${c.city.toLowerCase()}|${c.country.toLowerCase()}`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -8028,23 +10824,36 @@ async function ensureFounderChurches(
              NOW(),NOW())`,
           [
             randomUUID(),
-            c.name, c.address, c.city, c.state, c.country,
+            c.name,
+            c.address,
+            c.city,
+            c.state,
+            c.country,
             c.description,
             c.website,
-            String(c.lat), String(c.lng),
-          ]
+            String(c.lat),
+            String(c.lng),
+          ],
         );
         existingKeys.add(key);
         inserted++;
-        log(`  Founder churches: inserted "${c.name}" in ${c.city}, ${c.state}`);
+        log(
+          `  Founder churches: inserted "${c.name}" in ${c.city}, ${c.state}`,
+        );
       } catch (err: unknown) {
-        warn(`  Founder churches: failed to insert "${c.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Founder churches: failed to insert "${c.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Founder churches guard: ${inserted} inserted, ${skipped} already present`);
+    log(
+      `Founder churches guard: ${inserted} inserted, ${skipped} already present`,
+    );
   } catch (err: unknown) {
-    warn(`Founder churches guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Founder churches guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8052,9 +10861,8 @@ async function ensureFounderChurches(
 // Source: TikTok screenshots from tester on-ground + curated research
 async function ensurePhuketFullLayer(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
-
   type PlaceEntry = {
     name: string;
     category: string;
@@ -8123,7 +10931,7 @@ async function ensurePhuketFullLayer(
       city: "Patong",
       description:
         "Zippy is a popular Patong day club known for pool parties and daytime DJ sets. Great entry point for the Phuket party scene before the Bangla Road night begins.",
-      lat: 7.8970,
+      lat: 7.897,
       lng: 98.2981,
     },
     {
@@ -8249,7 +11057,7 @@ async function ensurePhuketFullLayer(
       city: "Phuket Town",
       description:
         "Jui Tui is one of Phuket's most important Chinese Taoist shrines and the heart of the famous Phuket Vegetarian Festival. Vivid red-and-gold architecture, incense, and a deeply spiritual atmosphere year-round.",
-      lat: 7.8820,
+      lat: 7.882,
       lng: 98.3918,
     },
     // ── Nature & views ────────────────────────────────────────────────────────
@@ -8317,8 +11125,8 @@ async function ensurePhuketFullLayer(
       city: "Phuket Town",
       description:
         "Monkey Hill is a forested peak in the middle of Phuket Town populated by hundreds of wild macaque monkeys. An easy 20-minute climb rewards you with city views and unforgettable wildlife encounters. Go early, don't bring food out in the open.",
-      lat: 7.9020,
-      lng: 98.3700,
+      lat: 7.902,
+      lng: 98.37,
     },
     // ── Creative & unique ─────────────────────────────────────────────────────
     {
@@ -8330,7 +11138,7 @@ async function ensurePhuketFullLayer(
       description:
         "Art in Paradise is a massive 3D trick-art museum spread across multiple themed rooms — you become part of the paintings. Ocean floors, dinosaurs, ancient Egypt, and more. Wildly fun and uniquely photogenic. Great rainy-day activity.",
       lat: 7.8822,
-      lng: 98.3910,
+      lng: 98.391,
       website: "https://artinparadisephuket.com",
     },
     {
@@ -8341,7 +11149,7 @@ async function ensurePhuketFullLayer(
       city: "Patong",
       description:
         "The Trickeye Museum in Patong features optical illusion art and 3D installations you can step into and photograph. Smaller and more accessible than Art in Paradise — great for an afternoon between beach and nightlife.",
-      lat: 7.8940,
+      lat: 7.894,
       lng: 98.2968,
     },
     {
@@ -8385,7 +11193,7 @@ async function ensurePhuketFullLayer(
       city: "Karon",
       description:
         "Kata Noi is one of Phuket's most beautiful and least crowded beaches — a small, intimate bay with powdery sand, clear water, and a peaceful atmosphere. Far fewer vendors and tourists than the main Kata beach nearby.",
-      lat: 7.8130,
+      lat: 7.813,
       lng: 98.2995,
     },
     {
@@ -8404,7 +11212,7 @@ async function ensurePhuketFullLayer(
 
   try {
     const existing = await pool.query(
-      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'thailand')) AS k FROM businesses`
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'thailand')) AS k FROM businesses`,
     );
     const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
 
@@ -8413,7 +11221,10 @@ async function ensurePhuketFullLayer(
 
     for (const p of places) {
       const key = `${p.name.toLowerCase()}|${p.city.toLowerCase()}|thailand`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -8444,23 +11255,33 @@ async function ensurePhuketFullLayer(
              NOW(),NOW())`,
           [
             randomUUID(),
-            p.name, p.category, p.subcategory,
-            p.address, p.city,
+            p.name,
+            p.category,
+            p.subcategory,
+            p.address,
+            p.city,
             p.description,
             p.website ?? null,
-            String(p.lat), String(p.lng),
-          ]
+            String(p.lat),
+            String(p.lng),
+          ],
         );
         existingKeys.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Phuket full layer: failed to insert "${p.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Phuket full layer: failed to insert "${p.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Phuket full layer: ${inserted} inserted, ${skipped} already present (${places.length} total)`);
+    log(
+      `Phuket full layer: ${inserted} inserted, ${skipped} already present (${places.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`Phuket full layer failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Phuket full layer failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8469,7 +11290,7 @@ async function ensurePhuketFullLayer(
 // Restaurant → Food | Safe: preserves all records, only updates category label
 async function ensureCategoryNormalization(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const result = await pool.query(`
@@ -8486,7 +11307,9 @@ async function ensureCategoryNormalization(
     `);
     log(`Category normalization: ${result.rowCount ?? 0} records normalized`);
   } catch (err: unknown) {
-    warn(`Category normalization failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Category normalization failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8494,11 +11317,11 @@ async function ensureCategoryNormalization(
 // health, legal, trades, Jamaica, beauty specialty enrichment
 async function ensureGapCoverageV2(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const existing = await pool.query(
-      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`,
     );
     const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
 
@@ -8506,9 +11329,12 @@ async function ensureGapCoverageV2(
     let skipped = 0;
 
     for (const b of GAP_COVERAGE_V2) {
-      const countryKey = (b.country ?? 'usa').toLowerCase();
+      const countryKey = (b.country ?? "usa").toLowerCase();
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${countryKey}`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -8539,25 +11365,35 @@ async function ensureGapCoverageV2(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
-            b.address, b.city,
+            b.name,
+            b.category,
+            b.subcategory,
+            b.address,
+            b.city,
             b.state || null,
             b.country,
             b.description,
             b.website ?? null,
-            String(b.lat), String(b.lng),
-          ]
+            String(b.lat),
+            String(b.lng),
+          ],
         );
         existingKeys.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  gap-coverage-v2: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  gap-coverage-v2: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Gap coverage v2: ${inserted} inserted, ${skipped} already present (${GAP_COVERAGE_V2.length} total in seed)`);
+    log(
+      `Gap coverage v2: ${inserted} inserted, ${skipped} already present (${GAP_COVERAGE_V2.length} total in seed)`,
+    );
   } catch (err: unknown) {
-    warn(`Gap coverage v2 failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Gap coverage v2 failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8565,11 +11401,11 @@ async function ensureGapCoverageV2(
 // FREEZE after this pass. Future additions by tester demand only.
 async function ensureFinalMicroSeed(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     const existing = await pool.query(
-      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`,
     );
     const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
 
@@ -8577,9 +11413,12 @@ async function ensureFinalMicroSeed(
     let skipped = 0;
 
     for (const b of FINAL_MICRO_SEED) {
-      const countryKey = (b.country ?? 'usa').toLowerCase();
+      const countryKey = (b.country ?? "usa").toLowerCase();
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${countryKey}`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -8610,25 +11449,35 @@ async function ensureFinalMicroSeed(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
-            b.address, b.city,
+            b.name,
+            b.category,
+            b.subcategory,
+            b.address,
+            b.city,
             b.state || null,
             b.country,
             b.description,
             b.website ?? null,
-            String(b.lat), String(b.lng),
-          ]
+            String(b.lat),
+            String(b.lng),
+          ],
         );
         existingKeys.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  final-micro: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  final-micro: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`Final micro-seed: ${inserted} inserted, ${skipped} already present (${FINAL_MICRO_SEED.length} total)`);
+    log(
+      `Final micro-seed: ${inserted} inserted, ${skipped} already present (${FINAL_MICRO_SEED.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`Final micro-seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Final micro-seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8637,9 +11486,15 @@ async function ensureFinalMicroSeed(
 // Deduplicates by lower(name)|lower(city)|lower(state).
 async function runTourCulturalSitesBatch(
   batchName: string,
-  sites: Array<{ name: string; city: string; state: string; address: string | null; description: string }>,
+  sites: Array<{
+    name: string;
+    city: string;
+    state: string;
+    address: string | null;
+    description: string;
+  }>,
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   if (!sites || sites.length === 0) {
     log(`${batchName}: empty seed array — skipping`);
@@ -8647,30 +11502,40 @@ async function runTourCulturalSitesBatch(
   }
   try {
     const r = await pool.query(
-      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM tour_cultural_sites`
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM tour_cultural_sites`,
     );
     const existing = new Set(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0, skipped = 0;
+    let inserted = 0,
+      skipped = 0;
 
     for (const s of sites) {
       const key = `${s.name.toLowerCase()}|${s.city.toLowerCase()}|${s.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO tour_cultural_sites
             (name, city, state, address, description, is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5, true, true, NOW(), NOW())`,
-          [s.name, s.city, s.state, s.address, s.description]
+          [s.name, s.city, s.state, s.address, s.description],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`${batchName}: failed to insert "${s.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `${batchName}: failed to insert "${s.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`${batchName}: ${inserted} inserted, ${skipped} already present (${sites.length} total in batch)`);
+    log(
+      `${batchName}: ${inserted} inserted, ${skipped} already present (${sites.length} total in batch)`,
+    );
   } catch (err: unknown) {
-    warn(`${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8688,17 +11553,21 @@ async function runKnowledgeTopicsBatch(
     trustedSources: Array<{ name: string; domain: string }>;
   }>,
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   if (!topics || topics.length === 0) {
     log(`${batchName}: empty seed array — skipping`);
     return;
   }
   try {
-    const r = await pool.query(`SELECT LOWER(topic_name) AS n FROM knowledge_topics`);
+    const r = await pool.query(
+      `SELECT LOWER(topic_name) AS n FROM knowledge_topics`,
+    );
     const existing = new Set(r.rows.map((row: { n: string }) => row.n));
 
-    const newTopics = topics.filter((t) => !existing.has(t.topicName.toLowerCase()));
+    const newTopics = topics.filter(
+      (t) => !existing.has(t.topicName.toLowerCase()),
+    );
     if (newTopics.length === 0) {
       log(`${batchName}: 0 inserted, ${topics.length} already present`);
       return;
@@ -8706,7 +11575,10 @@ async function runKnowledgeTopicsBatch(
 
     const COLS = 6;
     const placeholders = newTopics
-      .map((_, i) => `(gen_random_uuid(),$${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4},$${i*COLS+5},$${i*COLS+6}::jsonb,true,'free',NOW())`)
+      .map(
+        (_, i) =>
+          `(gen_random_uuid(),$${i * COLS + 1},$${i * COLS + 2},$${i * COLS + 3},$${i * COLS + 4},$${i * COLS + 5},$${i * COLS + 6}::jsonb,true,'free',NOW())`,
+      )
       .join(",");
     const params = newTopics.flatMap((t) => [
       t.topicName,
@@ -8722,12 +11594,16 @@ async function runKnowledgeTopicsBatch(
          (id, topic_name, category, description, keywords,
           notification_priority, trusted_sources, enabled, tier, created_at)
        VALUES ${placeholders}`,
-      params
+      params,
     );
 
-    log(`${batchName}: ${newTopics.length} inserted, ${existing.size} already present (${topics.length} total in batch)`);
+    log(
+      `${batchName}: ${newTopics.length} inserted, ${existing.size} already present (${topics.length} total in batch)`,
+    );
   } catch (err: unknown) {
-    warn(`${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8737,7 +11613,7 @@ async function runSeedBatch(
   batchName: string,
   businesses: SeedBiz[],
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   if (!businesses || businesses.length === 0) {
     log(`${batchName}: empty seed array — skipping`);
@@ -8745,16 +11621,21 @@ async function runSeedBatch(
   }
   try {
     const existing = await pool.query(
-      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`,
     );
-    const existingKeys = new Set<string>(existing.rows.map((r: { k: string }) => r.k));
+    const existingKeys = new Set<string>(
+      existing.rows.map((r: { k: string }) => r.k),
+    );
 
     let inserted = 0;
     let skipped = 0;
 
     for (const b of businesses) {
-      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.country || 'USA').toLowerCase()}`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.country || "USA").toLowerCase()}`;
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO businesses
@@ -8785,25 +11666,35 @@ async function runSeedBatch(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
-            b.address, b.city,
+            b.name,
+            b.category,
+            b.subcategory,
+            b.address,
+            b.city,
             b.state ?? null,
-            b.country || 'USA',
+            b.country || "USA",
             b.description,
-            String(b.lat), String(b.lng),
+            String(b.lat),
+            String(b.lng),
             b.website ?? null,
-          ]
+          ],
         );
         existingKeys.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  ${batchName}: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  ${batchName}: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
 
-    log(`${batchName}: ${inserted} inserted, ${skipped} already present (${businesses.length} total in batch)`);
+    log(
+      `${batchName}: ${inserted} inserted, ${skipped} already present (${businesses.length} total in batch)`,
+    );
   } catch (err: unknown) {
-    warn(`${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8816,7 +11707,7 @@ async function runSeedBatch(
 // Safe on every boot — all operations are idempotent.
 async function ensureBusinessDiscoverability(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // 1. Promote listing_status so API gate passes
@@ -8826,10 +11717,12 @@ async function ensureBusinessDiscoverability(
        WHERE status = 'active'
          AND listing_status IN ('live', 'active')
          AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-       RETURNING id`
+       RETURNING id`,
     );
     if (promoted.rowCount && promoted.rowCount > 0) {
-      log(`Business discoverability: promoted ${promoted.rowCount} businesses to live_unclaimed`);
+      log(
+        `Business discoverability: promoted ${promoted.rowCount} businesses to live_unclaimed`,
+      );
     }
 
     // 2. Create missing business_identity rows
@@ -8840,10 +11733,12 @@ async function ensureBusinessDiscoverability(
        WHERE b.status = 'active'
          AND bi.business_id IS NULL
          AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-       ON CONFLICT (business_id) DO NOTHING`
+       ON CONFLICT (business_id) DO NOTHING`,
     );
     if (identityInsert.rowCount && identityInsert.rowCount > 0) {
-      log(`Business discoverability: created ${identityInsert.rowCount} missing business_identity rows`);
+      log(
+        `Business discoverability: created ${identityInsert.rowCount} missing business_identity rows`,
+      );
     }
 
     // 3. Set ownership_badges where empty
@@ -8855,7 +11750,7 @@ async function ensureBusinessDiscoverability(
            SELECT b.id FROM businesses b
            WHERE b.status = 'active'
              AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-         )`
+         )`,
     );
 
     // 4. Set category-based tags where empty
@@ -8896,18 +11791,22 @@ async function ensureBusinessDiscoverability(
        END
        WHERE status = 'active'
          AND (tags IS NULL OR tags::text = '[]' OR tags::text = 'null')
-         AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}`
+         AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}`,
     );
 
-    log('Business discoverability: tags and ownership badges ensured for all active businesses');
+    log(
+      "Business discoverability: tags and ownership badges ensured for all active businesses",
+    );
   } catch (err: unknown) {
-    warn(`Business discoverability guard failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Business discoverability guard failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
 async function ensureDemoContainment(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Promise<void> {
   try {
     // Hide rather than delete: business rows and all member-linked records remain.
@@ -8926,16 +11825,22 @@ async function ensureDemoContainment(
            OR COALESCE(b.featured, false) = true
            OR b.promoted_until IS NOT NULL
          )
-       RETURNING b.name, b.city`
+       RETURNING b.name, b.city`,
     );
     if (result.rowCount && result.rowCount > 0) {
-      const names = result.rows.map((r) => `${r.name} (${r.city})`).join(', ');
-      log(`Demo containment: hid ${result.rowCount} proven demo/test listings; linked data retained — ${names}`);
+      const names = result.rows.map((r) => `${r.name} (${r.city})`).join(", ");
+      log(
+        `Demo containment: hid ${result.rowCount} proven demo/test listings; linked data retained — ${names}`,
+      );
     } else {
-      log('Demo containment: all proven demo/test listings already hidden or absent');
+      log(
+        "Demo containment: all proven demo/test listings already hidden or absent",
+      );
     }
   } catch (err: unknown) {
-    warn(`Demo containment failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Demo containment failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8958,26 +11863,37 @@ async function ensureLibraryLinkHealth(
        WHERE source_url LIKE '%cancer.org%breast-cancer%'
          AND status = 'active'
          AND (link_status IS NULL OR link_status = 'unchecked')
-       RETURNING id`
+       RETURNING id`,
     );
     if (acsFix.rowCount && acsFix.rowCount > 0) {
-      log(`Library link health: flagged ${acsFix.rowCount} ACS breast cancer source(s) as needs_review`);
+      log(
+        `Library link health: flagged ${acsFix.rowCount} ACS breast cancer source(s) as needs_review`,
+      );
     } else {
-      log(`Library link health: ACS breast cancer source already reviewed or not found — no change`);
+      log(
+        `Library link health: ACS breast cancer source already reviewed or not found — no change`,
+      );
     }
 
     // Report overall link health state
-    const summary = await pool.query<{ link_status: string | null; cnt: string }>(
+    const summary = await pool.query<{
+      link_status: string | null;
+      cnt: string;
+    }>(
       `SELECT COALESCE(link_status, 'unchecked') AS link_status, COUNT(*) AS cnt
        FROM knowledge_sources
        WHERE status = 'active'
        GROUP BY COALESCE(link_status, 'unchecked')
-       ORDER BY cnt DESC`
+       ORDER BY cnt DESC`,
     );
-    const breakdown = summary.rows.map(r => `${r.link_status}:${r.cnt}`).join(", ");
+    const breakdown = summary.rows
+      .map((r) => `${r.link_status}:${r.cnt}`)
+      .join(", ");
     log(`Library link health summary: ${breakdown}`);
   } catch (err: unknown) {
-    warn(`ensureLibraryLinkHealth failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureLibraryLinkHealth failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -8993,63 +11909,83 @@ async function ensureBusinessClaimsV2ConflictReport(
   try {
     // ── Conflict check 1: multiple open claims for the same (business_id, user_id)
     const claimConflicts = await pool.query<{
-      business_id: string; user_id: string | null; cnt: string;
+      business_id: string;
+      user_id: string | null;
+      cnt: string;
     }>(
       `SELECT business_id, user_id, COUNT(*) AS cnt
        FROM business_claims
        WHERE status IN ('pending', 'needs_info')
        GROUP BY business_id, user_id
-       HAVING COUNT(*) > 1`
+       HAVING COUNT(*) > 1`,
     );
     if (claimConflicts.rowCount && claimConflicts.rowCount > 0) {
       const detail = claimConflicts.rows
-        .map(r => `business=${r.business_id} user=${r.user_id ?? "null"} (${r.cnt} open)`)
+        .map(
+          (r) =>
+            `business=${r.business_id} user=${r.user_id ?? "null"} (${r.cnt} open)`,
+        )
         .join("; ");
-      warn(`Business claims v2 — open-claim conflicts (must resolve before unique index applies): ${detail}`);
+      warn(
+        `Business claims v2 — open-claim conflicts (must resolve before unique index applies): ${detail}`,
+      );
     } else {
       log(`Business claims v2 — no open-claim conflicts found`);
     }
 
     // ── Conflict check 2: multiple active primary owner links for same business_id
-    const ownerConflicts = await pool.query<{ business_id: string; cnt: string }>(
+    const ownerConflicts = await pool.query<{
+      business_id: string;
+      cnt: string;
+    }>(
       `SELECT business_id, COUNT(*) AS cnt
        FROM business_owner_links
        WHERE role = 'owner' AND status = 'approved' AND revoked_at IS NULL
        GROUP BY business_id
-       HAVING COUNT(*) > 1`
+       HAVING COUNT(*) > 1`,
     );
     if (ownerConflicts.rowCount && ownerConflicts.rowCount > 0) {
       const detail = ownerConflicts.rows
-        .map(r => `business=${r.business_id} (${r.cnt} active owners)`)
+        .map((r) => `business=${r.business_id} (${r.cnt} active owners)`)
         .join("; ");
-      warn(`Business owner links v2 — duplicate active owner conflicts: ${detail}`);
+      warn(
+        `Business owner links v2 — duplicate active owner conflicts: ${detail}`,
+      );
     } else {
-      log(`Business owner links v2 — no duplicate active owner conflicts found`);
+      log(
+        `Business owner links v2 — no duplicate active owner conflicts found`,
+      );
     }
 
     // ── Attempt unique index creation (fails gracefully if conflicts exist)
     await pool.query(
       `CREATE UNIQUE INDEX IF NOT EXISTS business_claims_one_open_per_member_biz
        ON business_claims (business_id, user_id)
-       WHERE status IN ('pending', 'needs_info') AND user_id IS NOT NULL`
+       WHERE status IN ('pending', 'needs_info') AND user_id IS NOT NULL`,
     );
-    log(`Business claims v2 — unique index business_claims_one_open_per_member_biz: OK`);
+    log(
+      `Business claims v2 — unique index business_claims_one_open_per_member_biz: OK`,
+    );
 
     await pool.query(
       `CREATE UNIQUE INDEX IF NOT EXISTS business_owner_links_one_active_primary_owner
        ON business_owner_links (business_id)
-       WHERE role = 'owner' AND status = 'approved' AND revoked_at IS NULL`
+       WHERE role = 'owner' AND status = 'approved' AND revoked_at IS NULL`,
     );
-    log(`Business claims v2 — unique index business_owner_links_one_active_primary_owner: OK`);
+    log(
+      `Business claims v2 — unique index business_owner_links_one_active_primary_owner: OK`,
+    );
 
     // Total open claims count for ops awareness
     const totals = await pool.query<{ status: string; cnt: string }>(
-      `SELECT status, COUNT(*) AS cnt FROM business_claims GROUP BY status ORDER BY cnt DESC`
+      `SELECT status, COUNT(*) AS cnt FROM business_claims GROUP BY status ORDER BY cnt DESC`,
     );
-    const tStr = totals.rows.map(r => `${r.status}:${r.cnt}`).join(", ");
+    const tStr = totals.rows.map((r) => `${r.status}:${r.cnt}`).join(", ");
     log(`Business claims v2 — claim status distribution: ${tStr}`);
   } catch (err: unknown) {
-    warn(`ensureBusinessClaimsV2ConflictReport failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureBusinessClaimsV2ConflictReport failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9065,7 +12001,12 @@ async function ensureDiscoverabilityCoordinatesV1(
 ): Promise<void> {
   try {
     const [sitesR, evtsR, orgsR] = await Promise.all([
-      pool.query<{ total: string; with_coords: string; no_coords: string; no_address: string }>(`
+      pool.query<{
+        total: string;
+        with_coords: string;
+        no_coords: string;
+        no_address: string;
+      }>(`
         SELECT
           COUNT(*) AS total,
           COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -9079,7 +12020,12 @@ async function ensureDiscoverabilityCoordinatesV1(
                             AND address IS NULL)                    AS no_address
         FROM tour_cultural_sites WHERE is_active = true
       `),
-      pool.query<{ total: string; with_coords: string; no_coords: string; no_address: string }>(`
+      pool.query<{
+        total: string;
+        with_coords: string;
+        no_coords: string;
+        no_address: string;
+      }>(`
         SELECT
           COUNT(*) AS total,
           COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -9093,7 +12039,12 @@ async function ensureDiscoverabilityCoordinatesV1(
                             AND address IS NULL AND venue IS NULL)  AS no_address
         FROM recurring_events WHERE is_active = true
       `),
-      pool.query<{ total: string; with_coords: string; no_coords: string; no_address: string }>(`
+      pool.query<{
+        total: string;
+        with_coords: string;
+        no_coords: string;
+        no_address: string;
+      }>(`
         SELECT
           COUNT(*) AS total,
           COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -9115,12 +12066,14 @@ async function ensureDiscoverabilityCoordinatesV1(
 
     log(
       `Discoverability coords v1 — ` +
-      `cultural_sites: ${s.with_coords}/${s.total} mapped (${s.no_coords} missing, ${s.no_address} no-address) | ` +
-      `recurring_events: ${e.with_coords}/${e.total} mapped (${e.no_coords} missing, ${e.no_address} no-address) | ` +
-      `community_orgs: ${o.with_coords}/${o.total} mapped (${o.no_coords} missing, ${o.no_address} no-address)`
+        `cultural_sites: ${s.with_coords}/${s.total} mapped (${s.no_coords} missing, ${s.no_address} no-address) | ` +
+        `recurring_events: ${e.with_coords}/${e.total} mapped (${e.no_coords} missing, ${e.no_address} no-address) | ` +
+        `community_orgs: ${o.with_coords}/${o.total} mapped (${o.no_coords} missing, ${o.no_address} no-address)`,
     );
   } catch (err: unknown) {
-    warn(`ensureDiscoverabilityCoordinatesV1 failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureDiscoverabilityCoordinatesV1 failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9170,363 +12123,481 @@ async function ensurePhiladelphiaMurals(
     // 55 Philadelphia murals. Coordinates are approximate neighborhood-level for
     // all except well-known fixed installations (Magic Gardens, Keith Haring, etc.).
     // Source: Mural Arts Philadelphia public map + public record.
-    type MuralRow = { name: string; address: string; description: string; lat: number; lng: number };
+    type MuralRow = {
+      name: string;
+      address: string;
+      description: string;
+      lat: number;
+      lng: number;
+    };
     const murals: MuralRow[] = [
       // ── South Street / South Philadelphia ─────────────────────────────────
       {
         name: "Philadelphia's Magic Gardens",
         address: "1020 South St, Philadelphia, PA",
-        description: "Isaiah Zagar's immersive mosaic mural environment covering an entire city block on South Street. One of the most visited public art destinations in Philadelphia, built over 14 years with found objects, bicycle wheels, mirror shards, and folk art.",
-        lat: 39.9427, lng: -75.1583,
+        description:
+          "Isaiah Zagar's immersive mosaic mural environment covering an entire city block on South Street. One of the most visited public art destinations in Philadelphia, built over 14 years with found objects, bicycle wheels, mirror shards, and folk art.",
+        lat: 39.9427,
+        lng: -75.1583,
       },
       {
         name: "We The Youth — Keith Haring",
         address: "22nd St & Ellsworth St, Philadelphia, PA",
-        description: "Painted by Keith Haring in 1987, one of his last outdoor murals before his death in 1990. Bright primary colors on a school wall in South Philadelphia. Restored and landmarked by the city as a permanent public art installation.",
-        lat: 39.9378, lng: -75.1768,
+        description:
+          "Painted by Keith Haring in 1987, one of his last outdoor murals before his death in 1990. Bright primary colors on a school wall in South Philadelphia. Restored and landmarked by the city as a permanent public art installation.",
+        lat: 39.9378,
+        lng: -75.1768,
       },
       {
         name: "Tribute to Aretha Franklin",
         address: "1525 Locust St, Philadelphia, PA",
-        description: "A Mural Arts Philadelphia tribute to the Queen of Soul, Aretha Franklin, painted after her passing in 2018. Part of a national conversation about honoring Black musical legends in public space.",
-        lat: 39.9474, lng: -75.1659,
+        description:
+          "A Mural Arts Philadelphia tribute to the Queen of Soul, Aretha Franklin, painted after her passing in 2018. Part of a national conversation about honoring Black musical legends in public space.",
+        lat: 39.9474,
+        lng: -75.1659,
       },
       {
         name: "William Still — Father of the Underground Railroad",
         address: "South St & 7th St, Philadelphia, PA",
-        description: "Honors William Still, a free Black Philadelphian who documented the stories of over 800 freedom seekers on the Underground Railroad. His 1872 book 'The Underground Railroad' remains a primary historical record.",
-        lat: 39.9435, lng: -75.1556,
+        description:
+          "Honors William Still, a free Black Philadelphian who documented the stories of over 800 freedom seekers on the Underground Railroad. His 1872 book 'The Underground Railroad' remains a primary historical record.",
+        lat: 39.9435,
+        lng: -75.1556,
       },
       {
         name: "South Street Stories",
         address: "South St & 4th St, Philadelphia, PA",
-        description: "A community narrative mural along South Street celebrating the multicultural history of the corridor — from its 1960s counterculture era to its roots as a Black commercial district known as 'the highway' to Baltimore.",
-        lat: 39.9430, lng: -75.1480,
+        description:
+          "A community narrative mural along South Street celebrating the multicultural history of the corridor — from its 1960s counterculture era to its roots as a Black commercial district known as 'the highway' to Baltimore.",
+        lat: 39.943,
+        lng: -75.148,
       },
       {
         name: "1947 — Jackie Robinson Integration",
         address: "S Broad St & Carpenter St, Philadelphia, PA",
-        description: "Commemorates Jackie Robinson's 1947 integration of Major League Baseball and the role of Black Philadelphia fans and athletes in pushing for integration across American sports.",
-        lat: 39.9422, lng: -75.1650,
+        description:
+          "Commemorates Jackie Robinson's 1947 integration of Major League Baseball and the role of Black Philadelphia fans and athletes in pushing for integration across American sports.",
+        lat: 39.9422,
+        lng: -75.165,
       },
       {
         name: "Passyunk Pride",
         address: "E Passyunk Ave & Morris St, Philadelphia, PA",
-        description: "A neighborhood identity mural on East Passyunk Avenue celebrating the multicultural working-class roots of South Philadelphia and the communities who shaped it.",
-        lat: 39.9315, lng: -75.1638,
+        description:
+          "A neighborhood identity mural on East Passyunk Avenue celebrating the multicultural working-class roots of South Philadelphia and the communities who shaped it.",
+        lat: 39.9315,
+        lng: -75.1638,
       },
       {
         name: "Tribute to Frankie Beverly",
         address: "Washington Ave & 2nd St, Philadelphia, PA",
-        description: "Honoring Frankie Beverly, born in Philadelphia and founder of Maze featuring Frankie Beverly. His anthem 'Before I Let Go' has been a staple of Black family gatherings for generations.",
-        lat: 39.9296, lng: -75.1594,
+        description:
+          "Honoring Frankie Beverly, born in Philadelphia and founder of Maze featuring Frankie Beverly. His anthem 'Before I Let Go' has been a staple of Black family gatherings for generations.",
+        lat: 39.9296,
+        lng: -75.1594,
       },
       {
         name: "Tribute to Sun Ra",
         address: "Passyunk Ave & Federal St, Philadelphia, PA",
-        description: "Honoring avant-garde jazz musician Sun Ra, who spent formative years in Philadelphia before his career in Chicago and New York. His Arkestra performed frequently in the city's Black cultural spaces.",
-        lat: 39.9390, lng: -75.1592,
+        description:
+          "Honoring avant-garde jazz musician Sun Ra, who spent formative years in Philadelphia before his career in Chicago and New York. His Arkestra performed frequently in the city's Black cultural spaces.",
+        lat: 39.939,
+        lng: -75.1592,
       },
       {
         name: "1919 Race Riots Memorial Mural",
         address: "S 20th St & McKean St, Philadelphia, PA",
-        description: "A sobering memorial to the Philadelphia race riots of 1918–1919, when Black residents were targeted in South Philadelphia neighborhoods. Part of the Mural Arts Program's Truth, Racial Healing & Transformation series.",
-        lat: 39.9287, lng: -75.1583,
+        description:
+          "A sobering memorial to the Philadelphia race riots of 1918–1919, when Black residents were targeted in South Philadelphia neighborhoods. Part of the Mural Arts Program's Truth, Racial Healing & Transformation series.",
+        lat: 39.9287,
+        lng: -75.1583,
       },
       {
         name: "Grays Ferry Neighborhood Roots",
         address: "Grays Ferry Ave & 28th St, Philadelphia, PA",
-        description: "Celebrates the deep history of the Grays Ferry neighborhood, one of Philadelphia's oldest corridors, and the Black and Irish working-class families who lived side by side along the Schuylkill River.",
-        lat: 39.9255, lng: -75.1825,
+        description:
+          "Celebrates the deep history of the Grays Ferry neighborhood, one of Philadelphia's oldest corridors, and the Black and Irish working-class families who lived side by side along the Schuylkill River.",
+        lat: 39.9255,
+        lng: -75.1825,
       },
       {
         name: "Italian Market Memory",
         address: "9th St & Washington Ave, Philadelphia, PA",
-        description: "A tribute to the multi-generational story of the 9th Street Italian Market — the oldest and largest working outdoor market in the United States — and the Black, Latino, and immigrant vendors who make it run.",
-        lat: 39.9325, lng: -75.1578,
+        description:
+          "A tribute to the multi-generational story of the 9th Street Italian Market — the oldest and largest working outdoor market in the United States — and the Black, Latino, and immigrant vendors who make it run.",
+        lat: 39.9325,
+        lng: -75.1578,
       },
       {
         name: "Philly Soul",
         address: "S Broad St & Tasker St, Philadelphia, PA",
-        description: "Celebrating the Philadelphia soul sound — TSOP (The Sound of Philadelphia) — and the city's outsized contribution to American R&B through artists like The Stylistics, The O'Jays, Harold Melvin & the Blue Notes, and Patti LaBelle.",
-        lat: 39.9350, lng: -75.1650,
+        description:
+          "Celebrating the Philadelphia soul sound — TSOP (The Sound of Philadelphia) — and the city's outsized contribution to American R&B through artists like The Stylistics, The O'Jays, Harold Melvin & the Blue Notes, and Patti LaBelle.",
+        lat: 39.935,
+        lng: -75.165,
       },
       {
         name: "Tribute to Patti LaBelle",
         address: "S 20th St & Wharton St, Philadelphia, PA",
-        description: "Honoring Patti LaBelle, born Patricia Louise Holte in North Philadelphia, as one of the most powerful voices in American soul and gospel music. She remains deeply connected to her Philadelphia roots.",
-        lat: 39.9350, lng: -75.1760,
+        description:
+          "Honoring Patti LaBelle, born Patricia Louise Holte in North Philadelphia, as one of the most powerful voices in American soul and gospel music. She remains deeply connected to her Philadelphia roots.",
+        lat: 39.935,
+        lng: -75.176,
       },
 
       // ── Center City / Spring Garden / Broad Street ─────────────────────────
       {
         name: "Hope for the Future — Meg Saligman",
         address: "1522 Spring Garden St, Philadelphia, PA",
-        description: "A monumental Mural Arts Philadelphia work by Meg Saligman (1999) spanning several stories on a building at Spring Garden and N 16th St. One of the largest murals in Philadelphia, depicting hands reaching upward against a sky of color.",
-        lat: 39.9641, lng: -75.1570,
+        description:
+          "A monumental Mural Arts Philadelphia work by Meg Saligman (1999) spanning several stories on a building at Spring Garden and N 16th St. One of the largest murals in Philadelphia, depicting hands reaching upward against a sky of color.",
+        lat: 39.9641,
+        lng: -75.157,
       },
       {
         name: "Common Thread",
         address: "N Broad St & Fairmount Ave, Philadelphia, PA",
-        description: "Part of the Avenue of the Arts initiative, this Mural Arts Philadelphia piece explores the shared threads of community identity across Philadelphia's diverse neighborhoods along the Broad Street corridor.",
-        lat: 39.9597, lng: -75.1575,
+        description:
+          "Part of the Avenue of the Arts initiative, this Mural Arts Philadelphia piece explores the shared threads of community identity across Philadelphia's diverse neighborhoods along the Broad Street corridor.",
+        lat: 39.9597,
+        lng: -75.1575,
       },
       {
         name: "MLK — The Dream Lives On",
         address: "N Broad St & Spring Garden St, Philadelphia, PA",
-        description: "One of several Mural Arts Philadelphia tributes to Dr. Martin Luther King Jr. along the Broad Street corridor, celebrating his Philadelphia connections and the city's Civil Rights movement.",
-        lat: 39.9627, lng: -75.1571,
+        description:
+          "One of several Mural Arts Philadelphia tributes to Dr. Martin Luther King Jr. along the Broad Street corridor, celebrating his Philadelphia connections and the city's Civil Rights movement.",
+        lat: 39.9627,
+        lng: -75.1571,
       },
       {
         name: "Thomas Eakins Tribute",
         address: "22nd St & Market St, Philadelphia, PA",
-        description: "A tribute to Philadelphia painter Thomas Eakins, whose realist portraits of Black Philadelphia life in the late 19th century were groundbreaking for their time. His studio was a gathering place for the city's artists.",
-        lat: 39.9528, lng: -75.1762,
+        description:
+          "A tribute to Philadelphia painter Thomas Eakins, whose realist portraits of Black Philadelphia life in the late 19th century were groundbreaking for their time. His studio was a gathering place for the city's artists.",
+        lat: 39.9528,
+        lng: -75.1762,
       },
       {
         name: "Philadelphia Freedom",
         address: "Chestnut St & 15th St, Philadelphia, PA",
-        description: "A sweeping Center City mural celebrating Philadelphia as the birthplace of American liberty and exploring the contradiction between that founding promise and the lived experience of Black Philadelphians through history.",
-        lat: 39.9496, lng: -75.1634,
+        description:
+          "A sweeping Center City mural celebrating Philadelphia as the birthplace of American liberty and exploring the contradiction between that founding promise and the lived experience of Black Philadelphians through history.",
+        lat: 39.9496,
+        lng: -75.1634,
       },
       {
         name: "Octavius Catto — Unfinished Revolution",
         address: "S Broad St & Carpenter St, Philadelphia, PA",
-        description: "Honors Octavius Catto (1839–1871), a Black civil rights leader, educator, and baseball organizer assassinated on Election Day 1871 while trying to vote. A companion to the Catto statue outside City Hall.",
-        lat: 39.9464, lng: -75.1669,
+        description:
+          "Honors Octavius Catto (1839–1871), a Black civil rights leader, educator, and baseball organizer assassinated on Election Day 1871 while trying to vote. A companion to the Catto statue outside City Hall.",
+        lat: 39.9464,
+        lng: -75.1669,
       },
 
       // ── Historic District / Old City / Bella Vista ─────────────────────────
       {
         name: "Richard Allen & Absalom Jones — Free African Society",
         address: "6th St & Lombard St, Philadelphia, PA",
-        description: "Honors Richard Allen and Absalom Jones, founders of the Free African Society (1787) — the first independent Black civic organization in the Western Hemisphere — and Mother Bethel AME Church at this location.",
-        lat: 39.9440, lng: -75.1497,
+        description:
+          "Honors Richard Allen and Absalom Jones, founders of the Free African Society (1787) — the first independent Black civic organization in the Western Hemisphere — and Mother Bethel AME Church at this location.",
+        lat: 39.944,
+        lng: -75.1497,
       },
       {
         name: "Free African Society 1787",
         address: "6th St & Pine St, Philadelphia, PA",
-        description: "Commemorates the founding of the Free African Society in Philadelphia in 1787, celebrating its founders' vision of Black self-determination and mutual aid that predates the U.S. Constitution.",
-        lat: 39.9443, lng: -75.1492,
+        description:
+          "Commemorates the founding of the Free African Society in Philadelphia in 1787, celebrating its founders' vision of Black self-determination and mutual aid that predates the U.S. Constitution.",
+        lat: 39.9443,
+        lng: -75.1492,
       },
       {
         name: "Mother Bethel AME Heritage",
         address: "419 S 6th St, Philadelphia, PA",
-        description: "Depicts the history of Mother Bethel African Methodist Episcopal Church, the oldest parcel of land continuously owned by Black Americans in the United States, established 1794 by Bishop Richard Allen.",
-        lat: 39.9441, lng: -75.1498,
+        description:
+          "Depicts the history of Mother Bethel African Methodist Episcopal Church, the oldest parcel of land continuously owned by Black Americans in the United States, established 1794 by Bishop Richard Allen.",
+        lat: 39.9441,
+        lng: -75.1498,
       },
       {
         name: "Harriet Tubman — Moses of Her People",
         address: "N 8th St & Spring Garden St, Philadelphia, PA",
-        description: "A powerful portrait mural of Harriet Tubman, celebrating her many trips to Philadelphia on the Underground Railroad and her collaboration with William Still and the Philadelphia Vigilance Committee.",
-        lat: 39.9638, lng: -75.1523,
+        description:
+          "A powerful portrait mural of Harriet Tubman, celebrating her many trips to Philadelphia on the Underground Railroad and her collaboration with William Still and the Philadelphia Vigilance Committee.",
+        lat: 39.9638,
+        lng: -75.1523,
       },
 
       // ── North Philadelphia (historically Black) ────────────────────────────
       {
         name: "Muhammad Ali — The Greatest",
         address: "Columbia Ave & Ridge Ave, Philadelphia, PA",
-        description: "A towering portrait of Muhammad Ali in North Philadelphia, honoring his connection to the Black freedom movement and his visits to the city's Black communities during the Civil Rights era.",
-        lat: 39.9780, lng: -75.1720,
+        description:
+          "A towering portrait of Muhammad Ali in North Philadelphia, honoring his connection to the Black freedom movement and his visits to the city's Black communities during the Civil Rights era.",
+        lat: 39.978,
+        lng: -75.172,
       },
       {
         name: "Tribute to John Coltrane",
         address: "N Broad St & Jefferson St, Philadelphia, PA",
-        description: "Honoring John Coltrane, who moved to Philadelphia in 1943 and shaped his revolutionary jazz sound in the city's clubs and after-hours spaces before moving to New York. A Love Supreme was composed during his Philadelphia years.",
-        lat: 39.9832, lng: -75.1697,
+        description:
+          "Honoring John Coltrane, who moved to Philadelphia in 1943 and shaped his revolutionary jazz sound in the city's clubs and after-hours spaces before moving to New York. A Love Supreme was composed during his Philadelphia years.",
+        lat: 39.9832,
+        lng: -75.1697,
       },
       {
         name: "Cecil B. Moore — Civil Rights Pioneer",
         address: "N Broad St & Cecil B. Moore Ave, Philadelphia, PA",
-        description: "Honors Cecil B. Moore, the firebrand NAACP Philadelphia chapter president who led the 1963–1964 picket of Girard College (which had barred Black students from its endowment-funded school) — one of the longest civil rights demonstrations in US history.",
-        lat: 39.9803, lng: -75.1577,
+        description:
+          "Honors Cecil B. Moore, the firebrand NAACP Philadelphia chapter president who led the 1963–1964 picket of Girard College (which had barred Black students from its endowment-funded school) — one of the longest civil rights demonstrations in US history.",
+        lat: 39.9803,
+        lng: -75.1577,
       },
       {
         name: "Words, Beats & Life — Hip Hop Heritage",
         address: "N Broad St & Oxford St, Philadelphia, PA",
-        description: "Celebrating Philadelphia's contribution to hip-hop culture — from DJ Jazzy Jeff & The Fresh Prince (Will Smith) to Meek Mill — and the role of North Philly block parties and rec centers in shaping the genre.",
-        lat: 39.9917, lng: -75.1576,
+        description:
+          "Celebrating Philadelphia's contribution to hip-hop culture — from DJ Jazzy Jeff & The Fresh Prince (Will Smith) to Meek Mill — and the role of North Philly block parties and rec centers in shaping the genre.",
+        lat: 39.9917,
+        lng: -75.1576,
       },
       {
         name: "Frederick Douglass — Voice of Freedom",
         address: "N 17th St & Diamond St, Philadelphia, PA",
-        description: "A portrait mural of Frederick Douglass, celebrating his many visits to Philadelphia and his alliances with Black Philadelphia abolitionists. The city was a key stop on his speaking tours.",
-        lat: 39.9870, lng: -75.1590,
+        description:
+          "A portrait mural of Frederick Douglass, celebrating his many visits to Philadelphia and his alliances with Black Philadelphia abolitionists. The city was a key stop on his speaking tours.",
+        lat: 39.987,
+        lng: -75.159,
       },
       {
         name: "Spirit of Community",
         address: "Cecil B. Moore Ave & 17th St, Philadelphia, PA",
-        description: "A community-created mural celebrating the resilience of North Philadelphia neighborhoods and the intergenerational bonds that have sustained Black Philadelphia through urban renewal, disinvestment, and rebuilding.",
-        lat: 39.9803, lng: -75.1642,
+        description:
+          "A community-created mural celebrating the resilience of North Philadelphia neighborhoods and the intergenerational bonds that have sustained Black Philadelphia through urban renewal, disinvestment, and rebuilding.",
+        lat: 39.9803,
+        lng: -75.1642,
       },
       {
         name: "Children's Garden Mural",
         address: "Girard Ave & 18th St, Philadelphia, PA",
-        description: "A vibrant mural outside a North Philadelphia community garden space, depicting children tending plants and celebrating the connection between Black urban communities and food sovereignty.",
-        lat: 39.9736, lng: -75.1695,
+        description:
+          "A vibrant mural outside a North Philadelphia community garden space, depicting children tending plants and celebrating the connection between Black urban communities and food sovereignty.",
+        lat: 39.9736,
+        lng: -75.1695,
       },
       {
         name: "Marcus Garvey — Back to Africa Movement",
         address: "N Broad St & Susquehanna Ave, Philadelphia, PA",
-        description: "Honoring Marcus Garvey and his Pan-African vision. Philadelphia had one of the strongest UNIA chapters in the northeastern United States during the 1920s, centered in North Philadelphia.",
-        lat: 39.9897, lng: -75.1609,
+        description:
+          "Honoring Marcus Garvey and his Pan-African vision. Philadelphia had one of the strongest UNIA chapters in the northeastern United States during the 1920s, centered in North Philadelphia.",
+        lat: 39.9897,
+        lng: -75.1609,
       },
       {
         name: "Lee Elder — Golf Pioneer",
         address: "N 18th St & Lehigh Ave, Philadelphia, PA",
-        description: "Celebrating Lee Elder, who in 1975 became the first Black golfer to play in the Masters Tournament. A tribute to Black athletic excellence and the struggle to access sports historically closed to African Americans.",
-        lat: 39.9889, lng: -75.1623,
+        description:
+          "Celebrating Lee Elder, who in 1975 became the first Black golfer to play in the Masters Tournament. A tribute to Black athletic excellence and the struggle to access sports historically closed to African Americans.",
+        lat: 39.9889,
+        lng: -75.1623,
       },
       {
         name: "Dizzy Gillespie — Bebop Philadelphia",
         address: "N Broad St & Norris St, Philadelphia, PA",
-        description: "Honoring Dizzy Gillespie, who spent pivotal years of his career in Philadelphia's jazz clubs and mentored many musicians who would define bebop. His collaborations with Philadelphian Charlie Parker changed American music.",
-        lat: 39.9862, lng: -75.1623,
+        description:
+          "Honoring Dizzy Gillespie, who spent pivotal years of his career in Philadelphia's jazz clubs and mentored many musicians who would define bebop. His collaborations with Philadelphian Charlie Parker changed American music.",
+        lat: 39.9862,
+        lng: -75.1623,
       },
       {
         name: "Nicetown Corridor — Community Resilience",
         address: "Hunting Park Ave & 18th St, Philadelphia, PA",
-        description: "A community-driven mural in the Nicetown-Tioga neighborhood celebrating the neighborhood's history as a working-class Black community and its ongoing revival through resident-led investment and organizing.",
-        lat: 40.0050, lng: -75.1620,
+        description:
+          "A community-driven mural in the Nicetown-Tioga neighborhood celebrating the neighborhood's history as a working-class Black community and its ongoing revival through resident-led investment and organizing.",
+        lat: 40.005,
+        lng: -75.162,
       },
       {
         name: "North Philly Peace Park Mural",
         address: "N 19th St & Huntingdon St, Philadelphia, PA",
-        description: "Surrounding the North Philadelphia Peace Park, this large-scale community mural depicts elders, youth, and ancestors in a cycle of knowledge transfer — a visual prayer for the neighborhood's future.",
-        lat: 40.0021, lng: -75.1754,
+        description:
+          "Surrounding the North Philadelphia Peace Park, this large-scale community mural depicts elders, youth, and ancestors in a cycle of knowledge transfer — a visual prayer for the neighborhood's future.",
+        lat: 40.0021,
+        lng: -75.1754,
       },
       {
         name: "Diamond Street Mural",
         address: "33rd St & Diamond St, Philadelphia, PA",
-        description: "A North Philadelphia mural at the edge of the Strawberry Mansion neighborhood, celebrating the community's cultural heritage and the families who have shaped the corridor for generations.",
-        lat: 39.9920, lng: -75.1860,
+        description:
+          "A North Philadelphia mural at the edge of the Strawberry Mansion neighborhood, celebrating the community's cultural heritage and the families who have shaped the corridor for generations.",
+        lat: 39.992,
+        lng: -75.186,
       },
       {
         name: "Strawberry Mansion Community Story",
         address: "N 30th St & Dauphin St, Philadelphia, PA",
-        description: "Depicts the history of the Strawberry Mansion neighborhood — once a prosperous Jewish community, then a thriving Black middle-class enclave, and now a community working to preserve its legacy and rebuild.",
-        lat: 40.0010, lng: -75.1820,
+        description:
+          "Depicts the history of the Strawberry Mansion neighborhood — once a prosperous Jewish community, then a thriving Black middle-class enclave, and now a community working to preserve its legacy and rebuild.",
+        lat: 40.001,
+        lng: -75.182,
       },
       {
         name: "Strawberry Mansion Bridge Mural",
         address: "Strawberry Mansion Dr & Edgely Dr, Philadelphia, PA",
-        description: "A mural on the approach to the historic Strawberry Mansion Bridge in Fairmount Park, celebrating the neighborhood's relationship with the Schuylkill River and the natural landscape of North Philadelphia.",
-        lat: 40.0035, lng: -75.1859,
+        description:
+          "A mural on the approach to the historic Strawberry Mansion Bridge in Fairmount Park, celebrating the neighborhood's relationship with the Schuylkill River and the natural landscape of North Philadelphia.",
+        lat: 40.0035,
+        lng: -75.1859,
       },
 
       // ── West Philadelphia ──────────────────────────────────────────────────
       {
         name: "Clark Park Mural — West Philadelphia Roots",
         address: "Chester Ave & 43rd St, Philadelphia, PA",
-        description: "Near Clark Park in West Philadelphia, this mural celebrates the neighborhood's identity as a diverse, walkable community with deep Black roots centered on Baltimore Avenue and the park itself.",
-        lat: 39.9464, lng: -75.2128,
+        description:
+          "Near Clark Park in West Philadelphia, this mural celebrates the neighborhood's identity as a diverse, walkable community with deep Black roots centered on Baltimore Avenue and the park itself.",
+        lat: 39.9464,
+        lng: -75.2128,
       },
       {
         name: "West Philly Rising",
         address: "52nd St & Baltimore Ave, Philadelphia, PA",
-        description: "A mural on the 52nd Street commercial corridor celebrating West Philadelphia's Black business community and the cultural renaissance taking place along Baltimore Avenue.",
-        lat: 39.9487, lng: -75.2168,
+        description:
+          "A mural on the 52nd Street commercial corridor celebrating West Philadelphia's Black business community and the cultural renaissance taking place along Baltimore Avenue.",
+        lat: 39.9487,
+        lng: -75.2168,
       },
       {
         name: "Sankofa — We Must Know Where We Came From",
         address: "46th St & Woodland Ave, Philadelphia, PA",
-        description: "Based on the Akan concept of Sankofa — looking back to move forward — this West Philadelphia mural depicts ancestors passing knowledge to younger generations through art, music, and community.",
-        lat: 39.9472, lng: -75.2135,
+        description:
+          "Based on the Akan concept of Sankofa — looking back to move forward — this West Philadelphia mural depicts ancestors passing knowledge to younger generations through art, music, and community.",
+        lat: 39.9472,
+        lng: -75.2135,
       },
       {
         name: "Malcolm X Park Tribute",
         address: "51st St & Pine St, Philadelphia, PA",
-        description: "Near Malcolm X Park in West Philadelphia, this mural celebrates the park's role as a community gathering space and the legacy of Malcolm X's vision of Black self-determination in urban America.",
-        lat: 39.9511, lng: -75.2165,
+        description:
+          "Near Malcolm X Park in West Philadelphia, this mural celebrates the park's role as a community gathering space and the legacy of Malcolm X's vision of Black self-determination in urban America.",
+        lat: 39.9511,
+        lng: -75.2165,
       },
       {
         name: "Tribute to Jazz Masters — West Philadelphia",
         address: "44th St & Baltimore Ave, Philadelphia, PA",
-        description: "Celebrating Philadelphia's jazz legends with West Philadelphia roots — including Lee Morgan, Jimmy Heath, and Bobby Timmons — who came of age in the clubs and jam sessions of Black West Philadelphia.",
-        lat: 39.9484, lng: -75.2073,
+        description:
+          "Celebrating Philadelphia's jazz legends with West Philadelphia roots — including Lee Morgan, Jimmy Heath, and Bobby Timmons — who came of age in the clubs and jam sessions of Black West Philadelphia.",
+        lat: 39.9484,
+        lng: -75.2073,
       },
       {
         name: "Roots — Honoring Alex Haley's Legacy",
         address: "46th St & Baltimore Ave, Philadelphia, PA",
-        description: "A tribute to Alex Haley's Roots and the broader genealogy movement among African Americans. West Philadelphia has one of the most active genealogy communities in Black America.",
-        lat: 39.9462, lng: -75.2100,
+        description:
+          "A tribute to Alex Haley's Roots and the broader genealogy movement among African Americans. West Philadelphia has one of the most active genealogy communities in Black America.",
+        lat: 39.9462,
+        lng: -75.21,
       },
       {
         name: "Baltimore Avenue Corridor Mural",
         address: "Baltimore Ave & 50th St, Philadelphia, PA",
-        description: "A long-running Mural Arts Philadelphia installation along the Baltimore Avenue corridor celebrating the small businesses, cultural institutions, and diverse communities that line one of West Philadelphia's main arteries.",
-        lat: 39.9480, lng: -75.2190,
+        description:
+          "A long-running Mural Arts Philadelphia installation along the Baltimore Avenue corridor celebrating the small businesses, cultural institutions, and diverse communities that line one of West Philadelphia's main arteries.",
+        lat: 39.948,
+        lng: -75.219,
       },
       {
         name: "Tribute to Bilal — Philadelphia Soul",
         address: "44th St & Chestnut St, Philadelphia, PA",
-        description: "Honoring Bilal Oliver, a West Philadelphia native and one of the most influential voices in neo-soul music. His debut album First Born Second (2001) is considered a landmark of the Philadelphia sound.",
-        lat: 39.9460, lng: -75.2105,
+        description:
+          "Honoring Bilal Oliver, a West Philadelphia native and one of the most influential voices in neo-soul music. His debut album First Born Second (2001) is considered a landmark of the Philadelphia sound.",
+        lat: 39.946,
+        lng: -75.2105,
       },
       {
         name: "Community Garden Mural — Point Breeze",
         address: "22nd St & Federal St, Philadelphia, PA",
-        description: "Surrounding a community garden in the Point Breeze neighborhood, this mural depicts the African American tradition of urban gardening and food sovereignty as both survival and cultural expression.",
-        lat: 39.9300, lng: -75.1720,
+        description:
+          "Surrounding a community garden in the Point Breeze neighborhood, this mural depicts the African American tradition of urban gardening and food sovereignty as both survival and cultural expression.",
+        lat: 39.93,
+        lng: -75.172,
       },
 
       // ── Germantown / Mt. Airy / Chestnut Hill ─────────────────────────────
       {
         name: "Jump Rope — Eric Okdeh",
         address: "Germantown Ave & Tulpehocken St, Philadelphia, PA",
-        description: "By muralist Eric Okdeh, this beloved mural in Germantown depicts children jumping rope on a Philadelphia street — a universal image of childhood joy that resonates deeply with the neighborhood's multigenerational families.",
-        lat: 40.0383, lng: -75.1715,
+        description:
+          "By muralist Eric Okdeh, this beloved mural in Germantown depicts children jumping rope on a Philadelphia street — a universal image of childhood joy that resonates deeply with the neighborhood's multigenerational families.",
+        lat: 40.0383,
+        lng: -75.1715,
       },
       {
         name: "Germantown Avenue History Mural",
         address: "Germantown Ave & Chelten Ave, Philadelphia, PA",
-        description: "Documents the layered history of Germantown Avenue — one of the oldest roads in America — from Lenape pathways to colonial settlement to the vibrant Black community that made Germantown a cultural hub in the 20th century.",
-        lat: 40.0297, lng: -75.1684,
+        description:
+          "Documents the layered history of Germantown Avenue — one of the oldest roads in America — from Lenape pathways to colonial settlement to the vibrant Black community that made Germantown a cultural hub in the 20th century.",
+        lat: 40.0297,
+        lng: -75.1684,
       },
       {
         name: "Battle of Germantown Commemorative",
         address: "Germantown Ave & School House Ln, Philadelphia, PA",
-        description: "Commemorates the 1777 Battle of Germantown and the often-untold stories of enslaved people and free Black Philadelphians who were present during the Revolutionary War era in this neighborhood.",
-        lat: 40.0342, lng: -75.1706,
+        description:
+          "Commemorates the 1777 Battle of Germantown and the often-untold stories of enslaved people and free Black Philadelphians who were present during the Revolutionary War era in this neighborhood.",
+        lat: 40.0342,
+        lng: -75.1706,
       },
 
       // ── Kensington / Fishtown / Northern Liberties ────────────────────────
       {
         name: "Kensington Kindness",
         address: "Kensington Ave & Lehigh Ave, Philadelphia, PA",
-        description: "A community-driven mural in the Kensington neighborhood created as part of a public health and community resilience initiative. Depicts local faces, stories of recovery, and hope for the neighborhood's future.",
-        lat: 39.9977, lng: -75.1338,
+        description:
+          "A community-driven mural in the Kensington neighborhood created as part of a public health and community resilience initiative. Depicts local faces, stories of recovery, and hope for the neighborhood's future.",
+        lat: 39.9977,
+        lng: -75.1338,
       },
       {
         name: "Fishtown Arts District Mural",
         address: "Girard Ave & Front St, Philadelphia, PA",
-        description: "Celebrating Fishtown's transformation into an arts district while honoring the longtime working-class families — many of them Black and Puerto Rican — who made the neighborhood before gentrification.",
-        lat: 39.9740, lng: -75.1368,
+        description:
+          "Celebrating Fishtown's transformation into an arts district while honoring the longtime working-class families — many of them Black and Puerto Rican — who made the neighborhood before gentrification.",
+        lat: 39.974,
+        lng: -75.1368,
       },
       {
         name: "Spectrum of Light",
         address: "Kensington Ave & Somerset St, Philadelphia, PA",
-        description: "A large-scale Mural Arts Philadelphia installation in Kensington using refracted light imagery to explore themes of hope, healing, and the complexity of human experience in one of the city's most challenged neighborhoods.",
-        lat: 39.9983, lng: -75.1298,
+        description:
+          "A large-scale Mural Arts Philadelphia installation in Kensington using refracted light imagery to explore themes of hope, healing, and the complexity of human experience in one of the city's most challenged neighborhoods.",
+        lat: 39.9983,
+        lng: -75.1298,
       },
 
       // ── Fairmount / Art Museum area ────────────────────────────────────────
       {
         name: "Fairmount Avenue — Neighborhood Tapestry",
         address: "Fairmount Ave & N 24th St, Philadelphia, PA",
-        description: "A mural along Fairmount Avenue celebrating the neighborhood's identity as a mixed community — working class, artistic, and rooted in Philadelphia's long tradition of neighborhood identity along the Benjamin Franklin Parkway corridor.",
-        lat: 39.9680, lng: -75.1828,
+        description:
+          "A mural along Fairmount Avenue celebrating the neighborhood's identity as a mixed community — working class, artistic, and rooted in Philadelphia's long tradition of neighborhood identity along the Benjamin Franklin Parkway corridor.",
+        lat: 39.968,
+        lng: -75.1828,
       },
       {
         name: "Wissahickon Watershed Mural",
         address: "Germantown Ave & Wissahickon Ave, Philadelphia, PA",
-        description: "A nature-inspired mural celebrating the Wissahickon Creek watershed and the long tradition of Black families enjoying Fairmount Park's Wissahickon Valley — one of the largest urban parks in the United States.",
-        lat: 40.0553, lng: -75.2140,
+        description:
+          "A nature-inspired mural celebrating the Wissahickon Creek watershed and the long tradition of Black families enjoying Fairmount Park's Wissahickon Valley — one of the largest urban parks in the United States.",
+        lat: 40.0553,
+        lng: -75.214,
       },
     ];
 
     let inserted = 0;
-    let skipped  = 0;
+    let skipped = 0;
     for (const m of murals) {
       const existing = await pool.query(
         `SELECT id FROM tour_cultural_sites
@@ -9534,7 +12605,10 @@ async function ensurePhiladelphiaMurals(
          LIMIT 1`,
         [m.name],
       );
-      if (existing.rows.length > 0) { skipped++; continue; }
+      if (existing.rows.length > 0) {
+        skipped++;
+        continue;
+      }
 
       await pool.query(
         `INSERT INTO tour_cultural_sites
@@ -9545,9 +12619,13 @@ async function ensurePhiladelphiaMurals(
       );
       inserted++;
     }
-    log(`Philadelphia murals: ${inserted} inserted, ${skipped} already present (${murals.length} total)`);
+    log(
+      `Philadelphia murals: ${inserted} inserted, ${skipped} already present (${murals.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`ensurePhiladelphiaMurals failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensurePhiladelphiaMurals failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9562,10 +12640,14 @@ async function ensureMuralsBatch(
       `SELECT LOWER(name)||'|'||LOWER(city) AS k FROM tour_cultural_sites`,
     );
     const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0; let skipped = 0;
+    let inserted = 0;
+    let skipped = 0;
     for (const m of MURALS_DIASPORA_V1) {
       const key = `${m.name.toLowerCase()}|${m.city.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO tour_cultural_sites
@@ -9577,12 +12659,18 @@ async function ensureMuralsBatch(
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  murals-diaspora-v1: failed "${m.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  murals-diaspora-v1: failed "${m.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Murals diaspora v1: ${inserted} inserted, ${skipped} already present (${MURALS_DIASPORA_V1.length} total)`);
+    log(
+      `Murals diaspora v1: ${inserted} inserted, ${skipped} already present (${MURALS_DIASPORA_V1.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`ensureMuralsBatch failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureMuralsBatch failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9597,27 +12685,46 @@ async function ensureCulturalTourSiteBatch(
       `SELECT LOWER(name)||'|'||LOWER(city) AS k FROM tour_cultural_sites`,
     );
     const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
-    let inserted = 0; let skipped = 0;
+    let inserted = 0;
+    let skipped = 0;
     for (const s of MONUMENTS_CULTURAL_V1) {
       const key = `${s.name.toLowerCase()}|${s.city.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         await pool.query(
           `INSERT INTO tour_cultural_sites
              (name, city, state, address, description, latitude, longitude,
               site_type, is_active, tour_source, created_at, updated_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,true,NOW(),NOW())`,
-          [s.name, s.city, s.state, s.address, s.description, s.lat, s.lng, s.siteType],
+          [
+            s.name,
+            s.city,
+            s.state,
+            s.address,
+            s.description,
+            s.lat,
+            s.lng,
+            s.siteType,
+          ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  monuments-cultural-v1: failed "${s.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  monuments-cultural-v1: failed "${s.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Monuments cultural v1: ${inserted} inserted, ${skipped} already present (${MONUMENTS_CULTURAL_V1.length} total)`);
+    log(
+      `Monuments cultural v1: ${inserted} inserted, ${skipped} already present (${MONUMENTS_CULTURAL_V1.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`ensureCulturalTourSiteBatch failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureCulturalTourSiteBatch failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9636,16 +12743,28 @@ async function ensureBusinessBatch(
     );
     const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
     const BLACK_DESIGNATIONS = [
-      "Black / African American-Owned", "African-Owned", "West African-Owned",
-      "Nigerian-Owned", "Ghanaian-Owned", "Haitian-Owned",
-      "Caribbean / West Indian-Owned", "Afro-Caribbean-Owned", "Afro-Latino-Owned",
+      "Black / African American-Owned",
+      "African-Owned",
+      "West African-Owned",
+      "Nigerian-Owned",
+      "Ghanaian-Owned",
+      "Haitian-Owned",
+      "Caribbean / West Indian-Owned",
+      "Afro-Caribbean-Owned",
+      "Afro-Latino-Owned",
     ];
-    let inserted = 0; let skipped = 0;
+    let inserted = 0;
+    let skipped = 0;
     for (const b of businesses) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.state ?? "").toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
-        const isBlack = (b.ownershipDesignations ?? []).some((d: string) => BLACK_DESIGNATIONS.includes(d));
+        const isBlack = (b.ownershipDesignations ?? []).some((d: string) =>
+          BLACK_DESIGNATIONS.includes(d),
+        );
         await pool.query(
           `INSERT INTO businesses
             (id, name, category, subcategory, address, city, state, country,
@@ -9673,25 +12792,36 @@ async function ensureBusinessBatch(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
+            b.name,
+            b.category,
+            b.subcategory,
             b.address ?? `${b.city}, ${b.state}`,
-            b.city, b.state ?? null, b.country ?? "USA",
+            b.city,
+            b.state ?? null,
+            b.country ?? "USA",
             b.description,
             JSON.stringify(b.ownershipDesignations ?? []),
             isBlack,
-            String(b.lat), String(b.lng),
+            String(b.lat),
+            String(b.lng),
             b.website ?? null,
           ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  ${label}: failed "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  ${label}: failed "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`${label}: ${inserted} inserted, ${skipped} already present (${businesses.length} total)`);
+    log(
+      `${label}: ${inserted} inserted, ${skipped} already present (${businesses.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`${label} seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `${label} seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9713,14 +12843,25 @@ async function ensureLaundryBusinesses(
 
     for (const b of LAUNDRY_SEED_V1) {
       const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.state ?? "").toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
+      if (existing.has(key)) {
+        skipped++;
+        continue;
+      }
       try {
         const BLACK_DESIGNATIONS = [
-          "Black / African American-Owned", "African-Owned", "West African-Owned",
-          "Nigerian-Owned", "Ghanaian-Owned", "Haitian-Owned",
-          "Caribbean / West Indian-Owned", "Afro-Caribbean-Owned", "Afro-Latino-Owned",
+          "Black / African American-Owned",
+          "African-Owned",
+          "West African-Owned",
+          "Nigerian-Owned",
+          "Ghanaian-Owned",
+          "Haitian-Owned",
+          "Caribbean / West Indian-Owned",
+          "Afro-Caribbean-Owned",
+          "Afro-Latino-Owned",
         ];
-        const isBlack = (b.ownershipDesignations ?? []).some((d: string) => BLACK_DESIGNATIONS.includes(d));
+        const isBlack = (b.ownershipDesignations ?? []).some((d: string) =>
+          BLACK_DESIGNATIONS.includes(d),
+        );
         await pool.query(
           `INSERT INTO businesses
             (id, name, category, subcategory, address, city, state, country,
@@ -9748,25 +12889,36 @@ async function ensureLaundryBusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory,
+            b.name,
+            b.category,
+            b.subcategory,
             b.address ?? `${b.city}, ${b.state}`,
-            b.city, b.state ?? null, b.country ?? "USA",
+            b.city,
+            b.state ?? null,
+            b.country ?? "USA",
             b.description,
             JSON.stringify(b.ownershipDesignations ?? []),
             isBlack,
-            String(b.lat), String(b.lng),
+            String(b.lat),
+            String(b.lng),
             b.website ?? null,
           ],
         );
         existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        warn(`  Laundry seed: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+        warn(
+          `  Laundry seed: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
-    log(`Laundry businesses v1: ${inserted} inserted, ${skipped} already present (${LAUNDRY_SEED_V1.length} total)`);
+    log(
+      `Laundry businesses v1: ${inserted} inserted, ${skipped} already present (${LAUNDRY_SEED_V1.length} total)`,
+    );
   } catch (err: unknown) {
-    warn(`Laundry businesses seed failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `Laundry businesses seed failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -9797,15 +12949,19 @@ async function ensureKinfolkCulturalContextV1(
         updated_at      timestamptz NOT NULL DEFAULT now()
       )
     `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ksr_tier   ON kinfolk_source_records(tier)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ksr_status ON kinfolk_source_records(status)`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ksr_tier   ON kinfolk_source_records(tier)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ksr_status ON kinfolk_source_records(status)`,
+    );
 
     // ── 2. kinfolk_entities — add missing columns (idempotent) ─────────────────
     for (const [col, def] of [
-      ["normalized_name",   "text"],
-      ["short_summary",     "text"],
-      ["country_codes",     "text[] NOT NULL DEFAULT '{}'"],
-      ["language_codes",    "text[] NOT NULL DEFAULT '{}'"],
+      ["normalized_name", "text"],
+      ["short_summary", "text"],
+      ["country_codes", "text[] NOT NULL DEFAULT '{}'"],
+      ["language_codes", "text[] NOT NULL DEFAULT '{}'"],
       ["resolution_status", "text NOT NULL DEFAULT 'active'"],
     ] as const) {
       await pool.query(`
@@ -9829,8 +12985,12 @@ async function ensureKinfolkCulturalContextV1(
         END IF;
       END $$
     `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_resolution_status ON kinfolk_entities(resolution_status)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_normalized_name   ON kinfolk_entities(lower(normalized_name))`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ke_resolution_status ON kinfolk_entities(resolution_status)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ke_normalized_name   ON kinfolk_entities(lower(normalized_name))`,
+    );
 
     // ── 3. kinfolk_entity_aliases — add missing columns ────────────────────────
     await pool.query(`
@@ -9852,7 +13012,9 @@ async function ensureKinfolkCulturalContextV1(
         created_at        timestamptz NOT NULL DEFAULT now()
       )
     `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ker_subject ON kinfolk_entity_relationships(subject_entity_id)`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ker_subject ON kinfolk_entity_relationships(subject_entity_id)`,
+    );
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS kinfolk_entity_source_links (
@@ -9875,7 +13037,9 @@ async function ensureKinfolkCulturalContextV1(
         created_at  timestamptz NOT NULL DEFAULT now()
       )
     `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_kcc_session ON kinfolk_context_candidates(session_id)`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_kcc_session ON kinfolk_context_candidates(session_id)`,
+    );
 
     // ── 5. education_institutions — add optional tracking columns ─────────────
     await pool.query(`
@@ -9897,17 +13061,105 @@ async function ensureKinfolkCulturalContextV1(
     `);
 
     // ── 7. Seed sources ────────────────────────────────────────────────────────
-    type SrcRow = { canonical_url: string; publisher: string; title?: string; tier: string; claim_scope: string[]; expected_host: string; notes: string };
+    type SrcRow = {
+      canonical_url: string;
+      publisher: string;
+      title?: string;
+      tier: string;
+      claim_scope: string[];
+      expected_host: string;
+      notes: string;
+    };
     const SOURCES: SrcRow[] = [
-      { canonical_url: "https://www.sinnersmovie.com/toolkit/",        publisher: "Sinners (Official Film)",                                tier: "A", claim_scope: ["film_credit","director_credit","cast_credit","release_year"],        expected_host: "sinnersmovie.com", notes: "Confirms Ryan Coogler as writer/director; Michael B. Jordan as lead" },
-      { canonical_url: "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96", publisher: "HBO Max",               tier: "A", claim_scope: ["film_credit","streaming_availability","release_year"],                 expected_host: "hbomax.com",       notes: "Official streaming page; may redirect" },
-      { canonical_url: "https://www.iamtenitra.com/about",              publisher: "Michelle Williams (Artist Official Site)",              tier: "A", claim_scope: ["biography","group_membership","discography","career"],               expected_host: "iamtenitra.com",   notes: "Confirms Michelle Williams as Destiny's Child member" },
-      { canonical_url: "https://nollywire.com/names/annie-macaulay-idibia/", publisher: "Nollywire",                                      tier: "B", claim_scope: ["biography","nationality","public_profile"],                           expected_host: "nollywire.com",    notes: "Tier B: reputable Nigerian entertainment publication" },
-      { canonical_url: "https://www.instagram.com/annieidibia1/",       publisher: "Annie Macaulay — Public Instagram",                    tier: "C", claim_scope: ["public_identity","social_presence"],                                  expected_host: "instagram.com",    notes: "Tier C verified public creator profile" },
-      { canonical_url: "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/", publisher: "White House Initiative on HBCUs", tier: "A", claim_scope: ["hbcu_designation","institution_name","institution_location"], expected_host: "sites.ed.gov", notes: "Authoritative federal HBCU list" },
-      { canonical_url: "https://www.temple.edu/",                       publisher: "Temple University",                                    tier: "A", claim_scope: ["institution_name","institution_location","academic_offerings"],       expected_host: "temple.edu",       notes: "Confirms Temple as Philadelphia public research university" },
-      { canonical_url: "https://www.allmusic.com/artist/kendrick-lamar-mn0002683148", publisher: "AllMusic",                              tier: "B", claim_scope: ["discography","career_chronology","genre"],                            expected_host: "allmusic.com",     notes: "Tier B: trade publication for cultural-opinion context" },
-      { canonical_url: "https://www.allmusic.com/artist/drake-mn0000783338",          publisher: "AllMusic",                              tier: "B", claim_scope: ["discography","career_chronology","genre"],                            expected_host: "allmusic.com",     notes: "Tier B: trade publication for cultural-opinion context" },
+      {
+        canonical_url: "https://www.sinnersmovie.com/toolkit/",
+        publisher: "Sinners (Official Film)",
+        tier: "A",
+        claim_scope: [
+          "film_credit",
+          "director_credit",
+          "cast_credit",
+          "release_year",
+        ],
+        expected_host: "sinnersmovie.com",
+        notes:
+          "Confirms Ryan Coogler as writer/director; Michael B. Jordan as lead",
+      },
+      {
+        canonical_url:
+          "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96",
+        publisher: "HBO Max",
+        tier: "A",
+        claim_scope: ["film_credit", "streaming_availability", "release_year"],
+        expected_host: "hbomax.com",
+        notes: "Official streaming page; may redirect",
+      },
+      {
+        canonical_url: "https://www.iamtenitra.com/about",
+        publisher: "Michelle Williams (Artist Official Site)",
+        tier: "A",
+        claim_scope: ["biography", "group_membership", "discography", "career"],
+        expected_host: "iamtenitra.com",
+        notes: "Confirms Michelle Williams as Destiny's Child member",
+      },
+      {
+        canonical_url: "https://nollywire.com/names/annie-macaulay-idibia/",
+        publisher: "Nollywire",
+        tier: "B",
+        claim_scope: ["biography", "nationality", "public_profile"],
+        expected_host: "nollywire.com",
+        notes: "Tier B: reputable Nigerian entertainment publication",
+      },
+      {
+        canonical_url: "https://www.instagram.com/annieidibia1/",
+        publisher: "Annie Macaulay — Public Instagram",
+        tier: "C",
+        claim_scope: ["public_identity", "social_presence"],
+        expected_host: "instagram.com",
+        notes: "Tier C verified public creator profile",
+      },
+      {
+        canonical_url:
+          "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/",
+        publisher: "White House Initiative on HBCUs",
+        tier: "A",
+        claim_scope: [
+          "hbcu_designation",
+          "institution_name",
+          "institution_location",
+        ],
+        expected_host: "sites.ed.gov",
+        notes: "Authoritative federal HBCU list",
+      },
+      {
+        canonical_url: "https://www.temple.edu/",
+        publisher: "Temple University",
+        tier: "A",
+        claim_scope: [
+          "institution_name",
+          "institution_location",
+          "academic_offerings",
+        ],
+        expected_host: "temple.edu",
+        notes: "Confirms Temple as Philadelphia public research university",
+      },
+      {
+        canonical_url:
+          "https://www.allmusic.com/artist/kendrick-lamar-mn0002683148",
+        publisher: "AllMusic",
+        tier: "B",
+        claim_scope: ["discography", "career_chronology", "genre"],
+        expected_host: "allmusic.com",
+        notes: "Tier B: trade publication for cultural-opinion context",
+      },
+      {
+        canonical_url: "https://www.allmusic.com/artist/drake-mn0000783338",
+        publisher: "AllMusic",
+        tier: "B",
+        claim_scope: ["discography", "career_chronology", "genre"],
+        expected_host: "allmusic.com",
+        notes: "Tier B: trade publication for cultural-opinion context",
+      },
     ];
     for (const s of SOURCES) {
       await pool.query(
@@ -9917,34 +13169,80 @@ async function ensureKinfolkCulturalContextV1(
            publisher=EXCLUDED.publisher, title=EXCLUDED.title, tier=EXCLUDED.tier,
            claim_scope=EXCLUDED.claim_scope, expected_host=EXCLUDED.expected_host,
            notes=EXCLUDED.notes, updated_at=now()`,
-        [s.canonical_url, s.publisher, s.canonical_url.split("/").slice(0, 4).join("/"), s.tier, s.claim_scope, s.expected_host, s.notes],
+        [
+          s.canonical_url,
+          s.publisher,
+          s.canonical_url.split("/").slice(0, 4).join("/"),
+          s.tier,
+          s.claim_scope,
+          s.expected_host,
+          s.notes,
+        ],
       );
     }
 
     // ── 8. Seed entities + aliases + source links ──────────────────────────────
     type EntSeed = {
-      cn: string; etype: string; nn: string; ss: string; cc: string[]; lc: string[]; tags: string[];
-      eraStart?: number; eraEnd?: number;
-      aliases: { alias: string; aliasType: string; confidence: number; locale?: string }[];
+      cn: string;
+      etype: string;
+      nn: string;
+      ss: string;
+      cc: string[];
+      lc: string[];
+      tags: string[];
+      eraStart?: number;
+      eraEnd?: number;
+      aliases: {
+        alias: string;
+        aliasType: string;
+        confidence: number;
+        locale?: string;
+      }[];
       sourceUrls: string[];
     };
     const ENTITIES: EntSeed[] = [
       {
-        cn: "Sinners (2025 film)", etype: "work", nn: "sinners 2025 film",
+        cn: "Sinners (2025 film)",
+        etype: "work",
+        nn: "sinners 2025 film",
         ss: "Sinners is a 2025 horror/drama film written and directed by Ryan Coogler, starring Michael B. Jordan. Released by Warner Bros. and available on HBO Max.",
-        cc: ["US"], lc: ["en"], tags: ["black cinema","ryan coogler filmography","michael b jordan","horror","drama","2025 film"], eraStart: 2025,
+        cc: ["US"],
+        lc: ["en"],
+        tags: [
+          "black cinema",
+          "ryan coogler filmography",
+          "michael b jordan",
+          "horror",
+          "drama",
+          "2025 film",
+        ],
+        eraStart: 2025,
         aliases: [
           { alias: "Sinners", aliasType: "title", confidence: 0.75 },
           { alias: "Sinners 2025", aliasType: "title", confidence: 0.92 },
           { alias: "Sinners film", aliasType: "title", confidence: 0.92 },
           { alias: "Sinners movie", aliasType: "title", confidence: 0.92 },
         ],
-        sourceUrls: ["https://www.sinnersmovie.com/toolkit/", "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96"],
+        sourceUrls: [
+          "https://www.sinnersmovie.com/toolkit/",
+          "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96",
+        ],
       },
       {
-        cn: "Ryan Coogler", etype: "person", nn: "ryan coogler",
+        cn: "Ryan Coogler",
+        etype: "person",
+        nn: "ryan coogler",
         ss: "Ryan Coogler is an American film director and screenwriter from Oakland, California. Known for Fruitvale Station (2013), Creed (2015), Black Panther (2018), Black Panther: Wakanda Forever (2022), and Sinners (2025).",
-        cc: ["US"], lc: ["en"], tags: ["black cinema","film director","african american directors","marvel","ryan coogler"], eraStart: 2013,
+        cc: ["US"],
+        lc: ["en"],
+        tags: [
+          "black cinema",
+          "film director",
+          "african american directors",
+          "marvel",
+          "ryan coogler",
+        ],
+        eraStart: 2013,
         aliases: [
           { alias: "Ryan Coogler", aliasType: "full_name", confidence: 0.97 },
           { alias: "Coogler", aliasType: "stage_name", confidence: 0.82 },
@@ -9952,72 +13250,189 @@ async function ensureKinfolkCulturalContextV1(
         sourceUrls: ["https://www.sinnersmovie.com/toolkit/"],
       },
       {
-        cn: "Michelle Williams (singer)", etype: "person", nn: "michelle williams singer",
+        cn: "Michelle Williams (singer)",
+        etype: "person",
+        nn: "michelle williams singer",
         ss: "Michelle Williams is a singer, actress, and Broadway performer born July 23, 1980, in Rockford, Illinois. Best known as a member of Destiny's Child alongside Beyoncé and Kelly Rowland.",
-        cc: ["US"], lc: ["en"], tags: ["destinys child","r&b","gospel","black music history","beyonce","kelly rowland","singer","broadway"], eraStart: 2000,
+        cc: ["US"],
+        lc: ["en"],
+        tags: [
+          "destinys child",
+          "r&b",
+          "gospel",
+          "black music history",
+          "beyonce",
+          "kelly rowland",
+          "singer",
+          "broadway",
+        ],
+        eraStart: 2000,
         aliases: [
-          { alias: "Michelle Williams", aliasType: "full_name", confidence: 0.62 },
-          { alias: "Michelle Williams from Destiny's Child", aliasType: "group_context", confidence: 0.99 },
-          { alias: "Michelle Williams Destiny's Child", aliasType: "group_context", confidence: 0.99 },
-          { alias: "Michelle Williams singer", aliasType: "group_context", confidence: 0.95 },
+          {
+            alias: "Michelle Williams",
+            aliasType: "full_name",
+            confidence: 0.62,
+          },
+          {
+            alias: "Michelle Williams from Destiny's Child",
+            aliasType: "group_context",
+            confidence: 0.99,
+          },
+          {
+            alias: "Michelle Williams Destiny's Child",
+            aliasType: "group_context",
+            confidence: 0.99,
+          },
+          {
+            alias: "Michelle Williams singer",
+            aliasType: "group_context",
+            confidence: 0.95,
+          },
         ],
         sourceUrls: ["https://www.iamtenitra.com/about"],
       },
       {
-        cn: "Destiny's Child", etype: "group", nn: "destinys child",
+        cn: "Destiny's Child",
+        etype: "group",
+        nn: "destinys child",
         ss: "Destiny's Child was an American R&B girl group formed in Houston, Texas. Classic lineup: Beyoncé Knowles, Kelly Rowland, and Michelle Williams. Hits include Say My Name, Survivor, Bootylicious, Independent Women Part I.",
-        cc: ["US"], lc: ["en"], tags: ["r&b","black music history","houston","girl groups","beyonce","kelly rowland"], eraStart: 1990, eraEnd: 2006,
+        cc: ["US"],
+        lc: ["en"],
+        tags: [
+          "r&b",
+          "black music history",
+          "houston",
+          "girl groups",
+          "beyonce",
+          "kelly rowland",
+        ],
+        eraStart: 1990,
+        eraEnd: 2006,
         aliases: [
-          { alias: "Destiny's Child", aliasType: "full_name", confidence: 0.97 },
+          {
+            alias: "Destiny's Child",
+            aliasType: "full_name",
+            confidence: 0.97,
+          },
           { alias: "Destinys Child", aliasType: "full_name", confidence: 0.97 },
-          { alias: "DC", aliasType: "stage_name", confidence: 0.30 },
+          { alias: "DC", aliasType: "stage_name", confidence: 0.3 },
         ],
         sourceUrls: ["https://www.iamtenitra.com/about"],
       },
       {
-        cn: "Annie Macaulay-Idibia", etype: "person", nn: "annie macaulay idibia",
+        cn: "Annie Macaulay-Idibia",
+        etype: "person",
+        nn: "annie macaulay idibia",
         ss: "Annie Macaulay-Idibia is a Nigerian-born public figure and entertainer married to 2face Idibia. Publicly known in Nigerian entertainment and social media circles.",
-        cc: ["NG"], lc: ["en","yo"], tags: ["nigerian entertainment","nigeria","nollywood adjacent","public figure","annie idibia"], eraStart: 2010,
+        cc: ["NG"],
+        lc: ["en", "yo"],
+        tags: [
+          "nigerian entertainment",
+          "nigeria",
+          "nollywood adjacent",
+          "public figure",
+          "annie idibia",
+        ],
+        eraStart: 2010,
         aliases: [
           { alias: "Annie", aliasType: "stage_name", confidence: 0.35 },
           { alias: "Annie Macaulay", aliasType: "full_name", confidence: 0.88 },
-          { alias: "Annie Idibia", aliasType: "stage_name", confidence: 0.90 },
-          { alias: "Annie Macaulay-Idibia", aliasType: "full_name", confidence: 0.95 },
-          { alias: "annieidibia1", aliasType: "stage_name", confidence: 0.90 },
+          { alias: "Annie Idibia", aliasType: "stage_name", confidence: 0.9 },
+          {
+            alias: "Annie Macaulay-Idibia",
+            aliasType: "full_name",
+            confidence: 0.95,
+          },
+          { alias: "annieidibia1", aliasType: "stage_name", confidence: 0.9 },
         ],
-        sourceUrls: ["https://nollywire.com/names/annie-macaulay-idibia/", "https://www.instagram.com/annieidibia1/"],
+        sourceUrls: [
+          "https://nollywire.com/names/annie-macaulay-idibia/",
+          "https://www.instagram.com/annieidibia1/",
+        ],
       },
       {
-        cn: "Temple University", etype: "institution", nn: "temple university",
+        cn: "Temple University",
+        etype: "institution",
+        nn: "temple university",
         ss: "Temple University is a public research university in Philadelphia, Pennsylvania. Founded 1884. Located in North Philadelphia. Home to 17 schools and colleges.",
-        cc: ["US"], lc: ["en"], tags: ["philadelphia","pennsylvania","public university","research university","north philadelphia"], eraStart: 1884,
+        cc: ["US"],
+        lc: ["en"],
+        tags: [
+          "philadelphia",
+          "pennsylvania",
+          "public university",
+          "research university",
+          "north philadelphia",
+        ],
+        eraStart: 1884,
         aliases: [
-          { alias: "Temple University", aliasType: "full_name", confidence: 0.97 },
+          {
+            alias: "Temple University",
+            aliasType: "full_name",
+            confidence: 0.97,
+          },
           { alias: "Temple", aliasType: "stage_name", confidence: 0.75 },
-          { alias: "TU", aliasType: "stage_name", confidence: 0.30 },
-          { alias: "Temple Owls", aliasType: "stage_name", confidence: 0.80 },
+          { alias: "TU", aliasType: "stage_name", confidence: 0.3 },
+          { alias: "Temple Owls", aliasType: "stage_name", confidence: 0.8 },
         ],
         sourceUrls: ["https://www.temple.edu/"],
       },
       {
-        cn: "Kendrick Lamar", etype: "person", nn: "kendrick lamar",
+        cn: "Kendrick Lamar",
+        etype: "person",
+        nn: "kendrick lamar",
         ss: "Kendrick Lamar is an American rapper, songwriter, and record producer from Compton, California. Pulitzer Prize winner (2018). Albums: TPAB, DAMN., Mr. Morale.",
-        cc: ["US"], lc: ["en"], tags: ["hip hop","rap","compton","black music","pulitzer","tde","pglan","music artist"], eraStart: 2011,
+        cc: ["US"],
+        lc: ["en"],
+        tags: [
+          "hip hop",
+          "rap",
+          "compton",
+          "black music",
+          "pulitzer",
+          "tde",
+          "pglan",
+          "music artist",
+        ],
+        eraStart: 2011,
         aliases: [
           { alias: "Kendrick Lamar", aliasType: "full_name", confidence: 0.97 },
-          { alias: "Kendrick", aliasType: "stage_name", confidence: 0.80 },
+          { alias: "Kendrick", aliasType: "stage_name", confidence: 0.8 },
           { alias: "K.Dot", aliasType: "stage_name", confidence: 0.82 },
         ],
-        sourceUrls: ["https://www.allmusic.com/artist/kendrick-lamar-mn0002683148"],
+        sourceUrls: [
+          "https://www.allmusic.com/artist/kendrick-lamar-mn0002683148",
+        ],
       },
       {
-        cn: "Drake (rapper)", etype: "person", nn: "drake rapper",
+        cn: "Drake (rapper)",
+        etype: "person",
+        nn: "drake rapper",
         ss: "Drake (Aubrey Drake Graham) is a Canadian rapper, singer, songwriter, and actor from Toronto, Ontario. One of the best-selling music artists in history.",
-        cc: ["CA"], lc: ["en"], tags: ["hip hop","rap","toronto","ovo","music artist","r&b","pop rap"], eraStart: 2009,
+        cc: ["CA"],
+        lc: ["en"],
+        tags: [
+          "hip hop",
+          "rap",
+          "toronto",
+          "ovo",
+          "music artist",
+          "r&b",
+          "pop rap",
+        ],
+        eraStart: 2009,
         aliases: [
           { alias: "Drake", aliasType: "stage_name", confidence: 0.83 },
-          { alias: "Aubrey Drake Graham", aliasType: "full_name", confidence: 0.95 },
-          { alias: "Champagne Papi", aliasType: "stage_name", confidence: 0.85 },
+          {
+            alias: "Aubrey Drake Graham",
+            aliasType: "full_name",
+            confidence: 0.95,
+          },
+          {
+            alias: "Champagne Papi",
+            aliasType: "stage_name",
+            confidence: 0.85,
+          },
         ],
         sourceUrls: ["https://www.allmusic.com/artist/drake-mn0000783338"],
       },
@@ -10045,7 +13460,16 @@ async function ensureKinfolkCulturalContextV1(
                  language_codes=$5, cultural_context_tags=$6,
                  era_start=$7, era_end=$8, resolution_status='active', updated_at=now()
            WHERE id=$1`,
-          [entityId, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
+          [
+            entityId,
+            e.nn,
+            e.ss,
+            e.cc,
+            e.lc,
+            e.tags,
+            e.eraStart ?? null,
+            e.eraEnd ?? null,
+          ],
         );
       } else {
         const insRes = await pool.query(
@@ -10055,7 +13479,17 @@ async function ensureKinfolkCulturalContextV1(
               era_start, era_end, resolution_status, source_status, last_verified_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',now())
            RETURNING id`,
-          [e.cn, e.etype, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
+          [
+            e.cn,
+            e.etype,
+            e.nn,
+            e.ss,
+            e.cc,
+            e.lc,
+            e.tags,
+            e.eraStart ?? null,
+            e.eraEnd ?? null,
+          ],
         );
         if (insRes.rows.length === 0) continue;
         entityId = insRes.rows[0].id;
@@ -10064,14 +13498,25 @@ async function ensureKinfolkCulturalContextV1(
 
       // Insert aliases
       for (const a of e.aliases) {
-        const normAlias = a.alias.toLowerCase().replace(/[''`]/g, "'").replace(/[^a-z0-9\s'.-]/g, "").trim();
+        const normAlias = a.alias
+          .toLowerCase()
+          .replace(/[''`]/g, "'")
+          .replace(/[^a-z0-9\s'.-]/g, "")
+          .trim();
         const res = await pool.query(
           `INSERT INTO kinfolk_entity_aliases
              (entity_id, alias, alias_type, confidence, normalized_alias, locale)
            VALUES ($1,$2,$3,$4,$5,$6)
            ON CONFLICT DO NOTHING
            RETURNING id`,
-          [entityId, a.alias, a.aliasType, a.confidence, normAlias, a.locale ?? null],
+          [
+            entityId,
+            a.alias,
+            a.aliasType,
+            a.confidence,
+            normAlias,
+            a.locale ?? null,
+          ],
         );
         if (res.rows.length > 0) aliasesInserted++;
       }
@@ -10095,9 +13540,13 @@ async function ensureKinfolkCulturalContextV1(
       }
     }
 
-    log(`ensureKinfolkCulturalContextV1: ${entitiesInserted} entities, ${aliasesInserted} aliases, ${linksInserted} source links seeded`);
+    log(
+      `ensureKinfolkCulturalContextV1: ${entitiesInserted} entities, ${aliasesInserted} aliases, ${linksInserted} source links seeded`,
+    );
   } catch (err: unknown) {
-    warn(`ensureKinfolkCulturalContextV1 failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureKinfolkCulturalContextV1 failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10131,11 +13580,19 @@ async function ensureKinfolkEntityRegistry(
         created_at  timestamptz NOT NULL DEFAULT now()
       )
     `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_aliases_entity ON kinfolk_entity_aliases(entity_id)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_aliases_alias  ON kinfolk_entity_aliases(lower(alias))`);
-    log("ensureKinfolkEntityRegistry: kinfolk_entities + kinfolk_entity_aliases ready");
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ke_aliases_entity ON kinfolk_entity_aliases(entity_id)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_ke_aliases_alias  ON kinfolk_entity_aliases(lower(alias))`,
+    );
+    log(
+      "ensureKinfolkEntityRegistry: kinfolk_entities + kinfolk_entity_aliases ready",
+    );
   } catch (err: unknown) {
-    warn(`ensureKinfolkEntityRegistry failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureKinfolkEntityRegistry failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10184,15 +13641,23 @@ async function ensureAlliedPartnerApplications(
     `);
 
     // allied_partner flag on businesses (best-effort — column may already exist)
-    await pool.query(`
+    await pool
+      .query(
+        `
       ALTER TABLE businesses
         ADD COLUMN IF NOT EXISTS allied_partner       BOOLEAN DEFAULT false,
         ADD COLUMN IF NOT EXISTS allied_partner_since TIMESTAMPTZ
-    `).catch(() => {/* ignore */});
+    `,
+      )
+      .catch(() => {
+        /* ignore */
+      });
 
     log("Allied partner applications v1: table + index ready");
   } catch (err: unknown) {
-    warn(`ensureAlliedPartnerApplications failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureAlliedPartnerApplications failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10202,45 +13667,45 @@ async function ensureAlliedPartnerApplications(
 // coordinate so they appear on the discoverability map.
 // Coordinates are intentionally approximate — the event card shows the city name.
 const CITY_CENTROIDS: Record<string, { lat: number; lng: number }> = {
-  "washington|dc":        { lat: 38.9072,  lng: -77.0369  },
-  "washington|md":        { lat: 38.9072,  lng: -77.0369  },
-  "atlanta|ga":           { lat: 33.7490,  lng: -84.3880  },
-  "houston|tx":           { lat: 29.7604,  lng: -95.3698  },
-  "chicago|il":           { lat: 41.8781,  lng: -87.6298  },
-  "los angeles|ca":       { lat: 34.0522,  lng: -118.2437 },
-  "compton|ca":           { lat: 33.8958,  lng: -118.2201 },
-  "inglewood|ca":         { lat: 33.9617,  lng: -118.3531 },
-  "new york|ny":          { lat: 40.7128,  lng: -74.0060  },
-  "brooklyn|ny":          { lat: 40.6782,  lng: -73.9442  },
-  "bronx|ny":             { lat: 40.8448,  lng: -73.8648  },
-  "miami|fl":             { lat: 25.7617,  lng: -80.1918  },
-  "detroit|mi":           { lat: 42.3314,  lng: -83.0458  },
-  "charlotte|nc":         { lat: 35.2271,  lng: -80.8431  },
-  "new orleans|la":       { lat: 29.9511,  lng: -90.0715  },
-  "baltimore|md":         { lat: 39.2904,  lng: -76.6122  },
-  "richmond|va":          { lat: 37.5407,  lng: -77.4360  },
-  "nashville|tn":         { lat: 36.1627,  lng: -86.7816  },
-  "memphis|tn":           { lat: 35.1495,  lng: -90.0490  },
-  "dallas|tx":            { lat: 32.7767,  lng: -96.7970  },
-  "fort worth|tx":        { lat: 32.7555,  lng: -97.3308  },
-  "columbia|sc":          { lat: 34.0007,  lng: -81.0348  },
-  "national harbor|md":   { lat: 38.7873,  lng: -77.0120  },
-  "largo|md":             { lat: 38.8929,  lng: -76.8274  },
-  "raleigh|nc":           { lat: 35.7796,  lng: -78.6382  },
-  "durham|nc":            { lat: 35.9940,  lng: -78.8986  },
-  "greensboro|nc":        { lat: 36.0726,  lng: -79.7920  },
-  "jacksonville|fl":      { lat: 30.3322,  lng: -81.6557  },
-  "las vegas|nv":         { lat: 36.1699,  lng: -115.1398 },
-  "birmingham|al":        { lat: 33.5186,  lng: -86.8104  },
-  "jackson|ms":           { lat: 32.2988,  lng: -90.1848  },
-  "tallahassee|fl":       { lat: 30.4518,  lng: -84.2807  },
-  "hampton|va":           { lat: 37.0299,  lng: -76.3452  },
-  "tuskegee|al":          { lat: 32.4301,  lng: -85.7042  },
-  "prairie view|tx":      { lat: 30.0919,  lng: -95.9827  },
-  "grambling|la":         { lat: 32.5268,  lng: -92.7162  },
-  "daytona beach|fl":     { lat: 29.2108,  lng: -81.0228  },
-  "philadelphia|pa":      { lat: 39.9526,  lng: -75.1652  },
-  "baton rouge|la":       { lat: 30.4515,  lng: -91.1871  },
+  "washington|dc": { lat: 38.9072, lng: -77.0369 },
+  "washington|md": { lat: 38.9072, lng: -77.0369 },
+  "atlanta|ga": { lat: 33.749, lng: -84.388 },
+  "houston|tx": { lat: 29.7604, lng: -95.3698 },
+  "chicago|il": { lat: 41.8781, lng: -87.6298 },
+  "los angeles|ca": { lat: 34.0522, lng: -118.2437 },
+  "compton|ca": { lat: 33.8958, lng: -118.2201 },
+  "inglewood|ca": { lat: 33.9617, lng: -118.3531 },
+  "new york|ny": { lat: 40.7128, lng: -74.006 },
+  "brooklyn|ny": { lat: 40.6782, lng: -73.9442 },
+  "bronx|ny": { lat: 40.8448, lng: -73.8648 },
+  "miami|fl": { lat: 25.7617, lng: -80.1918 },
+  "detroit|mi": { lat: 42.3314, lng: -83.0458 },
+  "charlotte|nc": { lat: 35.2271, lng: -80.8431 },
+  "new orleans|la": { lat: 29.9511, lng: -90.0715 },
+  "baltimore|md": { lat: 39.2904, lng: -76.6122 },
+  "richmond|va": { lat: 37.5407, lng: -77.436 },
+  "nashville|tn": { lat: 36.1627, lng: -86.7816 },
+  "memphis|tn": { lat: 35.1495, lng: -90.049 },
+  "dallas|tx": { lat: 32.7767, lng: -96.797 },
+  "fort worth|tx": { lat: 32.7555, lng: -97.3308 },
+  "columbia|sc": { lat: 34.0007, lng: -81.0348 },
+  "national harbor|md": { lat: 38.7873, lng: -77.012 },
+  "largo|md": { lat: 38.8929, lng: -76.8274 },
+  "raleigh|nc": { lat: 35.7796, lng: -78.6382 },
+  "durham|nc": { lat: 35.994, lng: -78.8986 },
+  "greensboro|nc": { lat: 36.0726, lng: -79.792 },
+  "jacksonville|fl": { lat: 30.3322, lng: -81.6557 },
+  "las vegas|nv": { lat: 36.1699, lng: -115.1398 },
+  "birmingham|al": { lat: 33.5186, lng: -86.8104 },
+  "jackson|ms": { lat: 32.2988, lng: -90.1848 },
+  "tallahassee|fl": { lat: 30.4518, lng: -84.2807 },
+  "hampton|va": { lat: 37.0299, lng: -76.3452 },
+  "tuskegee|al": { lat: 32.4301, lng: -85.7042 },
+  "prairie view|tx": { lat: 30.0919, lng: -95.9827 },
+  "grambling|la": { lat: 32.5268, lng: -92.7162 },
+  "daytona beach|fl": { lat: 29.2108, lng: -81.0228 },
+  "philadelphia|pa": { lat: 39.9526, lng: -75.1652 },
+  "baton rouge|la": { lat: 30.4515, lng: -91.1871 },
 };
 
 async function ensureRecurringEventsCityCoords(
@@ -10249,30 +13714,45 @@ async function ensureRecurringEventsCityCoords(
 ): Promise<void> {
   try {
     // Find events that still have no coordinates
-    const { rows } = await pool.query<{ id: string; city: string; state: string }>(
+    const { rows } = await pool.query<{
+      id: string;
+      city: string;
+      state: string;
+    }>(
       `SELECT id, city, state FROM recurring_events
        WHERE (latitude IS NULL OR longitude IS NULL OR (latitude = 0 AND longitude = 0))
-         AND is_active = true`
+         AND is_active = true`,
     );
-    if (rows.length === 0) { log("City-centroid coords: all events already have coordinates"); return; }
+    if (rows.length === 0) {
+      log("City-centroid coords: all events already have coordinates");
+      return;
+    }
 
-    let updated = 0; let skipped = 0;
+    let updated = 0;
+    let skipped = 0;
     for (const evt of rows) {
       const key = `${evt.city.toLowerCase()}|${evt.state.toLowerCase()}`;
       const centroid = CITY_CENTROIDS[key];
-      if (!centroid) { skipped++; continue; }
+      if (!centroid) {
+        skipped++;
+        continue;
+      }
       // Jitter slightly so events in the same city don't stack on the exact same pixel
       const jitterLat = centroid.lat + (Math.random() - 0.5) * 0.015;
       const jitterLng = centroid.lng + (Math.random() - 0.5) * 0.015;
       await pool.query(
         `UPDATE recurring_events SET latitude = $1, longitude = $2, updated_at = NOW() WHERE id = $3`,
-        [jitterLat, jitterLng, evt.id]
+        [jitterLat, jitterLng, evt.id],
       );
       updated++;
     }
-    log(`City-centroid coords: ${updated} recurring events updated, ${skipped} cities not in map`);
+    log(
+      `City-centroid coords: ${updated} recurring events updated, ${skipped} cities not in map`,
+    );
   } catch (err: unknown) {
-    warn(`ensureRecurringEventsCityCoords failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureRecurringEventsCityCoords failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10302,37 +13782,273 @@ async function ensureEducationInstitutions(
         created_at                  timestamptz NOT NULL DEFAULT now()
       )
     `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_edu_city  ON education_institutions(lower(city))`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_edu_state ON education_institutions(lower(state))`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_edu_hbcu  ON education_institutions(hbcu_status) WHERE hbcu_status = true`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_edu_city  ON education_institutions(lower(city))`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_edu_state ON education_institutions(lower(state))`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_edu_hbcu  ON education_institutions(hbcu_status) WHERE hbcu_status = true`,
+    );
 
-    type SeedRow = { name: string; type: string; url: string; city: string; state: string; lat: number; lng: number; hbcu: boolean; tags: string };
+    type SeedRow = {
+      name: string;
+      type: string;
+      url: string;
+      city: string;
+      state: string;
+      lat: number;
+      lng: number;
+      hbcu: boolean;
+      tags: string;
+    };
     const seeds: SeedRow[] = [
       // Philadelphia area
-      { name: "Temple University",                    type: "university",            url: "https://www.temple.edu",        city: "Philadelphia",   state: "PA", lat: 39.9811, lng: -75.1543, hbcu: false, tags: "business, law, medicine, education, engineering, communications" },
-      { name: "University of Pennsylvania",           type: "university",            url: "https://www.upenn.edu",         city: "Philadelphia",   state: "PA", lat: 39.9522, lng: -75.1932, hbcu: false, tags: "medicine, law, business (Wharton), nursing, engineering" },
-      { name: "Drexel University",                    type: "university",            url: "https://www.drexel.edu",        city: "Philadelphia",   state: "PA", lat: 39.9566, lng: -75.1875, hbcu: false, tags: "engineering, business, nursing, computer science" },
-      { name: "Community College of Philadelphia",    type: "community_college",     url: "https://www.ccp.edu",           city: "Philadelphia",   state: "PA", lat: 39.9583, lng: -75.1613, hbcu: false, tags: "associates degrees, workforce training, transfer pathways" },
-      { name: "La Salle University",                  type: "university",            url: "https://www.lasalle.edu",       city: "Philadelphia",   state: "PA", lat: 40.0333, lng: -75.1667, hbcu: false, tags: "business, nursing, education, liberal arts" },
-      { name: "Saint Joseph's University",            type: "university",            url: "https://www.sju.edu",           city: "Philadelphia",   state: "PA", lat: 40.0094, lng: -75.2313, hbcu: false, tags: "business, education, health sciences, liberal arts" },
+      {
+        name: "Temple University",
+        type: "university",
+        url: "https://www.temple.edu",
+        city: "Philadelphia",
+        state: "PA",
+        lat: 39.9811,
+        lng: -75.1543,
+        hbcu: false,
+        tags: "business, law, medicine, education, engineering, communications",
+      },
+      {
+        name: "University of Pennsylvania",
+        type: "university",
+        url: "https://www.upenn.edu",
+        city: "Philadelphia",
+        state: "PA",
+        lat: 39.9522,
+        lng: -75.1932,
+        hbcu: false,
+        tags: "medicine, law, business (Wharton), nursing, engineering",
+      },
+      {
+        name: "Drexel University",
+        type: "university",
+        url: "https://www.drexel.edu",
+        city: "Philadelphia",
+        state: "PA",
+        lat: 39.9566,
+        lng: -75.1875,
+        hbcu: false,
+        tags: "engineering, business, nursing, computer science",
+      },
+      {
+        name: "Community College of Philadelphia",
+        type: "community_college",
+        url: "https://www.ccp.edu",
+        city: "Philadelphia",
+        state: "PA",
+        lat: 39.9583,
+        lng: -75.1613,
+        hbcu: false,
+        tags: "associates degrees, workforce training, transfer pathways",
+      },
+      {
+        name: "La Salle University",
+        type: "university",
+        url: "https://www.lasalle.edu",
+        city: "Philadelphia",
+        state: "PA",
+        lat: 40.0333,
+        lng: -75.1667,
+        hbcu: false,
+        tags: "business, nursing, education, liberal arts",
+      },
+      {
+        name: "Saint Joseph's University",
+        type: "university",
+        url: "https://www.sju.edu",
+        city: "Philadelphia",
+        state: "PA",
+        lat: 40.0094,
+        lng: -75.2313,
+        hbcu: false,
+        tags: "business, education, health sciences, liberal arts",
+      },
       // PA HBCUs
-      { name: "Cheyney University of Pennsylvania",   type: "university",            url: "https://www.cheyney.edu",       city: "Cheyney",        state: "PA", lat: 39.9359, lng: -75.5227, hbcu: true,  tags: "business, education, social work, liberal arts" },
-      { name: "Lincoln University",                   type: "university",            url: "https://www.lincoln.edu",       city: "Lincoln University", state: "PA", lat: 39.8070, lng: -75.9278, hbcu: true, tags: "business, education, humanities, sciences, nursing" },
+      {
+        name: "Cheyney University of Pennsylvania",
+        type: "university",
+        url: "https://www.cheyney.edu",
+        city: "Cheyney",
+        state: "PA",
+        lat: 39.9359,
+        lng: -75.5227,
+        hbcu: true,
+        tags: "business, education, social work, liberal arts",
+      },
+      {
+        name: "Lincoln University",
+        type: "university",
+        url: "https://www.lincoln.edu",
+        city: "Lincoln University",
+        state: "PA",
+        lat: 39.807,
+        lng: -75.9278,
+        hbcu: true,
+        tags: "business, education, humanities, sciences, nursing",
+      },
       // National HBCUs
-      { name: "Howard University",                    type: "university",            url: "https://home.howard.edu",       city: "Washington",     state: "DC", lat: 38.9218, lng: -77.0200, hbcu: true,  tags: "medicine, law, business, engineering, fine arts, journalism" },
-      { name: "Spelman College",                      type: "liberal_arts_college",  url: "https://www.spelman.edu",       city: "Atlanta",        state: "GA", lat: 33.7456, lng: -84.4110, hbcu: true,  tags: "STEM, humanities, social sciences, public health (women's college)" },
-      { name: "Morehouse College",                    type: "liberal_arts_college",  url: "https://morehouse.edu",         city: "Atlanta",        state: "GA", lat: 33.7480, lng: -84.4148, hbcu: true,  tags: "business, education, humanities, sciences (men's college)" },
-      { name: "Hampton University",                   type: "university",            url: "https://home.hamptonu.edu",     city: "Hampton",        state: "VA", lat: 37.0206, lng: -76.3428, hbcu: true,  tags: "business, engineering, nursing, education, architecture" },
-      { name: "Clark Atlanta University",             type: "university",            url: "https://www.cau.edu",           city: "Atlanta",        state: "GA", lat: 33.7522, lng: -84.4144, hbcu: true,  tags: "business, education, social work, arts & sciences" },
-      { name: "Florida A&M University",               type: "university",            url: "https://www.famu.edu",          city: "Tallahassee",    state: "FL", lat: 30.4198, lng: -84.2870, hbcu: true,  tags: "pharmacy, engineering, business, law, journalism, agriculture" },
-      { name: "North Carolina A&T State University",  type: "university",            url: "https://www.ncat.edu",          city: "Greensboro",     state: "NC", lat: 36.0803, lng: -79.7848, hbcu: true,  tags: "engineering, agriculture, business, education, nursing" },
-      { name: "Morgan State University",              type: "university",            url: "https://www.morgan.edu",        city: "Baltimore",      state: "MD", lat: 39.3427, lng: -76.5826, hbcu: true,  tags: "engineering, business, education, social work, public health" },
-      { name: "Tuskegee University",                  type: "university",            url: "https://www.tuskegee.edu",      city: "Tuskegee",       state: "AL", lat: 32.4301, lng: -85.7042, hbcu: true,  tags: "engineering, veterinary medicine, nursing, business, agriculture" },
-      { name: "Prairie View A&M University",          type: "university",            url: "https://www.pvamu.edu",         city: "Prairie View",   state: "TX", lat: 30.0919, lng: -95.9827, hbcu: true,  tags: "engineering, nursing, business, education, agriculture" },
-      { name: "Grambling State University",           type: "university",            url: "https://www.gram.edu",          city: "Grambling",      state: "LA", lat: 32.5268, lng: -92.7162, hbcu: true,  tags: "criminal justice, education, business, nursing, social work" },
-      { name: "Bethune-Cookman University",           type: "university",            url: "https://www.cookman.edu",       city: "Daytona Beach",  state: "FL", lat: 29.2111, lng: -81.0203, hbcu: true,  tags: "education, nursing, business, liberal arts" },
-      { name: "Xavier University of Louisiana",       type: "university",            url: "https://www.xula.edu",          city: "New Orleans",    state: "LA", lat: 29.9649, lng: -90.1095, hbcu: true,  tags: "pharmacy, pre-med, education, business" },
-      { name: "Fisk University",                      type: "liberal_arts_college",  url: "https://www.fisk.edu",          city: "Nashville",      state: "TN", lat: 36.1697, lng: -86.8114, hbcu: true,  tags: "arts & sciences, business, education" },
+      {
+        name: "Howard University",
+        type: "university",
+        url: "https://home.howard.edu",
+        city: "Washington",
+        state: "DC",
+        lat: 38.9218,
+        lng: -77.02,
+        hbcu: true,
+        tags: "medicine, law, business, engineering, fine arts, journalism",
+      },
+      {
+        name: "Spelman College",
+        type: "liberal_arts_college",
+        url: "https://www.spelman.edu",
+        city: "Atlanta",
+        state: "GA",
+        lat: 33.7456,
+        lng: -84.411,
+        hbcu: true,
+        tags: "STEM, humanities, social sciences, public health (women's college)",
+      },
+      {
+        name: "Morehouse College",
+        type: "liberal_arts_college",
+        url: "https://morehouse.edu",
+        city: "Atlanta",
+        state: "GA",
+        lat: 33.748,
+        lng: -84.4148,
+        hbcu: true,
+        tags: "business, education, humanities, sciences (men's college)",
+      },
+      {
+        name: "Hampton University",
+        type: "university",
+        url: "https://home.hamptonu.edu",
+        city: "Hampton",
+        state: "VA",
+        lat: 37.0206,
+        lng: -76.3428,
+        hbcu: true,
+        tags: "business, engineering, nursing, education, architecture",
+      },
+      {
+        name: "Clark Atlanta University",
+        type: "university",
+        url: "https://www.cau.edu",
+        city: "Atlanta",
+        state: "GA",
+        lat: 33.7522,
+        lng: -84.4144,
+        hbcu: true,
+        tags: "business, education, social work, arts & sciences",
+      },
+      {
+        name: "Florida A&M University",
+        type: "university",
+        url: "https://www.famu.edu",
+        city: "Tallahassee",
+        state: "FL",
+        lat: 30.4198,
+        lng: -84.287,
+        hbcu: true,
+        tags: "pharmacy, engineering, business, law, journalism, agriculture",
+      },
+      {
+        name: "North Carolina A&T State University",
+        type: "university",
+        url: "https://www.ncat.edu",
+        city: "Greensboro",
+        state: "NC",
+        lat: 36.0803,
+        lng: -79.7848,
+        hbcu: true,
+        tags: "engineering, agriculture, business, education, nursing",
+      },
+      {
+        name: "Morgan State University",
+        type: "university",
+        url: "https://www.morgan.edu",
+        city: "Baltimore",
+        state: "MD",
+        lat: 39.3427,
+        lng: -76.5826,
+        hbcu: true,
+        tags: "engineering, business, education, social work, public health",
+      },
+      {
+        name: "Tuskegee University",
+        type: "university",
+        url: "https://www.tuskegee.edu",
+        city: "Tuskegee",
+        state: "AL",
+        lat: 32.4301,
+        lng: -85.7042,
+        hbcu: true,
+        tags: "engineering, veterinary medicine, nursing, business, agriculture",
+      },
+      {
+        name: "Prairie View A&M University",
+        type: "university",
+        url: "https://www.pvamu.edu",
+        city: "Prairie View",
+        state: "TX",
+        lat: 30.0919,
+        lng: -95.9827,
+        hbcu: true,
+        tags: "engineering, nursing, business, education, agriculture",
+      },
+      {
+        name: "Grambling State University",
+        type: "university",
+        url: "https://www.gram.edu",
+        city: "Grambling",
+        state: "LA",
+        lat: 32.5268,
+        lng: -92.7162,
+        hbcu: true,
+        tags: "criminal justice, education, business, nursing, social work",
+      },
+      {
+        name: "Bethune-Cookman University",
+        type: "university",
+        url: "https://www.cookman.edu",
+        city: "Daytona Beach",
+        state: "FL",
+        lat: 29.2111,
+        lng: -81.0203,
+        hbcu: true,
+        tags: "education, nursing, business, liberal arts",
+      },
+      {
+        name: "Xavier University of Louisiana",
+        type: "university",
+        url: "https://www.xula.edu",
+        city: "New Orleans",
+        state: "LA",
+        lat: 29.9649,
+        lng: -90.1095,
+        hbcu: true,
+        tags: "pharmacy, pre-med, education, business",
+      },
+      {
+        name: "Fisk University",
+        type: "liberal_arts_college",
+        url: "https://www.fisk.edu",
+        city: "Nashville",
+        state: "TN",
+        lat: 36.1697,
+        lng: -86.8114,
+        hbcu: true,
+        tags: "arts & sciences, business, education",
+      },
     ];
 
     for (const row of seeds) {
@@ -10343,15 +14059,29 @@ async function ensureEducationInstitutions(
             minority_serving_designations, program_tags, is_active)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)
          ON CONFLICT DO NOTHING`,
-        [row.name, row.type, row.url, row.city, row.state, row.lat, row.lng, row.hbcu,
-         row.hbcu ? ["HBCU"] : [], row.tags],
+        [
+          row.name,
+          row.type,
+          row.url,
+          row.city,
+          row.state,
+          row.lat,
+          row.lng,
+          row.hbcu,
+          row.hbcu ? ["HBCU"] : [],
+          row.tags,
+        ],
       );
     }
 
     const hbcuCount = seeds.filter((r) => r.hbcu).length;
-    log(`ensureEducationInstitutions: table ready — ${seeds.length} institutions seeded (${seeds.length - hbcuCount} general + ${hbcuCount} HBCUs)`);
+    log(
+      `ensureEducationInstitutions: table ready — ${seeds.length} institutions seeded (${seeds.length - hbcuCount} general + ${hbcuCount} HBCUs)`,
+    );
   } catch (err: unknown) {
-    warn(`ensureEducationInstitutions failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureEducationInstitutions failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10391,9 +14121,13 @@ async function ensureBusinessContactCompleteness(
         WHERE status = 'active'
     `);
 
-    log("ensureBusinessContactCompleteness: contact_source_url, contact_verified_at, contact_completeness columns ready");
+    log(
+      "ensureBusinessContactCompleteness: contact_source_url, contact_verified_at, contact_completeness columns ready",
+    );
   } catch (err: unknown) {
-    warn(`ensureBusinessContactCompleteness failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureBusinessContactCompleteness failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10524,12 +14258,24 @@ async function ensureCanonicalPlacesV1(
     `);
 
     // Indexes
-    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_places_name_trgm_idx ON public.canonical_places USING gin (normalized_name gin_trgm_ops)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_places_city_idx ON public.canonical_places (normalized_city, state) WHERE match_status = 'confirmed'`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_places_domain_idx ON public.canonical_places (official_domain) WHERE official_domain IS NOT NULL`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_place_sources_canonical_idx ON public.canonical_place_sources (canonical_place_id)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_place_candidates_status_idx ON public.canonical_place_merge_candidates (status, proposed_confidence DESC)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_place_candidates_domain_idx ON public.canonical_place_merge_candidates (official_domain_match, status) WHERE official_domain_match = true`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS canonical_places_name_trgm_idx ON public.canonical_places USING gin (normalized_name gin_trgm_ops)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS canonical_places_city_idx ON public.canonical_places (normalized_city, state) WHERE match_status = 'confirmed'`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS canonical_places_domain_idx ON public.canonical_places (official_domain) WHERE official_domain IS NOT NULL`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS canonical_place_sources_canonical_idx ON public.canonical_place_sources (canonical_place_id)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS canonical_place_candidates_status_idx ON public.canonical_place_merge_candidates (status, proposed_confidence DESC)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS canonical_place_candidates_domain_idx ON public.canonical_place_merge_candidates (official_domain_match, status) WHERE official_domain_match = true`,
+    );
 
     // Seed active businesses as primary canonical places (idempotent upsert)
     const { rowCount: cpRows } = await pool.query(`
@@ -10722,9 +14468,13 @@ async function ensureCanonicalPlacesV1(
       ON CONFLICT (source_type, source_id) DO NOTHING
     `);
 
-    log(`ensureCanonicalPlacesV1: canonical_places ready (${cpRows ?? 0} businesses seeded), ${candRows ?? 0} merge candidates evaluated`);
+    log(
+      `ensureCanonicalPlacesV1: canonical_places ready (${cpRows ?? 0} businesses seeded), ${candRows ?? 0} merge candidates evaluated`,
+    );
   } catch (err: unknown) {
-    warn(`ensureCanonicalPlacesV1 failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureCanonicalPlacesV1 failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10793,12 +14543,18 @@ async function ensureBusinessDedupSchema(
       )
     `);
 
-    await pool.query(`CREATE INDEX IF NOT EXISTS bri_status_idx ON business_review_items(status)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS bri_review_type_idx ON business_review_items(review_type)`);
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS bri_status_idx ON business_review_items(status)`,
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS bri_review_type_idx ON business_review_items(review_type)`,
+    );
 
     log("ensureBusinessDedupSchema: schema ready");
   } catch (err: unknown) {
-    warn(`ensureBusinessDedupSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureBusinessDedupSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10841,9 +14597,13 @@ async function ensureUserHandles(
       ) sub
       WHERE users.id = sub.id
     `);
-    log(`ensureUserHandles: handle column ready, ${rowCount ?? 0} users back-filled`);
+    log(
+      `ensureUserHandles: handle column ready, ${rowCount ?? 0} users back-filled`,
+    );
   } catch (err: unknown) {
-    warn(`ensureUserHandles failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureUserHandles failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10912,9 +14672,13 @@ async function ensureVisibilityAndDedupeHardening(
           AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
     `);
 
-    log("ensureVisibilityAndDedupeHardening: public_businesses view + indexes ready");
+    log(
+      "ensureVisibilityAndDedupeHardening: public_businesses view + indexes ready",
+    );
   } catch (err: unknown) {
-    warn(`ensureVisibilityAndDedupeHardening failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureVisibilityAndDedupeHardening failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -10928,45 +14692,118 @@ async function ensureBusinessDeduplication(
 ): Promise<void> {
   try {
     // 17 confirmed duplicate pairs: { id: duplicate, canonicalId: keep }
-    const CONFIRMED_DUPLICATES: Array<{ id: string; canonicalId: string; name: string }> = [
+    const CONFIRMED_DUPLICATES: Array<{
+      id: string;
+      canonicalId: string;
+      name: string;
+    }> = [
       // Shiloh Baptist Church DC — 2 duplicates
-      { id: "b64ebade-3908-48f4-b64f-c997f95b2e8d", canonicalId: "531bc3a2-b142-4b25-8a58-95ccd5f76333", name: "Shiloh Baptist Church DC (variant)" },
-      { id: "0c049dbe-65cc-4005-ae1d-f2bce2ec793e", canonicalId: "531bc3a2-b142-4b25-8a58-95ccd5f76333", name: "Shiloh Baptist Church" },
+      {
+        id: "b64ebade-3908-48f4-b64f-c997f95b2e8d",
+        canonicalId: "531bc3a2-b142-4b25-8a58-95ccd5f76333",
+        name: "Shiloh Baptist Church DC (variant)",
+      },
+      {
+        id: "0c049dbe-65cc-4005-ae1d-f2bce2ec793e",
+        canonicalId: "531bc3a2-b142-4b25-8a58-95ccd5f76333",
+        name: "Shiloh Baptist Church",
+      },
       // Greater Allen A.M.E. Cathedral
-      { id: "bd6991b8-50ad-41b5-b84d-02aa8b2ed474", canonicalId: "16f4ea6a-8398-4c7d-b064-ce013e8e8588", name: "Greater Allen AME Cathedral (variant)" },
+      {
+        id: "bd6991b8-50ad-41b5-b84d-02aa8b2ed474",
+        canonicalId: "16f4ea6a-8398-4c7d-b064-ce013e8e8588",
+        name: "Greater Allen AME Cathedral (variant)",
+      },
       // CARECEN DC
-      { id: "52ae0d76-dfac-4510-8dbb-bb5c983d9417", canonicalId: "2741dbd9-dacc-4495-8290-e0cf69a8151d", name: "CARECEN DC (variant)" },
+      {
+        id: "52ae0d76-dfac-4510-8dbb-bb5c983d9417",
+        canonicalId: "2741dbd9-dacc-4495-8290-e0cf69a8151d",
+        name: "CARECEN DC (variant)",
+      },
       // National Center for Civil and Human Rights
-      { id: "ea9e99a7-fe1d-4b39-9e2e-6c839dd433ce", canonicalId: "34de569d-c58b-42fe-95ce-bb103bd157e4", name: "National Center Civil Rights Atlanta (variant)" },
+      {
+        id: "ea9e99a7-fe1d-4b39-9e2e-6c839dd433ce",
+        canonicalId: "34de569d-c58b-42fe-95ce-bb103bd157e4",
+        name: "National Center Civil Rights Atlanta (variant)",
+      },
       // Ethiopian Orthodox Tewahedo Church
-      { id: "3bc5cd51-fc8d-411b-bd2f-1f4550869f5b", canonicalId: "3ab5ae6d-3c62-4482-b303-f040eb63a7b4", name: "Ethiopian Orthodox Tewahedo Church Bronx (variant)" },
+      {
+        id: "3bc5cd51-fc8d-411b-bd2f-1f4550869f5b",
+        canonicalId: "3ab5ae6d-3c62-4482-b303-f040eb63a7b4",
+        name: "Ethiopian Orthodox Tewahedo Church Bronx (variant)",
+      },
       // People's Community Clinic Austin
-      { id: "a0d1a36d-1b8b-4899-808a-90b3e43f92c1", canonicalId: "3f4fb4d6-f316-423c-aa5e-4d6ec0959adb", name: "People's Community Clinic Austin (variant)" },
+      {
+        id: "a0d1a36d-1b8b-4899-808a-90b3e43f92c1",
+        canonicalId: "3f4fb4d6-f316-423c-aa5e-4d6ec0959adb",
+        name: "People's Community Clinic Austin (variant)",
+      },
       // Simply Wholesome
-      { id: "5cb738c1-4663-4b0a-a428-0cfaa5b5c093", canonicalId: "39fa282e-d634-415a-a782-313f7475a3b2", name: "Simply Wholesome (variant)" },
+      {
+        id: "5cb738c1-4663-4b0a-a428-0cfaa5b5c093",
+        canonicalId: "39fa282e-d634-415a-a782-313f7475a3b2",
+        name: "Simply Wholesome (variant)",
+      },
       // Masjid Al-Jamia Philadelphia
-      { id: "665313ea-4406-433a-a187-ca88a0eceffe", canonicalId: "697dfcaf-daf9-46ed-8d62-647c0c9ccd76", name: "Masjid Al-Jamia Philadelphia (variant)" },
+      {
+        id: "665313ea-4406-433a-a187-ca88a0eceffe",
+        canonicalId: "697dfcaf-daf9-46ed-8d62-647c0c9ccd76",
+        name: "Masjid Al-Jamia Philadelphia (variant)",
+      },
       // DuSable Black History Museum
-      { id: "a22cd6c8-c548-4433-8408-527f938ce3fc", canonicalId: "79368b78-162e-4d86-adde-6156f07e42bc", name: "DuSable Museum (variant)" },
+      {
+        id: "a22cd6c8-c548-4433-8408-527f938ce3fc",
+        canonicalId: "79368b78-162e-4d86-adde-6156f07e42bc",
+        name: "DuSable Museum (variant)",
+      },
       // APEX Museum
-      { id: "3b5d5181-5304-4143-bb7a-7a8468a39674", canonicalId: "96a162a9-8a75-46f7-99f7-d0b54bb9d69a", name: "APEX Museum (variant)" },
+      {
+        id: "3b5d5181-5304-4143-bb7a-7a8468a39674",
+        canonicalId: "96a162a9-8a75-46f7-99f7-d0b54bb9d69a",
+        name: "APEX Museum (variant)",
+      },
       // Harold & Belle's Restaurant
-      { id: "c19a012f-1718-4612-af3b-261eaa93b6d7", canonicalId: "9e3d9475-8886-4185-b10e-66d8c3c4b90e", name: "Harold & Belle's Restaurant (variant)" },
+      {
+        id: "c19a012f-1718-4612-af3b-261eaa93b6d7",
+        canonicalId: "9e3d9475-8886-4185-b10e-66d8c3c4b90e",
+        name: "Harold & Belle's Restaurant (variant)",
+      },
       // Legacy Museum — Equal Justice Initiative
-      { id: "c8e47b91-a13d-42f2-bb03-15b1f2f2c5c0", canonicalId: "9fe78afa-f490-4e46-81b0-15757e882570", name: "Legacy Museum EJI (variant)" },
+      {
+        id: "c8e47b91-a13d-42f2-bb03-15b1f2f2c5c0",
+        canonicalId: "9fe78afa-f490-4e46-81b0-15757e882570",
+        name: "Legacy Museum EJI (variant)",
+      },
       // First Baptist Church Montgomery
-      { id: "c6191fa7-381a-474d-af0b-66d84fb8c1ec", canonicalId: "a14acf1e-9db8-47a9-bace-f71123088dea", name: "First Baptist Church of Montgomery (variant)" },
+      {
+        id: "c6191fa7-381a-474d-af0b-66d84fb8c1ec",
+        canonicalId: "a14acf1e-9db8-47a9-bace-f71123088dea",
+        name: "First Baptist Church of Montgomery (variant)",
+      },
       // National Civil Rights Museum at the Lorraine Motel
-      { id: "d1001e39-7b1f-446d-9007-0260939c0067", canonicalId: "a6e09d44-c4cc-4a55-ac42-0524ad079fea", name: "National Civil Rights Museum Lorraine Motel (variant)" },
+      {
+        id: "d1001e39-7b1f-446d-9007-0260939c0067",
+        canonicalId: "a6e09d44-c4cc-4a55-ac42-0524ad079fea",
+        name: "National Civil Rights Museum Lorraine Motel (variant)",
+      },
       // National Memorial for Peace and Justice — EJI
-      { id: "4893139f-511e-4412-af72-77bcf0f159dc", canonicalId: "d20dc8e0-2ac7-42de-a657-1aa0e5576b11", name: "National Memorial for Peace and Justice EJI (variant)" },
+      {
+        id: "4893139f-511e-4412-af72-77bcf0f159dc",
+        canonicalId: "d20dc8e0-2ac7-42de-a657-1aa0e5576b11",
+        name: "National Memorial for Peace and Justice EJI (variant)",
+      },
       // National Museum of African American History and Culture
-      { id: "6713556a-e66c-4c1a-8d15-1a1b1c7d71ea", canonicalId: "d9b40522-5887-4475-b197-d5fc69aaf597", name: "NMAAHC (variant)" },
+      {
+        id: "6713556a-e66c-4c1a-8d15-1a1b1c7d71ea",
+        canonicalId: "d9b40522-5887-4475-b197-d5fc69aaf597",
+        name: "NMAAHC (variant)",
+      },
     ];
 
     let marked = 0;
     let skipped = 0;
-    const reason = "Confirmed duplicate by full-DB audit (Manus, Aug 2026) — same normalized name and identical coordinates or exact address/city/state";
+    const reason =
+      "Confirmed duplicate by full-DB audit (Manus, Aug 2026) — same normalized name and identical coordinates or exact address/city/state";
 
     for (const { id, canonicalId } of CONFIRMED_DUPLICATES) {
       try {
@@ -10985,7 +14822,9 @@ async function ensureBusinessDeduplication(
         if ((rowCount ?? 0) > 0) marked++;
         else skipped++;
       } catch (err2: unknown) {
-        warn(`ensureBusinessDeduplication: failed to mark ${id}: ${err2 instanceof Error ? err2.message : String(err2)}`);
+        warn(
+          `ensureBusinessDeduplication: failed to mark ${id}: ${err2 instanceof Error ? err2.message : String(err2)}`,
+        );
       }
     }
 
@@ -11006,9 +14845,13 @@ async function ensureBusinessDeduplication(
       [DUKES_CANONICAL, reason],
     );
 
-    log(`ensureBusinessDeduplication: ${marked} non-Duke's duplicates soft-marked, ${skipped} already done, ${dukesCount ?? 0} Duke's Cafe records backfilled`);
+    log(
+      `ensureBusinessDeduplication: ${marked} non-Duke's duplicates soft-marked, ${skipped} already done, ${dukesCount ?? 0} Duke's Cafe records backfilled`,
+    );
   } catch (err: unknown) {
-    warn(`ensureBusinessDeduplication failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureBusinessDeduplication failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11025,48 +14868,98 @@ async function ensureBusinessReviewItems(
     const { rows } = await pool.query(
       `SELECT to_regclass('public.business_review_items') AS t`,
     );
-    if (!rows[0]?.t) { warn("ensureBusinessReviewItems: table not yet created, skipping"); return; }
+    if (!rows[0]?.t) {
+      warn("ensureBusinessReviewItems: table not yet created, skipping");
+      return;
+    }
   } catch {
     warn("ensureBusinessReviewItems: cannot check table existence, skipping");
     return;
   }
 
   const MANUAL_REVIEW_PAIRS: Array<{
-    nameA: string; idA: string; addressA: string; latA: number; lngA: number;
-    nameB: string; idB: string; addressB: string; latB: number; lngB: number;
-    city: string; state: string; category: string; reason: string;
+    nameA: string;
+    idA: string;
+    addressA: string;
+    latA: number;
+    lngA: number;
+    nameB: string;
+    idB: string;
+    addressB: string;
+    latB: number;
+    lngB: number;
+    city: string;
+    state: string;
+    category: string;
+    reason: string;
   }> = [
     {
-      nameA: "Busy Bee Cafe", idA: "d6789c0a-c678-4d86-8014-03c347008f83",
-      addressA: "810 Martin Luther King Jr Dr SW, Atlanta, GA 30314", latA: 33.749000, lngA: -84.388000,
-      nameB: "Busy Bee Café", idB: "771b7789-00f8-4163-91f7-82d5bb04bb65",
-      addressB: "810 Martin Luther King Jr Dr SW", latB: 33.750100, lngB: -84.412900,
-      city: "Atlanta", state: "GA", category: "Food",
-      reason: "Same Atlanta address text but coordinates differ materially. May be one business or two listings of the same location.",
+      nameA: "Busy Bee Cafe",
+      idA: "d6789c0a-c678-4d86-8014-03c347008f83",
+      addressA: "810 Martin Luther King Jr Dr SW, Atlanta, GA 30314",
+      latA: 33.749,
+      lngA: -84.388,
+      nameB: "Busy Bee Café",
+      idB: "771b7789-00f8-4163-91f7-82d5bb04bb65",
+      addressB: "810 Martin Luther King Jr Dr SW",
+      latB: 33.7501,
+      lngB: -84.4129,
+      city: "Atlanta",
+      state: "GA",
+      category: "Food",
+      reason:
+        "Same Atlanta address text but coordinates differ materially. May be one business or two listings of the same location.",
     },
     {
-      nameA: "Mrs. White's Golden Rule Cafe", idA: "0f331f0d-917d-4eb4-be84-c852aa237a65",
-      addressA: "Downtown Phoenix", latA: 33.448400, lngA: -112.074000,
-      nameB: "Mrs. White's Golden Rule Café", idB: "7d447753-7eeb-46aa-9b71-dc89aef4f28a",
-      addressB: "808 E Jefferson St", latB: 33.443700, lngB: -112.064800,
-      city: "Phoenix", state: "AZ", category: "Food",
-      reason: "Similar names; one lists 'Downtown Phoenix' as address, the other gives 808 E Jefferson St with different coordinates.",
+      nameA: "Mrs. White's Golden Rule Cafe",
+      idA: "0f331f0d-917d-4eb4-be84-c852aa237a65",
+      addressA: "Downtown Phoenix",
+      latA: 33.4484,
+      lngA: -112.074,
+      nameB: "Mrs. White's Golden Rule Café",
+      idB: "7d447753-7eeb-46aa-9b71-dc89aef4f28a",
+      addressB: "808 E Jefferson St",
+      latB: 33.4437,
+      lngB: -112.0648,
+      city: "Phoenix",
+      state: "AZ",
+      category: "Food",
+      reason:
+        "Similar names; one lists 'Downtown Phoenix' as address, the other gives 808 E Jefferson St with different coordinates.",
     },
     {
-      nameA: "Roscoe's House of Chicken & Waffles", idA: "9816d35e-06c4-450f-a430-70c96cc2ccd1",
-      addressA: "1514 N Gower St", latA: 34.098900, lngA: -118.327100,
-      nameB: "Roscoe's House of Chicken & Waffles", idB: "21091f4c-a545-4031-bcf5-88693acce89c",
-      addressB: "1518 N Gower St", latB: 34.098500, lngB: -118.326200,
-      city: "Los Angeles", state: "CA", category: "Food",
-      reason: "1514 vs 1518 N Gower St — may be two separate entrances or a data error. Coordinates are nearly identical.",
+      nameA: "Roscoe's House of Chicken & Waffles",
+      idA: "9816d35e-06c4-450f-a430-70c96cc2ccd1",
+      addressA: "1514 N Gower St",
+      latA: 34.0989,
+      lngA: -118.3271,
+      nameB: "Roscoe's House of Chicken & Waffles",
+      idB: "21091f4c-a545-4031-bcf5-88693acce89c",
+      addressB: "1518 N Gower St",
+      latB: 34.0985,
+      lngB: -118.3262,
+      city: "Los Angeles",
+      state: "CA",
+      category: "Food",
+      reason:
+        "1514 vs 1518 N Gower St — may be two separate entrances or a data error. Coordinates are nearly identical.",
     },
     {
-      nameA: "Scotchies Jerk Centre — Kingston", idA: "3fccfabe-9685-4728-aa66-959a0db297cd",
-      addressA: "Shop 7, Sovereign Centre, Hope Rd", latA: 17.987600, lngA: -76.770700,
-      nameB: "Scotchies Jerk Centre Kingston", idB: "c5f3eb48-d233-4b12-9383-e949d94ce02c",
-      addressB: "130 E Kings House Rd", latB: 18.005300, lngB: -76.767600,
-      city: "Kingston", state: "", category: "Food",
-      reason: "Same Kingston name, different addresses and coordinates — may be two real Scotchies locations.",
+      nameA: "Scotchies Jerk Centre — Kingston",
+      idA: "3fccfabe-9685-4728-aa66-959a0db297cd",
+      addressA: "Shop 7, Sovereign Centre, Hope Rd",
+      latA: 17.9876,
+      lngA: -76.7707,
+      nameB: "Scotchies Jerk Centre Kingston",
+      idB: "c5f3eb48-d233-4b12-9383-e949d94ce02c",
+      addressB: "130 E Kings House Rd",
+      latB: 18.0053,
+      lngB: -76.7676,
+      city: "Kingston",
+      state: "",
+      category: "Food",
+      reason:
+        "Same Kingston name, different addresses and coordinates — may be two real Scotchies locations.",
     },
   ];
 
@@ -11081,9 +14974,17 @@ async function ensureBusinessReviewItems(
          AND (matched_business_id = $1 OR matched_business_id = $2
               OR (candidate_name ILIKE $3 AND candidate_city ILIKE $4))
        LIMIT 1`,
-      [pair.idA, pair.idB, `%${pair.nameA.split(" ").slice(0, 2).join(" ")}%`, `%${pair.city}%`],
+      [
+        pair.idA,
+        pair.idB,
+        `%${pair.nameA.split(" ").slice(0, 2).join(" ")}%`,
+        `%${pair.city}%`,
+      ],
     );
-    if (existing.length > 0) { skipped++; continue; }
+    if (existing.length > 0) {
+      skipped++;
+      continue;
+    }
 
     try {
       await pool.query(
@@ -11093,21 +14994,44 @@ async function ensureBusinessReviewItems(
            candidate_source_provider, reason, matched_business_id, evidence, created_at, updated_at)
          VALUES ('possible_duplicate','pending',$1,$2,$3,$4,$5,$6,$7,'audit',$8,$9,$10::jsonb,NOW(),NOW())`,
         [
-          pair.nameA, pair.addressA, pair.city, pair.state,
-          pair.latA, pair.lngA, pair.category, pair.reason, pair.idB,
+          pair.nameA,
+          pair.addressA,
+          pair.city,
+          pair.state,
+          pair.latA,
+          pair.lngA,
+          pair.category,
+          pair.reason,
+          pair.idB,
           JSON.stringify([
-            { nameA: pair.nameA, idA: pair.idA, addressA: pair.addressA, latA: pair.latA, lngA: pair.lngA },
-            { nameB: pair.nameB, idB: pair.idB, addressB: pair.addressB, latB: pair.latB, lngB: pair.lngB },
+            {
+              nameA: pair.nameA,
+              idA: pair.idA,
+              addressA: pair.addressA,
+              latA: pair.latA,
+              lngA: pair.lngA,
+            },
+            {
+              nameB: pair.nameB,
+              idB: pair.idB,
+              addressB: pair.addressB,
+              latB: pair.latB,
+              lngB: pair.lngB,
+            },
           ]),
         ],
       );
       inserted++;
     } catch (err2: unknown) {
-      warn(`ensureBusinessReviewItems: failed to insert ${pair.nameA}: ${err2 instanceof Error ? err2.message : String(err2)}`);
+      warn(
+        `ensureBusinessReviewItems: failed to insert ${pair.nameA}: ${err2 instanceof Error ? err2.message : String(err2)}`,
+      );
     }
   }
 
-  log(`ensureBusinessReviewItems: ${inserted} manual-review pairs seeded, ${skipped} already present`);
+  log(
+    `ensureBusinessReviewItems: ${inserted} manual-review pairs seeded, ${skipped} already present`,
+  );
 }
 
 // ── Manus audit tester accounts — 30 pre-seeded email/password accounts ──────────
@@ -11119,7 +15043,8 @@ async function ensureManusAuditAccounts(
   log: (msg: string) => void,
   warn: (msg: string) => void,
 ): Promise<void> {
-  const PW_HASH = "$2b$08$n9R7qWA/PLR0rWtrXNRf6uq9aVUoUaP2lziZOvYwR.e.Y8zAhSZKS";
+  const PW_HASH =
+    "$2b$08$n9R7qWA/PLR0rWtrXNRf6uq9aVUoUaP2lziZOvYwR.e.Y8zAhSZKS";
   let inserted = 0;
   let skipped = 0;
   for (let i = 1; i <= 30; i++) {
@@ -11161,10 +15086,14 @@ async function ensureManusAuditAccounts(
       if ((rowCount ?? 0) > 0) inserted++;
       else skipped++;
     } catch (err: unknown) {
-      warn(`ensureManusAuditAccounts: failed for ${email}: ${err instanceof Error ? err.message : String(err)}`);
+      warn(
+        `ensureManusAuditAccounts: failed for ${email}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
-  log(`ensureManusAuditAccounts: ${inserted} inserted, ${skipped} already present`);
+  log(
+    `ensureManusAuditAccounts: ${inserted} inserted, ${skipped} already present`,
+  );
 }
 
 // ── Beta safety columns — permanently_hidden boolean + public_businesses view ────
@@ -11201,9 +15130,13 @@ async function ensureBetaSafetyColumns(
         AND COALESCE(b.listing_status, 'live_unclaimed') IN ('live_unclaimed', 'live_claimed')
         AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
     `);
-    log("ensureBetaSafetyColumns: permanently_hidden column, indexes, and public_businesses view confirmed");
+    log(
+      "ensureBetaSafetyColumns: permanently_hidden column, indexes, and public_businesses view confirmed",
+    );
   } catch (err: unknown) {
-    warn(`ensureBetaSafetyColumns: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureBetaSafetyColumns: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11222,7 +15155,9 @@ async function revokeManusAuditSessions(
     );
     log(`revokeManusAuditSessions: ${result.rowCount ?? 0} session(s) revoked`);
   } catch (err: unknown) {
-    warn(`revokeManusAuditSessions: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `revokeManusAuditSessions: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11235,47 +15170,67 @@ async function ensureAtlantaBlackGroceryStores(
   warn: (msg: string) => void,
 ): Promise<void> {
   type StoreRow = {
-    name: string; address: string; city: string; state: string;
-    phone: string | null; website: string; latitude: number; longitude: number;
-    subcategory: string; description: string; normalized_name: string;
-    dedupe_key: string; ownership_designations: string;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    phone: string | null;
+    website: string;
+    latitude: number;
+    longitude: number;
+    subcategory: string;
+    description: string;
+    normalized_name: string;
+    dedupe_key: string;
+    ownership_designations: string;
   };
   const stores: StoreRow[] = [
     {
       name: "Wadada Healthy Market & Juice Bar",
       address: "878 Ralph David Abernathy Blvd SW",
-      city: "Atlanta", state: "GA",
+      city: "Atlanta",
+      state: "GA",
       phone: "(678) 974-7330",
       website: "https://www.wadadaatl.com",
-      latitude: 33.7381695, longitude: -84.4055093,
+      latitude: 33.7381695,
+      longitude: -84.4055093,
       subcategory: "Health Food Market",
-      description: "Atlanta's first Black woman-owned vegan health food market and juice bar. Founded in 2019 by Jeanette Sellers (Sister Nilajah Ma'at) to address the health crisis in the Black community. Over 90% of products come from other local Black-owned businesses. Specializes in superfood sea moss smoothies, fresh-pressed juices, organic teas, and a curated selection of natural groceries, health products, and wellness items. Located in the historic West End neighborhood. Hours: Mon–Thu 9am–9pm, Fri–Sat 9am–10pm, Sun 9am–9pm.",
+      description:
+        "Atlanta's first Black woman-owned vegan health food market and juice bar. Founded in 2019 by Jeanette Sellers (Sister Nilajah Ma'at) to address the health crisis in the Black community. Over 90% of products come from other local Black-owned businesses. Specializes in superfood sea moss smoothies, fresh-pressed juices, organic teas, and a curated selection of natural groceries, health products, and wellness items. Located in the historic West End neighborhood. Hours: Mon–Thu 9am–9pm, Fri–Sat 9am–10pm, Sun 9am–9pm.",
       normalized_name: "wadada healthy market juice bar",
       dedupe_key: "wadada healthy market juice bar|geo:33.73817,-84.40551",
-      ownership_designations: '["Black / African American-Owned","Woman-Owned"]',
+      ownership_designations:
+        '["Black / African American-Owned","Woman-Owned"]',
     },
     {
       name: "Sevananda Natural Foods Market",
       address: "467 Moreland Ave NE",
-      city: "Atlanta", state: "GA",
+      city: "Atlanta",
+      state: "GA",
       phone: "(404) 681-2831",
       website: "https://sevananda.coop",
-      latitude: 33.7670328, longitude: -84.3485013,
+      latitude: 33.7670328,
+      longitude: -84.3485013,
       subcategory: "Natural Foods Co-op",
-      description: "A community-owned natural foods co-op serving Atlanta since 1974. Located in the heart of Little Five Points — one of CNN's top 25 neighborhoods — Sevananda offers vegan and vegetarian products, fresh local and organic produce, exotic fruits, bulk herbs and spices, and wellness products. As Atlanta's longest-running natural foods market, it supports local farmers and businesses by prioritizing locally sourced, organic food. Member-owned and operated; membership open to all. Hours: Daily 8am–9pm.",
+      description:
+        "A community-owned natural foods co-op serving Atlanta since 1974. Located in the heart of Little Five Points — one of CNN's top 25 neighborhoods — Sevananda offers vegan and vegetarian products, fresh local and organic produce, exotic fruits, bulk herbs and spices, and wellness products. As Atlanta's longest-running natural foods market, it supports local farmers and businesses by prioritizing locally sourced, organic food. Member-owned and operated; membership open to all. Hours: Daily 8am–9pm.",
       normalized_name: "sevananda natural foods market",
       dedupe_key: "sevananda natural foods market|geo:33.76703,-84.34850",
-      ownership_designations: '["Community-Owned Co-op","Black / African American-Owned"]',
+      ownership_designations:
+        '["Community-Owned Co-op","Black / African American-Owned"]',
     },
     {
       name: "Nourish + Bloom Market — Cascade",
       address: "2287 Cascade Rd",
-      city: "Atlanta", state: "GA",
+      city: "Atlanta",
+      state: "GA",
       phone: null,
       website: "https://www.nourishandbloommarket.com",
-      latitude: 33.7223603, longitude: -84.4639829,
+      latitude: 33.7223603,
+      longitude: -84.4639829,
       subcategory: "Autonomous Grocery Market",
-      description: "The first 24-hour AI-powered, frictionless grocery store in the United States — and the first African American-owned autonomous grocery store in the world. Co-founded by husband-and-wife duo Jilea and Jamie Hemmings. Located in historic Cascade Heights in Southwest Atlanta, it offers locally sourced groceries, prepared meals, everyday essentials, and fresh produce with a contactless, staff-free shopping experience using a smartphone app for entry. Hours: Open 24/7/365.",
+      description:
+        "The first 24-hour AI-powered, frictionless grocery store in the United States — and the first African American-owned autonomous grocery store in the world. Co-founded by husband-and-wife duo Jilea and Jamie Hemmings. Located in historic Cascade Heights in Southwest Atlanta, it offers locally sourced groceries, prepared meals, everyday essentials, and fresh produce with a contactless, staff-free shopping experience using a smartphone app for entry. Hours: Open 24/7/365.",
       normalized_name: "nourish bloom market cascade",
       dedupe_key: "nourish bloom market cascade|geo:33.72236,-84.46398",
       ownership_designations: '["Black / African American-Owned"]',
@@ -11283,15 +15238,19 @@ async function ensureAtlantaBlackGroceryStores(
     {
       name: "Goodr Community Market on Edgewood",
       address: "381 Edgewood Ave SE",
-      city: "Atlanta", state: "GA",
+      city: "Atlanta",
+      state: "GA",
       phone: null,
       website: "https://goodr.co",
-      latitude: 33.7509, longitude: -84.3769,
+      latitude: 33.7509,
+      longitude: -84.3769,
       subcategory: "Community Grocery Store",
-      description: "A Black woman-owned community grocery store and deli in Atlanta's historic Sweet Auburn District. Founded by tech entrepreneur and food justice activist Jasmine Crowe-Houston, the market opened in July 2025 to bring affordable fresh groceries back to a neighborhood that had gone without a full grocery option for years. Features Little Loaf Deli with $5 deli meals, 2-for-1 pricing for SNAP users, and provides free monthly groceries to approximately 200 families in Atlanta's District 5. Hours: Mon–Sat 9am–8pm, Sun Closed.",
+      description:
+        "A Black woman-owned community grocery store and deli in Atlanta's historic Sweet Auburn District. Founded by tech entrepreneur and food justice activist Jasmine Crowe-Houston, the market opened in July 2025 to bring affordable fresh groceries back to a neighborhood that had gone without a full grocery option for years. Features Little Loaf Deli with $5 deli meals, 2-for-1 pricing for SNAP users, and provides free monthly groceries to approximately 200 families in Atlanta's District 5. Hours: Mon–Sat 9am–8pm, Sun Closed.",
       normalized_name: "goodr community market on edgewood",
       dedupe_key: "goodr community market on edgewood|geo:33.75090,-84.37690",
-      ownership_designations: '["Black / African American-Owned","Woman-Owned"]',
+      ownership_designations:
+        '["Black / African American-Owned","Woman-Owned"]',
     },
   ];
 
@@ -11311,7 +15270,10 @@ async function ensureAtlantaBlackGroceryStores(
   let inserted = 0;
   let skipped = 0;
   for (const s of stores) {
-    if (existingNames.has(s.name.toLowerCase())) { skipped++; continue; }
+    if (existingNames.has(s.name.toLowerCase())) {
+      skipped++;
+      continue;
+    }
     try {
       await pool.query(
         `INSERT INTO businesses
@@ -11329,17 +15291,29 @@ async function ensureAtlantaBlackGroceryStores(
             'mwm_curated',$7,0.95,
             NOW(),NOW())`,
         [
-          s.name, s.address, s.city, s.state, s.subcategory,
-          s.phone, s.website, s.latitude, s.longitude,
-          s.ownership_designations, s.description,
+          s.name,
+          s.address,
+          s.city,
+          s.state,
+          s.subcategory,
+          s.phone,
+          s.website,
+          s.latitude,
+          s.longitude,
+          s.ownership_designations,
+          s.description,
         ],
       );
       inserted++;
     } catch (err: unknown) {
-      warn(`ensureAtlantaBlackGroceryStores: failed for ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
+      warn(
+        `ensureAtlantaBlackGroceryStores: failed for ${s.name}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
-  log(`ensureAtlantaBlackGroceryStores: ${inserted} inserted, ${skipped} already present`);
+  log(
+    `ensureAtlantaBlackGroceryStores: ${inserted} inserted, ${skipped} already present`,
+  );
 }
 
 // ── Dedicated monitoring account ─────────────────────────────────────────────
@@ -11386,15 +15360,19 @@ async function ensureMonitoringAccount(
       [userId, email.toLowerCase(), passwordHash],
     );
     // Seed a tester entitlement row so Kinfolk quota checks pass.
-    await pool.query(
-      `INSERT INTO tester_entitlements (user_id, entitlement_type, granted_at, is_active)
+    await pool
+      .query(
+        `INSERT INTO tester_entitlements (user_id, entitlement_type, granted_at, is_active)
        VALUES ($1, 'beta_tester', NOW(), true)
        ON CONFLICT DO NOTHING`,
-      [userId],
-    ).catch(() => {}); // Table may not exist yet; non-fatal.
+        [userId],
+      )
+      .catch(() => {}); // Table may not exist yet; non-fatal.
     log(`ensureMonitoringAccount: created (${email})`);
   } catch (err: unknown) {
-    warn(`ensureMonitoringAccount failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureMonitoringAccount failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11421,7 +15399,9 @@ async function ensureHotelStayIngestionSchema(
     `);
     log("ensureHotelStayIngestionSchema: provider_place_id, postal_code ready");
   } catch (err: unknown) {
-    warn(`ensureHotelStayIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureHotelStayIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11434,28 +15414,137 @@ async function ensureTourHotels(
   warn: (msg: string) => void,
 ): Promise<void> {
   type Hotel = {
-    name: string; address: string; city: string; state: string;
-    postalCode: string; country: string;
-    lat: number | null; lon: number | null;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    lat: number | null;
+    lon: number | null;
   };
 
   const HOTELS: Hotel[] = [
-    { name: "Richmond Marriott",                           address: "500 E Broad St",           city: "Richmond",    state: "VA", postalCode: "23219", country: "US", lat: 37.543192,  lon: -77.436513 },
-    { name: "The Lantern Columbia",                        address: "1001 Senate St",            city: "Columbia",    state: "SC", postalCode: "29201", country: "US", lat: 33.999434,  lon: -81.036039 },
-    { name: "Home2 Suites by Hilton Charlotte Uptown NC",  address: "610 S Caldwell St",         city: "Charlotte",   state: "NC", postalCode: "28202", country: "US", lat: 35.221934,  lon: -80.841671 },
-    { name: "Reverb by Hard Rock Downtown Atlanta",        address: "89 Centennial Olympic Park Dr", city: "Atlanta", state: "GA", postalCode: "30313", country: "US", lat: 33.753211,  lon: -84.399333 },
-    { name: "Embassy Suites by Hilton Montgomery Hotel and Conference Ctr", address: "300 Tallapoosa Street", city: "Montgomery", state: "AL", postalCode: "36104", country: "US", lat: 32.379630, lon: -86.313986 },
-    { name: "The Admiral Downtown Historic District",      address: "251 Government Street",     city: "Mobile",      state: "AL", postalCode: "36602", country: "US", lat: 30.689360,  lon: -88.043300 },
-    { name: "InterContinental New Orleans by IHG",         address: "444 St Charles Ave",        city: "New Orleans", state: "LA", postalCode: "70130", country: "US", lat: 29.950337,  lon: -90.069713 },
-    { name: "Marriott Baton Rouge",                        address: "5500 Hilton Ave",           city: "Baton Rouge", state: "LA", postalCode: "70808", country: "US", lat: 30.423464,  lon: -91.133568 },
-    { name: "Sentral Forme Houston",                       address: "5501 La Branch St",         city: "Houston",     state: "TX", postalCode: "77004", country: "US", lat: 29.723908,  lon: -95.384635 },
-    { name: "Sheraton Flowood The Refuge Hotel and Conference Center", address: "2200 Refugee Boulevard", city: "Flowood", state: "MS", postalCode: "39232", country: "US", lat: 32.299932, lon: -90.142316 },
-    { name: "SpringHill Suites by Marriott Roanoke",       address: "301 Reserve Ave SW",        city: "Roanoke",     state: "VA", postalCode: "24015", country: "US", lat: 37.256314,  lon: -79.946982 },
+    {
+      name: "Richmond Marriott",
+      address: "500 E Broad St",
+      city: "Richmond",
+      state: "VA",
+      postalCode: "23219",
+      country: "US",
+      lat: 37.543192,
+      lon: -77.436513,
+    },
+    {
+      name: "The Lantern Columbia",
+      address: "1001 Senate St",
+      city: "Columbia",
+      state: "SC",
+      postalCode: "29201",
+      country: "US",
+      lat: 33.999434,
+      lon: -81.036039,
+    },
+    {
+      name: "Home2 Suites by Hilton Charlotte Uptown NC",
+      address: "610 S Caldwell St",
+      city: "Charlotte",
+      state: "NC",
+      postalCode: "28202",
+      country: "US",
+      lat: 35.221934,
+      lon: -80.841671,
+    },
+    {
+      name: "Reverb by Hard Rock Downtown Atlanta",
+      address: "89 Centennial Olympic Park Dr",
+      city: "Atlanta",
+      state: "GA",
+      postalCode: "30313",
+      country: "US",
+      lat: 33.753211,
+      lon: -84.399333,
+    },
+    {
+      name: "Embassy Suites by Hilton Montgomery Hotel and Conference Ctr",
+      address: "300 Tallapoosa Street",
+      city: "Montgomery",
+      state: "AL",
+      postalCode: "36104",
+      country: "US",
+      lat: 32.37963,
+      lon: -86.313986,
+    },
+    {
+      name: "The Admiral Downtown Historic District",
+      address: "251 Government Street",
+      city: "Mobile",
+      state: "AL",
+      postalCode: "36602",
+      country: "US",
+      lat: 30.68936,
+      lon: -88.0433,
+    },
+    {
+      name: "InterContinental New Orleans by IHG",
+      address: "444 St Charles Ave",
+      city: "New Orleans",
+      state: "LA",
+      postalCode: "70130",
+      country: "US",
+      lat: 29.950337,
+      lon: -90.069713,
+    },
+    {
+      name: "Marriott Baton Rouge",
+      address: "5500 Hilton Ave",
+      city: "Baton Rouge",
+      state: "LA",
+      postalCode: "70808",
+      country: "US",
+      lat: 30.423464,
+      lon: -91.133568,
+    },
+    {
+      name: "Sentral Forme Houston",
+      address: "5501 La Branch St",
+      city: "Houston",
+      state: "TX",
+      postalCode: "77004",
+      country: "US",
+      lat: 29.723908,
+      lon: -95.384635,
+    },
+    {
+      name: "Sheraton Flowood The Refuge Hotel and Conference Center",
+      address: "2200 Refugee Boulevard",
+      city: "Flowood",
+      state: "MS",
+      postalCode: "39232",
+      country: "US",
+      lat: 32.299932,
+      lon: -90.142316,
+    },
+    {
+      name: "SpringHill Suites by Marriott Roanoke",
+      address: "301 Reserve Ave SW",
+      city: "Roanoke",
+      state: "VA",
+      postalCode: "24015",
+      country: "US",
+      lat: 37.256314,
+      lon: -79.946982,
+    },
   ];
 
   function norm(s: string): string {
-    return String(s).normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
-      .toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim();
+    return String(s)
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
   }
 
   let inserted = 0;
@@ -11486,15 +15575,23 @@ async function ensureTourHotels(
           NOW(), NOW())
        ON CONFLICT DO NOTHING`,
       [
-        h.name, normalizedName,
-        h.address, h.city, h.state, h.postalCode, h.country,
-        h.lat, h.lon,
+        h.name,
+        normalizedName,
+        h.address,
+        h.city,
+        h.state,
+        h.postalCode,
+        h.country,
+        h.lat,
+        h.lon,
         key,
       ],
     );
     inserted++;
   }
-  log(`ensureTourHotels: ${inserted} inserted, ${HOTELS.length - inserted} already present (${HOTELS.length} total)`);
+  log(
+    `ensureTourHotels: ${inserted} inserted, ${HOTELS.length - inserted} already present (${HOTELS.length} total)`,
+  );
 }
 
 // ── Social-first ingestion schema ─────────────────────────────────────────────
@@ -11533,9 +15630,13 @@ async function ensureSocialFirstIngestionSchema(
         WHERE website_domain IS NOT NULL
     `);
 
-    log("ensureSocialFirstIngestionSchema: social_profiles, source_evidence, ownership_claim, website_domain ready");
+    log(
+      "ensureSocialFirstIngestionSchema: social_profiles, source_evidence, ownership_claim, website_domain ready",
+    );
   } catch (err: unknown) {
-    warn(`ensureSocialFirstIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureSocialFirstIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11617,9 +15718,13 @@ async function ensureKinfolkFourPurposeSchema(
           AND COALESCE(permanently_hidden, false) = false
     `);
 
-    log("ensureKinfolkFourPurposeSchema: flywheel events, answer sources, promotion cols ready");
+    log(
+      "ensureKinfolkFourPurposeSchema: flywheel events, answer sources, promotion cols ready",
+    );
   } catch (err: unknown) {
-    warn(`ensureKinfolkFourPurposeSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureKinfolkFourPurposeSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11665,8 +15770,12 @@ async function ensureDirectoryDiscoverySchema(
     `);
 
     // Geospatial columns for location-first bookstore ranking.
-    await pool.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION`);
-    await pool.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION`);
+    await pool.query(
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION`,
+    );
+    await pool.query(
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION`,
+    );
 
     // businesses table does not have is_active; index on coordinates only.
     await pool.query(`
@@ -11677,7 +15786,9 @@ async function ensureDirectoryDiscoverySchema(
 
     log("ensureDirectoryDiscoverySchema: directory tables and columns ready");
   } catch (err: unknown) {
-    warn(`ensureDirectoryDiscoverySchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureDirectoryDiscoverySchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11702,7 +15813,9 @@ async function ensureKinfolkRetrievalEvents(
     `);
     log("ensureKinfolkRetrievalEvents: table and index ready");
   } catch (err: unknown) {
-    warn(`ensureKinfolkRetrievalEvents failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureKinfolkRetrievalEvents failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11742,7 +15855,9 @@ async function ensureCanonicalRecordLocations(
     `);
     log("ensureCanonicalRecordLocations: table and indexes ready");
   } catch (err: unknown) {
-    warn(`ensureCanonicalRecordLocations failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureCanonicalRecordLocations failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11866,7 +15981,9 @@ async function ensureLocationFirstDiscovery(
         is_primary = EXCLUDED.is_primary,
         updated_at = NOW()
     `);
-    log(`ensureLocationFirstDiscovery: businesses backfill — ${bizResult.rowCount ?? 0} rows upserted`);
+    log(
+      `ensureLocationFirstDiscovery: businesses backfill — ${bizResult.rowCount ?? 0} rows upserted`,
+    );
 
     // ── Backfill from tour_cultural_sites ───────────────────────────────────
     const siteResult = await pool.query(`
@@ -11884,7 +16001,9 @@ async function ensureLocationFirstDiscovery(
       WHERE city IS NOT NULL AND TRIM(city) != '' AND is_active = TRUE
       ON CONFLICT DO NOTHING
     `);
-    log(`ensureLocationFirstDiscovery: cultural sites backfill — ${siteResult.rowCount ?? 0} rows inserted`);
+    log(
+      `ensureLocationFirstDiscovery: cultural sites backfill — ${siteResult.rowCount ?? 0} rows inserted`,
+    );
 
     // ── Backfill from recurring_events ──────────────────────────────────────
     const evtResult = await pool.query(`
@@ -11902,7 +16021,9 @@ async function ensureLocationFirstDiscovery(
       WHERE city IS NOT NULL AND TRIM(city) != '' AND is_active = TRUE
       ON CONFLICT DO NOTHING
     `);
-    log(`ensureLocationFirstDiscovery: events backfill — ${evtResult.rowCount ?? 0} rows inserted`);
+    log(
+      `ensureLocationFirstDiscovery: events backfill — ${evtResult.rowCount ?? 0} rows inserted`,
+    );
 
     // ── Backfill from community_organizations ───────────────────────────────
     const orgResult = await pool.query(`
@@ -11920,11 +16041,15 @@ async function ensureLocationFirstDiscovery(
       WHERE city IS NOT NULL AND TRIM(city) != ''
       ON CONFLICT DO NOTHING
     `);
-    log(`ensureLocationFirstDiscovery: community orgs backfill — ${orgResult.rowCount ?? 0} rows inserted`);
+    log(
+      `ensureLocationFirstDiscovery: community orgs backfill — ${orgResult.rowCount ?? 0} rows inserted`,
+    );
 
     log("ensureLocationFirstDiscovery: all tables and backfills complete");
   } catch (err: unknown) {
-    warn(`ensureLocationFirstDiscovery failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureLocationFirstDiscovery failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -11982,7 +16107,9 @@ async function ensureCommunityBusinessSubmissionsSchema(
         updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-    log("ensureCommunityBusinessSubmissionsSchema: community_business_submissions OK");
+    log(
+      "ensureCommunityBusinessSubmissionsSchema: community_business_submissions OK",
+    );
 
     // Additive fields preserve current web/mobile intake. Submission media stays
     // in private storage for separate moderation and is never copied to an
@@ -12038,7 +16165,9 @@ async function ensureCommunityBusinessSubmissionsSchema(
           AND identity_key IS NOT NULL
           AND status IN ('pending_review','needs_info')
     `);
-    log("ensureCommunityBusinessSubmissionsSchema: field-complete v2 columns and lifecycle OK");
+    log(
+      "ensureCommunityBusinessSubmissionsSchema: field-complete v2 columns and lifecycle OK",
+    );
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS business_submission_audit_events (
@@ -12050,14 +16179,18 @@ async function ensureCommunityBusinessSubmissionsSchema(
         created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-    log("ensureCommunityBusinessSubmissionsSchema: business_submission_audit_events OK");
+    log(
+      "ensureCommunityBusinessSubmissionsSchema: business_submission_audit_events OK",
+    );
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_community_business_submissions_status
         ON community_business_submissions(status, created_at DESC)
     `);
   } catch (err: unknown) {
-    warn(`ensureCommunityBusinessSubmissionsSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureCommunityBusinessSubmissionsSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -12080,7 +16213,9 @@ async function ensureMediaAndClaimsSchema(
         created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-    await pool.query(`ALTER TABLE media_assets ALTER COLUMN public_url DROP NOT NULL`);
+    await pool.query(
+      `ALTER TABLE media_assets ALTER COLUMN public_url DROP NOT NULL`,
+    );
     log("ensureMediaAndClaimsSchema: media_assets OK");
 
     await pool.query(`
@@ -12130,7 +16265,8 @@ async function ensureMediaAndClaimsSchema(
         await pool.query(stmt);
       } catch (alterErr: unknown) {
         // Ignore duplicate column errors — they are safe
-        const msg = alterErr instanceof Error ? alterErr.message : String(alterErr);
+        const msg =
+          alterErr instanceof Error ? alterErr.message : String(alterErr);
         if (!msg.includes("already exists")) {
           warn(`ensureMediaAndClaimsSchema ALTER warning: ${msg}`);
         }
@@ -12147,7 +16283,9 @@ async function ensureMediaAndClaimsSchema(
         ON business_claim_requests(claimant_member_id, status)
     `);
   } catch (err: unknown) {
-    warn(`ensureMediaAndClaimsSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureMediaAndClaimsSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -12165,9 +16303,13 @@ async function ensureSaborWebsiteCorrection(
         AND (website IS NULL OR website = '')
     `);
     if ((rowCount ?? 0) > 0) {
-      log(`ensureSaborWebsiteCorrection: website set on ${rowCount} Sabor Latin Street Grill Charlotte record(s)`);
+      log(
+        `ensureSaborWebsiteCorrection: website set on ${rowCount} Sabor Latin Street Grill Charlotte record(s)`,
+      );
     }
   } catch (err: unknown) {
-    warn(`ensureSaborWebsiteCorrection failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `ensureSaborWebsiteCorrection failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }

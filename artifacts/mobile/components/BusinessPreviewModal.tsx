@@ -116,6 +116,7 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
       animationType="slide"
       onRequestClose={onClose}
       statusBarTranslucent
+      navigationBarTranslucent
     >
       <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={onClose} />
 

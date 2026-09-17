@@ -81,6 +81,7 @@ export function SkipFeedbackModal({ visible, businessId, businessName, onClose }
       transparent
       animationType="fade"
       statusBarTranslucent
+      navigationBarTranslucent
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleClose}>

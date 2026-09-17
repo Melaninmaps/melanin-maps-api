@@ -98,7 +98,7 @@ describe("community-fed business publication governance", () => {
     expect(smartSearch).toContain('sourceChannel: "expo_smart_search_nomination"');
     expect(smartSearch).toContain("Add details for an immediate pin");
     expect(smartSearch).toContain('router.push("/list-business"');
-    expect(smartSearch).toContain("Community/founder-listed · Unclaimed · Not verified");
+    expect(smartSearch).toContain("Unclaimed · Not verified");
     expect(smartSearch).toContain("Community-reported minority-owned · Not verified");
     expect(smartSearch).toContain("Community-reported non-minority-owned · Not verified");
     expect(smartSearch).not.toContain("/api/business-nominations");

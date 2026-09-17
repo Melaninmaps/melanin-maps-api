@@ -57,7 +57,7 @@ describe("meeting-ready universal web search", () => {
     expect(markup).toContain("/places/heritage-1/historic-church-philadelphia");
     expect(markup).toContain("/library/search?q=Philadelphia%20Black%20History");
     expect(markup).toContain("https://example.org/community");
-    expect(markup).toContain("Community/founder-listed · Unclaimed · Not verified");
+    expect(markup).toContain("Unclaimed · Not verified");
   });
 
   it("rejects unsafe outgoing destinations", () => {
