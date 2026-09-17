@@ -1,0 +1,16 @@
+{
+  "input_rows": 1927,
+  "counts": {
+    "business": 1711,
+    "community_resource": 139,
+    "cultural_place": 69,
+    "manual_review": 8
+  },
+  "rules": {
+    "business": "Default for commercial service and retail providers.",
+    "community_resource": "Public-help, nonprofit, government, and referral entities; not commercial Map pins.",
+    "cultural_place": "Museum, monument, historic, heritage, and cultural-place entities; separate discovery layer.",
+    "manual_review": "Mixed signals requiring a reviewer before publication."
+  },
+  "note": "This deterministic first pass does not infer ownership. Reviewers may correct target_kind with source evidence before publication."
+}

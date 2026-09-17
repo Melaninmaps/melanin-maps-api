@@ -1,0 +1,3 @@
+# 10,000-listing source-backed research expansion
+
+This workspace holds one independently researched candidate CSV per configured city. Each row must have a public business name, public street address, city/state/country, category, subcategory, source-backed services/description, source URL, and an official website or attributable social destination. Identity designations may be included only when explicitly self-identified or directly documented by a cited source. Regulated services must be flagged for separate credential review. Research rows are candidates only; they do not insert into production.

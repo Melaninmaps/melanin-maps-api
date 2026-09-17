@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import type { Business } from "@/constants/types";
-import { ownershipDesignationFilterId } from "@workspace/constants";
+import {
+  normalizeOwnershipDesignationFilterIds,
+  ownershipDesignationFilterId,
+} from "@workspace/constants";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
-const BUSINESS_LOAD_ERROR = "Unable to load businesses. Check your connection and try again.";
+const BUSINESS_LOAD_ERROR =
+  "Unable to load businesses. Check your connection and try again.";
 
 interface UseBusinessesOptions {
   search?: string;
@@ -12,6 +16,7 @@ interface UseBusinessesOptions {
   latitude?: number | null;
   longitude?: number | null;
   radiusMiles?: number;
+  designations?: readonly string[];
 }
 
 interface UseBusinessesResult {
@@ -35,13 +40,20 @@ function getApiBaseUrl(): string {
 }
 
 function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
-  const socialProfiles = b.socialProfiles && typeof b.socialProfiles === "object" && !Array.isArray(b.socialProfiles)
-    ? b.socialProfiles as Record<string, unknown>
-    : {};
+  const socialProfiles =
+    b.socialProfiles &&
+    typeof b.socialProfiles === "object" &&
+    !Array.isArray(b.socialProfiles)
+      ? (b.socialProfiles as Record<string, unknown>)
+      : {};
   const ownershipDesignations = Array.isArray(b.ownershipDesignations)
-    ? b.ownershipDesignations.filter((value): value is string => typeof value === "string")
+    ? b.ownershipDesignations.filter(
+        (value): value is string => typeof value === "string",
+      )
     : [];
-  const ownershipFilterIds = ownershipDesignations.map(ownershipDesignationFilterId);
+  const ownershipFilterIds = ownershipDesignations.map(
+    ownershipDesignationFilterId,
+  );
   if (b.blackOwned === true) ownershipFilterIds.push("black-african-american");
   return {
     id: b.id as string,
@@ -52,7 +64,10 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     city: b.city as string,
     state: b.state as string,
     country: b.country as string | undefined,
-    rating: typeof b.rating === "string" ? parseFloat(b.rating) : (b.rating as number),
+    rating:
+      typeof b.rating === "string"
+        ? parseFloat(b.rating)
+        : (b.rating as number),
     reviewCount: b.reviewCount as number,
     verified: b.verified as boolean,
     featured: b.featured as boolean,
@@ -61,14 +76,23 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     ownershipFilterIds: [...new Set(ownershipFilterIds)],
     verifiedDesignations: (b.verifiedDesignations as string[]) ?? [],
     confidenceScore: b.confidenceScore as number,
-    safetyRating: b.safetyRating != null
-      ? (typeof b.safetyRating === "string" ? parseFloat(b.safetyRating) : (b.safetyRating as number))
-      : undefined,
+    safetyRating:
+      b.safetyRating != null
+        ? typeof b.safetyRating === "string"
+          ? parseFloat(b.safetyRating)
+          : (b.safetyRating as number)
+        : undefined,
     wouldReturnAlone: b.wouldReturnAlone as number | undefined,
     recommendationRate: b.recommendationRate as number | undefined,
     description: b.description as string,
-    latitude: typeof b.latitude === "string" ? parseFloat(b.latitude) : (b.latitude as number),
-    longitude: typeof b.longitude === "string" ? parseFloat(b.longitude) : (b.longitude as number),
+    latitude:
+      typeof b.latitude === "string"
+        ? parseFloat(b.latitude)
+        : (b.latitude as number),
+    longitude:
+      typeof b.longitude === "string"
+        ? parseFloat(b.longitude)
+        : (b.longitude as number),
     tags: (b.tags as string[]) ?? [],
     reviews: (b.reviews as Business["reviews"]) ?? [],
     phone: b.phone as string | undefined,
@@ -93,8 +117,19 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
   };
 }
 
-export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinessesResult {
-  const { search = "", category = "All", latitude = null, longitude = null, radiusMiles = 25 } = options;
+export function useBusinesses(
+  options: UseBusinessesOptions = {},
+): UseBusinessesResult {
+  const {
+    search = "",
+    category = "All",
+    latitude = null,
+    longitude = null,
+    radiusMiles = 25,
+    designations = [],
+  } = options;
+  const designationKey =
+    normalizeOwnershipDesignationFilterIds(designations).join(",");
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +145,7 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
       const params = new URLSearchParams();
       if (search.length > 0) params.set("search", search);
       if (category && category !== "All") params.set("category", category);
+      if (designationKey) params.set("designations", designationKey);
       if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
         params.set("lat", String(latitude));
         params.set("lng", String(longitude));
@@ -131,9 +167,11 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
           throw new Error("Invalid businesses response");
         }
         if (requestId === requestIdRef.current) {
-          setBusinesses(data.businesses.map((business) =>
-            mapApiBusinessToLocal(business as Record<string, unknown>),
-          ));
+          setBusinesses(
+            data.businesses.map((business) =>
+              mapApiBusinessToLocal(business as Record<string, unknown>),
+            ),
+          );
         }
       } finally {
         clearTimeout(timeout);
@@ -146,7 +184,7 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [search, category, latitude, longitude, radiusMiles]);
+  }, [search, category, latitude, longitude, radiusMiles, designationKey]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);
@@ -182,7 +220,10 @@ export function useBusinessById(id: string): UseBusinessByIdResult {
           if (!data.business || typeof data.business !== "object") {
             throw new Error("Invalid business response");
           }
-          if (isCurrent) setBusiness(mapApiBusinessToLocal(data.business as Record<string, unknown>));
+          if (isCurrent)
+            setBusiness(
+              mapApiBusinessToLocal(data.business as Record<string, unknown>),
+            );
         } finally {
           clearTimeout(timeout);
         }

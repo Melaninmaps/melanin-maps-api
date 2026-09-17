@@ -13,6 +13,7 @@
 export const OWNERSHIP_DESIGNATIONS = [
   // ── African Diaspora ───────────────────────────────────────────────────────
   "Black / African American-Owned",
+  "Foundational Black American-Owned",
   "African-Owned",
   "West African-Owned",
   "Nigerian-Owned",
@@ -104,6 +105,7 @@ export const OWNERSHIP_DESIGNATIONS = [
   "LGBTQIA+-Owned",
   "Veteran-Owned",
   "Disability-Owned",
+  "Divine Nine-Affiliated",
   "Family-Owned",
   "Cooperative / Worker-Owned",
   "Multicultural / Multiethnic-Owned",
@@ -115,7 +117,11 @@ export type OwnershipDesignation = (typeof OWNERSHIP_DESIGNATIONS)[number];
 
 const OWNERSHIP_FILTER_ALIASES: Record<string, string> = {
   black: "black-african-american",
+  "black-owned": "black-african-american",
   "black-african-american": "black-african-american",
+  fba: "foundational-black-american",
+  "foundational-black": "foundational-black-american",
+  "foundational-black-american": "foundational-black-american",
   woman: "woman",
   women: "woman",
   lgbtq: "lgbtqia",
@@ -132,6 +138,9 @@ const OWNERSHIP_FILTER_ALIASES: Record<string, string> = {
   "melanated-diaspora": "minority-general-legacy",
   multiracial: "multicultural-multiethnic",
   "middle-eastern-north-african": "arab-mena",
+  d9: "divine-nine-affiliated",
+  "d9-affiliated": "divine-nine-affiliated",
+  "divine-nine": "divine-nine-affiliated",
 };
 
 /** Stable comparison key for owner-provided and verified designation values. */
@@ -153,11 +162,85 @@ export const OWNERSHIP_FILTER_OPTIONS = OWNERSHIP_DESIGNATIONS.map((label) => ({
 }));
 
 /**
+ * High-signal filters displayed together when a member wants an intentional
+ * intersectional support search. Every designation remains optional and must
+ * be self-identified or documented by the business; no label is inferred.
+ */
+export const INTERSECTIONAL_SUPPORT_FILTER_IDS = [
+  "foundational-black-american",
+  "black-african-american",
+  "woman",
+  "divine-nine-affiliated",
+  "veteran",
+  "lgbtqia",
+  "disability",
+  "latino-hispanic",
+] as const;
+
+export const INTERSECTIONAL_SUPPORT_FILTER_OPTIONS = INTERSECTIONAL_SUPPORT_FILTER_IDS
+  .flatMap((id) => OWNERSHIP_FILTER_OPTIONS.filter((option) => option.id === id));
+
+const LEGACY_OWNERSHIP_FILTER_VALUES: Record<string, string[]> = {
+  "black-african-american": ["black-owned", "Black-Owned"],
+  "foundational-black-american": [
+    "foundational-black-american-owned",
+    "Foundational Black American-Owned",
+    "fba-owned",
+  ],
+  woman: ["woman-owned", "women-owned", "Woman-Owned", "Women-Owned"],
+  lgbtqia: ["lgbtq-owned", "lgbtqia-owned", "LGBTQ-Owned", "LGBTQIA-Owned"],
+  "latino-hispanic": ["latino-owned", "hispanic-owned", "Latino-Owned", "Hispanic-Owned"],
+  "indigenous-native": ["indigenous-owned", "native-owned", "Indigenous-Owned", "Native-Owned"],
+  veteran: ["veteran-owned", "Veteran-Owned"],
+  disability: ["disability-owned", "Disability-Owned"],
+  "divine-nine-affiliated": ["d9-affiliated", "Divine Nine-Affiliated", "Divine Nine Affiliated"],
+};
+
+/** Returns all stored values that can faithfully represent one approved designation. */
+export function ownershipDesignationStorageValues(raw: string): { id: string; values: string[] } {
+  const id = ownershipDesignationFilterId(raw);
+  const canonical = OWNERSHIP_FILTER_OPTIONS
+    .filter((option) => option.id === id)
+    .map((option) => option.label);
+  return {
+    id,
+    values: [...new Set([raw, ...canonical, ...(LEGACY_OWNERSHIP_FILTER_VALUES[id] ?? [])])],
+  };
+}
+
+/** Normalize a bounded, member-selected list and ignore unsupported values. */
+export function normalizeOwnershipDesignationFilterIds(values: readonly unknown[], limit = 8): string[] {
+  const allowed = new Set(OWNERSHIP_FILTER_OPTIONS.map((option) => option.id));
+  return [...new Set(values
+    .filter((value): value is string => typeof value === "string")
+    .map(ownershipDesignationFilterId)
+    .filter((id) => allowed.has(id)))]
+    .slice(0, Math.max(1, limit));
+}
+
+/** Detect only explicitly stated support designations in a member's chat request. */
+export function extractExplicitOwnershipDesignationFilterIds(message: string): string[] {
+  const text = message.normalize("NFKC").toLocaleLowerCase("en-US");
+  const matched: string[] = [];
+  const hasFoundationalBlack = /\b(?:fba|foundational(?:ly)?\s+black(?:\s+american)?)\b/.test(text);
+  if (hasFoundationalBlack) matched.push("foundational-black-american");
+  if (!hasFoundationalBlack && /\b(?:black|african[-\s]?american)\b/.test(text)) matched.push("black-african-american");
+  if (/\b(?:woman|women|female)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("woman");
+  if (/\b(?:divine\s*nine|d9)\b/.test(text)) matched.push("divine-nine-affiliated");
+  if (/\b(?:veteran|veterans|military[-\s]?(?:owned|led)?)\b/.test(text)) matched.push("veteran");
+  if (/\b(?:lgbtq(?:ia)?|queer)[+\s-]?(?:owned|led)?\b/.test(text)) matched.push("lgbtqia");
+  if (/\b(?:disability|disabled)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("disability");
+  if (/\b(?:hispanic|latino|latina|latinx)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("latino-hispanic");
+  return normalizeOwnershipDesignationFilterIds(matched);
+}
+
+/**
  * Designations that imply blackOwned = true on the business record.
  * Used during import and business submission to auto-set the boolean index.
  */
 export const BLACK_OWNED_DESIGNATIONS: readonly string[] = [
   "Black / African American-Owned",
+  "Foundational Black American-Owned",
   "African-Owned",
   "West African-Owned",
   "Nigerian-Owned",

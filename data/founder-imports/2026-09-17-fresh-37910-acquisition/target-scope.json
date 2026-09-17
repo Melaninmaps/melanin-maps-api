@@ -1,0 +1,350 @@
+{
+  "assignment": "Fresh acquisition: do not count, subtract, or rely on prior supplied lists.",
+  "us_markets": [
+    {
+      "market": "Philadelphia, PA",
+      "city_target": 840,
+      "surrounding_target": 360,
+      "new_business_target": 1200
+    },
+    {
+      "market": "Washington, DC",
+      "city_target": 770,
+      "surrounding_target": 330,
+      "new_business_target": 1100
+    },
+    {
+      "market": "Richmond, VA",
+      "city_target": 320,
+      "surrounding_target": 130,
+      "new_business_target": 450
+    },
+    {
+      "market": "Charlotte, NC",
+      "city_target": 450,
+      "surrounding_target": 200,
+      "new_business_target": 650
+    },
+    {
+      "market": "Columbia, SC",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Atlanta, GA",
+      "city_target": 1050,
+      "surrounding_target": 450,
+      "new_business_target": 1500
+    },
+    {
+      "market": "Montgomery, AL",
+      "city_target": 150,
+      "surrounding_target": 70,
+      "new_business_target": 220
+    },
+    {
+      "market": "Birmingham, AL",
+      "city_target": 350,
+      "surrounding_target": 150,
+      "new_business_target": 500
+    },
+    {
+      "market": "New Orleans, LA",
+      "city_target": 530,
+      "surrounding_target": 220,
+      "new_business_target": 750
+    },
+    {
+      "market": "Houston, TX",
+      "city_target": 1050,
+      "surrounding_target": 450,
+      "new_business_target": 1500
+    },
+    {
+      "market": "Baltimore, MD",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "New York City, NY",
+      "city_target": 2450,
+      "surrounding_target": 1050,
+      "new_business_target": 3500
+    },
+    {
+      "market": "Newark, NJ",
+      "city_target": 450,
+      "surrounding_target": 200,
+      "new_business_target": 650
+    },
+    {
+      "market": "Baton Rouge, LA",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Mobile, AL",
+      "city_target": 170,
+      "surrounding_target": 70,
+      "new_business_target": 240
+    },
+    {
+      "market": "Las Vegas, NV",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "Nashville, TN",
+      "city_target": 420,
+      "surrounding_target": 180,
+      "new_business_target": 600
+    },
+    {
+      "market": "San Antonio, TX",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "Phoenix, AZ",
+      "city_target": 490,
+      "surrounding_target": 210,
+      "new_business_target": 700
+    },
+    {
+      "market": "Portland, OR",
+      "city_target": 320,
+      "surrounding_target": 130,
+      "new_business_target": 450
+    },
+    {
+      "market": "Kansas City, MO",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "Tampa, FL",
+      "city_target": 320,
+      "surrounding_target": 130,
+      "new_business_target": 450
+    },
+    {
+      "market": "Tuskegee, AL",
+      "city_target": 70,
+      "surrounding_target": 30,
+      "new_business_target": 100
+    },
+    {
+      "market": "Jacksonville, FL",
+      "city_target": 350,
+      "surrounding_target": 150,
+      "new_business_target": 500
+    },
+    {
+      "market": "Orlando, FL",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "Memphis, TN",
+      "city_target": 490,
+      "surrounding_target": 210,
+      "new_business_target": 700
+    },
+    {
+      "market": "Cleveland, OH",
+      "city_target": 320,
+      "surrounding_target": 130,
+      "new_business_target": 450
+    },
+    {
+      "market": "Los Angeles, CA",
+      "city_target": 1540,
+      "surrounding_target": 660,
+      "new_business_target": 2200
+    },
+    {
+      "market": "Denver, CO",
+      "city_target": 350,
+      "surrounding_target": 150,
+      "new_business_target": 500
+    },
+    {
+      "market": "Chicago, IL",
+      "city_target": 1260,
+      "surrounding_target": 540,
+      "new_business_target": 1800
+    },
+    {
+      "market": "Miami, FL",
+      "city_target": 770,
+      "surrounding_target": 330,
+      "new_business_target": 1100
+    },
+    {
+      "market": "Detroit, MI",
+      "city_target": 670,
+      "surrounding_target": 280,
+      "new_business_target": 950
+    },
+    {
+      "market": "Oakland, CA",
+      "city_target": 560,
+      "surrounding_target": 240,
+      "new_business_target": 800
+    },
+    {
+      "market": "Dallas, TX",
+      "city_target": 770,
+      "surrounding_target": 330,
+      "new_business_target": 1100
+    },
+    {
+      "market": "St. Louis, MO",
+      "city_target": 350,
+      "surrounding_target": 150,
+      "new_business_target": 500
+    },
+    {
+      "market": "Tulsa, OK",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Jackson, MS",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Raleigh, NC",
+      "city_target": 280,
+      "surrounding_target": 120,
+      "new_business_target": 400
+    },
+    {
+      "market": "Durham, NC",
+      "city_target": 240,
+      "surrounding_target": 110,
+      "new_business_target": 350
+    },
+    {
+      "market": "Indianapolis, IN",
+      "city_target": 320,
+      "surrounding_target": 130,
+      "new_business_target": 450
+    },
+    {
+      "market": "Savannah, GA",
+      "city_target": 180,
+      "surrounding_target": 70,
+      "new_business_target": 250
+    },
+    {
+      "market": "Charleston, SC",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Norfolk, VA",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Columbus, OH",
+      "city_target": 350,
+      "surrounding_target": 150,
+      "new_business_target": 500
+    },
+    {
+      "market": "Cincinnati, OH",
+      "city_target": 280,
+      "surrounding_target": 120,
+      "new_business_target": 400
+    },
+    {
+      "market": "Seattle, WA",
+      "city_target": 350,
+      "surrounding_target": 150,
+      "new_business_target": 500
+    },
+    {
+      "market": "Boston, MA",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "Minneapolis, MN",
+      "city_target": 390,
+      "surrounding_target": 160,
+      "new_business_target": 550
+    },
+    {
+      "market": "Selma, AL",
+      "city_target": 80,
+      "surrounding_target": 40,
+      "new_business_target": 120
+    },
+    {
+      "market": "Tallahassee, FL",
+      "city_target": 200,
+      "surrounding_target": 80,
+      "new_business_target": 280
+    },
+    {
+      "market": "Daytona Beach, FL",
+      "city_target": 150,
+      "surrounding_target": 70,
+      "new_business_target": 220
+    },
+    {
+      "market": "Greensboro, NC",
+      "city_target": 240,
+      "surrounding_target": 110,
+      "new_business_target": 350
+    },
+    {
+      "market": "Winston-Salem, NC",
+      "city_target": 210,
+      "surrounding_target": 90,
+      "new_business_target": 300
+    },
+    {
+      "market": "Hampton, VA",
+      "city_target": 200,
+      "surrounding_target": 80,
+      "new_business_target": 280
+    },
+    {
+      "market": "Petersburg, VA",
+      "city_target": 140,
+      "surrounding_target": 60,
+      "new_business_target": 200
+    }
+  ],
+  "us_market_count": 55,
+  "us_target": 35410,
+  "international_target": 2500,
+  "total_target": 37910,
+  "quality_gate": {
+    "active": true,
+    "exact_pinnable_public_location": true,
+    "working_website_or_attributable_official_social_destination": true,
+    "attributable_official_social_destination_required": true,
+    "documented_ownership_claim_only": true,
+    "not_already_in_production_database": true,
+    "city_and_surrounding_counts_reported_separately": true
+  },
+  "catchment_rule": "Assign every surrounding municipality and commercial corridor to exactly one named market. City-specific catchment lists must be documented before counting begins.",
+  "enrichment_specification": "FRESH_CANDIDATE_ENRICHMENT_SPEC.md"
+}

@@ -1,0 +1,338 @@
+[
+  {
+    "file": "01.csv",
+    "city": "Toronto",
+    "state": "ON",
+    "country": "Canada"
+  },
+  {
+    "file": "02.csv",
+    "city": "Philadelphia",
+    "state": "PA",
+    "country": "USA"
+  },
+  {
+    "file": "03.csv",
+    "city": "New York",
+    "state": "NY",
+    "country": "USA"
+  },
+  {
+    "file": "04.csv",
+    "city": "Washington",
+    "state": "DC",
+    "country": "USA"
+  },
+  {
+    "file": "05.csv",
+    "city": "Los Angeles",
+    "state": "CA",
+    "country": "United States"
+  },
+  {
+    "file": "06.csv",
+    "city": "Chicago",
+    "state": "IL",
+    "country": "USA"
+  },
+  {
+    "file": "07.csv",
+    "city": "Houston",
+    "state": "TX",
+    "country": "USA"
+  },
+  {
+    "file": "08.csv",
+    "city": "New Orleans",
+    "state": "LA",
+    "country": "USA"
+  },
+  {
+    "file": "09.csv",
+    "city": "Baltimore",
+    "state": "MD",
+    "country": "USA"
+  },
+  {
+    "file": "10.csv",
+    "city": "Detroit",
+    "state": "MI",
+    "country": "USA"
+  },
+  {
+    "file": "11.csv",
+    "city": "Oakland",
+    "state": "CA",
+    "country": "USA"
+  },
+  {
+    "file": "12.csv",
+    "city": "Nashville",
+    "state": "TN",
+    "country": "USA"
+  },
+  {
+    "file": "13.csv",
+    "city": "Memphis",
+    "state": "TN",
+    "country": "United States"
+  },
+  {
+    "file": "14.csv",
+    "city": "Jackson",
+    "state": "MS",
+    "country": "USA"
+  },
+  {
+    "file": "15.csv",
+    "city": "Richmond",
+    "state": "VA",
+    "country": "USA"
+  },
+  {
+    "file": "16.csv",
+    "city": "Charlotte",
+    "state": "NC",
+    "country": "USA"
+  },
+  {
+    "file": "17.csv",
+    "city": "Birmingham",
+    "state": "AL",
+    "country": "USA"
+  },
+  {
+    "file": "18.csv",
+    "city": "Atlanta",
+    "state": "GA",
+    "country": "USA"
+  },
+  {
+    "file": "19.csv",
+    "city": "Miami",
+    "state": "FL",
+    "country": "USA"
+  },
+  {
+    "file": "20.csv",
+    "city": "Dallas",
+    "state": "TX",
+    "country": "USA"
+  },
+  {
+    "file": "21.csv",
+    "city": "San Antonio",
+    "state": "TX",
+    "country": "USA"
+  },
+  {
+    "file": "22.csv",
+    "city": "Denver",
+    "state": "CO",
+    "country": "USA"
+  },
+  {
+    "file": "23.csv",
+    "city": "Seattle",
+    "state": "WA",
+    "country": "USA"
+  },
+  {
+    "file": "24.csv",
+    "city": "Portland",
+    "state": "OR",
+    "country": "USA"
+  },
+  {
+    "file": "25.csv",
+    "city": "Minneapolis",
+    "state": "MN",
+    "country": "USA"
+  },
+  {
+    "file": "26.csv",
+    "city": "Cleveland",
+    "state": "OH",
+    "country": "USA"
+  },
+  {
+    "file": "27.csv",
+    "city": "Cincinnati",
+    "state": "OH",
+    "country": "US"
+  },
+  {
+    "file": "28.csv",
+    "city": "Columbus",
+    "state": "OH",
+    "country": "USA"
+  },
+  {
+    "file": "29.csv",
+    "city": "Pittsburgh",
+    "state": "PA",
+    "country": "USA"
+  },
+  {
+    "file": "30.csv",
+    "city": "Indianapolis",
+    "state": "IN",
+    "country": "USA"
+  },
+  {
+    "file": "31.csv",
+    "city": "Kansas City",
+    "state": "MO",
+    "country": "USA"
+  },
+  {
+    "file": "32.csv",
+    "city": "St. Louis",
+    "state": "MO",
+    "country": "USA"
+  },
+  {
+    "file": "33.csv",
+    "city": "Milwaukee",
+    "state": "WI",
+    "country": "USA"
+  },
+  {
+    "file": "34.csv",
+    "city": "Louisville",
+    "state": "KY",
+    "country": "USA"
+  },
+  {
+    "file": "35.csv",
+    "city": "Tampa",
+    "state": "FL",
+    "country": "USA"
+  },
+  {
+    "file": "36.csv",
+    "city": "Orlando",
+    "state": "FL",
+    "country": "USA"
+  },
+  {
+    "file": "37.csv",
+    "city": "Jacksonville",
+    "state": "FL",
+    "country": "USA"
+  },
+  {
+    "file": "38.csv",
+    "city": "Raleigh",
+    "state": "NC",
+    "country": "USA"
+  },
+  {
+    "file": "39.csv",
+    "city": "Durham",
+    "state": "NC",
+    "country": "USA"
+  },
+  {
+    "file": "40.csv",
+    "city": "Greensboro",
+    "state": "NC",
+    "country": "USA"
+  },
+  {
+    "file": "41.csv",
+    "city": "Columbia",
+    "state": "SC",
+    "country": "USA"
+  },
+  {
+    "file": "42.csv",
+    "city": "Charleston",
+    "state": "SC",
+    "country": "USA"
+  },
+  {
+    "file": "43.csv",
+    "city": "Savannah",
+    "state": "GA",
+    "country": "United States"
+  },
+  {
+    "file": "44.csv",
+    "city": "Montgomery",
+    "state": "AL",
+    "country": "USA"
+  },
+  {
+    "file": "45.csv",
+    "city": "Mobile",
+    "state": "AL",
+    "country": "USA"
+  },
+  {
+    "file": "46.csv",
+    "city": "Baton Rouge",
+    "state": "LA",
+    "country": "United States"
+  },
+  {
+    "file": "47.csv",
+    "city": "Shreveport",
+    "state": "LA",
+    "country": "USA"
+  },
+  {
+    "file": "48.csv",
+    "city": "Little Rock",
+    "state": "AR",
+    "country": "USA"
+  },
+  {
+    "file": "49.csv",
+    "city": "Oklahoma City",
+    "state": "OK",
+    "country": "USA"
+  },
+  {
+    "file": "50.csv",
+    "city": "Tulsa",
+    "state": "OK",
+    "country": "USA"
+  },
+  {
+    "file": "51.csv",
+    "city": "Las Vegas",
+    "state": "NV",
+    "country": "USA"
+  },
+  {
+    "file": "52.csv",
+    "city": "Phoenix",
+    "state": "AZ",
+    "country": "USA"
+  },
+  {
+    "file": "53.csv",
+    "city": "Tucson",
+    "state": "AZ",
+    "country": "USA"
+  },
+  {
+    "file": "54.csv",
+    "city": "Albuquerque",
+    "state": "NM",
+    "country": "USA"
+  },
+  {
+    "file": "55.csv",
+    "city": "El Paso",
+    "state": "TX",
+    "country": "USA"
+  },
+  {
+    "file": "56.csv",
+    "city": "San Francisco",
+    "state": "CA",
+    "country": "US"
+  }
+]

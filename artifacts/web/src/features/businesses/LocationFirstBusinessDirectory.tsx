@@ -4,6 +4,7 @@ import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
 import {
   appendUniqueCanonicalBusinesses,
   buildCanonicalBusinessSearchParams,
@@ -15,25 +16,20 @@ const BASE = import.meta.env.BASE_URL;
 const PAGE_SIZE = 60;
 
 const CATEGORIES = [
-  "Food & Drink", "Beauty & Personal Care", "Health & Wellness",
-  "Professional Services", "Arts & Culture", "Retail & Shopping",
+  "Food & Drink",
+  "Beauty & Personal Care",
+  "Health & Wellness",
+  "Professional Services",
+  "Arts & Culture",
+  "Retail & Shopping",
   "Faith & Community",
 ];
-
-const OWNERSHIP_FILTERS = [
-  "Black / African American-Owned",
-  "Woman-Owned",
-  "LGBTQIA+-Owned",
-  "Latino / Hispanic-Owned",
-  "Indigenous / Native-Owned",
-  "Veteran-Owned",
-] as const;
 
 export function LocationFirstBusinessDirectory() {
   const { location, setExplicitLocation } = useDiscoveryLocation();
   const [category, setCategory] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
-  const [ownership, setOwnership] = useState<string | null>(null);
+  const [designationIds, setDesignationIds] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const [records, setRecords] = useState<CanonicalBusinessSearchRecord[]>([]);
   const [total, setTotal] = useState(0);
@@ -44,7 +40,9 @@ export function LocationFirstBusinessDirectory() {
   const requestIdRef = useRef(0);
 
   const specialtyLabel = useMemo(
-    () => BUSINESS_SPECIALTIES.find((item) => item.slug === specialty)?.label ?? null,
+    () =>
+      BUSINESS_SPECIALTIES.find((item) => item.slug === specialty)?.label ??
+      null,
     [specialty],
   );
 
@@ -55,12 +53,19 @@ export function LocationFirstBusinessDirectory() {
       stateCode: location.stateCode,
       category,
       specialty: specialtyLabel,
-      ownership,
+      designations: designationIds,
       searchText,
       limit: PAGE_SIZE,
       offset: 0,
     });
-  }, [category, location.city, location.stateCode, ownership, searchText, specialtyLabel]);
+  }, [
+    category,
+    designationIds,
+    location.city,
+    location.stateCode,
+    searchText,
+    specialtyLabel,
+  ]);
 
   const queryKey = queryParams?.toString() ?? "no-location";
   const queryKeyRef = useRef(queryKey);
@@ -91,22 +96,30 @@ export function LocationFirstBusinessDirectory() {
       signal: controller.signal,
     })
       .then(async (response) => {
-        if (!response.ok) throw new Error(`Business search failed (${response.status})`);
+        if (!response.ok)
+          throw new Error(`Business search failed (${response.status})`);
         return readCanonicalBusinessSearchResponse(await response.json());
       })
       .then((result) => {
-        if (requestId !== requestIdRef.current || controller.signal.aborted) return;
+        if (requestId !== requestIdRef.current || controller.signal.aborted)
+          return;
         setRecords(result.businesses);
         setTotal(result.total);
       })
       .catch((caught: unknown) => {
-        if (controller.signal.aborted || requestId !== requestIdRef.current) return;
+        if (controller.signal.aborted || requestId !== requestIdRef.current)
+          return;
         setRecords([]);
         setTotal(0);
-        setError(caught instanceof Error ? caught.message : "Business search is unavailable right now.");
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Business search is unavailable right now.",
+        );
       })
       .finally(() => {
-        if (requestId === requestIdRef.current && !controller.signal.aborted) setLoading(false);
+        if (requestId === requestIdRef.current && !controller.signal.aborted)
+          setLoading(false);
       });
     return () => controller.abort();
   }, [queryKey, retryKey]);
@@ -120,32 +133,63 @@ export function LocationFirstBusinessDirectory() {
     setLoadingMore(true);
     setError(null);
     try {
-      const response = await authenticatedFetch(`${BASE}api/businesses?${params.toString()}`);
-      if (!response.ok) throw new Error(`Business search failed (${response.status})`);
+      const response = await authenticatedFetch(
+        `${BASE}api/businesses?${params.toString()}`,
+      );
+      if (!response.ok)
+        throw new Error(`Business search failed (${response.status})`);
       const result = readCanonicalBusinessSearchResponse(await response.json());
-      if (requestId !== requestIdRef.current || requestKey !== queryKeyRef.current) return;
-      setRecords((current) => appendUniqueCanonicalBusinesses(current, result.businesses));
+      if (
+        requestId !== requestIdRef.current ||
+        requestKey !== queryKeyRef.current
+      )
+        return;
+      setRecords((current) =>
+        appendUniqueCanonicalBusinesses(current, result.businesses),
+      );
       setTotal(result.total);
     } catch (caught) {
-      if (requestId !== requestIdRef.current || requestKey !== queryKeyRef.current) return;
-      setError(caught instanceof Error ? caught.message : "Could not load more businesses right now.");
+      if (
+        requestId !== requestIdRef.current ||
+        requestKey !== queryKeyRef.current
+      )
+        return;
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load more businesses right now.",
+      );
     } finally {
-      if (requestId === requestIdRef.current && requestKey === queryKeyRef.current) setLoadingMore(false);
+      if (
+        requestId === requestIdRef.current &&
+        requestKey === queryKeyRef.current
+      )
+        setLoadingMore(false);
     }
   }, [loadingMore, queryKey, queryParams, records.length, total]);
 
-  const locationLabel = [location.neighborhood, location.city, location.stateCode].filter(Boolean).join(", ");
+  const locationLabel = [
+    location.neighborhood,
+    location.city,
+    location.stateCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
   const countLabel = !location.city
     ? "Choose your area to begin"
     : loading
-    ? "Loading…"
-    : error && records.length === 0
-    ? "We could not load this search"
-    : `${total} searchable ${total === 1 ? "business" : "businesses"} in ${locationLabel}`;
+      ? "Loading…"
+      : error && records.length === 0
+        ? "We could not load this search"
+        : `${total} searchable ${total === 1 ? "business" : "businesses"} in ${locationLabel}`;
 
-  function toggleOwnership(value: string) {
+  function toggleDesignation(value: string) {
     invalidateRequests();
-    setOwnership((current) => current === value ? null : value);
+    setDesignationIds((current) =>
+      current.includes(value)
+        ? current.filter((id) => id !== value)
+        : [...current, value],
+    );
   }
 
   return (
@@ -154,9 +198,12 @@ export function LocationFirstBusinessDirectory() {
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E5B94B]">
           Focused business and service finder
         </p>
-        <h1 className="mt-3 font-serif text-4xl font-bold">Find who you need, where you are.</h1>
+        <h1 className="mt-3 font-serif text-4xl font-bold">
+          Find who you need, where you are.
+        </h1>
         <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/75">
-          Search published community- and founder-listed businesses by name, specialty, category, ownership, city, or postal code.
+          Search published community- and founder-listed businesses by name,
+          specialty, category, ownership, city, or postal code.
         </p>
       </section>
 
@@ -179,9 +226,15 @@ export function LocationFirstBusinessDirectory() {
           }}
         />
 
-        <p className="mt-4 text-sm font-semibold text-[#2B1507]" aria-live="polite">{countLabel}</p>
+        <p
+          className="mt-4 text-sm font-semibold text-[#2B1507]"
+          aria-live="polite"
+        >
+          {countLabel}
+        </p>
         <p className="mt-1 text-xs text-[#3A1F0E]/60">
-          Listings marked unclaimed are searchable but are not presented as verified or owner-controlled.
+          Listings marked unclaimed are searchable but are not presented as
+          verified or owner-controlled.
         </p>
         {location.city && (
           <Link
@@ -207,21 +260,41 @@ export function LocationFirstBusinessDirectory() {
           selected={specialtyLabel ? [specialtyLabel] : []}
           onToggle={(label) => {
             invalidateRequests();
-            const slug = BUSINESS_SPECIALTIES.find((item) => item.label === label)?.slug ?? null;
+            const slug =
+              BUSINESS_SPECIALTIES.find((item) => item.label === label)?.slug ??
+              null;
             setSpecialty(slug === specialty ? null : slug);
           }}
         />
         <FilterRow
-          label="Ownership"
-          values={OWNERSHIP_FILTERS}
-          selected={ownership ? [ownership] : []}
-          onToggle={toggleOwnership}
+          label="Support designations"
+          values={INTERSECTIONAL_SUPPORT_FILTER_OPTIONS.map(
+            (option) => option.label,
+          )}
+          selected={INTERSECTIONAL_SUPPORT_FILTER_OPTIONS.filter((option) =>
+            designationIds.includes(option.id),
+          ).map((option) => option.label)}
+          onToggle={(label) => {
+            const id = INTERSECTIONAL_SUPPORT_FILTER_OPTIONS.find(
+              (option) => option.label === label,
+            )?.id;
+            if (id) toggleDesignation(id);
+          }}
         />
+        <p className="mt-2 text-xs text-[#3A1F0E]/60">
+          Choose one or more labels. When more than one is selected, a listing
+          must match <strong>every</strong> selected owner-provided label.
+        </p>
 
         {!location.city && <LocationNeededState />}
         {!loading && error && (
-          <section role="alert" className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
-            <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Your search did not load</h2>
+          <section
+            role="alert"
+            className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6"
+          >
+            <h2 className="font-serif text-2xl font-bold text-[#2B1507]">
+              Your search did not load
+            </h2>
             <p className="mt-2 leading-7 text-[#3A1F0E]/70">{error}</p>
             <button
               type="button"
@@ -232,10 +305,14 @@ export function LocationFirstBusinessDirectory() {
             </button>
           </section>
         )}
-        {!loading && !error && location.city && records.length === 0 && <DirectoryGapState />}
+        {!loading && !error && location.city && records.length === 0 && (
+          <DirectoryGapState />
+        )}
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {records.map((record) => <BusinessCard key={record.id} record={record} />)}
+          {records.map((record) => (
+            <BusinessCard key={record.id} record={record} />
+          ))}
         </section>
 
         {!loading && records.length < total && (
@@ -246,7 +323,9 @@ export function LocationFirstBusinessDirectory() {
               disabled={loadingMore}
               className="rounded-full bg-[#2B1507] px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {loadingMore ? "Loading more…" : `Load more (${total - records.length} remaining)`}
+              {loadingMore
+                ? "Loading more…"
+                : `Load more (${total - records.length} remaining)`}
             </button>
           </div>
         )}
@@ -256,7 +335,10 @@ export function LocationFirstBusinessDirectory() {
 }
 
 function FilterRow({
-  label, values, selected, onToggle,
+  label,
+  values,
+  selected,
+  onToggle,
 }: {
   label: string;
   values: readonly string[] | string[];
@@ -265,7 +347,9 @@ function FilterRow({
 }) {
   return (
     <section className="mt-5">
-      <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#8D5C17]">{label}</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#8D5C17]">
+        {label}
+      </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {values.map((value) => (
           <button
@@ -291,16 +375,18 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
   const unclaimed = record.listingStatus === "live_unclaimed";
   const latitude = Number(record.latitude);
   const longitude = Number(record.longitude);
-  const hasPin = record.latitude != null
-    && record.longitude != null
-    && Number.isFinite(latitude)
-    && Number.isFinite(longitude)
-    && !(latitude === 0 && longitude === 0);
-  const communityOwnership = record.ownershipClaim === "community_reported_minority_owned"
-    ? "Community-reported minority-owned · Not verified"
-    : record.ownershipClaim === "community_reported_non_minority_owned"
-    ? "Community-reported non-minority-owned · Not verified"
-    : null;
+  const hasPin =
+    record.latitude != null &&
+    record.longitude != null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    !(latitude === 0 && longitude === 0);
+  const communityOwnership =
+    record.ownershipClaim === "community_reported_minority_owned"
+      ? "Community-reported minority-owned · Not verified"
+      : record.ownershipClaim === "community_reported_non_minority_owned"
+        ? "Community-reported non-minority-owned · Not verified"
+        : null;
   return (
     <Link
       href={`/businesses/${encodeURIComponent(record.id)}`}
@@ -315,20 +401,42 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
         {[record.city, record.state].filter(Boolean).join(", ")}
       </p>
       {record.description && (
-        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#3A1F0E]/65">{record.description}</p>
+        <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#3A1F0E]/65">
+          {record.description}
+        </p>
       )}
       <p className="mt-4 text-xs font-semibold text-[#8D5C17]">
-        {unclaimed ? "Unclaimed · Not verified" : record.verified ? "Verified listing" : "Not verified"}
+        {unclaimed
+          ? "Unclaimed · Not verified"
+          : record.verified
+            ? "Verified listing"
+            : "Not verified"}
       </p>
       {unclaimed && (
         <p className="mt-1 text-xs text-[#3A1F0E]/65">
-          {hasPin ? "Precise map pin available" : "Searchable by city · Precise map pin pending"}
+          {hasPin
+            ? "Precise map pin available"
+            : "Searchable by city · Precise map pin pending"}
         </p>
       )}
-      {communityOwnership && <p className="mt-1 text-xs font-semibold text-[#6B4A2F]">{communityOwnership}</p>}
-      {record.priceRange && <p className="mt-1 text-xs text-[#3A1F0E]/60">Price: {record.priceRange}</p>}
+      {communityOwnership && (
+        <p className="mt-1 text-xs font-semibold text-[#6B4A2F]">
+          {communityOwnership}
+        </p>
+      )}
+      {record.priceRange && (
+        <p className="mt-1 text-xs text-[#3A1F0E]/60">
+          Price: {record.priceRange}
+        </p>
+      )}
       <p className="mt-3 text-xs font-bold text-[#CA922B]">
-        View details, Community Says, and {record.website ? "website" : record.sourceUrl ? "supplied source" : "available links"} →
+        View details, Community Says, and{" "}
+        {record.website
+          ? "website"
+          : record.sourceUrl
+            ? "supplied source"
+            : "available links"}{" "}
+        →
       </p>
     </Link>
   );
@@ -337,9 +445,12 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
 function LocationNeededState() {
   return (
     <section className="mt-8 rounded-2xl border border-[#CA922B]/35 bg-white p-6">
-      <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Choose an area to begin</h2>
+      <h2 className="font-serif text-2xl font-bold text-[#2B1507]">
+        Choose an area to begin
+      </h2>
       <p className="mt-2 max-w-xl leading-7 text-[#3A1F0E]/70">
-        Enter a city above or use your location to see nearby businesses and services.
+        Enter a city above or use your location to see nearby businesses and
+        services.
       </p>
     </section>
   );
@@ -348,12 +459,18 @@ function LocationNeededState() {
 function DirectoryGapState() {
   return (
     <section className="mt-8 rounded-2xl border border-[#CA922B]/35 bg-[#CA922B]/[0.07] p-6">
-      <h2 className="font-serif text-2xl font-bold text-[#2B1507]">No published local match yet.</h2>
+      <h2 className="font-serif text-2xl font-bold text-[#2B1507]">
+        No published local match yet.
+      </h2>
       <p className="mt-2 leading-7 text-[#3A1F0E]/70">
-        Try a broader specialty or category, or add a complete community business so it can publish immediately after software checks.
+        Try a broader specialty or category, or add a complete community
+        business so it can publish immediately after software checks.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <Link href="/submit-business" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
+        <Link
+          href="/submit-business"
+          className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]"
+        >
           Add a business
         </Link>
       </div>

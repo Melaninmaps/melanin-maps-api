@@ -4,6 +4,7 @@ export interface CanonicalBusinessSearchInput {
   category?: string | null;
   specialty?: string | null;
   ownership?: string | null;
+  designations?: readonly string[];
   searchText?: string;
   offset?: number;
   limit?: number;
@@ -22,11 +23,18 @@ export function buildCanonicalBusinessSearchParams(
   const specialty = input.specialty?.trim();
   const searchText = input.searchText?.trim();
   const ownership = input.ownership?.trim();
+  const designations = [
+    ...new Set(
+      (input.designations ?? []).map((value) => value.trim()).filter(Boolean),
+    ),
+  ].slice(0, 8);
   const search = [searchText, specialty].filter(Boolean).join(" ").trim();
   if (state) params.set("state", state.toUpperCase());
   if (category) params.set("category", category);
   if (search) params.set("search", search);
   if (ownership) params.set("ownership", ownership);
+  if (designations.length > 0)
+    params.set("designations", designations.join(","));
   return params;
 }
 
@@ -44,9 +52,10 @@ export function readCanonicalBusinessSearchResponse(value: unknown): {
   const businesses = payload.businesses.filter(isCanonicalBusinessSearchRecord);
   return {
     businesses,
-    total: typeof payload.total === "number" && Number.isFinite(payload.total)
-      ? Math.max(0, payload.total)
-      : businesses.length,
+    total:
+      typeof payload.total === "number" && Number.isFinite(payload.total)
+        ? Math.max(0, payload.total)
+        : businesses.length,
   };
 }
 
@@ -69,11 +78,17 @@ export interface CanonicalBusinessSearchRecord {
   tags?: unknown;
 }
 
-function isCanonicalBusinessSearchRecord(value: unknown): value is CanonicalBusinessSearchRecord {
+function isCanonicalBusinessSearchRecord(
+  value: unknown,
+): value is CanonicalBusinessSearchRecord {
   if (!value || typeof value !== "object") return false;
   const row = value as { id?: unknown; name?: unknown };
-  return typeof row.id === "string" && row.id.length > 0
-    && typeof row.name === "string" && row.name.trim().length > 0;
+  return (
+    typeof row.id === "string" &&
+    row.id.length > 0 &&
+    typeof row.name === "string" &&
+    row.name.trim().length > 0
+  );
 }
 
 export function appendUniqueCanonicalBusinesses(
@@ -81,5 +96,8 @@ export function appendUniqueCanonicalBusinesses(
   incoming: CanonicalBusinessSearchRecord[],
 ): CanonicalBusinessSearchRecord[] {
   const known = new Set(current.map((business) => business.id));
-  return [...current, ...incoming.filter((business) => !known.has(business.id))];
+  return [
+    ...current,
+    ...incoming.filter((business) => !known.has(business.id)),
+  ];
 }

@@ -1,0 +1,955 @@
+{
+  "city_files_seen": 48,
+  "city_files_with_expected_schema": 48,
+  "rows_read": 641,
+  "eligible_candidates": 595,
+  "held_rows": 46,
+  "duplicate_within_international_batch": 0,
+  "matches_in_domestic_candidate_batch": 1,
+  "net_new_review_candidates": 594,
+  "address_enrichment_review_candidates": 1,
+  "manifest": "/home/ubuntu/melanin-maps-api/data/founder-imports/2026-09-17-international-2500-expansion/source-backed-international-candidates.jsonl",
+  "manifest_sha256": "ead486f8cd0e2068b76c91da49129cd423d6e95e1b8e10f5c4056481fe0cfb82",
+  "city_reports": [
+    {
+      "file": "01.csv",
+      "schema_ok": true,
+      "rows_read": 16,
+      "eligible": 16,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "02.csv",
+      "schema_ok": true,
+      "rows_read": 9,
+      "eligible": 9,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "03.csv",
+      "schema_ok": true,
+      "rows_read": 12,
+      "eligible": 12,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "04.csv",
+      "schema_ok": true,
+      "rows_read": 5,
+      "eligible": 5,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "05.csv",
+      "schema_ok": true,
+      "rows_read": 14,
+      "eligible": 14,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "06.csv",
+      "schema_ok": true,
+      "rows_read": 10,
+      "eligible": 10,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "07.csv",
+      "schema_ok": true,
+      "rows_read": 11,
+      "eligible": 11,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "08.csv",
+      "schema_ok": true,
+      "rows_read": 7,
+      "eligible": 7,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "09.csv",
+      "schema_ok": true,
+      "rows_read": 21,
+      "eligible": 21,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "10.csv",
+      "schema_ok": true,
+      "rows_read": 16,
+      "eligible": 16,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "11.csv",
+      "schema_ok": true,
+      "rows_read": 6,
+      "eligible": 6,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "12.csv",
+      "schema_ok": true,
+      "rows_read": 10,
+      "eligible": 10,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "13.csv",
+      "schema_ok": true,
+      "rows_read": 25,
+      "eligible": 25,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "14.csv",
+      "schema_ok": true,
+      "rows_read": 10,
+      "eligible": 10,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "15.csv",
+      "schema_ok": true,
+      "rows_read": 13,
+      "eligible": 13,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "16.csv",
+      "schema_ok": true,
+      "rows_read": 15,
+      "eligible": 15,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "17.csv",
+      "schema_ok": true,
+      "rows_read": 15,
+      "eligible": 6,
+      "held": 9,
+      "held_rows": [
+        {
+          "row": 4,
+          "name": "Bahamas Isle Dental Suites",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 5,
+          "name": "Skin Solutions Day Spa & Salon",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 6,
+          "name": "Central Supercenter",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 7,
+          "name": "Ace Hardware Nassau",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 8,
+          "name": "Pirates of Nassau Museum",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 9,
+          "name": "Sbarro Bahamas - Cable Beach",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 10,
+          "name": "Sbarro Bahamas - Mall at Marathon",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 14,
+          "name": "Bahamas Real Estate Association",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 16,
+          "name": "BOND at Baha Mar",
+          "reason": {
+            "missing": [],
+            "is_physical": false,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "18.csv",
+      "schema_ok": true,
+      "rows_read": 13,
+      "eligible": 13,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "19.csv",
+      "schema_ok": true,
+      "rows_read": 60,
+      "eligible": 60,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "20.csv",
+      "schema_ok": true,
+      "rows_read": 6,
+      "eligible": 6,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "21.csv",
+      "schema_ok": true,
+      "rows_read": 9,
+      "eligible": 9,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "22.csv",
+      "schema_ok": true,
+      "rows_read": 6,
+      "eligible": 5,
+      "held": 1,
+      "held_rows": [
+        {
+          "row": 7,
+          "name": "Port St Louis Haiti",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "23.csv",
+      "schema_ok": true,
+      "rows_read": 18,
+      "eligible": 18,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "24.csv",
+      "schema_ok": true,
+      "rows_read": 10,
+      "eligible": 7,
+      "held": 3,
+      "held_rows": [
+        {
+          "row": 2,
+          "name": "Las Quince Letras",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 6,
+          "name": "Instituto Cultural Oaxaca",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 7,
+          "name": "Oaxaca International",
+          "reason": {
+            "missing": [
+              "source_url"
+            ],
+            "is_physical": false,
+            "source_url_valid": false,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "25.csv",
+      "schema_ok": true,
+      "rows_read": 9,
+      "eligible": 9,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "26.csv",
+      "schema_ok": true,
+      "rows_read": 12,
+      "eligible": 12,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "27.csv",
+      "schema_ok": true,
+      "rows_read": 15,
+      "eligible": 15,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "28.csv",
+      "schema_ok": true,
+      "rows_read": 9,
+      "eligible": 9,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "29.csv",
+      "schema_ok": true,
+      "rows_read": 24,
+      "eligible": 24,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "30.csv",
+      "schema_ok": true,
+      "rows_read": 5,
+      "eligible": 5,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "31.csv",
+      "schema_ok": true,
+      "rows_read": 18,
+      "eligible": 18,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "32.csv",
+      "schema_ok": true,
+      "rows_read": 14,
+      "eligible": 14,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "33.csv",
+      "schema_ok": true,
+      "rows_read": 13,
+      "eligible": 13,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "34.csv",
+      "schema_ok": true,
+      "rows_read": 9,
+      "eligible": 9,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "35.csv",
+      "schema_ok": true,
+      "rows_read": 7,
+      "eligible": 7,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "36.csv",
+      "schema_ok": true,
+      "rows_read": 7,
+      "eligible": 7,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "37.csv",
+      "schema_ok": true,
+      "rows_read": 20,
+      "eligible": 20,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "38.csv",
+      "schema_ok": true,
+      "rows_read": 11,
+      "eligible": 11,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "39.csv",
+      "schema_ok": true,
+      "rows_read": 9,
+      "eligible": 9,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "40.csv",
+      "schema_ok": true,
+      "rows_read": 13,
+      "eligible": 13,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "41.csv",
+      "schema_ok": true,
+      "rows_read": 12,
+      "eligible": 12,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "42.csv",
+      "schema_ok": true,
+      "rows_read": 13,
+      "eligible": 13,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "43.csv",
+      "schema_ok": true,
+      "rows_read": 7,
+      "eligible": 7,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "44.csv",
+      "schema_ok": true,
+      "rows_read": 10,
+      "eligible": 10,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "45.csv",
+      "schema_ok": true,
+      "rows_read": 16,
+      "eligible": 16,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "46.csv",
+      "schema_ok": true,
+      "rows_read": 14,
+      "eligible": 0,
+      "held": 14,
+      "held_rows": [
+        {
+          "row": 2,
+          "name": "Sheraton Addis, a Luxury Collection Hotel, Addis Ababa",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 3,
+          "name": "Shaheen",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 4,
+          "name": "Stagioni",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 5,
+          "name": "Fountain Court",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 6,
+          "name": "Summerfields",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 7,
+          "name": "Breezes",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 8,
+          "name": "Baywatch",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 9,
+          "name": "Stanley's Cocktail Bar",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 10,
+          "name": "Temptations",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 11,
+          "name": "Jade Restaurant",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 12,
+          "name": "JW Steak House",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": false
+          }
+        },
+        {
+          "row": 13,
+          "name": "Hyatt Regency Addis Ababa",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 14,
+          "name": "The Market at Hyatt Regency Addis Ababa",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 15,
+          "name": "AAU-IHL Clinic",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    },
+    {
+      "file": "47.csv",
+      "schema_ok": true,
+      "rows_read": 18,
+      "eligible": 18,
+      "held": 0,
+      "held_rows": []
+    },
+    {
+      "file": "48.csv",
+      "schema_ok": true,
+      "rows_read": 19,
+      "eligible": 0,
+      "held": 19,
+      "held_rows": [
+        {
+          "row": 2,
+          "name": "藝 yì by Jereme Leung",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 3,
+          "name": "ALTRO Zafferano",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 4,
+          "name": "Zouk Singapore",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 5,
+          "name": "J's Salon",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 6,
+          "name": "Black Hair Salon",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 7,
+          "name": "Walking On Sunshine Hair Salon",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 8,
+          "name": "National Dental Centre Singapore",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 9,
+          "name": "National University Centre for Oral Health, Singapore",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 10,
+          "name": "National Gallery Singapore",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 11,
+          "name": "Science Centre Singapore",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 12,
+          "name": "U Stars Geylang",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 13,
+          "name": "U Stars Toh Yi",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 14,
+          "name": "U Stars Compassvale",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 15,
+          "name": "U Stars Woodlands",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 16,
+          "name": "U Stars Anchorvale",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 17,
+          "name": "Greenland Childcare @ Yishun (POP Centre)",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 18,
+          "name": "Greenland Childcare @ Kallang Bahru (POP Centre)",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 19,
+          "name": "Greenland Childcare @ Punggol Walk (POP Centre)",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        },
+        {
+          "row": 20,
+          "name": "Artemis Preskool @ Tampines",
+          "reason": {
+            "missing": [
+              "state_or_region"
+            ],
+            "is_physical": true,
+            "source_url_valid": true,
+            "has_attributable_destination": true
+          }
+        }
+      ]
+    }
+  ],
+  "next_gate": "Match candidates against the live production directory by normalized name/address and aliases. Matching records become address enrichment review; only approved net-new physical businesses proceed to staging geocoding."
+}

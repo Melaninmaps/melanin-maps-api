@@ -7,10 +7,8 @@ import {
   readCanonicalBusinessSearchResponse,
 } from "../features/businesses/canonicalBusinessSearch";
 
-const source = (relativePath: string) => readFileSync(
-  fileURLToPath(new URL(relativePath, import.meta.url)),
-  "utf8",
-);
+const source = (relativePath: string) =>
+  readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 
 describe("routed canonical business directory", () => {
   it("sends name, specialty, category, city, state, ownership, offset, and a bounded limit", () => {
@@ -38,15 +36,26 @@ describe("routed canonical business directory", () => {
   it("validates canonical results and deduplicates later pages", () => {
     const first = { id: "a", name: "AMINA" };
     const second = { id: "b", name: "Uncle Bobbie's Coffee & Books" };
-    expect(readCanonicalBusinessSearchResponse({ businesses: [first, null, second], total: 12 }))
-      .toEqual({ businesses: [first, second], total: 12 });
-    expect(appendUniqueCanonicalBusinesses([first], [first, second])).toEqual([first, second]);
-    expect(() => readCanonicalBusinessSearchResponse({ records: [] })).toThrow("invalid response");
+    expect(
+      readCanonicalBusinessSearchResponse({
+        businesses: [first, null, second],
+        total: 12,
+      }),
+    ).toEqual({ businesses: [first, second], total: 12 });
+    expect(appendUniqueCanonicalBusinesses([first], [first, second])).toEqual([
+      first,
+      second,
+    ]);
+    expect(() => readCanonicalBusinessSearchResponse({ records: [] })).toThrow(
+      "invalid response",
+    );
   });
 
   it("routes the member Businesses page to canonical searchable inventory", () => {
     const app = source("../App.tsx");
-    const directory = source("../features/businesses/LocationFirstBusinessDirectory.tsx");
+    const directory = source(
+      "../features/businesses/LocationFirstBusinessDirectory.tsx",
+    );
     const api = source("../../../api-server/src/routes/businesses.ts");
     expect(app).toContain("<LocationFirstBusinessDirectory />");
     expect(directory).toContain("api/businesses?");
@@ -55,12 +64,20 @@ describe("routed canonical business directory", () => {
     expect(directory).toContain("queryKeyRef.current");
     expect(directory).toContain("Load more (");
     expect(directory).toContain("Unclaimed · Not verified");
-    expect(directory).toContain("Community-reported minority-owned · Not verified");
-    expect(directory).toContain("Community-reported non-minority-owned · Not verified");
+    expect(directory).toContain(
+      "Community-reported minority-owned · Not verified",
+    );
+    expect(directory).toContain(
+      "Community-reported non-minority-owned · Not verified",
+    );
     expect(directory).toContain("publish immediately after software checks");
     expect(directory).not.toContain("verified businesses in");
-    expect(api).toContain('eq(businessesTable.ownershipClaim, "community_reported_minority_owned")');
-    expect(api).toContain("NOT (latitude::numeric = 0 AND longitude::numeric = 0)");
+    expect(api).toMatch(
+      /eq\(\s*businessesTable\.ownershipClaim,\s*"community_reported_minority_owned",?\s*\)/,
+    );
+    expect(api).toContain(
+      "NOT (latitude::numeric = 0 AND longitude::numeric = 0)",
+    );
   });
 
   it("maps owner claim status so community listings can be labeled unclaimed", () => {
