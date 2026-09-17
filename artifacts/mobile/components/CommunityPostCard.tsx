@@ -293,8 +293,25 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [showBizCard, setShowBizCard] = useState(false);
+  const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
 
   const isOwnPost = !!(currentUserId && post.authorId && currentUserId === post.authorId);
+
+  const updateCommentPolicy = async (next: "everyone" | "followers" | "off") => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comment-policy`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ commentPolicy: next }),
+      });
+      if (!response.ok) throw new Error("comment policy update failed");
+      setCommentPolicy(next);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert("Could not update comments", "Your current comment setting was not changed. Please try again.");
+    }
+  };
 
   const handleMoreOptions = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -302,6 +319,9 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
       "Post Options",
       undefined,
       [
+        { text: "Everyone can comment", onPress: () => void updateCommentPolicy("everyone") },
+        { text: "Followers can comment", onPress: () => void updateCommentPolicy("followers") },
+        { text: "Turn off comments", style: "destructive", onPress: () => void updateCommentPolicy("off") },
         { text: "Edit Post", onPress: () => onEdit?.(post) },
         {
           text: "Delete Post",
@@ -597,10 +617,17 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
           <Feather name="heart" size={16} color={liked ? "#C4622D" : colors.mutedForeground} />
           <Text style={[s.actionText, { color: liked ? "#C4622D" : colors.mutedForeground }]}>{likeCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.action} activeOpacity={0.7} onPress={onCommentPress}>
-          <Feather name="message-circle" size={16} color={colors.mutedForeground} />
-          <Text style={[s.actionText, { color: colors.mutedForeground }]}>{post.comments}</Text>
-        </TouchableOpacity>
+        {commentPolicy === "off" ? (
+          <View style={s.action} accessibilityLabel="Comments are off">
+            <Feather name="message-circle" size={16} color={colors.mutedForeground} />
+            <Text style={[s.actionText, { color: colors.mutedForeground }]}>Off</Text>
+          </View>
+        ) : (
+          <TouchableOpacity style={s.action} activeOpacity={0.7} onPress={onCommentPress}>
+            <Feather name="message-circle" size={16} color={colors.mutedForeground} />
+            <Text style={[s.actionText, { color: colors.mutedForeground }]}>{post.comments}</Text>
+          </TouchableOpacity>
+        )}
         {onRepost && (
           <TouchableOpacity style={s.action} activeOpacity={0.7} onPress={() => onRepost(post)}>
             <Feather name="repeat" size={16} color={colors.mutedForeground} />
