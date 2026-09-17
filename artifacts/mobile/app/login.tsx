@@ -419,52 +419,20 @@ export default function LoginScreen() {
               <View style={{ flex: 1, gap: 8 }}>
                 <Text style={styles.errorTxt}>{error}</Text>
                 {noPasswordError && (
-                  <>
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => {
-                        setEmailMode(false);
-                        setError("");
-                        setNoPasswordError(false);
-                      }}
-                      style={styles.errorAppleBtn}
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => router.push("/forgot-password" as any)}
+                  >
+                    <Text
+                      style={[styles.errorAppleTxt, { color: "#B91C1C" }]}
                     >
-                      <Feather name="smartphone" size={12} color="#DC2626" />
-                      <Text style={styles.errorAppleTxt}>
-                        Continue with Phone
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => router.push("/forgot-password" as any)}
-                    >
-                      <Text
-                        style={[styles.errorAppleTxt, { color: "#B91C1C" }]}
-                      >
-                        Set Up Email Password →
-                      </Text>
-                    </TouchableOpacity>
-                  </>
+                      Set Up Email Password →
+                    </Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
           )}
-
-          <TouchableOpacity
-            style={[
-              styles.googleBtn,
-              { backgroundColor: c.card, borderColor: c.border },
-            ]}
-            onPress={() => router.push("/phone-login" as any)}
-            disabled={loading}
-            activeOpacity={0.85}
-          >
-            <Feather name="smartphone" size={18} color={c.foreground} />
-            <Text style={[styles.googleTxt, { color: c.foreground }]}>
-              Continue with Phone
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={[
               styles.googleBtn,
