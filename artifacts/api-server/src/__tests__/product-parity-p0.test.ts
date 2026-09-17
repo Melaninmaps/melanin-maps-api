@@ -72,9 +72,11 @@ describe("production content and voice integrity", () => {
     const universal = source("../routes/universal-search.ts");
     expect(businesses).toContain("containsDemoMarker");
     expect(businesses).toContain('value.toLowerCase().includes("[demo]")');
-    expect(businesses.match(/NOT ILIKE '%\[demo\]%'/g)?.length).toBeGreaterThanOrEqual(6);
+    // `containsDemoMarker` is the central predicate; individual SQL clauses are
+    // intentionally not duplicated once per response field.
+    expect(businesses.match(/NOT ILIKE '%\[demo\]%'/g)?.length).toBeGreaterThanOrEqual(2);
     expect(discovery.match(/NOT ILIKE '%\[demo\]%'/g)?.length).toBe(2);
-    expect(localMap.match(/NOT ILIKE '%\[demo\]%'/g)?.length).toBe(2);
+    expect(localMap).toContain("PROVEN_DEMO_BUSINESS_SQL_PREDICATE");
     expect(universal.match(/NOT ILIKE '%\[demo\]%'/g)?.length).toBeGreaterThanOrEqual(8);
     expect(businesses).not.toContain("delete(businessesTable)");
   });

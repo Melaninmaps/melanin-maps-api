@@ -1,9 +1,33 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, conversations as conversationsTable, messages as messagesTable, usersTable } from "@workspace/db";
+import { db, conversations as conversationsTable, messages as messagesTable, userBlocksTable, usersTable } from "@workspace/db";
 import { scanForFamily } from "../lib/familyFilter";
-import { eq, asc, desc, sql, or, ilike } from "drizzle-orm";
+import { eq, and, asc, desc, sql, or, ilike } from "drizzle-orm";
 
 const router: IRouter = Router();
+
+function conversationHasParticipant(conversation: { participantIds: unknown }, userId: string): boolean {
+  return Array.isArray(conversation.participantIds) && conversation.participantIds.includes(userId);
+}
+
+async function usersAreBlocked(firstUserId: string, secondUserId: string): Promise<boolean> {
+  const blocks = await db
+    .select({ id: userBlocksTable.id })
+    .from(userBlocksTable)
+    .where(
+      or(
+        and(eq(userBlocksTable.blockerId, firstUserId), eq(userBlocksTable.blockedId, secondUserId)),
+        and(eq(userBlocksTable.blockerId, secondUserId), eq(userBlocksTable.blockedId, firstUserId)),
+      ),
+    )
+    .limit(1);
+  return blocks.length > 0;
+}
+
+async function dmConversationIsBlocked(conversation: { type: string; participantIds: unknown }, userId: string): Promise<boolean> {
+  if (conversation.type !== "dm" || !Array.isArray(conversation.participantIds)) return false;
+  const otherUserId = conversation.participantIds.find((id) => id !== userId);
+  return typeof otherUserId === "string" && await usersAreBlocked(userId, otherUserId);
+}
 
 // ─── GET /api/users/search — find users for DM compose & @mentions ───────────
 router.get("/users/search", async (req: Request, res: Response) => {
@@ -68,7 +92,22 @@ router.post("/conversations", async (req: Request, res: Response) => {
     const convType = type === "dm" ? "dm" : "business";
     const participantIds = [req.user.id, ...(participantId ? [participantId] : [])];
 
-    if (convType === "dm" && participantId) {
+    if (convType === "dm") {
+      if (!participantId || typeof participantId !== "string" || participantId === req.user.id) {
+        return void res.status(400).json({ error: "A different direct-message recipient is required" });
+      }
+
+      const [recipient] = await db
+        .select({ id: usersTable.id, isPrivate: usersTable.isPrivate, allowDm: usersTable.allowDm })
+        .from(usersTable)
+        .where(eq(usersTable.id, participantId))
+        .limit(1);
+      if (!recipient) return void res.status(404).json({ error: "Recipient not found" });
+      if (!recipient.allowDm) return void res.status(403).json({ error: "This member is not accepting direct messages" });
+      if (await usersAreBlocked(req.user.id, recipient.id)) {
+        return void res.status(403).json({ error: "A direct message is unavailable for this member" });
+      }
+
       const existing = await db
         .select()
         .from(conversationsTable)
@@ -76,17 +115,11 @@ router.post("/conversations", async (req: Request, res: Response) => {
           sql`${conversationsTable.type} = 'dm'
             AND ${conversationsTable.participantIds}::jsonb @> ${JSON.stringify([req.user.id])}::jsonb
             AND ${conversationsTable.participantIds}::jsonb @> ${JSON.stringify([participantId])}::jsonb`
-        )
-        .limit(1);
+      )
+      .limit(1);
       if (existing.length > 0) return void res.json({ conversation: existing[0] });
 
-      const [recipient] = await db
-        .select({ isPrivate: usersTable.isPrivate })
-        .from(usersTable)
-        .where(eq(usersTable.id, participantId))
-        .limit(1);
-
-      const requestStatus: "pending" | "accepted" = recipient?.isPrivate ? "pending" : "accepted";
+      const requestStatus: "pending" | "accepted" = recipient.isPrivate ? "pending" : "accepted";
       const [conv] = await db
         .insert(conversationsTable)
         .values({
@@ -131,6 +164,10 @@ router.post("/conversations/:id/accept", async (req: Request, res: Response) => 
     if (!conv) return void res.status(404).json({ error: "Not found" });
     const ids = conv.participantIds as string[];
     if (!ids.includes(req.user.id)) return void res.status(403).json({ error: "Forbidden" });
+    if (conv.type !== "dm") return void res.status(400).json({ error: "Not a direct-message request" });
+    if (await dmConversationIsBlocked(conv, req.user.id)) {
+      return void res.status(403).json({ error: "This conversation is unavailable" });
+    }
     if (conv.requestedBy === req.user.id) return void res.status(400).json({ error: "Cannot accept your own request" });
     const [updated] = await db
       .update(conversationsTable)
@@ -158,6 +195,10 @@ router.post("/conversations/:id/decline", async (req: Request, res: Response) =>
     if (!conv) return void res.status(404).json({ error: "Not found" });
     const ids = conv.participantIds as string[];
     if (!ids.includes(req.user.id)) return void res.status(403).json({ error: "Forbidden" });
+    if (conv.type !== "dm") return void res.status(400).json({ error: "Not a direct-message request" });
+    if (await dmConversationIsBlocked(conv, req.user.id)) {
+      return void res.status(403).json({ error: "This conversation is unavailable" });
+    }
     if (conv.requestedBy === req.user.id) return void res.status(400).json({ error: "Cannot decline your own request" });
     await db.delete(conversationsTable).where(eq(conversationsTable.id, convId));
     res.json({ ok: true });
@@ -173,6 +214,16 @@ router.get("/conversations/:id/messages", async (req: Request, res: Response) =>
     if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
     const convId = parseInt(req.params["id"] as string, 10);
     if (isNaN(convId)) return void res.status(400).json({ error: "Invalid conversation ID" });
+    const [conv] = await db
+      .select({ id: conversationsTable.id, type: conversationsTable.type, participantIds: conversationsTable.participantIds })
+      .from(conversationsTable)
+      .where(eq(conversationsTable.id, convId))
+      .limit(1);
+    if (!conv) return void res.status(404).json({ error: "Conversation not found" });
+    if (!conversationHasParticipant(conv, req.user.id)) return void res.status(403).json({ error: "Forbidden" });
+    if (await dmConversationIsBlocked(conv, req.user.id)) {
+      return void res.status(403).json({ error: "This conversation is unavailable" });
+    }
     const msgs = await db
       .select()
       .from(messagesTable)
@@ -200,6 +251,11 @@ router.post("/conversations/:id/messages", async (req: Request, res: Response) =
       .from(conversationsTable)
       .where(eq(conversationsTable.id, convId))
       .limit(1);
+    if (!conv) return void res.status(404).json({ error: "Conversation not found" });
+    if (!conversationHasParticipant(conv, req.user.id)) return void res.status(403).json({ error: "Forbidden" });
+    if (await dmConversationIsBlocked(conv, req.user.id)) {
+      return void res.status(403).json({ error: "This conversation is unavailable" });
+    }
     if (conv?.requestStatus === "pending" && conv.requestedBy !== req.user.id) {
       return void res.status(403).json({ error: "Message request not yet accepted", code: "REQUEST_PENDING" });
     }
