@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   MessageSquare, Heart, Users, Calendar, Globe, ChevronDown,
   X, Image as ImageIcon, Video, Hash, MapPin, Send, Loader2,
-  Plus, AlertCircle, Smile, MoreHorizontal, Bookmark, Flag, Trash2,
+  Plus, AlertCircle, Smile, MoreHorizontal, Flag, Trash2,
   TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2
 } from "lucide-react";
 import { CommentsDialog } from "@/components/community/CommentsDialog";
@@ -127,6 +127,7 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(post.hasContentWarning ?? false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
+  const { toast } = useToast();
 
   const handleLike = () => {
     setLiked(l => !l);
@@ -141,6 +142,33 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
       body: JSON.stringify({ commentPolicy: next }),
     });
     if (response.ok) setCommentPolicy(next);
+  };
+
+  const reportPost = async () => {
+    const description = window.prompt("Tell us what needs review (optional):");
+    if (description === null) return;
+    const response = await authenticatedFetch(`${BASE}api/content-reports`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetType: "post", targetId: post.id, reason: "other", description: description.trim() || undefined }),
+    });
+    if (!response.ok) {
+      toast({ title: "Could not submit report", description: "Please try again.", variant: "destructive" });
+      return;
+    }
+    setMenuOpen(false);
+    toast({ title: "Report submitted", description: "Thank you. Our moderation team will review it." });
+  };
+
+  const blockAuthor = async () => {
+    if (!post.authorId || !window.confirm(`Block ${post.authorName}? Their content will no longer appear in your feed.`)) return;
+    const response = await authenticatedFetch(`${BASE}api/users/${encodeURIComponent(post.authorId)}/block`, { method: "POST" });
+    if (!response.ok) {
+      toast({ title: "Could not block member", description: "Please try again.", variant: "destructive" });
+      return;
+    }
+    setMenuOpen(false);
+    toast({ title: "Member blocked", description: "Their content will no longer appear in your feed." });
   };
 
   if (showWarning) {
@@ -188,12 +216,14 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
           </button>
           {menuOpen && (
             <div className="absolute right-0 top-8 bg-white border border-[#3A1F0E]/10 rounded-xl shadow-xl z-10 min-w-36 overflow-hidden">
-              <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-[#FAF6EF] text-[#3A1F0E]/70" onClick={() => setMenuOpen(false)}>
-                <Bookmark className="w-3.5 h-3.5" /> Save Post
-              </button>
-              <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-[#FAF6EF] text-[#3A1F0E]/70" onClick={() => setMenuOpen(false)}>
+              <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-[#FAF6EF] text-[#3A1F0E]/70" onClick={() => void reportPost()}>
                 <Flag className="w-3.5 h-3.5" /> Report
               </button>
+              {post.authorId && post.authorId !== currentUserId && (
+                <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-600" onClick={() => void blockAuthor()}>
+                  <Shield className="w-3.5 h-3.5" /> Block member
+                </button>
+              )}
               {post.authorId === currentUserId && (
                 <>
                   <p className="border-t border-[#3A1F0E]/8 px-4 pt-2 text-[10px] font-bold uppercase tracking-wide text-[#3A1F0E]/40">Who can comment</p>
@@ -840,7 +870,11 @@ export default function Community() {
   const handleLike = async (postId: string) => {
     if (!isAuthenticated) { toast({ title: "Sign in to like posts" }); return; }
     try {
-      await authenticatedFetch(`${BASE}api/community/posts/${postId}/upvote`, { method: "POST" });
+      await authenticatedFetch(`${BASE}api/community/posts/${postId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ direction: "up" }),
+      });
     } catch { /* ignore */ }
   };
 
