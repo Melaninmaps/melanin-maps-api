@@ -373,6 +373,7 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
         createdAt: usersTable.createdAt,
         memberType: usersTable.memberType,
         isPrivate: usersTable.isPrivate,
+        allowDm: usersTable.allowDm,
       })
       .from(usersTable)
       .where(eq(usersTable.id, targetId))
@@ -462,7 +463,7 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
       }
     }
 
-    const { isPrivate, ...profile } = user;
+    const { isPrivate, allowDm, ...profile } = user;
     res.json({
       user: profile,
       profile,
@@ -473,6 +474,9 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
       isFollowing,
       followStatus,
       canSeeContent,
+      // This is a display hint only. POST /api/conversations repeats the
+      // recipient preference and block checks before creating a DM.
+      canReceiveDirectMessages: Boolean(callerId && callerId !== targetId && allowDm),
     });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/:userId/profile error");

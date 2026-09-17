@@ -88,6 +88,8 @@ import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
 import SubmitEvent from "@/pages/submit-event";
 import LocationShareView from "@/pages/location-share-view";
+import MemberProfile from "@/pages/member-profile";
+import Messages from "@/pages/messages";
 
 const BASE = import.meta.env.BASE_URL;
 const ROUTER_BASE = (() => {
@@ -291,6 +293,13 @@ function Router() {
       </Route>
       <Route path="/admin/business-review">
         <ProtectedRoute><AdminBusinessReview /></ProtectedRoute>
+      </Route>
+
+      <Route path="/members/:userId">
+        <Layout><PreLaunchRoute><MemberProfile /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/messages">
+        <Layout><PreLaunchRoute><Messages /></PreLaunchRoute></Layout>
       </Route>
 
       {/* ── Member discovery — authentication required ───────────────────────── */}
