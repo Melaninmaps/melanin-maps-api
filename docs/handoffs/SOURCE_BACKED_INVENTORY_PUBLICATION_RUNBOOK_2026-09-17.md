@@ -31,6 +31,23 @@ data/founder-imports/2026-09-17-source-backed-inventory-review/
 
 The review-only manifest is checksum-pinned by `source-backed-inventory-review-summary.json`. Do not edit the manifest after link verification. Rebuild it and re-run link verification if research records need correction.
 
+## Adding a later city-research batch
+
+The city research collector writes one candidate file per market. Audit every city file before combining it with the baseline bundle. The audit rejects rows that lack a physical address, a source URL, a social destination, or an allowed record kind. The filter places rejected rows in a separate held manifest and never alters the original city files.
+
+```bash
+pnpm --filter @workspace/scripts run audit-55-city-social-recovery
+pnpm --filter @workspace/scripts run filter-55-city-social-recovery
+
+pnpm --filter @workspace/scripts exec tsx ./src/prepare-source-backed-inventory-review.ts \
+  --input "$PWD/data/founder-imports/2026-09-17-10k-expansion/source-backed-domestic-candidates.jsonl" \
+  --input "$PWD/data/founder-imports/2026-09-17-international-2500-expansion/source-backed-international-candidates.jsonl" \
+  --input "$PWD/data/founder-imports/2026-09-17-55-city-social-recovery/strict-city-social-recovery-candidates.jsonl" \
+  --output-dir "$PWD/data/founder-imports/2026-09-17-all-source-backed-review"
+```
+
+Run the official-destination health verifier against the newly generated combined manifest. Then use that new manifest, summary, and health report in the same dry-run and local-review staging procedure below. Do not append raw city files directly to the production database.
+
 ## Required release code
 
 Merge the implementation that adds these files before staging the package:
