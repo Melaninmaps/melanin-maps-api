@@ -1,5 +1,5 @@
 {
-  "lastIosSubmitted": 105,
+  "lastIosSubmitted": 107,
   "lastAndroidSubmitted": 73,
   "iosEasBuildId": "7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
   "iosEasSubmissionId": "c5193c56-2e49-450f-ab43-194a4baf52e8",
@@ -9,5 +9,5 @@
   "androidArtifactUrl": "https://expo.dev/artifacts/eas/3kdQyf7pgJgqCpZM4Yat2mG4dYV69_jA-TYGtyxwUJ4.aab",
   "androidSubmissionStatus": "BUILD_COMPLETE_SUBMIT_PENDING_CREDENTIAL",
   "sourceCommit": "4af512bc70e030beafd4f256aa8034be0c833bc8",
-  "notes": "iOS Build 105 was uploaded to App Store Connect/TestFlight with existing remote signing credentials. Android VC73 is the last build recorded here; confirm Google Play's current highest version code before submitting a new Android bundle."
+  "notes": "iOS builds 106 and 107 already exist in EAS/App Store Connect history. Build 108 is reserved for the next production iOS archive so it can be uploaded without a duplicate build-number rejection. Android VC73 is the last locally recorded Android submission; confirm Google Play's current highest version code before submitting a new Android bundle."
 }
