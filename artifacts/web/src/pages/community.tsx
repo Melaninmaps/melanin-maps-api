@@ -186,15 +186,22 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
     <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden hover:shadow-sm transition-shadow">
       {/* Header */}
       <div className="flex items-start gap-3 p-4 pb-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden"
-          style={{ backgroundColor: post.authorColor }}>
-          {post.authorProfileImageUrl
-            ? <img src={post.authorProfileImageUrl} alt="" className="w-full h-full object-cover" />
-            : post.authorInitials}
-        </div>
+        {post.authorId ? (
+          <Link href={`/members/${encodeURIComponent(post.authorId)}`} aria-label={`View ${post.authorName}'s profile`} className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#CA922B]" style={{ backgroundColor: post.authorColor }}>
+            {post.authorProfileImageUrl
+              ? <img src={post.authorProfileImageUrl} alt="" className="w-full h-full object-cover" />
+              : post.authorInitials}
+          </Link>
+        ) : (
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden" style={{ backgroundColor: post.authorColor }}>
+            {post.authorProfileImageUrl
+              ? <img src={post.authorProfileImageUrl} alt="" className="w-full h-full object-cover" />
+              : post.authorInitials}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-sm text-[#2B1507] truncate">{post.authorName}</span>
+            {post.authorId ? <Link href={`/members/${encodeURIComponent(post.authorId)}`} className="font-bold text-sm text-[#2B1507] truncate hover:underline">{post.authorName}</Link> : <span className="font-bold text-sm text-[#2B1507] truncate">{post.authorName}</span>}
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
               style={{ backgroundColor: "#CA922B18", color: "#CA922B" }}>
               {categoryLabel(post.category)}
