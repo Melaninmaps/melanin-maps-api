@@ -42,6 +42,7 @@ type CandidateStatus =
 type CandidateTargetKind =
   | "business"
   | "community_resource"
+  | "cultural_place"
   | "regulated_review"
   | "manual_review"
   | "internal_only";
@@ -75,7 +76,7 @@ export interface DirectoryImportCandidate {
   dedupe_key: string;
   name: string;
   city: string;
-  state: string;
+  state: string | null;
   category: string;
   subcategory: string | null;
   cultural_specialty: string | null;
@@ -203,6 +204,7 @@ const VALID_STATUSES = new Set<CandidateStatus>([
 const VALID_TARGET_KINDS = new Set<CandidateTargetKind>([
   "business",
   "community_resource",
+  "cultural_place",
   "regulated_review",
   "manual_review",
   "internal_only",
@@ -1174,6 +1176,10 @@ export function evaluatePublicationHolds(
     holds.push(
       "Destination must be resolved before this candidate can be published.",
     );
+  if (candidate.target_kind === "cultural_place")
+    holds.push(
+      "Cultural places remain in the separate cultural review queue and cannot be published as businesses or Resources.",
+    );
   if (candidate.matched_business_id && body.action !== "link_existing") {
     holds.push(
       "A canonical business match exists; use link_existing rather than creating a duplicate.",
@@ -1676,7 +1682,7 @@ async function publishBusiness(
     [
       businessId,
       candidate.city.trim().toLowerCase(),
-      candidate.state.trim().toUpperCase(),
+      candidate.state?.trim().toUpperCase() ?? null,
       coordinates.latitude,
       coordinates.longitude,
     ],
@@ -1884,7 +1890,7 @@ async function publishResource(
     [
       resourceId,
       candidate.city.trim().toLowerCase(),
-      candidate.state.trim().toUpperCase(),
+      candidate.state?.trim().toUpperCase() ?? null,
       coordinates?.latitude ?? null,
       coordinates?.longitude ?? null,
     ],
