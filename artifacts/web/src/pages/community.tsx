@@ -126,11 +126,21 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
   const [likes, setLikes] = useState(post.upvotes);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(post.hasContentWarning ?? false);
+  const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
 
   const handleLike = () => {
     setLiked(l => !l);
     setLikes(l => liked ? l - 1 : l + 1);
     onLike(post.id);
+  };
+
+  const updateCommentPolicy = async (next: "everyone" | "followers" | "off") => {
+    const response = await authenticatedFetch(`${BASE}api/community/posts/${post.id}/comment-policy`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commentPolicy: next }),
+    });
+    if (response.ok) setCommentPolicy(next);
   };
 
   if (showWarning) {
@@ -185,10 +195,19 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
                 <Flag className="w-3.5 h-3.5" /> Report
               </button>
               {post.authorId === currentUserId && (
-                <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-600"
-                  onClick={() => { setMenuOpen(false); onDelete(post.id); }}>
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                </button>
+                <>
+                  <p className="border-t border-[#3A1F0E]/8 px-4 pt-2 text-[10px] font-bold uppercase tracking-wide text-[#3A1F0E]/40">Who can comment</p>
+                  {(["everyone", "followers", "off"] as const).map((policy) => (
+                    <button key={policy} className="w-full px-4 py-2 text-left text-sm text-[#3A1F0E]/70 hover:bg-[#FAF6EF]"
+                      onClick={() => { void updateCommentPolicy(policy); setMenuOpen(false); }}>
+                      {policy === "everyone" ? "Everyone" : policy === "followers" ? "Followers only" : "Turn off comments"}{commentPolicy === policy ? " ✓" : ""}
+                    </button>
+                  ))}
+                  <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-red-50 text-red-600"
+                    onClick={() => { setMenuOpen(false); onDelete(post.id); }}>
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </>
               )}
             </div>
           )}
@@ -234,10 +253,10 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
           <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
           <span>{likes > 0 ? likes : ""}</span>
         </button>
-        <button data-testid={`community-post-comments-${post.id}`} onClick={() => onOpenComments(post)}
-          className="flex items-center gap-1.5 text-sm font-medium text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors">
+        <button data-testid={`community-post-comments-${post.id}`} onClick={() => onOpenComments(post)} disabled={commentPolicy === "off"}
+          className="flex items-center gap-1.5 text-sm font-medium text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors disabled:cursor-not-allowed disabled:opacity-60">
           <MessageSquare className="w-4 h-4" />
-          <span>{post.commentsCount > 0 ? post.commentsCount : "Comment"}</span>
+          <span>{commentPolicy === "off" ? "Comments off" : post.commentsCount > 0 ? post.commentsCount : "Comment"}</span>
         </button>
       </div>
     </div>
@@ -707,7 +726,9 @@ function MemberCard({ m }: { m: MemberResult }) {
 }
 
 // ── Main Community Page ────────────────────────────────────────────────────
-const TABS = ["Feed", "Events", "Groups"] as const;
+// Community is intentionally limited to the social feed and groups. Events
+// retain their dedicated route, while Library carries urgent updates.
+const TABS = ["Feed", "Groups"] as const;
 type Tab = typeof TABS[number];
 
 export default function Community() {
@@ -1042,7 +1063,6 @@ export default function Community() {
           </>
         )}
 
-        {!searchActive && activeTab === "Events" && <EventsTab />}
         {!searchActive && activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
       </div>
 

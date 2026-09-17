@@ -41,7 +41,9 @@ import { RecommendationNudge } from "@/components/RecommendationNudge";
 import { parseMediaUrls } from "@/lib/mediaUrls";
 import { detectSocialVideoPlatform } from "@workspace/constants";
 
-const TABS = ["Feed", "What's Happening", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
+// Community is the social feed. Urgent updates live in Library, events retain
+// their dedicated route, and Circles belong to a member's Profile.
+const TABS = ["Feed", "Groups", "Challenges 🏆", "Resources"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -683,7 +685,7 @@ export default function CommunityScreen() {
           style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert("Search Community", "Use the category filters below to browse groups, events, and posts by topic.");
+            Alert.alert("Search Community", "Use the options below to browse groups and posts by topic.");
           }}
         >
           <Feather name="search" size={18} color={colors.foreground} />
