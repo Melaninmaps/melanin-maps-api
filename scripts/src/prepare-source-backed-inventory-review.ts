@@ -327,7 +327,9 @@ async function main(): Promise<void> {
   let sourceRow = 0;
 
   for (const { path, rows } of manifestRows) {
-    const input = basename(path);
+    const input = path.startsWith(`${root}/`)
+      ? path.slice(root.length + 1)
+      : basename(path);
     for (const raw of rows) {
       sourceRow += 1;
       const result = parseRecord(raw, input, sourceRow);
