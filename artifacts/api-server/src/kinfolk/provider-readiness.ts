@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import {
+  openai,
+  resolveOpenAIConfiguration,
+} from "@workspace/integrations-openai-ai-server";
 import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 import { canonicalizeContextualUrl } from "./contextual-url";
 import { inspectVoiceAudio } from "./voice/audioInspection";
@@ -53,10 +56,7 @@ function readinessDependencies(
 }
 
 function openAiConfigurationPresent(environment: NodeJS.ProcessEnv): boolean {
-  return Boolean(
-    environment.AI_INTEGRATIONS_OPENAI_API_KEY?.trim()
-    && environment.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim(),
-  );
+  return resolveOpenAIConfiguration(environment) !== null;
 }
 
 export const KINFOLK_READINESS_FIXTURE_RELATIVE_PATH = "assets/readiness/kinfolk-readiness-voice.wav";
