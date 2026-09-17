@@ -189,6 +189,15 @@ describe("local business subject classification", () => {
   it("does not turn a general question about books into a store search", () => {
     expect(deriveBusinessSubject("Tell me about books written in Atlanta GA")).toBeNull();
   });
+
+  it.each(["braider", "braiders", "hair braiding", "knotless braids", "protective styles"])(
+    "recognizes %s as a local braider request",
+    (variant) => {
+      const subject = deriveBusinessSubject(`Find a ${variant} near me in Philadelphia PA`);
+      expect(subject).toMatchObject({ key: "braider", label: "braiders and protective-style specialists" });
+      expect(subject?.searchTerms).toEqual(expect.arrayContaining(["braider", "braiding", "braids", "protective styles"]));
+    },
+  );
 });
 
 describe("deterministic local business discovery", () => {

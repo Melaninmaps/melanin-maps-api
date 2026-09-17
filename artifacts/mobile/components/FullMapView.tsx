@@ -232,6 +232,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(true);
+  const [memberLocation, setMemberLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
@@ -290,7 +291,13 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const { user } = useAuth();
   const pollingEnabled = isFocused && user !== null;
 
-  const { businesses } = useBusinesses();
+  // GPS remains on-device.  Once foreground permission is granted, use it only
+  // to ask the canonical business endpoint for nearby, relevance-ranked pins.
+  const { businesses } = useBusinesses({
+    latitude: memberLocation?.latitude ?? null,
+    longitude: memberLocation?.longitude ?? null,
+    radiusMiles: 25,
+  });
 
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
@@ -408,6 +415,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
           ),
         ]);
         const acquired = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+        setMemberLocation(acquired);
         if (mapReadyRef.current) {
           mapRef.current?.animateToRegion({ ...acquired, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 800);
         } else {
@@ -578,6 +586,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
           setTimeout(() => reject(new Error("location timeout")), 8_000),
         ),
       ]) as Awaited<ReturnType<typeof Location.getCurrentPositionAsync>>;
+      setMemberLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       mapRef.current?.animateToRegion(
         { latitude: loc.coords.latitude, longitude: loc.coords.longitude, latitudeDelta: 0.12, longitudeDelta: 0.12 },
         600,

@@ -54,7 +54,7 @@ describe("routed canonical business directory", () => {
     expect(directory).toContain("requestIdRef.current");
     expect(directory).toContain("queryKeyRef.current");
     expect(directory).toContain("Load more (");
-    expect(directory).toContain("Community/founder-listed · Unclaimed · Not verified");
+    expect(directory).toContain("Unclaimed · Not verified");
     expect(directory).toContain("Community-reported minority-owned · Not verified");
     expect(directory).toContain("Community-reported non-minority-owned · Not verified");
     expect(directory).toContain("publish immediately after software checks");

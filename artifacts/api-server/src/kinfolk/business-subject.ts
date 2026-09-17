@@ -3,6 +3,7 @@ export type BusinessSubjectKey =
   | "restaurant"
   | "cafe"
   | "barber"
+  | "braider"
   | "salon"
   | "grocery"
   | "laundromat"
@@ -68,6 +69,13 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     label: "barbershops",
     match: /\b(?:barbers?|barber[ -]?shops?)\b/i,
     searchTerms: ["barber", "barbershop", "barber shop"],
+  },
+  {
+    key: "braider",
+    label: "braiders and protective-style specialists",
+    match: /\b(?:braiders?|braiding|box braids?|knotless braids?|feed[ -]?in braids?|cornrows?|protective styles?)\b/i,
+    searchTerms: ["braider", "braiding", "braids", "protective styles", "natural hair"],
+    priority: 20,
   },
   {
     key: "salon",

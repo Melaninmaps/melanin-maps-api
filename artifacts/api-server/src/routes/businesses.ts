@@ -409,6 +409,34 @@ router.get("/businesses", async (req: Request, res: Response) => {
       callerPrefs.length > 0 &&
       callerPrefs.some((p) => (b.ownershipDesignations ?? []).includes(p));
 
+    // Search intent is ranked before membership promotion. Exact business names
+    // lead; reviewed service tags and descriptions follow. For a "near me"
+    // request, distance breaks relevance ties so a far-away restaurant cannot
+    // outrank an equally relevant nearby result.
+    const searchText = typeof search === "string" ? search.trim().toLowerCase() : "";
+    const relevanceScore = (business: typeof businesses[number]) => {
+      if (!searchText) return 0;
+      const name = String(business.name ?? "").toLowerCase();
+      const haystack = [business.category, business.subcategory, business.description, JSON.stringify(business.tags ?? [])]
+        .join(" ")
+        .toLowerCase();
+      if (name === searchText) return 100;
+      if (name.startsWith(searchText)) return 90;
+      if (name.includes(searchText)) return 80;
+      return haystack.includes(searchText) ? 60 : 0;
+    };
+    const distanceMiles = (business: typeof businesses[number]) => {
+      if (!hasGeoFilter || business.latitude == null || business.longitude == null) return Number.POSITIVE_INFINITY;
+      const lat = Number(business.latitude);
+      const lng = Number(business.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return Number.POSITIVE_INFINITY;
+      const toRadians = (value: number) => (value * Math.PI) / 180;
+      const deltaLat = toRadians(lat - geoLat!);
+      const deltaLng = toRadians(lng - geoLng!);
+      const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(toRadians(geoLat!)) * Math.cos(toRadians(lat)) * Math.sin(deltaLng / 2) ** 2;
+      return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
     const annotated = businesses
       .map((b) => ({
         ...b,
@@ -417,21 +445,26 @@ router.get("/businesses", async (req: Request, res: Response) => {
         culturalMatch: matchesPref(b as any),
       }))
       .sort((a, b) => {
-        // 1. Active promotions / featured first (paid bump always wins top slot)
+        // 1. Search relevance and proximity always come before promotion.
+        const relevanceDifference = relevanceScore(b) - relevanceScore(a);
+        if (relevanceDifference !== 0) return relevanceDifference;
+        const distanceDifference = distanceMiles(a) - distanceMiles(b);
+        if (Number.isFinite(distanceDifference) && distanceDifference !== 0) return distanceDifference;
+        // 2. Active promotions / featured first only among equally relevant results.
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        // 2. Business membership tier: premium > growth > community
+        // 3. Business membership tier: premium > growth > community
         //    Even promoted businesses show real reviews — tier only affects slot order
         const TIER_RANK: Record<string, number> = { premium: 3, growth: 2, community: 1 };
         const aTier = TIER_RANK[(a as any).businessStatus] ?? 1;
         const bTier = TIER_RANK[(b as any).businessStatus] ?? 1;
         if (bTier !== aTier) return bTier - aTier;
-        // 3. Cultural preference match
+        // 4. Cultural preference match
         if (a.culturalMatch && !b.culturalMatch) return -1;
         if (!a.culturalMatch && b.culturalMatch) return 1;
-        // 4. Founding members
+        // 5. Founding members
         if (b.foundingBusiness !== a.foundingBusiness) return b.foundingBusiness ? 1 : -1;
-        // 5. Popularity: confidence score + rating × log(reviewCount+1) boost
+        // 6. Popularity: confidence score + rating × log(reviewCount+1) boost
         const aScore = (a.confidenceScore ?? 0) + Number((a as any).rating ?? 0) * Math.log(Number((a as any).reviewCount ?? 0) + 1) * 0.1;
         const bScore = (b.confidenceScore ?? 0) + Number((b as any).rating ?? 0) * Math.log(Number((b as any).reviewCount ?? 0) + 1) * 0.1;
         return bScore - aScore;

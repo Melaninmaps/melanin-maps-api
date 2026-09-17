@@ -9,6 +9,9 @@ const BUSINESS_LOAD_ERROR = "Unable to load businesses. Check your connection an
 interface UseBusinessesOptions {
   search?: string;
   category?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  radiusMiles?: number;
 }
 
 interface UseBusinessesResult {
@@ -91,7 +94,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
 }
 
 export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinessesResult {
-  const { search = "", category = "All" } = options;
+  const { search = "", category = "All", latitude = null, longitude = null, radiusMiles = 25 } = options;
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +110,11 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
       const params = new URLSearchParams();
       if (search.length > 0) params.set("search", search);
       if (category && category !== "All") params.set("category", category);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        params.set("lat", String(latitude));
+        params.set("lng", String(longitude));
+        params.set("radius", String(Math.min(100, Math.max(1, radiusMiles))));
+      }
       const qs = params.toString();
       const url = `${apiBase}/api/businesses${qs ? `?${qs}` : ""}`;
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
@@ -138,7 +146,7 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [search, category]);
+  }, [search, category, latitude, longitude, radiusMiles]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);

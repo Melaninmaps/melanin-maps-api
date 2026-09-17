@@ -318,7 +318,7 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#3A1F0E]/65">{record.description}</p>
       )}
       <p className="mt-4 text-xs font-semibold text-[#8D5C17]">
-        {unclaimed ? "Community/founder-listed · Unclaimed · Not verified" : record.verified ? "Verified listing" : "Not verified"}
+        {unclaimed ? "Unclaimed · Not verified" : record.verified ? "Verified listing" : "Not verified"}
       </p>
       {unclaimed && (
         <p className="mt-1 text-xs text-[#3A1F0E]/65">

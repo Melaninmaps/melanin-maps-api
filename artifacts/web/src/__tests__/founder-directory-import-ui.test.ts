@@ -29,7 +29,7 @@ describe("founder directory review UI", () => {
 
   it("labels businesses unclaimed/not verified and resources as a separate destination", () => {
     const page = source("../pages/founder-directory-imports.tsx");
-    expect(page).toContain("Community/founder-listed • Unclaimed • Not verified");
+    expect(page).toContain("Unclaimed • Not verified");
     expect(page).toContain("Resources (never Businesses)");
     expect(page).toContain("Publish to Resources");
     expect(page).toContain("Publish unclaimed listing");

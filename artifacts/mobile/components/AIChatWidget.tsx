@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
@@ -101,7 +102,25 @@ async function getVoiceMode(token: string | null): Promise<string> {
   return "community";
 }
 
-async function sendToKinfolk(message: string, token: string | null): Promise<{
+async function nearbyCityHint(message: string): Promise<string | undefined> {
+  // Ask only when the member explicitly says "near me" or "nearby". The exact
+  // device coordinates are never included in the Kinfolk API request.
+  if (!/\b(?:near me|nearby|closest)\b/i.test(message) || Platform.OS === "web") return undefined;
+  try {
+    let permission = await Location.getForegroundPermissionsAsync();
+    if (permission.status !== "granted") permission = await Location.requestForegroundPermissionsAsync();
+    if (permission.status !== "granted") return undefined;
+    const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    const [place] = await Location.reverseGeocodeAsync(position.coords);
+    const city = place?.city?.trim();
+    const region = place?.region?.trim();
+    return city && region ? `${city}, ${region}` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function sendToKinfolk(message: string, token: string | null, cityHint?: string): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
   followUpSuggestions: string[];
@@ -120,7 +139,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
   const res = await fetch(`${base}/api/kinfolk/chat`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ message, sessionId, voiceMode }),
+    body: JSON.stringify({ message, sessionId, voiceMode, cityHint }),
   });
   if (!res.ok) {
     // Extract server error message so the catch block can surface it to the user
@@ -667,7 +686,7 @@ export function AIChatWidget() {
         sourceNote,
         sources,
         libraryAction,
-      } = await sendToKinfolk(text, token);
+      } = await sendToKinfolk(text, token, await nearbyCityHint(text));
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {

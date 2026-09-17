@@ -790,7 +790,7 @@ export default function BusinessDetail() {
                 <span>{business.city}, {business.state}</span>
               </div>
               {(business as any).listingStatus === "live_unclaimed" && (
-                <p className="mt-3 text-sm font-semibold text-[#F5EBD8]">Community/founder-listed · Unclaimed · Not verified</p>
+                <p className="mt-3 text-sm font-semibold text-[#F5EBD8]">Unclaimed · Not verified</p>
               )}
               {(business as any).ownershipClaim === "community_reported_minority_owned" && (
                 <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported minority-owned · Not verified</p>

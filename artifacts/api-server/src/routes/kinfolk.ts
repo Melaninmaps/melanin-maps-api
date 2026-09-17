@@ -2731,6 +2731,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   message: string;
   vibes: string[];
   memoryEnabled: boolean;
+  cityHint?: string;
 }): Promise<boolean> {
   let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
   if (input.memoryEnabled && input.sessionId && input.req.user?.id) {
@@ -2750,7 +2751,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     }
   }
 
-  const location = resolveTurnGeography(input.message, currentSession?.destination ?? null);
+  // A mobile "near me" request can provide a reverse-geocoded city/region only.
+  // Coordinates never enter this chat route or the saved conversation payload.
+  const location = resolveTurnGeography(input.message, input.cityHint ?? currentSession?.destination ?? null);
   const subject = deriveBusinessSubject(input.message);
   const decision = classifyKinfolkRequest(input.message, location?.city ?? null);
   if (decision.route !== "business_discovery" || !location?.state || !subject) return false;
@@ -2927,12 +2930,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (!res.writableEnded) abortDisconnectedRequest();
   });
 
-  const { sessionId, message, vibes = [], voiceMode = "community", imageUrls = [] } = req.body as {
+  const { sessionId, message, vibes = [], voiceMode = "community", imageUrls = [], cityHint } = req.body as {
     sessionId?: string;
     message: string;
     vibes?: string[];
     voiceMode?: string;
     imageUrls?: unknown;
+    cityHint?: unknown;
   };
 
   if (!message?.trim()) {
@@ -3016,6 +3020,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     message,
     vibes,
     memoryEnabled,
+    cityHint: typeof cityHint === "string" && cityHint.length <= 120 ? cityHint.trim() : undefined,
   })) return;
   if (contextualRequestAbort.signal.aborted) return;
 

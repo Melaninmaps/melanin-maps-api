@@ -728,7 +728,7 @@ export default function BusinessDetailScreen() {
                 />
               </View>
               {business.listingStatus === "live_unclaimed" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community/founder-listed · Unclaimed · Not verified</Text>
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Unclaimed · Not verified</Text>
               )}
               {business.ownershipClaim === "community_reported_minority_owned" && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
