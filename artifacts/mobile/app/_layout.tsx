@@ -15,7 +15,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter, usePathname, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, Animated, AppState, type AppStateStatus, Platform, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Animated,
+  AppState,
+  type AppStateStatus,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProviderWrapper } from "@/components/KeyboardProviderWrapper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -35,7 +43,12 @@ import {
   checkAndSendSavedCrash,
   reportErrorBoundary,
 } from "@/lib/crashLogger";
-import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
+import {
+  FRESH_LOGIN_KEY,
+  getBiometricCapabilities,
+  isBiometricsEnabled,
+  enableBiometrics,
+} from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { TesterReportButton } from "@/components/TesterReportButton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -61,7 +74,9 @@ installCrashLogger();
 // intentionally absent (removed Build 100 — pre-JS native crash).
 // If this appears in Railway logs / Expo DevTools after a preview build, the
 // build launched cleanly. Task #206 — confirm before testers receive the build.
-console.info("[MWM] Crash logger active. Sentry native SDK: intentionally disabled. Build launched cleanly.");
+console.info(
+  "[MWM] Crash logger active. Sentry native SDK: intentionally disabled. Build launched cleanly.",
+);
 
 function PushNotificationRegistrar() {
   useEffect(() => {
@@ -69,19 +84,31 @@ function PushNotificationRegistrar() {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         if (!token) return;
-        const Notifications = await import("expo-notifications").catch(() => null);
+        const Notifications = await import("expo-notifications").catch(
+          () => null,
+        );
         if (!Notifications) return;
 
         const perms: any = await Notifications.requestPermissionsAsync();
         if (!perms?.granted && perms?.status !== "granted") return;
-        const pushToken = await Notifications.getExpoPushTokenAsync({ projectId: "0f873107-7787-46ab-9a04-685c2a6756b1" }).catch(() => null);
+        const pushToken = await Notifications.getExpoPushTokenAsync({
+          projectId: "0f873107-7787-46ab-9a04-685c2a6756b1",
+        }).catch(() => null);
         if (!pushToken?.data) return;
-        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const apiBase = process.env.EXPO_PUBLIC_DOMAIN
+          ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+          : "";
         if (!apiBase) return;
         await fetch(`${apiBase}/api/notifications/register`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ token: pushToken.data, platform: Platform.OS }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            token: pushToken.data,
+            platform: Platform.OS,
+          }),
         });
       } catch {}
     }
@@ -96,9 +123,17 @@ function BrandedLoader() {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.08, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
-      ])
+        Animated.timing(pulse, {
+          toValue: 1.08,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
     ).start();
   }, [pulse]);
 
@@ -127,9 +162,17 @@ function Dot({ delay }: { delay: number }) {
     Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
-        Animated.timing(op, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.timing(op, { toValue: 0.25, duration: 400, useNativeDriver: true }),
-      ])
+        Animated.timing(op, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(op, {
+          toValue: 0.25,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]),
     ).start();
   }, [op, delay]);
 
@@ -146,7 +189,12 @@ const loader = StyleSheet.create({
   },
   logo: { width: 160, height: 160 },
   dotsRow: { flexDirection: "row", gap: 10 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "rgba(251,247,240,0.9)" },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(251,247,240,0.9)",
+  },
 });
 
 // RevenueCat initialization disabled for v1.0 free release
@@ -160,7 +208,12 @@ function BiometricEnrollmentPrompt() {
   const shownRef = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated || shownRef.current || (Platform.OS as string) === "web") return;
+    if (
+      !isAuthenticated ||
+      shownRef.current ||
+      (Platform.OS as string) === "web"
+    )
+      return;
     shownRef.current = true;
     void (async () => {
       try {
@@ -176,10 +229,15 @@ function BiometricEnrollmentPrompt() {
           `Sign in faster next time using ${label} — no password needed.`,
           [
             { text: "Not Now", style: "cancel" },
-            { text: `Enable ${label}`, onPress: () => { void enableBiometrics(label); } },
-          ]
+            {
+              text: `Enable ${label}`,
+              onPress: () => {
+                void enableBiometrics(label);
+              },
+            },
+          ],
         );
-      } catch { }
+      } catch {}
     })();
   }, [isAuthenticated]);
 
@@ -194,6 +252,7 @@ const AUTH_EXEMPT = [
   "/phone-login",
   "/forgot-password",
   "/reset-password",
+  "/set-initial-password",
   "/auth-complete",
   "/pending-approval",
   "/waitlist",
@@ -210,7 +269,11 @@ function OnboardingChecker() {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("preview=1")) return;
+    if (
+      typeof window !== "undefined" &&
+      window.location.search.includes("preview=1")
+    )
+      return;
     let active = true;
     AsyncStorage.getItem("@mapping_with_melanin_onboarding_complete")
       .then((val) => {
@@ -242,7 +305,9 @@ function AuthGate() {
       return;
     }
     // Allow auth-exempt paths through
-    if (AUTH_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    if (
+      AUTH_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + "/"))
+    ) {
       return;
     }
     // Check onboarding: only enforce auth once the user has completed onboarding
@@ -272,14 +337,36 @@ function ApprovalChecker() {
   return null;
 }
 
+// Temporary tester credentials create an authenticated session solely to let the
+// member choose a private password. Ordinary password-reset users are unaffected.
+function InitialPasswordChecker() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !user?.mustChangePassword) return;
+    if (pathname.startsWith("/set-initial-password")) return;
+    router.replace("/set-initial-password" as Href);
+  }, [isLoading, isAuthenticated, user?.mustChangePassword, pathname, router]);
+
+  return null;
+}
+
 function DobChecker() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, isAuthenticated } = useAuth();
   const SKIP_PATHS = [
-    "/onboarding", "/login", "/signup", "/dob-collection",
-    "/pending-approval", "/profile-setup", "/auth-complete",
-    "/forgot-password", "/reset-password",
+    "/onboarding",
+    "/login",
+    "/signup",
+    "/dob-collection",
+    "/pending-approval",
+    "/profile-setup",
+    "/auth-complete",
+    "/forgot-password",
+    "/reset-password",
   ];
 
   useEffect(() => {
@@ -333,9 +420,12 @@ function CrashLoggerSetup() {
     checkAndSendSavedCrash().catch(() => {});
 
     // Foreground / background transitions
-    const stateSub = AppState.addEventListener("change", (next: AppStateStatus) => {
-      setAppStateBreadcrumb(next);
-    });
+    const stateSub = AppState.addEventListener(
+      "change",
+      (next: AppStateStatus) => {
+        setAppStateBreadcrumb(next);
+      },
+    );
 
     // iOS low-memory warnings — the OS sends this before force-killing the process.
     // Capturing it lets us distinguish OOM terminations from true native crashes.
@@ -359,7 +449,14 @@ function CrashLoggerSetup() {
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: "Back", headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true }}>
+    <Stack
+      screenOptions={{
+        headerBackTitle: "Back",
+        headerShown: false,
+        gestureEnabled: true,
+        fullScreenGestureEnabled: true,
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="business/[id]"
@@ -705,80 +802,303 @@ function RootLayoutNav() {
           presentation: "card",
         }}
       />
-      <Stack.Screen name="phone-login" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="business-guide" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="business-intelligence" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="business-search" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="challenges" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="checkin" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="city-archive" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="city-story" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="community-hub" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="community-lists" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="community-verified" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="compare-neighborhoods" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="connections" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="create-journal" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="create-list" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="creator-profile" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="cultural-preference" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="destination" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="dob-collection" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="family-circle" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="family-mode" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="family-settings" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="find-friends" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="health-hub" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="journals" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="kinfolk-settings" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="kinfolk-tasks" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="knowledge-hub" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="library-article" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="library-expert" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="library-topic" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="life-journey" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="location-share" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="melanin-wrapped" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="member-connections" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="mental-health" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="mentorship" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="my-trips" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="na-aa-meetings" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="nominate-business" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen
+        name="phone-login"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="business-guide"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="business-intelligence"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="business-search"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="challenges"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="checkin"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="city-archive"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="city-story"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="community-hub"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="community-lists"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="community-verified"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="compare-neighborhoods"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="connections"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="create-journal"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="create-list"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="creator-profile"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="cultural-preference"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="destination"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="dob-collection"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="family-circle"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="family-mode"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="family-settings"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="find-friends"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="health-hub"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="journals"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="kinfolk-settings"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="kinfolk-tasks"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="knowledge-hub"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="library-article"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="library-expert"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="library-topic"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="life-journey"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="location-share"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="melanin-wrapped"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="member-connections"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="mental-health"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="mentorship"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="my-trips"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="na-aa-meetings"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="nominate-business"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
       <Stack.Screen name="+not-found" options={{ headerShown: false }} />
-      <Stack.Screen name="notification-prefs" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="officer-watch" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="opportunities" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="pending-approval" options={{ headerShown: false, presentation: "card", gestureEnabled: false }} />
-      <Stack.Screen name="privacy-policy" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="relocation-planner" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="report-intelligence" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="report-police" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="report-space" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="resolution-center" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="resources" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="safety-hub" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="safety-survey" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="safety-tip" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="smart-pathway" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="smart-search" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="submit-event" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="terms" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="travel-planner" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="travel-videos" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="trust-verification" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="upgrade" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="vibe-search" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="wellness-tracker" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="circles" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="collections" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="global-recommendations" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="group" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="groups" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="guides" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="roadmap" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="user" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="user-profile" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen
+        name="notification-prefs"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="officer-watch"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="opportunities"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="pending-approval"
+        options={{
+          headerShown: false,
+          presentation: "card",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="privacy-policy"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="relocation-planner"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="report-intelligence"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="report-police"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="report-space"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="resolution-center"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="resources"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="safety-hub"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="safety-survey"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="safety-tip"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="smart-pathway"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="smart-search"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="submit-event"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="terms"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="travel-planner"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="travel-videos"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="trust-verification"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="upgrade"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="vibe-search"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="wellness-tracker"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="circles"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="collections"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="global-recommendations"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="group"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="groups"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="guides"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="roadmap"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="user"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="user-profile"
+        options={{ headerShown: false, presentation: "card" }}
+      />
     </Stack>
   );
 }
@@ -807,32 +1127,33 @@ function RootLayout() {
 
   return (
     <ThemeProvider>
-    <SafeAreaProvider>
-      <ErrorBoundary onError={reportErrorBoundary}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <KeyboardProviderWrapper>
-                <View style={{ flex: 1 }}>
-                  <OnboardingChecker />
-                  <AuthGate />
-                  <ApprovalChecker />
-                  <DobChecker />
-                  <SessionExpiryWatcher />
-                  <BiometricEnrollmentPrompt />
-                  <PushNotificationRegistrar />
-                  <CrashLoggerSetup />
-                  <RootLayoutNav />
-                  <AIChatWidget />
-                  <OfflineBanner />
-                  <TesterReportButton />
-                </View>
-              </KeyboardProviderWrapper>
-            </GestureHandlerRootView>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+      <SafeAreaProvider>
+        <ErrorBoundary onError={reportErrorBoundary}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <KeyboardProviderWrapper>
+                  <View style={{ flex: 1 }}>
+                    <OnboardingChecker />
+                    <AuthGate />
+                    <InitialPasswordChecker />
+                    <ApprovalChecker />
+                    <DobChecker />
+                    <SessionExpiryWatcher />
+                    <BiometricEnrollmentPrompt />
+                    <PushNotificationRegistrar />
+                    <CrashLoggerSetup />
+                    <RootLayoutNav />
+                    <AIChatWidget />
+                    <OfflineBanner />
+                    <TesterReportButton />
+                  </View>
+                </KeyboardProviderWrapper>
+              </GestureHandlerRootView>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
     </ThemeProvider>
   );
 }

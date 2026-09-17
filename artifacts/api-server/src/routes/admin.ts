@@ -314,12 +314,9 @@ router.post(
       }
 
       if (!business.blackOwned) {
-        res
-          .status(403)
-          .json({
-            error:
-              "Outreach emails are only sent to minority-owned businesses.",
-          });
+        res.status(403).json({
+          error: "Outreach emails are only sent to minority-owned businesses.",
+        });
         return;
       }
 
@@ -378,12 +375,9 @@ router.post("/admin/bootstrap", async (req: Request, res: Response) => {
       .limit(1);
 
     if (existingAdmin) {
-      res
-        .status(403)
-        .json({
-          error:
-            "An admin account already exists. Contact your existing admin.",
-        });
+      res.status(403).json({
+        error: "An admin account already exists. Contact your existing admin.",
+      });
       return;
     }
 
@@ -3155,11 +3149,9 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
     // Never allow this generic spam-removal action to remove an administrator.
     if (targetUser.role === "admin") {
       await client.query("ROLLBACK");
-      res
-        .status(409)
-        .json({
-          error: "Administrator accounts cannot be deleted from this screen.",
-        });
+      res.status(409).json({
+        error: "Administrator accounts cannot be deleted from this screen.",
+      });
       return;
     }
     if (targetUser.email) {
@@ -5187,10 +5179,11 @@ router.post("/admin/set-user-password", async (req: Request, res: Response) => {
     const hash = await bcrypt.hash(password, 8);
     const r = await pool.query(
       `UPDATE users SET password_hash = $1, email_verified = true,
+        must_change_password = true,
         email_verification_token = NULL, email_verification_expires = NULL,
         failed_login_attempts = 0, locked_until = NULL
        WHERE LOWER(email) = LOWER($2)
-       RETURNING id, email, member_type, approved`,
+       RETURNING id, email, member_type, approved, must_change_password`,
       [hash, email.trim()],
     );
     if ((r.rowCount ?? 0) === 0) {
@@ -5457,14 +5450,12 @@ router.post(
           [key],
         );
         if (winner.rows[0]) {
-          res
-            .status(200)
-            .json({
-              ok: true,
-              id: winner.rows[0].id,
-              isDuplicate: true,
-              action: "EXISTING_CANONICAL",
-            });
+          res.status(200).json({
+            ok: true,
+            id: winner.rows[0].id,
+            isDuplicate: true,
+            action: "EXISTING_CANONICAL",
+          });
           return;
         }
       }
@@ -5816,11 +5807,9 @@ router.patch(
       if (action === "merge") {
         if (!item.matched_business_id) {
           await client.query("ROLLBACK");
-          res
-            .status(422)
-            .json({
-              error: "Cannot merge without a canonical matched_business_id",
-            });
+          res.status(422).json({
+            error: "Cannot merge without a canonical matched_business_id",
+          });
           return;
         }
 

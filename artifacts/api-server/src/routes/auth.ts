@@ -8,18 +8,35 @@ import {
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
-import { db, pool, usersTable, getPoolStats, memberAgreementsTable, waitlistTable, userPreferencesTable } from "@workspace/db";
+import {
+  db,
+  pool,
+  usersTable,
+  getPoolStats,
+  memberAgreementsTable,
+  waitlistTable,
+  userPreferencesTable,
+} from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
 import { normalizeHomeState } from "../lib/happening-personalization";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
 function isAdminReq(req: Request): boolean {
   const user = (req as any).user;
   return !!(user?.email && ADMIN_EMAILS.includes(user.email));
 }
 function isReservedUsername(username: string): boolean {
   const n = username.toLowerCase().replace(/_/g, "");
-  return ["mappingwithmelanin", "melaninmaps", "melaninmap", "melaninmapping", "mappingmelanin"].some(p => n.includes(p));
+  return [
+    "mappingwithmelanin",
+    "melaninmaps",
+    "melaninmap",
+    "melaninmapping",
+    "mappingmelanin",
+  ].some((p) => n.includes(p));
 }
 import {
   clearSession,
@@ -36,8 +53,16 @@ import {
   type SessionData,
 } from "../lib/auth";
 import jwt from "jsonwebtoken";
-import { encryptToken, generateClientSecret, exchangeAuthCode } from "../lib/apple";
-import { sendWelcomeEmail, sendPasswordResetEmail, generateUnsubscribeToken } from "../lib/email";
+import {
+  encryptToken,
+  generateClientSecret,
+  exchangeAuthCode,
+} from "../lib/apple";
+import {
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  generateUnsubscribeToken,
+} from "../lib/email";
 import { getUserTier, TESTING_MODE } from "../middleware/requireMembership";
 
 /**
@@ -47,7 +72,10 @@ import { getUserTier, TESTING_MODE } from "../middleware/requireMembership";
  * the entitlement is applied immediately on registration — no manual follow-up needed.
  * Non-blocking: a failure here never interrupts the registration flow.
  */
-async function applyPendingTesterEntitlement(userId: string, email: string): Promise<void> {
+async function applyPendingTesterEntitlement(
+  userId: string,
+  email: string,
+): Promise<void> {
   try {
     const normalizedEmail = email.toLowerCase().trim();
     // Atomically mark the pending record as applied and read its entitlement fields
@@ -60,10 +88,11 @@ async function applyPendingTesterEntitlement(userId: string, email: string): Pro
        SET applied_at = NOW(), applied_to_user_id = $1
        WHERE email = $2 AND applied_at IS NULL
        RETURNING tester_access_source, entitlement_ends_at, granted_by`,
-      [userId, normalizedEmail]
+      [userId, normalizedEmail],
     );
     if (result.rows[0]) {
-      const { tester_access_source, entitlement_ends_at, granted_by } = result.rows[0];
+      const { tester_access_source, entitlement_ends_at, granted_by } =
+        result.rows[0];
       await pool.query(
         `UPDATE users
          SET tester_status = 'active',
@@ -74,7 +103,7 @@ async function applyPendingTesterEntitlement(userId: string, email: string): Pro
              role = CASE WHEN role = 'user' THEN 'tester' ELSE role END,
              updated_at = NOW()
          WHERE id = $4`,
-        [tester_access_source, granted_by, entitlement_ends_at, userId]
+        [tester_access_source, granted_by, entitlement_ends_at, userId],
       );
     }
   } catch {
@@ -91,7 +120,8 @@ function maskEmail(raw: string): string {
   const local = raw.slice(0, at);
   const domain = raw.slice(at + 1);
   const maskedLocal = local.length > 2 ? `${local.slice(0, 2)}***` : "***";
-  const maskedDomain = domain.length > 4 ? `${domain.slice(0, 4)}***` : `${domain.slice(0, 2)}***`;
+  const maskedDomain =
+    domain.length > 4 ? `${domain.slice(0, 4)}***` : `${domain.slice(0, 2)}***`;
   return `${maskedLocal}@${maskedDomain}`;
 }
 function genReqId(): string {
@@ -129,7 +159,11 @@ function setOidcCookie(res: Response, name: string, value: string) {
 }
 
 function getSafeReturnTo(value: unknown): string {
-  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
     return "/";
   }
   return value;
@@ -178,7 +212,10 @@ router.get("/auth/user", async (req: Request, res: Response) => {
   // Return 401 (not 200) when unauthenticated so the mobile client's
   // fetchUser() immediately signs out instead of treating it as a transient
   // server error and retrying 3× (which caused a ~33s hang on the landing screen).
-  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   try {
     const [dbRow] = await db
       .select({
@@ -197,6 +234,7 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         trustLevel: usersTable.trustLevel,
         reputationScore: usersTable.reputationScore,
         profileSetupComplete: usersTable.profileSetupComplete,
+        mustChangePassword: usersTable.mustChangePassword,
       })
       .from(usersTable)
       .where(eq(usersTable.id, req.user!.id))
@@ -204,7 +242,10 @@ router.get("/auth/user", async (req: Request, res: Response) => {
     // Compute effective tier so mobile client can suppress upgrade prompts
     const tier = await getUserTier(req.user!.id);
 
-    const resolvedRole = (dbRow?.role ?? req.user!.role) as "user" | "tester" | "admin";
+    const resolvedRole = (dbRow?.role ?? req.user!.role) as
+      | "user"
+      | "tester"
+      | "admin";
     res.json({
       // Top-level role field for deployment-gate compatibility
       role: resolvedRole,
@@ -225,13 +266,19 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         trustLevel: dbRow?.trustLevel ?? 1,
         reputationScore: dbRow?.reputationScore ?? 0,
         profileSetupComplete: dbRow?.profileSetupComplete ?? false,
+        mustChangePassword: dbRow?.mustChangePassword ?? false,
         tier,
         testingMode: TESTING_MODE,
       },
     });
   } catch (err) {
-    req.log.error({ err }, "GET /api/auth/user: DB lookup failed, refusing to serve potentially stale role");
-    res.status(503).json({ error: "Unable to verify user data, please try again shortly" });
+    req.log.error(
+      { err },
+      "GET /api/auth/user: DB lookup failed, refusing to serve potentially stale role",
+    );
+    res
+      .status(503)
+      .json({ error: "Unable to verify user data, please try again shortly" });
   }
 });
 
@@ -314,9 +361,7 @@ router.get("/callback", async (req: Request, res: Response) => {
     return;
   }
 
-  const dbUser = await upsertUser(
-    claims as unknown as Record<string, unknown>,
-  );
+  const dbUser = await upsertUser(claims as unknown as Record<string, unknown>);
 
   const now = Math.floor(Date.now() / 1000);
   const sessionData: SessionData = {
@@ -379,7 +424,9 @@ router.get("/mobile-auth/done", (req: Request, res: Response) => {
     res.redirect("mappingwithmelanin://auth-complete?error=no_session");
     return;
   }
-  res.redirect(`mappingwithmelanin://auth-complete?token=${encodeURIComponent(sid)}`);
+  res.redirect(
+    `mappingwithmelanin://auth-complete?token=${encodeURIComponent(sid)}`,
+  );
 });
 
 router.post(
@@ -444,19 +491,38 @@ router.post(
 );
 
 router.patch("/auth/user/profile", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   try {
     const userId = req.user!.id;
     const { dateOfBirth } = req.body as { dateOfBirth?: string };
-    if (!dateOfBirth) { res.status(400).json({ error: "dateOfBirth is required" }); return; }
+    if (!dateOfBirth) {
+      res.status(400).json({ error: "dateOfBirth is required" });
+      return;
+    }
 
     const dob = new Date(dateOfBirth);
-    if (isNaN(dob.getTime())) { res.status(400).json({ error: "Invalid date format" }); return; }
+    if (isNaN(dob.getTime())) {
+      res.status(400).json({ error: "Invalid date format" });
+      return;
+    }
 
     const ageMs = Date.now() - dob.getTime();
     const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25);
-    if (ageYears < 13) { res.status(400).json({ error: "You must be at least 13 years old to use this platform." }); return; }
-    if (ageYears > 120) { res.status(400).json({ error: "Invalid date of birth." }); return; }
+    if (ageYears < 13) {
+      res
+        .status(400)
+        .json({
+          error: "You must be at least 13 years old to use this platform.",
+        });
+      return;
+    }
+    if (ageYears > 120) {
+      res.status(400).json({ error: "Invalid date of birth." });
+      return;
+    }
 
     const [updated] = await db
       .update(usersTable)
@@ -501,11 +567,17 @@ router.get("/auth/check-username", async (req: Request, res: Response) => {
     return;
   }
   if (username.length > 30) {
-    res.json({ available: false, error: "Username must be 30 characters or fewer" });
+    res.json({
+      available: false,
+      error: "Username must be 30 characters or fewer",
+    });
     return;
   }
   if (!/^[a-z0-9_]+$/.test(username)) {
-    res.json({ available: false, error: "Letters, numbers, and underscores only" });
+    res.json({
+      available: false,
+      error: "Letters, numbers, and underscores only",
+    });
     return;
   }
   if (isReservedUsername(username) && !isAdminReq(req)) {
@@ -527,7 +599,9 @@ router.get("/auth/check-username", async (req: Request, res: Response) => {
     res.json({ available: !existing });
   } catch (err) {
     req.log.error({ err }, "GET /api/auth/check-username error");
-    res.status(500).json({ available: false, error: "Could not check username" });
+    res
+      .status(500)
+      .json({ available: false, error: "Could not check username" });
   }
 });
 
@@ -538,23 +612,47 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   const diagBase = {
     reqId,
     ts: new Date(t0).toISOString(),
-    origin: (req.headers["origin"] as string | undefined) ?? req.headers["host"] ?? "unknown",
-    ua: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"].slice(0, 150) : "unknown",
+    origin:
+      (req.headers["origin"] as string | undefined) ??
+      req.headers["host"] ??
+      "unknown",
+    ua:
+      typeof req.headers["user-agent"] === "string"
+        ? req.headers["user-agent"].slice(0, 150)
+        : "unknown",
   };
 
-  const { firstName, lastName, email, password, username, dateOfBirth, agreeToTerms } =
-    req.body as {
-      firstName?: string;
-      lastName?: string;
-      email?: string;
-      password?: string;
-      username?: string;
-      dateOfBirth?: string;
-      agreeToTerms?: boolean;
-    };
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    username,
+    dateOfBirth,
+    agreeToTerms,
+  } = req.body as {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    password?: string;
+    username?: string;
+    dateOfBirth?: string;
+    agreeToTerms?: boolean;
+  };
 
-  if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password || !username?.trim()) {
-    res.status(400).json({ error: "First name, last name, email, password, and username are required." });
+  if (
+    !firstName?.trim() ||
+    !lastName?.trim() ||
+    !email?.trim() ||
+    !password ||
+    !username?.trim()
+  ) {
+    res
+      .status(400)
+      .json({
+        error:
+          "First name, last name, email, password, and username are required.",
+      });
     return;
   }
   if (!agreeToTerms) {
@@ -567,7 +665,12 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   }
   const cleanUsername = username.trim().toLowerCase();
   if (!/^[a-z0-9_]{3,30}$/.test(cleanUsername)) {
-    res.status(400).json({ error: "Username must be 3–30 characters: letters, numbers, and underscores only." });
+    res
+      .status(400)
+      .json({
+        error:
+          "Username must be 3–30 characters: letters, numbers, and underscores only.",
+      });
     return;
   }
   if (isReservedUsername(cleanUsername)) {
@@ -580,7 +683,9 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   }
 
   if (!dateOfBirth) {
-    res.status(400).json({ error: "Date of birth is required to create an account." });
+    res
+      .status(400)
+      .json({ error: "Date of birth is required to create an account." });
     return;
   }
   const dob = new Date(dateOfBirth);
@@ -595,8 +700,12 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   }
   // Calendar-based age — correct on the exact birthday, UTC-normalized to
   // avoid timezone-induced day shifts near the 13-year threshold.
-  const y = dob.getUTCFullYear(), m = dob.getUTCMonth(), d = dob.getUTCDate();
-  const ty = now.getUTCFullYear(), tm = now.getUTCMonth(), td = now.getUTCDate();
+  const y = dob.getUTCFullYear(),
+    m = dob.getUTCMonth(),
+    d = dob.getUTCDate();
+  const ty = now.getUTCFullYear(),
+    tm = now.getUTCMonth(),
+    td = now.getUTCDate();
   let age = ty - y;
   if (tm < m || (tm === m && td < d)) age--; // birthday not yet reached this year
   if (age > 120) {
@@ -604,141 +713,242 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     return;
   }
   if (age < 13) {
-    res.status(400).json({ error: "You must be at least 13 years old to use this platform." });
+    res
+      .status(400)
+      .json({
+        error: "You must be at least 13 years old to use this platform.",
+      });
     return;
   }
 
   try {
-    await withDbRetry(async () => {
-    const cleanEmail = email.trim().toLowerCase();
-    const emailMasked = maskEmail(cleanEmail);
+    await withDbRetry(
+      async () => {
+        const cleanEmail = email.trim().toLowerCase();
+        const emailMasked = maskEmail(cleanEmail);
 
-    // Run email, username checks and password hash in parallel — no sequential waiting
-    const [existingEmail, existingUsername, passwordHash] = await Promise.all([
-      db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1).then(r => r[0]),
-      db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, cleanUsername)).limit(1).then(r => r[0]),
-      bcrypt.hash(password, 8),
-    ]);
+        // Run email, username checks and password hash in parallel — no sequential waiting
+        const [existingEmail, existingUsername, passwordHash] =
+          await Promise.all([
+            db
+              .select({ id: usersTable.id })
+              .from(usersTable)
+              .where(eq(usersTable.email, cleanEmail))
+              .limit(1)
+              .then((r) => r[0]),
+            db
+              .select({ id: usersTable.id })
+              .from(usersTable)
+              .where(eq(usersTable.username, cleanUsername))
+              .limit(1)
+              .then((r) => r[0]),
+            bcrypt.hash(password, 8),
+          ]);
 
-    if (existingEmail) {
-      req.log.info({ ...diagBase, event: "AUTH_REGISTER_DUPLICATE_EMAIL", emailMasked, status: 409, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(409).json({ error: "An account with this exact email address already exists. Try signing in instead, or use a different email." });
-      return;
-    }
-    if (existingUsername) {
-      res.status(409).json({ error: "That @username is already taken — please choose a different one. Your email address is fine." });
-      return;
-    }
+        if (existingEmail) {
+          req.log.info(
+            {
+              ...diagBase,
+              event: "AUTH_REGISTER_DUPLICATE_EMAIL",
+              emailMasked,
+              status: 409,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res
+            .status(409)
+            .json({
+              error:
+                "An account with this exact email address already exists. Try signing in instead, or use a different email.",
+            });
+          return;
+        }
+        if (existingUsername) {
+          res
+            .status(409)
+            .json({
+              error:
+                "That @username is already taken — please choose a different one. Your email address is fine.",
+            });
+          return;
+        }
 
-    // ── Authorization gate (server-side) ─────────────────────────────────────
-    // AUTHORIZED TO REGISTER = approved waitlist member OR pre-approved tester.
-    // These are intentionally independent paths — testers are pre-authorized via
-    // pending_tester_emails and must not be forced to also exist in the waitlist.
-    // After account creation, the existing applyPendingTesterEntitlement() logic
-    // auto-attaches the tester role — this gate only controls ENTRY, not entitlement.
+        // ── Authorization gate (server-side) ─────────────────────────────────────
+        // AUTHORIZED TO REGISTER = approved waitlist member OR pre-approved tester.
+        // These are intentionally independent paths — testers are pre-authorized via
+        // pending_tester_emails and must not be forced to also exist in the waitlist.
+        // After account creation, the existing applyPendingTesterEntitlement() logic
+        // auto-attaches the tester role — this gate only controls ENTRY, not entitlement.
 
-    const [waitlistEntry] = await db
-      .select({ approvedAt: waitlistTable.approvedAt })
-      .from(waitlistTable)
-      .where(eq(waitlistTable.email, cleanEmail))
-      .limit(1);
+        const [waitlistEntry] = await db
+          .select({ approvedAt: waitlistTable.approvedAt })
+          .from(waitlistTable)
+          .where(eq(waitlistTable.email, cleanEmail))
+          .limit(1);
 
-    // Tester bypass: if not on waitlist, check pending_tester_emails
-    let approvedAsTester = false;
-    if (!waitlistEntry) {
-      const testerCheck = await pool.query(
-        `SELECT 1 FROM pending_tester_emails WHERE lower(email) = lower($1) LIMIT 1`,
-        [cleanEmail],
-      );
-      if (testerCheck.rows.length > 0) approvedAsTester = true;
-    }
+        // Tester bypass: if not on waitlist, check pending_tester_emails
+        let approvedAsTester = false;
+        if (!waitlistEntry) {
+          const testerCheck = await pool.query(
+            `SELECT 1 FROM pending_tester_emails WHERE lower(email) = lower($1) LIMIT 1`,
+            [cleanEmail],
+          );
+          if (testerCheck.rows.length > 0) approvedAsTester = true;
+        }
 
-    if (!waitlistEntry && !approvedAsTester) {
-      req.log.info({ ...diagBase, event: "AUTH_REGISTER_NOT_ON_WAITLIST", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(403).json({
-        error: "Mapping With Melanin is currently invite-only. Join the waitlist at mappingwithmelanin.com to request access.",
-        code: "WAITLIST_REQUIRED",
-      });
-      return;
-    }
-    if (waitlistEntry && !waitlistEntry.approvedAt) {
-      // On waitlist but pending admin approval — pre-approved testers (approvedAsTester=true) skip this
-      req.log.info({ ...diagBase, event: "AUTH_REGISTER_WAITLIST_PENDING", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(403).json({
-        error: "Your waitlist application is still pending review. You'll receive an email when you're approved to join.",
-        code: "WAITLIST_PENDING",
-      });
-      return;
-    }
-    // ── End authorization gate ────────────────────────────────────────────────
+        if (!waitlistEntry && !approvedAsTester) {
+          req.log.info(
+            {
+              ...diagBase,
+              event: "AUTH_REGISTER_NOT_ON_WAITLIST",
+              emailMasked,
+              status: 403,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res.status(403).json({
+            error:
+              "Mapping With Melanin is currently invite-only. Join the waitlist at mappingwithmelanin.com to request access.",
+            code: "WAITLIST_REQUIRED",
+          });
+          return;
+        }
+        if (waitlistEntry && !waitlistEntry.approvedAt) {
+          // On waitlist but pending admin approval — pre-approved testers (approvedAsTester=true) skip this
+          req.log.info(
+            {
+              ...diagBase,
+              event: "AUTH_REGISTER_WAITLIST_PENDING",
+              emailMasked,
+              status: 403,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res.status(403).json({
+            error:
+              "Your waitlist application is still pending review. You'll receive an email when you're approved to join.",
+            code: "WAITLIST_PENDING",
+          });
+          return;
+        }
+        // ── End authorization gate ────────────────────────────────────────────────
 
-    const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase();
+        const referralCode = crypto
+          .randomBytes(4)
+          .toString("hex")
+          .toUpperCase();
 
-    const [user] = await db
-      .insert(usersTable)
-      .values({
-        email: cleanEmail,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        username: cleanUsername,
-        passwordHash,
-        emailVerified: false,
-        approved: true,
-        agreeToTerms: true,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-        referralCode,
-      })
-      .returning();
+        const [user] = await db
+          .insert(usersTable)
+          .values({
+            email: cleanEmail,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            username: cleanUsername,
+            passwordHash,
+            emailVerified: false,
+            approved: true,
+            agreeToTerms: true,
+            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+            referralCode,
+          })
+          .returning();
 
-    req.log.info({ ...diagBase, event: "AUTH_REGISTER_USER_CREATED", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
+        req.log.info(
+          {
+            ...diagBase,
+            event: "AUTH_REGISTER_USER_CREATED",
+            emailMasked,
+            status: 201,
+            durationMs: Date.now() - t0,
+          },
+          "auth diagnostic",
+        );
 
-    // Create server-authoritative Community Agreement record for every new member.
-    // Non-blocking — a failure here must never fail the signup itself.
-    db.insert(memberAgreementsTable).values({
-      id: crypto.randomUUID(),
-      userId: user.id,
-      agreementVersion: "v1",
-      platform: (req.headers["x-platform"] as string) || "web",
-      active: true,
-    }).catch(() => {});
+        // Create server-authoritative Community Agreement record for every new member.
+        // Non-blocking — a failure here must never fail the signup itself.
+        db.insert(memberAgreementsTable)
+          .values({
+            id: crypto.randomUUID(),
+            userId: user.id,
+            agreementVersion: "v1",
+            platform: (req.headers["x-platform"] as string) || "web",
+            active: true,
+          })
+          .catch(() => {});
 
-    sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
-    // Auto-attach any pre-approved tester entitlement for this email
-    applyPendingTesterEntitlement(user.id, user.email!).catch(() => {});
+        sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
+        // Auto-attach any pre-approved tester entitlement for this email
+        applyPendingTesterEntitlement(user.id, user.email!).catch(() => {});
 
-    const sessionData: SessionData = {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        approved: user.approved,
-        role: user.role as "user" | "tester" | "admin",
+        const sessionData: SessionData = {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            approved: user.approved,
+            role: user.role as "user" | "tester" | "admin",
+          },
+          access_token: "",
+        };
+        const sid = await createSession(sessionData);
+
+        // Track whether the HTTP response actually reaches the client
+        let responseFinished = false;
+        res.on("finish", () => {
+          responseFinished = true;
+          req.log.info(
+            {
+              ...diagBase,
+              event: "AUTH_REGISTER_RESPONSE_SENT",
+              emailMasked,
+              status: 201,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+        });
+        res.on("close", () => {
+          if (!responseFinished) {
+            req.log.warn(
+              {
+                ...diagBase,
+                event: "AUTH_REGISTER_RESPONSE_ABORTED_OR_FAILED",
+                emailMasked,
+                durationMs: Date.now() - t0,
+              },
+              "auth diagnostic",
+            );
+          }
+        });
+
+        res.status(201).json({
+          token: sid,
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            username: user.username,
+          },
+        });
       },
-      access_token: "",
-    };
-    const sid = await createSession(sessionData);
-
-    // Track whether the HTTP response actually reaches the client
-    let responseFinished = false;
-    res.on("finish", () => {
-      responseFinished = true;
-      req.log.info({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_SENT", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
-    });
-    res.on("close", () => {
-      if (!responseFinished) {
-        req.log.warn({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_ABORTED_OR_FAILED", emailMasked, durationMs: Date.now() - t0 }, "auth diagnostic");
-      }
-    });
-
-    res.status(201).json({
-      token: sid,
-      user: { id: user.id, firstName: user.firstName, username: user.username },
-    });
-    }, req.log, "POST /auth/register");
+      req.log,
+      "POST /auth/register",
+    );
   } catch (err) {
-    req.log.error({ ...diagBase, err, event: "AUTH_REGISTER_ERROR", durationMs: Date.now() - t0 }, "POST /api/auth/register error");
+    req.log.error(
+      {
+        ...diagBase,
+        err,
+        event: "AUTH_REGISTER_ERROR",
+        durationMs: Date.now() - t0,
+      },
+      "POST /api/auth/register error",
+    );
     res.status(500).json({ error: "Registration failed. Please try again." });
   }
 });
@@ -750,8 +960,14 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
   const diagBase = {
     reqId,
     ts: new Date(t0).toISOString(),
-    origin: (req.headers["origin"] as string | undefined) ?? req.headers["host"] ?? "unknown",
-    ua: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"].slice(0, 150) : "unknown",
+    origin:
+      (req.headers["origin"] as string | undefined) ??
+      req.headers["host"] ??
+      "unknown",
+    ua:
+      typeof req.headers["user-agent"] === "string"
+        ? req.headers["user-agent"].slice(0, 150)
+        : "unknown",
   };
 
   const { email, password } = req.body as { email?: string; password?: string };
@@ -765,94 +981,187 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
   const emailMasked = maskEmail(cleanEmail);
 
   try {
-    await withDbRetry(async () => {
-    const [user] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, cleanEmail))
-      .limit(1);
+    await withDbRetry(
+      async () => {
+        const [user] = await db
+          .select()
+          .from(usersTable)
+          .where(eq(usersTable.email, cleanEmail))
+          .limit(1);
 
-    if (!user) {
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_USER_NOT_FOUND", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({ error: "Invalid email or password." });
-      return;
-    }
-    if (!user.passwordHash) {
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_NO_PASSWORD_HASH", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({
-        error: "This account does not have an email password set up yet. Try the sign-in method you originally used, or choose Forgot Password to create one.",
-        error_code: "NO_PASSWORD",
-      });
-      return;
-    }
+        if (!user) {
+          req.log.warn(
+            {
+              ...diagBase,
+              event: "AUTH_LOGIN_USER_NOT_FOUND",
+              emailMasked,
+              hasPasswordHash: false,
+              status: 401,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res.status(401).json({ error: "Invalid email or password." });
+          return;
+        }
+        if (!user.passwordHash) {
+          req.log.warn(
+            {
+              ...diagBase,
+              event: "AUTH_LOGIN_NO_PASSWORD_HASH",
+              emailMasked,
+              hasPasswordHash: false,
+              status: 401,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res.status(401).json({
+            error:
+              "This account does not have an email password set up yet. Try the sign-in method you originally used, or choose Forgot Password to create one.",
+            error_code: "NO_PASSWORD",
+          });
+          return;
+        }
 
-    // Account lockout check — must pass before attempting password verify
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_LOCKED", emailMasked, lockedUntilIso: user.lockedUntil.toISOString(), minutesLeft, status: 423, durationMs: Date.now() - t0 }, "auth diagnostic");
-      void logAuthEvent(user.id, "AUTH_LOCKED_ATTEMPT", req.ip ?? null, diagBase.ua);
-      res.status(423).json({
-        error: `Too many failed attempts. Your account is locked for ${minutesLeft} more minute${minutesLeft !== 1 ? "s" : ""}. Use "Forgot password?" to unlock immediately.`,
-        locked_until: user.lockedUntil!.toISOString(),
-      });
-      return;
-    }
+        // Account lockout check — must pass before attempting password verify
+        if (user.lockedUntil && user.lockedUntil > new Date()) {
+          const minutesLeft = Math.ceil(
+            (user.lockedUntil.getTime() - Date.now()) / 60000,
+          );
+          req.log.warn(
+            {
+              ...diagBase,
+              event: "AUTH_LOGIN_LOCKED",
+              emailMasked,
+              lockedUntilIso: user.lockedUntil.toISOString(),
+              minutesLeft,
+              status: 423,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          void logAuthEvent(
+            user.id,
+            "AUTH_LOCKED_ATTEMPT",
+            req.ip ?? null,
+            diagBase.ua,
+          );
+          res.status(423).json({
+            error: `Too many failed attempts. Your account is locked for ${minutesLeft} more minute${minutesLeft !== 1 ? "s" : ""}. Use "Forgot password?" to unlock immediately.`,
+            locked_until: user.lockedUntil!.toISOString(),
+          });
+          return;
+        }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      const newCount = (user.failedLoginAttempts ?? 0) + 1;
-      let lockedUntil: Date | null = null;
-      if (newCount >= 20) {
-        lockedUntil = new Date(Date.now() + 60 * 60 * 1000);
-      } else if (newCount >= 10) {
-        lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
-      }
-      await db.update(usersTable).set({
-        failedLoginAttempts: newCount,
-        ...(lockedUntil !== null ? { lockedUntil } : {}),
-      }).where(eq(usersTable.id, user.id));
-      const lockEvent = lockedUntil ? "AUTH_LOCKOUT_TRIGGERED" : "AUTH_LOGIN_FAILURE";
-      void logAuthEvent(user.id, lockEvent, req.ip ?? null, diagBase.ua, { failedAttempts: newCount });
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_PASSWORD_MISMATCH", emailMasked, hasPasswordHash: true, failedAttempts: newCount, locked: !!lockedUntil, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({ error: "Invalid email or password." });
-      return;
-    }
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) {
+          const newCount = (user.failedLoginAttempts ?? 0) + 1;
+          let lockedUntil: Date | null = null;
+          if (newCount >= 20) {
+            lockedUntil = new Date(Date.now() + 60 * 60 * 1000);
+          } else if (newCount >= 10) {
+            lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+          }
+          await db
+            .update(usersTable)
+            .set({
+              failedLoginAttempts: newCount,
+              ...(lockedUntil !== null ? { lockedUntil } : {}),
+            })
+            .where(eq(usersTable.id, user.id));
+          const lockEvent = lockedUntil
+            ? "AUTH_LOCKOUT_TRIGGERED"
+            : "AUTH_LOGIN_FAILURE";
+          void logAuthEvent(user.id, lockEvent, req.ip ?? null, diagBase.ua, {
+            failedAttempts: newCount,
+          });
+          req.log.warn(
+            {
+              ...diagBase,
+              event: "AUTH_LOGIN_PASSWORD_MISMATCH",
+              emailMasked,
+              hasPasswordHash: true,
+              failedAttempts: newCount,
+              locked: !!lockedUntil,
+              status: 401,
+              durationMs: Date.now() - t0,
+            },
+            "auth diagnostic",
+          );
+          res.status(401).json({ error: "Invalid email or password." });
+          return;
+        }
 
-    // Successful authentication — reset lockout counters
-    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
-    void logAuthEvent(user.id, "AUTH_LOGIN_SUCCESS", req.ip ?? null, diagBase.ua);
+        // Successful authentication — reset lockout counters
+        await db
+          .update(usersTable)
+          .set({ failedLoginAttempts: 0, lockedUntil: null })
+          .where(eq(usersTable.id, user.id));
+        void logAuthEvent(
+          user.id,
+          "AUTH_LOGIN_SUCCESS",
+          req.ip ?? null,
+          diagBase.ua,
+        );
 
-    const sessionData: SessionData = {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        approved: user.approved,
-        role: user.role as "user" | "tester" | "admin",
+        const sessionData: SessionData = {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            approved: user.approved,
+            role: user.role as "user" | "tester" | "admin",
+          },
+          access_token: "",
+        };
+        const sid = await createSession(sessionData);
+        req.log.info(
+          {
+            ...diagBase,
+            event: "AUTH_LOGIN_SUCCESS",
+            emailMasked,
+            hasPasswordHash: true,
+            status: 200,
+            durationMs: Date.now() - t0,
+          },
+          "auth diagnostic",
+        );
+        // Check if user must change password on first login (pre-seeded tester accounts)
+        let mustChangePassword = false;
+        try {
+          const { rows } = await pool.query<{ must_change_password: boolean }>(
+            "SELECT must_change_password FROM users WHERE id = $1",
+            [user.id],
+          );
+          mustChangePassword = rows[0]?.must_change_password ?? false;
+        } catch {
+          /* column may not exist yet — safe to ignore */
+        }
+        // Set HttpOnly session cookie so web clients authenticate automatically
+        // without needing to read the token from localStorage. Mobile clients continue
+        // to use the token returned in the JSON body (Bearer header).
+        setSessionCookie(res, sid);
+        res.json({ token: sid, mustChangePassword });
       },
-      access_token: "",
-    };
-    const sid = await createSession(sessionData);
-    req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
-    // Check if user must change password on first login (pre-seeded tester accounts)
-    let mustChangePassword = false;
-    try {
-      const { rows } = await pool.query<{ must_change_password: boolean }>(
-        'SELECT must_change_password FROM users WHERE id = $1', [user.id]
-      );
-      mustChangePassword = rows[0]?.must_change_password ?? false;
-    } catch { /* column may not exist yet — safe to ignore */ }
-    // Set HttpOnly session cookie so web clients authenticate automatically
-    // without needing to read the token from localStorage. Mobile clients continue
-    // to use the token returned in the JSON body (Bearer header).
-    setSessionCookie(res, sid);
-    res.json({ token: sid, mustChangePassword });
-    }, req.log, "POST /auth/login-email");
+      req.log,
+      "POST /auth/login-email",
+    );
   } catch (err) {
     const pool = getPoolStats();
-    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool }, "POST /api/auth/login-email error");
+    req.log.error(
+      {
+        ...diagBase,
+        err,
+        event: "AUTH_LOGIN_ERROR",
+        emailMasked,
+        durationMs: Date.now() - t0,
+        pool,
+      },
+      "POST /api/auth/login-email error",
+    );
     res.status(500).json({ error: "Login failed. Please try again." });
   }
 });
@@ -871,24 +1180,46 @@ router.post("/auth/logout-all", async (req: Request, res: Response) => {
   }
   try {
     const count = await deleteAllSessionsForUser(session.user.id);
-    const ua = typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : null;
-    void logAuthEvent(session.user.id, "LOGOUT_ALL", req.ip ?? null, ua, { sessionsRevoked: count });
-    req.log.info({ event: "AUTH_LOGOUT_ALL", userId: session.user.id, sessionsRevoked: count }, "auth diagnostic");
+    const ua =
+      typeof req.headers["user-agent"] === "string"
+        ? req.headers["user-agent"]
+        : null;
+    void logAuthEvent(session.user.id, "LOGOUT_ALL", req.ip ?? null, ua, {
+      sessionsRevoked: count,
+    });
+    req.log.info(
+      {
+        event: "AUTH_LOGOUT_ALL",
+        userId: session.user.id,
+        sessionsRevoked: count,
+      },
+      "auth diagnostic",
+    );
     res.json({ success: true, sessionsRevoked: count });
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/logout-all error");
-    res.status(500).json({ error: "Failed to revoke sessions. Please try again." });
+    res
+      .status(500)
+      .json({ error: "Failed to revoke sessions. Please try again." });
   }
 });
 
 // ─── POST /auth/forgot-password ───────────────────────────────────────────────
 router.post("/auth/forgot-password", async (req: Request, res: Response) => {
   const { email } = req.body as { email?: string };
-  if (!email?.trim()) { res.status(400).json({ error: "Email is required." }); return; }
+  if (!email?.trim()) {
+    res.status(400).json({ error: "Email is required." });
+    return;
+  }
 
   try {
     const [user] = await db
-      .select({ id: usersTable.id, firstName: usersTable.firstName, email: usersTable.email, passwordHash: usersTable.passwordHash })
+      .select({
+        id: usersTable.id,
+        firstName: usersTable.firstName,
+        email: usersTable.email,
+        passwordHash: usersTable.passwordHash,
+      })
       .from(usersTable)
       .where(ilike(usersTable.email, email.trim()))
       .limit(1);
@@ -896,7 +1227,13 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
     // Unknown email — return silent success (anti-enumeration: caller cannot tell
     // whether an account exists). Internal log distinguishes all 4 outcomes.
     if (!user) {
-      req.log.info({ event: "AUTH_RESET_NO_ACCOUNT", emailMasked: `${email.trim().slice(0, 3)}***@${email.trim().split("@")[1] ?? "?"}` }, "password reset: no account found");
+      req.log.info(
+        {
+          event: "AUTH_RESET_NO_ACCOUNT",
+          emailMasked: `${email.trim().slice(0, 3)}***@${email.trim().split("@")[1] ?? "?"}`,
+        },
+        "password reset: no account found",
+      );
       res.json({ success: true });
       return;
     }
@@ -907,20 +1244,46 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 
     await db
       .update(usersTable)
-      .set({ emailVerificationToken: codeHash, emailVerificationExpires: expires })
+      .set({
+        emailVerificationToken: codeHash,
+        emailVerificationExpires: expires,
+      })
       .where(eq(usersTable.id, user.id));
 
     const emailMasked = `${email.trim().slice(0, 3)}***@${email.trim().split("@")[1] ?? "?"}`;
-    req.log.info({ event: "AUTH_RESET_GENERATED", emailMasked, userId: user.id.slice(0, 8), expiresAt: expires.toISOString() }, "password reset: code stored");
+    req.log.info(
+      {
+        event: "AUTH_RESET_GENERATED",
+        emailMasked,
+        userId: user.id.slice(0, 8),
+        expiresAt: expires.toISOString(),
+      },
+      "password reset: code stored",
+    );
 
     try {
       await sendPasswordResetEmail(user.email!, user.firstName, code);
-      req.log.info({ event: "AUTH_RESET_SENT", emailMasked }, "password reset: Resend accepted");
+      req.log.info(
+        { event: "AUTH_RESET_SENT", emailMasked },
+        "password reset: Resend accepted",
+      );
       res.json({ success: true });
     } catch (emailErr: unknown) {
-      req.log.error({ event: "AUTH_RESET_PROVIDER_FAILURE", emailMasked, err: String(emailErr) }, "password reset: Resend failed");
+      req.log.error(
+        {
+          event: "AUTH_RESET_PROVIDER_FAILURE",
+          emailMasked,
+          err: String(emailErr),
+        },
+        "password reset: Resend failed",
+      );
       // Code is already stored; client should retry rather than silently succeed
-      res.status(500).json({ error: "Something went wrong sending the reset email. Please try again." });
+      res
+        .status(500)
+        .json({
+          error:
+            "Something went wrong sending the reset email. Please try again.",
+        });
     }
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/forgot-password error");
@@ -930,9 +1293,15 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
 
 // ─── POST /auth/reset-password ────────────────────────────────────────────────
 router.post("/auth/reset-password", async (req: Request, res: Response) => {
-  const { email, code, newPassword } = req.body as { email?: string; code?: string; newPassword?: string };
+  const { email, code, newPassword } = req.body as {
+    email?: string;
+    code?: string;
+    newPassword?: string;
+  };
   if (!email?.trim() || !code?.trim() || !newPassword) {
-    res.status(400).json({ error: "Email, code, and new password are required." });
+    res
+      .status(400)
+      .json({ error: "Email, code, and new password are required." });
     return;
   }
   if (newPassword.length < 8) {
@@ -951,36 +1320,62 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
       .where(ilike(usersTable.email, email.trim()))
       .limit(1);
 
-    if (!user || !user.emailVerificationToken || !user.emailVerificationExpires) {
+    if (
+      !user ||
+      !user.emailVerificationToken ||
+      !user.emailVerificationExpires
+    ) {
       res.status(400).json({ error: "Invalid or expired reset code." });
       return;
     }
     if (new Date() > user.emailVerificationExpires) {
-      res.status(400).json({ error: "Reset code has expired. Please request a new one." });
+      res
+        .status(400)
+        .json({ error: "Reset code has expired. Please request a new one." });
       return;
     }
-    const codeHash = crypto.createHash("sha256").update(code.trim()).digest("hex");
+    const codeHash = crypto
+      .createHash("sha256")
+      .update(code.trim())
+      .digest("hex");
     if (codeHash !== user.emailVerificationToken) {
-      res.status(400).json({ error: "Incorrect reset code. Please check your email and try again." });
+      res
+        .status(400)
+        .json({
+          error: "Incorrect reset code. Please check your email and try again.",
+        });
       return;
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 8);
     await db
       .update(usersTable)
-      .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null, failedLoginAttempts: 0, lockedUntil: null })
+      .set({
+        passwordHash,
+        mustChangePassword: false,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      })
       .where(eq(usersTable.id, user.id));
 
     const requestId = genReqId();
     // Internal-only diagnostic log — never returned to the client
-    req.log.info({
-      event: "AUTH_RESET_SUCCESS",
-      requestId,
-      emailMasked: maskEmail(email.trim()),
-      env: process.env.RAILWAY_ENVIRONMENT ?? process.env.NODE_ENV ?? "unknown",
-      dbUrlPrefix: (process.env.DATABASE_URL ?? "").slice(0, 20).replace(/:[^@]*@/, ":***@"),
-      ts: new Date().toISOString(),
-    }, "password reset completed");
+    req.log.info(
+      {
+        event: "AUTH_RESET_SUCCESS",
+        requestId,
+        emailMasked: maskEmail(email.trim()),
+        env:
+          process.env.RAILWAY_ENVIRONMENT ?? process.env.NODE_ENV ?? "unknown",
+        dbUrlPrefix: (process.env.DATABASE_URL ?? "")
+          .slice(0, 20)
+          .replace(/:[^@]*@/, ":***@"),
+        ts: new Date().toISOString(),
+      },
+      "password reset completed",
+    );
 
     res.json({ success: true, requestId });
   } catch (err) {
@@ -998,10 +1393,12 @@ async function verifyAppleToken(
     signal: AbortSignal.timeout(8_000),
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { keys } = await res.json() as { keys: any[] };
+  const { keys } = (await res.json()) as { keys: any[] };
 
   const [headerB64] = identityToken.split(".");
-  const header = JSON.parse(Buffer.from(headerB64, "base64url").toString()) as { kid: string };
+  const header = JSON.parse(Buffer.from(headerB64, "base64url").toString()) as {
+    kid: string;
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jwk = keys.find((k: any) => k.kid === header.kid);
@@ -1021,7 +1418,10 @@ async function verifyAppleToken(
   // matches what Apple embedded in the JWT — this closes the replay-attack vector
   // and satisfies Apple's guideline enforcement on iOS 26+.
   if (rawNonce) {
-    const expectedHash = crypto.createHash("sha256").update(rawNonce).digest("hex");
+    const expectedHash = crypto
+      .createHash("sha256")
+      .update(rawNonce)
+      .digest("hex");
     if (payload.nonce !== expectedHash) {
       throw new Error("Apple identity token nonce mismatch");
     }
@@ -1031,174 +1431,268 @@ async function verifyAppleToken(
 }
 
 router.post("/auth/apple", async (req: Request, res: Response) => {
-  const { identityToken, nonce, appleUserId, email, firstName, lastName, authorizationCode } =
-    req.body as { identityToken?: string; nonce?: string; appleUserId?: string; email?: string; firstName?: string; lastName?: string; authorizationCode?: string };
+  const {
+    identityToken,
+    nonce,
+    appleUserId,
+    email,
+    firstName,
+    lastName,
+    authorizationCode,
+  } = req.body as {
+    identityToken?: string;
+    nonce?: string;
+    appleUserId?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    authorizationCode?: string;
+  };
 
-  if (!identityToken) { res.status(400).json({ error: "identityToken is required." }); return; }
+  if (!identityToken) {
+    res.status(400).json({ error: "identityToken is required." });
+    return;
+  }
 
   try {
-    await withDbRetry(async () => {
-    const payload = await verifyAppleToken(identityToken, nonce);
-    const sub = payload.sub;
-    const verifiedEmail = email || payload.email;
+    await withDbRetry(
+      async () => {
+        const payload = await verifyAppleToken(identityToken, nonce);
+        const sub = payload.sub;
+        const verifiedEmail = email || payload.email;
 
-    // Find by appleId first, then by email
-    let [user] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.appleId, sub))
-      .limit(1);
+        // Find by appleId first, then by email
+        let [user] = await db
+          .select()
+          .from(usersTable)
+          .where(eq(usersTable.appleId, sub))
+          .limit(1);
 
-    if (!user && verifiedEmail) {
-      const [byEmail] = await db
-        .select()
-        .from(usersTable)
-        .where(ilike(usersTable.email, verifiedEmail))
-        .limit(1);
-      if (byEmail) {
-        await db.update(usersTable).set({ appleId: sub }).where(eq(usersTable.id, byEmail.id));
-        user = { ...byEmail, appleId: sub };
-      }
-    }
+        if (!user && verifiedEmail) {
+          const [byEmail] = await db
+            .select()
+            .from(usersTable)
+            .where(ilike(usersTable.email, verifiedEmail))
+            .limit(1);
+          if (byEmail) {
+            await db
+              .update(usersTable)
+              .set({ appleId: sub })
+              .where(eq(usersTable.id, byEmail.id));
+            user = { ...byEmail, appleId: sub };
+          }
+        }
 
-    const isNewUser = !user;
+        const isNewUser = !user;
 
-    // ── Authorization-code exchange (required for account-deletion revocation) ─
-    // Never log the code, access token, refresh token, or private-key content.
-    const APPLE_CLIENT_ID = "com.melaninmaps.app";
-    const appleSecretsConfigured = !!(
-      process.env.APPLE_TEAM_ID &&
-      process.env.APPLE_KEY_ID &&
-      process.env.APPLE_PRIVATE_KEY &&
-      process.env.APPLE_TOKEN_ENCRYPTION_KEY
-    );
-
-    let encryptedRefreshToken: string | null = null;
-
-    if (authorizationCode && appleSecretsConfigured) {
-      try {
-        const privateKey = process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, "\n");
-        const clientSecret = generateClientSecret(
-          process.env.APPLE_TEAM_ID!,
-          process.env.APPLE_KEY_ID!,
-          privateKey,
-          APPLE_CLIENT_ID,
+        // ── Authorization-code exchange (required for account-deletion revocation) ─
+        // Never log the code, access token, refresh token, or private-key content.
+        const APPLE_CLIENT_ID = "com.melaninmaps.app";
+        const appleSecretsConfigured = !!(
+          process.env.APPLE_TEAM_ID &&
+          process.env.APPLE_KEY_ID &&
+          process.env.APPLE_PRIVATE_KEY &&
+          process.env.APPLE_TOKEN_ENCRYPTION_KEY
         );
-        const { refreshToken } = await exchangeAuthCode(authorizationCode, APPLE_CLIENT_ID, clientSecret);
-        encryptedRefreshToken = encryptToken(refreshToken, process.env.APPLE_TOKEN_ENCRYPTION_KEY!);
-        req.log.info({ event: "APPLE_TOKEN_EXCHANGED", isNewUser }, "Apple authorization code exchanged and encrypted");
-      } catch (exchErr) {
-        // Distinguish network failures from Apple API rejections — never log token values.
-        // "appleError=" in the message means fetch() completed and Apple responded (even non-2xx).
-        // Its absence means fetch() itself threw before a response was received.
-        const msg = exchErr instanceof Error ? exchErr.message : "";
-        const isNetworkErr = !msg.includes("appleError=");
-        const baseEvent = isNetworkErr
-          ? "APPLE_TOKEN_EXCHANGE_NETWORK_ERROR"
-          : "APPLE_TOKEN_EXCHANGE_APPLE_REJECTED";
 
-        // Extract Apple's sanitized error category — allowlisted so only known Apple error
-        // codes reach logs. Any unexpected value is recorded as "unknown".
-        const KNOWN_APPLE_ERRORS = new Set([
-          "invalid_client", "invalid_grant", "invalid_request",
-          "invalid_scope", "unauthorized_client", "unsupported_grant_type", "access_denied",
-        ]);
-        const httpMatch = msg.match(/HTTP (\d+)/);
-        const errMatch  = msg.match(/appleError=(\S+)/);
-        const appleHttpStatus = httpMatch ? parseInt(httpMatch[1], 10) : null;
-        const rawErrCode      = errMatch  ? errMatch[1]               : "unknown";
-        const appleErrorCode  = KNOWN_APPLE_ERRORS.has(rawErrCode) ? rawErrCode : "unknown";
+        let encryptedRefreshToken: string | null = null;
 
-        if (isNewUser) {
-          req.log.warn({ event: baseEvent, appleHttpStatus, appleErrorCode },
-            "Apple token exchange failed — blocking new account creation");
-          res.status(401).json({ error: "Apple authorization could not be verified. Please try Sign in with Apple again." });
+        if (authorizationCode && appleSecretsConfigured) {
+          try {
+            const privateKey = process.env.APPLE_PRIVATE_KEY!.replace(
+              /\\n/g,
+              "\n",
+            );
+            const clientSecret = generateClientSecret(
+              process.env.APPLE_TEAM_ID!,
+              process.env.APPLE_KEY_ID!,
+              privateKey,
+              APPLE_CLIENT_ID,
+            );
+            const { refreshToken } = await exchangeAuthCode(
+              authorizationCode,
+              APPLE_CLIENT_ID,
+              clientSecret,
+            );
+            encryptedRefreshToken = encryptToken(
+              refreshToken,
+              process.env.APPLE_TOKEN_ENCRYPTION_KEY!,
+            );
+            req.log.info(
+              { event: "APPLE_TOKEN_EXCHANGED", isNewUser },
+              "Apple authorization code exchanged and encrypted",
+            );
+          } catch (exchErr) {
+            // Distinguish network failures from Apple API rejections — never log token values.
+            // "appleError=" in the message means fetch() completed and Apple responded (even non-2xx).
+            // Its absence means fetch() itself threw before a response was received.
+            const msg = exchErr instanceof Error ? exchErr.message : "";
+            const isNetworkErr = !msg.includes("appleError=");
+            const baseEvent = isNetworkErr
+              ? "APPLE_TOKEN_EXCHANGE_NETWORK_ERROR"
+              : "APPLE_TOKEN_EXCHANGE_APPLE_REJECTED";
+
+            // Extract Apple's sanitized error category — allowlisted so only known Apple error
+            // codes reach logs. Any unexpected value is recorded as "unknown".
+            const KNOWN_APPLE_ERRORS = new Set([
+              "invalid_client",
+              "invalid_grant",
+              "invalid_request",
+              "invalid_scope",
+              "unauthorized_client",
+              "unsupported_grant_type",
+              "access_denied",
+            ]);
+            const httpMatch = msg.match(/HTTP (\d+)/);
+            const errMatch = msg.match(/appleError=(\S+)/);
+            const appleHttpStatus = httpMatch
+              ? parseInt(httpMatch[1], 10)
+              : null;
+            const rawErrCode = errMatch ? errMatch[1] : "unknown";
+            const appleErrorCode = KNOWN_APPLE_ERRORS.has(rawErrCode)
+              ? rawErrCode
+              : "unknown";
+
+            if (isNewUser) {
+              req.log.warn(
+                { event: baseEvent, appleHttpStatus, appleErrorCode },
+                "Apple token exchange failed — blocking new account creation",
+              );
+              res
+                .status(401)
+                .json({
+                  error:
+                    "Apple authorization could not be verified. Please try Sign in with Apple again.",
+                });
+              return;
+            }
+            req.log.warn(
+              { event: baseEvent, appleHttpStatus, appleErrorCode },
+              "Apple token exchange failed for existing user — sign-in continues without token refresh",
+            );
+          }
+        } else if (isNewUser && !authorizationCode) {
+          req.log.warn(
+            { event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" },
+            "New Apple account without authorization code — old app build, blocking creation",
+          );
+          res
+            .status(400)
+            .json({
+              error:
+                "Sign in with Apple requires an authorization code. Please try again.",
+            });
+          return;
+        } else if (isNewUser && !appleSecretsConfigured) {
+          req.log.error(
+            { event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" },
+            "Apple credentials not configured — cannot create new account",
+          );
+          res
+            .status(500)
+            .json({
+              error:
+                "Apple Sign-In is temporarily unavailable. Please try again later.",
+            });
+          return;
+        } else if (!authorizationCode) {
+          // Existing user, old app build — sign-in allowed, token not updated
+          req.log.info(
+            { event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" },
+            "Existing user sign-in without authorization code — legacy app version",
+          );
+        } else {
+          // Existing user, secrets not configured — sign-in allowed, token not stored
+          req.log.warn(
+            { event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" },
+            "Apple credentials not configured — existing user sign-in continues without token storage",
+          );
+        }
+
+        if (!user) {
+          const cleanFirst = firstName?.trim() || "Apple";
+          const cleanLast = lastName?.trim() || "User";
+          const baseUsername =
+            `${cleanFirst}${cleanLast}`
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, "")
+              .slice(0, 20) || "user";
+          const uniqueUsername = `${baseUsername}${String(Math.floor(Math.random() * 9000 + 1000))}`;
+
+          const [created] = await db
+            .insert(usersTable)
+            .values({
+              firstName: cleanFirst,
+              lastName: cleanLast,
+              email: verifiedEmail ?? `apple_${sub}@melaninmaps.internal`,
+              username: uniqueUsername,
+              appleId: sub,
+              approved: true,
+              agreeToTerms: true,
+              ...(encryptedRefreshToken
+                ? { appleRefreshToken: encryptedRefreshToken }
+                : {}),
+            })
+            .returning();
+          user = created;
+
+          // Create server-authoritative Community Agreement record for every new member.
+          // Non-blocking — a failure here must never interrupt the Apple auth flow.
+          db.insert(memberAgreementsTable)
+            .values({
+              id: crypto.randomUUID(),
+              userId: created.id,
+              agreementVersion: "v1",
+              platform: "ios",
+              active: true,
+            })
+            .catch(() => {});
+
+          // Auto-attach any pre-approved tester entitlement for this Apple email
+          if (verifiedEmail) {
+            applyPendingTesterEntitlement(created.id, verifiedEmail).catch(
+              () => {},
+            );
+          }
+        } else if (encryptedRefreshToken) {
+          await db
+            .update(usersTable)
+            .set({ appleRefreshToken: encryptedRefreshToken })
+            .where(eq(usersTable.id, user.id));
+        }
+
+        if (!user.approved) {
+          res.status(403).json({ error: "Your account is pending approval." });
           return;
         }
-        req.log.warn({ event: baseEvent, appleHttpStatus, appleErrorCode },
-          "Apple token exchange failed for existing user — sign-in continues without token refresh");
-      }
-    } else if (isNewUser && !authorizationCode) {
-      req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "New Apple account without authorization code — old app build, blocking creation");
-      res.status(400).json({ error: "Sign in with Apple requires an authorization code. Please try again." });
-      return;
-    } else if (isNewUser && !appleSecretsConfigured) {
-      req.log.error({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured — cannot create new account");
-      res.status(500).json({ error: "Apple Sign-In is temporarily unavailable. Please try again later." });
-      return;
-    } else if (!authorizationCode) {
-      // Existing user, old app build — sign-in allowed, token not updated
-      req.log.info({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "Existing user sign-in without authorization code — legacy app version");
-    } else {
-      // Existing user, secrets not configured — sign-in allowed, token not stored
-      req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured — existing user sign-in continues without token storage");
-    }
 
-    if (!user) {
-      const cleanFirst = firstName?.trim() || "Apple";
-      const cleanLast = lastName?.trim() || "User";
-      const baseUsername = `${cleanFirst}${cleanLast}`.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || "user";
-      const uniqueUsername = `${baseUsername}${String(Math.floor(Math.random() * 9000 + 1000))}`;
+        // Clear any lockout state on successful Apple Sign-In
+        await db
+          .update(usersTable)
+          .set({ failedLoginAttempts: 0, lockedUntil: null })
+          .where(eq(usersTable.id, user.id));
 
-      const [created] = await db
-        .insert(usersTable)
-        .values({
-          firstName: cleanFirst,
-          lastName: cleanLast,
-          email: verifiedEmail ?? `apple_${sub}@melaninmaps.internal`,
-          username: uniqueUsername,
-          appleId: sub,
-          approved: true,
-          agreeToTerms: true,
-          ...(encryptedRefreshToken ? { appleRefreshToken: encryptedRefreshToken } : {}),
-        })
-        .returning();
-      user = created;
-
-      // Create server-authoritative Community Agreement record for every new member.
-      // Non-blocking — a failure here must never interrupt the Apple auth flow.
-      db.insert(memberAgreementsTable).values({
-        id: crypto.randomUUID(),
-        userId: created.id,
-        agreementVersion: "v1",
-        platform: "ios",
-        active: true,
-      }).catch(() => {});
-
-      // Auto-attach any pre-approved tester entitlement for this Apple email
-      if (verifiedEmail) {
-        applyPendingTesterEntitlement(created.id, verifiedEmail).catch(() => {});
-      }
-    } else if (encryptedRefreshToken) {
-      await db
-        .update(usersTable)
-        .set({ appleRefreshToken: encryptedRefreshToken })
-        .where(eq(usersTable.id, user.id));
-    }
-
-    if (!user.approved) {
-      res.status(403).json({ error: "Your account is pending approval." });
-      return;
-    }
-
-    // Clear any lockout state on successful Apple Sign-In
-    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
-
-    const sessionData: SessionData = {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        approved: user.approved,
-        role: user.role as "user" | "tester" | "admin",
+        const sessionData: SessionData = {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            approved: user.approved,
+            role: user.role as "user" | "tester" | "admin",
+          },
+          access_token: "",
+        };
+        const sid = await createSession(sessionData);
+        res.json({
+          token: sid,
+          profileSetupComplete: user.profileSetupComplete ?? false,
+        });
       },
-      access_token: "",
-    };
-    const sid = await createSession(sessionData);
-    res.json({ token: sid, profileSetupComplete: user.profileSetupComplete ?? false });
-    }, req.log, "POST /auth/apple");
+      req.log,
+      "POST /auth/apple",
+    );
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/apple error");
     res.status(500).json({ error: "Apple Sign-In failed. Please try again." });
@@ -1207,7 +1701,10 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
 
 // ─── PATCH /auth/user/setup ───────────────────────────────────────────────────
 router.patch("/auth/user/setup", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   try {
     const userId = req.user!.id;
     const {
@@ -1244,7 +1741,11 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
     if (homeState !== undefined) {
       const normalizedHomeState = normalizeHomeState(homeState);
       if (homeState.trim() && !normalizedHomeState) {
-        res.status(400).json({ error: "homeState must be a US state name or two-letter code." });
+        res
+          .status(400)
+          .json({
+            error: "homeState must be a US state name or two-letter code.",
+          });
         return;
       }
       updates.homeState = normalizedHomeState;
@@ -1253,12 +1754,16 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
       // separate normalized field for geographic feed matching.
       updates.homeState = normalizeHomeState(homeCity.split(",").pop());
     }
-    if (isBusinessOwner !== undefined) updates.isBusinessOwner = isBusinessOwner;
-    if (isContentCreator !== undefined) updates.isContentCreator = isContentCreator;
-    if (isCommunityOrganizer !== undefined) updates.isCommunityOrganizer = isCommunityOrganizer;
+    if (isBusinessOwner !== undefined)
+      updates.isBusinessOwner = isBusinessOwner;
+    if (isContentCreator !== undefined)
+      updates.isContentCreator = isContentCreator;
+    if (isCommunityOrganizer !== undefined)
+      updates.isCommunityOrganizer = isCommunityOrganizer;
     if (allowDm !== undefined) updates.allowDm = allowDm;
     if (showCity !== undefined) updates.showCity = showCity;
-    if (profileSetupComplete !== undefined) updates.profileSetupComplete = profileSetupComplete;
+    if (profileSetupComplete !== undefined)
+      updates.profileSetupComplete = profileSetupComplete;
 
     await db.update(usersTable).set(updates).where(eq(usersTable.id, userId));
 
@@ -1267,23 +1772,32 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
     const hasPrefsData =
       (Array.isArray(culturalInterests) && culturalInterests.length > 0) ||
       (Array.isArray(diasporaCountries) && diasporaCountries.length > 0) ||
-      (Array.isArray(preferredOwnershipTypes) && preferredOwnershipTypes.length > 0);
+      (Array.isArray(preferredOwnershipTypes) &&
+        preferredOwnershipTypes.length > 0);
 
     if (hasPrefsData) {
       await db
         .insert(userPreferencesTable)
         .values({
           userId,
-          ...(Array.isArray(culturalInterests) && culturalInterests.length > 0 && { culturalInterests }),
-          ...(Array.isArray(diasporaCountries) && diasporaCountries.length > 0 && { diasporaCountries }),
-          ...(Array.isArray(preferredOwnershipTypes) && preferredOwnershipTypes.length > 0 && { preferredOwnershipTypes }),
+          ...(Array.isArray(culturalInterests) &&
+            culturalInterests.length > 0 && { culturalInterests }),
+          ...(Array.isArray(diasporaCountries) &&
+            diasporaCountries.length > 0 && { diasporaCountries }),
+          ...(Array.isArray(preferredOwnershipTypes) &&
+            preferredOwnershipTypes.length > 0 && { preferredOwnershipTypes }),
         })
         .onConflictDoUpdate({
           target: userPreferencesTable.userId,
           set: {
-            ...(Array.isArray(culturalInterests) && culturalInterests.length > 0 && { culturalInterests }),
-            ...(Array.isArray(diasporaCountries) && diasporaCountries.length > 0 && { diasporaCountries }),
-            ...(Array.isArray(preferredOwnershipTypes) && preferredOwnershipTypes.length > 0 && { preferredOwnershipTypes }),
+            ...(Array.isArray(culturalInterests) &&
+              culturalInterests.length > 0 && { culturalInterests }),
+            ...(Array.isArray(diasporaCountries) &&
+              diasporaCountries.length > 0 && { diasporaCountries }),
+            ...(Array.isArray(preferredOwnershipTypes) &&
+              preferredOwnershipTypes.length > 0 && {
+                preferredOwnershipTypes,
+              }),
             updatedAt: new Date(),
           },
         });
@@ -1309,8 +1823,14 @@ router.post("/auth/unsubscribe", async (req: Request, res: Response) => {
     return;
   }
   try {
-    await db.update(usersTable).set({ marketingOptOut: true }).where(eq(usersTable.email, normalizedEmail));
-    res.json({ success: true, message: "You have been unsubscribed from marketing emails." });
+    await db
+      .update(usersTable)
+      .set({ marketingOptOut: true })
+      .where(eq(usersTable.email, normalizedEmail));
+    res.json({
+      success: true,
+      message: "You have been unsubscribed from marketing emails.",
+    });
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/unsubscribe error");
     res.status(500).json({ error: "Failed to process unsubscribe request." });
@@ -1320,28 +1840,61 @@ router.post("/auth/unsubscribe", async (req: Request, res: Response) => {
 // ─── POST /auth/change-password ───────────────────────────────────────────────
 // Authenticated user changes their own password using their current password.
 router.post("/auth/change-password", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const { currentPassword, newPassword } = req.body as {
+    currentPassword?: string;
+    newPassword?: string;
+  };
   if (!currentPassword || !newPassword) {
-    res.status(400).json({ error: "currentPassword and newPassword are required" }); return;
+    res
+      .status(400)
+      .json({ error: "currentPassword and newPassword are required" });
+    return;
   }
   if (newPassword.length < 8) {
-    res.status(400).json({ error: "New password must be at least 8 characters" }); return;
+    res
+      .status(400)
+      .json({ error: "New password must be at least 8 characters" });
+    return;
   }
   try {
     const userId = req.user!.id;
-    const [user] = await db.select({ passwordHash: usersTable.passwordHash }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    const [user] = await db
+      .select({ passwordHash: usersTable.passwordHash })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
     if (!user?.passwordHash) {
-      res.status(400).json({ error: "This account uses Apple or social sign-in. Use 'Forgot Password' to set a password." }); return;
+      res
+        .status(400)
+        .json({
+          error:
+            "This account uses Apple or social sign-in. Use 'Forgot Password' to set a password.",
+        });
+      return;
     }
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) { res.status(401).json({ error: "Current password is incorrect" }); return; }
+    if (!valid) {
+      res.status(401).json({ error: "Current password is incorrect" });
+      return;
+    }
     const newHash = await bcrypt.hash(newPassword, 8);
-    await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, userId));
+    await db
+      .update(usersTable)
+      .set({ passwordHash: newHash })
+      .where(eq(usersTable.id, userId));
     // Clear forced-change flag if it was set (tester first-login flow)
     try {
-      await pool.query('UPDATE users SET must_change_password = FALSE WHERE id = $1', [userId]);
-    } catch { /* safe to ignore if column not yet present */ }
+      await pool.query(
+        "UPDATE users SET must_change_password = FALSE WHERE id = $1",
+        [userId],
+      );
+    } catch {
+      /* safe to ignore if column not yet present */
+    }
     req.log.info({ userId }, "User changed their password");
     res.json({ success: true });
   } catch (err) {
@@ -1350,17 +1903,79 @@ router.post("/auth/change-password", async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /auth/complete-initial-password ─────────────────────────────────────
+// A tester who has signed in with an admin-issued temporary password can set a
+// private password without sending the temporary credential back to the client.
+// This endpoint is intentionally unavailable to ordinary accounts.
+router.post(
+  "/auth/complete-initial-password",
+  async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    const { newPassword } = req.body as { newPassword?: string };
+    if (!newPassword || newPassword.length < 8) {
+      res
+        .status(400)
+        .json({ error: "New password must be at least 8 characters" });
+      return;
+    }
+    try {
+      const userId = req.user!.id;
+      const result = await pool.query<{ must_change_password: boolean }>(
+        "SELECT must_change_password FROM users WHERE id = $1 FOR UPDATE",
+        [userId],
+      );
+      if (!result.rows[0]?.must_change_password) {
+        res
+          .status(409)
+          .json({
+            error: "This account is not awaiting a temporary-password change.",
+          });
+        return;
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 8);
+      await pool.query(
+        "UPDATE users SET password_hash = $1, must_change_password = FALSE, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = $2",
+        [passwordHash, userId],
+      );
+      void logAuthEvent(
+        userId,
+        "AUTH_INITIAL_PASSWORD_COMPLETED",
+        req.ip ?? null,
+        typeof req.headers["user-agent"] === "string"
+          ? req.headers["user-agent"]
+          : null,
+      );
+      res.json({ success: true });
+    } catch (err) {
+      req.log.error({ err }, "POST /api/auth/complete-initial-password error");
+      res
+        .status(500)
+        .json({ error: "Could not set your password. Please try again." });
+    }
+  },
+);
+
 // ─── PATCH /auth/user/privacy ──────────────────────────────────────────────────
 // Toggle the authenticated user's isPrivate flag.
 router.patch("/auth/user/privacy", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const { isPrivate } = req.body as { isPrivate?: boolean };
   if (typeof isPrivate !== "boolean") {
-    res.status(400).json({ error: "isPrivate (boolean) is required" }); return;
+    res.status(400).json({ error: "isPrivate (boolean) is required" });
+    return;
   }
   try {
     const userId = req.user!.id;
-    await db.update(usersTable).set({ isPrivate }).where(eq(usersTable.id, userId));
+    await db
+      .update(usersTable)
+      .set({ isPrivate })
+      .where(eq(usersTable.id, userId));
     res.json({ success: true, isPrivate });
   } catch (err) {
     req.log.error({ err }, "PATCH /api/auth/user/privacy error");
@@ -1376,7 +1991,12 @@ router.get("/auth/apple/config-check", (req: Request, res: Response) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  const vars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const vars = [
+    "APPLE_TEAM_ID",
+    "APPLE_KEY_ID",
+    "APPLE_PRIVATE_KEY",
+    "APPLE_TOKEN_ENCRYPTION_KEY",
+  ];
   const result: Record<string, boolean> = {};
   for (const v of vars) {
     result[v] = !!process.env[v];
