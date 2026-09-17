@@ -5,14 +5,25 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path("/home/ubuntu/melanin-maps-inventory-staging")
-PRIMARY = ROOT / "data/founder-imports/2026-09-17-55-city-social-recovery/cities"
-SECONDARY = Path("/home/ubuntu/founder-imports/2026-09-17-55-city-social-recovery/cities")
-OUTPUT = ROOT / "data/founder-imports/2026-09-17-55-city-social-recovery/city-social-recovery-audit.json"
-INPUT_LIST = ROOT / "data/founder-imports/2026-09-17-55-city-social-recovery/accepted-city-inputs.txt"
+
+
+def option(name: str, default: str | None = None) -> str | None:
+    try:
+        return sys.argv[sys.argv.index(name) + 1]
+    except (ValueError, IndexError):
+        return default
+
+
+BATCH = Path(option("--batch-dir", str(ROOT / "data/founder-imports/2026-09-17-55-city-social-recovery"))).resolve()
+PRIMARY = BATCH / "cities"
+SECONDARY = Path(option("--alternate-dir", "/home/ubuntu/founder-imports/2026-09-17-55-city-social-recovery/cities")).resolve()
+OUTPUT = BATCH / "city-inventory-audit.json"
+INPUT_LIST = BATCH / "accepted-city-inputs.txt"
 FIELDS = {
     "name", "address", "city", "state", "postal_code", "country", "category",
     "subcategory", "services_search_terms", "description", "website", "phone",
