@@ -33,6 +33,8 @@ export type GovernedKinfolkBusiness = Readonly<{
   category: string;
   subcategory: string | null;
   description: string;
+  /** Optional physical address; absent for older public listings. */
+  address?: string | null;
   city: string;
   stateCode: string | null;
   country: string | null;
@@ -88,6 +90,7 @@ type BusinessRow = {
   category: unknown;
   subcategory: unknown;
   description: unknown;
+  address: unknown;
   city: unknown;
   state_code: unknown;
   country: unknown;
@@ -160,6 +163,7 @@ const CANONICAL_SELECT = `
   b.category,
   b.subcategory,
   b.description,
+  b.address,
   b.city,
   b.state AS state_code,
   b.country,
@@ -230,6 +234,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     category: text(row.category),
     subcategory: nullableText(row.subcategory),
     description: text(row.description),
+    address: nullableText(row.address),
     city: text(row.city),
     stateCode: nullableText(row.state_code),
     country: nullableText(row.country),
