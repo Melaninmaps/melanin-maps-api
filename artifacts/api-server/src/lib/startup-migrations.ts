@@ -1430,6 +1430,33 @@ ON CONFLICT (city_slug) DO UPDATE SET
     )`,
   },
   {
+    // New Check-Ins can alert an already accepted Kinfolk profile without
+    // collecting an email address. Existing email Check-Ins retain every value
+    // and the email column becomes nullable only for these new records.
+    name: "safety_checkin_profile_recipients_v1",
+    sql: `
+      ALTER TABLE safety_checkins
+        ALTER COLUMN trusted_contact_email DROP NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS safety_checkin_recipients (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        checkin_id INTEGER NOT NULL REFERENCES safety_checkins(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        recipient_user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        recipient_name VARCHAR(150) NOT NULL,
+        notification_id VARCHAR,
+        delivery_status VARCHAR(20) NOT NULL DEFAULT 'pending'
+          CHECK (delivery_status IN ('pending', 'delivered', 'skipped')),
+        notified_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (checkin_id, trusted_share_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS safety_checkin_recipients_pending_idx
+        ON safety_checkin_recipients(checkin_id, delivery_status, notified_at);
+    `,
+  },
+  {
     // Normalize HBCU category casing — all HBCU records should use uppercase
     // "HBCU" so map/library filters work consistently regardless of query casing.
     // Safe to run repeatedly (UPDATE with explicit value is idempotent).

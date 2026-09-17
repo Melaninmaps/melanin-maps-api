@@ -213,6 +213,98 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
   }
 });
 
+/** Persist an in-app safety alert before attempting a best-effort push. */
+async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string, ownerName: string, city: string | null) {
+  const client = await pool.connect();
+  const readyForPush: string[] = [];
+  try {
+    await client.query("BEGIN");
+    const recipients = await client.query<{
+      id: string;
+      recipient_user_id: string;
+      push_enabled: boolean;
+      is_eligible: boolean;
+    }>(
+      `SELECT scr.id::text,
+              scr.recipient_user_id,
+              COALESCE(np.push_enabled, true) AS push_enabled,
+              (
+                tss.id IS NOT NULL
+                AND recipient.approved = true
+                AND owner_blocks.id IS NULL
+                AND recipient_blocks.id IS NULL
+                AND COALESCE(np.topics @> ARRAY['safety']::text[], true)
+              ) AS is_eligible
+         FROM safety_checkin_recipients scr
+         LEFT JOIN trusted_safety_shares tss
+           ON tss.id = scr.trusted_share_id
+          AND tss.owner_id = $2
+          AND tss.contact_user_id = scr.recipient_user_id
+          AND tss.contact_type = 'mwm_user'
+          AND tss.status = 'active'
+          AND tss.owner_enabled = true
+          AND tss.contact_accepted = true
+         LEFT JOIN users recipient ON recipient.id = scr.recipient_user_id
+         LEFT JOIN notification_preferences np ON np.user_id = scr.recipient_user_id
+         LEFT JOIN user_blocks owner_blocks
+           ON owner_blocks.blocker_id = $2 AND owner_blocks.blocked_id = scr.recipient_user_id
+         LEFT JOIN user_blocks recipient_blocks
+           ON recipient_blocks.blocker_id = scr.recipient_user_id AND recipient_blocks.blocked_id = $2
+        WHERE scr.checkin_id = $1
+          AND scr.delivery_status = 'pending'
+          AND scr.notified_at IS NULL
+        FOR UPDATE`,
+      [checkinId, ownerId],
+    );
+
+    for (const recipient of recipients.rows) {
+      if (!recipient.is_eligible) {
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET delivery_status = 'skipped', notified_at = NOW()
+            WHERE id = $1::uuid AND delivery_status = 'pending'`,
+          [recipient.id],
+        );
+        continue;
+      }
+      const locationPhrase = city ? ` in ${city}` : "";
+      const notification = await client.query<{ id: string }>(
+        `INSERT INTO notifications (user_id, type, title, body, entity_id, entity_type, data)
+         VALUES ($1, 'safety', 'Safety Check-In Overdue', $2, $3, 'safety_checkin', $4::jsonb)
+         RETURNING id`,
+        [
+          recipient.recipient_user_id,
+          `${ownerName} has not checked in${locationPhrase}. Open Safety for more information.`,
+          String(checkinId),
+          JSON.stringify({ screen: "safety-hub", checkinId, type: "safety_checkin_overdue" }),
+        ],
+      );
+      await client.query(
+        `UPDATE safety_checkin_recipients
+            SET delivery_status = 'delivered', notified_at = NOW(), notification_id = $2
+          WHERE id = $1::uuid AND delivery_status = 'pending'`,
+        [recipient.id, notification.rows[0].id],
+      );
+      if (recipient.push_enabled) readyForPush.push(recipient.recipient_user_id);
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  for (const recipientUserId of readyForPush) {
+    void sendPushToUser(recipientUserId, {
+      title: "Safety Check-In Overdue",
+      body: `${ownerName} has not checked in${city ? ` in ${city}` : ""}.`,
+      data: { screen: "safety-hub", checkinId, type: "safety_checkin_overdue" },
+    });
+  }
+  return readyForPush.length;
+}
+
 router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
   const now = new Date();
@@ -238,33 +330,44 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
       ));
 
     let notified = 0;
+    let profileAlerts = 0;
     for (const row of overdue) {
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your contact";
-        await sendCheckinOverdueEmail(
-          row.trustedContactEmail, row.trustedContactName, memberName,
-          row.scheduledAt, row.location, row.city,
-        );
-        await db.update(safetyCheckinsTable)
-          .set({ status: "overdue", notifiedAt: now })
-          .where(eq(safetyCheckinsTable.id, row.id));
-        notified++;
-        // Also push in-app alert to the user who set up the check-in
-        if (row.userId) {
-          void sendPushToUser(row.userId, {
-            title: "⚠️ Safety Check-In Overdue",
-            body: `Your scheduled check-in${row.location ? ` at ${row.location}` : ""} is overdue. Your trusted contact has been notified.`,
-            data: { screen: "safety-hub" },
-          });
+        // Preserve legacy email Check-Ins. Profile-based Check-Ins have no
+        // email address and instead receive durable in-app notifications.
+        if (row.trustedContactEmail) {
+          await sendCheckinOverdueEmail(
+            row.trustedContactEmail, row.trustedContactName, memberName,
+            row.scheduledAt, row.location, row.city,
+          );
         }
-      } catch (err) {
-        logger.error({ err, id: row.id }, "Failed to send overdue checkin email");
+        profileAlerts += await notifySelectedCheckinProfiles(row.id, row.userId, memberName, row.city);
+        const [updated] = await db.update(safetyCheckinsTable)
+          .set({ status: "overdue", notifiedAt: now })
+          .where(and(
+            eq(safetyCheckinsTable.id, row.id),
+            eq(safetyCheckinsTable.status, "pending"),
+            isNull(safetyCheckinsTable.notifiedAt),
+          ))
+          .returning({ id: safetyCheckinsTable.id });
+        if (!updated) continue;
+        notified++;
+        // Retain the existing creator alert without exposing location to the
+        // selected recipient profiles.
+        void sendPushToUser(row.userId, {
+          title: "Safety Check-In Overdue",
+          body: `Your scheduled check-in${row.location ? ` at ${row.location}` : ""} is overdue.`,
+          data: { screen: "safety-hub" },
+        });
+      } catch (error) {
+        logger.error({ error, id: row.id }, "Failed to process overdue safety checkin");
       }
     }
-    logger.info({ notified }, "Safety checkin cron completed");
-    res.json({ ok: true, notified });
-  } catch (err: unknown) {
-    logger.error({ err }, "Safety checkin cron failed");
+    logger.info({ notified, profileAlerts }, "Safety checkin cron completed");
+    res.json({ ok: true, notified, profileAlerts });
+  } catch (error: unknown) {
+    logger.error({ error }, "Safety checkin cron failed");
     res.status(500).json({ error: "Cron failed" });
   }
 });
