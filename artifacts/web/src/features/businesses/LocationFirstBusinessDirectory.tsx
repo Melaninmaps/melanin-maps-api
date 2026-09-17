@@ -202,7 +202,7 @@ export function LocationFirstBusinessDirectory() {
           Find who you need, where you are.
         </h1>
         <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/75">
-          Search published community- and founder-listed businesses by name,
+          Search published businesses by name,
           specialty, category, ownership, city, or postal code.
         </p>
       </section>

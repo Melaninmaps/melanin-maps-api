@@ -1,6 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, businessIdentityTable } from "@workspace/db";
-import { isBlackOwned, OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
+import {
+  getBusinessExperiencePolicy,
+  isBlackOwned,
+  normalizeOwnerExperienceKey,
+  OWNERSHIP_DESIGNATIONS,
+} from "@workspace/constants";
 import { and, eq, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -60,7 +65,11 @@ function ownershipDesignations(val: unknown): string[] | undefined {
     .slice(0, 10);
 }
 
-function sanitize(body: Record<string, unknown>): IdentityBody {
+function sanitize(
+  body: Record<string, unknown>,
+  category: string,
+  subcategory: string | null,
+): IdentityBody {
   const s = (k: string, maxLen = 2000): string | undefined => {
     const v = body[k];
     return typeof v === "string" ? v.slice(0, maxLen) : undefined;
@@ -77,7 +86,14 @@ function sanitize(body: Record<string, unknown>): IdentityBody {
     communityValues: strArr(body["communityValues"], 5),
     audiencesServed: strArr(body["audiencesServed"], 20),
     accessibilityFeatures: strArr(body["accessibilityFeatures"], 20),
-    vibes: strArr(body["vibes"], 6),
+    vibes: (() => {
+      const values = strArr(body["vibes"], 3);
+      if (!values) return undefined;
+      const allowed = new Set(
+        getBusinessExperiencePolicy(category, subcategory).vibeChoices.map((choice) => choice.key),
+      );
+      return [...new Set(values.map(normalizeOwnerExperienceKey).filter((value) => allowed.has(value)))];
+    })(),
     employeeCount: typeof body["employeeCount"] === "number" ? Math.max(0, Math.floor(body["employeeCount"])) : (body["employeeCount"] === null ? null : undefined),
     isHiring: typeof body["isHiring"] === "boolean" ? body["isHiring"] : undefined,
     hasInternships: typeof body["hasInternships"] === "boolean" ? body["hasInternships"] : undefined,
@@ -126,7 +142,9 @@ router.get("/businesses/mine/identity", async (req: Request, res: Response) => {
     identity: {
       ...identity,
       ownershipBadges: normalizedBadges.length > 0 ? normalizedBadges : biz.ownershipDesignations,
+      vibes: biz.vibes ?? identity.vibes,
     },
+    business: { id: biz.id, category: biz.category, subcategory: biz.subcategory },
   });
 });
 
@@ -134,7 +152,7 @@ router.patch("/businesses/mine/identity", async (req: Request, res: Response) =>
   const biz = await getOwnedBusiness(req, res);
   if (!biz) return;
 
-  const data = sanitize(req.body as Record<string, unknown>);
+  const data = sanitize(req.body as Record<string, unknown>, biz.category, biz.subcategory);
 
   const [existing] = await db.select({ id: businessIdentityTable.id }).from(businessIdentityTable).where(eq(businessIdentityTable.businessId, biz.id)).limit(1);
 
@@ -154,6 +172,12 @@ router.patch("/businesses/mine/identity", async (req: Request, res: Response) =>
           blackOwned: isBlackOwned(data.ownershipBadges),
           updatedAt: new Date(),
         })
+        .where(eq(businessesTable.id, biz.id));
+    }
+    if (data.vibes !== undefined) {
+      await tx
+        .update(businessesTable)
+        .set({ vibes: data.vibes, updatedAt: new Date() })
         .where(eq(businessesTable.id, biz.id));
     }
     return saved;

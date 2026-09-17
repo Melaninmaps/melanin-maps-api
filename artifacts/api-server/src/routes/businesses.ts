@@ -55,6 +55,7 @@ import {
   ownershipDesignationFilterId,
   ownershipDesignationStorageValues,
   normalizeOwnershipDesignationFilterIds,
+  findVibeKeysForSearch,
 } from "@workspace/constants";
 
 const communitySubmissionRepository = new SubmissionRepository();
@@ -413,6 +414,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
         if (search && typeof search === "string") {
           const q = search.trim();
+          const matchingVibeKeys = findVibeKeysForSearch(q);
+          const matchesApprovedVibe = matchingVibeKeys.length
+            ? sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(matchingVibeKeys.map((key) => sql`${key}`), sql`, `)}]`
+            : null;
           const STOP = new Set([
             "a",
             "an",
@@ -448,6 +453,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 ilike(businessesTable.subcategory, `%${q}%`),
                 ilike(businessesTable.description, `%${q}%`),
                 sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${q}%`}`,
+                ...(matchesApprovedVibe ? [matchesApprovedVibe] : []),
               ),
             );
           } else {
@@ -486,6 +492,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 ilike(businessesTable.description, `%${q}%`), // full phrase in description
                 ilike(businessesTable.category, `%${q}%`), // full phrase in category
                 ilike(businessesTable.subcategory, `%${q}%`), // full phrase in subcategory
+                ...(matchesApprovedVibe ? [matchesApprovedVibe] : []),
               ),
             );
           }

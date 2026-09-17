@@ -53,6 +53,7 @@ export {
   isVibeEligible,
 } from "./vibe-labels";
 export type { VibeLabel } from "./vibe-labels";
+export { findVibeKeysForSearch } from "./vibe-search";
 
 // ── Endorsement tags ───────────────────────────────────────────────────────
 export {

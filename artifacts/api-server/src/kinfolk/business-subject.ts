@@ -1,3 +1,5 @@
+import { findVibeKeysForSearch } from "@workspace/constants";
+
 export type BusinessSubjectKey =
   | "bookstore"
   | "restaurant"
@@ -33,6 +35,8 @@ export type NormalizedBusinessSubject = Readonly<{
   key: BusinessSubjectKey;
   label: string;
   searchTerms: readonly string[];
+  /** Optional explicit atmosphere keys derived from the current request only. */
+  vibeKeys?: readonly string[];
 }>;
 
 type SubjectDefinition = NormalizedBusinessSubject &
@@ -340,6 +344,7 @@ export function deriveBusinessSubject(
         key: salon.key,
         label: salon.label,
         searchTerms: salon.searchTerms,
+        vibeKeys: findVibeKeysForSearch(message),
       };
     }
     const booksAsShoppingRequest =
@@ -353,12 +358,14 @@ export function deriveBusinessSubject(
       key: bookstore.key,
       label: bookstore.label,
       searchTerms: bookstore.searchTerms,
+      vibeKeys: findVibeKeysForSearch(message),
     };
   }
   return {
     key: subject.key,
     label: subject.label,
     searchTerms: subject.searchTerms,
+    vibeKeys: findVibeKeysForSearch(message),
   };
 }
 

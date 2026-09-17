@@ -186,7 +186,7 @@ const CANONICAL_SELECT = `
   COALESCE(bi.ownership_badges, '[]'::jsonb) AS ownership_badges,
   COALESCE(bi.community_values, '[]'::jsonb) AS community_values,
   COALESCE(bi.audiences_served, '[]'::jsonb) AS audiences_served,
-  COALESCE(bi.vibes, '[]'::jsonb) AS vibes,
+  COALESCE(NULLIF(b.vibes, '[]'::jsonb), bi.vibes, '[]'::jsonb) AS vibes,
   COALESCE(bi.accessibility_features, '[]'::jsonb) AS accessibility_features,
   COALESCE(bi.community_initiatives, '[]'::jsonb) AS community_initiatives,
   COALESCE(bi.growth_goals, '[]'::jsonb) AS growth_goals,
@@ -520,13 +520,14 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
       const patterns = businessSubjectSearchPatterns(subject);
+      const vibeKeys = subject.vibeKeys ?? [];
       if (!patterns.length) return [];
       const designationValueGroups = normalizeOwnershipDesignationFilterIds(
         requiredDesignationIds,
       ).map((id) => ownershipDesignationStorageValues(id).values);
       const designationClauses = designationValueGroups
         .map((_, index) => {
-          const parameter = 6 + index;
+          const parameter = 7 + index;
           return `
           AND EXISTS (
             SELECT 1
@@ -578,6 +579,15 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           ${designationClauses}
         ORDER BY
           CASE
+            WHEN cardinality($6::text[]) > 0
+              AND EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements_text(COALESCE(b.vibes, '[]'::jsonb)) AS vibe(value)
+                WHERE lower(regexp_replace(vibe.value, '[^a-z0-9]+', '_', 'g')) = ANY($6::text[])
+              ) THEN 0
+            ELSE 1
+          END,
+          CASE
             WHEN LOWER(COALESCE(b.category, '')) ~ ANY($3::text[]) THEN 0
             WHEN LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[]) THEN 1
             WHEN LOWER(COALESCE(b.name, '')) ~ ANY($3::text[]) THEN 2
@@ -597,6 +607,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           patterns,
           resultLimit,
           subject.key,
+          vibeKeys,
           ...designationValueGroups,
         ],
       );
@@ -637,7 +648,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
             COALESCE(b.tags, '[]'::jsonb)::text,
             COALESCE(bi.community_values, '[]'::jsonb)::text,
             COALESCE(bi.audiences_served, '[]'::jsonb)::text,
-            COALESCE(bi.vibes, '[]'::jsonb)::text,
+            COALESCE(NULLIF(b.vibes, '[]'::jsonb), bi.vibes, '[]'::jsonb)::text,
             COALESCE(bi.environment_tags, '[]'::jsonb)::text,
             COALESCE(bi.amenity_tags, '[]'::jsonb)::text
           )) ~ ('(^|[^a-z0-9])' || preference.token || '([^a-z0-9]|$)')
