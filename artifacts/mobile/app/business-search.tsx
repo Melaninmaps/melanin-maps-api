@@ -69,7 +69,7 @@ export default function BusinessSearchScreen() {
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
 
-  const { history, add: addHistory } = useSearchHistory("business");
+  const { history, add: addHistory, clear: clearHistory, remove: removeHistoryEntry } = useSearchHistory("business");
 
   useEffect(() => {
     if (history.length > 0 && !category) {
@@ -81,8 +81,13 @@ export default function BusinessSearchScreen() {
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
-  const handleSearch = useCallback(async () => {
-    const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category;
+  const handleSearch = useCallback(async (override?: Partial<{ name: string; city: string; state: string; handle: string; category: string }>) => {
+    const searchName = override?.name ?? name;
+    const searchCity = override?.city ?? city;
+    const searchState = override?.state ?? state;
+    const searchHandle = override?.handle ?? handle;
+    const searchCategory = override?.category ?? category;
+    const hasQuery = searchName.trim() || searchCity.trim() || searchState.trim() || searchHandle.trim() || searchCategory;
     if (!hasQuery) return;
     const requestId = ++searchRequestIdRef.current;
     Keyboard.dismiss();
@@ -90,17 +95,17 @@ export default function BusinessSearchScreen() {
     setSearched(false);
     setSearchError(null);
     try {
-      const nameParam = name.trim();
-      const cityParam = city.trim();
-      const stateParam = state.trim();
-      const handleParam = handle.trim();
+      const nameParam = searchName.trim();
+      const cityParam = searchCity.trim();
+      const stateParam = searchState.trim();
+      const handleParam = searchHandle.trim();
 
       const allParams = new URLSearchParams();
       if (nameParam) allParams.set("search", nameParam);
       if (cityParam) allParams.set("city", cityParam);
       if (stateParam) allParams.set("state", stateParam);
       if (handleParam) allParams.set("handle", handleParam);
-      if (category) allParams.set("category", category);
+      if (searchCategory) allParams.set("category", searchCategory);
       allParams.set("limit", "200");
 
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -125,8 +130,8 @@ export default function BusinessSearchScreen() {
       setSearched(true);
       setMode(list.length > 0 ? "results" : "invite");
 
-      const searchLabel = [nameParam, cityParam, stateParam].filter(Boolean).join(", ") || category;
-      void addHistory(searchLabel, category ? [category] : []);
+      const searchLabel = [nameParam, cityParam, stateParam].filter(Boolean).join(", ") || searchCategory;
+      void addHistory(searchLabel, searchCategory ? [searchCategory] : []);
     } catch {
       if (requestId === searchRequestIdRef.current) {
         setResults([]);
@@ -246,32 +251,39 @@ export default function BusinessSearchScreen() {
           <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 8 }}>
               <Feather name="clock" size={13} color={colors.mutedForeground} />
-              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.mutedForeground, letterSpacing: 0.5 }}>
+              <Text style={{ flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.mutedForeground, letterSpacing: 0.5 }}>
                 RECENT SEARCHES
               </Text>
+              <TouchableOpacity onPress={() => void clearHistory()} accessibilityRole="button" accessibilityLabel="Clear all recent business searches">
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: primaryGold }}>Clear all</Text>
+              </TouchableOpacity>
             </View>
             <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
-              {history.slice(0, 6).map((h, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, backgroundColor: primaryGold + "12", borderColor: primaryGold + "35" }}
-                  onPress={() => {
-                    if (h.categories?.[0]) setCategory(h.categories[0]);
-                    const parts = h.query.split(", ");
-                    if (parts[0]) setName(parts[0]);
-                    if (parts[1]) setCity(parts[1]);
-                    if (parts[2]) setState(parts[2]);
-                    setTimeout(() => void handleSearch(), 50);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Feather name="rotate-ccw" size={11} color={primaryGold} />
-                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: primaryGold }} numberOfLines={1}>
-                    {h.query}
-                    {h.categories?.[0] ? ` · ${h.categories[0]}` : ""}
-                  </Text>
-                </TouchableOpacity>
+              {history.slice(0, 6).map((h) => (
+                <View key={`${h.type}:${h.query}`} style={{ flexDirection: "row", alignItems: "center", borderRadius: 20, borderWidth: 1, backgroundColor: primaryGold + "12", borderColor: primaryGold + "35" }}>
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingLeft: 12, paddingVertical: 7, maxWidth: 220 }}
+                    onPress={() => {
+                      const parts = h.query.split(", ");
+                      const next = { name: parts[0] ?? "", city: parts[1] ?? "", state: parts[2] ?? "", category: h.categories?.[0] ?? "" };
+                      setName(next.name);
+                      setCity(next.city);
+                      setState(next.state);
+                      setCategory(next.category);
+                      void handleSearch(next);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="rotate-ccw" size={11} color={primaryGold} />
+                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: primaryGold }} numberOfLines={1}>
+                      {h.query}{h.categories?.[0] ? ` · ${h.categories[0]}` : ""}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={{ paddingHorizontal: 9, paddingVertical: 7 }} onPress={() => void removeHistoryEntry(h)} accessibilityRole="button" accessibilityLabel={`Remove ${h.query} from recent searches`}>
+                    <Feather name="x" size={13} color={primaryGold} />
+                  </TouchableOpacity>
+                </View>
               ))}
             </ScrollView>
           </View>
@@ -343,7 +355,7 @@ export default function BusinessSearchScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
-              onSubmitEditing={handleSearch}
+              onSubmitEditing={() => void handleSearch()}
             />
             {handle.length > 0 && (
               <TouchableOpacity activeOpacity={0.85} onPress={() => setHandle("")}>
@@ -385,7 +397,7 @@ export default function BusinessSearchScreen() {
             { backgroundColor: hasQuery ? primaryGold : colors.secondary },
           ]}
           activeOpacity={0.85}
-          onPress={handleSearch}
+          onPress={() => void handleSearch()}
           disabled={!hasQuery || loading}
         >
           {loading ? (

@@ -66,6 +66,17 @@ export async function clearHistory(type?: SearchType): Promise<void> {
   await Promise.all(types.map((t) => AsyncStorage.removeItem(KEY(t))));
 }
 
+async function deleteRemoteHistory(type: SearchType, query?: string): Promise<void> {
+  const token = await getToken();
+  if (!token) return;
+  const response = await fetch(`${getApiBase()}/api/search/history`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ type, ...(query ? { query } : {}) }),
+  });
+  if (!response.ok) throw new Error("History deletion failed");
+}
+
 export function useSearchHistory(type: SearchType) {
   const [history, setHistory] = useState<SearchHistoryEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -107,9 +118,19 @@ export function useSearchHistory(type: SearchType) {
   const clear = useCallback(async () => {
     await clearHistory(type);
     setHistory([]);
+    try { await deleteRemoteHistory(type); } catch { /* Local deletion remains effective offline. */ }
   }, [type]);
 
-  return { history, loaded, add, clear };
+  const remove = useCallback(async (entry: SearchHistoryEntry) => {
+    const updated = history.filter((candidate) =>
+      !(candidate.type === entry.type && candidate.query.toLowerCase() === entry.query.toLowerCase()),
+    );
+    setHistory(updated);
+    await AsyncStorage.setItem(KEY(type), JSON.stringify(updated));
+    try { await deleteRemoteHistory(type, entry.query); } catch { /* Local deletion remains effective offline. */ }
+  }, [history, type]);
+
+  return { history, loaded, add, clear, remove };
 }
 
 function mergeHistory(

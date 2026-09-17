@@ -119,6 +119,35 @@ router.get("/search/history", async (req: Request, res: Response) => {
   }
 });
 
+// A member may remove one item or clear one search surface without changing
+// any profile, account, waitlist, or discovery record.
+router.delete("/search/history", async (req: Request, res: Response) => {
+  const user = (req as any).user as { id: string } | undefined;
+  if (!user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { query, type } = req.body as { query?: unknown; type?: unknown };
+  const normalizedType = typeof type === "string" && type.trim() ? type.trim() : null;
+  const normalizedQuery = typeof query === "string" && query.trim() ? query.trim().toLowerCase() : null;
+  try {
+    const rows = await db.select({ searchHistory: userPreferencesTable.searchHistory })
+      .from(userPreferencesTable).where(eq(userPreferencesTable.userId, user.id));
+    const existing = (rows[0]?.searchHistory ?? []) as Array<{ query: string; type: string; categories: string[]; ts: number }>;
+    const updated = existing.filter((entry) => {
+      if (normalizedQuery) {
+        return !(entry.query.trim().toLowerCase() === normalizedQuery && (!normalizedType || entry.type === normalizedType));
+      }
+      if (normalizedType) return entry.type !== normalizedType;
+      return false;
+    });
+    await db.insert(userPreferencesTable)
+      .values({ userId: user.id, searchHistory: updated })
+      .onConflictDoUpdate({ target: userPreferencesTable.userId, set: { searchHistory: updated } });
+    res.json({ history: normalizedType ? updated.filter((entry) => entry.type === normalizedType) : updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete search history");
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
 router.get("/search/intent", async (req: Request, res: Response) => {
   const { q, city, limit = "12", recentCategories } = req.query as Record<string, string>;
 
