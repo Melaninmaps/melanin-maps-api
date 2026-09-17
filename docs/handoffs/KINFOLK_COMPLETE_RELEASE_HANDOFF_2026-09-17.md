@@ -2,7 +2,7 @@
 
 **Prepared by:** Manus AI  
 **Repository:** `Melaninmaps/melanin-maps-api`  
-**Release source:** `main` at `78193d60d77efe15aca30b671ab7c9309cff7193` (merged PR #51)  
+**Application release source:** `main` through `78193d60d77efe15aca30b671ab7c9309cff7193` (merged PR #51); later commits in this handoff-only series do not alter application behavior
 **Handoff date:** 2026-09-17  
 **Deployment owner:** Replit or the hosting owner with the production database, deployment, Expo Application Services (EAS), Apple, and Google Play credentials
 
@@ -68,7 +68,7 @@ Kinfolk’s readiness route performs real but small provider checks for chat, we
 
 ### 1. Freeze and verify the release input
 
-Replit must deploy from `main` at `78193d60d77efe15aca30b671ab7c9309cff7193` or a reviewed descendant. It must record the exact deployed API and web commit SHA. It must not substitute a local workspace, an unreviewed open pull request, a generated prototype, or an older mobile branch.
+Replit must deploy the reviewed current `main`, which contains the application source through `78193d60d77efe15aca30b671ab7c9309cff7193` (PR #51) plus this documentation. It must record the exact deployed API and web commit SHA. It must not substitute a local workspace, an unreviewed open pull request, a generated prototype, or an older mobile branch.
 
 Before any migration, take a production database backup and verify restoration procedures. The deployment must preserve all existing users, Replit/Auth-compatible tables, sessions, OAuth/Apple identities, password-reset records, `waitlist_signups`, claims, subscriptions, and existing business records. No user or waitlist backfill, cleanup, seed, deletion, or bulk mutation is authorized.
 
