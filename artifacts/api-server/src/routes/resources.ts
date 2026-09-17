@@ -439,6 +439,55 @@ router.post("/resources/admin/seed-curated", async (req: Request, res: Response)
   }
 });
 
+// ── GET /resources/providers/:serviceKey ──────────────────────────────────────
+// A safe, in-app provider-result contract. It only returns already-active
+// Resource records whose published title/description/keywords match the
+// supported need. A zero-result is a successful, truthful response; it never
+// redirects a member to a third-party site or promotes review-only listings.
+const PROVIDER_NEEDS: Record<string, { label: string; terms: string[] }> = {
+  "financial-coaching": {
+    label: "financial coaches",
+    terms: ["financial coaching", "credit counseling", "financial literacy"],
+  },
+};
+
+router.get("/resources/providers/:serviceKey", async (req: Request, res: Response) => {
+  const need = PROVIDER_NEEDS[String(req.params.serviceKey)];
+  if (!need) {
+    res.status(404).json({ error: "Provider need not found" });
+    return;
+  }
+
+  try {
+    const { city, state } = req.query as Record<string, string>;
+    const conditions = [
+      eq(resourcesTable.isActive, true),
+      or(isNull(resourcesTable.expiresAt), gt(resourcesTable.expiresAt, new Date()))!,
+      or(
+        ...need.terms.flatMap((term) => [
+          ilike(resourcesTable.title, `%${term}%`),
+          ilike(resourcesTable.description, `%${term}%`),
+          sql`${resourcesTable.keywords}::text ILIKE ${`%${term}%`}`,
+        ]),
+      )!,
+    ];
+    if (state) conditions.push(or(eq(resourcesTable.isNational, true), ilike(resourcesTable.state, `%${state}%`))!);
+    if (city) conditions.push(or(eq(resourcesTable.isNational, true), ilike(resourcesTable.city, `%${city}%`))!);
+
+    const providers = await db.select().from(resourcesTable)
+      .where(and(...conditions))
+      .orderBy(
+        sql`CASE ${resourcesTable.sourceTier} WHEN 'official' THEN 1 WHEN 'verified_org' THEN 2 WHEN 'community_confirmed' THEN 3 ELSE 4 END`,
+        resourcesTable.title,
+      )
+      .limit(20);
+    res.json({ serviceKey: req.params.serviceKey, label: need.label, providers, total: providers.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch resource providers");
+    res.status(500).json({ error: "Failed to fetch resource providers" });
+  }
+});
+
 // Keep this parameter route after every literal /resources/* GET route so
 // requests such as /resources/opportunities and /resources/alerts cannot be
 // captured as a resource ID.

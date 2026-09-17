@@ -761,6 +761,8 @@ export default function ResourcesScreen() {
   const [activeOppType, setActiveOppType] = useState<OppType | "all">("all");
   const [resources, setResources] = useState<Resource[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [resourceLoadError, setResourceLoadError] = useState<string | null>(null);
+  const [opportunityLoadError, setOpportunityLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [aiSearchOpen, setAiSearchOpen] = useState(false);
@@ -768,6 +770,7 @@ export default function ResourcesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchResources = useCallback(async () => {
+    setResourceLoadError(null);
     try {
       const params = new URLSearchParams({ limit: "30" });
       if (activeCategory !== "all") params.set("category", activeCategory);
@@ -776,14 +779,17 @@ export default function ResourcesScreen() {
       const res = await fetch(`${getApiBase()}/api/resources?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (res.ok) {
-        const data = await res.json() as { resources: Resource[] };
-        setResources(data.resources ?? []);
-      }
-    } catch {}
+      const data = await res.json() as { resources?: Resource[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Resources could not be loaded");
+      setResources(data.resources ?? []);
+    } catch (error) {
+      setResources([]);
+      setResourceLoadError(error instanceof Error ? error.message : "Resources could not be loaded");
+    }
   }, [activeCategory, searchQuery]);
 
   const fetchOpportunities = useCallback(async () => {
+    setOpportunityLoadError(null);
     try {
       const params = new URLSearchParams({ limit: "30" });
       if (activeOppType !== "all") params.set("type", activeOppType);
@@ -792,11 +798,13 @@ export default function ResourcesScreen() {
       const res = await fetch(`${getApiBase()}/api/resources/opportunities?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (res.ok) {
-        const data = await res.json() as { opportunities: Opportunity[] };
-        setOpportunities(data.opportunities ?? []);
-      }
-    } catch {}
+      const data = await res.json() as { opportunities?: Opportunity[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Opportunities could not be loaded");
+      setOpportunities(data.opportunities ?? []);
+    } catch (error) {
+      setOpportunities([]);
+      setOpportunityLoadError(error instanceof Error ? error.message : "Opportunities could not be loaded");
+    }
   }, [activeOppType, searchQuery]);
 
   useEffect(() => {
@@ -941,17 +949,29 @@ export default function ResourcesScreen() {
             ) : null
           }
           ListEmptyComponent={
-            <View style={s.emptyState}>
-              <Feather name="heart" size={36} color={colors.mutedForeground} />
-              <Text style={[s.emptyTitle, { color: colors.foreground }]}>No resources found</Text>
-              <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>
-                Try a different category or ask KinfolkAI for help.
-              </Text>
-              <TouchableOpacity style={s.emptyAiBtn} onPress={() => setAiSearchOpen(true)} activeOpacity={0.85}>
-                <Feather name="compass" size={15} color="#1C0E06" />
-                <Text style={s.emptyAiBtnText}>Ask KinfolkAI</Text>
-              </TouchableOpacity>
-            </View>
+            resourceLoadError ? (
+              <View style={s.emptyState}>
+                <Feather name="alert-circle" size={36} color="#B91C1C" />
+                <Text style={[s.emptyTitle, { color: colors.foreground }]}>Resources could not be loaded</Text>
+                <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>{resourceLoadError}</Text>
+                <TouchableOpacity style={s.emptyAiBtn} onPress={() => { void fetchResources(); }} activeOpacity={0.85}>
+                  <Feather name="refresh-cw" size={15} color="#1C0E06" />
+                  <Text style={s.emptyAiBtnText}>Try again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={s.emptyState}>
+                <Feather name="heart" size={36} color={colors.mutedForeground} />
+                <Text style={[s.emptyTitle, { color: colors.foreground }]}>No resources found</Text>
+                <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>
+                  Try a different category or ask KinfolkAI for help.
+                </Text>
+                <TouchableOpacity style={s.emptyAiBtn} onPress={() => setAiSearchOpen(true)} activeOpacity={0.85}>
+                  <Feather name="compass" size={15} color="#1C0E06" />
+                  <Text style={s.emptyAiBtnText}>Ask KinfolkAI</Text>
+                </TouchableOpacity>
+              </View>
+            )
           }
           renderItem={({ item }) => (
             <ResourceCard item={item} colors={colors} onReport={(id) => { void handleReport(id, false); }} />
@@ -964,17 +984,29 @@ export default function ResourcesScreen() {
           contentContainerStyle={s.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void handleRefresh(); }} tintColor="#CA922B" />}
           ListEmptyComponent={
-            <View style={s.emptyState}>
-              <Feather name="briefcase" size={36} color={colors.mutedForeground} />
-              <Text style={[s.emptyTitle, { color: colors.foreground }]}>No opportunities yet</Text>
-              <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>
-                Be the first to share a job opening, housing lead, or scholarship.
-              </Text>
-              <TouchableOpacity style={s.emptyAiBtn} onPress={() => setSubmitOpen(true)} activeOpacity={0.85}>
-                <Feather name="plus" size={15} color="#1C0E06" />
-                <Text style={s.emptyAiBtnText}>Share an Opportunity</Text>
-              </TouchableOpacity>
-            </View>
+            opportunityLoadError ? (
+              <View style={s.emptyState}>
+                <Feather name="alert-circle" size={36} color="#B91C1C" />
+                <Text style={[s.emptyTitle, { color: colors.foreground }]}>Opportunities could not be loaded</Text>
+                <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>{opportunityLoadError}</Text>
+                <TouchableOpacity style={s.emptyAiBtn} onPress={() => { void fetchOpportunities(); }} activeOpacity={0.85}>
+                  <Feather name="refresh-cw" size={15} color="#1C0E06" />
+                  <Text style={s.emptyAiBtnText}>Try again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={s.emptyState}>
+                <Feather name="briefcase" size={36} color={colors.mutedForeground} />
+                <Text style={[s.emptyTitle, { color: colors.foreground }]}>No opportunities yet</Text>
+                <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>
+                  Be the first to share a job opening, housing lead, or scholarship.
+                </Text>
+                <TouchableOpacity style={s.emptyAiBtn} onPress={() => setSubmitOpen(true)} activeOpacity={0.85}>
+                  <Feather name="plus" size={15} color="#1C0E06" />
+                  <Text style={s.emptyAiBtnText}>Share an Opportunity</Text>
+                </TouchableOpacity>
+              </View>
+            )
           }
           renderItem={({ item }) => (
             <OpportunityCard item={item} colors={colors} onReport={(id) => { void handleReport(id, true); }} />
