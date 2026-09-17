@@ -404,9 +404,7 @@ setInterval(() => {
     if (v.expiresAt <= now) sessionsCache.delete(k);
 }, 60_000).unref();
 
-async function getCachedSessions(
-  userId: string,
-): Promise<
+async function getCachedSessions(userId: string): Promise<
   Array<{
     id: string;
     title: string | null;
@@ -4427,6 +4425,12 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           culturalInterests: normalizeArr(prefs.culturalInterests),
           lifestyleServices: normalizeArr(prefs.lifestyleServices),
           diasporaCountries: normalizeArr(prefs.diasporaCountries),
+          communities: normalizeArr(prefs.communities),
+          cultures: normalizeArr(prefs.cultures),
+          preferredLanguages: normalizeArr(prefs.preferredLanguages),
+          personalizationContextCompleted: Boolean(
+            prefs.personalizationContextCompletedAt,
+          ),
           // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
           ownershipTypes: normalizeArr(prefs.preferredOwnershipTypes),
           kinfolkVoice: normalizeKinfolkVoice(prefs.kinfolkVoice),
@@ -4451,6 +4455,10 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           dietaryNotes: null,
           ownershipTypes: [],
           lifestyleServices: [],
+          communities: [],
+          cultures: [],
+          preferredLanguages: [],
+          personalizationContextCompleted: false,
           communicationStyle: "friendly",
           personalityMode: "neighborhood_guide",
           emojiLevel: "some",
@@ -4514,6 +4522,9 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     preferredOwnershipTypes,
     ownershipTypes,
     diasporaCountries,
+    communities,
+    cultures,
+    preferredLanguages,
     lifestyleServices,
     personalityMode,
     kinfolkVoice,
@@ -4611,6 +4622,19 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         diasporaCountries: Array.isArray(diasporaCountries)
           ? (diasporaCountries as string[])
           : undefined,
+        communities: Array.isArray(communities)
+          ? (communities as string[])
+          : undefined,
+        cultures: Array.isArray(cultures) ? (cultures as string[]) : undefined,
+        preferredLanguages: Array.isArray(preferredLanguages)
+          ? (preferredLanguages as string[])
+          : undefined,
+        personalizationContextCompletedAt:
+          Array.isArray(communities) ||
+          Array.isArray(cultures) ||
+          Array.isArray(preferredLanguages)
+            ? new Date()
+            : undefined,
         lifestyleServices: Array.isArray(lifestyleServices)
           ? (lifestyleServices as string[])
           : undefined,
@@ -4656,6 +4680,20 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           }),
           ...(Array.isArray(diasporaCountries) && {
             diasporaCountries: diasporaCountries as string[],
+          }),
+          ...(Array.isArray(communities) && {
+            communities: communities as string[],
+          }),
+          ...(Array.isArray(cultures) && {
+            cultures: cultures as string[],
+          }),
+          ...(Array.isArray(preferredLanguages) && {
+            preferredLanguages: preferredLanguages as string[],
+          }),
+          ...((Array.isArray(communities) ||
+            Array.isArray(cultures) ||
+            Array.isArray(preferredLanguages)) && {
+            personalizationContextCompletedAt: new Date(),
           }),
           ...(Array.isArray(lifestyleServices) && {
             lifestyleServices: lifestyleServices as string[],
@@ -4919,12 +4957,10 @@ function isSensitiveMemoryRelevant(
 
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled()) {
-    return void res
-      .status(403)
-      .json({
-        error: "Kinfolk private memory is disabled.",
-        code: "PRIVATE_MEMORY_DISABLED",
-      });
+    return void res.status(403).json({
+      error: "Kinfolk private memory is disabled.",
+      code: "PRIVATE_MEMORY_DISABLED",
+    });
   }
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
@@ -4964,34 +5000,28 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
 
 router.post("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled()) {
-    return void res
-      .status(403)
-      .json({
-        error: "Kinfolk private memory is disabled.",
-        code: "PRIVATE_MEMORY_DISABLED",
-      });
+    return void res.status(403).json({
+      error: "Kinfolk private memory is disabled.",
+      code: "PRIVATE_MEMORY_DISABLED",
+    });
   }
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
   try {
     const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
     if (!memoryEnabled) {
-      return void res
-        .status(403)
-        .json({
-          error: "Kinfolk memory is disabled.",
-          code: "PRIVATE_MEMORY_DISABLED",
-        });
+      return void res.status(403).json({
+        error: "Kinfolk memory is disabled.",
+        code: "PRIVATE_MEMORY_DISABLED",
+      });
     }
     const body = req.body as Record<string, unknown>;
     if (body.consent !== true) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Explicit consent is required before Kinfolk remembers anything.",
-          code: "MEMORY_CONSENT_REQUIRED",
-        });
+      res.status(400).json({
+        error:
+          "Explicit consent is required before Kinfolk remembers anything.",
+        code: "MEMORY_CONSENT_REQUIRED",
+      });
       return;
     }
     const content = String(body.content ?? "").trim();
@@ -5047,12 +5077,10 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
 
 router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled()) {
-    return void res
-      .status(403)
-      .json({
-        error: "Kinfolk private memory is disabled.",
-        code: "PRIVATE_MEMORY_DISABLED",
-      });
+    return void res.status(403).json({
+      error: "Kinfolk private memory is disabled.",
+      code: "PRIVATE_MEMORY_DISABLED",
+    });
   }
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
@@ -5256,6 +5284,14 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       (option) => option.label,
     ),
   );
+  // These terms are supplied by the member in Profile. They improve ranking only:
+  // a Black woman, for example, can make that context useful without the app ever
+  // guessing it, and a saved culture/language never hides relevant results.
+  const memberContextTerms = [
+    ...(prefs?.communities ?? []),
+    ...(prefs?.cultures ?? []),
+    ...(prefs?.preferredLanguages ?? []),
+  ];
   const clarificationSteps = businessDiscoveryClarification({
     message: input.message,
     subjectKey: subject.key,
@@ -5332,10 +5368,12 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         ...(prefs?.culturalInterests ?? []),
         ...(prefs?.lifestyleServices ?? []),
         ...preferredDesignationLabels,
+        ...memberContextTerms,
       ],
       priorityPreferenceTerms: [
         ...(prefs?.favoriteCategories ?? []),
         ...preferredDesignationLabels,
+        ...memberContextTerms,
       ],
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: input.message,
@@ -5462,11 +5500,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 
   if (message.length > 2000) {
-    res
-      .status(400)
-      .json({
-        error: "Message is too long. Please keep it under 2,000 characters.",
-      });
+    res.status(400).json({
+      error: "Message is too long. Please keep it under 2,000 characters.",
+    });
     return;
   }
 
@@ -5552,12 +5588,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (contextualRequestAbort.signal.aborted) return;
     verifiedImageUrls = requestedImageUrls.filter((url) => owned.has(url));
     if (verifiedImageUrls.length !== requestedImageUrls.length) {
-      res
-        .status(400)
-        .json({
-          error:
-            "One or more images are invalid, expired, or do not belong to this account.",
-        });
+      res.status(400).json({
+        error:
+          "One or more images are invalid, expired, or do not belong to this account.",
+      });
       return;
     }
   }
@@ -9473,12 +9507,10 @@ router.post(
     const { id } = req.params as { id: string };
     const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
     if (!memoryEnabled) {
-      return void res
-        .status(403)
-        .json({
-          error: "Kinfolk memory is disabled.",
-          code: "PRIVATE_MEMORY_DISABLED",
-        });
+      return void res.status(403).json({
+        error: "Kinfolk memory is disabled.",
+        code: "PRIVATE_MEMORY_DISABLED",
+      });
     }
 
     const [session] = await db
@@ -9779,22 +9811,18 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   // Authentication is checked before provider configuration so unauthenticated
   // requests never learn whether a backend credential is installed.
   if (!req.user?.id) {
-    return void res
-      .status(401)
-      .json({
-        error: "AUTHENTICATION_REQUIRED",
-        message: "Sign in to use voice input.",
-        audioRetained: false,
-      });
+    return void res.status(401).json({
+      error: "AUTHENTICATION_REQUIRED",
+      message: "Sign in to use voice input.",
+      audioRetained: false,
+    });
   }
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res
-      .status(503)
-      .json({
-        error: "TRANSCRIPTION_UNAVAILABLE",
-        message: "Transcription is temporarily unavailable.",
-        audioRetained: false,
-      });
+    return void res.status(503).json({
+      error: "TRANSCRIPTION_UNAVAILABLE",
+      message: "Transcription is temporarily unavailable.",
+      audioRetained: false,
+    });
   }
 
   // 2. Per-member rate limit (primary)
@@ -9806,13 +9834,11 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   if (!memberCheck.allowed) {
     const retrySec = Math.ceil(memberCheck.retryAfterMs / 1000);
     res.set("Retry-After", String(retrySec));
-    return void res
-      .status(429)
-      .json({
-        error: "VOICE_INPUT_RATE_LIMITED",
-        message: `Voice input limit reached. Try again in ${retrySec} seconds.`,
-        audioRetained: false,
-      });
+    return void res.status(429).json({
+      error: "VOICE_INPUT_RATE_LIMITED",
+      message: `Voice input limit reached. Try again in ${retrySec} seconds.`,
+      audioRetained: false,
+    });
   }
 
   if (!req.is("multipart/form-data")) {
@@ -9833,57 +9859,46 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
         audioRetained: false,
       });
     }
-    return void res
-      .status(400)
-      .json({
-        error: "AUDIO_UNREADABLE",
-        message:
-          "Kinfolk could not read that audio. Please try again or type your question.",
-        audioRetained: false,
-      });
+    return void res.status(400).json({
+      error: "AUDIO_UNREADABLE",
+      message:
+        "Kinfolk could not read that audio. Please try again or type your question.",
+      audioRetained: false,
+    });
   }
   if (!req.file?.buffer?.length) {
-    return void res
-      .status(400)
-      .json({
-        error: "AUDIO_REQUIRED",
-        message: "No audio data provided.",
-        audioRetained: false,
-      });
+    return void res.status(400).json({
+      error: "AUDIO_REQUIRED",
+      message: "No audio data provided.",
+      audioRetained: false,
+    });
   }
   const buffer = req.file.buffer;
   const format = canonicalVoiceFormat(req.file.mimetype ?? "");
 
   if (!format || !ALLOWED_AUDIO_FORMATS.has(format.safeFormat)) {
-    return void res
-      .status(400)
-      .json({
-        error: "UNSUPPORTED_AUDIO_FORMAT",
-        message: "Use WebM, M4A, WAV, or MP3 audio.",
-        audioRetained: false,
-      });
+    return void res.status(400).json({
+      error: "UNSUPPORTED_AUDIO_FORMAT",
+      message: "Use WebM, M4A, WAV, or MP3 audio.",
+      audioRetained: false,
+    });
   }
   const { safeFormat, mimeType: canonicalMimeType } = format;
 
   if (buffer.length > MAX_VOICE_PAYLOAD_BYTES) {
-    return void res
-      .status(413)
-      .json({
-        error: "AUDIO_PAYLOAD_TOO_LARGE",
-        message:
-          "This voice clip is too large. Please send a shorter recording.",
-        audioRetained: false,
-      });
+    return void res.status(413).json({
+      error: "AUDIO_PAYLOAD_TOO_LARGE",
+      message: "This voice clip is too large. Please send a shorter recording.",
+      audioRetained: false,
+    });
   }
 
   if (buffer.length < 100) {
-    return void res
-      .status(400)
-      .json({
-        error: "AUDIO_REQUIRED",
-        message: "Audio clip is too short.",
-        audioRetained: false,
-      });
+    return void res.status(400).json({
+      error: "AUDIO_REQUIRED",
+      message: "Audio clip is too short.",
+      audioRetained: false,
+    });
   }
 
   try {
@@ -9900,13 +9915,11 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
         .status(400)
         .json({ error: error.code, message, audioRetained: false });
     }
-    return void res
-      .status(400)
-      .json({
-        error: "AUDIO_UNREADABLE",
-        message: "Kinfolk could not read that recording.",
-        audioRetained: false,
-      });
+    return void res.status(400).json({
+      error: "AUDIO_UNREADABLE",
+      message: "Kinfolk could not read that recording.",
+      audioRetained: false,
+    });
   }
 
   // 7. Transcribe with 15-second timeout — never persist audio blob
@@ -9972,22 +9985,18 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     );
 
     if (isAbort) {
-      return void res
-        .status(503)
-        .json({
-          error: "TRANSCRIPTION_UNAVAILABLE",
-          message:
-            "Transcription timed out. Please try again or type your question.",
-          audioRetained: false,
-        });
-    }
-    return void res
-      .status(503)
-      .json({
+      return void res.status(503).json({
         error: "TRANSCRIPTION_UNAVAILABLE",
-        message: "Transcription failed. Please try again.",
+        message:
+          "Transcription timed out. Please try again or type your question.",
         audioRetained: false,
       });
+    }
+    return void res.status(503).json({
+      error: "TRANSCRIPTION_UNAVAILABLE",
+      message: "Transcription failed. Please try again.",
+      audioRetained: false,
+    });
   } finally {
     clearTimeout(timeout);
   }

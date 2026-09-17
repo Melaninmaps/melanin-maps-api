@@ -43,12 +43,27 @@ describe("Library search query parsing", () => {
 
   it.each([
     [{}, 'Library search requires one text query in "q".'],
-    [{ q: ["hvac", "plumbing"] }, 'Library search requires one text query in "q".'],
+    [
+      { q: ["hvac", "plumbing"] },
+      'Library search requires one text query in "q".',
+    ],
     [{ q: "   " }, "Enter a Library search term."],
-    [{ q: "x".repeat(121) }, "Library search terms must be 120 characters or fewer."],
-    [{ q: "hvac", limit: "0" }, "Search limit must be a whole number from 1 through 20."],
-    [{ q: "hvac", limit: "2.5" }, "Search limit must be a whole number from 1 through 20."],
-    [{ q: "hvac", cursor: "not/a/cursor" }, "Search cursor is invalid or expired."],
+    [
+      { q: "x".repeat(121) },
+      "Library search terms must be 120 characters or fewer.",
+    ],
+    [
+      { q: "hvac", limit: "0" },
+      "Search limit must be a whole number from 1 through 20.",
+    ],
+    [
+      { q: "hvac", limit: "2.5" },
+      "Search limit must be a whole number from 1 through 20.",
+    ],
+    [
+      { q: "hvac", cursor: "not/a/cursor" },
+      "Search cursor is invalid or expired.",
+    ],
   ])("rejects malformed query input %#", (query, error) => {
     expect(parseLibrarySearchQuery(query)).toEqual({ ok: false, error });
   });
@@ -73,21 +88,25 @@ describe("Library internal-first vocabulary", () => {
     );
   });
 
-  it.each(["hbcu", "hbcus", "hbcu's", "historically black colleges and universities"])(
-    "maps %s to education/history and all HBCU search forms",
-    (query) => {
-      const vocabulary = resolveLibrarySearchVocabulary(query);
-      expect(vocabulary.preferredTopicSlugs).toEqual([
-        "education-learning",
-        "places-our-history",
-      ]);
-      expect(vocabulary.patterns).toEqual(expect.arrayContaining([
+  it.each([
+    "hbcu",
+    "hbcus",
+    "hbcu's",
+    "historically black colleges and universities",
+  ])("maps %s to education/history and all HBCU search forms", (query) => {
+    const vocabulary = resolveLibrarySearchVocabulary(query);
+    expect(vocabulary.preferredTopicSlugs).toEqual([
+      "education-learning",
+      "places-our-history",
+    ]);
+    expect(vocabulary.patterns).toEqual(
+      expect.arrayContaining([
         "%hbcu%",
         "%hbcus%",
         "%historically black college%",
-      ]));
-    },
-  );
+      ]),
+    );
+  });
 
   it("escapes LIKE wildcards from member input", () => {
     expect(resolveLibrarySearchVocabulary("100%_ready").patterns).toEqual([
@@ -103,7 +122,8 @@ describe("Library internal-first vocabulary", () => {
           id: "topic-1",
           slug: "trades-skills-certifications",
           title: "Trades, Skills & Certifications",
-          summary: "Apprenticeships, skilled trades, certifications, and career pathways.",
+          summary:
+            "Apprenticeships, skilled trades, certifications, and career pathways.",
           iconKey: "home-services",
           entryCount: 2,
         },
@@ -136,20 +156,48 @@ describe("Library internal-first vocabulary", () => {
     expect(response.webResearch.status).toBe("not_needed");
   });
 
+  it("passes voluntary member context as ranking hints without changing the query", async () => {
+    const searchPublishedContent = vi
+      .fn()
+      .mockResolvedValue({ results: [], total: 0 });
+
+    const response = await searchLivingLibrary(
+      repositoryStub(searchPublishedContent),
+      { query: "childcare", normalizedQuery: "childcare", limit: 6, offset: 0 },
+      ["Black woman", "Haitian", "Haitian Creole"],
+    );
+
+    expect(searchPublishedContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        normalizedQuery: "childcare",
+        rankingContextPatterns: [
+          "%black woman%",
+          "%haitian%",
+          "%haitian creole%",
+        ],
+      }),
+    );
+    expect(response.preferenceContextApplied).toBe(true);
+  });
+
   it("treats a matching foundation shell with zero approved entries as sparse", async () => {
     const response = await searchLivingLibrary(
-      repositoryStub(vi.fn().mockResolvedValue({
-        results: [{
-          kind: "topic",
-          id: "topic-1",
-          slug: "trades-skills-certifications",
-          title: "Trades, Skills & Certifications",
-          summary: "Apprenticeships and career pathways.",
-          iconKey: "home-services",
-          entryCount: 0,
-        }],
-        total: 1,
-      })),
+      repositoryStub(
+        vi.fn().mockResolvedValue({
+          results: [
+            {
+              kind: "topic",
+              id: "topic-1",
+              slug: "trades-skills-certifications",
+              title: "Trades, Skills & Certifications",
+              summary: "Apprenticeships and career pathways.",
+              iconKey: "home-services",
+              entryCount: 0,
+            },
+          ],
+          total: 1,
+        }),
+      ),
       { query: "HVAC", normalizedQuery: "hvac", limit: 6, offset: 0 },
     );
     expect(response.webResearch).toMatchObject({ status: "available" });
@@ -157,28 +205,44 @@ describe("Library internal-first vocabulary", () => {
 
   it("treats a sourced HBCU entry as approved reusable coverage", async () => {
     const response = await searchLivingLibrary(
-      repositoryStub(vi.fn().mockResolvedValue({
-        results: [{
-          kind: "entry",
-          id: "entry-hbcu",
-          title: "What Are Historically Black Colleges and Universities (HBCUs)?",
-          summary: "A source-backed foundation.",
-          body: "HBCUs are accredited institutions with a historic mission.",
-          topicSlug: "education-learning",
-          topicTitle: "Education & Learning",
-          sourceCount: 2,
-          sources: [
-            { url: "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/", title: "What is an HBCU?", publisher: "U.S. Department of Education" },
-            { url: "https://www.pewresearch.org/short-reads/2024/10/02/a-look-at-historically-black-colleges-and-universities-in-the-u-s/", title: "A look at HBCUs", publisher: "Pew Research Center" },
+      repositoryStub(
+        vi.fn().mockResolvedValue({
+          results: [
+            {
+              kind: "entry",
+              id: "entry-hbcu",
+              title:
+                "What Are Historically Black Colleges and Universities (HBCUs)?",
+              summary: "A source-backed foundation.",
+              body: "HBCUs are accredited institutions with a historic mission.",
+              topicSlug: "education-learning",
+              topicTitle: "Education & Learning",
+              sourceCount: 2,
+              sources: [
+                {
+                  url: "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/",
+                  title: "What is an HBCU?",
+                  publisher: "U.S. Department of Education",
+                },
+                {
+                  url: "https://www.pewresearch.org/short-reads/2024/10/02/a-look-at-historically-black-colleges-and-universities-in-the-u-s/",
+                  title: "A look at HBCUs",
+                  publisher: "Pew Research Center",
+                },
+              ],
+              refreshedAt: new Date("2026-09-08T02:36:47.000Z"),
+            },
           ],
-          refreshedAt: new Date("2026-09-08T02:36:47.000Z"),
-        }],
-        total: 1,
-      })),
+          total: 1,
+        }),
+      ),
       { query: "HBCUs", normalizedQuery: "hbcus", limit: 6, offset: 0 },
     );
 
-    expect(response.results[0]).toMatchObject({ kind: "entry", sourceCount: 2 });
+    expect(response.results[0]).toMatchObject({
+      kind: "entry",
+      sourceCount: 2,
+    });
     expect(response.webResearch.status).toBe("not_needed");
   });
 });
