@@ -2,7 +2,7 @@
 
 **Prepared by:** Manus AI  
 **Repository:** `Melaninmaps/melanin-maps-api`  
-**Release branch:** `fix/kinfolk-core-chat-readiness-20260917` until merged  
+**Merged application release:** pull request [#54](https://github.com/Melaninmaps/melanin-maps-api/pull/54), merge commit `0852c2af22f79202ccfdcdcc7355c849e7f35977`
 **Date:** 2026-09-17  
 **Deployment owner:** Replit or the authorized hosting owner
 
