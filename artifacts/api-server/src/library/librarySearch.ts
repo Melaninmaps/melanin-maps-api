@@ -1,7 +1,4 @@
-import type {
-  LibraryRepository,
-  LibrarySearchPage,
-} from "./types";
+import type { LibraryRepository, LibrarySearchPage } from "./types";
 
 export type LibrarySearchRepository = LibraryRepository;
 
@@ -13,6 +10,8 @@ export type LibraryIntentChoice = {
 export type LibrarySearchResponse = LibrarySearchPage & {
   query: string;
   nextCursor: string | null;
+  /** True only when this signed-in member elected to save context in Profile. */
+  preferenceContextApplied: boolean;
   clarification: {
     prompt: string;
     choices: LibraryIntentChoice[];
@@ -68,13 +67,25 @@ export const LIBRARY_TOPIC_VOCABULARY: readonly VocabularyGroup[] = [
   {
     topicSlug: "education-learning",
     terms: [
-      "education", "training", "learning", "school", "classes",
-      "hbcu", "hbcus", "historically black college", "historically black colleges and universities",
+      "education",
+      "training",
+      "learning",
+      "school",
+      "classes",
+      "hbcu",
+      "hbcus",
+      "historically black college",
+      "historically black colleges and universities",
     ],
   },
   {
     topicSlug: "places-our-history",
-    terms: ["hbcu", "hbcus", "historically black college", "historically black colleges and universities"],
+    terms: [
+      "hbcu",
+      "hbcus",
+      "historically black college",
+      "historically black colleges and universities",
+    ],
   },
   {
     topicSlug: "careers-professional-life",
@@ -104,10 +115,16 @@ const HBCU_RESEARCH_TERMS = [
 
 const HVAC_INTENT_CHOICES: LibraryIntentChoice[] = [
   { label: "Training and education", query: "HVAC training education" },
-  { label: "Licenses and certifications", query: "HVAC licenses certifications" },
+  {
+    label: "Licenses and certifications",
+    query: "HVAC licenses certifications",
+  },
   { label: "Apprenticeships and jobs", query: "HVAC apprenticeships jobs" },
   { label: "Studies and workforce", query: "HVAC studies workforce" },
-  { label: "Organizations and professionals", query: "HVAC organizations professionals" },
+  {
+    label: "Organizations and professionals",
+    query: "HVAC organizations professionals",
+  },
 ];
 
 function singleQueryValue(value: unknown): string | null {
@@ -138,10 +155,15 @@ export function normalizeLibrarySearchQuery(query: string): string {
     .toLocaleLowerCase("en-US");
 }
 
-export function parseLibrarySearchQuery(query: Record<string, unknown>): LibrarySearchParseResult {
+export function parseLibrarySearchQuery(
+  query: Record<string, unknown>,
+): LibrarySearchParseResult {
   const rawQuery = singleQueryValue(query["q"]);
   if (rawQuery === null) {
-    return { ok: false, error: 'Library search requires one text query in "q".' };
+    return {
+      ok: false,
+      error: 'Library search requires one text query in "q".',
+    };
   }
 
   const displayQuery = rawQuery.normalize("NFKC").trim().replace(/\s+/g, " ");
@@ -149,7 +171,10 @@ export function parseLibrarySearchQuery(query: Record<string, unknown>): Library
     return { ok: false, error: "Enter a Library search term." };
   }
   if (displayQuery.length > 120) {
-    return { ok: false, error: "Library search terms must be 120 characters or fewer." };
+    return {
+      ok: false,
+      error: "Library search terms must be 120 characters or fewer.",
+    };
   }
 
   const rawLimit = query["limit"];
@@ -157,11 +182,17 @@ export function parseLibrarySearchQuery(query: Record<string, unknown>): Library
   if (rawLimit !== undefined) {
     const limitText = singleQueryValue(rawLimit);
     if (!limitText || !/^\d+$/.test(limitText)) {
-      return { ok: false, error: "Search limit must be a whole number from 1 through 20." };
+      return {
+        ok: false,
+        error: "Search limit must be a whole number from 1 through 20.",
+      };
     }
     limit = Number(limitText);
     if (limit < 1 || limit > 20) {
-      return { ok: false, error: "Search limit must be a whole number from 1 through 20." };
+      return {
+        ok: false,
+        error: "Search limit must be a whole number from 1 through 20.",
+      };
     }
   }
 
@@ -200,15 +231,18 @@ export function resolveLibrarySearchVocabulary(normalizedQuery: string): {
   patterns: string[];
   preferredTopicSlugs: string[];
 } {
-  const preferredTopicSlugs = LIBRARY_TOPIC_VOCABULARY
-    .filter((group) => group.terms.some((term) => containsVocabularyTerm(normalizedQuery, term)))
-    .map((group) => group.topicSlug);
+  const preferredTopicSlugs = LIBRARY_TOPIC_VOCABULARY.filter((group) =>
+    group.terms.some((term) => containsVocabularyTerm(normalizedQuery, term)),
+  ).map((group) => group.topicSlug);
 
-  const expandedTerms = normalizedQuery === "hvac"
-    ? HVAC_RESEARCH_TERMS
-    : /\bhbcu(?:'?s)?\b|historically black colleges?(?: and universities)?/.test(normalizedQuery)
-      ? HBCU_RESEARCH_TERMS
-      : [normalizedQuery];
+  const expandedTerms =
+    normalizedQuery === "hvac"
+      ? HVAC_RESEARCH_TERMS
+      : /\bhbcu(?:'?s)?\b|historically black colleges?(?: and universities)?/.test(
+            normalizedQuery,
+          )
+        ? HBCU_RESEARCH_TERMS
+        : [normalizedQuery];
   const searchTerms = [...new Set(expandedTerms)];
 
   return {
@@ -221,20 +255,32 @@ export function resolveLibrarySearchVocabulary(normalizedQuery: string): {
 export async function searchLivingLibrary(
   repository: LibrarySearchRepository,
   parsed: ParsedLibrarySearch,
+  rankingContext: readonly string[] = [],
 ): Promise<LibrarySearchResponse> {
-  const { searchTerms, patterns, preferredTopicSlugs } = resolveLibrarySearchVocabulary(
-    parsed.normalizedQuery,
-  );
+  const { searchTerms, patterns, preferredTopicSlugs } =
+    resolveLibrarySearchVocabulary(parsed.normalizedQuery);
+  const rankingContextPatterns = [
+    ...new Set(
+      rankingContext
+        .map((value) => normalizeLibrarySearchQuery(value))
+        .filter((value) => value.length >= 2 && value.length <= 100),
+    ),
+  ]
+    .slice(0, 25)
+    .map((value) => `%${escapeLikeTerm(value)}%`);
   const page = await repository.searchPublishedContent({
     normalizedQuery: parsed.normalizedQuery,
     searchTerms,
     patterns,
     preferredTopicSlugs,
+    rankingContextPatterns,
     limit: parsed.limit,
     offset: parsed.offset,
   });
   const nextOffset = parsed.offset + page.results.length;
-  const hasApprovedEntry = page.results.some((result) => result.kind === "entry");
+  const hasApprovedEntry = page.results.some(
+    (result) => result.kind === "entry",
+  );
   const hasPopulatedTopic = page.results.some(
     (result) => result.kind === "topic" && result.entryCount > 0,
   );
@@ -243,6 +289,7 @@ export async function searchLivingLibrary(
   return {
     ...page,
     query: parsed.query,
+    preferenceContextApplied: rankingContextPatterns.length > 0,
     nextCursor:
       page.results.length > 0 && nextOffset < page.total
         ? encodeLibrarySearchCursor(nextOffset)

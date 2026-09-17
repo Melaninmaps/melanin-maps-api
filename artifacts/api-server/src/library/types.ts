@@ -71,7 +71,9 @@ export type LibraryEntrySearchResult = {
   refreshedAt: Date;
 };
 
-export type LibrarySearchResult = LibraryTopicSearchResult | LibraryEntrySearchResult;
+export type LibrarySearchResult =
+  | LibraryTopicSearchResult
+  | LibraryEntrySearchResult;
 
 export type LibrarySearchPage = {
   results: LibrarySearchResult[];
@@ -115,7 +117,11 @@ export interface LibraryRepository {
     topicSlug: string;
     internalResultCount: number;
     usedLiveResearch: boolean;
-    outcome: "internal" | "researched" | "insufficient" | "provider_unavailable";
+    outcome:
+      | "internal"
+      | "researched"
+      | "insufficient"
+      | "provider_unavailable";
   }): Promise<void>;
   listTopics(input: {
     search: string | null;
@@ -127,12 +133,22 @@ export interface LibraryRepository {
     searchTerms: string[];
     patterns: string[];
     preferredTopicSlugs: string[];
+    /** Optional member-selected context used for ranking, never exclusion. */
+    rankingContextPatterns?: string[];
     limit: number;
     offset: number;
   }): Promise<LibrarySearchPage>;
   findTopicBySlug(slug: string): Promise<LibraryTopic | null>;
-  listTopicEntries(input: { topicId: string; limit: number; cursor: string | null }): Promise<LibraryEntry[]>;
-  setTopicFollow(input: { topicId: string; memberId: string; following: boolean }): Promise<void>;
+  listTopicEntries(input: {
+    topicId: string;
+    limit: number;
+    cursor: string | null;
+  }): Promise<LibraryEntry[]>;
+  setTopicFollow(input: {
+    topicId: string;
+    memberId: string;
+    following: boolean;
+  }): Promise<void>;
 }
 
 export interface ExternalResearchProvider {
@@ -152,7 +168,12 @@ export interface LibrarySynthesisWriter {
     communityLens: string;
     locationLabel: string | null;
     disclaimer: string | null;
-    sources: Array<Pick<ResearchDocument, "url" | "title" | "content" | "publisher" | "publishedAt">>;
+    sources: Array<
+      Pick<
+        ResearchDocument,
+        "url" | "title" | "content" | "publisher" | "publishedAt"
+      >
+    >;
   }): Promise<{
     title: string;
     summary: string;

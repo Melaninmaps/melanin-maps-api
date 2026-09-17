@@ -43,7 +43,9 @@ type SourceRow = {
 };
 
 function stringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function mapSource(row: SourceRow): KnowledgeSource {
@@ -59,7 +61,10 @@ function mapSource(row: SourceRow): KnowledgeSource {
   };
 }
 
-async function attachSources(db: Queryable, entries: EntryRow[]): Promise<LibraryEntry[]> {
+async function attachSources(
+  db: Queryable,
+  entries: EntryRow[],
+): Promise<LibraryEntry[]> {
   if (!entries.length) return [];
   const entryIds = entries.map((e) => e.id);
   const { rows: sourceRows } = await db.query<SourceRow & { entry_id: string }>(
@@ -71,7 +76,10 @@ async function attachSources(db: Queryable, entries: EntryRow[]): Promise<Librar
   );
   const sourceMap = new Map<string, KnowledgeSource[]>();
   for (const row of sourceRows) {
-    sourceMap.set(row.entry_id, [...(sourceMap.get(row.entry_id) ?? []), mapSource(row)]);
+    sourceMap.set(row.entry_id, [
+      ...(sourceMap.get(row.entry_id) ?? []),
+      mapSource(row),
+    ]);
   }
   return entries.map((row) => ({
     id: row.id,
@@ -95,7 +103,9 @@ async function attachSources(db: Queryable, entries: EntryRow[]): Promise<Librar
   }));
 }
 
-export function createPostgresLibraryRepository(db: Queryable): LibraryRepository {
+export function createPostgresLibraryRepository(
+  db: Queryable,
+): LibraryRepository {
   return {
     async findReusableEntry(input) {
       const { rows } = await db.query<EntryRow>(
@@ -125,7 +135,8 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
         `SELECT id FROM library_topics WHERE slug = $1 LIMIT 1`,
         [input.topicSlug],
       );
-      if (!topicRows[0]) throw new Error(`Missing Library topic: ${input.topicSlug}`);
+      if (!topicRows[0])
+        throw new Error(`Missing Library topic: ${input.topicSlug}`);
 
       const { rows } = await db.query<EntryRow>(
         `INSERT INTO library_entries (
@@ -242,6 +253,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
       searchTerms,
       patterns,
       preferredTopicSlugs,
+      rankingContextPatterns = [],
       limit,
       offset,
     }) {
@@ -273,7 +285,11 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
         topic_slug: string;
         topic_title: string;
         source_count: number;
-        sources: Array<{ url: string; title: string; publisher: string | null }>;
+        sources: Array<{
+          url: string;
+          title: string;
+          publisher: string | null;
+        }>;
         refreshed_at: Date;
         total_count: number;
       };
@@ -313,6 +329,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              CASE
                WHEN topic.slug = ANY($3::text[]) THEN 400
                WHEN lower(topic.title) = $1 THEN 300
+               WHEN lower(COALESCE(topic.community_lens, '')) LIKE ANY($7::text[]) THEN 250
                ELSE 200
              END AS rank
            FROM library_topics topic
@@ -353,6 +370,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              CASE
                WHEN COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[]) THEN 150
                WHEN lower(entry.title) = $1 THEN 140
+               WHEN lower(CONCAT_WS(' ', entry.community_lens, entry.title, entry.summary, entry.body)) LIKE ANY($7::text[]) THEN 130
                ELSE 100
              END AS rank
            FROM library_entries entry
@@ -412,6 +430,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
           searchTerms,
           limit,
           offset,
+          rankingContextPatterns,
         ],
       );
 

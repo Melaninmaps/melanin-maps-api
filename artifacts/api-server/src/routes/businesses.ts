@@ -219,7 +219,17 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
     _sim_score,
     ...publicRecord
   } = business;
-  return publicRecord;
+  // Old imports placed the internal provenance phrase in descriptions. Do not
+  // expose it on any public client; listing status already communicates whether
+  // a profile is claimed or verified without changing the business-page layout.
+  const description = publicRecord.description;
+  if (typeof description !== "string") return publicRecord;
+  return {
+    ...publicRecord,
+    description: description
+      .replace(/\bcommunity\s*\/\s*founder-listed\b/gi, "Publicly listed")
+      .replace(/\bfounder-listed\b/gi, "Publicly listed"),
+  };
 }
 
 function publicBusinessVisibilityCondition() {
@@ -1136,12 +1146,10 @@ router.post(
       const currentPhotos = (business.photos as string[]) ?? [];
       const currentPending = (business.pendingPhotos as string[]) ?? [];
       if (currentPhotos.length + currentPending.length >= 10) {
-        res
-          .status(400)
-          .json({
-            error:
-              "Maximum of 10 photos allowed (including those pending review)",
-          });
+        res.status(400).json({
+          error:
+            "Maximum of 10 photos allowed (including those pending review)",
+        });
         return;
       }
 
@@ -1603,12 +1611,10 @@ router.post("/businesses/mine/videos/link", async (req: any, res: Response) => {
   try {
     const hostname = new URL(url).hostname.replace("www.", "");
     if (!ALLOWED_HOSTS.some((h) => hostname.includes(h))) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Only YouTube, TikTok, Instagram, Facebook, and Vimeo links are accepted",
-        });
+      res.status(400).json({
+        error:
+          "Only YouTube, TikTok, Instagram, Facebook, and Vimeo links are accepted",
+      });
       return;
     }
   } catch {
@@ -2108,11 +2114,9 @@ router.post(
       const cat =
         typeof referenceCategory === "string" ? referenceCategory : "general";
       if (!VALID_CATEGORIES.includes(cat)) {
-        res
-          .status(400)
-          .json({
-            error: `referenceCategory must be one of: ${VALID_CATEGORIES.join(", ")}`,
-          });
+        res.status(400).json({
+          error: `referenceCategory must be one of: ${VALID_CATEGORIES.join(", ")}`,
+        });
         return;
       }
 
@@ -2338,14 +2342,12 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
       },
       "Member-submitted place queued for review",
     );
-    res
-      .status(201)
-      .json({
-        businessId: business.id,
-        name: business.name,
-        isNew: true,
-        pendingReview: true,
-      });
+    res.status(201).json({
+      businessId: business.id,
+      name: business.name,
+      isNew: true,
+      pendingReview: true,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to create member-submitted place");
     res
@@ -3718,11 +3720,9 @@ router.post(
 
       const currentPhotos = (business.photos as string[]) ?? [];
       if (currentPhotos.length + files.length > 20) {
-        res
-          .status(400)
-          .json({
-            error: `This business already has ${currentPhotos.length} photos. Maximum is 20.`,
-          });
+        res.status(400).json({
+          error: `This business already has ${currentPhotos.length} photos. Maximum is 20.`,
+        });
         return;
       }
 
@@ -3849,12 +3849,10 @@ router.post(
     try {
       const hostname = new URL(url.trim()).hostname.replace("www.", "");
       if (!ALLOWED.some((h) => hostname.includes(h))) {
-        res
-          .status(400)
-          .json({
-            error:
-              "Supported platforms: YouTube, TikTok, Instagram, Facebook, Pinterest, Vimeo.",
-          });
+        res.status(400).json({
+          error:
+            "Supported platforms: YouTube, TikTok, Instagram, Facebook, Pinterest, Vimeo.",
+        });
         return;
       }
     } catch {
@@ -4274,12 +4272,10 @@ router.post(
 
     const detectedType = detectSocialVideoPlatform(sourceUrl.trim());
     if (!detectedType) {
-      res
-        .status(400)
-        .json({
-          error:
-            "sourceUrl must be a public HTTPS link from an approved video platform",
-        });
+      res.status(400).json({
+        error:
+          "sourceUrl must be a public HTTPS link from an approved video platform",
+      });
       return;
     }
 

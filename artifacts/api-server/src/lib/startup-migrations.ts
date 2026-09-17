@@ -111,6 +111,14 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS social_video_platforms JSONB DEFAULT '["youtube","tiktok","instagram","facebook","twitch","snapchat","vimeo"]'::jsonb`,
   },
   {
+    name: "user_preferences_member_context_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS communities JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS cultures JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS preferred_languages JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS personalization_context_completed_at TIMESTAMPTZ`,
+  },
+  {
     name: "create_governed_directory_import_staging_v1",
     sql: `
       CREATE TABLE IF NOT EXISTS directory_import_batches (

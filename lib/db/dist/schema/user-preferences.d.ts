@@ -396,6 +396,80 @@ export declare const userPreferencesTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             $type: string[];
         }>;
+        communities: import("drizzle-orm/pg-core").PgColumn<{
+            name: "communities";
+            tableName: "user_preferences";
+            dataType: "json";
+            columnType: "PgJsonb";
+            data: string[];
+            driverParam: unknown;
+            notNull: false;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            $type: string[];
+        }>;
+        cultures: import("drizzle-orm/pg-core").PgColumn<{
+            name: "cultures";
+            tableName: "user_preferences";
+            dataType: "json";
+            columnType: "PgJsonb";
+            data: string[];
+            driverParam: unknown;
+            notNull: false;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            $type: string[];
+        }>;
+        preferredLanguages: import("drizzle-orm/pg-core").PgColumn<{
+            name: "preferred_languages";
+            tableName: "user_preferences";
+            dataType: "json";
+            columnType: "PgJsonb";
+            data: string[];
+            driverParam: unknown;
+            notNull: false;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            $type: string[];
+        }>;
+        personalizationContextCompletedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "personalization_context_completed_at";
+            tableName: "user_preferences";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         lifestyleServices: import("drizzle-orm/pg-core").PgColumn<{
             name: "lifestyle_services";
             tableName: "user_preferences";
@@ -875,6 +949,80 @@ export declare const insertUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         $type: string[];
     }>;
+    communities: import("drizzle-orm/pg-core").PgColumn<{
+        name: "communities";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    cultures: import("drizzle-orm/pg-core").PgColumn<{
+        name: "cultures";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    preferredLanguages: import("drizzle-orm/pg-core").PgColumn<{
+        name: "preferred_languages";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    personalizationContextCompletedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "personalization_context_completed_at";
+        tableName: "user_preferences";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     lifestyleServices: import("drizzle-orm/pg-core").PgColumn<{
         name: "lifestyle_services";
         tableName: "user_preferences";
@@ -1352,6 +1500,80 @@ export declare const selectUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         $type: string[];
     }>;
+    communities: import("drizzle-orm/pg-core").PgColumn<{
+        name: "communities";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    cultures: import("drizzle-orm/pg-core").PgColumn<{
+        name: "cultures";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    preferredLanguages: import("drizzle-orm/pg-core").PgColumn<{
+        name: "preferred_languages";
+        tableName: "user_preferences";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: string[];
+        driverParam: unknown;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        $type: string[];
+    }>;
+    personalizationContextCompletedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "personalization_context_completed_at";
+        tableName: "user_preferences";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     lifestyleServices: import("drizzle-orm/pg-core").PgColumn<{
         name: "lifestyle_services";
         tableName: "user_preferences";
