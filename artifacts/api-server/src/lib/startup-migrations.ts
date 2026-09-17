@@ -5557,7 +5557,16 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`,
   );
 
-  // ── Seed Data Integrity Guards ────────────────────────────────────────────
+  // Production startup is schema-only by default. Inventory, directory, and
+  // content population must remain an explicit, reviewed operator action so a
+  // deployment cannot publish, alter, or enrich listings without approval.
+  // This opt-in is only for deliberate non-production maintenance runs.
+  if (process.env.ENABLE_STARTUP_SEED_GUARDS !== "true") {
+    log("Automatic startup seed guards are disabled; use reviewed publication workflows.");
+    return;
+  }
+
+  // ── Explicit non-production seed guards ───────────────────────────────────
   // IMPORTANT: Run guards SEQUENTIALLY, not in parallel.
   // Each guard does its own pool.query calls. Running them concurrently via
   // Promise.allSettled created 6 simultaneous query streams that exhausted

@@ -89,6 +89,20 @@ describe("founder-approved tester roster source guard", () => {
     expect(startupBody).not.toContain("() => ensureUserHandles(log, warn)");
   });
 
+  it("keeps automatic seed and listing writes disabled unless explicitly opted in", () => {
+    const startupStart = startupSource.indexOf("export async function runStartupMigrations");
+    const startupEnd = startupSource.indexOf("// ── Helper:", startupStart);
+    const startupBody = startupSource.slice(startupStart, startupEnd);
+    const guard = startupBody.indexOf('process.env.ENABLE_STARTUP_SEED_GUARDS !== "true"');
+    const seedLoop = startupBody.indexOf("for (const [name, fn]", guard);
+
+    expect(guard).toBeGreaterThan(-1);
+    expect(seedLoop).toBeGreaterThan(guard);
+    expect(startupBody).toContain(
+      "Automatic startup seed guards are disabled; use reviewed publication workflows.",
+    );
+  });
+
   it("keeps internal Manus audit identities separate and load-test tagged", () => {
     const auditStart = startupSource.indexOf("async function ensureManusAuditAccounts(");
     const auditEnd = startupSource.indexOf("async function ensureBetaSafetyColumns(", auditStart);
