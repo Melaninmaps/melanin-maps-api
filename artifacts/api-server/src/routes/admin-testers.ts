@@ -25,25 +25,6 @@ function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
 }
 
-/**
- * An access grant is also a waitlist record. The upsert is additive: it never
- * changes the member's original join date, status, referral, or saved data.
- */
-async function ensureUnifiedWaitlistEntry(email: string): Promise<void> {
-  await pool.query(
-    `INSERT INTO waitlist_signups (id, email, status, notes, created_at)
-     VALUES (gen_random_uuid(), $1, 'pending', $2, NOW())
-     ON CONFLICT (email) DO NOTHING`,
-    [
-      email,
-      JSON.stringify({
-        systemRecord: "tester_access_grant",
-        source: "admin_testers",
-      }),
-    ],
-  );
-}
-
 async function recordAccessEvent(input: {
   email: string;
   userId?: string | null;
@@ -411,7 +392,6 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
 
     for (const email of unique) {
       const user = userMap.get(email);
-      await ensureUnifiedWaitlistEntry(email);
       if (user) {
         // Grant/refresh entitlement on existing account
         await pool.query(

@@ -34,7 +34,7 @@ describe("founder-approved tester roster source guard", () => {
     expect(digest).toBe("ac56bd3b0f041d1870e4016c4233973f868e7a0dfcbf2c7725c679d3d1f29c97");
   });
 
-  it("uses the canonical roster in startup and protected cron write paths", () => {
+  it("keeps the canonical roster distinct from startup account mutations", () => {
     expect(startupSource).toContain(
       "const TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;",
     );
@@ -49,9 +49,15 @@ describe("founder-approved tester roster source guard", () => {
     );
   });
 
-  it("skips every obsolete migration that pre-created or reset external tester accounts", () => {
-    const disabled = stringSet("DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS");
+  it("skips every startup migration that would create or mutate user accounts", () => {
+    const disabled = stringSet("DISABLED_RELEASE_USER_MUTATION_MIGRATIONS");
     expect(disabled.sort()).toEqual([
+      "ensure_apple_reviewer_account_v1",
+      "ensure_manus_ai_tester_v1",
+      "ensure_manus_geo_audit_v1",
+      "ensure_manus_monitor_account_v1",
+      "ensure_manus_tester_account_v1",
+      "founder_admin_promotion",
       "pre_manus_tester_accounts_v1",
       "pre_manus_tester_clear_must_change_password_v1",
       "tester_accounts_restore_v1",
@@ -62,20 +68,25 @@ describe("founder-approved tester roster source guard", () => {
     ]);
 
     const loopGuard = startupSource.indexOf(
-      "if (DISABLED_LEGACY_TESTER_ACCOUNT_MIGRATIONS.has(m.name))",
+      "if (DISABLED_RELEASE_USER_MUTATION_MIGRATIONS.has(m.name))",
     );
     const migrationExecution = startupSource.indexOf("await pool.query(m.sql)", loopGuard);
     expect(loopGuard).toBeGreaterThan(-1);
     expect(migrationExecution).toBeGreaterThan(loopGuard);
   });
 
-  it("retires only stale system-seeded website-test authorizations outside the roster", () => {
-    expect(startupSource).toContain("DELETE FROM pending_tester_emails");
-    expect(startupSource).toContain("tester_access_source = 'website_test'");
-    expect(startupSource).toContain("granted_by IS NULL");
-    expect(startupSource).toContain(
-      "PRE_APPROVED_TESTER_EMAILS.map(e => e.toLowerCase().trim())",
-    );
+  it("does not seed, grant, or reconcile tester access during startup", () => {
+    const startupStart = startupSource.indexOf("export async function runStartupMigrations");
+    const startupEnd = startupSource.indexOf("// ── Helper:", startupStart);
+    const startupBody = startupSource.slice(startupStart, startupEnd);
+
+    expect(startupBody).not.toContain("() => ensureAdminAccounts(log, warn)");
+    expect(startupBody).not.toContain("() => ensureTesterAccounts(log, warn)");
+    expect(startupBody).not.toContain("() => ensurePendingTesterEmails(log, warn)");
+    expect(startupBody).not.toContain("() => ensureLoadTestAccounts(log, warn)");
+    expect(startupBody).not.toContain("() => ensureManusAuditAccounts(log, warn)");
+    expect(startupBody).not.toContain("() => ensureMonitoringAccount(log, warn)");
+    expect(startupBody).not.toContain("() => ensureUserHandles(log, warn)");
   });
 
   it("keeps internal Manus audit identities separate and load-test tagged", () => {
