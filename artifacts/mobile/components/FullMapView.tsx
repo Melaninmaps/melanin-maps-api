@@ -30,7 +30,6 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
-import { useAuth } from "@/lib/auth";
 import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
 import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
 
@@ -311,15 +310,10 @@ export function FullMapView({
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
-  const mapReadyRef = useRef(false);
-  const pendingLocationRef = useRef<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
   const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once on load
 
   const [locationGranted, setLocationGranted] = useState(false);
-  const [locating, setLocating] = useState(true);
+  const [locating, setLocating] = useState(false);
   const [memberLocation, setMemberLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -392,8 +386,9 @@ export function FullMapView({
       return () => setIsFocused(false);
     }, []),
   );
-  const { user } = useAuth();
-  const pollingEnabled = isFocused && user !== null;
+  // Background proximity monitoring is off until a member explicitly chooses
+  // a location-based safety action from Safety Hub.
+  const pollingEnabled = false;
 
   // GPS remains on-device.  Once foreground permission is granted, use it only
   // to ask the canonical business endpoint for nearby, relevance-ranked pins.
@@ -550,44 +545,6 @@ export function FullMapView({
 
   const currentWarning =
     warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          setLocating(false);
-          return;
-        }
-        setLocationGranted(true);
-        const loc = await Promise.race([
-          Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("location timeout")), 8_000),
-          ),
-        ]);
-        const acquired = {
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        };
-        setMemberLocation(acquired);
-        if (mapReadyRef.current) {
-          mapRef.current?.animateToRegion(
-            { ...acquired, latitudeDelta: 0.12, longitudeDelta: 0.12 },
-            800,
-          );
-        } else {
-          pendingLocationRef.current = acquired;
-        }
-      } catch {
-        // permission denied — stays at default US overview
-      } finally {
-        setLocating(false);
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     if (showHeatmap && heatmapPoints.length === 0) {
@@ -831,10 +788,14 @@ export function FullMapView({
   }, [mapReady, isFocused]);
 
   const recenter = async () => {
+    setLocating(true);
     try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+      setLocationGranted(true);
       const loc = (await Promise.race([
         Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
+          accuracy: Location.Accuracy.Highest,
         }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("location timeout")), 8_000),
@@ -853,7 +814,9 @@ export function FullMapView({
         },
         600,
       );
-    } catch {}
+    } catch {} finally {
+      setLocating(false);
+    }
   };
 
   const anyCardVisible =
@@ -881,16 +844,7 @@ export function FullMapView({
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
         onMapReady={() => {
-          mapReadyRef.current = true;
           setMapReady(true);
-          const pending = pendingLocationRef.current;
-          if (pending) {
-            pendingLocationRef.current = null;
-            mapRef.current?.animateToRegion(
-              { ...pending, latitudeDelta: 0.12, longitudeDelta: 0.12 },
-              800,
-            );
-          }
         }}
         {...(Platform.OS === "ios"
           ? {
@@ -1706,9 +1660,8 @@ export function FullMapView({
         </View>
       )}
 
-      {/* Recenter FAB */}
-      {locationGranted && (
-        <TouchableOpacity
+      {/* Explicit opt-in for precise nearby discovery. */}
+      <TouchableOpacity
           style={[
             s.fab,
             {
@@ -1717,11 +1670,11 @@ export function FullMapView({
             },
           ]}
           onPress={() => void recenter()}
+          accessibilityLabel={locationGranted ? "Refresh my precise map location" : "Use my precise location for nearby businesses"}
           activeOpacity={0.85}
         >
           <Feather name="navigation" size={20} color={GOLD} />
-        </TouchableOpacity>
-      )}
+      </TouchableOpacity>
 
       {/* ── Cultural site bottom card ── */}
       {HERITAGE_SITES_ENABLED &&

@@ -155,7 +155,7 @@ export default function ReportSafetyScreen() {
         Alert.alert("Location Access", "You can continue by entering the incident city or area manually.");
         return;
       }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
       const [place] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       if (place?.city) {
         const region = place.region ?? place.subregion ?? "";
@@ -441,7 +441,7 @@ export default function ReportSafetyScreen() {
                 <View>
                   <Text style={[styles.stepTitle, { color: colors.foreground }]}>Incident Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Enter where the situation happened. This may be different from where you are now. You can type an area or choose to use your current location.
+                    Enter where the situation happened. This may be different from where you are now. You can type an area or choose to use your precise current location.
                   </Text>
 
                   {selectedType && (

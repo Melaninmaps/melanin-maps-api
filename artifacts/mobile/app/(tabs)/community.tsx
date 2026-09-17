@@ -683,12 +683,10 @@ export default function CommunityScreen() {
         <Text style={[styles.title, { color: colors.foreground }]}>Community</Text>
         <TouchableOpacity activeOpacity={0.85}
           style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert("Search Community", "Use the options below to browse groups and posts by topic.");
-          }}
+          onPress={() => router.push("/connections")}
+          accessibilityLabel="Find people in Community"
         >
-          <Feather name="search" size={18} color={colors.foreground} />
+          <Feather name="users" size={18} color={colors.foreground} />
         </TouchableOpacity>
       </View>
 

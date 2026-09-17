@@ -121,13 +121,15 @@ export function MapTabView() {
     category: string; alertCount: number; distanceMiles: number;
   }[]>([]);
 
-  const { alerts: activityAlerts, reportAlert, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
+  // A report can still request location after the member explicitly submits it;
+  // simply opening the map must not begin location monitoring.
+  const { alerts: activityAlerts, reportAlert, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: false });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
-  const { warnings, dismissWarning } = useSafetyProximity();
+  const { warnings, dismissWarning } = useSafetyProximity({ enabled: false });
 
   function getApiBase() {
     if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -147,7 +149,7 @@ export function MapTabView() {
         setFlaggedBizLoading(false);
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
       const res = await fetch(
         `${getApiBase()}/api/community-alerts/flagged-businesses?lat=${loc.coords.latitude}&lng=${loc.coords.longitude}`,
       );

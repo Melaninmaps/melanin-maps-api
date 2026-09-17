@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -47,16 +47,12 @@ export default function SafetyTipScreen() {
   const [lng, setLng] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    void autoLocate();
-  }, []);
-
-  async function autoLocate() {
+  async function usePreciseLocation() {
     setLocating(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return;
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
       setLat(pos.coords.latitude);
       setLng(pos.coords.longitude);
       const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
@@ -163,10 +159,10 @@ export default function SafetyTipScreen() {
 
           {/* Location */}
           <Text style={[styles.label, { color: colors.foreground }]}>Location</Text>
-          <TouchableOpacity style={[styles.locRow, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={autoLocate} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.locRow, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={usePreciseLocation} activeOpacity={0.8}>
             <Feather name={locating ? "loader" : "map-pin"} size={16} color="#CA922B" />
             <Text style={[styles.locText, { color: lat !== null ? colors.foreground : colors.mutedForeground }]}>
-              {locating ? "Detecting location…" : lat !== null ? `${lat.toFixed(4)}, ${lng?.toFixed(4)} — detected` : "Tap to use my current location"}
+              {locating ? "Detecting location…" : lat !== null ? `${lat.toFixed(4)}, ${lng?.toFixed(4)} — detected` : "Tap to use my precise current location"}
             </Text>
           </TouchableOpacity>
 
