@@ -28,7 +28,7 @@ describe("Kinfolk universal assistant and culturally relevant lens contract", ()
   });
 
   it("requires current evidence for changing financial and public-information questions", () => {
-    expect(routeSource).toMatch(/current\(\?:ly\)\?/);
+    expect(routeSource).toContain("requiresCurrentResearch(message)");
     expect(routeSource).toContain("Current interest rates, news, laws, prices, elections, schedules");
     expect(routeSource).toContain("require current authoritative evidence");
   });

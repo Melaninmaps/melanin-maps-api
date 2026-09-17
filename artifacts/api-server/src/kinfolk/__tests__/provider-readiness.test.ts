@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   kinfolkProviderReadinessHttpResult,
+  probeKinfolkCoreChatReadiness,
   probeKinfolkProviderReadiness,
   summarizeKinfolkProviderReadiness,
 } from "../provider-readiness";
@@ -76,6 +77,29 @@ function row(rows: Awaited<ReturnType<typeof probeKinfolkProviderReadiness>>, ca
 }
 
 describe("Kinfolk provider readiness", () => {
+  it("reports core chat ready without probing optional provider capabilities", async () => {
+    const dependencies = passingDependencies();
+    const result = await probeKinfolkCoreChatReadiness(configured, dependencies as never);
+    expect(result).toEqual({ ok: true });
+    expect(dependencies.chatCreate).toHaveBeenCalledTimes(1);
+    expect(dependencies.responsesCreate).not.toHaveBeenCalled();
+    expect(dependencies.transcriptionCreate).not.toHaveBeenCalled();
+    expect(dependencies.textToSpeech).not.toHaveBeenCalled();
+  });
+
+  it("fails core chat honestly when configuration is absent or its completion fails", async () => {
+    const dependencies = passingDependencies();
+    await expect(probeKinfolkCoreChatReadiness({}, dependencies as never)).resolves.toEqual({
+      ok: false,
+      reason: "missing_configuration",
+    });
+    dependencies.chatCreate.mockRejectedValueOnce(new Error("provider unavailable"));
+    await expect(probeKinfolkCoreChatReadiness(configured, dependencies as never)).resolves.toEqual({
+      ok: false,
+      reason: "connection_failure",
+    });
+  });
+
   it("fails every required row as missing configuration without calling a provider", async () => {
     const dependencies = passingDependencies();
     const rows = await probeKinfolkProviderReadiness({}, dependencies as never);

@@ -38,9 +38,9 @@ describe("Kinfolk chat static wiring", () => {
     const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
     const audienceFilter = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
     const ownerContext = chatRoute.indexOf("let ownerBusinessContext");
-    const travelCandidateMerge = chatRoute.indexOf("const favoriteMatches = await governedBusinessRepository.findByPreferenceTerms(");
-    const travelRanking = chatRoute.indexOf("businessCatalog = rankTravelCatalogForMember({");
-    const promptBuild = chatRoute.indexOf("const baseSystemPrompt = buildSystemPrompt({");
+    const travelCandidateMerge = chatRoute.search(/const favoriteMatches\s*=\s*await governedBusinessRepository\.findByPreferenceTerms\(/);
+    const travelRanking = chatRoute.search(/businessCatalog\s*=\s*rankTravelCatalogForMember\(\{/);
+    const promptBuild = chatRoute.indexOf("const baseSystemPrompt");
     const itinerarySelection = chatRoute.indexOf("buildValidatedOrRankedItinerary({");
 
     expect(ageContext).toBeGreaterThan(-1);
@@ -52,7 +52,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(travelRanking).toBeLessThan(promptBuild);
     expect(travelRanking).toBeLessThan(itinerarySelection);
     expect(chatRoute).toContain("ageBand: effectiveAudienceBand");
-    expect(chatRoute).toContain("audienceAllowsBusinessText({ ageBand: effectiveAudienceBand, text: message })");
+    expect(chatRoute).toMatch(/audienceAllowsBusinessText\(\{\s*ageBand:\s*effectiveAudienceBand,\s*text:\s*message,?\s*\}\)/);
     expect(chatRoute).toContain("businessCatalog.some((business) => business.id === namedBusiness.id)");
     expect(chatRoute).toContain("favoriteCategories: prefs?.favoriteCategories");
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
@@ -63,16 +63,16 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("returns a basic governed-catalog itinerary before any provider call", () => {
-    const deterministicTravel = chatRoute.indexOf("const deterministicTravelEligible = travelPlanning");
+    const deterministicTravel = chatRoute.search(/const deterministicTravelEligible\s*=\s*travelPlanning/);
     const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
     expect(deterministicTravel).toBeGreaterThan(-1);
     expect(deterministicTravel).toBeLessThan(providerCall);
-    expect(chatRoute).toContain("const itinerary = buildRankedCatalogItinerary({ message, catalog: businessCatalog })");
+    expect(chatRoute).toMatch(/const itinerary\s*=\s*buildRankedCatalogItinerary\(\{\s*message,\s*catalog: businessCatalog,?\s*\}\)/);
     expect(chatRoute).toContain("&& !contextualEvidence");
-    expect(chatRoute).toContain("&& !requiresCurrentResearch(message)");
+    expect(chatRoute).toContain("!requiresCurrentResearch(message)");
     expect(chatRoute).toContain("&& !sensitiveTopicDetected");
-    expect(chatRoute).toContain("&& !bodyCircleId");
-    expect(chatRoute).toContain("&& verifiedImageUrls.length === 0");
+    expect(chatRoute).toContain("!bodyCircleId");
+    expect(chatRoute).toContain("verifiedImageUrls.length === 0");
     expect(chatRoute).toContain('intentClass: "travel_planning"');
     expect(chatRoute).toContain("usedLiveWeb: false");
     expect(chatRoute).toContain('const detailUrl = `/businesses/${encodeURIComponent(business.id)}`');
@@ -93,7 +93,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(deterministicStart).toBeGreaterThan(-1);
     expect(deterministicStart).toBeLessThan(quotaCheck);
     expect(deterministicStart).toBeLessThan(providerCall);
-    expect(helper).toContain("resolveTurnGeography(input.message, currentSession?.destination ?? null)");
+    expect(helper).toMatch(/resolveTurnGeography\(\s*input\.message,\s*input\.cityHint \?\? currentSession\?\.destination \?\? null,?\s*\)/);
     expect(helper).toContain('decision.route !== "business_discovery"');
     expect(helper).toContain('namedBusiness.state !== "not_named"');
     expect(helper).toContain("getMemberAgeBand(input.req.user!.id)");
@@ -101,7 +101,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("temporaryBusinessAudienceBand(input.message)");
     expect(helper).not.toContain("loadAdaptiveDeliveryProfile");
     expect(helper).toContain("await discoverLocalBusinesses({");
-    expect(helper).toContain("priorityPreferenceTerms: prefs?.favoriteCategories ?? []");
+    expect(helper).toContain("priorityPreferenceTerms: [");
+    expect(helper).toContain("...(prefs?.favoriteCategories ?? [])");
     expect(helper).toContain("await persistDeterministicDiscoveryTurn({");
     expect(helper).toContain("input.res.status(200).json({");
     expect(helper).not.toContain("openai.chat.completions.create");
@@ -117,9 +118,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(approvedLookup).toBeGreaterThan(intentStart);
     expect(approvedLookup).toBeLessThan(semanticPlanner);
     expect(approvedLookup).toBeLessThan(providerCall);
-    expect(chatRoute).toContain('intentClass === "general_knowledge" && !shouldResearchInLibrary && !namedBusiness');
+    expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*!shouldResearchInLibrary\s*&&\s*!namedBusiness/);
     expect(routeSource).toContain('import { requiresCurrentResearch } from "../kinfolk/current-research"');
-    expect(chatRoute).toContain('intentClass === "general_knowledge" && requiresCurrentResearch(message)');
+    expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*requiresCurrentResearch\(message\)/);
     expect(chatRoute).toContain('answerMode: "approved_library"');
     expect(chatRoute).toContain("usedInternal: true");
     expect(chatRoute).toContain("usedLiveWeb: false");
