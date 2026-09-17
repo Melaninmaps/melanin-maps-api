@@ -409,7 +409,7 @@ function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRo
     verifiedByMwm: false,
     excerpt: "Founder-supplied directory evidence for an unclaimed searchable listing. This is not Mapping With Melanin verification.",
   }));
-  const description = `Founder-listed, unclaimed ${subcategory} in ${winner.city}. Not verified by Mapping With Melanin.${address ? " The supplied address is shown; a map pin appears only after precise geocoding." : " Exact street location has not yet been supplied, so this listing is searchable but not pinned."}`;
+  const description = `Unclaimed ${subcategory} in ${winner.city}. Not verified by Mapping With Melanin.${address ? " The supplied address is shown; a map pin appears only after precise geocoding." : " Exact street location has not yet been supplied, so this listing is searchable but not pinned."}`;
   const canonicalDedupeKey = dedupeKey({ name: winner.name, city: location.city, state: location.state, address });
   const identityKey = publicationIdentityKey(ordered);
   const primaryCandidateId = winner.id;

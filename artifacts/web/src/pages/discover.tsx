@@ -56,7 +56,7 @@ function BusinessProvenanceLabels({ business }: { business: Record<string, unkno
   return (
     <div className="space-y-1" aria-label="Listing status">
       {listingStatus === "live_unclaimed" && (
-        <p className="text-[11px] font-semibold text-[#704611]">Community/founder-listed · Unclaimed · Not verified</p>
+        <p className="text-[11px] font-semibold text-[#704611]">Unclaimed · Not verified</p>
       )}
       {ownershipClaim === "community_reported_minority_owned" && (
         <p className="text-[11px] font-semibold text-[#704611]">Community-reported minority-owned · Not verified</p>

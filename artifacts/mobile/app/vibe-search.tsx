@@ -19,20 +19,12 @@ import { useFavorites } from "@/hooks/useFavorites";
 
 const BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
-const VIBES = [
-  { id: "date-night", label: "Date Night", icon: "heart" as const, description: "Romantic & intimate" },
-  { id: "group-hangout", label: "Group Hangout", icon: "users" as const, description: "Lively, great for squads" },
-  { id: "solo-vibes", label: "Solo Vibes", icon: "user" as const, description: "Quiet, chill, recharge" },
-  { id: "bougie-treat", label: "Bougie Treat", icon: "award" as const, description: "Upscale & elevated" },
-  { id: "hood-classic", label: "Hood Classic", icon: "home" as const, description: "Authentic local staple" },
-  { id: "soul-food", label: "Soul Food", icon: "coffee" as const, description: "Southern comfort cooking" },
-  { id: "late-night", label: "Late Night", icon: "moon" as const, description: "After dark energy" },
-  { id: "family-time", label: "Family Time", icon: "smile" as const, description: "Kid-friendly & wholesome" },
-  { id: "creative-scene", label: "Creative Scene", icon: "music" as const, description: "Art, music & culture" },
-  { id: "wellness", label: "Wellness", icon: "activity" as const, description: "Health, spa & balance" },
-  { id: "work-and-study", label: "Work & Study", icon: "book-open" as const, description: "Productive, WiFi energy" },
-  { id: "adventure", label: "Adventure Ready", icon: "compass" as const, description: "Active & explorative" },
-];
+type VibeOption = {
+  id: string;
+  label: string;
+  description: string;
+  categories: string[];
+};
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
 
@@ -48,7 +40,6 @@ type VibeResult = {
   reviewCount: number;
   confidenceScore: number;
   verified: boolean;
-  blackOwned: boolean;
   vibes: string[];
   ownerVibeMatches: number;
   communityTagCount: number;
@@ -64,11 +55,28 @@ export default function VibeSearchScreen() {
 
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
+  const [vibes, setVibes] = useState<VibeOption[]>([]);
+  const [vibesError, setVibesError] = useState<string | null>(null);
   const [results, setResults] = useState<VibeResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const response = await fetch(`${BASE}/api/vibes/list`);
+        const data = await response.json() as { vibes?: VibeOption[]; error?: string };
+        if (!response.ok) throw new Error(data.error ?? "VIBES could not be loaded");
+        if (active) setVibes(data.vibes ?? []);
+      } catch (error) {
+        if (active) setVibesError(error instanceof Error ? error.message : "VIBES could not be loaded");
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   const toggleVibe = (id: string) => {
     setSelectedVibes((prev) =>
@@ -178,7 +186,7 @@ export default function VibeSearchScreen() {
           {item.vibes?.length > 0 && (
             <View style={styles.vibeRow}>
               {item.vibes.slice(0, 3).map((v) => {
-                const meta = VIBES.find((x) => x.id === v);
+                const meta = vibes.find((x) => x.id === v);
                 return (
                   <View key={v} style={[styles.vibePill, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}>
                     <Text style={[styles.vibePillText, { color: colors.primary }]}>
@@ -201,7 +209,7 @@ export default function VibeSearchScreen() {
           <Feather name="arrow-left" size={22} color="#FFF" />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>Vibe Search</Text>
+          <Text style={styles.headerTitle}>VIBES</Text>
           <Text style={styles.headerSub}>Find your scene by mood</Text>
         </View>
       </View>
@@ -218,7 +226,7 @@ export default function VibeSearchScreen() {
               Select one or more moods — we&apos;ll find spots that match
             </Text>
             <View style={styles.vibeGrid}>
-              {VIBES.map((v) => {
+              {vibes.map((v) => {
                 const active = selectedVibes.includes(v.id);
                 return (
                   <TouchableOpacity
@@ -233,7 +241,7 @@ export default function VibeSearchScreen() {
                     onPress={() => toggleVibe(v.id)}
                     activeOpacity={0.8}
                   >
-                    <Feather name={v.icon} size={22} color={active ? "#FFF" : colors.primary} />
+                    <Feather name="tag" size={22} color={active ? "#FFF" : colors.primary} />
                     <Text style={[styles.vibeCardLabel, { color: active ? "#FFF" : colors.foreground }]}>
                       {v.label}
                     </Text>
@@ -244,6 +252,11 @@ export default function VibeSearchScreen() {
                 );
               })}
             </View>
+            {vibesError ? (
+              <Text style={[styles.vibesError, { color: "#B91C1C" }]}>{vibesError}</Text>
+            ) : vibes.length === 0 ? (
+              <Text style={[styles.vibesError, { color: colors.mutedForeground }]}>Loading available VIBES…</Text>
+            ) : null}
 
             <Text style={[styles.sectionLabel, { color: colors.foreground, marginTop: 20 }]}>Price range</Text>
             <View style={styles.priceRow}>
@@ -324,6 +337,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
   },
+  vibesError: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginTop: 12 },
   vibeCard: {
     width: "47%",
     borderRadius: 14,

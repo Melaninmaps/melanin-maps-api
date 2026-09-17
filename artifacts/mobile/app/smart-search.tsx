@@ -313,7 +313,7 @@ export default function SmartSearchScreen() {
                       </View>
                       <Text style={[styles.resultMeta, { color: colors.mutedForeground }]}>{biz.category} · {biz.city}</Text>
                       {biz.listing_status === "live_unclaimed" && (
-                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community/founder-listed · Unclaimed · Not verified</Text>
+                        <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Unclaimed · Not verified</Text>
                       )}
                       {biz.ownership_claim === "community_reported_minority_owned" && (
                         <Text style={[styles.resultDesc, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>

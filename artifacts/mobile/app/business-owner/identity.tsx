@@ -44,11 +44,6 @@ const ACCESSIBILITY = [
   "Outdoor Seating", "Kid Friendly", "Quiet Environment", "Sensory Friendly",
   "Parking Available", "Public Transit Nearby",
 ];
-const VIBES = [
-  "☕ Cozy", "🎉 Lively", "💼 Professional", "👨🏾‍👩🏾‍👧🏾 Family Friendly",
-  "🎶 Great Music", "💕 Romantic", "🏃 Quick Stop", "📚 Quiet",
-  "🎨 Creative", "🌿 Relaxed", "💎 Luxury", "🏙 Trendy",
-];
 const HIGHLIGHTS = [
   "Celebrating 10+ years", "Newly opened", "Currently expanding",
   "Locally owned & operated", "Introducing new services", "Award-winning",
@@ -86,6 +81,9 @@ type Identity = {
   communityInitiatives: string[];
   growthGoals: string[];
 };
+
+type VibeOption = { id: string; label: string; description: string; categories: string[] };
+type OwnedBusiness = { id: string; category: string; subcategory: string | null };
 
 const EMPTY: Identity = {
   businessStory: "",
@@ -215,6 +213,8 @@ export default function BusinessIdentityScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Identity>(EMPTY);
+  const [vibeOptions, setVibeOptions] = useState<VibeOption[]>([]);
+  const [ownedBusiness, setOwnedBusiness] = useState<OwnedBusiness | null>(null);
   const [ownershipQuery, setOwnershipQuery] = useState("");
 
   const visibleOwnershipBadges = useMemo(() => {
@@ -222,6 +222,10 @@ export default function BusinessIdentityScreen() {
     if (!query) return [...OWNERSHIP_DESIGNATIONS];
     return OWNERSHIP_DESIGNATIONS.filter((designation) => designation.toLocaleLowerCase().includes(query));
   }, [ownershipQuery]);
+  const availableVibes = useMemo(
+    () => vibeOptions.filter((option) => option.categories.includes(ownedBusiness?.category ?? "")),
+    [ownedBusiness?.category, vibeOptions],
+  );
 
   const set = <K extends keyof Identity>(key: K, val: Identity[K]) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -238,10 +242,18 @@ export default function BusinessIdentityScreen() {
       const token = await getToken();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/identity`, { headers });
+      const [res, vibeResponse] = await Promise.all([
+        fetch(`${getApiBase()}/api/businesses/mine/identity`, { headers }),
+        fetch(`${getApiBase()}/api/vibes/list`),
+      ]);
       if (res.ok) {
-        const data = await res.json() as { identity: Identity };
+        const data = await res.json() as { identity: Identity; business?: OwnedBusiness };
         setForm({ ...EMPTY, ...data.identity });
+        setOwnedBusiness(data.business ?? null);
+      }
+      if (vibeResponse.ok) {
+        const data = await vibeResponse.json() as { vibes?: VibeOption[] };
+        setVibeOptions(data.vibes ?? []);
       }
     } catch { /* silent */ } finally {
       setLoading(false);
@@ -387,7 +399,19 @@ export default function BusinessIdentityScreen() {
 
         {/* Section 6: Your Vibe */}
         <SectionHeader title="6. Your Vibe" subtitle="People choose experiences based on atmosphere. What's yours?" />
-        <ChipGrid options={VIBES} selected={form.vibes} onToggle={v => toggle("vibes", v)} />
+        {availableVibes.length > 0 ? (
+          <ChipGrid
+            options={availableVibes.map((option) => option.label)}
+            selected={availableVibes.filter((option) => form.vibes.includes(option.id)).map((option) => option.label)}
+            onToggle={(label) => {
+              const key = availableVibes.find((option) => option.label === label)?.id;
+              if (key) toggle("vibes", key);
+            }}
+            max={3}
+          />
+        ) : (
+          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>This business type uses community endorsements instead of VIBES.</Text>
+        )}
 
         {/* Section 7: Your Team */}
         <SectionHeader title="7. Your Team" subtitle="Help customers discover employment and community opportunities." />

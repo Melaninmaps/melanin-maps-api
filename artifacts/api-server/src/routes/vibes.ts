@@ -1,189 +1,106 @@
 import { Router } from "express";
 import { pool } from "@workspace/db";
-import { getBusinessExperiencePolicy, getOwnerProfileExperienceChoices } from "@workspace/constants";
+import {
+  getBusinessExperiencePolicy,
+  getOwnerProfileExperienceChoices,
+  normalizeOwnerExperienceKey,
+  VIBES_BY_CATEGORY,
+} from "@workspace/constants";
 
 const router = Router();
 
-export const VIBE_LIST = [
-  {
-    id: "date-night",
-    label: "Date Night",
-    icon: "heart",
-    description: "Romantic, intimate, couples",
-    priceHint: "$$-$$$",
-  },
-  {
-    id: "group-hangout",
-    label: "Group Hangout",
-    icon: "users",
-    description: "Lively, social, great for squads",
-    priceHint: "$-$$",
-  },
-  {
-    id: "solo-vibes",
-    label: "Solo Vibes",
-    icon: "user",
-    description: "Quiet, chill, recharge energy",
-    priceHint: "$-$$",
-  },
-  {
-    id: "bougie-treat",
-    label: "Bougie Treat",
-    icon: "award",
-    description: "Upscale, elevated, special occasion",
-    priceHint: "$$$-$$$$",
-  },
-  {
-    id: "hood-classic",
-    label: "Hood Classic",
-    icon: "home",
-    description: "Authentic, local, community staple",
-    priceHint: "$-$$",
-  },
-  {
-    id: "soul-food",
-    label: "Soul Food",
-    icon: "coffee",
-    description: "Southern comfort, home cooking, real flavor",
-    priceHint: "$-$$",
-  },
-  {
-    id: "late-night",
-    label: "Late Night",
-    icon: "moon",
-    description: "After dark, nightlife, good energy",
-    priceHint: "$$-$$$",
-  },
-  {
-    id: "family-time",
-    label: "Family Time",
-    icon: "smile",
-    description: "Kid-friendly, wholesome, all ages",
-    priceHint: "$-$$",
-  },
-  {
-    id: "creative-scene",
-    label: "Creative Scene",
-    icon: "music",
-    description: "Art, music, culture, expression",
-    priceHint: "$-$$$",
-  },
-  {
-    id: "wellness",
-    label: "Wellness",
-    icon: "activity",
-    description: "Health, spa, spiritual, balance",
-    priceHint: "$$-$$$",
-  },
-  {
-    id: "work-and-study",
-    label: "Work & Study",
-    icon: "book-open",
-    description: "Productive, WiFi, focused energy",
-    priceHint: "$-$$",
-  },
-  {
-    id: "adventure",
-    label: "Adventure Ready",
-    icon: "compass",
-    description: "Active, explorative, outdoors",
-    priceHint: "$-$$",
-  },
-  // Community endorsement vibes — used by the web business detail page
-  {
-    id: "hidden_gem",
-    label: "Hidden Gem",
-    icon: "gem",
-    description: "Underrated, secret, worth discovering",
-    priceHint: "$-$$$",
-  },
-  {
-    id: "community_staple",
-    label: "Community Staple",
-    icon: "home",
-    description: "A cornerstone of the neighborhood",
-    priceHint: "$-$$",
-  },
-  {
-    id: "grandma_approved",
-    label: "Grandma Approved",
-    icon: "heart",
-    description: "Authentic, time-tested, trusted by generations",
-    priceHint: "$-$$",
-  },
-  {
-    id: "worth_every_visit",
-    label: "Worth Every Visit",
-    icon: "star",
-    description: "Consistently excellent, never disappoints",
-    priceHint: "$-$$$",
-  },
-  {
-    id: "date_night",
-    label: "Date Night Worthy",
-    icon: "heart",
-    description: "Romantic, intimate, great for couples",
-    priceHint: "$$-$$$",
-  },
-  {
-    id: "family_friendly",
-    label: "Family Friendly",
-    icon: "smile",
-    description: "Welcoming to all ages, great for families",
-    priceHint: "$-$$",
-  },
-  {
-    id: "black_excellence",
-    label: "Black Excellence",
-    icon: "award",
-    description: "Exemplary Black-owned community business",
-    priceHint: "$-$$$",
-  },
-];
+type CanonicalVibe = {
+  id: string;
+  label: string;
+  description: string;
+  categories: string[];
+};
 
-// GET /vibes/list — return canonical vibe list
-router.get("/vibes/list", (_req, res) => {
+/**
+ * The version-controlled VIBES taxonomy is the sole selector/search vocabulary.
+ * A VIBE is an atmosphere descriptor, not a category, ownership label, or
+ * quality claim. Duplicate labels across eligible categories remain one filter
+ * key with their permitted categories returned for clients.
+ */
+export const VIBE_LIST: CanonicalVibe[] = Object.values(
+  Object.entries(VIBES_BY_CATEGORY)
+    .flatMap(([category, vibes]) => vibes.map((vibe) => ({
+      id: normalizeOwnerExperienceKey(vibe.label),
+      label: vibe.label,
+      description: vibe.helperText,
+      category,
+    })))
+    .reduce<Record<string, CanonicalVibe>>((all, vibe) => {
+      const existing = all[vibe.id];
+      if (existing) {
+        if (!existing.categories.includes(vibe.category)) existing.categories.push(vibe.category);
+      } else {
+        all[vibe.id] = {
+          id: vibe.id,
+          label: vibe.label,
+          description: vibe.description,
+          categories: [vibe.category],
+        };
+      }
+      return all;
+    }, {}),
+);
+
+function canonicalVibeKey(value: string): string | null {
+  const normalized = normalizeOwnerExperienceKey(value);
+  if (VIBE_LIST.some((vibe) => vibe.id === normalized)) return normalized;
+  const labelMatch = VIBE_LIST.find((vibe) => vibe.label.toLowerCase() === value.trim().toLowerCase());
+  return labelMatch?.id ?? null;
+}
+
+function normalizedVibeSql(column: string): string {
+  return `lower(regexp_replace(${column}, '[^a-z0-9]+', '_', 'g'))`;
+}
+
+// GET /vibes/list — canonical category-aware VIBES for every client.
+router.get('/vibes/list', (_req, res) => {
   res.json({ vibes: VIBE_LIST });
 });
 
-// GET /vibes/search — smart ranked business search by vibe + price
-router.get("/vibes/search", async (req, res) => {
+// GET /vibes/search — public, canonical VIBES search by atmosphere + price.
+router.get('/vibes/search', async (req, res) => {
   try {
     const rawVibes = req.query.vibes as string | string[] | undefined;
     const rawPrices = req.query.price as string | string[] | undefined;
     const city = (req.query.city as string | undefined)?.trim();
     const userId = req.user?.id ?? null;
 
-    const vibes = rawVibes
-      ? Array.isArray(rawVibes)
-        ? rawVibes
-        : rawVibes.split(",").map((v) => v.trim())
+    const submittedVibes = rawVibes
+      ? (Array.isArray(rawVibes) ? rawVibes : rawVibes.split(','))
       : [];
+    const vibes = [...new Set(submittedVibes
+      .map((value) => canonicalVibeKey(value))
+      .filter((value): value is string => Boolean(value)))];
     const prices = rawPrices
-      ? Array.isArray(rawPrices)
-        ? rawPrices
-        : rawPrices.split(",").map((p) => p.trim())
+      ? (Array.isArray(rawPrices) ? rawPrices : rawPrices.split(',')).map((value) => value.trim())
       : [];
 
+    if (submittedVibes.length > 0 && vibes.length !== submittedVibes.length) {
+      res.status(400).json({ error: 'One or more VIBES are not available in the canonical taxonomy' });
+      return;
+    }
     if (vibes.length === 0) {
-      res.json({ businesses: [], message: "No vibes specified" });
+      res.json({ businesses: [], message: 'No VIBES specified' });
       return;
     }
 
     const params: (string | string[])[] = [vibes];
-    let priceClause = "";
+    let priceClause = '';
     if (prices.length > 0) {
       params.push(prices);
-      priceClause = `AND (b.price_range = ANY($${params.length}::text[]))`;
+      priceClause = `AND b.price_range = ANY($${params.length}::text[])`;
     }
-
-    let cityClause = "";
+    let cityClause = '';
     if (city) {
       params.push(`%${city}%`);
       cityClause = `AND b.city ILIKE $${params.length}`;
     }
-
-    let savedSubquery = "0";
+    let savedSubquery = '0';
     if (userId) {
       params.push(userId);
       savedSubquery = `CASE WHEN EXISTS (
@@ -192,141 +109,76 @@ router.get("/vibes/search", async (req, res) => {
       ) THEN 15 ELSE 0 END`;
     }
 
+    const ownerVibeMatch = `(
+      SELECT COUNT(*)::int
+      FROM jsonb_array_elements_text(COALESCE(b.vibes, '[]'::jsonb)) v
+      WHERE ${normalizedVibeSql('v')} = ANY($1::text[])
+    )`;
+    const communityVibeMatch = `(
+      SELECT COUNT(*)::int
+      FROM business_vibe_tags bvt
+      WHERE bvt.business_id = b.id
+        AND ${normalizedVibeSql('bvt.vibe')} = ANY($1::text[])
+    )`;
     const sql = `
       SELECT
-        b.id,
-        b.name,
-        b.category,
-        b.subcategory,
-        b.description,
-        b.city,
-        b.state,
-        b.address,
-        b.image_url,
-        b.price_range,
-        b.rating,
-        b.review_count,
-        b.confidence_score,
-        b.verified,
-        b.black_owned,
-        b.ownership_designations,
-        b.vibes,
-        b.hours,
-        b.phone,
-        b.website,
-        b.latitude,
-        b.longitude,
-        b.hidden_gem_label,
-        b.hidden_gem_tagline,
-        b.business_status,
-        b.promoted_until,
-        COALESCE((
-          SELECT COUNT(*)::int
-          FROM business_vibe_tags bvt
-          WHERE bvt.business_id = b.id AND bvt.vibe = ANY($1::text[])
-        ), 0) AS community_tag_count,
-        COALESCE((
-          SELECT jsonb_object_agg(vibe_agg.vibe, vibe_agg.cnt)
-          FROM (
-            SELECT bvt2.vibe, COUNT(*)::int AS cnt
-            FROM business_vibe_tags bvt2
-            WHERE bvt2.business_id = b.id
-            GROUP BY bvt2.vibe
-          ) vibe_agg
-        ), '{}'::jsonb) AS all_vibe_counts,
-        (
-          SELECT COUNT(*)::int
-          FROM jsonb_array_elements_text(COALESCE(b.vibes, '[]'::jsonb)) v
-          WHERE v = ANY($1::text[])
-        ) AS owner_vibe_matches,
+        b.id, b.name, b.category, b.subcategory, b.description, b.city, b.state,
+        b.address, b.image_url, b.price_range, b.rating, b.review_count,
+        b.confidence_score, b.verified, b.ownership_designations, b.vibes,
+        b.hours, b.phone, b.website, b.latitude, b.longitude,
+        ${communityVibeMatch} AS community_tag_count,
+        ${ownerVibeMatch} AS owner_vibe_matches,
         ${savedSubquery} AS saved_boost,
         (
           b.rating::float * 2 +
           b.confidence_score::float / 20.0 +
           b.review_count * 0.1 +
           ${savedSubquery} +
-          COALESCE((
-            SELECT COUNT(*)::int * 2
-            FROM business_vibe_tags bvt3
-            WHERE bvt3.business_id = b.id AND bvt3.vibe = ANY($1::text[])
-          ), 0) +
-          (
-            SELECT COUNT(*)::int * 5
-            FROM jsonb_array_elements_text(COALESCE(b.vibes, '[]'::jsonb)) v
-            WHERE v = ANY($1::text[])
-          ) +
-          CASE
-            WHEN b.business_status = 'premium' THEN 8
-            WHEN b.business_status = 'growth' THEN 4
-            ELSE 0
-          END +
-          CASE WHEN b.promoted_until IS NOT NULL AND b.promoted_until > NOW() THEN 5 ELSE 0 END
+          ${communityVibeMatch} * 2 +
+          ${ownerVibeMatch} * 5
         ) AS total_score
-      FROM businesses b
-      WHERE b.black_owned = true
-        AND b.status = 'active'
-        AND (
-          EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements_text(COALESCE(b.vibes, '[]'::jsonb)) v
-            WHERE v = ANY($1::text[])
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM business_vibe_tags bvt4
-            WHERE bvt4.business_id = b.id AND bvt4.vibe = ANY($1::text[])
-          )
-        )
+      FROM public.public_businesses b
+      WHERE (${ownerVibeMatch} > 0 OR ${communityVibeMatch} > 0)
         ${priceClause}
         ${cityClause}
-      ORDER BY total_score DESC
+      ORDER BY total_score DESC, b.name ASC
       LIMIT 30
     `;
-
     const result = await pool.query(sql, params);
 
     res.json({
-      businesses: result.rows.map((r) => ({
-        id: r.id,
-        name: r.name,
-        category: r.category,
-        subcategory: r.subcategory,
-        description: r.description,
-        city: r.city,
-        state: r.state,
-        address: r.address,
-        imageUrl: r.image_url,
-        priceRange: r.price_range,
-        rating: parseFloat(r.rating ?? "0"),
-        reviewCount: r.review_count,
-        confidenceScore: r.confidence_score,
-        verified: r.verified,
-        blackOwned: r.black_owned,
-        ownershipDesignations: r.ownership_designations ?? [],
-        vibes: r.vibes ?? [],
-        hours: r.hours,
-        phone: r.phone,
-        website: r.website,
-        latitude: r.latitude,
-        longitude: r.longitude,
-        hiddenGemLabel: r.hidden_gem_label,
-        hiddenGemTagline: r.hidden_gem_tagline,
-        communityTagCount: r.community_tag_count,
-        allVibeCounts: r.all_vibe_counts ?? {},
-        ownerVibeMatches: r.owner_vibe_matches,
-        isSaved: (r.saved_boost as number) > 0,
-        rankScore: parseFloat(r.total_score ?? "0"),
+      businesses: result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        subcategory: row.subcategory,
+        description: row.description,
+        city: row.city,
+        state: row.state,
+        address: row.address,
+        imageUrl: row.image_url,
+        priceRange: row.price_range,
+        rating: parseFloat(row.rating ?? '0'),
+        reviewCount: row.review_count,
+        confidenceScore: row.confidence_score,
+        verified: row.verified,
+        ownershipDesignations: row.ownership_designations ?? [],
+        vibes: row.vibes ?? [],
+        hours: row.hours,
+        phone: row.phone,
+        website: row.website,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        communityTagCount: row.community_tag_count,
+        ownerVibeMatches: row.owner_vibe_matches,
+        isSaved: Number(row.saved_boost) > 0,
+        rankScore: parseFloat(row.total_score ?? '0'),
       })),
-      meta: {
-        vibesSearched: vibes,
-        pricesFiltered: prices,
-        city: city ?? null,
-        total: result.rows.length,
-      },
+      meta: { vibesSearched: vibes, pricesFiltered: prices, city: city ?? null, total: result.rows.length },
     });
   } catch (err) {
-    req.log.error({ err }, "vibe search error");
-    res.status(500).json({ error: "Search failed" });
+    req.log.error({ err }, 'canonical VIBES search error');
+    res.status(500).json({ error: 'Search failed' });
   }
 });
 
@@ -337,7 +189,7 @@ router.get("/vibes/businesses/:id", async (req, res) => {
     const userId = req.user?.id ?? null;
 
     const [bizResult, tagsResult, userTagsResult] = await Promise.all([
-      pool.query("SELECT vibes FROM businesses WHERE id = $1 AND status = 'active'", [id]),
+      pool.query("SELECT vibes FROM public.public_businesses WHERE id = $1", [id]),
       pool.query(
         `SELECT vibe, COUNT(*)::int as count
          FROM business_vibe_tags
@@ -382,9 +234,23 @@ router.post("/vibes/tag", async (req, res) => {
       return;
     }
 
-    const validVibe = VIBE_LIST.find((v) => v.id === vibe);
-    if (!validVibe) {
+    const canonicalVibe = canonicalVibeKey(vibe);
+    if (!canonicalVibe) {
       res.status(400).json({ error: "Invalid vibe" });
+      return;
+    }
+
+    const business = await pool.query<{ category: string; subcategory: string | null }>(
+      "SELECT category, subcategory FROM public.public_businesses WHERE id = $1",
+      [businessId],
+    );
+    if (!business.rows[0]) {
+      res.status(404).json({ error: "Business not found" });
+      return;
+    }
+    const policy = getBusinessExperiencePolicy(business.rows[0].category, business.rows[0].subcategory);
+    if (!policy.vibeChoices.some((choice) => choice.key === canonicalVibe)) {
+      res.status(400).json({ error: "This VIBE does not fit this business type" });
       return;
     }
 
@@ -392,12 +258,12 @@ router.post("/vibes/tag", async (req, res) => {
       `INSERT INTO business_vibe_tags (business_id, user_id, vibe)
        VALUES ($1, $2, $3)
        ON CONFLICT ON CONSTRAINT uniq_biz_user_vibe DO NOTHING`,
-      [businessId, userId, vibe],
+      [businessId, userId, canonicalVibe],
     );
 
     const countRes = await pool.query(
       "SELECT COUNT(*)::int as count FROM business_vibe_tags WHERE business_id = $1 AND vibe = $2",
-      [businessId, vibe],
+      [businessId, canonicalVibe],
     );
 
     res.json({ ok: true, count: (countRes.rows[0] as { count: number }).count });
