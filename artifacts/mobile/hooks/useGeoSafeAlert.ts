@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const ALERT_CACHE_KEY = "@melanin_geo_alert_";
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
@@ -34,7 +34,7 @@ export function useGeoSafeAlert() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return;
       const loc = await Promise.race([
-        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("location timeout")), 8_000)
         ),
@@ -82,10 +82,6 @@ export function useGeoSafeAlert() {
       setChecking(false);
     }
   }, []);
-
-  useEffect(() => {
-    void Promise.resolve().then(checkCurrentLocation);
-  }, [checkCurrentLocation]);
 
   return { alert, checking, dismissAlert, recheck: checkCurrentLocation };
 }

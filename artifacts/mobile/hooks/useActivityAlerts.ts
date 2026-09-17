@@ -100,7 +100,7 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted" || cancelled) return;
         const loc = await Promise.race([
-          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("location timeout")), 8_000)
           ),
@@ -116,7 +116,7 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
           inFlightRef.current = true;
           try {
             const fresh = await Promise.race([
-              Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+              Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }),
               new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error("location timeout")), 8_000)
               ),
@@ -145,9 +145,22 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
 
   const reportAlert = useCallback(async (type: AlertType, description?: string): Promise<boolean> => {
     if (Platform.OS === "web") return false;
-    const loc = locationRef.current;
-    if (!loc) return false;
     try {
+      let loc = locationRef.current;
+      // Reporting a nearby activity is an explicit member action. Acquire
+      // precise location here rather than when a map merely opens.
+      if (!loc) {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") return false;
+        const current = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("location timeout")), 8_000)
+          ),
+        ]);
+        loc = { lat: current.coords.latitude, lng: current.coords.longitude };
+        await updateLocation(loc.lat, loc.lng);
+      }
       const token = await getToken();
       if (!token) return false;
       const res = await fetch(`${getApiBase()}/api/community-alerts`, {
@@ -159,7 +172,7 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
       await fetchNearby();
       return true;
     } catch { return false; }
-  }, [fetchNearby]);
+  }, [fetchNearby, updateLocation]);
 
   const confirmAlert = useCallback(async (alertId: string): Promise<void> => {
     try {

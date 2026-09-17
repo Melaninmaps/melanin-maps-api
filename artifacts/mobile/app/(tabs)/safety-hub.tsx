@@ -114,16 +114,15 @@ const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["na
   { id: "location",    icon: "map-pin",        title: "Location Sharing",            desc: "Share your live location with a trusted contact temporarily.",                                          color: "#2563EB", route: "/location-share" },
   { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
   { id: "police",      icon: "shield-off",     title: "Report Police or ICE",        desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.",               color: "#991B1B", route: "/report-police" },
-  { id: "report",      icon: "flag",           title: "Anonymous Report",            desc: "Report unsafe content or behavior without revealing your identity.",                                    color: "#DC2626", route: "/report-safety" },
+  { id: "report",      icon: "flag",           title: "Report a Safety Concern",     desc: "Report unsafe content or behavior without revealing your identity.",                                    color: "#DC2626", route: "/report-safety" },
   { id: "space",       icon: "alert-octagon",  title: "Report an Unsafe Space",      desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.",    color: "#7C2D12", route: "/report-space" },
   { id: "family",      icon: "eye",            title: "Community Guidance",           desc: "Content is rated 🟢 Everyone, 🔵 Teen (13+), 🟠 Young Adult (16+), or 🔴 Adult (18+). Parents choose which tiers to show. Ratings include a reason so families always understand the context.", color: "#CA922B", route: "/family-settings" },
-  { id: "survey",      icon: "star",           title: "Neighborhood Safety",         desc: "Share and read community safety reports for any neighborhood.",                                         color: "#0891B2", route: "/neighborhood-survey" },
+  { id: "survey",      icon: "star",           title: "Neighborhood Experience",     desc: "Share what helps people feel safe and able to thrive in a neighborhood.",                              color: "#0891B2", route: "/neighborhood-survey" },
   { id: "registry",    icon: "search",         title: "Sex Offender Registry",       desc: "Search the national registry to see registered offenders in any neighborhood or zip code.",             color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
   { id: "officer-watch",   icon: "eye",    title: "Officer Watch",              desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
   { id: "mental-health",   icon: "heart",  title: "Mental Health Resources",    desc: "Crisis hotlines, 988 Lifeline, NAMI, Trevor Project, and Black mental health support — one tap away.", color: "#DC2626", route: "/mental-health" },
   { id: "na-aa-meetings",  icon: "map-pin", title: "NA/AA Meetings Near You",   desc: "Find Narcotics Anonymous, Alcoholics Anonymous, Al-Anon, and SMART Recovery meetings in your area.", color: "#059669", route: "/na-aa-meetings" },
   { id: "wellness-tracker", icon: "activity", title: "Wellness Tracker",         desc: "Daily mood, energy, sleep, and wellness check-ins. Build streaks and set personal wellness goals.", color: "#7C3AED", route: "/wellness-tracker" },
-  { id: "cultural-heritage", icon: "globe",    title: "Cultural Heritage Explorer", desc: "Discover HBCUs, civil rights landmarks, Native American heritage, cultural neighborhoods, and historic sites across America.", color: "#CA922B", route: "/cultural-heritage" },
 ];
 
 function applyOrder(ids: string[]) {
@@ -166,6 +165,7 @@ export default function SafetyHubTab() {
   const [intelAlerts, setIntelAlerts] = useState<IntelAlert[]>([]);
   const [intelLoading, setIntelLoading] = useState(false);
   const [intelError, setIntelError] = useState<string | null>(null);
+  const [intelChecked, setIntelChecked] = useState(false);
   const [protectedDataError, setProtectedDataError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -187,7 +187,7 @@ export default function SafetyHubTab() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") throw new Error("Location permission is off. Nearby intelligence was not checked.");
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
       const token = await SecureStore.getItemAsync("auth_session_token");
       if (!token) throw new Error("Sign in to load nearby community intelligence.");
       const base = getApiBase();
@@ -198,6 +198,7 @@ export default function SafetyHubTab() {
       if (!res.ok) throw new Error(`Nearby intelligence is unavailable (${res.status}).`);
       const data = await res.json() as { alerts: IntelAlert[] };
       setIntelAlerts(data.alerts ?? []);
+      setIntelChecked(true);
     } catch (cause) {
       setIntelAlerts([]);
       setIntelError(cause instanceof Error ? cause.message : "Nearby intelligence is unavailable.");
@@ -237,8 +238,7 @@ export default function SafetyHubTab() {
 
   useEffect(() => {
     queueMicrotask(() => { void fetchData(); });
-    queueMicrotask(() => { void fetchIntel(); });
-  }, [fetchData, fetchIntel]);
+  }, [fetchData]);
 
   const moveWidget = (index: number, direction: "up" | "down") => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -478,14 +478,16 @@ export default function SafetyHubTab() {
                   )}
                 </View>
                 <TouchableOpacity
-                  onPress={() => router.push("/report-intelligence" as Parameters<typeof router.push>[0])}
+                  onPress={() => void fetchIntel()}
                   style={[styles.reportIntelBtn, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}
                   activeOpacity={0.8}
                 >
-                  <Feather name="plus" size={13} color="#CA922B" />
-                  <Text style={styles.reportIntelBtnText}>Report</Text>
+                  {intelLoading ? <ActivityIndicator size="small" color="#CA922B" /> : <Feather name="navigation" size={13} color="#CA922B" />}
+                  <Text style={styles.reportIntelBtnText}>{intelLoading ? "Checking…" : "Check nearby"}</Text>
                 </TouchableOpacity>
               </View>
+
+              <Text style={[styles.intelConsentText, { color: colors.mutedForeground }]}>Check nearby uses your device&apos;s precise location only after you tap this button.</Text>
 
               <View style={[styles.threeStarRuleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.statusBadge, { backgroundColor: "#F59E0B18", borderColor: "#F59E0B40" }]}>
@@ -513,12 +515,20 @@ export default function SafetyHubTab() {
                 </View>
               )}
 
-              {!intelLoading && !intelError && intelAlerts.length === 0 && (
+              {!intelLoading && !intelError && !intelChecked && (
+                <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={styles.intelEmptyEmoji}>📍</Text>
+                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Check nearby safety information</Text>
+                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>Tap Check nearby to use your precise location for this request.</Text>
+                </View>
+              )}
+
+              {!intelLoading && !intelError && intelChecked && intelAlerts.length === 0 && (
                 <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Text style={styles.intelEmptyEmoji}>🟢</Text>
-                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>All clear nearby</Text>
+                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>No active community alerts found nearby</Text>
                   <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>
-                    No active community intelligence in your area. Be the first to report if you see something.
+                    This is not a guarantee that an area is safe. Use the report tools if you witness something the community should know.
                   </Text>
                 </View>
               )}
@@ -782,6 +792,7 @@ const styles = StyleSheet.create({
   intelCountText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#CA922B" },
   reportIntelBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1 },
   reportIntelBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#CA922B" },
+  intelConsentText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
   threeStarRuleRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, borderWidth: 1, flexWrap: "wrap" },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
   statusBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11 },

@@ -313,32 +313,6 @@ export default function DiscoverScreen() {
           />
         </View>
 
-        {/* Search banners row */}
-        <View style={styles.searchBannersRow}>
-          <TouchableOpacity
-            style={[styles.searchBannerHalf, { borderColor: "#CA922B30", backgroundColor: "#CA922B08" }]}
-            onPress={() => router.push("/smart-search" as never)}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.aiSearchIcon}>✨</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.aiSearchTitle}>AI Search</Text>
-              <Text style={styles.aiSearchSub}>Natural language</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.searchBannerHalf, { borderColor: "#3B82F630", backgroundColor: "#3B82F608" }]}
-            onPress={() => router.push("/connections" as never)}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.aiSearchIcon}>👥</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.aiSearchTitle, { color: "#3B82F6" }]}>Find People</Text>
-              <Text style={[styles.aiSearchSub, { color: "#3B82F699" }]}>Friends & community</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
         {/* Vibe Search shortcut */}
         <TouchableOpacity
           style={[styles.searchBannerFull, { borderColor: "#5B6AF030", backgroundColor: "#5B6AF008", marginBottom: 8 }]}
@@ -351,6 +325,19 @@ export default function DiscoverScreen() {
             <Text style={[styles.aiSearchSub, { color: "#5B6AF099" }]}>Find spots by mood — Date Night, Bougie, Hood Classic & more</Text>
           </View>
           <Feather name="arrow-right" size={14} color="#5B6AF0" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.searchBannerFull, { borderColor: "#CA922B30", backgroundColor: "#CA922B08", marginBottom: 8 }]}
+          onPress={() => router.push("/cultural-heritage" as never)}
+          activeOpacity={0.85}
+        >
+          <Feather name="map" size={14} color="#CA922B" />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.aiSearchTitle, { color: "#CA922B" }]}>Cultural Heritage Explorer</Text>
+            <Text style={[styles.aiSearchSub, { color: "#CA922B99" }]}>HBCUs, landmarks, historic districts, and cultural sites</Text>
+          </View>
+          <Feather name="arrow-right" size={14} color="#CA922B" />
         </TouchableOpacity>
 
         {/* Category dropdown */}

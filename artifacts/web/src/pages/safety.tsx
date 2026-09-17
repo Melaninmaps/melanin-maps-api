@@ -6,7 +6,7 @@ import { SafetyLocationPicker, type SafetyLocationSource } from "@/features/loca
 import type { ResolvedArea } from "@/features/location/useLocationResolver";
 import {
   Shield, AlertTriangle, Radio, Users, MapPin, Phone, ChevronRight,
-  X, CheckCircle, Loader2, Eye, EyeOff, Navigation, Flag, Building2,
+  X, CheckCircle, Loader2, Eye, EyeOff, Flag, Building2,
   Heart, BookOpen, AlertCircle, Star, Clock
 } from "lucide-react";
 
@@ -610,13 +610,12 @@ export default function Safety() {
   const FEATURE_CARDS: FeatureCard[] = [
     { icon: Radio, label: "Community Intelligence", color: "#CA922B", bg: "#CA922B18", href: "#alerts" },
     { icon: AlertCircle, label: "Submit Safety Tip", color: "#CA922B", bg: "#CA922B18", action: () => setActiveSheet("experience") },
-    { icon: Flag, label: "Anonymous Report", color: "#DC2626", bg: "#DC262618", action: () => setActiveSheet("safety") },
-    { icon: Users, label: "Report Police / ICE", color: "#DC2626", bg: "#DC262618", action: () => setActiveSheet("police") },
-    { icon: Building2, label: "Report Unsafe Space", color: "#7C3AED", bg: "#7C3AED18", action: () => setActiveSheet("space") },
+    { icon: Flag, label: "Report a Safety Concern", color: "#DC2626", bg: "#DC262618", action: () => setActiveSheet("safety") },
+    { icon: Users, label: "Report Police or ICE", color: "#DC2626", bg: "#DC262618", action: () => setActiveSheet("police") },
+    { icon: Building2, label: "Report an Unsafe Space", color: "#7C3AED", bg: "#7C3AED18", action: () => setActiveSheet("space") },
     { icon: Star, label: "Share an Experience", color: "#059669", bg: "#05906918", action: () => setActiveSheet("experience") },
-    { icon: BookOpen, label: "Neighborhood Safety", color: "#0891B2", bg: "#0891B218", href: "/rate-neighborhood" },
+    { icon: BookOpen, label: "Neighborhood Experience", color: "#0891B2", bg: "#0891B218", href: "/rate-neighborhood" },
     { icon: Heart, label: "Mental Health Resources", color: "#EC4899", bg: "#EC489918", href: "/resources" },
-    { icon: Navigation, label: "Cultural Heritage Map", color: "#CA922B", bg: "#CA922B18", href: "/map" },
     { icon: Clock, label: "Officer Watch", color: "#6B7280", bg: "#6B728018", href: "/map" },
   ];
 
@@ -673,9 +672,9 @@ export default function Safety() {
           <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Quick Report</p>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Safety Report", desc: "Neighborhood or community concern", sheet: "safety" as ReportSheet, color: "#CA922B" },
-              { label: "Police / ICE Encounter", desc: "Report a stop, checkpoint, or encounter", sheet: "police" as ReportSheet, color: "#DC2626" },
-              { label: "Unsafe Business", desc: "Report discrimination or unsafe space", sheet: "space" as ReportSheet, color: "#7C3AED" },
+              { label: "Report a Safety Concern", desc: "Neighborhood or community concern", sheet: "safety" as ReportSheet, color: "#CA922B" },
+              { label: "Report Police or ICE", desc: "Report a stop, checkpoint, or encounter", sheet: "police" as ReportSheet, color: "#DC2626" },
+              { label: "Report an Unsafe Space", desc: "Report discrimination or unsafe space", sheet: "space" as ReportSheet, color: "#7C3AED" },
               { label: "Share an Experience", desc: "Good or bad — your voice matters", sheet: "experience" as ReportSheet, color: "#059669" },
             ].map(btn => (
               <button key={btn.sheet} onClick={() => setActiveSheet(btn.sheet)}
