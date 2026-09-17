@@ -288,14 +288,31 @@ router.patch("/users/me", async (req: Request, res: Response) => {
 });
 
 /* ── Privacy & bio update ────────────────────────────────────────────── */
+router.get("/users/me/privacy", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const [user] = await db
+      .select({ isPrivate: usersTable.isPrivate, allowDm: usersTable.allowDm })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+    res.json({ profileVisibility: user.isPrivate ? "private" : "public", allowDm: user.allowDm });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/me/privacy error");
+    res.status(500).json({ error: "Failed to fetch privacy settings" });
+  }
+});
+
 router.patch("/users/me/privacy", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { isPrivate, bio } = req.body as Record<string, unknown>;
+  const { isPrivate, bio, allowDm } = req.body as Record<string, unknown>;
 
   try {
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (typeof isPrivate === "boolean") updates.isPrivate = isPrivate;
     if (typeof bio === "string") updates.bio = bio.trim().slice(0, 300) || null;
+    if (typeof allowDm === "boolean") updates.allowDm = allowDm;
 
     if (Object.keys(updates).length === 0) { res.status(400).json({ error: "Nothing to update" }); return; }
 
@@ -306,6 +323,7 @@ router.patch("/users/me/privacy", async (req: Request, res: Response) => {
       .returning({
         isPrivate: usersTable.isPrivate,
         bio: usersTable.bio,
+        allowDm: usersTable.allowDm,
       });
 
     // When switching to public: auto-accept all pending follow requests
@@ -330,7 +348,7 @@ router.patch("/users/me/privacy", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ user });
+    res.json({ user: user ? { ...user, profileVisibility: user.isPrivate ? "private" : "public" } : user });
   } catch (err) {
     req.log.error({ err }, "PATCH /api/users/me/privacy error");
     res.status(500).json({ error: "Failed to update privacy setting" });
@@ -354,12 +372,40 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
         jobTitle: usersTable.jobTitle,
         createdAt: usersTable.createdAt,
         memberType: usersTable.memberType,
+        isPrivate: usersTable.isPrivate,
       })
       .from(usersTable)
       .where(eq(usersTable.id, targetId))
       .limit(1);
 
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+    if (callerId && callerId !== targetId) {
+      const [block] = await db
+        .select({ id: userBlocksTable.id })
+        .from(userBlocksTable)
+        .where(
+          or(
+            and(eq(userBlocksTable.blockerId, callerId), eq(userBlocksTable.blockedId, targetId)),
+            and(eq(userBlocksTable.blockerId, targetId), eq(userBlocksTable.blockedId, callerId)),
+          ),
+        )
+        .limit(1);
+      if (block) { res.status(404).json({ error: "User not found" }); return; }
+    }
+
+    let isFollowing = false;
+    let followStatus: "pending" | "accepted" | null = null;
+    if (callerId && callerId !== targetId) {
+      const [follow] = await db
+        .select({ status: userFollowsTable.status })
+        .from(userFollowsTable)
+        .where(and(eq(userFollowsTable.followerId, callerId), eq(userFollowsTable.followingId, targetId)))
+        .limit(1);
+      followStatus = follow?.status ?? null;
+      isFollowing = follow?.status === "accepted";
+    }
+    const canSeeContent = callerId === targetId || (!user.isPrivate || isFollowing);
 
     // Recent reviews with social post links
     const reviews = await db
@@ -416,7 +462,18 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ user, reviews, tags, connectionStatus, connectionId });
+    const { isPrivate, ...profile } = user;
+    res.json({
+      user: profile,
+      profile,
+      reviews: canSeeContent ? reviews : [],
+      tags: canSeeContent ? tags : [],
+      connectionStatus,
+      connectionId,
+      isFollowing,
+      followStatus,
+      canSeeContent,
+    });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/:userId/profile error");
     res.status(500).json({ error: "Internal server error" });
