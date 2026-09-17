@@ -512,11 +512,9 @@ router.patch("/auth/user/profile", async (req: Request, res: Response) => {
     const ageMs = Date.now() - dob.getTime();
     const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25);
     if (ageYears < 13) {
-      res
-        .status(400)
-        .json({
-          error: "You must be at least 13 years old to use this platform.",
-        });
+      res.status(400).json({
+        error: "You must be at least 13 years old to use this platform.",
+      });
       return;
     }
     if (ageYears > 120) {
@@ -647,12 +645,10 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     !password ||
     !username?.trim()
   ) {
-    res
-      .status(400)
-      .json({
-        error:
-          "First name, last name, email, password, and username are required.",
-      });
+    res.status(400).json({
+      error:
+        "First name, last name, email, password, and username are required.",
+    });
     return;
   }
   if (!agreeToTerms) {
@@ -665,12 +661,10 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   }
   const cleanUsername = username.trim().toLowerCase();
   if (!/^[a-z0-9_]{3,30}$/.test(cleanUsername)) {
-    res
-      .status(400)
-      .json({
-        error:
-          "Username must be 3–30 characters: letters, numbers, and underscores only.",
-      });
+    res.status(400).json({
+      error:
+        "Username must be 3–30 characters: letters, numbers, and underscores only.",
+    });
     return;
   }
   if (isReservedUsername(cleanUsername)) {
@@ -713,11 +707,9 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     return;
   }
   if (age < 13) {
-    res
-      .status(400)
-      .json({
-        error: "You must be at least 13 years old to use this platform.",
-      });
+    res.status(400).json({
+      error: "You must be at least 13 years old to use this platform.",
+    });
     return;
   }
 
@@ -756,21 +748,17 @@ router.post("/auth/register", async (req: Request, res: Response) => {
             },
             "auth diagnostic",
           );
-          res
-            .status(409)
-            .json({
-              error:
-                "An account with this exact email address already exists. Try signing in instead, or use a different email.",
-            });
+          res.status(409).json({
+            error:
+              "An account with this exact email address already exists. Try signing in instead, or use a different email.",
+          });
           return;
         }
         if (existingUsername) {
-          res
-            .status(409)
-            .json({
-              error:
-                "That @username is already taken — please choose a different one. Your email address is fine.",
-            });
+          res.status(409).json({
+            error:
+              "That @username is already taken — please choose a different one. Your email address is fine.",
+          });
           return;
         }
 
@@ -1278,12 +1266,10 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
         "password reset: Resend failed",
       );
       // Code is already stored; client should retry rather than silently succeed
-      res
-        .status(500)
-        .json({
-          error:
-            "Something went wrong sending the reset email. Please try again.",
-        });
+      res.status(500).json({
+        error:
+          "Something went wrong sending the reset email. Please try again.",
+      });
     }
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/forgot-password error");
@@ -1339,11 +1325,9 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
       .update(code.trim())
       .digest("hex");
     if (codeHash !== user.emailVerificationToken) {
-      res
-        .status(400)
-        .json({
-          error: "Incorrect reset code. Please check your email and try again.",
-        });
+      res.status(400).json({
+        error: "Incorrect reset code. Please check your email and try again.",
+      });
       return;
     }
 
@@ -1558,12 +1542,10 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
                 { event: baseEvent, appleHttpStatus, appleErrorCode },
                 "Apple token exchange failed — blocking new account creation",
               );
-              res
-                .status(401)
-                .json({
-                  error:
-                    "Apple authorization could not be verified. Please try Sign in with Apple again.",
-                });
+              res.status(401).json({
+                error:
+                  "Apple authorization could not be verified. Please try Sign in with Apple again.",
+              });
               return;
             }
             req.log.warn(
@@ -1576,24 +1558,20 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
             { event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" },
             "New Apple account without authorization code — old app build, blocking creation",
           );
-          res
-            .status(400)
-            .json({
-              error:
-                "Sign in with Apple requires an authorization code. Please try again.",
-            });
+          res.status(400).json({
+            error:
+              "Sign in with Apple requires an authorization code. Please try again.",
+          });
           return;
         } else if (isNewUser && !appleSecretsConfigured) {
           req.log.error(
             { event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" },
             "Apple credentials not configured — cannot create new account",
           );
-          res
-            .status(500)
-            .json({
-              error:
-                "Apple Sign-In is temporarily unavailable. Please try again later.",
-            });
+          res.status(500).json({
+            error:
+              "Apple Sign-In is temporarily unavailable. Please try again later.",
+          });
           return;
         } else if (!authorizationCode) {
           // Existing user, old app build — sign-in allowed, token not updated
@@ -1741,11 +1719,9 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
     if (homeState !== undefined) {
       const normalizedHomeState = normalizeHomeState(homeState);
       if (homeState.trim() && !normalizedHomeState) {
-        res
-          .status(400)
-          .json({
-            error: "homeState must be a US state name or two-letter code.",
-          });
+        res.status(400).json({
+          error: "homeState must be a US state name or two-letter code.",
+        });
         return;
       }
       updates.homeState = normalizedHomeState;
@@ -1868,12 +1844,10 @@ router.post("/auth/change-password", async (req: Request, res: Response) => {
       .where(eq(usersTable.id, userId))
       .limit(1);
     if (!user?.passwordHash) {
-      res
-        .status(400)
-        .json({
-          error:
-            "This account uses Apple or social sign-in. Use 'Forgot Password' to set a password.",
-        });
+      res.status(400).json({
+        error:
+          "This account uses Apple or social sign-in. Use 'Forgot Password' to set a password.",
+      });
       return;
     }
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
@@ -1923,23 +1897,19 @@ router.post(
     }
     try {
       const userId = req.user!.id;
-      const result = await pool.query<{ must_change_password: boolean }>(
-        "SELECT must_change_password FROM users WHERE id = $1 FOR UPDATE",
-        [userId],
-      );
-      if (!result.rows[0]?.must_change_password) {
-        res
-          .status(409)
-          .json({
-            error: "This account is not awaiting a temporary-password change.",
-          });
-        return;
-      }
       const passwordHash = await bcrypt.hash(newPassword, 8);
-      await pool.query(
-        "UPDATE users SET password_hash = $1, must_change_password = FALSE, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = $2",
+      // The guarded update makes the one-time transition atomic. Ordinary
+      // accounts must continue to use the standard reset/change-password flow.
+      const result = await pool.query<{ id: string }>(
+        "UPDATE users SET password_hash = $1, must_change_password = FALSE, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = $2 AND must_change_password = TRUE RETURNING id",
         [passwordHash, userId],
       );
+      if (!result.rows[0]) {
+        res.status(409).json({
+          error: "This account is not awaiting a temporary-password change.",
+        });
+        return;
+      }
       void logAuthEvent(
         userId,
         "AUTH_INITIAL_PASSWORD_COMPLETED",
