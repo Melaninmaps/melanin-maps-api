@@ -29,6 +29,10 @@ import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import {
+  KinfolkBusinessRecommendationSheet,
+  type KinfolkBusinessRecommendation,
+} from "@/components/KinfolkBusinessRecommendationSheet";
 
 interface Message {
   id: string;
@@ -41,6 +45,7 @@ interface Message {
   sourceNote?: string | null;
   sources?: Array<{ title: string; url: string }>;
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
+  recommendations?: KinfolkBusinessRecommendation[];
 }
 
 interface TaskActionPayload {
@@ -129,6 +134,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
   sourceNote?: string | null;
   sources: Array<{ title: string; url: string }>;
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
+  recommendations: KinfolkBusinessRecommendation[];
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -161,6 +167,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
     sourceNote?: string | null;
     sources?: Array<{ title: string; url: string }> | null;
     libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
+    recommendations?: { businesses?: KinfolkBusinessRecommendation[] } | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -175,6 +182,11 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
       return safe ? [safe] : [];
     }),
     libraryAction: data.libraryAction ?? null,
+    recommendations: Array.isArray(data.recommendations?.businesses)
+      ? data.recommendations.businesses
+        .filter((business) => Boolean(business?.id && business?.name))
+        .slice(0, 6)
+      : [],
   };
 }
 
@@ -240,6 +252,7 @@ export function AIChatWidget() {
   const [voiceUsage, setVoiceUsage] = useState<{ used: number; limit: number; percent: number; tierName: string } | null>(null);
   const [voicePref, setVoicePref] = useState<string>("onyx");
   const [voiceSheet, setVoiceSheet] = useState(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<KinfolkBusinessRecommendation | null>(null);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const [aaveLevel, setAaveLevel] = useState<number>(0);
   const [aaveSaving, setAaveSaving] = useState(false);
@@ -686,6 +699,7 @@ export function AIChatWidget() {
         sourceNote,
         sources,
         libraryAction,
+        recommendations,
       } = await sendToKinfolk(text, token, await nearbyCityHint(text));
 
       let taskCreated: Message["taskCreated"] | undefined;
@@ -708,6 +722,7 @@ export function AIChatWidget() {
         sourceNote,
         sources,
         libraryAction,
+        recommendations,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -791,6 +806,7 @@ export function AIChatWidget() {
         <KeyboardAvoidingView
           style={[styles.modal, { backgroundColor: colors.background }]}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
           <View style={[styles.modalHeader, { paddingTop: Platform.OS === "web" ? 24 : insets.top + 12, borderBottomColor: colors.border }]}>
             <View style={styles.modalHeaderLeft}>
@@ -845,6 +861,7 @@ export function AIChatWidget() {
 
           <FlatList
             keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
             ref={listRef}
             data={messages}
             keyExtractor={(m) => m.id}
@@ -909,6 +926,32 @@ export function AIChatWidget() {
                     </Text>
                   </TouchableOpacity>
                 )}
+                {!item.fromUser && item.recommendations?.length ? (
+                  <View style={[styles.recommendationList, { marginLeft: 42 }]}>
+                    <Text style={[styles.recommendationHeading, { color: colors.mutedForeground }]}>KINFOLK PICKS</Text>
+                    {item.recommendations.map((recommendation: KinfolkBusinessRecommendation) => (
+                      <TouchableOpacity
+                        key={recommendation.id}
+                        onPress={() => setSelectedRecommendation(recommendation)}
+                        style={[styles.recommendationCard, { backgroundColor: colors.card, borderColor: "#CA922B66" }]}
+                        activeOpacity={0.82}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open ${recommendation.name}`}
+                      >
+                        <View style={[styles.recommendationIcon, { backgroundColor: "#CA922B1A" }]}>
+                          <Feather name="briefcase" size={16} color={colors.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.recommendationName, { color: colors.foreground }]} numberOfLines={1}>{recommendation.name}</Text>
+                          <Text style={[styles.recommendationMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                            {[recommendation.category, recommendation.city, recommendation.state].filter(Boolean).join(" · ")}
+                          </Text>
+                        </View>
+                        <Feather name="chevron-right" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : null}
                 {!item.fromUser && item.sourceNote ? (
                   <Text style={[styles.sourceNote, { color: colors.mutedForeground, borderTopColor: colors.border }]}>
                     {item.sourceNote}
@@ -1022,6 +1065,10 @@ export function AIChatWidget() {
               placeholderTextColor={isRecording ? "#DC2626" : colors.mutedForeground}
               value={input}
               onChangeText={setInput}
+              onFocus={() => {
+                setWidgetAtBottom(true);
+                requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+              }}
               onSubmitEditing={send}
               returnKeyType="send"
               multiline={false}
@@ -1160,6 +1207,15 @@ export function AIChatWidget() {
           )}
         </KeyboardAvoidingView>
       </Modal>
+      <KinfolkBusinessRecommendationSheet
+        recommendation={selectedRecommendation}
+        visible={selectedRecommendation !== null}
+        onClose={() => setSelectedRecommendation(null)}
+        onViewBusiness={(businessId) => {
+          setWidgetOpen(false);
+          router.push({ pathname: "/business/[id]", params: { id: businessId } } as never);
+        }}
+      />
     </>
   );
 }
@@ -1228,6 +1284,12 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
+  recommendationList: { marginTop: 10, gap: 7, maxWidth: "86%" },
+  recommendationHeading: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.9, marginBottom: 1 },
+  recommendationCard: { flexDirection: "row", alignItems: "center", gap: 9, borderWidth: 1, borderRadius: 14, padding: 10 },
+  recommendationIcon: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  recommendationName: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  recommendationMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
   sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
   sourceLinks: { maxWidth: "78%", marginTop: 7, gap: 5 },
   sourceLink: { fontSize: 11, fontFamily: "Inter_500Medium", lineHeight: 16, textDecorationLine: "underline" },

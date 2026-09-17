@@ -8256,6 +8256,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       category: business.category,
       city: business.city,
       state: business.stateCode,
+      address: business.address ?? undefined,
       description: business.description || undefined,
       website: business.website ?? undefined,
       phone: business.phone ?? undefined,

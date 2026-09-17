@@ -21,6 +21,7 @@ export type SafeBusiness = {
   category: string | null;
   city: string | null;
   state?: string | null;
+  address?: string | null;
   description?: string | null;
   website?: string | null;
   phone?: string | null;
