@@ -12,6 +12,7 @@ import {
   Platform,
   Keyboard,
   Image,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -57,6 +58,7 @@ export default function BusinessSearchScreen() {
   const [state, setState] = useState("");
   const [handle, setHandle] = useState("");
   const [category, setCategory] = useState("");
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Business[]>([]);
@@ -365,30 +367,19 @@ export default function BusinessSearchScreen() {
           </View>
 
           <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 16 }]}>CATEGORY</Text>
-          <ScrollView
-        keyboardDismissMode="on-drag"
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScroll}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setCategoryPickerOpen(true)}
+            style={[styles.inputRow, { borderColor: colors.border, marginTop: 8 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Choose a business category"
           >
-            {CATEGORY_OPTIONS.map((cat) => (
-              <TouchableOpacity activeOpacity={0.85}
-                key={cat}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: category === cat ? primaryGold : colors.secondary,
-                    borderColor: category === cat ? primaryGold : colors.border,
-                  },
-                ]}
-                onPress={() => setCategory(category === cat ? "" : cat)}
-              >
-                <Text style={[styles.chipText, { color: category === cat ? "#fff" : colors.foreground }]}>
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+            <Feather name="sliders" size={16} color={primaryGold} />
+            <Text style={[styles.input, { color: category ? colors.foreground : colors.mutedForeground }]} numberOfLines={1}>
+              {category || "All categories"}
+            </Text>
+            <Feather name="chevron-down" size={17} color={colors.mutedForeground} />
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -549,6 +540,31 @@ export default function BusinessSearchScreen() {
           </View>
         )}
       </ScrollView>
+      <Modal visible={categoryPickerOpen} transparent animationType="fade" onRequestClose={() => setCategoryPickerOpen(false)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => setCategoryPickerOpen(false)} style={styles.pickerBackdrop}>
+          <View style={[styles.pickerSheet, { backgroundColor: colors.card }]}>
+            <Text style={[styles.pickerTitle, { color: colors.foreground }]}>Business category</Text>
+            <Text style={[styles.pickerSubtitle, { color: colors.mutedForeground }]}>Optional — leave this open to search every category.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}>
+              {["", ...CATEGORY_OPTIONS].map((option) => {
+                const selected = category === option;
+                return (
+                  <TouchableOpacity
+                    key={option || "all"}
+                    onPress={() => { setCategory(option); setCategoryPickerOpen(false); }}
+                    style={[styles.pickerOption, { borderColor: colors.border, backgroundColor: selected ? primaryGold + "16" : "transparent" }]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text style={[styles.pickerOptionText, { color: colors.foreground }]}>{option || "All categories"}</Text>
+                    {selected && <Feather name="check" size={17} color={primaryGold} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -600,21 +616,29 @@ const styles = StyleSheet.create({
   cityStateRow: {
     flexDirection: "row",
   },
-  categoryScroll: {
-    paddingBottom: 4,
-    gap: 8,
+  pickerBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  pickerSheet: {
+    maxHeight: "72%",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  pickerTitle: { fontFamily: "Inter_700Bold", fontSize: 19 },
+  pickerSubtitle: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginTop: 5, marginBottom: 14 },
+  pickerOption: {
+    minHeight: 50,
+    borderBottomWidth: 1,
+    paddingHorizontal: 4,
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-  },
+  pickerOptionText: { fontFamily: "Inter_500Medium", fontSize: 15 },
   searchBtn: {
     flexDirection: "row",
     alignItems: "center",
