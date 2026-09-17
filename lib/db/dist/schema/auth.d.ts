@@ -765,6 +765,23 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
         }, {}, {
             length: number | undefined;
         }>;
+        mustChangePassword: import("drizzle-orm/pg-core").PgColumn<{
+            name: "must_change_password";
+            tableName: "users";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         emailVerified: import("drizzle-orm/pg-core").PgColumn<{
             name: "email_verified";
             tableName: "users";

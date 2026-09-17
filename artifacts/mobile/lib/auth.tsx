@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from "react";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import { AppState, Platform } from "react-native";
@@ -27,6 +34,7 @@ export interface User {
   isPrivate?: boolean;
   bio?: string | null;
   profileSetupComplete?: boolean;
+  mustChangePassword?: boolean;
 }
 
 interface AuthContextValue {
@@ -35,7 +43,15 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   sessionExpired: boolean;
   login: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<{ error?: string; authenticated?: boolean; errorCode?: string }>;
+  loginWithEmail: (
+    email: string,
+    password: string,
+  ) => Promise<{
+    error?: string;
+    authenticated?: boolean;
+    errorCode?: string;
+    mustChangePassword?: boolean;
+  }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<boolean>;
 }
@@ -64,7 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
     } catch (secureErr: unknown) {
       const e = secureErr as Error;
-      console.error("fetchUser: SecureStore.getItemAsync threw", { errorName: e?.name, errorMessage: e?.message });
+      console.error("fetchUser: SecureStore.getItemAsync threw", {
+        errorName: e?.name,
+        errorMessage: e?.message,
+      });
       setIsLoading(false);
       return false;
     }
@@ -109,7 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Non-401 response with no user (e.g. 500 server error, transient failure).
           // Do NOT erase the token or sign the user out — treat as a transient error
           // and retry. A server hiccup must never cause an irreversible logout.
-          console.warn("[AUTH] /api/auth/user returned no user with status", res.status, "— keeping session, retrying");
+          console.warn(
+            "[AUTH] /api/auth/user returned no user with status",
+            res.status,
+            "— keeping session, retrying",
+          );
           if (attempt < maxAttempts) {
             await new Promise((resolve) => setTimeout(resolve, attempt * 500));
             continue;
@@ -173,98 +196,170 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUser]);
 
-  const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string; authenticated?: boolean; errorCode?: string }> => {
-    const apiBase = getApiBaseUrl();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12_000);
-    let response: Response;
-    try {
-      response = await fetch(`${apiBase}/api/auth/login-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        signal: controller.signal,
-      });
-    } catch (fetchErr: unknown) {
-      clearTimeout(timer);
-      const e = fetchErr as Error;
-      console.error("login fetch threw", { host: apiBase, errorName: e?.name, errorMessage: e?.message });
-      const isTimeout = e?.name === "AbortError";
-      return { error: isTimeout ? "Connection timed out. Please check your network and try again." : `Could not reach the server. Check your connection and try again.` };
-    } finally {
-      clearTimeout(timer);
-    }
-
-    const contentType = response.headers.get("content-type") ?? "";
-    let rawBody = "";
-    try {
-      rawBody = await response.text();
-    } catch (textErr: unknown) {
-      const e = textErr as Error;
-      console.error("login response.text() threw", { status: response.status, contentType, errorName: e?.name, errorMessage: e?.message });
-      return { error: `Login failed: HTTP ${response.status} (could not read response).` };
-    }
-
-    let data: { token?: string; error?: string } = {};
-    try {
-      data = JSON.parse(rawBody) as { token?: string; error?: string };
-    } catch {
-      console.error("login response not JSON", { status: response.status, contentType, bodyPreview: rawBody.slice(0, 100) });
-      return { error: `Login service returned an unexpected response (HTTP ${response.status}).` };
-    }
-
-    if (!response.ok) {
-      const errorCode = (data as { error_code?: string }).error_code;
-      console.error("login failed", { status: response.status, responseKeys: Object.keys(data), errorCode });
-      return { error: data.error ?? `Login failed (HTTP ${response.status}).`, errorCode };
-    }
-
-    const token: string = data.token ?? "";
-    if (!token) {
-      console.error("login step 0: no token in response", { status: response.status, responseKeys: Object.keys(data) });
-      return { error: "Login succeeded but no session was returned. Please try again." };
-    }
-
-    // Step 1 — persist session token
-    try {
-      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-    } catch (step1Err: unknown) {
-      const e = step1Err as Error;
-      console.error("login step 1 FAILED: SecureStore.setItemAsync(token)", { tokenLen: token.length, errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
-      return { error: `Signed in but could not save your session (storage step 1: ${e?.name ?? "unknown"}). Please try again.` };
-    }
-
-    // Step 1 verify — read the token back immediately to confirm it was retained
-    try {
-      const verified = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-      if (!verified) {
-        console.error("login step 1 verify: token not retained after save (read-back null)");
-        return { error: "Session token was not retained after saving. Please try again." };
+  const loginWithEmail = useCallback(
+    async (
+      email: string,
+      password: string,
+    ): Promise<{
+      error?: string;
+      authenticated?: boolean;
+      errorCode?: string;
+      mustChangePassword?: boolean;
+    }> => {
+      const apiBase = getApiBaseUrl();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12_000);
+      let response: Response;
+      try {
+        response = await fetch(`${apiBase}/api/auth/login-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          signal: controller.signal,
+        });
+      } catch (fetchErr: unknown) {
+        clearTimeout(timer);
+        const e = fetchErr as Error;
+        console.error("login fetch threw", {
+          host: apiBase,
+          errorName: e?.name,
+          errorMessage: e?.message,
+        });
+        const isTimeout = e?.name === "AbortError";
+        return {
+          error: isTimeout
+            ? "Connection timed out. Please check your network and try again."
+            : `Could not reach the server. Check your connection and try again.`,
+        };
+      } finally {
+        clearTimeout(timer);
       }
-    } catch (verifyErr: unknown) {
-      const e = verifyErr as Error;
-      console.error("login step 1 verify: read-back threw", { errorName: e?.name, errorMessage: e?.message });
-      return { error: "Session saved but could not be verified. Please try again." };
-    }
 
-    // Step 2 — set fresh-login flag (non-critical, failure is allowed)
-    try {
-      await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
-    } catch (step2Err: unknown) {
-      const e = step2Err as Error;
-      console.error("login step 2: fresh_login flag failed (non-critical)", { errorName: e?.name, errorMessage: e?.message });
-    }
+      const contentType = response.headers.get("content-type") ?? "";
+      let rawBody = "";
+      try {
+        rawBody = await response.text();
+      } catch (textErr: unknown) {
+        const e = textErr as Error;
+        console.error("login response.text() threw", {
+          status: response.status,
+          contentType,
+          errorName: e?.name,
+          errorMessage: e?.message,
+        });
+        return {
+          error: `Login failed: HTTP ${response.status} (could not read response).`,
+        };
+      }
 
-    // Step 3 — token written and verified. Authentication is established.
-    // Set isLoading=true so AuthGate sees a loading state and cannot
-    // redirect to /login while the caller (login.tsx) awaits refreshUser().
-    // The caller awaits the profile fetch directly and only navigates after
-    // isAuthenticated=true is in place, eliminating the three-way
-    // router.replace race that caused the confirmed VC67/VC68 login flash.
-    setIsLoading(true);
+      let data: {
+        token?: string;
+        error?: string;
+        mustChangePassword?: boolean;
+      } = {};
+      try {
+        data = JSON.parse(rawBody) as { token?: string; error?: string };
+      } catch {
+        console.error("login response not JSON", {
+          status: response.status,
+          contentType,
+          bodyPreview: rawBody.slice(0, 100),
+        });
+        return {
+          error: `Login service returned an unexpected response (HTTP ${response.status}).`,
+        };
+      }
 
-    return { authenticated: true };
-  }, []);
+      if (!response.ok) {
+        const errorCode = (data as { error_code?: string }).error_code;
+        console.error("login failed", {
+          status: response.status,
+          responseKeys: Object.keys(data),
+          errorCode,
+        });
+        return {
+          error: data.error ?? `Login failed (HTTP ${response.status}).`,
+          errorCode,
+        };
+      }
+
+      const token: string = data.token ?? "";
+      if (!token) {
+        console.error("login step 0: no token in response", {
+          status: response.status,
+          responseKeys: Object.keys(data),
+        });
+        return {
+          error:
+            "Login succeeded but no session was returned. Please try again.",
+        };
+      }
+
+      // Step 1 — persist session token
+      try {
+        await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+      } catch (step1Err: unknown) {
+        const e = step1Err as Error;
+        console.error("login step 1 FAILED: SecureStore.setItemAsync(token)", {
+          tokenLen: token.length,
+          errorName: e?.name,
+          errorMessage: e?.message,
+          stack: e?.stack?.slice(0, 500),
+        });
+        return {
+          error: `Signed in but could not save your session (storage step 1: ${e?.name ?? "unknown"}). Please try again.`,
+        };
+      }
+
+      // Step 1 verify — read the token back immediately to confirm it was retained
+      try {
+        const verified = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+        if (!verified) {
+          console.error(
+            "login step 1 verify: token not retained after save (read-back null)",
+          );
+          return {
+            error:
+              "Session token was not retained after saving. Please try again.",
+          };
+        }
+      } catch (verifyErr: unknown) {
+        const e = verifyErr as Error;
+        console.error("login step 1 verify: read-back threw", {
+          errorName: e?.name,
+          errorMessage: e?.message,
+        });
+        return {
+          error: "Session saved but could not be verified. Please try again.",
+        };
+      }
+
+      // Step 2 — set fresh-login flag (non-critical, failure is allowed)
+      try {
+        await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
+      } catch (step2Err: unknown) {
+        const e = step2Err as Error;
+        console.error("login step 2: fresh_login flag failed (non-critical)", {
+          errorName: e?.name,
+          errorMessage: e?.message,
+        });
+      }
+
+      // Step 3 — token written and verified. Authentication is established.
+      // Set isLoading=true so AuthGate sees a loading state and cannot
+      // redirect to /login while the caller (login.tsx) awaits refreshUser().
+      // The caller awaits the profile fetch directly and only navigates after
+      // isAuthenticated=true is in place, eliminating the three-way
+      // router.replace race that caused the confirmed VC67/VC68 login flash.
+      setIsLoading(true);
+
+      return {
+        authenticated: true,
+        mustChangePassword: data.mustChangePassword === true,
+      };
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     // Step 1: Read token while the authenticated screen is still mounted.
@@ -322,47 +417,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // app transitions from background to foreground during the sign-in sheet dismiss),
     // which can cause a spurious logout if Apple's credential API hasn't settled yet.
     const mountedAt = Date.now();
-    const COOLDOWN_MS = 5 * 60 * 1000;  // check at most once per 5 minutes
-    const LOGIN_GRACE_MS = 10 * 1000;   // skip check for 10s after mount/login
+    const COOLDOWN_MS = 5 * 60 * 1000; // check at most once per 5 minutes
+    const LOGIN_GRACE_MS = 10 * 1000; // skip check for 10s after mount/login
 
-    const subscription = AppState.addEventListener("change", async (nextState) => {
-      if (nextState !== "active") return;
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextState) => {
+        if (nextState !== "active") return;
 
-      // Skip during post-login grace period — Apple's sandbox credential API
-      // is unreliable in the seconds immediately after sign-in completes.
-      if (Date.now() - mountedAt < LOGIN_GRACE_MS) return;
+        // Skip during post-login grace period — Apple's sandbox credential API
+        // is unreliable in the seconds immediately after sign-in completes.
+        if (Date.now() - mountedAt < LOGIN_GRACE_MS) return;
 
-      // Cooldown: don't hammer Apple's API on every foreground transition.
-      if (Date.now() - lastCheckRef.current < COOLDOWN_MS) return;
-      lastCheckRef.current = Date.now();
+        // Cooldown: don't hammer Apple's API on every foreground transition.
+        if (Date.now() - lastCheckRef.current < COOLDOWN_MS) return;
+        lastCheckRef.current = Date.now();
 
-      const appleUserId = await SecureStore.getItemAsync("apple_user_id").catch(() => null);
-      if (!appleUserId) return;
+        const appleUserId = await SecureStore.getItemAsync(
+          "apple_user_id",
+        ).catch(() => null);
+        if (!appleUserId) return;
 
-      try {
-        const AppleAuth = await import("expo-apple-authentication");
-        const credState = await AppleAuth.getCredentialStateAsync(appleUserId);
-        console.log("[AppleAuth] foreground credential state:", credState);
+        try {
+          const AppleAuth = await import("expo-apple-authentication");
+          const credState =
+            await AppleAuth.getCredentialStateAsync(appleUserId);
+          console.log("[AppleAuth] foreground credential state:", credState);
 
-        if (credState === AppleAuth.AppleAuthenticationCredentialState.REVOKED) {
-          // Definitive revocation — log out immediately.
-          await SecureStore.deleteItemAsync("apple_user_id").catch(() => {});
-          await logout();
-        } else if (credState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND) {
-          // NOT_FOUND can be a transient sandbox/TestFlight glitch — retry once
-          // before treating it as a hard revocation.
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          const retryState = await AppleAuth.getCredentialStateAsync(appleUserId);
-          console.log("[AppleAuth] credential state retry:", retryState);
-          if (retryState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND) {
+          if (
+            credState === AppleAuth.AppleAuthenticationCredentialState.REVOKED
+          ) {
+            // Definitive revocation — log out immediately.
             await SecureStore.deleteItemAsync("apple_user_id").catch(() => {});
             await logout();
+          } else if (
+            credState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND
+          ) {
+            // NOT_FOUND can be a transient sandbox/TestFlight glitch — retry once
+            // before treating it as a hard revocation.
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const retryState =
+              await AppleAuth.getCredentialStateAsync(appleUserId);
+            console.log("[AppleAuth] credential state retry:", retryState);
+            if (
+              retryState ===
+              AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND
+            ) {
+              await SecureStore.deleteItemAsync("apple_user_id").catch(
+                () => {},
+              );
+              await logout();
+            }
           }
+        } catch {
+          // Credential state check unavailable — Apple services unreachable or unsupported platform
         }
-      } catch {
-        // Credential state check unavailable — Apple services unreachable or unsupported platform
-      }
-    });
+      },
+    );
     return () => subscription.remove();
   }, [logout]);
 
