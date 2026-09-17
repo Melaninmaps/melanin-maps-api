@@ -18,10 +18,18 @@ import { basename, resolve } from "node:path";
  */
 
 const root = resolve(import.meta.dirname, "../..");
-const outputDirectory = resolve(
-  root,
-  "data/founder-imports/2026-09-17-source-backed-inventory-review",
-);
+function options(name: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < process.argv.length; index += 1) {
+    if (process.argv[index] === name && process.argv[index + 1]) values.push(process.argv[index + 1]!);
+  }
+  return values;
+}
+
+function option(name: string): string | null {
+  return options(name)[0] ?? null;
+}
+
 const domesticManifest = resolve(
   root,
   "data/founder-imports/2026-09-17-10k-expansion/source-backed-domestic-candidates.jsonl",
@@ -29,6 +37,11 @@ const domesticManifest = resolve(
 const internationalManifest = resolve(
   root,
   "data/founder-imports/2026-09-17-international-2500-expansion/source-backed-international-candidates.jsonl",
+);
+const inputManifests = options("--input").map((path) => resolve(path));
+const manifests = inputManifests.length > 0 ? inputManifests : [domesticManifest, internationalManifest];
+const outputDirectory = resolve(
+  option("--output-dir") ?? "data/founder-imports/2026-09-17-source-backed-inventory-review",
 );
 
 const SOCIAL_HOSTS = new Set([
@@ -94,7 +107,7 @@ type ReviewCandidate = {
 };
 
 type HeldCandidate = {
-  input: "domestic" | "international";
+  input: string;
   sourceRow: number;
   name: string | null;
   reason: string[];
@@ -207,7 +220,7 @@ function explicitDesignationList(raw: string): CanonicalDesignation[] {
   return found;
 }
 
-function parseRecord(raw: RawRecord, input: "domestic" | "international", sourceRow: number): { candidate?: ReviewCandidate; held?: HeldCandidate } {
+function parseRecord(raw: RawRecord, input: string, sourceRow: number): { candidate?: ReviewCandidate; held?: HeldCandidate } {
   const name = value(raw, "name");
   const address = value(raw, "address");
   const city = value(raw, "city");
@@ -238,7 +251,7 @@ function parseRecord(raw: RawRecord, input: "domestic" | "international", source
   const tiktokUrl = asHttpUrl(value(raw, "tiktok_url"));
   const target = targetKind(raw);
   const searchTerms = optional(value(raw, "services_search_terms"));
-  const sourceFile = value(raw, "source_file") || basename(input === "domestic" ? domesticManifest : internationalManifest);
+  const sourceFile = value(raw, "source_file") || input;
   const notes = JSON.stringify({
     review_only: true,
     input,
@@ -304,16 +317,17 @@ function sha256(content: string): string {
 }
 
 async function main(): Promise<void> {
-  const [domesticRows, internationalRows] = await Promise.all([
-    readJsonl(domesticManifest),
-    readJsonl(internationalManifest),
-  ]);
+  const manifestRows = await Promise.all(manifests.map(async (path) => ({
+    path,
+    rows: await readJsonl(path),
+  })));
   const accepted: ReviewCandidate[] = [];
   const held: HeldCandidate[] = [];
   const seen = new Set<string>();
   let sourceRow = 0;
 
-  for (const [input, rows] of [["domestic", domesticRows], ["international", internationalRows]] as const) {
+  for (const { path, rows } of manifestRows) {
+    const input = basename(path);
     for (const raw of rows) {
       sourceRow += 1;
       const result = parseRecord(raw, input, sourceRow);
@@ -347,9 +361,8 @@ async function main(): Promise<void> {
     return counts;
   }, {});
   const summary = {
-    domestic_input_rows: domesticRows.length,
-    international_input_rows: internationalRows.length,
-    input_rows: domesticRows.length + internationalRows.length,
+    input_rows_by_manifest: Object.fromEntries(manifestRows.map(({ path, rows }) => [path, rows.length])),
+    input_rows: manifestRows.reduce((total, { rows }) => total + rows.length, 0),
     accepted_review_only_candidates: accepted.length,
     held_candidates: held.length,
     duplicate_rows_held: held.filter((row) => row.reason.includes("duplicate_within_consolidated_batch")).length,
@@ -361,7 +374,7 @@ async function main(): Promise<void> {
     manifest: resolve(outputDirectory, "source-backed-inventory-review-only-candidates.jsonl"),
     manifest_sha256: sha256(manifestContent),
     hold_file: resolve(outputDirectory, "source-backed-inventory-held-candidates.jsonl"),
-    source_manifests: [domesticManifest, internationalManifest],
+    source_manifests: manifests,
   };
 
   await mkdir(outputDirectory, { recursive: true });
