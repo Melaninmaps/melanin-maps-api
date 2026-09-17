@@ -26,13 +26,24 @@ function getApiBase() {
 type SafetyCheckin = {
   id: number;
   trustedContactName: string;
-  trustedContactEmail: string;
+  trustedContactEmail: string | null;
   scheduledAt: string;
   status: string;
   confirmedAt: string | null;
   note: string | null;
   city: string | null;
   location: string | null;
+  recipients?: TrustedProfile[];
+};
+
+type TrustedProfile = {
+  trustedShareId: string;
+  recipientUserId: string;
+  recipientName: string;
+  profileImageUrl: string | null;
+  pushEnabled?: boolean;
+  deliveryStatus?: "pending" | "delivered" | "skipped";
+  notifiedAt?: string | null;
 };
 
 const DURATION_OPTIONS = [
@@ -68,8 +79,10 @@ export default function CheckinScreen() {
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
+  const [trustedProfiles, setTrustedProfiles] = useState<TrustedProfile[]>([]);
+  const [selectedShareIds, setSelectedShareIds] = useState<string[]>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [note, setNote] = useState("");
   const [location, setLocation] = useState("");
@@ -105,9 +118,42 @@ export default function CheckinScreen() {
 
   useEffect(() => { queueMicrotask(() => { void fetchCheckins(); }); }, [fetchCheckins]);
 
+  const fetchTrustedProfiles = useCallback(async () => {
+    setProfilesLoading(true);
+    setProfilesError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/safety/checkins/recipients`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json() as { recipients?: TrustedProfile[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Could not load trusted profiles");
+      setTrustedProfiles(data.recipients ?? []);
+    } catch (error) {
+      setProfilesError(error instanceof Error ? error.message : "Could not load trusted profiles");
+    } finally {
+      setProfilesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showNew) void fetchTrustedProfiles();
+  }, [fetchTrustedProfiles, showNew]);
+
+  const toggleTrustedProfile = (trustedShareId: string) => {
+    setSelectedShareIds((current) => {
+      if (current.includes(trustedShareId)) return current.filter((id) => id !== trustedShareId);
+      if (current.length >= 5) {
+        Alert.alert("Up to 5 profiles", "A Check-In can alert up to five trusted Kinfolk profiles.");
+        return current;
+      }
+      return [...current, trustedShareId];
+    });
+  };
+
   const handleCreate = async () => {
-    if (!contactName.trim() || !contactEmail.includes("@")) {
-      Alert.alert("Required", "Please enter your trusted contact's name and email.");
+    if (selectedShareIds.length === 0) {
+      Alert.alert("Choose a trusted profile", "Select at least one trusted Kinfolk profile to receive an in-app safety alert.");
       return;
     }
     setSaving(true);
@@ -119,8 +165,7 @@ export default function CheckinScreen() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          trustedContactName: contactName.trim(),
-          trustedContactEmail: contactEmail.trim(),
+          recipientShareIds: selectedShareIds,
           scheduledAt: scheduledAt.toISOString(),
           note: note.trim() || undefined,
           location: location.trim() || undefined,
@@ -130,11 +175,11 @@ export default function CheckinScreen() {
       if (res.ok && d.checkin) {
         setCheckins((prev) => [d.checkin!, ...prev]);
         setShowNew(false);
-        setContactName(""); setContactEmail(""); setNote(""); setLocation("");
+        setSelectedShareIds([]); setNote(""); setLocation("");
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
           "Check-In Scheduled ✓",
-          `If you don't confirm your safety by ${scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}, ${contactName} will be notified.`,
+          `If you don't confirm your safety by ${scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}, your selected trusted profile${selectedShareIds.length === 1 ? "" : "s"} will receive an in-app alert.`,
         );
       } else {
         Alert.alert("Error", d.error ?? "Failed to schedule check-in.");
@@ -187,7 +232,7 @@ export default function CheckinScreen() {
           <View style={[styles.infoBanner, { backgroundColor: "#16A34A0F", borderColor: "#16A34A30" }]}>
             <Feather name="check-circle" size={18} color="#16A34A" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              Schedule a check-in before going somewhere. If you don&apos;t tap &quot;I&apos;m Safe&quot; in time, your trusted contact gets an automated email alert.
+              Schedule a check-in before going somewhere. If you do not tap &quot;I&apos;m Safe&quot; in time, the trusted Kinfolk profiles you choose receive an in-app safety alert. No email is required.
             </Text>
           </View>
 
@@ -203,25 +248,52 @@ export default function CheckinScreen() {
 
           {showNew && (
             <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.formLabel, { color: colors.foreground }]}>Trusted Contact Name</Text>
-              <TextInput
-                style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                placeholder="e.g. Mom, Best Friend, Partner"
-                placeholderTextColor={colors.mutedForeground}
-                value={contactName}
-                onChangeText={setContactName}
-                autoCapitalize="words"
-              />
-              <Text style={[styles.formLabel, { color: colors.foreground }]}>Their Email</Text>
-              <TextInput
-                style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                placeholder="email@example.com"
-                placeholderTextColor={colors.mutedForeground}
-                value={contactEmail}
-                onChangeText={setContactEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <Text style={[styles.formLabel, { color: colors.foreground }]}>Alert trusted Kinfolk profiles</Text>
+              <Text style={[styles.profileHelp, { color: colors.mutedForeground }]}>
+                Only people who accepted your Trusted Safety Share and allow safety alerts appear here. Choose up to five profiles.
+              </Text>
+              {profilesLoading ? (
+                <View style={styles.profileState}><ActivityIndicator size="small" color="#16A34A" /></View>
+              ) : profilesError ? (
+                <View style={[styles.profileState, { borderColor: "#FCA5A5", backgroundColor: "#FEF2F2" }]}>
+                  <Text style={{ color: "#991B1B", flex: 1 }}>{profilesError}</Text>
+                  <TouchableOpacity onPress={() => void fetchTrustedProfiles()} accessibilityRole="button" accessibilityLabel="Retry trusted profile loading">
+                    <Text style={{ color: "#166534", fontFamily: "Inter_700Bold" }}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : trustedProfiles.length === 0 ? (
+                <View style={[styles.profileState, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.profileEmptyTitle, { color: colors.foreground }]}>No eligible trusted profiles yet</Text>
+                    <Text style={[styles.profileHelp, { color: colors.mutedForeground }]}>Add a trusted Kinfolk profile in Safety, then have them accept your request before scheduling a Check-In.</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => router.push("/trusted-safety-share")} accessibilityRole="button" accessibilityLabel="Add a trusted safety profile">
+                    <Text style={{ color: "#166534", fontFamily: "Inter_700Bold" }}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.profileList}>
+                  {trustedProfiles.map((profile) => {
+                    const selected = selectedShareIds.includes(profile.trustedShareId);
+                    return (
+                      <TouchableOpacity
+                        key={profile.trustedShareId}
+                        style={[styles.profileOption, { borderColor: selected ? "#16A34A" : colors.border, backgroundColor: selected ? "#16A34A12" : colors.background }]}
+                        onPress={() => toggleTrustedProfile(profile.trustedShareId)}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: selected }}
+                        accessibilityLabel={`Alert ${profile.recipientName}`}
+                      >
+                        <View style={[styles.profileAvatar, { backgroundColor: "#16A34A18" }]}>
+                          <Feather name="user" size={15} color="#16A34A" />
+                        </View>
+                        <Text style={[styles.profileName, { color: colors.foreground }]} numberOfLines={1}>{profile.recipientName}</Text>
+                        <Feather name={selected ? "check-circle" : "circle"} size={20} color={selected ? "#16A34A" : colors.mutedForeground} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Check in by (from now)</Text>
               <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
@@ -305,7 +377,11 @@ export default function CheckinScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.checkinContact, { color: colors.foreground }]}>{c.trustedContactName}</Text>
-                        <Text style={[styles.checkinEmail, { color: colors.mutedForeground }]}>{c.trustedContactEmail}</Text>
+                        <Text style={[styles.checkinEmail, { color: colors.mutedForeground }]}>
+                          {c.recipients?.length
+                            ? `${c.recipients.length} trusted profile${c.recipients.length === 1 ? "" : "s"} · In-app alert`
+                            : c.trustedContactEmail ?? "Trusted profile · In-app alert"}
+                        </Text>
                       </View>
                       <View style={[styles.statusBadge, { backgroundColor: statusColor + "18" }]}>
                         <Text style={[styles.statusText, { color: statusColor }]}>{STATUS_LABELS[c.status] ?? c.status}</Text>
@@ -358,6 +434,13 @@ const styles = StyleSheet.create({
   newBtnText: { fontFamily: "Inter_700Bold", fontSize: 15 },
   formCard: { borderRadius: 18, borderWidth: 1, padding: 16, gap: 6 },
   formLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 8, marginBottom: 4 },
+  profileHelp: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginBottom: 5 },
+  profileList: { gap: 8, marginBottom: 4 },
+  profileState: { minHeight: 58, borderRadius: 12, borderWidth: 1, padding: 12, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  profileEmptyTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 2 },
+  profileOption: { minHeight: 50, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
+  profileAvatar: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  profileName: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 14 },
   input: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 11, fontFamily: "Inter_400Regular", fontSize: 14 },
   textArea: { minHeight: 80, textAlignVertical: "top" },
   durationRow: { flexDirection: "row", gap: 8, paddingVertical: 4 },
