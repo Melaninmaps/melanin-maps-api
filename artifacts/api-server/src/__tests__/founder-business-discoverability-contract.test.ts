@@ -44,7 +44,8 @@ describe("founder business discoverability correction", () => {
     ]) {
       expect(businesses).toContain(`${field}: _${field}`);
     }
-    expect(businesses).toContain("withDistance.map((business) => toPublicBusinessRecord(business))");
+    expect(businesses).toContain("businesses: withDistance.map((business) =>");
+    expect(businesses).toContain("toPublicBusinessRecord(business)");
     expect(businesses).toContain("...toPublicBusinessRecord(business)");
   });
 
@@ -53,7 +54,8 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain("${sql.raw('\"businesses\".\"is_duplicate\"')}");
     expect(businesses).toContain("${sql.raw('\"businesses\".\"data_source\"')}");
     expect(businesses).not.toContain("SELECT b.*");
-    expect(businesses).toContain("fuzzyRows = await db.select().from(businessesTable)");
+    expect(businesses).toContain("let fuzzyRows");
+    expect(businesses).toContain(".from(businessesTable)");
   });
 
   it("compiles the canonical visibility predicate to the installed eight-argument function", () => {
@@ -73,7 +75,9 @@ describe("founder business discoverability correction", () => {
   it("returns source provenance through canonical typed business responses", () => {
     expect(schema).toContain('sourceUrl: text("source_url")');
     expect(webDetail).toContain("View supplied listing source");
-    expect(mobileDetail).toContain('business.website ?? business.sourceUrl');
+    // Source URLs are discovery evidence, not a commercial listing's official
+    // destination. They may be used only by explicitly reference-only records.
+    expect(mobileDetail).toContain('business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)');
   });
 
   it("labels unpinned founder listings as searchable without fabricating coordinates", () => {

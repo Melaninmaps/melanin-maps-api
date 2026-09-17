@@ -69,6 +69,8 @@ export interface CanonicalBusinessSearchRecord {
   description?: string | null;
   website?: string | null;
   sourceUrl?: string | null;
+  imageUrl?: string | null;
+  profileStatus?: string | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
   listingStatus?: string | null;

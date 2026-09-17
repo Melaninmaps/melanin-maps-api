@@ -5,6 +5,7 @@ import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
+import { canDisplayBusinessCover, getBusinessHeroIcon } from "./businessHero";
 import {
   appendUniqueCanonicalBusinesses,
   buildCanonicalBusinessSearchParams,
@@ -14,6 +15,13 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 const PAGE_SIZE = 60;
+const DIRECTORY_HISTORY_KEY = "mwm_directory_recent_searches";
+
+type DirectoryHistoryEntry = {
+  query: string;
+  city: string;
+  stateCode: string | null;
+};
 
 const CATEGORIES = [
   "Food & Drink",
@@ -37,7 +45,46 @@ export function LocationFirstBusinessDirectory() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [recentSearches, setRecentSearches] = useState<DirectoryHistoryEntry[]>([]);
   const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(DIRECTORY_HISTORY_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed)) {
+        setRecentSearches(parsed.filter((entry): entry is DirectoryHistoryEntry =>
+          entry && typeof entry.query === "string" && typeof entry.city === "string",
+        ).slice(0, 6));
+      }
+    } catch {
+      // Browser-local history is optional and must never block discovery.
+    }
+  }, []);
+
+  const saveRecentSearch = useCallback((entry: DirectoryHistoryEntry) => {
+    const normalized = `${entry.query.trim().toLowerCase()}|${entry.city.trim().toLowerCase()}|${entry.stateCode ?? ""}`;
+    setRecentSearches((current) => {
+      const next = [entry, ...current.filter((candidate) =>
+        `${candidate.query.trim().toLowerCase()}|${candidate.city.trim().toLowerCase()}|${candidate.stateCode ?? ""}` !== normalized,
+      )].slice(0, 6);
+      try { window.localStorage.setItem(DIRECTORY_HISTORY_KEY, JSON.stringify(next)); } catch { /* optional */ }
+      return next;
+    });
+  }, []);
+
+  const removeRecentSearch = useCallback((entry: DirectoryHistoryEntry) => {
+    setRecentSearches((current) => {
+      const next = current.filter((candidate) => candidate !== entry);
+      try { window.localStorage.setItem(DIRECTORY_HISTORY_KEY, JSON.stringify(next)); } catch { /* optional */ }
+      return next;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    try { window.localStorage.removeItem(DIRECTORY_HISTORY_KEY); } catch { /* optional */ }
+  }, []);
 
   const specialtyLabel = useMemo(
     () =>
@@ -218,6 +265,11 @@ export function LocationFirstBusinessDirectory() {
           onResolved={({ query, area }) => {
             invalidateRequests();
             setSearchText(query);
+            saveRecentSearch({
+              query,
+              city: area.cityName,
+              stateCode: area.stateCode ?? null,
+            });
             setExplicitLocation({
               city: area.cityName,
               stateCode: area.stateCode ?? null,
@@ -225,6 +277,29 @@ export function LocationFirstBusinessDirectory() {
             });
           }}
         />
+
+        {recentSearches.length > 0 && (
+          <section className="mt-4" aria-label="Recent directory searches">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#8D5C17]">Recent searches</p>
+              <button type="button" onClick={clearRecentSearches} className="text-xs font-semibold text-[#8D5C17] hover:underline">Clear all</button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {recentSearches.map((entry) => (
+                <div key={`${entry.query}|${entry.city}|${entry.stateCode ?? ""}`} className="inline-flex overflow-hidden rounded-full border border-[#CA922B]/35 bg-white">
+                  <button type="button" onClick={() => {
+                    invalidateRequests();
+                    setSearchText(entry.query);
+                    setExplicitLocation({ city: entry.city, stateCode: entry.stateCode, neighborhood: null });
+                  }} className="px-3 py-1.5 text-xs font-semibold text-[#3A1F0E] hover:bg-[#CA922B]/10">
+                    {[entry.query, entry.city, entry.stateCode].filter(Boolean).join(" · ")}
+                  </button>
+                  <button type="button" onClick={() => removeRecentSearch(entry)} aria-label={`Remove ${entry.query || entry.city} from recent searches`} className="border-l border-[#CA922B]/25 px-2 text-[#8D5C17] hover:bg-[#CA922B]/10">×</button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <p
           className="mt-4 text-sm font-semibold text-[#2B1507]"
@@ -373,6 +448,11 @@ function FilterRow({
 
 function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
   const unclaimed = record.listingStatus === "live_unclaimed";
+  const heroIcon = getBusinessHeroIcon(record);
+  const fallbackSymbol: Record<ReturnType<typeof getBusinessHeroIcon>, string> = {
+    beauty: "✂️", food: "🍽️", health: "✚", professional: "⚖️", arts: "✦",
+    retail: "🛍️", faith: "⌂", education: "▣", home: "⌂", travel: "✈️", business: "◆",
+  };
   const latitude = Number(record.latitude);
   const longitude = Number(record.longitude);
   const hasPin =
@@ -390,8 +470,16 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
   return (
     <Link
       href={`/businesses/${encodeURIComponent(record.id)}`}
-      className="block rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 shadow-sm transition hover:border-[#CA922B]/60"
+      className="block overflow-hidden rounded-2xl border border-[#3A1F0E]/10 bg-white shadow-sm transition hover:border-[#CA922B]/60"
     >
+      {canDisplayBusinessCover(record) ? (
+        <img src={record.imageUrl!} alt={`${record.name} listing`} className="h-32 w-full object-cover" />
+      ) : (
+        <div className="flex h-32 items-center justify-center bg-gradient-to-br from-[#F4D98D] via-[#CA922B] to-[#8D5C17] text-4xl" aria-label={`${heroIcon} business category`}>
+          <span aria-hidden="true">{fallbackSymbol[heroIcon]}</span>
+        </div>
+      )}
+      <div className="p-5">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8D5C17]">
         {record.category || "Business"}
         {record.subcategory ? ` · ${record.subcategory}` : ""}
@@ -438,6 +526,7 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
             : "available links"}{" "}
         →
       </p>
+      </div>
     </Link>
   );
 }
