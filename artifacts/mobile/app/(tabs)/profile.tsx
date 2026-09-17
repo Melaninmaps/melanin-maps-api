@@ -88,11 +88,6 @@ const INDUSTRIES = [
   "Other",
 ];
 
-const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim())
-  .filter(Boolean);
-
 function getInitials(firstName?: string | null, lastName?: string | null): string {
   const f = firstName?.[0] ?? "";
   const l = lastName?.[0] ?? "";
@@ -543,7 +538,6 @@ export default function ProfileScreen() {
   const { user, isLoading, isAuthenticated, login, logout, refreshUser } = useAuth();
   const { nominations: showLoveNoms } = useShowLoveReceived(user?.id ?? null);
   const { isSupported: biometricSupported, isEnabled: biometricEnabled, label: biometricLabel, toggle: toggleBiometric } = useBiometricSettings();
-  const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -1462,52 +1456,6 @@ export default function ProfileScreen() {
           ))}
         </View>
       </View>
-
-      {/* Admin Panel access — only visible to admin users */}
-      {isAdminUser && (
-        <TouchableOpacity
-          style={[styles.adminBanner, { backgroundColor: "#1A1A2E", borderColor: "#DC262630" }]}
-          onPress={() => router.push("/admin")}
-          activeOpacity={0.88}
-        >
-          <View style={styles.adminBannerLeft}>
-            <View style={[styles.adminIcon, { backgroundColor: "#DC262620" }]}>
-              <Feather name="shield" size={20} color="#DC2626" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.adminBannerTitle}>Admin Panel</Text>
-              <Text style={styles.adminBannerSub}>Manage businesses, users, reports & analytics</Text>
-            </View>
-          </View>
-          <View style={[styles.adminCta, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
-            <Text style={styles.adminCtaText}>Open</Text>
-            <Feather name="arrow-right" size={13} color="#DC2626" />
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {/* Map Diagnostic — Beta · admin only · temporary · remove after map investigation */}
-      {isAdminUser && (
-        <TouchableOpacity
-          style={[styles.adminBanner, { backgroundColor: "#0F172A", borderColor: "#CA922B30", marginTop: 8 }]}
-          onPress={() => router.push("/map-diagnostic")}
-          activeOpacity={0.88}
-        >
-          <View style={styles.adminBannerLeft}>
-            <View style={[styles.adminIcon, { backgroundColor: "#CA922B20" }]}>
-              <Feather name="map" size={20} color="#CA922B" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.adminBannerTitle, { color: "#CA922B" }]}>Map Diagnostic — Beta</Text>
-              <Text style={styles.adminBannerSub}>Minimal map render test · no data, no overlays</Text>
-            </View>
-          </View>
-          <View style={[styles.adminCta, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}>
-            <Text style={[styles.adminCtaText, { color: "#CA922B" }]}>Open</Text>
-            <Feather name="arrow-right" size={13} color="#CA922B" />
-          </View>
-        </TouchableOpacity>
-      )}
 
       {isAuthenticated && biometricSupported && (
         <View style={[styles.biometricRow, { backgroundColor: colors.card, borderColor: colors.border }]}>

@@ -2888,70 +2888,24 @@ export default function AdminScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("overview");
-
-  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-
-  const TabContent = TAB_COMPONENTS[activeTab] ?? OverviewTab;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Feather name="arrow-left" size={22} color={colors.foreground} />
+    <View style={[styles.mobileOnlyContainer, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 44), paddingBottom: insets.bottom + 28 }]}>
+      <View style={[styles.mobileOnlyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.mobileOnlyIcon, { backgroundColor: colors.primary + "18" }]}>
+          <Feather name="monitor" size={26} color={colors.primary} />
+        </View>
+        <Text style={[styles.mobileOnlyTitle, { color: colors.foreground }]}>Administrator tools are on the website</Text>
+        <Text style={[styles.mobileOnlyBody, { color: colors.mutedForeground }]}>For account protection, access records, and the combined waitlist dashboard, use the secure web administrator dashboard.</Text>
+        <TouchableOpacity
+          style={[styles.mobileOnlyBack, { backgroundColor: colors.primary }]}
+          onPress={() => router.replace("/(tabs)/profile" as never)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Return to Profile"
+        >
+          <Text style={styles.mobileOnlyBackText}>Return to Profile</Text>
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Admin Panel</Text>
-          <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>Mapping With Melanin™</Text>
-        </View>
-        <View style={[styles.adminBadge, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
-          <Feather name="shield" size={13} color="#DC2626" />
-          <Text style={[styles.adminBadgeText, { color: "#DC2626" }]}>Admin</Text>
-        </View>
-      </View>
-
-      {/* Tab bar */}
-      <ScrollView
-        keyboardDismissMode="on-drag"
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={[styles.tabBar, { borderBottomColor: colors.border, backgroundColor: colors.background }]}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 4 }}
-      >
-        {ADMIN_TABS.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={[
-                styles.tabPill,
-                {
-                  backgroundColor: active ? colors.primary : "transparent",
-                  borderColor: active ? colors.primary : colors.border,
-                },
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab(tab.id);
-              }}
-              activeOpacity={0.8}
-            >
-              <Feather name={tab.icon} size={13} color={active ? "#FFFFFF" : colors.mutedForeground} />
-              <Text style={[styles.tabLabel, { color: active ? "#FFFFFF" : colors.mutedForeground }]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* Tab content */}
-      <View style={[styles.content, { paddingBottom: bottomPad }]}>
-        <AdminNavContext.Provider value={setActiveTab}>
-          <TabContent />
-        </AdminNavContext.Provider>
       </View>
     </View>
   );
@@ -2959,6 +2913,13 @@ export default function AdminScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  mobileOnlyContainer: { flex: 1, justifyContent: "center", paddingHorizontal: 24 },
+  mobileOnlyCard: { borderWidth: 1, borderRadius: 20, padding: 24, alignItems: "center" },
+  mobileOnlyIcon: { width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 16 },
+  mobileOnlyTitle: { fontFamily: "Inter_700Bold", fontSize: 19, textAlign: "center", lineHeight: 26 },
+  mobileOnlyBody: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 21, textAlign: "center", marginTop: 10 },
+  mobileOnlyBack: { marginTop: 22, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 },
+  mobileOnlyBackText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 14 },
   header: {
     flexDirection: "row",
     alignItems: "center",
