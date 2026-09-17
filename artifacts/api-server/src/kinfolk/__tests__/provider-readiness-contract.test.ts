@@ -7,8 +7,10 @@ const command = readFileSync(new URL("../../scripts/kinfolkProviderReadiness.ts"
 
 describe("provider readiness entry points", () => {
   it("keeps the network command authenticated, development-only, and probe-backed", () => {
-    const start = route.indexOf('router.get("/kinfolk/provider-readiness"');
-    const end = route.indexOf('router.post("/kinfolk/speak"', start);
+    const start = route.search(/router\.get\(\s*"\/kinfolk\/provider-readiness"/);
+    const end = route.search(/router\.post\(\s*"\/kinfolk\/speak"/);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
     const block = route.slice(start, end);
     expect(block).toContain("AUTHENTICATION_REQUIRED");
     expect(block).toContain("ADMIN_REQUIRED");
@@ -28,6 +30,8 @@ describe("provider readiness entry points", () => {
     const block = routesIndex.slice(start, end);
     expect(block).toContain("probeKinfolkAI()");
     expect(block).toContain('reason: result.reason ?? "connection_failure"');
+    expect(block).not.toContain('process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]');
+    expect(block).not.toContain('process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]');
     expect(block).not.toContain("capabilities");
     expect(block).not.toMatch(/modelId|prompt:|transcript:|providerUrl/i);
   });

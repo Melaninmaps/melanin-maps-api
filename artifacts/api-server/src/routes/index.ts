@@ -217,9 +217,9 @@ router.use(businessesRouter);
 // otherwise working basic chat.
 // Safe to expose publicly: no user data, no platform data, no session required.
 router.get("/kinfolk/health", async (_req, res) => {
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
-    return void res.status(503).json({ ok: false, reason: "missing_configuration" });
-  }
+  // probeKinfolkAI owns the single runtime configuration contract. It supports
+  // the legacy integration variables and a normal OPENAI_API_KEY deployment,
+  // so this route must not duplicate a narrower legacy-only env check here.
   const result = await probeKinfolkAI();
   if (!result.ok) return void res.status(503).json({ ok: false, reason: result.reason ?? "connection_failure" });
   res.json({ ok: true });
