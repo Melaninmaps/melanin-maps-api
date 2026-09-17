@@ -462,6 +462,8 @@ router.post("/circles/:id/suggestions/:sugId/upvote", async (req: Request, res: 
   const sugId = parseInt(req.params.sugId as string);
   if (isNaN(circleId) || isNaN(sugId)) { res.status(400).json({ error: "Invalid ids" }); return; }
   try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
     await db.update(circleSuggestions)
       .set({ upvotes: sql`${circleSuggestions.upvotes} + 1` })
       .where(and(eq(circleSuggestions.id, sugId), eq(circleSuggestions.circleId, circleId)));
@@ -478,6 +480,8 @@ router.delete("/circles/:id/suggestions/:sugId", async (req: Request, res: Respo
   const sugId = parseInt(req.params.sugId as string);
   if (isNaN(circleId) || isNaN(sugId)) { res.status(400).json({ error: "Invalid ids" }); return; }
   try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
     const [sug] = await db.select().from(circleSuggestions).where(eq(circleSuggestions.id, sugId)).limit(1);
     if (!sug || sug.circleId !== circleId) { res.status(404).json({ error: "Suggestion not found" }); return; }
     if (sug.userId !== uid(req)) { res.status(403).json({ error: "Only the suggester can remove it" }); return; }
@@ -589,6 +593,14 @@ router.post("/circles/:id/plans", async (req: Request, res: Response) => {
     // Fetch member prefs when planning by a specific member's taste
     let memberPrefs: MemberPrefsContext | null = null;
     if (resolvedCuratorMode === "by_member" && typeof curatorMemberId === "string" && curatorMemberId) {
+      const [curatorMembership] = await db.select({ userId: circleMembers.userId })
+        .from(circleMembers)
+        .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, curatorMemberId)))
+        .limit(1);
+      if (!curatorMembership) {
+        res.status(400).json({ error: "The selected member is not in this circle" });
+        return;
+      }
       const [prefs] = await db.select().from(userPreferencesTable)
         .where(eq(userPreferencesTable.userId, curatorMemberId)).limit(1);
       if (prefs) {
@@ -694,6 +706,14 @@ router.post("/circles/:id/plans/:planId/vote", async (req: Request, res: Respons
   try {
     const result = await getCircleWithAuth(circleId, uid(req), res);
     if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const [plan] = await db.select({ id: circlePlans.id, circleId: circlePlans.circleId })
+      .from(circlePlans)
+      .where(eq(circlePlans.id, planId))
+      .limit(1);
+    if (!plan || plan.circleId !== circleId) {
+      res.status(404).json({ error: "Plan not found in this circle" });
+      return;
+    }
 
     const [existing] = await db.select().from(circleVotes)
       .where(and(eq(circleVotes.planId, planId), eq(circleVotes.userId, uid(req)))).limit(1);
