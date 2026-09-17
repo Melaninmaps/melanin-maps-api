@@ -36,6 +36,8 @@ describe("source-backed inventory review builder", () => {
 
   it("holds duplicates for review and maintains a reusable link check", () => {
     expect(source).toContain("duplicate_within_consolidated_batch");
+    expect(source).toContain('options("--input")');
+    expect(source).toContain('option("--output-dir")');
     expect(linkChecker).toContain('option("--manifest")');
     expect(linkChecker).toContain('option("--output")');
     expect(linkChecker).toContain("Review-only evidence");
