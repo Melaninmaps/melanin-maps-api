@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-09-18T22:20:25.945Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "oakland-candidates.jsonl",
+    "portland-candidates.jsonl",
+    "seattle-candidates.jsonl"
+  ],
+  "inputRows": 35,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 35,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "addressBackedCandidates": 32,
+  "commercialMapPinReviewCandidates": 17,
+  "maplessCommunityResources": 3,
+  "onlineOnlyCandidates": 0,
+  "targetKinds": {
+    "business": 17,
+    "community_resource": 10,
+    "cultural_place": 8
+  },
+  "categories": {
+    "food_and_drink": 11,
+    "community_support": 7,
+    "arts_culture": 5,
+    "arts_and_culture": 4,
+    "community_services": 3,
+    "retail": 2,
+    "personal_care": 1,
+    "professional_services": 1,
+    "shopping": 1
+  },
+  "states": {
+    "Portland, OR": 13,
+    "Oakland, CA": 10,
+    "Seattle, WA": 8,
+    "Berkeley, CA": 1,
+    "Kent, WA": 1,
+    "North Plains, OR": 1,
+    "Tukwila, WA": 1
+  },
+  "officialCustomerDestinationCoverage": 35,
+  "files": {
+    "candidates": "eighth-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "eighth-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "eighth-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "eighth-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "d28666ea80129373dee178101560d0499cdd718eab97f92e2229156561a39fef"
+}

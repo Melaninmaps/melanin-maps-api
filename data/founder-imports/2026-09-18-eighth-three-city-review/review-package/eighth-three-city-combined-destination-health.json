@@ -1,0 +1,254 @@
+{
+  "checkedAt": "2026-09-18T22:21:16.409Z",
+  "sourceManifest": "eighth-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 35,
+  "uniqueDestinations": 40,
+  "counts": {
+    "review_required": 3,
+    "reachable": 36,
+    "network_error": 1
+  },
+  "results": [
+    {
+      "url": "https://lapena.org/",
+      "status": 403,
+      "finalUrl": "https://lapena.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://urbanleague.org/black-business-directory/",
+      "status": 200,
+      "finalUrl": "https://urbanleague.org/black-business-directory/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.abbeycreekvineyard.com/",
+      "status": 200,
+      "finalUrl": "https://www.abbeycreekvineyard.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oaklandlibrary.org/aamlo/",
+      "status": 202,
+      "finalUrl": "https://oaklandlibrary.org/aamlo/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackculturalzone.org/",
+      "status": 200,
+      "finalUrl": "https://www.blackculturalzone.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackculturalzone.org/events",
+      "status": 200,
+      "finalUrl": "https://www.blackculturalzone.org/events",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sscf.org/",
+      "status": 200,
+      "finalUrl": "https://www.sscf.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.joycegordon.gallery/",
+      "status": 404,
+      "finalUrl": "https://www.joycegordon.gallery/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.visitoakland.com/listing/joyce-gordon-gallery/901/",
+      "status": 200,
+      "finalUrl": "https://www.visitoakland.com/listing/joyce-gordon-gallery/901/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://juntosfruitvale.org/",
+      "status": 200,
+      "finalUrl": "https://juntosfruitvale.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/theoaacc/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftheoaacc%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.redbaycoffee.com/",
+      "status": 200,
+      "finalUrl": "https://www.redbaycoffee.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.redbaycoffee.com/pages/cafes",
+      "status": 200,
+      "finalUrl": "https://www.redbaycoffee.com/pages/cafes",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://renegade-running.com/",
+      "status": 200,
+      "finalUrl": "https://renegade-running.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.visitoakland.com/listing/renegade-running/5785/",
+      "status": 200,
+      "finalUrl": "https://www.visitoakland.com/listing/renegade-running/5785/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sobremesaoak.com/",
+      "status": 200,
+      "finalUrl": "https://sobremesaoak.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bettiono.com/",
+      "status": 200,
+      "finalUrl": "https://www.bettiono.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.casonsfinemeats.com/",
+      "status": 200,
+      "finalUrl": "https://www.casonsfinemeats.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.championspdx.com/",
+      "status": 200,
+      "finalUrl": "https://www.championspdx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.deadstockcoffee.com/",
+      "status": 200,
+      "finalUrl": "https://deadstockcoffee.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jamaicanhomestylepdx.com/",
+      "status": 200,
+      "finalUrl": "https://www.jamaicanhomestylepdx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kannrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://kannrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://labonitapdx.com/",
+      "status": 200,
+      "finalUrl": "https://www.labonitapdx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/labonita.pdx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flabonita.pdx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lafamiliacider.com/",
+      "status": 200,
+      "finalUrl": "https://lafamiliacider.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.latnet.org/",
+      "status": 200,
+      "finalUrl": "https://www.latnet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://milagro.org/",
+      "status": 403,
+      "finalUrl": "https://milagro.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://oregonblackpioneers.org/",
+      "status": 200,
+      "finalUrl": "https://oregonblackpioneers.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oregonblackpioneers.org/about-us/",
+      "status": 200,
+      "finalUrl": "https://oregonblackpioneers.org/about-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.retoricajewelry.com/",
+      "status": 200,
+      "finalUrl": "https://retoricajewelry.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/retoricajewelry",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fretoricajewelry&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://tinostacoshop.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/tinos_taco_shop/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftinos_taco_shop%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ulpdx.org/",
+      "status": 200,
+      "finalUrl": "https://ulpdx.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bhswa.org/",
+      "status": 200,
+      "finalUrl": "https://www.bhswa.org/wordpress/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://casa-latina.org/",
+      "status": 200,
+      "finalUrl": "https://casa-latina.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://visitseattle.org/things-to-do/arts-culture/cultural-heritage/latino/support-for-seattles-latino-a-x-community/",
+      "status": 200,
+      "finalUrl": "https://visitseattle.org/things-to-do/arts-culture/cultural-heritage/latino/support-for-seattles-latino-a-x-community/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://entrehermanos.org/",
+      "status": 200,
+      "finalUrl": "https://entrehermanos.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nepantlaculturalarts.com/",
+      "status": 200,
+      "finalUrl": "https://www.nepantlaculturalarts.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://seamarmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://seamarmuseum.org/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
