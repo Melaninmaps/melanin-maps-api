@@ -1,0 +1,256 @@
+[
+  {
+    "file": "expansion-03-dc-latino-guides-candidates.jsonl",
+    "line": 10,
+    "name": "District Bridges Columbia Heights | Mount Pleasant Main Streets",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-04-dc-suburbs-candidates.jsonl",
+    "line": 1,
+    "name": "1105 Social",
+    "missing": [],
+    "invalidTargetKind": "online_business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-07-baltimore-latino-guides-candidates.jsonl",
+    "line": 3,
+    "name": "Colado Latino Network",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-07-baltimore-latino-guides-candidates.jsonl",
+    "line": 4,
+    "name": "Latin Opinion Baltimore — Directorio de Negocios Latinos en Baltimore",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-13-hampton-roads-black-candidates.jsonl",
+    "line": 4,
+    "name": "Sustainabili-T by Stretch Couture",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-13-hampton-roads-black-candidates.jsonl",
+    "line": 5,
+    "name": "Positive Vibes Inc. (DJs, Multi Media, Streaming, and Sound Services)",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-13-hampton-roads-black-candidates.jsonl",
+    "line": 6,
+    "name": "Advanced Business Systems (CPA, Taxes, Business Services)",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "expansion-13-hampton-roads-black-candidates.jsonl",
+    "line": 7,
+    "name": "Hampton Roads Committee of 200+ Men, Inc.",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-13-hampton-roads-black-candidates.jsonl",
+    "line": 8,
+    "name": "Hampton Roads Greenbook",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-13-hampton-roads-black-candidates.jsonl",
+    "line": 9,
+    "name": "Buy Black Hampton Roads",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-14-hampton-roads-suburbs-candidates.jsonl",
+    "line": 2,
+    "name": "Cooke Brothers Funeral Chapel",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-14-hampton-roads-suburbs-candidates.jsonl",
+    "line": 3,
+    "name": "Saving & Changing Lives, LLC",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+    "line": 3,
+    "name": "Oyin Handmade",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+    "line": 5,
+    "name": "Phina’s Fine Linens",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+    "line": 6,
+    "name": "Taharka Brothers Ice Cream",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+    "line": 7,
+    "name": "Sankofa African & World Bazaar",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+    "line": 8,
+    "name": "Aunt Kelly’s Cookies",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-19-petersburg-local-guides-candidates.jsonl",
+    "line": 1,
+    "name": "Virginia Black Business Directory",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-19-petersburg-local-guides-candidates.jsonl",
+    "line": 2,
+    "name": "Virginia Hispanic Chamber Products & Services Guide",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-19-petersburg-local-guides-candidates.jsonl",
+    "line": 3,
+    "name": "Visit Hopewell-Prince George dining and attractions guide",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-19-petersburg-local-guides-candidates.jsonl",
+    "line": 6,
+    "name": "Manna Colombian Bakery",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-20-midatlantic-public-agencies-candidates.jsonl",
+    "line": 1,
+    "name": "DC Certified Business Enterprise (CBE) Search Portal",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-20-midatlantic-public-agencies-candidates.jsonl",
+    "line": 2,
+    "name": "Maryland MDOT Directory of Certified Firms",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-20-midatlantic-public-agencies-candidates.jsonl",
+    "line": 3,
+    "name": "Baltimore City MBE/WBE Directory",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "expansion-20-midatlantic-public-agencies-candidates.jsonl",
+    "line": 4,
+    "name": "Virginia SWaM & DBE Directory",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "source2-10-va-hispanic-chamber-candidates.jsonl",
+    "line": 5,
+    "name": "Dominion Energy",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "source2-10-va-hispanic-chamber-candidates.jsonl",
+    "line": 7,
+    "name": "Dominion Energy",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "source2-10-va-hispanic-chamber-candidates.jsonl",
+    "line": 9,
+    "name": "AWAD PROTECTION & INVESTIGATIONS - SPECIALIZING IN SECURITY CONSULTATIONS",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  }
+]

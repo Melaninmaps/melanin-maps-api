@@ -1,0 +1,42 @@
+[
+  {
+    "destination": "https://www.theladyclipper.com",
+    "records": [
+      {
+        "name": "Lady Clipper Barber Shop",
+        "city": "Washington",
+        "state": "DC",
+        "file": "expansion-03-dc-latino-guides-candidates.jsonl",
+        "line": 1
+      },
+      {
+        "name": "The Lady Clipper Barber Shop",
+        "city": "Washington",
+        "state": "DC",
+        "file": "source2-08-dc-hispanic-business-candidates.jsonl",
+        "line": 1
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.ledcmetro.org",
+    "records": [
+      {
+        "name": "Latino Economic Development Center",
+        "city": "Washington",
+        "state": "DC",
+        "file": "expansion-03-dc-latino-guides-candidates.jsonl",
+        "line": 9
+      },
+      {
+        "name": "Latino Economic Development Center (LEDC) Baltimore Office",
+        "city": "Baltimore",
+        "state": "MD",
+        "file": "expansion-07-baltimore-latino-guides-candidates.jsonl",
+        "line": 1
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "package": "2026-09-18-mid-atlantic-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 215,
+  "accepted_review_only_candidates": 215,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "business": 156,
+    "regulated_review": 23,
+    "online_business": 8,
+    "community_resource": 12,
+    "cultural_place": 15,
+    "manual_review": 1
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 174,
+    "needs_research": 41
+  },
+  "manifest_sha256": "d83797abce353a731de5afef1272b82a78f70a503478cd0410063ee2b9705eb6",
+  "source_manifest": "/home/ubuntu/melanin-maps-midatlantic-review-package/data/founder-imports/2026-09-18-midatlantic-combined-pass/consolidated/mid-atlantic-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "3561d88b9f21b82a63b33c4ea1d5b0fb04e9250094d23464e86e641e6ce48eae",
+  "destination_health": {
+    "candidates": 215,
+    "unique_destinations": 220,
+    "by_outcome": {
+      "reachable": 178,
+      "timeout": 3,
+      "network_error": 12,
+      "review_required": 27
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}
