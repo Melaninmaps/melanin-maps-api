@@ -1,0 +1,928 @@
+[
+  {
+    "destination": "https://www.procutzschoolofbarbering.com",
+    "records": [
+      {
+        "name": "Pro Cuts",
+        "city": "Lewes",
+        "state": "DE",
+        "file": "delaware-candidates.jsonl",
+        "line": 55
+      },
+      {
+        "name": "Pro Cutz",
+        "city": "Lewes",
+        "state": "DE",
+        "file": "11-sdarj-candidates.jsonl",
+        "line": 11
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.facebook.com/MsSweeTeas",
+    "records": [
+      {
+        "name": "Ms. Sweetea's Comfort Food and Bakery",
+        "city": "Pine Hill",
+        "state": "NJ",
+        "file": "new-jersey-candidates.jsonl",
+        "line": 7
+      },
+      {
+        "name": "Ms. Sweetea’s Comfort Food Cafe & Bakery",
+        "city": "Pine Hill",
+        "state": "NJ",
+        "file": "15-camden-county-candidates.jsonl",
+        "line": 5
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.terinanicole.com",
+    "records": [
+      {
+        "name": "Fashion Design Center of South Jersey",
+        "city": "Camden",
+        "state": "NJ",
+        "file": "new-jersey-candidates.jsonl",
+        "line": 10
+      },
+      {
+        "name": "The Fashion Design Center of South Jersey",
+        "city": "Camden",
+        "state": "NJ",
+        "file": "15-camden-county-candidates.jsonl",
+        "line": 8
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://hakimsbookstore.com",
+    "records": [
+      {
+        "name": "Hakim's Bookstore & Gift Shop",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "se-pa-candidates.jsonl",
+        "line": 5
+      },
+      {
+        "name": "Hakim's Bookstore",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "06-visit-philly-additional-candidates.jsonl",
+        "line": 4
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.facebook.com/handcautocareDE",
+    "records": [
+      {
+        "name": "H and C Auto Care llc",
+        "city": "Wilmington,",
+        "state": "DE",
+        "file": "08-delaware-hispanic-chamber-candidates.jsonl",
+        "line": 77
+      },
+      {
+        "name": "HyC AutoCare",
+        "city": "Willmington",
+        "state": "DE",
+        "file": "08-delaware-hispanic-chamber-candidates.jsonl",
+        "line": 85
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://x.com/SHCCNJ",
+    "records": [
+      {
+        "name": "Agave Cantina Mexicana",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 2
+      },
+      {
+        "name": "Airy Affairs, LLC | Event Planning",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 3
+      },
+      {
+        "name": "Alzheimer’s Association | non",
+        "city": "Florham Park",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 10
+      },
+      {
+        "name": "Ama la vida",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 11
+      },
+      {
+        "name": "AmeriHealth | Hospitals & Clinics | Health Insurance",
+        "city": "Cranbury",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 13
+      },
+      {
+        "name": "Archipielago LLC",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 18
+      },
+      {
+        "name": "Areli Rosado | Real Estate Services",
+        "city": "Basking Ridged",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 20
+      },
+      {
+        "name": "Banks Industrial Group | Contractors",
+        "city": "West Berlin",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 27
+      },
+      {
+        "name": "Beauty boutique",
+        "city": "Somerset",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 28
+      },
+      {
+        "name": "Busy Bees Learning Center",
+        "city": "Bloomfield",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 35
+      },
+      {
+        "name": "C&C Immigration Paralegals, LLC",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 36
+      },
+      {
+        "name": "Casa Bagel",
+        "city": "Fords",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 39
+      },
+      {
+        "name": "Castle & Brother Logistics LLP | Logistics",
+        "city": "Morristown",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 41
+      },
+      {
+        "name": "Charry’s | Food & Beverage/Catering",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 45
+      },
+      {
+        "name": "City of Jersey City",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 46
+      },
+      {
+        "name": "Clean and on time llc",
+        "city": "New Milford",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 48
+      },
+      {
+        "name": "conSHINEment",
+        "city": "Jersey city",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 52
+      },
+      {
+        "name": "Construction/Construcción",
+        "city": "Easton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 53
+      },
+      {
+        "name": "Devine Alignment | Health care",
+        "city": "Boonton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 63
+      },
+      {
+        "name": "Dulce Tentacion | Food & Beverage/Catering",
+        "city": "North Haledon",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 65
+      },
+      {
+        "name": "ECR Dealings LLC | Real Estate Services",
+        "city": "Fords",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 67
+      },
+      {
+        "name": "El rey latin food",
+        "city": "\\clifton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 71
+      },
+      {
+        "name": "El sazo de Josefina | Food Truck",
+        "city": "Bogota",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 72
+      },
+      {
+        "name": "El Sazon Restaurant",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 73
+      },
+      {
+        "name": "EN Business Consulting | Business Strategies",
+        "city": "maywood",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 74
+      },
+      {
+        "name": "Flores de Azucar | Restaurants",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 81
+      },
+      {
+        "name": "Gallo Felix",
+        "city": "Some rest",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 86
+      },
+      {
+        "name": "Go fresh produce market",
+        "city": "Paramus",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 93
+      },
+      {
+        "name": "Greenco Trading LLC | Restaurants",
+        "city": "Mahwah",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 99
+      },
+      {
+        "name": "Guaranteed Rate | Brokers",
+        "city": "Oakland",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 100
+      },
+      {
+        "name": "Homelynx Realty LLC | Real Estate Services",
+        "city": "Hackensack",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 104
+      },
+      {
+        "name": "Hudson County Community College | Education | Academ/Educational Trainings Programs",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 107
+      },
+      {
+        "name": "Industrial Painting Group | Contractors",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 109
+      },
+      {
+        "name": "Ivy Antonio | Academ/Educational Trainings Programs",
+        "city": "Chester",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 113
+      },
+      {
+        "name": "J. Fletcher Creamer & Son, Inc. | Construction Management",
+        "city": "Hackensack",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 115
+      },
+      {
+        "name": "J&M Industrial Cleaning and Construction LLC | Cleaning Services",
+        "city": "Roselle",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 116
+      },
+      {
+        "name": "Jersey Financials",
+        "city": "North Brunswick",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 118
+      },
+      {
+        "name": "Johnson & Johnson",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 119
+      },
+      {
+        "name": "Julie’s tours | Travel Agencies",
+        "city": "Budd lake",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 121
+      },
+      {
+        "name": "Kean University",
+        "city": "Union",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 122
+      },
+      {
+        "name": "La Tia Peruvian Cuisine",
+        "city": "Somers Point",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 125
+      },
+      {
+        "name": "LAMONGE INSURANCE SERVICES INC/COMBINE | Health Insurance",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 128
+      },
+      {
+        "name": "Lashkmi Glow, LLC",
+        "city": "North Bergen",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 129
+      },
+      {
+        "name": "Latinas Unidas en AC New Jersey",
+        "city": "Pleasantville",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 130
+      },
+      {
+        "name": "LCGG Business LLC",
+        "city": "Rahway",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 131
+      },
+      {
+        "name": "LeadJet | Consultants",
+        "city": "RIDGEFIELD PARK",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 133
+      },
+      {
+        "name": "Learn, Love and Grow Counseling",
+        "city": "Rahway",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 134
+      },
+      {
+        "name": "LeGurt",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 135
+      },
+      {
+        "name": "LiftCentro LLC | Marketing",
+        "city": "Hoboken",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 138
+      },
+      {
+        "name": "Lopez Repair Construction, LLC | Construction Management",
+        "city": "Hamilton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 141
+      },
+      {
+        "name": "Los Tamales de Ana y mas | Food & Beverage/Catering",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 143
+      },
+      {
+        "name": "Love At First Boxx",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 144
+      },
+      {
+        "name": "Lucas Renovation and Painting LLC",
+        "city": "Plainfield",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 145
+      },
+      {
+        "name": "Lydia I Rentas-Santiago | Business Strategies",
+        "city": "Bayonne",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 146
+      },
+      {
+        "name": "Mac Cleaning Services LLC",
+        "city": "Middlesx",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 147
+      },
+      {
+        "name": "Mahalo Holistiv Beauty Bar",
+        "city": "Hackensack",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 148
+      },
+      {
+        "name": "Matilde Molina KW premier | Real Estate Services",
+        "city": "Hamilton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 154
+      },
+      {
+        "name": "Maxis Fashion",
+        "city": "kearny",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 155
+      },
+      {
+        "name": "MEDICARE ADVISORS | Health Insurance",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 156
+      },
+      {
+        "name": "Mis Anhelos LLC",
+        "city": "NORTH BERGEN",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 163
+      },
+      {
+        "name": "Multifiestas Mary",
+        "city": "West orange",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 169
+      },
+      {
+        "name": "Nicolas Rodriguez Ananin | Student",
+        "city": "Madison",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 178
+      },
+      {
+        "name": "NJ Home Health Care Academy | Health care",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 180
+      },
+      {
+        "name": "NJM Insurance Group | Insurance",
+        "city": "West Trenton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 181
+      },
+      {
+        "name": "NYXARA | Arts & Crafts",
+        "city": "Ridgefield park",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 185
+      },
+      {
+        "name": "OceanFirst Bank | Banks & Credit Unions | Banks & Credit Unions | Banks & Credit Unions",
+        "city": "Red Bank",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 187
+      },
+      {
+        "name": "Otro Rollo Films | Digital & Social Media/Marketing & Communications | Online Media | TV Media",
+        "city": "North Plainfield",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 188
+      },
+      {
+        "name": "Partnership West Inc. Business Improvement District | Business Strategies",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 192
+      },
+      {
+        "name": "PMarrero Business Solutions | Consulting Services",
+        "city": "Keasbey",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 196
+      },
+      {
+        "name": "Pretty Lash",
+        "city": "North Haledon",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 200
+      },
+      {
+        "name": "Provident Bank | Banks & Credit Unions",
+        "city": "Dumont",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 204
+      },
+      {
+        "name": "Quadratín Hispano",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 206
+      },
+      {
+        "name": "R&I FLOWER SHOP | Florists",
+        "city": "Kearny",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 208
+      },
+      {
+        "name": "Realty Executives Property Squad",
+        "city": "Lake Hopatcong",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 211
+      },
+      {
+        "name": "Resina GEJA",
+        "city": "Paterson",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 214
+      },
+      {
+        "name": "Rhythm N Food Glocal LLC",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 216
+      },
+      {
+        "name": "Riverside Digital Productions, Inc.",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 217
+      },
+      {
+        "name": "RJS PRODUCTIONS | Photographers/Photo Finishing/Framing",
+        "city": "Piscataway",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 218
+      },
+      {
+        "name": "Salamandras Spiritual shop",
+        "city": "Kearny",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 224
+      },
+      {
+        "name": "Skindex Studios",
+        "city": "Freehold",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 229
+      },
+      {
+        "name": "SR Staffing LLC | Entertainment",
+        "city": "Paterson",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 234
+      },
+      {
+        "name": "Statewide Hispanic Chamber of Commerce of NJ | Personal Services | Consultants | Education | Government",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 236
+      },
+      {
+        "name": "Strawberry & Me | Restaurants | Restaurants & Specialty Dining",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 237
+      },
+      {
+        "name": "Stunning Med Spa",
+        "city": "Union",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 238
+      },
+      {
+        "name": "Tacolgando Taquerias LLC",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 239
+      },
+      {
+        "name": "TaxPros Service",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 241
+      },
+      {
+        "name": "Team Wellness Massage Spa",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 243
+      },
+      {
+        "name": "TeamLogic IT",
+        "city": "Plainsboro",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 244
+      },
+      {
+        "name": "Tech Doors and Windows LLC",
+        "city": "Clifton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 245
+      },
+      {
+        "name": "Tex Mex Restaurant",
+        "city": "Long branch",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 246
+      },
+      {
+        "name": "The Station Restaurant LLC | Restaurants & Specialty Dining",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 253
+      },
+      {
+        "name": "University Hospital | Health care",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 262
+      },
+      {
+        "name": "Velvet Art Floral Studio",
+        "city": "Clark",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 264
+      },
+      {
+        "name": "Vital Home Spa",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 270
+      },
+      {
+        "name": "Yanet Garcia Coching Services LLC",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 277
+      },
+      {
+        "name": "Yenyere Art Academy",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "14-nj-hispanic-chamber-candidates.jsonl",
+        "line": 278
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://cfbnj.org",
+    "records": [
+      {
+        "name": "Community FoodBank of New Jersey - Hillside Headquarters",
+        "city": "Hillside",
+        "state": "NJ",
+        "file": "02-nj-community-candidates.jsonl",
+        "line": 1
+      },
+      {
+        "name": "Community FoodBank of New Jersey - Egg Harbor Township",
+        "city": "Egg Harbor Township",
+        "state": "NJ",
+        "file": "02-nj-community-candidates.jsonl",
+        "line": 2
+      },
+      {
+        "name": "Garfield Unity Pantry",
+        "city": "Garfield",
+        "state": "NJ",
+        "file": "02-nj-community-candidates.jsonl",
+        "line": 3
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.njstatelib.org",
+    "records": [
+      {
+        "name": "New Jersey State Library",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "02-nj-community-candidates.jsonl",
+        "line": 7
+      },
+      {
+        "name": "New Jersey State Library Talking Book and Braille Center",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "02-nj-community-candidates.jsonl",
+        "line": 8
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://dehistory.org",
+    "records": [
+      {
+        "name": "Delaware History Museum",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 5
+      },
+      {
+        "name": "Read House & Gardens",
+        "city": "New Castle",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 6
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://delcf.org",
+    "records": [
+      {
+        "name": "Delaware Community Foundation - Wilmington Office",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 9
+      },
+      {
+        "name": "Delaware Community Foundation - Lewes Office",
+        "city": "Lewes",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 10
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.thelatincenter.org",
+    "records": [
+      {
+        "name": "Latin American Community Center - Main Building",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 11
+      },
+      {
+        "name": "Latin American Community Center - Manuelita Olson Building",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 12
+      },
+      {
+        "name": "La Fiesta II Infant and Toddler Center",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 13
+      },
+      {
+        "name": "La Fiesta III Early Learning Center",
+        "city": "New Castle",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 14
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.iri-delaware.org",
+    "records": [
+      {
+        "name": "Independent Resources, Inc. - Kent County",
+        "city": "Dover",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 17
+      },
+      {
+        "name": "Independent Resources, Inc. - New Castle County",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 18
+      },
+      {
+        "name": "Independent Resources, Inc. - Sussex County",
+        "city": "Milford",
+        "state": "DE",
+        "file": "03-de-community-candidates.jsonl",
+        "line": 19
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

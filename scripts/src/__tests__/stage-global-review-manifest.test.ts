@@ -24,6 +24,13 @@ describe("global review-only directory staging", () => {
     expect(source).toContain("matched_business_id = b.id");
   });
 
+  it("gates health only on customer destinations rather than the cited source directory", () => {
+    expect(source).toContain("const customerDestinationFields");
+    expect(source).toContain('["website", candidate.website]');
+    expect(source).toContain('["socialSource", candidate.socialSourceUrl]');
+    expect(source).not.toContain('["source", candidate.sourceUrl]');
+  });
+
   it("adds only staging compatibility for international and cultural review records", () => {
     expect(migrations).toContain("allow_review_only_international_directory_candidates_v1");
     expect(migrations).toContain("ALTER COLUMN state DROP NOT NULL");
