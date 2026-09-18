@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  communityPublicViewDefinitionIsSafe,
   publicationSchemaFailureLogLines,
   summarizeRequiredPublicationSchemaFailure,
 } from "../startup-migrations";
@@ -36,5 +37,17 @@ describe("required publication schema failure diagnostics", () => {
       "publication_schema_malformed_indexes=[canonical_record_locations_unique_idx]",
     );
     expect(lines.join("\n")).not.toMatch(/secret|database_url|postgres:/i);
+  });
+
+  it("accepts PostgreSQL's unqualified rendering of the same fail-closed view", () => {
+    const canonicalView = `SELECT b.* FROM businesses b
+      WHERE business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)`;
+
+    expect(communityPublicViewDefinitionIsSafe(canonicalView)).toBe(true);
+    expect(
+      communityPublicViewDefinitionIsSafe(
+        canonicalView.replace("WHERE business_record_is_public", "WHERE NOT business_record_is_public"),
+      ),
+    ).toBe(false);
   });
 });
