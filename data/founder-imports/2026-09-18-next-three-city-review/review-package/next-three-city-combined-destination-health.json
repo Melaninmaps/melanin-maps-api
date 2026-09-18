@@ -1,0 +1,1383 @@
+{
+  "checkedAt": "2026-09-18T18:44:07.038Z",
+  "sourceManifest": "next-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 179,
+  "uniqueDestinations": 228,
+  "counts": {
+    "reachable": 187,
+    "review_required": 29,
+    "timeout": 8,
+    "network_error": 4
+  },
+  "results": [
+    {
+      "url": "https://www.facebook.com/personalconciergemd/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fpersonalconciergemd%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/personalconciergemd",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fpersonalconciergemd&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.tastetheflavorbrunch.com/",
+      "status": 200,
+      "finalUrl": "https://tastetheflavorbrunch.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/5/",
+      "status": 200,
+      "finalUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/5/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://aiskrimuicecreambar.com/",
+      "status": 200,
+      "finalUrl": "https://aiskrimuicecreambar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/4/",
+      "status": 200,
+      "finalUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/4/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.apexmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.apexmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.backyardgrillatlanta.com/",
+      "status": 200,
+      "finalUrl": "https://backyardgrillatlanta.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/6/",
+      "status": 200,
+      "finalUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/6/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://barrioatl.com/",
+      "status": 200,
+      "finalUrl": "https://barrioatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/2/",
+      "status": 200,
+      "finalUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/2/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theblackcoffeecompany.com/black-coffee-atl",
+      "status": 200,
+      "finalUrl": "https://www.theblackcoffeecompany.com/black-coffee-atl",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.cafebartique.com/",
+      "status": 200,
+      "finalUrl": "https://cafebartique.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.carrotdogatl.com/",
+      "status": 200,
+      "finalUrl": "https://carrotdogatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.crescentcityga.com/",
+      "status": 403,
+      "finalUrl": "https://www.crescentcityga.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/",
+      "status": 200,
+      "finalUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://djuans.com/",
+      "status": 200,
+      "finalUrl": "https://djuans.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dougsncbbq.com/",
+      "status": 404,
+      "finalUrl": "https://www.dougsncbbq.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/3/",
+      "status": 200,
+      "finalUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/atlanta-brw/page/3/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://finna-eat.com/",
+      "status": 404,
+      "finalUrl": "https://finna-eat.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://gochastapasbar.com/",
+      "status": 200,
+      "finalUrl": "https://gochastapasbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ebenezeratl.org/",
+      "status": 200,
+      "finalUrl": "https://www.ebenezeratl.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/myjourneyunlimited",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/myjourneyunlimited",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/myjourneyunlimited",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmyjourneyunlimited&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.eatatkeetons.com/",
+      "status": 200,
+      "finalUrl": "https://www.eatatkeetons.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thelaa.org/",
+      "status": 200,
+      "finalUrl": "https://thelaa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://marcusbarandgrille.com/",
+      "status": 200,
+      "finalUrl": "https://www.marcusbarandgrille.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nomasatlanta.com/",
+      "status": 200,
+      "finalUrl": "https://www.nomasatlanta.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oreathas.com/",
+      "status": 403,
+      "finalUrl": "https://www.oreathas.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ourhousega.org/childcare/",
+      "status": 403,
+      "finalUrl": "https://ourhousega.org/childcare/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.peppershotdogs.com/",
+      "status": 200,
+      "finalUrl": "https://www.peppershotdogs.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.perfectseasoningllc.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "http://rukiskitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.rukiskitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://sharpirospizza.com/",
+      "status": 200,
+      "finalUrl": "https://sharpirospizza.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sm44atl.com/",
+      "status": 403,
+      "finalUrl": "https://www.sm44atl.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://southern-queenz.com/",
+      "status": 200,
+      "finalUrl": "https://southern-queenz.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.spicehouseatl.com/midtown",
+      "status": 403,
+      "finalUrl": "https://www.spicehouseatl.com/midtown",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://spicehousebuckhead.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "http://station11atl.com/",
+      "status": 200,
+      "finalUrl": "https://station11atl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tsbrunchbaratl.com/",
+      "status": 403,
+      "finalUrl": "https://www.tsbrunchbaratl.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://beautifulrestaurant-atlanta.com/",
+      "status": 200,
+      "finalUrl": "https://beautifulrestaurant-atlanta.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tkstlaw.com/",
+      "status": 200,
+      "finalUrl": "https://tkstlaw.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.upperroomatl.com/",
+      "status": 200,
+      "finalUrl": "https://www.upperroomatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.arepamiaatlanta.com/",
+      "status": 200,
+      "finalUrl": "https://www.arepamiaatlanta.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.arepamiaatlanta.com/hours-location",
+      "status": 200,
+      "finalUrl": "https://www.arepamiaatlanta.com/hours-location",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://dandelionhouston.com/",
+      "status": 200,
+      "finalUrl": "https://www.dandelionhouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/dandelionhouston",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdandelionhouston&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.anticonquistacafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.anticonquistacafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bbicecreamcandy.com/",
+      "status": 200,
+      "finalUrl": "https://www.bbicecreamcandy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://barsolnavypier.com/",
+      "status": 200,
+      "finalUrl": "https://barsolnavypier.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bluehavanaclothing.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://bocaditoschicago.com/",
+      "status": 200,
+      "finalUrl": "https://bocaditoschicago.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bronzeballoons.com/",
+      "status": 200,
+      "finalUrl": "https://bronzeballoons.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://buddyguy.com/",
+      "status": 200,
+      "finalUrl": "https://buddyguy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/buenodays.coffee/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbuenodays.coffee%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cajuncafechicago.com/",
+      "status": 200,
+      "finalUrl": "https://www.cajuncafechicago.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/cajun-cafe-chicago",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/cajun-cafe-chicago",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.callandresponsechi.com/",
+      "status": 200,
+      "finalUrl": "https://www.callandresponsechi.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/call-%26-response",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/call-%26-response",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://candlecastleco.com/",
+      "status": 200,
+      "finalUrl": "https://candlecastleco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.casachichicago.com/",
+      "status": 200,
+      "finalUrl": "https://www.casachichicago.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.killermargaritas.com/",
+      "status": 403,
+      "finalUrl": "https://killermargaritas.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://product.healthyculture360.com/pages/cc360",
+      "status": 200,
+      "finalUrl": "https://product.healthyculture360.com/pages/cc360",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dabookjoint.com/",
+      "status": 200,
+      "finalUrl": "https://www.dabookjoint.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/da-book-joint",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/da-book-joint",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dellrooster.com/",
+      "status": 200,
+      "finalUrl": "https://dellrooster.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dusablemuseum.org/",
+      "status": 200,
+      "finalUrl": "https://dusablemuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.freemvmtshop.com/",
+      "status": 200,
+      "finalUrl": "https://www.freemvmtshop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://huaracheschicago.com/",
+      "status": 200,
+      "finalUrl": "https://huaracheschicago.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.justiceofthepies.com/",
+      "status": 200,
+      "finalUrl": "https://www.justiceofthepies.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kennymacsbarbershop.com/",
+      "status": 200,
+      "finalUrl": "https://kennymacsbarbershop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackpearl.org/",
+      "status": 200,
+      "finalUrl": "https://www.blackpearl.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.luellassouthernkitchen.com/",
+      "status": 403,
+      "finalUrl": "https://www.luellassouthernkitchen.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mariscossanpedro.com/",
+      "status": 200,
+      "finalUrl": "https://www.mariscossanpedro.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mitocaya.com/",
+      "status": 200,
+      "finalUrl": "https://www.mitocaya.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ositostap.com/",
+      "status": 200,
+      "finalUrl": "https://www.ositostap.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pilsenartscommunityhouse.org/",
+      "status": 200,
+      "finalUrl": "https://www.pilsenartscommunityhouse.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://saltybooksandbeans.net/",
+      "status": 404,
+      "finalUrl": "https://saltybooksandbeans.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/salty-books",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/salty-books",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/smash_jibarito/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsmash_jibarito%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soulvegcity.com/",
+      "status": 403,
+      "finalUrl": "https://soulvegcity.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.taste222chicago.com/",
+      "status": 200,
+      "finalUrl": "https://www.taste222chicago.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theburgerpoint.com/",
+      "status": 200,
+      "finalUrl": "https://theburgerpoint.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thequarrychi.com/",
+      "status": 200,
+      "finalUrl": "https://www.thequarrychi.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thesilverroom.com/",
+      "status": 200,
+      "finalUrl": "https://www.thesilverroom.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thesoulfoodlounge.com/",
+      "status": 403,
+      "finalUrl": "https://thesoulfoodlounge.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.thirdcoastcomics.com/",
+      "status": 200,
+      "finalUrl": "https://www.thirdcoastcomics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tierrayfuegochicago.com/",
+      "status": 200,
+      "finalUrl": "https://tierrayfuegochicago.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ImagineDesign2707/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/ImagineDesign2707/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nouveaubar.com/",
+      "status": 403,
+      "finalUrl": "https://nouveaubar.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://www.eatwrapalot.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://kkcheesecakes.com/",
+      "status": 403,
+      "finalUrl": "https://kkcheesecakes.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/kkcheesecakes/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkkcheesecakes%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kilwins.com/cypress",
+      "status": 200,
+      "finalUrl": "https://www.kilwins.com/location/stores-near-me-cypress-tx-77433-0239/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kilwinscypress/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkilwinscypress%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/GatewayMobileMassage",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/GatewayMobileMassage",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/GatewayMassage",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FGatewayMassage&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jewelstreatsandmore.com/",
+      "status": 200,
+      "finalUrl": "https://jewelstreatsandmore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://tsburgerbar.com/",
+      "status": 403,
+      "finalUrl": "https://tsburgerbar.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.simplynawlins.com/",
+      "status": 520,
+      "finalUrl": "https://www.simplynawlins.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://eatmybiscuits.com/",
+      "status": 403,
+      "finalUrl": "https://eatmybiscuits.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.eatmybiscuits.com/",
+      "status": 403,
+      "finalUrl": "https://eatmybiscuits.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://www.spicehousebbq.com/",
+      "status": 200,
+      "finalUrl": "https://www.spicehousebbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vinyasavibesyogastudio.com/",
+      "status": 200,
+      "finalUrl": "https://www.vinyasavibesyogastudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/vinyasa-vibes-yoga-studio",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/vinyasa-vibes-yoga-studio",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://peachcobblerfactory.com/",
+      "status": 200,
+      "finalUrl": "https://peachcobblerfactory.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://unbelieveganatl.com/",
+      "status": 200,
+      "finalUrl": "https://unbelieveganatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gochasbreakfastbar.com/",
+      "status": 200,
+      "finalUrl": "https://gochasbreakfastbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.convoatl.com/",
+      "status": 200,
+      "finalUrl": "https://convoatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://davessportsbarandgrill.com/",
+      "status": 200,
+      "finalUrl": "https://davessportsbarandgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pitboss-bbq.com/",
+      "status": 403,
+      "finalUrl": "https://www.pitboss-bbq.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.beyondthebook.online/",
+      "status": 200,
+      "finalUrl": "https://www.beyondthebook.online/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/beyond-the-book",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/beyond-the-book",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://adoralmeda.com/",
+      "status": 200,
+      "finalUrl": "https://adoralmeda.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/adoralmeda/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fadoralmeda%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://adorhouston.com/",
+      "status": 200,
+      "finalUrl": "https://adorhouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/adorhouston?igshid=YmMyMTA2M2Y=",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fadorhouston%3Figshid%3DYmMyMTA2M2Y%253D&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://bigkatshouston.com/",
+      "status": 200,
+      "finalUrl": "http://bigkatshouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bungalowdining.com/",
+      "status": 200,
+      "finalUrl": "https://bungalowdining.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bungalowdining/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbungalowdining%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/buried.seeds/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fburied.seeds%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bussitdowneateryhtx/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbussitdowneateryhtx%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/butterfunkhouston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbutterfunkhouston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/obo/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/obo/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/obo/certification_overview.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/obo/certification_overview.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thesmokehtx.online/",
+      "status": 200,
+      "finalUrl": "https://thesmokehtx.online/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thesmokehtx",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthesmokehtx&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://creole-kitchen.com/",
+      "status": 403,
+      "finalUrl": "https://creole-kitchen.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/creolehtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcreolehtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://creoles.net/",
+      "status": 403,
+      "finalUrl": "https://creoles.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/thecreolelounge/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthecreolelounge%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.davisstreet.com/",
+      "status": 200,
+      "finalUrl": "https://www.davisstreet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/davissthouston",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdavissthouston&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dayandnightalmeda.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/dayandnightalmeda",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdayandnightalmeda&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://doveshouston.com/",
+      "status": 200,
+      "finalUrl": "https://doveshouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/doveshtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdoveshtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.estherscajunsoul.com/",
+      "status": 200,
+      "finalUrl": "https://www.estherscajunsoul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/estherscajuncafe/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Festherscajuncafe%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackfarmerbox.com/fresh-houwse-grocery",
+      "status": 200,
+      "finalUrl": "https://www.blackfarmerbox.com/fresh-houwse-grocery",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackfarmerbox.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackfarmerbox.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gatlinsbbq.com/",
+      "status": 403,
+      "finalUrl": "https://gatlinsbbq.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/houblackchamber/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhoublackchamber%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://greenzkitchen.com/",
+      "status": 200,
+      "finalUrl": "http://greenzkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/greenz.kitchen/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fgreenz.kitchen%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.gcakelovers.com/",
+      "status": 200,
+      "finalUrl": "https://www.gcakelovers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haiikeii.com/",
+      "status": 200,
+      "finalUrl": "https://www.haiikeii.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/haiikeii.htx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhaiikeii.htx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/hispanic_houston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhispanic_houston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmsdc.org/",
+      "status": 200,
+      "finalUrl": "https://hmsdc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jamaicapondiroad.com/",
+      "status": 200,
+      "finalUrl": "https://jamaicapondiroad.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/jamaicapondiroad/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjamaicapondiroad%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.juliethtx.com/",
+      "status": 200,
+      "finalUrl": "https://www.juliethtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/juliet.htx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjuliet.htx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kamphouston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkamphouston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kefita.coffee/",
+      "status": 200,
+      "finalUrl": "https://www.kefita.coffee/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kefita.coffee",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkefita.coffee&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kulture_houston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkulture_houston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.loloschickenandwaffleshtx.com/",
+      "status": 200,
+      "finalUrl": "https://www.loloschickenandwaffleshtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/loloschickenandwaffleshtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Floloschickenandwaffleshtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/lostandfoundmidtown/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flostandfoundmidtown%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mimiscajuncafe_and_catering",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmimiscajuncafe_and_catering&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mocahtx.com/moca-restaurant/",
+      "status": 200,
+      "finalUrl": "https://mocahtx.com/moca-restaurant/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mocahtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmocahtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moonlightmiso.com/",
+      "status": 200,
+      "finalUrl": "https://www.moonlightmiso.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/moonlightmisohtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmoonlightmisohtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.msmyrtlesbakery.com/",
+      "status": 200,
+      "finalUrl": "https://msmyrtlesbakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/msmyrtlesbakery",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmsmyrtlesbakery&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mysthouston.com/",
+      "status": 403,
+      "finalUrl": "https://mysthouston.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/mystloungeandkitchen/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmystloungeandkitchen%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/nbbreads/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnbbreads%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/omg_baked_potatoes_llc/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fomg_baked_potatoes_llc%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.plushbarandgrill.com/",
+      "status": 200,
+      "finalUrl": "https://plushbarandgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/plushbarandgrill/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fplushbarandgrill%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://projectrowhouses.org/",
+      "status": 200,
+      "finalUrl": "https://projectrowhouses.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.reggaehutcafe.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/reggaehutcafehouston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freggaehutcafehouston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/rhaysrestaurant",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Frhaysrestaurant&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.shiningstarkid.com/",
+      "status": 200,
+      "finalUrl": "https://www.shiningstarkid.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shiningstarkid.ueniweb.com/",
+      "status": 200,
+      "finalUrl": "https://shiningstarkid.ueniweb.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sigslagoon.com/",
+      "status": 200,
+      "finalUrl": "https://www.sigslagoon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://smilesofmidtown.com/",
+      "status": 200,
+      "finalUrl": "https://www.smilesofmidtown.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/southernjerkshtx",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsouthernjerkshtx&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.sticktalkhouston.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/sticktalkcajunhibachi/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsticktalkcajunhibachi%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebodyshophtx.com/",
+      "status": 200,
+      "finalUrl": "https://thebodyshophtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebreakfastklub.com/",
+      "status": 200,
+      "finalUrl": "https://thebreakfastklub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://thegreasyspoonhtx.com/",
+      "status": 200,
+      "finalUrl": "https://thegreasyspoonhtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/TheGreasySpoonHTX",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FTheGreasySpoonHTX&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thegypsypoet.us/",
+      "status": 200,
+      "finalUrl": "https://thegypsypoet.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thesavoyhtx.com/",
+      "status": 403,
+      "finalUrl": "https://www.thesavoyhtx.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/meetmeatthesavoy/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmeetmeatthesavoy%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/wafflebaeshtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fwafflebaeshtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.winsomeprime.com/houston",
+      "status": 200,
+      "finalUrl": "https://www.winsomeprime.com/houston",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/winsomeprime/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fwinsomeprime%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.kidkreolekooking.com/",
+      "status": 200,
+      "finalUrl": "https://kidkreolekooking.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kidkreolekooking",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkidkreolekooking&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://rocosgrill.com/",
+      "status": 200,
+      "finalUrl": "https://rocosgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/Rocosgrill",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FRocosgrill&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nouveaubar.com/",
+      "status": 403,
+      "finalUrl": "https://nouveaubar.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/chapteravenueproduction/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/chapteravenueproduction/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/chapteravenueproductions",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fchapteravenueproductions&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bar44atl.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://bolivarcoffee.com/",
+      "status": 403,
+      "finalUrl": "https://bolivarcoffee.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://infusioncrab.com/",
+      "status": 200,
+      "finalUrl": "https://infusioncrab.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.1942onthesquare.com/",
+      "status": 403,
+      "finalUrl": "https://www.1942onthesquare.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/LloydMediaGroup/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/LloydMediaGroup/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.pandorarestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.pandorarestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.beyondbbqmorrow.com/",
+      "status": 200,
+      "finalUrl": "https://beyondbbqmorrow.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/cohesiveconsulting/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/cohesiveconsulting/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/cohesiveconsulting",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcohesiveconsulting&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.afriwarebooks.com/",
+      "status": 200,
+      "finalUrl": "https://www.afriwarebooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/afriware-books",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/afriware-books",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://amerikasrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://amerikasrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.jamburritos.com/",
+      "status": 200,
+      "finalUrl": "https://jamburritos.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.instagram.com/jamburritoscajun",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjamburritoscajun&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thepuddery.com/",
+      "status": 200,
+      "finalUrl": "https://thepuddery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thepuddery/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthepuddery%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://mealprepcafe.square.site/",
+      "status": 200,
+      "finalUrl": "https://mealprepcafe.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/WeLuvSpudz",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FWeLuvSpudz&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://southernclassicfoods.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "http://www.makedascookies.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.fruiteabubblescafe.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.gochasbreakfastbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.gochasbreakfastbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tastedowntownhtx.com/menu",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.instagram.com/tastekitchenbar/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftastekitchenbar%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.myelevatedcare.com/",
+      "status": 401,
+      "finalUrl": "https://www.myelevatedcare.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.blackbookchi.com/directory-listings/elevated-health-%26-wellness",
+      "status": 200,
+      "finalUrl": "https://www.blackbookchi.com/directory-listings/elevated-health-%26-wellness",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}

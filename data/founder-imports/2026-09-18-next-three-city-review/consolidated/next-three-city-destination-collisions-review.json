@@ -1,0 +1,49 @@
+[
+  {
+    "destination": "http://dandelionhouston.com",
+    "records": [
+      {
+        "name": "Dandelion Cafe – Heights",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 6
+      },
+      {
+        "name": "Dandelion Cafe – Bellaire",
+        "city": "Bellaire",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 9
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.thegypsypoet.us",
+    "records": [
+      {
+        "name": "The Gypsy Poet – Midtown",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 55
+      },
+      {
+        "name": "The Gypsy Poet – Heights",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 56
+      },
+      {
+        "name": "The Gypsy Poet – Rice Village",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 57
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]
