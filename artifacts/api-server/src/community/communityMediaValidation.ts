@@ -15,6 +15,11 @@ export function normalizeCommunityMediaUrls(value: unknown): string[] {
       }
       return Array.from(unique).slice(0, 5);
     }
+    // PostgreSQL JSONB may return one legacy public URL as a scalar. Preserve
+    // it instead of silently dropping an otherwise valid provider attachment.
+    if (typeof current === "string" && /^https?:\/\//i.test(current.trim())) {
+      return [current.trim()];
+    }
     if (typeof current !== "string" || !current.trim()) return [];
     try {
       current = JSON.parse(current);

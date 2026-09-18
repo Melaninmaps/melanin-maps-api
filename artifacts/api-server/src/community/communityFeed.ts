@@ -14,7 +14,7 @@ export type CommunityPostRow = {
   business_id: string | null;
   business_name: string | null;
   business_link: string | null;
-  media_urls: string | null;
+  media_urls: unknown;
   saved_place_id: string | null;
   location_tag: string | null;
   location_venue_name: string | null;
@@ -86,12 +86,34 @@ export type CommunitySqlQuery = {
   values: unknown[];
 };
 
+export type CommunityFeedCapabilities = {
+  communityPostComments: boolean;
+};
+
+const ALL_COMMUNITY_FEED_CAPABILITIES: CommunityFeedCapabilities = {
+  communityPostComments: true,
+};
+
 // Only the original post shape and safety-critical columns are referenced by
 // identifier. Additive display fields are read from the row JSON, so an older
 // instance can serve core posts while a safe migration is still rolling out.
 // Active comment totals are calculated from retained comment rows rather than
 // trusting the denormalized community_posts.comments_count value.
-export const COMMUNITY_POST_PROJECTION = `
+const POST_VISIBILITY = `COALESCE(NULLIF(to_jsonb(cp)->>'visibility', ''), 'public')`;
+const POST_REQUIRES_MODERATION = `COALESCE((to_jsonb(cp)->>'requires_moderation')::boolean, false)`;
+const AUTHOR_IS_PRIVATE = `COALESCE((to_jsonb(u)->>'is_private')::boolean, false)`;
+
+function communityPostProjection(capabilities: CommunityFeedCapabilities): string {
+  const commentsCount = capabilities.communityPostComments
+    ? `(
+      SELECT COUNT(*)::integer
+      FROM community_post_comments c
+      WHERE c.post_id = cp.id
+        AND COALESCE(NULLIF(to_jsonb(c)->>'status', ''), 'active') = 'active'
+    )`
+    : `COALESCE((to_jsonb(cp)->>'comments_count')::integer, 0)`;
+
+  return `
   cp.id,
   cp.author_id,
   cp.author_name,
@@ -99,12 +121,12 @@ export const COMMUNITY_POST_PROJECTION = `
   cp.author_color,
   cp.content,
   cp.category,
-  cp.post_type,
-  cp.business_id,
-  cp.business_name,
-  cp.business_link,
-  cp.media_urls,
-  cp.saved_place_id,
+  COALESCE(NULLIF(to_jsonb(cp)->>'post_type', ''), 'community') AS post_type,
+  to_jsonb(cp)->>'business_id' AS business_id,
+  to_jsonb(cp)->>'business_name' AS business_name,
+  to_jsonb(cp)->>'business_link' AS business_link,
+  to_jsonb(cp)->'media_urls' AS media_urls,
+  to_jsonb(cp)->>'saved_place_id' AS saved_place_id,
   to_jsonb(cp)->>'location_tag' AS location_tag,
   to_jsonb(cp)->>'location_venue_name' AS location_venue_name,
   to_jsonb(cp)->>'location_city' AS location_city,
@@ -114,11 +136,11 @@ export const COMMUNITY_POST_PROJECTION = `
   to_jsonb(cp)->'hashtags' AS hashtags,
   to_jsonb(cp)->>'topic_tag' AS topic_tag,
   COALESCE((to_jsonb(cp)->>'is_private_topic')::boolean, false) AS is_private_topic,
-  cp.visibility,
+  ${POST_VISIBILITY} AS visibility,
   CASE
     WHEN to_jsonb(cp)->>'comment_policy' IN ('everyone', 'followers', 'off')
       THEN to_jsonb(cp)->>'comment_policy'
-    WHEN cp.visibility = 'followers_only' THEN 'followers'
+    WHEN ${POST_VISIBILITY} = 'followers_only' THEN 'followers'
     ELSE 'everyone'
   END AS comment_policy,
   COALESCE((to_jsonb(cp)->>'has_content_warning')::boolean, false) AS has_content_warning,
@@ -140,16 +162,14 @@ export const COMMUNITY_POST_PROJECTION = `
   (to_jsonb(cp)->>'mentioned_business_rating')::integer AS mentioned_business_rating,
   cp.upvotes,
   cp.downvotes,
-  (
-    SELECT COUNT(*)::integer
-    FROM community_post_comments c
-    WHERE c.post_id = cp.id
-      AND COALESCE(NULLIF(to_jsonb(c)->>'status', ''), 'active') = 'active'
-  ) AS comments_count,
+  ${commentsCount} AS comments_count,
   to_jsonb(cp)->>'thread_id' AS thread_id,
   COALESCE((to_jsonb(cp)->>'thread_position')::integer, 1) AS thread_position,
   COALESCE((to_jsonb(cp)->>'thread_total')::integer, 1) AS thread_total,
   cp.created_at`;
+}
+
+export const COMMUNITY_POST_PROJECTION = communityPostProjection(ALL_COMMUNITY_FEED_CAPABILITIES);
 
 function acceptedRelationship(viewerPlaceholder: string): string {
   return `(
@@ -188,8 +208,8 @@ function notBlocked(viewerPlaceholder: string): string {
 const INTERNAL_CONTENT_EXCLUSION = `
   COALESCE(to_jsonb(cp)->>'internal_test_content', 'false') <> 'true'
   AND COALESCE(to_jsonb(u)->>'is_load_test', 'false') <> 'true'
-  AND lower(COALESCE(u.email, '')) NOT LIKE 'mwm-loadtest-%@loadtest.mwm.internal'
-  AND lower(COALESCE(u.email, '')) NOT IN (
+  AND lower(COALESCE(to_jsonb(u)->>'email', '')) NOT LIKE 'mwm-loadtest-%@loadtest.mwm.internal'
+  AND lower(COALESCE(to_jsonb(u)->>'email', '')) NOT IN (
     'apple.reviewer@mappingwithmelanin.com',
     'tester@mwm.com',
     'manus@mappingwithmelanin.com',
@@ -203,21 +223,25 @@ const INTERNAL_CONTENT_EXCLUSION = `
     'smoke test post — ignore'
   )`;
 
-export function buildCommunityFeedQuery(input: CommunityFeedQueryInput): CommunitySqlQuery {
+export function buildCommunityFeedQuery(
+  input: CommunityFeedQueryInput,
+  capabilities: CommunityFeedCapabilities = ALL_COMMUNITY_FEED_CAPABILITIES,
+): CommunitySqlQuery {
+  const projection = communityPostProjection(capabilities);
   if (input.authorId) {
     const relation = acceptedRelationship("$2");
     return {
-      text: `SELECT ${COMMUNITY_POST_PROJECTION}
+      text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.author_id = $1
-          AND (cp.requires_moderation = false OR cp.author_id = $2)
+          AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $2)
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$2")}
           AND (
             cp.author_id = $2
-            OR (${relation} AND cp.visibility IN ('public', 'followers_only'))
-            OR (cp.visibility = 'public' AND (u.is_private = false OR u.id IS NULL))
+            OR (${relation} AND ${POST_VISIBILITY} IN ('public', 'followers_only'))
+            OR (${POST_VISIBILITY} = 'public' AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL))
           )
         ORDER BY cp.created_at DESC
         LIMIT $3 OFFSET $4`,
@@ -228,12 +252,12 @@ export function buildCommunityFeedQuery(input: CommunityFeedQueryInput): Communi
   if (input.feedMode === "following") {
     const relation = acceptedRelationship("$1");
     return {
-      text: `SELECT ${COMMUNITY_POST_PROJECTION}
+      text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE (cp.author_id = $1 OR ${relation})
-          AND cp.visibility IN ('public', 'followers_only')
-          AND (cp.requires_moderation = false OR cp.author_id = $1)
+          AND ${POST_VISIBILITY} IN ('public', 'followers_only')
+          AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $1)
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$1")}
         ORDER BY cp.created_at DESC
@@ -244,12 +268,12 @@ export function buildCommunityFeedQuery(input: CommunityFeedQueryInput): Communi
 
   if (input.feedMode === "foryou") {
     return {
-      text: `SELECT ${COMMUNITY_POST_PROJECTION}
+      text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
-        WHERE cp.visibility = 'public'
-          AND cp.requires_moderation = false
-          AND (u.is_private = false OR u.id IS NULL)
+        WHERE ${POST_VISIBILITY} = 'public'
+          AND ${POST_REQUIRES_MODERATION} = false
+          AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL)
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$1")}
           AND cp.created_at > NOW() - INTERVAL '30 days'
@@ -261,15 +285,15 @@ export function buildCommunityFeedQuery(input: CommunityFeedQueryInput): Communi
 
   const relation = acceptedRelationship("$1");
   return {
-    text: `SELECT ${COMMUNITY_POST_PROJECTION}
+    text: `SELECT ${projection}
       FROM community_posts cp
       LEFT JOIN users u ON u.id = cp.author_id
-      WHERE cp.visibility = 'public'
-        AND cp.requires_moderation = false
+      WHERE ${POST_VISIBILITY} = 'public'
+        AND ${POST_REQUIRES_MODERATION} = false
         AND ${INTERNAL_CONTENT_EXCLUSION}
         AND ${notBlocked("$1")}
         AND (
-          u.is_private = false
+          ${AUTHOR_IS_PRIVATE} = false
           OR u.id IS NULL
           OR cp.author_id = $1
           OR ${relation}
@@ -348,8 +372,19 @@ export async function fetchCommunityFeedRows(
   queryable: Queryable,
   input: CommunityFeedQueryInput,
 ): Promise<CommunityPostRow[]> {
-  const query = buildCommunityFeedQuery(input);
-  const { rows } = await queryable.query<CommunityPostRow>(query.text, query.values);
+  let query = buildCommunityFeedQuery(input);
+  let rows: CommunityPostRow[];
+  try {
+    ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
+  } catch (error) {
+    // The comments table is optional enrichment for a post already constrained
+    // by the same privacy, block, moderation, and test-content predicates. A
+    // pre-comments schema retains stored counts, so preserve the visible post
+    // instead of failing the entire authenticated feed.
+    if (!isOptionalSchemaError(error)) throw error;
+    query = buildCommunityFeedQuery(input, { communityPostComments: false });
+    ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
+  }
   if (input.authorId || input.feedMode !== "foryou") return rows;
 
   const [preferences, relatedIds] = await Promise.all([
@@ -464,6 +499,15 @@ export async function fetchActiveCommunityComments(
 }
 
 export const COMMUNITY_FEED_OPTIONAL_COLUMNS = [
+  "post_type",
+  "business_id",
+  "business_name",
+  "business_link",
+  "media_urls",
+  "saved_place_id",
+  "visibility",
+  "requires_moderation",
+  "comments_count",
   "internal_test_content",
   "location_tag",
   "location_venue_name",

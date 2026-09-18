@@ -106,6 +106,11 @@ function normalizeMediaUrls(value: unknown): string[] | undefined {
       const urls = Array.from(unique).slice(0, 5);
       return urls.length > 0 ? urls : undefined;
     }
+    // The feed can return a legacy scalar public attachment as well as a JSON
+    // array. Keep it renderable so canonical TikTok links are never discarded.
+    if (typeof current === "string" && /^https?:\/\//i.test(current.trim())) {
+      return [current.trim()];
+    }
     if (typeof current !== "string" || !current.trim()) return undefined;
     try {
       current = JSON.parse(current);

@@ -40,4 +40,10 @@ describe("Community feed client error state", () => {
     expect(communityFeedErrorState(503).message).toContain("posts already on screen are still available");
     expect(communityPageSource).toContain("{feedError.message}");
   });
+
+  it("retains a scalar public provider attachment during legacy response normalization", () => {
+    expect(communityPageSource).toContain("/^https?:\\/\\//i.test(current.trim())");
+    expect(communityPageSource).toContain("return [current.trim()]");
+    expect(communityPageSource).toContain("<CommunityMedia key={url} url={url} index={i} />");
+  });
 });
