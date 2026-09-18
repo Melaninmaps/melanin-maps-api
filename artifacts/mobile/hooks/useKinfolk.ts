@@ -116,6 +116,18 @@ export type KinfolkClarificationStep = {
   persistence: "temporary";
 };
 
+/**
+ * A deliberately generic disclosure that public, hashtag-matched Community
+ * discussion was considered. Post text, authors, and post URLs never leave the
+ * server for this optional perspective signal.
+ */
+export type CommunityPerspective = {
+  label: "Community perspective";
+  topics: string[];
+  itemCount: number;
+  note: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -136,6 +148,8 @@ export type ChatMessage = {
   provenanceNote?: string | null;
   /** Quiet source attribution, returned only when a material detail lacks support. */
   sourceNote?: string | null;
+  /** Optional, opt-in public Community discussion disclosure; never evidence. */
+  communityPerspective?: CommunityPerspective | null;
   /** Set on KINFOLK_BUSY/KINFOLK_RATE_LIMITED errors — original question can be retried */
   retryable?: boolean;
   retryText?: string;
@@ -174,7 +188,7 @@ export function useKinfolk() {
 
   const sendMessage = useCallback(async (
     text: string,
-    opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; rememberThis?: boolean },
+    opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; rememberThis?: boolean; includeCommunityPerspective?: boolean },
   ): Promise<void> => {
     const token = await getToken();
     const apiBase = getApiBase();
@@ -204,6 +218,7 @@ export function useKinfolk() {
           vibes: opts?.vibes ?? [],
           voiceMode: opts?.voiceMode ?? "community",
           imageUrls: opts?.imageUrls ?? [],
+          includeCommunityPerspective: opts?.includeCommunityPerspective === true,
         }),
         signal: controller.signal,
       }).finally(() => clearTimeout(chatTimeout));
@@ -225,6 +240,7 @@ export function useKinfolk() {
           intentClass?: string | null;
           provenanceNote?: string | null;
           sourceNote?: string | null;
+          communityPerspective?: CommunityPerspective | null;
           sources?: Array<{ title: string; url: string }> | null;
           clarificationSteps?: KinfolkClarificationStep[] | null;
           needsClarification?: boolean;
@@ -261,6 +277,7 @@ export function useKinfolk() {
           intentClass: data.intentClass ?? null,
           provenanceNote: data.provenanceNote ?? null,
           sourceNote: data.sourceNote ?? null,
+          communityPerspective: data.communityPerspective ?? null,
           sources: data.sources ?? null,
           clarificationSteps: data.clarificationSteps ?? undefined,
           needsClarification: data.needsClarification === true,

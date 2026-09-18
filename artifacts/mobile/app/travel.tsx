@@ -911,6 +911,18 @@ function AiMessageBubble({
           </Text>
         ) : null}
 
+        {msg.communityPerspective ? (
+          <View style={[aiStyles.communityPerspectiveBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
+            <Ionicons name="people-outline" size={13} color={GOLD} style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={[aiStyles.communityPerspectiveTitle, { color: GOLD }]}>{msg.communityPerspective.label}</Text>
+              <Text style={[aiStyles.communityPerspectiveText, { color: "#3A1F0E99" }]}>
+                Recent public discussion about {msg.communityPerspective.topics.map((topic) => `#${topic}`).join(", ")} was considered as unverified perspective, not as evidence or a recommendation.
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         {!msg.resultView && msg.sources && msg.sources.length > 0 && (
           <View style={[aiStyles.sourcesBox, { borderColor: colors.border }]}>
             <Text style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}>Sources</Text>
@@ -976,6 +988,9 @@ const aiStyles = StyleSheet.create({
   provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
   provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
   sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },
+  communityPerspectiveBox: { flexDirection: "row", gap: 7, borderWidth: 1, borderRadius: 10, marginTop: 8, padding: 9 },
+  communityPerspectiveTitle: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
+  communityPerspectiveText: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 },
   sourcesBox: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 8, gap: 6 },
   sourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 },
   sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -1889,6 +1904,7 @@ export default function TravelScreen() {
   const [kinfolkImages, setKinfolkImages] = useState<string[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
   const [rememberThis, setRememberThis] = useState(false);
+  const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const appStateRef = useRef(AppState.currentState);
   const voiceOutputRef = useRef(false);
@@ -2031,10 +2047,16 @@ export default function TravelScreen() {
     setInputText("");
     onUserSend(); // scroll to bottom, suppress jump button for this send
     armAutoSpeech();
-    await sendMessage(msg, { voiceMode, imageUrls: attachedImages, rememberThis: shouldRemember });
+    await sendMessage(msg, {
+      voiceMode,
+      imageUrls: attachedImages,
+      rememberThis: shouldRemember,
+      includeCommunityPerspective,
+    });
     setKinfolkImages([]);
     setRememberThis(false);
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend, kinfolkImages, rememberThis, armAutoSpeech]);
+    setIncludeCommunityPerspective(false);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -2357,7 +2379,7 @@ export default function TravelScreen() {
           </ScrollView>
         </View>
 
-        <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+        <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }}>
               <Ionicons name={rememberThis ? "checkbox" : "square-outline"} size={18} color={rememberThis ? colors.primary : colors.mutedForeground} />
@@ -2365,6 +2387,20 @@ export default function TravelScreen() {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setIncludeCommunityPerspective((value) => !value)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: includeCommunityPerspective }}
+            accessibilityLabel="Include public Community perspective"
+          >
+            <Ionicons name={includeCommunityPerspective ? "checkbox" : "square-outline"} size={18} color={includeCommunityPerspective ? colors.primary : colors.mutedForeground} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Include public Community perspective</Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>Matching public hashtags only; never used as evidence or a recommendation.</Text>
+            </View>
+          </TouchableOpacity>
           {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((url) => <View key={url} style={{ marginRight: 8 }}><Image source={{ uri: url }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => setKinfolkImages((items) => items.filter((item) => item !== url))} style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
         </View>
 
