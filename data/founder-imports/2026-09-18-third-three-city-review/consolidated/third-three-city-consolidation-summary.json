@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-09-18T20:57:56.889Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "birmingham-candidates.jsonl",
+    "columbia-candidates.jsonl",
+    "new-orleans-candidates.jsonl"
+  ],
+  "inputRows": 74,
+  "invalidOrIncompleteRowsHeld": 1,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 74,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "physicalAddressCandidates": 72,
+  "onlineOnlyCandidates": 2,
+  "targetKinds": {
+    "business": 42,
+    "regulated_review": 15,
+    "community_resource": 8,
+    "cultural_place": 7,
+    "online_business": 2
+  },
+  "categories": {
+    "food_and_drink": 25,
+    "beauty_and_personal_care": 7,
+    "Food & beverage": 5,
+    "retail": 4,
+    "culture_and_heritage": 3,
+    "culture_and_history": 3,
+    "faith_and_community": 3,
+    "trades_and_professional_services": 3,
+    "community_and_social_services": 2,
+    "community_support": 2,
+    "health_and_wellness": 2,
+    "legal": 2,
+    "professional_services": 2,
+    "travel_and_moving": 2,
+    "Apparel": 1,
+    "education": 1,
+    "health": 1,
+    "Museum & cultural heritage": 1,
+    "online_services": 1,
+    "pet_services": 1,
+    "Photography/Videography": 1,
+    "technology_and_trades": 1,
+    "trades_and_home_services": 1
+  },
+  "states": {
+    "Birmingham, AL": 29,
+    "Columbia, SC": 28,
+    "New Orleans, LA": 8,
+    "Homewood, AL": 2,
+    "West Columbia, SC": 2,
+    "Alabaster, AL": 1,
+    "Cayce, SC": 1,
+    "Hoover, AL": 1,
+    "Irmo, SC": 1,
+    "Lexington, SC": 1
+  },
+  "officialCustomerDestinationCoverage": 74,
+  "files": {
+    "candidates": "third-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "third-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "third-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "third-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "449549b05ce018d9df511b261f76a96263c5c66c516205ccbc6681f98f0f750c"
+}
