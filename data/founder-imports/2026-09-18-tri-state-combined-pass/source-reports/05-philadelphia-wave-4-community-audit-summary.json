@@ -1,0 +1,86 @@
+{
+  "sourceFiles": [
+    "wave-4-01-01-aachamber-candidates.jsonl",
+    "wave-4-02-02-gphcc-candidates.jsonl",
+    "wave-4-03-03-shccnj-candidates.jsonl",
+    "wave-4-04-04-philly-oed-candidates.jsonl",
+    "wave-4-05-05-pa-dgs-candidates.jsonl",
+    "wave-4-06-06-black-business-philly-candidates.jsonl",
+    "wave-4-07-07-latino-philly-candidates.jsonl",
+    "wave-4-08-08-delaware-black-candidates.jsonl",
+    "wave-4-09-09-delaware-hispanic-candidates.jsonl",
+    "wave-4-10-10-south-jersey-candidates.jsonl",
+    "wave-4-11-11-west-philly-candidates.jsonl",
+    "wave-4-12-12-neighborhood-retail-candidates.jsonl"
+  ],
+  "rawRecords": 1469,
+  "rawBySourceFile": {
+    "wave-4-01-01-aachamber-candidates.jsonl": 161,
+    "wave-4-03-03-shccnj-candidates.jsonl": 180,
+    "wave-4-05-05-pa-dgs-candidates.jsonl": 352,
+    "wave-4-06-06-black-business-philly-candidates.jsonl": 119,
+    "wave-4-07-07-latino-philly-candidates.jsonl": 89,
+    "wave-4-08-08-delaware-black-candidates.jsonl": 9,
+    "wave-4-09-09-delaware-hispanic-candidates.jsonl": 23,
+    "wave-4-10-10-south-jersey-candidates.jsonl": 533,
+    "wave-4-11-11-west-philly-candidates.jsonl": 3
+  },
+  "rawByTargetKind": {
+    "business": 1271,
+    "community_resource": 135,
+    "cultural_place": 19,
+    "online_business": 4,
+    "regulated_review": 40
+  },
+  "readyPreDedupe": 538,
+  "readyUniqueWithinWave": 536,
+  "exactDuplicatesWithinReady": 2,
+  "heldInvalidOrMapless": 77,
+  "heldGeneralDirectoryLead": 854,
+  "readyByTargetKind": {
+    "business": 453,
+    "community_resource": 26,
+    "cultural_place": 19,
+    "online_business": 2,
+    "regulated_review": 36
+  },
+  "readyByState": {
+    "DE": 12,
+    "NJ": 190,
+    "PA": 334
+  },
+  "heldInvalidReasons": {
+    "incomplete_business_name": 4,
+    "missing_direct_customer_destination": 19,
+    "missing_qualified_physical_address": 54,
+    "shared_noncustomer_destination": 13
+  },
+  "destinationCollisionsForReview": [
+    {
+      "url": "https://maps.app.goo.gl/dxwz6nv5utzviv2w5",
+      "records": 13,
+      "names": [
+        "The HTE4 Group LLC",
+        "Project Primacy Foundation",
+        "Izzard Investigations and Security LLC",
+        "Stylist Graceful Cathering",
+        "Tasco Contractors, Inc",
+        "Luxury Locksmith LLC",
+        "Empire Supplies and Services LLC",
+        "Community Property Management",
+        "PECO",
+        "Progressive Life Center",
+        "AT&T",
+        "INFLUENCE ENTERTAINMENT LLC",
+        "Miss Mahogany"
+      ]
+    }
+  ],
+  "files": {
+    "readyForCrossSourceConsolidation": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/wave-4-ready-for-cross-source-consolidation.jsonl",
+    "heldInvalidOrMapless": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/wave-4-held-invalid-or-mapless.jsonl",
+    "heldGeneralDirectoryLeads": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/wave-4-held-general-directory-leads.jsonl",
+    "possibleDuplicates": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/wave-4-possible-duplicates.json"
+  },
+  "readyManifestSha256": "10852c43f565797d156f0a7b5e21ce4b17ab7779e2cab63f23e2b9a279c43f83"
+}

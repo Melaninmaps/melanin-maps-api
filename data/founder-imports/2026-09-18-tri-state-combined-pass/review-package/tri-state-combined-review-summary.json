@@ -1,0 +1,45 @@
+{
+  "package": "2026-09-18-tri-state-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 1442,
+  "accepted_review_only_candidates": 1336,
+  "held_candidates": 106,
+  "held_reason_counts": {
+    "missing_or_invalid_customer_destination": 105,
+    "generic_or_placeholder_business_name": 1
+  },
+  "accepted_by_target_kind": {
+    "regulated_review": 120,
+    "cultural_place": 76,
+    "business": 984,
+    "online_business": 38,
+    "community_resource": 116,
+    "manual_review": 2
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 1171,
+    "needs_research": 165
+  },
+  "manifest_sha256": "d3566f2c0ea10b3751c56e6eab5bd324e86e3ebaf0ffd663600007437fca3a51",
+  "source_manifest": "/home/ubuntu/melanin-maps-tri-state-pass2-review/data/founder-imports/2026-09-18-tri-state-combined-pass/consolidated/tri-state-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "fb81364640240be99f4a76ce0b30b1c85f1b6ad8b4faf6e5ea9c510e2f7e6e6f",
+  "destination_health": {
+    "candidates": 1336,
+    "unique_destinations": 1260,
+    "by_outcome": {
+      "reachable": 1126,
+      "network_error": 56,
+      "timeout": 7,
+      "review_required": 71
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}

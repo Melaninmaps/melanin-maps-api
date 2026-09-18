@@ -1,0 +1,3196 @@
+[
+  {
+    "destination": "https://x.com/SHCCNJ",
+    "records": [
+      {
+        "name": "El rey latin food",
+        "city": "\\clifton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 1
+      },
+      {
+        "name": "Areli Rosado | Real Estate Services",
+        "city": "Basking Ridged",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 10
+      },
+      {
+        "name": "Lydia I Rentas-Santiago | Business Strategies",
+        "city": "Bayonne",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 12
+      },
+      {
+        "name": "Busy Bees Learning Center",
+        "city": "Bloomfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 20
+      },
+      {
+        "name": "El sazo de Josefina | Food Truck",
+        "city": "Bogota",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 23
+      },
+      {
+        "name": "Devine Alignment | Health care",
+        "city": "Boonton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 24
+      },
+      {
+        "name": "Julie’s tours | Travel Agencies",
+        "city": "Budd lake",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 32
+      },
+      {
+        "name": "Ivy Antonio | Academ/Educational Trainings Programs",
+        "city": "Chester",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 55
+      },
+      {
+        "name": "Velvet Art Floral Studio",
+        "city": "Clark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 57
+      },
+      {
+        "name": "Tech Doors and Windows LLC",
+        "city": "Clifton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 63
+      },
+      {
+        "name": "AmeriHealth | Hospitals & Clinics | Health Insurance",
+        "city": "Cranbury",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 76
+      },
+      {
+        "name": "Provident Bank | Banks & Credit Unions",
+        "city": "Dumont",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 100
+      },
+      {
+        "name": "Construction/Construcción",
+        "city": "Easton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 106
+      },
+      {
+        "name": "Vital Home Spa",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 116
+      },
+      {
+        "name": "Alzheimer’s Association | non",
+        "city": "Florham Park",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 125
+      },
+      {
+        "name": "Casa Bagel",
+        "city": "Fords",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 127
+      },
+      {
+        "name": "ECR Dealings LLC | Real Estate Services",
+        "city": "Fords",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 128
+      },
+      {
+        "name": "Skindex Studios",
+        "city": "Freehold",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 133
+      },
+      {
+        "name": "Homelynx Realty LLC | Real Estate Services",
+        "city": "Hackensack",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 144
+      },
+      {
+        "name": "J. Fletcher Creamer & Son, Inc. | Construction Management",
+        "city": "Hackensack",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 145
+      },
+      {
+        "name": "Mahalo Holistiv Beauty Bar",
+        "city": "Hackensack",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 147
+      },
+      {
+        "name": "Lopez Repair Construction, LLC | Construction Management",
+        "city": "Hamilton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 154
+      },
+      {
+        "name": "Matilde Molina KW premier | Real Estate Services",
+        "city": "Hamilton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 155
+      },
+      {
+        "name": "LiftCentro LLC | Marketing",
+        "city": "Hoboken",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 170
+      },
+      {
+        "name": "conSHINEment",
+        "city": "Jersey city",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 177
+      },
+      {
+        "name": "City of Jersey City",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 178
+      },
+      {
+        "name": "Flores de Azucar | Restaurants",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 181
+      },
+      {
+        "name": "Hudson County Community College | Education | Academ/Educational Trainings Programs",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 182
+      },
+      {
+        "name": "Strawberry & Me | Restaurants | Restaurants & Specialty Dining",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 187
+      },
+      {
+        "name": "Maxis Fashion",
+        "city": "kearny",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 188
+      },
+      {
+        "name": "R&I FLOWER SHOP | Florists",
+        "city": "Kearny",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 189
+      },
+      {
+        "name": "Salamandras Spiritual shop",
+        "city": "Kearny",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 190
+      },
+      {
+        "name": "PMarrero Business Solutions | Consulting Services",
+        "city": "Keasbey",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 191
+      },
+      {
+        "name": "Realty Executives Property Squad",
+        "city": "Lake Hopatcong",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 193
+      },
+      {
+        "name": "Tex Mex Restaurant",
+        "city": "Long branch",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 216
+      },
+      {
+        "name": "LeGurt",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 222
+      },
+      {
+        "name": "Love At First Boxx",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 223
+      },
+      {
+        "name": "Statewide Hispanic Chamber of Commerce of NJ | Personal Services | Consultants | Education | Government",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 224
+      },
+      {
+        "name": "Nicolas Rodriguez Ananin | Student",
+        "city": "Madison",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 227
+      },
+      {
+        "name": "Greenco Trading LLC | Restaurants",
+        "city": "Mahwah",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 228
+      },
+      {
+        "name": "EN Business Consulting | Business Strategies",
+        "city": "maywood",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 231
+      },
+      {
+        "name": "Mac Cleaning Services LLC",
+        "city": "Middlesx",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 247
+      },
+      {
+        "name": "Castle & Brother Logistics LLP | Logistics",
+        "city": "Morristown",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 264
+      },
+      {
+        "name": "Ama la vida",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 268
+      },
+      {
+        "name": "El Sazon Restaurant",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 269
+      },
+      {
+        "name": "Johnson & Johnson",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 270
+      },
+      {
+        "name": "TaxPros Service",
+        "city": "New Brunswick",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 271
+      },
+      {
+        "name": "Clean and on time llc",
+        "city": "New Milford",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 289
+      },
+      {
+        "name": "Partnership West Inc. Business Improvement District | Business Strategies",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 316
+      },
+      {
+        "name": "Rhythm N Food Glocal LLC",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 318
+      },
+      {
+        "name": "University Hospital | Health care",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 324
+      },
+      {
+        "name": "Yenyere Art Academy",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 326
+      },
+      {
+        "name": "Lashkmi Glow, LLC",
+        "city": "North Bergen",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 339
+      },
+      {
+        "name": "Mis Anhelos LLC",
+        "city": "NORTH BERGEN",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 340
+      },
+      {
+        "name": "Jersey Financials",
+        "city": "North Brunswick",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 341
+      },
+      {
+        "name": "Dulce Tentacion | Food & Beverage/Catering",
+        "city": "North Haledon",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 342
+      },
+      {
+        "name": "Pretty Lash",
+        "city": "North Haledon",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 343
+      },
+      {
+        "name": "Otro Rollo Films | Digital & Social Media/Marketing & Communications | Online Media | TV Media",
+        "city": "North Plainfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 345
+      },
+      {
+        "name": "Guaranteed Rate | Brokers",
+        "city": "Oakland",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 350
+      },
+      {
+        "name": "Industrial Painting Group | Contractors",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 354
+      },
+      {
+        "name": "Riverside Digital Productions, Inc.",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 355
+      },
+      {
+        "name": "Go fresh produce market",
+        "city": "Paramus",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 360
+      },
+      {
+        "name": "Agave Cantina Mexicana",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 364
+      },
+      {
+        "name": "C&C Immigration Paralegals, LLC",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 366
+      },
+      {
+        "name": "Charry’s | Food & Beverage/Catering",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 367
+      },
+      {
+        "name": "Tacolgando Taquerias LLC",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 370
+      },
+      {
+        "name": "Resina GEJA",
+        "city": "Paterson",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 376
+      },
+      {
+        "name": "SR Staffing LLC | Entertainment",
+        "city": "Paterson",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 378
+      },
+      {
+        "name": "RJS PRODUCTIONS | Photographers/Photo Finishing/Framing",
+        "city": "Piscataway",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 508
+      },
+      {
+        "name": "Lucas Renovation and Painting LLC",
+        "city": "Plainfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 510
+      },
+      {
+        "name": "TeamLogic IT",
+        "city": "Plainsboro",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 511
+      },
+      {
+        "name": "Latinas Unidas en AC New Jersey",
+        "city": "Pleasantville",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 512
+      },
+      {
+        "name": "LCGG Business LLC",
+        "city": "Rahway",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 517
+      },
+      {
+        "name": "Learn, Love and Grow Counseling",
+        "city": "Rahway",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 518
+      },
+      {
+        "name": "OceanFirst Bank | Banks & Credit Unions | Banks & Credit Unions | Banks & Credit Unions",
+        "city": "Red Bank",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 522
+      },
+      {
+        "name": "NYXARA | Arts & Crafts",
+        "city": "Ridgefield park",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 527
+      },
+      {
+        "name": "LeadJet | Consultants",
+        "city": "RIDGEFIELD PARK",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 530
+      },
+      {
+        "name": "J&M Industrial Cleaning and Construction LLC | Cleaning Services",
+        "city": "Roselle",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 536
+      },
+      {
+        "name": "Gallo Felix",
+        "city": "Some rest",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 554
+      },
+      {
+        "name": "La Tia Peruvian Cuisine",
+        "city": "Somers Point",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 555
+      },
+      {
+        "name": "Beauty boutique",
+        "city": "Somerset",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 557
+      },
+      {
+        "name": "Quadratín Hispano",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 585
+      },
+      {
+        "name": "The Station Restaurant LLC | Restaurants & Specialty Dining",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 586
+      },
+      {
+        "name": "Kean University",
+        "city": "Union",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 591
+      },
+      {
+        "name": "Stunning Med Spa",
+        "city": "Union",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 592
+      },
+      {
+        "name": "Airy Affairs, LLC | Event Planning",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 593
+      },
+      {
+        "name": "LAMONGE INSURANCE SERVICES INC/COMBINE | Health Insurance",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 595
+      },
+      {
+        "name": "MEDICARE ADVISORS | Health Insurance",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 596
+      },
+      {
+        "name": "NJ Home Health Care Academy | Health care",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 597
+      },
+      {
+        "name": "Banks Industrial Group | Contractors",
+        "city": "West Berlin",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 613
+      },
+      {
+        "name": "Archipielago LLC",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 617
+      },
+      {
+        "name": "Los Tamales de Ana y mas | Food & Beverage/Catering",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 618
+      },
+      {
+        "name": "Team Wellness Massage Spa",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 620
+      },
+      {
+        "name": "Yanet Garcia Coching Services LLC",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 621
+      },
+      {
+        "name": "Multifiestas Mary",
+        "city": "West orange",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 622
+      },
+      {
+        "name": "NJM Insurance Group | Insurance",
+        "city": "West Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 625
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://everestdispensary.com",
+    "records": [
+      {
+        "name": "Everest Dispensary LLC | Sales",
+        "city": "Atlantic City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 7
+      },
+      {
+        "name": "Everest Dispensary Llc",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 198
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://gravityforms.com",
+    "records": [
+      {
+        "name": "Travel Box NJ",
+        "city": "Bay Ville",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 11
+      },
+      {
+        "name": "Travel Box Nj Bay Ville",
+        "city": "Ville",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 310
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://sagearrowboutique.com",
+    "records": [
+      {
+        "name": "Sage & Arrow Boutique | Clothing/Shoes",
+        "city": "Branchburg Township",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 26
+      },
+      {
+        "name": "Sage Arrow Boutique Branchburg Township",
+        "city": "Township",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 291
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://https//www.tdbank.com",
+    "records": [
+      {
+        "name": "TD Bank | Banks & Credit Unions",
+        "city": "Bridgewater",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 28
+      },
+      {
+        "name": "Td Bank Bridgewater",
+        "city": "Bridgewater",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 301
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.oasissenioradvisors.com/locations/bergen-county",
+    "records": [
+      {
+        "name": "Oasis Senior Advisors Of Bergen County | Assisted Living",
+        "city": "Budd Lake",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 33
+      },
+      {
+        "name": "Oasis Senior Advisors Of Bergen County",
+        "city": "Lake",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 267
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.terinanicole.com",
+    "records": [
+      {
+        "name": "Fashion Design Center of South Jersey",
+        "city": "Camden",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 37
+      },
+      {
+        "name": "The Fashion Design Center of South Jersey",
+        "city": "Camden",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 45
+      },
+      {
+        "name": "The Fashion Design Center of South Jersey",
+        "city": "Camden",
+        "state": "NJ",
+        "file": "11-camden-south-jersey-deep-candidates.jsonl",
+        "line": 4
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://missfancybiscuits.com",
+    "records": [
+      {
+        "name": "Miss Fancy Biscuits LLC | Restaurants & Specialty Dining",
+        "city": "Ceanford",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 47
+      },
+      {
+        "name": "Miss Fancy Biscuits Llc Ceanford",
+        "city": "Ceanford",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 254
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.cleaningculture.com",
+    "records": [
+      {
+        "name": "Cleaning Culture LLC | Cleaning Services",
+        "city": "Cedar Grove",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 48
+      },
+      {
+        "name": "Cleaning Culture Llc Cedar Grove",
+        "city": "Grove",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 180
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.mayrabarrera.com",
+    "records": [
+      {
+        "name": "Achiever Business Consulting, LLC",
+        "city": "Clifton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 62
+      },
+      {
+        "name": "Achiever Business Consulting Llc Clifton",
+        "city": "Clifton",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 150
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.viomedspa.com/locations/clifton",
+    "records": [
+      {
+        "name": "VIO Med Spa Clifton | Salon and Spa",
+        "city": "Clifton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 64
+      },
+      {
+        "name": "Vio Med Spa Clifton Clifton",
+        "city": "Clifton",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 316
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.soldadoscoffee.com",
+    "records": [
+      {
+        "name": "Soldados Coffee | Restaurants & Specialty Dining",
+        "city": "closter",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 66
+      },
+      {
+        "name": "Soldados Coffee Closter",
+        "city": "Closter",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 297
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://ccoic.org",
+    "records": [
+      {
+        "name": "Chester County Opportunities Industrialization Centers, Inc.",
+        "city": "Coatesville",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 67
+      },
+      {
+        "name": "Chester County Opportunities Industrialization Centers, Inc. (Chester County OIC",
+        "city": "Coatesville",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 27
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.edwardjones.com/lourdes-siverio",
+    "records": [
+      {
+        "name": "Edward Jones | Financial & Investment Services",
+        "city": "Cresskill",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 77
+      },
+      {
+        "name": "Edward Jones Cresskill",
+        "city": "Cresskill",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 194
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.iri-delaware.org",
+    "records": [
+      {
+        "name": "Independent Resources, Inc. - Kent County",
+        "city": "Dover",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 89
+      },
+      {
+        "name": "Independent Resources, Inc. - Sussex County",
+        "city": "Milford",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 256
+      },
+      {
+        "name": "Independent Resources, Inc. - New Castle County",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 679
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.themexiboys.com",
+    "records": [
+      {
+        "name": "The mexi Boys | Restaurants",
+        "city": "east brunswick",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 102
+      },
+      {
+        "name": "The Mexi Boys East Brunswick",
+        "city": "Brunswick",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 304
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.thaimexstation.com",
+    "records": [
+      {
+        "name": "Cake and David LLC | Restaurants",
+        "city": "East Rutherford",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 104
+      },
+      {
+        "name": "Cake And David Llc",
+        "city": "Rutherford",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 174
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.sergiotobon.com",
+    "records": [
+      {
+        "name": "Sergio Tobon | Salon and Spa",
+        "city": "Edgewater",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 108
+      },
+      {
+        "name": "Sergio Tobon",
+        "city": "Edgewater,",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 295
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.maxielrubel.com",
+    "records": [
+      {
+        "name": "Belle Studio by Maxiel Rubel LLC | Beauty Salons/Spas",
+        "city": "Edison",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 109
+      },
+      {
+        "name": "Belle Studio By Maxiel Rubel Llc Edison",
+        "city": "Edison",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 167
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://cfbnj.org",
+    "records": [
+      {
+        "name": "Community FoodBank of New Jersey - Egg Harbor Township",
+        "city": "Egg Harbor Township",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 110
+      },
+      {
+        "name": "Garfield Unity Pantry",
+        "city": "Garfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 134
+      },
+      {
+        "name": "Community FoodBank of New Jersey - Hillside Headquarters",
+        "city": "Hillside",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 166
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://rocohealthgroup.com",
+    "records": [
+      {
+        "name": "Roco Health Group",
+        "city": "Egg Harbor Township",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 111
+      },
+      {
+        "name": "Roco Health Group Egg Harbor Township",
+        "city": "Township",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 287
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.davidrosegifts.com",
+    "records": [
+      {
+        "name": "David Rose LLC | Florists",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 112
+      },
+      {
+        "name": "David Rose Llc Elizabeth",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 188
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://foodwayusa.com",
+    "records": [
+      {
+        "name": "Foodway LLC | Distribution",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 113
+      },
+      {
+        "name": "Foodway Llc Elizabeth",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 204
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://lienascakes.com",
+    "records": [
+      {
+        "name": "Lienas Group Cakes and Gifts Corp | Restaurants",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 114
+      },
+      {
+        "name": "Lienas Group Cakes And Gifts Corp Elizabeth",
+        "city": "Elizabeth",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 236
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://lestheticmedspa.com",
+    "records": [
+      {
+        "name": "Spa médico | Beauty Salons/Spas | Salon and Spa",
+        "city": "Fort lee",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 129
+      },
+      {
+        "name": "Spa Médico Fort Lee",
+        "city": "Lee",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 298
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.davilaconstructionservices.com",
+    "records": [
+      {
+        "name": "Davila Construction Services | Consulting Services",
+        "city": "Fort Lee",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 130
+      },
+      {
+        "name": "Davila Construction Services",
+        "city": "Lee",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 189
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://rumbacafeleonia.com",
+    "records": [
+      {
+        "name": "Rumba Cafe | Restaurants",
+        "city": "Fort Lee",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 131
+      },
+      {
+        "name": "Rumba Cafe Fort Lee",
+        "city": "Lee",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 290
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.bravolatinmedia.com",
+    "records": [
+      {
+        "name": "Bravo Latin Media LLC | Advertising/Promotions",
+        "city": "Hamilton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 153
+      },
+      {
+        "name": "Bravo Latin Media Llc Hamilton",
+        "city": "Hamilton",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 172
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.caidosdelcielobakery.com",
+    "records": [
+      {
+        "name": "Caidos del Cielo Bakery | Bakery and Cafe",
+        "city": "Hoboken",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 168
+      },
+      {
+        "name": "Caidos Del Cielo Bakery Hoboken",
+        "city": "Hoboken",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 173
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.educationalartsteam.org",
+    "records": [
+      {
+        "name": "Educational Arts Team | Education",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 179
+      },
+      {
+        "name": "Educational Arts Team",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 193
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.evolverenj.org",
+    "records": [
+      {
+        "name": "Evolvere Consulting | Consultants",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 180
+      },
+      {
+        "name": "Evolvere Consulting Jersey City",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 199
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://hudsonedc.org",
+    "records": [
+      {
+        "name": "Hudson County Economic Development Corporation | Community Organizations | Financial & Investment Services | Education | Personal Services",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 183
+      },
+      {
+        "name": "Hudson County Economic Development Corporation",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 221
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://noviaminc.com",
+    "records": [
+      {
+        "name": "Noviam Inc | Consulting Services",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 184
+      },
+      {
+        "name": "Noviam Inc",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 266
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.paralegalservices4u.com",
+    "records": [
+      {
+        "name": "Paralegal Services 4U",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 185
+      },
+      {
+        "name": "Paralegal Services 4U Jersey City",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 270
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.pichardocoaching.com",
+    "records": [
+      {
+        "name": "Pichardo Coaching | Consulting Services",
+        "city": "Jersey City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 186
+      },
+      {
+        "name": "Pichardo Coaching",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 272
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.pmarrerobs.com",
+    "records": [
+      {
+        "name": "PMarrero Business Solutions | Consulting Services | Business Strategies | Consultants",
+        "city": "Keasbey",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 192
+      },
+      {
+        "name": "Pmarrero Business Solutions Keasbey",
+        "city": "Keasbey",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 274
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://quevivalamusic.com",
+    "records": [
+      {
+        "name": "Que Viva La Music | Entertainment",
+        "city": "Lawrenceville",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 205
+      },
+      {
+        "name": "Que Viva La Music Lawrenceville",
+        "city": "Lawrenceville",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 283
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://delcf.org",
+    "records": [
+      {
+        "name": "Delaware Community Foundation - Lewes Office",
+        "city": "Lewes",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 206
+      },
+      {
+        "name": "Delaware Community Foundation - Wilmington Office",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 655
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.procutzschoolofbarbering.com",
+    "records": [
+      {
+        "name": "Pro Cuts",
+        "city": "Lewes",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 208
+      },
+      {
+        "name": "Pro Cutz",
+        "city": "Lewes",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 209
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://allegrapartyrentals.com",
+    "records": [
+      {
+        "name": "Allegra party rentals & design",
+        "city": "Lincroft",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 210
+      },
+      {
+        "name": "Allegra Party Rentals Design Lincroft",
+        "city": "Lincroft",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 153
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://mylittlepreschoolnj.com",
+    "records": [
+      {
+        "name": "My Little Preschool | Education",
+        "city": "Little falls",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 213
+      },
+      {
+        "name": "My Little Preschool",
+        "city": "Falls",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 258
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://elespecialitomk.com",
+    "records": [
+      {
+        "name": "El Especialito (agent) | Holistic Health",
+        "city": "Little Ferry",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 214
+      },
+      {
+        "name": "El Especialito Agent",
+        "city": "Ferry",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 195
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://njhhs.org",
+    "records": [
+      {
+        "name": "HEAVENLYHEALINGSOAPS LLC | Health care | Health Technology",
+        "city": "Long Branch",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 217
+      },
+      {
+        "name": "Heavenlyhealingsoaps Llc Long Branch",
+        "city": "Branch",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 218
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.areagasolutions.com",
+    "records": [
+      {
+        "name": "Areaga Chemicals LLC | Personal Services",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 218
+      },
+      {
+        "name": "Areaga Chemicals Llc Lyndhurst",
+        "city": "Lyndhurst",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 161
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.sercuidado.com",
+    "records": [
+      {
+        "name": "SerCuidado Academy LLC | Education | Academ/Educational Trainings Programs",
+        "city": "MILLSTONE TWP",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 261
+      },
+      {
+        "name": "Sercuidado Academy Llc Millstone Twp",
+        "city": "Twp",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 294
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://centraltaqueria.com",
+    "records": [
+      {
+        "name": "Central Taqueria Corp",
+        "city": "Morris Plains",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 263
+      },
+      {
+        "name": "Central Taqueria Corp Morris Plains",
+        "city": "Plains",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 178
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.thelatincenter.org",
+    "records": [
+      {
+        "name": "La Fiesta III Early Learning Center",
+        "city": "New Castle",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 283
+      },
+      {
+        "name": "La Fiesta II Infant and Toddler Center",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 686
+      },
+      {
+        "name": "Latin American Community Center - Main Building",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 689
+      },
+      {
+        "name": "Latin American Community Center - Manuelita Olson Building",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 690
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://dehistory.org",
+    "records": [
+      {
+        "name": "Read House & Gardens",
+        "city": "New Castle",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 285
+      },
+      {
+        "name": "Delaware History Museum",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 656
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.gendoorsonline.com",
+    "records": [
+      {
+        "name": "General Doors & Remodeling, LLC DBA GenDoors | Contractors",
+        "city": "New Jersey",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 287
+      },
+      {
+        "name": "General Doors Remodeling Llc Dba Gendoors",
+        "city": "Jersey",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 208
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://x-plortravel.com",
+    "records": [
+      {
+        "name": "XPLOR TRAVEL & MULTISERVICES LLC | Travel Agencies",
+        "city": "New Jersey",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 288
+      },
+      {
+        "name": "Xplor Travel Multiservices Llc",
+        "city": "Jersey",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 322
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://nikishaking.com",
+    "records": [
+      {
+        "name": "NK Business Essentials | Consulting Services",
+        "city": "New Providence",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 290
+      },
+      {
+        "name": "Nk Business Essentials",
+        "city": "Providence",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 264
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.glitzngarlands.com",
+    "records": [
+      {
+        "name": "GlitznGarlands",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 304
+      },
+      {
+        "name": "Glitzngarlands Newark",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 211
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://https//www.pseg.com",
+    "records": [
+      {
+        "name": "PSEG | Personal Services",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 317
+      },
+      {
+        "name": "Pseg Newark",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 282
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://asbestoscontrolprofessional.com",
+    "records": [
+      {
+        "name": "Asbestos Control Professional LLC | Contractors",
+        "city": "NEWARK",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 327
+      },
+      {
+        "name": "Asbestos Control Professional Llc Newark",
+        "city": "Newark",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 162
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://hudpost.com",
+    "records": [
+      {
+        "name": "HudPost | Online Media",
+        "city": "North Bergen",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 338
+      },
+      {
+        "name": "Hudpost",
+        "city": "Bergen",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 220
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://centraljerseydentist.com",
+    "records": [
+      {
+        "name": "Cedar Dental LLC | Dental",
+        "city": "North Plainfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 344
+      },
+      {
+        "name": "Cedar Dental Llc North Plainfield",
+        "city": "Plainfield",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 177
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.taqueriarendonnj.com",
+    "records": [
+      {
+        "name": "Taqueria Rendon LLC/Empanada Xpress | Food & Beverage/Catering | Food Truck",
+        "city": "Northfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 346
+      },
+      {
+        "name": "Taqueria Rendon Llc Empanada Xpress Northfield",
+        "city": "Northfield",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 300
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://xn--mayordomafinancierabblica-hlcm.com",
+    "records": [
+      {
+        "name": "B&A Consulting Firm LLC | Consultants",
+        "city": "Nutley",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 348
+      },
+      {
+        "name": "B A Consulting Firm Llc Nutley",
+        "city": "Nutley",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 164
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://1mrshine.com",
+    "records": [
+      {
+        "name": "Mr Shine Cleaning & Painting Service inc | Cleaning Services",
+        "city": "Ocean City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 352
+      },
+      {
+        "name": "Mr Shine Cleaning Painting Service Inc",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 256
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://tasteofthecaribbeanfoodmarket.com",
+    "records": [
+      {
+        "name": "Triple C - 3c DBA Taste of the Caribbean Food Market | Restaurants | Restaurants & Specialty Dining",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 356
+      },
+      {
+        "name": "Triple C 3C Dba Taste Of The Caribbean Food Market Orange",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 311
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.lincolntech.edu",
+    "records": [
+      {
+        "name": "Lincoln Technical Institute | Education",
+        "city": "Parsippany",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 362
+      },
+      {
+        "name": "Lincoln Technical Institute Parsippany",
+        "city": "Parsippany",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 238
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.progressrehabnj.com",
+    "records": [
+      {
+        "name": "Progress Rehab | Medical, Dental & Nursing Care",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 368
+      },
+      {
+        "name": "Progress Rehab Passaic",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 280
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.vidaltraveltours.com",
+    "records": [
+      {
+        "name": "Vidal Travel Inc.",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 371
+      },
+      {
+        "name": "Vidal Travel Inc Passaic",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 315
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://workwiseguide.com",
+    "records": [
+      {
+        "name": "Worl Wise Guide | Consulting Services",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 372
+      },
+      {
+        "name": "Worl Wise Guide Passaic",
+        "city": "Passaic",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 321
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://mexicomagicoinc.com",
+    "records": [
+      {
+        "name": "Mexico Magico Inc | Accountants | Tax Preperation",
+        "city": "Passic",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 373
+      },
+      {
+        "name": "Mexico Magico Inc Passic",
+        "city": "Passic",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 250
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.saboramitierra26.com",
+    "records": [
+      {
+        "name": "Sazonador Clary, Sabor a mi tierra LLC",
+        "city": "Paterson",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 377
+      },
+      {
+        "name": "Sazonador Clary Sabor A Mi Tierra Llc Paterson",
+        "city": "Paterson",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 292
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.la-unica.net",
+    "records": [
+      {
+        "name": "La Unica Mexican Eatery | Food & Beverage/Catering",
+        "city": "Pennington Borough",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 380
+      },
+      {
+        "name": "La Unica Mexican Eatery Pennington Borough",
+        "city": "Borough",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 230
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://mirandas-daycare.square.site",
+    "records": [
+      {
+        "name": "Miranda's Daycare, LLC | Childcare",
+        "city": "Pennsauken Township",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 384
+      },
+      {
+        "name": "Miranda S Daycare Llc",
+        "city": "Township",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 252
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://weddingsbymaritzas.com",
+    "records": [
+      {
+        "name": "Weddings by Maritza’s | Florists",
+        "city": "Perth Amboy",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 386
+      },
+      {
+        "name": "Weddings By Maritza S",
+        "city": "Amboy",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 318
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.aampmuseum.org",
+    "records": [
+      {
+        "name": "African American Museum in Philadelphia",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 391
+      },
+      {
+        "name": "African American Museum of Philadelphia",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 6
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://allthewaylivecafe.com",
+    "records": [
+      {
+        "name": "All The Way Live Cafe",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 394
+      },
+      {
+        "name": "All the Way Live",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "21-phila-oed-diverse-business-candidates.jsonl",
+        "line": 12
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.amadarestaurant.com",
+    "records": [
+      {
+        "name": "Amada Philadelphia",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 396
+      },
+      {
+        "name": "Amada",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 446
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.blackandnobel.com",
+    "records": [
+      {
+        "name": "Black and Nobel",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 408
+      },
+      {
+        "name": "Black & Nobel Bookstore",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 544
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.cristoreyphiladelphia.org",
+    "records": [
+      {
+        "name": "Cristo Rey Philadelphia High School",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 416
+      },
+      {
+        "name": "Cristo Rey Philadelphia High School (9161)",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 24
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://hakimsbookstore.com",
+    "records": [
+      {
+        "name": "Hakim's Bookstore",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 436
+      },
+      {
+        "name": "Hakim's Bookstore & Gift Shop",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 437
+      },
+      {
+        "name": "Hakim’s Bookstore and Giftshop",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-04-phila-small-business-guides-candidates.jsonl",
+        "line": 12
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.luhvfood.com",
+    "records": [
+      {
+        "name": "LUHV Food",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 451
+      },
+      {
+        "name": "LUHV Food-Vegan Deli LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-02-gphcc-member-profiles-candidates.jsonl",
+        "line": 5
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://clefclubofjazz.org",
+    "records": [
+      {
+        "name": "Philadelphia Clef of Jazz & Performing Arts",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 461
+      },
+      {
+        "name": "The Philadelphia Clef Club of Jazz & Performing Arts",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 548
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://thebizctr.com",
+    "records": [
+      {
+        "name": "The Business Center for Entrepreneurship",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 490
+      },
+      {
+        "name": "The Business Center for Entrepreneurship (6759)",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 105
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.facebook.com/MsSweeTeas",
+    "records": [
+      {
+        "name": "Ms. Sweetea's Comfort Food and Bakery",
+        "city": "Pine Hill",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 505
+      },
+      {
+        "name": "Ms. Sweetea’s Comfort Food Cafe & Bakery",
+        "city": "Pine Hill",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 506
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://thebasie.org/membership",
+    "records": [
+      {
+        "name": "Count Basie Center for the Arts | Entertainment",
+        "city": "Red Bank",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 521
+      },
+      {
+        "name": "Count Basie Center For The Arts Red Bank 732 224 8778",
+        "city": "Bank",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 184
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://thebarefootbridenj.com",
+    "records": [
+      {
+        "name": "The Barefoot Bride | Shop/Miscellaneous",
+        "city": "Red Bank",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 523
+      },
+      {
+        "name": "The Barefoot Bride Red Bank",
+        "city": "Bank",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 302
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.facebook.com/p/First-state-corn-more-100067750864532",
+    "records": [
+      {
+        "name": "First State Corn & More",
+        "city": "Rehoboth Beach",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 524
+      },
+      {
+        "name": "First State Corn",
+        "city": "Rehoboth Beach",
+        "state": "DE",
+        "file": "15-delaware-black-chambers-deep-candidates.jsonl",
+        "line": 21
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.enattl.com",
+    "records": [
+      {
+        "name": "Enat Transportation & Logistics | Transportation",
+        "city": "Ridgefield Park",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 529
+      },
+      {
+        "name": "Enat Transportation Logistics Ridgefield Park",
+        "city": "Park",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 196
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://dynamicsmultilingual.com",
+    "records": [
+      {
+        "name": "Dynamics Multilingual Services INC | Translations Services | Personal Services",
+        "city": "River Edge",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 532
+      },
+      {
+        "name": "Dynamics Multilingual Services Inc River Edge",
+        "city": "Edge",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 192
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://csglaw.com",
+    "records": [
+      {
+        "name": "CSG Law | Attorneys",
+        "city": "Roseland",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 533
+      },
+      {
+        "name": "Csg Law Roseland",
+        "city": "Roseland",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 185
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://mindingthemess.com",
+    "records": [
+      {
+        "name": "Minding the Mess | Personal Services",
+        "city": "Roselle Park",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 537
+      },
+      {
+        "name": "Minding The Mess Roselle Park",
+        "city": "Park",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 251
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://mydigitalcard.club/pablo-mendez",
+    "records": [
+      {
+        "name": "MP POOL AND SPA LLC | Salon and Spa",
+        "city": "Roselle Park",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 538
+      },
+      {
+        "name": "Mp Pool And Spa Llc Roselle Park",
+        "city": "Park",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 255
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.rootedinjoy.net",
+    "records": [
+      {
+        "name": "Rooted in Joy LLC | Individual & Family Services",
+        "city": "Rutherford",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 541
+      },
+      {
+        "name": "Rooted In Joy Llc Rutherford",
+        "city": "Rutherford",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 289
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.zbcouture.com",
+    "records": [
+      {
+        "name": "ZB Couture",
+        "city": "Scotch Plains",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 542
+      },
+      {
+        "name": "Zb Couture Scotch Plains",
+        "city": "Plains",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 323
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.losradio.com",
+    "records": [
+      {
+        "name": "Los Radio Plus | Press/Publications/Radio",
+        "city": "Secaucus",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 543
+      },
+      {
+        "name": "Los Radio Plus Secaucus",
+        "city": "Secaucus",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 240
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.lcmcleaningservicescorp.com",
+    "records": [
+      {
+        "name": "LCM Cleaning Services Corporation | Cleaning Services",
+        "city": "South Plainfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 563
+      },
+      {
+        "name": "Lcm Cleaning Services Corporation",
+        "city": "Plainfield",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 233
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://https//google.com",
+    "records": [
+      {
+        "name": "Rodriguez and Roscoe LLC | Grocery Stores | Personal Services",
+        "city": "South Plainfield",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 564
+      },
+      {
+        "name": "Rodriguez And Roscoe Llc South Plainfield",
+        "city": "Plainfield",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 288
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.reliancenj.com",
+    "records": [
+      {
+        "name": "Reliance Electronics Inc",
+        "city": "Totowa",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 580
+      },
+      {
+        "name": "Reliance Electronics Inc Totowa",
+        "city": "Totowa",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 285
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.njstatelib.org",
+    "records": [
+      {
+        "name": "New Jersey State Library",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 582
+      },
+      {
+        "name": "New Jersey State Library Talking Book and Braille Center",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 583
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://holamusica.com",
+    "records": [
+      {
+        "name": "The Voice Radio network New Jersey/Radio Maxima 92.9fm y La Raza 98.5fm | Digital & Social Media/Marketing & Communications",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 587
+      },
+      {
+        "name": "The Voice Radio Network New Jersey Radio Maxima 92 9Fm Y La Raza 98 5Fm Trenton",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 306
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.tesu.edu",
+    "records": [
+      {
+        "name": "Thomas Edison State University | Education | Academ/Educational Trainings Programs",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 588
+      },
+      {
+        "name": "Thomas Edison State University Trenton",
+        "city": "Trenton",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 307
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.goosehead.com/agents/nj/union-city/edward-t-mauricio",
+    "records": [
+      {
+        "name": "Goosehead Insurance - The Mauricio Agency | Insurance",
+        "city": "Union City",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 594
+      },
+      {
+        "name": "Goosehead Insurance The Mauricio Agency",
+        "city": "City",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 213
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://girlsautoclinic.com",
+    "records": [
+      {
+        "name": "Girls Auto Clinic Repair Center",
+        "city": "Upper Darby",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 598
+      },
+      {
+        "name": "Girls Auto Clinic & Clutch Beauty Bar",
+        "city": "Upper Darby",
+        "state": "PA",
+        "file": "03-12-phila-suburb-delco-deep-candidates.jsonl",
+        "line": 8
+      },
+      {
+        "name": "Girls Auto Clinic",
+        "city": "Upper Darby",
+        "state": "PA",
+        "file": "07-delaware-county-mainline-candidates.jsonl",
+        "line": 7
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.allegianceinsurancebrokers.com",
+    "records": [
+      {
+        "name": "Allegiance Insurance Brokers LLC | Insurance",
+        "city": "Upper Montclair",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 600
+      },
+      {
+        "name": "Allegiance Insurance Brokers Llc",
+        "city": "Montclair",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 152
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://manasquan.bank",
+    "records": [
+      {
+        "name": "Manasquan Bank | Banks & Credit Unions",
+        "city": "Wall Township",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 604
+      },
+      {
+        "name": "Manasquan Bank",
+        "city": "Township",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 242
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://margfinancial.com",
+    "records": [
+      {
+        "name": "MARGfinancial | Financial & Investment Services",
+        "city": "Wall Township",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 605
+      },
+      {
+        "name": "Margfinancial",
+        "city": "Township",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 243
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.cpasurvey.com",
+    "records": [
+      {
+        "name": "Control Point Associates Inc. | Engineering",
+        "city": "Warren",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 609
+      },
+      {
+        "name": "Control Point Associates Inc Warren",
+        "city": "Warren",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 183
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.farmerjawnphilly.com",
+    "records": [
+      {
+        "name": "FarmerJawn Agriculture",
+        "city": "West Chester",
+        "state": "PA",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 615
+      },
+      {
+        "name": "FarmerJawn Produce & Kitchen",
+        "city": "West Chester",
+        "state": "PA",
+        "file": "03-20-phila-directories-discovery-candidates.jsonl",
+        "line": 11
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://searchquestinvestigation.com",
+    "records": [
+      {
+        "name": "Search Quest Investigations | Legal Services",
+        "city": "West Mildford",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 616
+      },
+      {
+        "name": "Search Quest Investigations",
+        "city": "Mildford",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 293
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.popularcommunitybank.com",
+    "records": [
+      {
+        "name": "Popular Bank | Banks & Credit Unions",
+        "city": "West New York",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 619
+      },
+      {
+        "name": "Popular Bank West New York",
+        "city": "York",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 276
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.ginarivasdesigns.com",
+    "records": [
+      {
+        "name": "Gina Rivas Design launches Kitz Connect Inc.",
+        "city": "West Orange",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 623
+      },
+      {
+        "name": "Gina Rivas Design Launches Kitz Connect Inc West Orange",
+        "city": "Orange",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 209
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.facebook.com/handcautocareDE",
+    "records": [
+      {
+        "name": "HyC AutoCare",
+        "city": "Willmington",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 631
+      },
+      {
+        "name": "H and C Auto Care llc",
+        "city": "Wilmington,",
+        "state": "DE",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 725
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://thebloomsocialclub.com",
+    "records": [
+      {
+        "name": "Bloom Social Club | Event Planning",
+        "city": "Wood-Ridge",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 726
+      },
+      {
+        "name": "Bloom Social Club Wood Ridge",
+        "city": "Wood-Ridge",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 171
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://equitable.com",
+    "records": [
+      {
+        "name": "Equitable Advisors | Consultants | Business Strategies | Consulting Services | Financial & Investment Services | Insurance",
+        "city": "Woodbridge",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 727
+      },
+      {
+        "name": "Equitable Advisors Woodbridge 201 898 9997",
+        "city": "Woodbridge",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 197
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://circleofcarecmo.org",
+    "records": [
+      {
+        "name": "The Circle of Care for Families and Children of Passaic County Inc | Health care",
+        "city": "Woodland Park",
+        "state": "NJ",
+        "file": "00-first-tri-state-review-candidates.jsonl",
+        "line": 728
+      },
+      {
+        "name": "The Circle Of Care For Families And Children Of Passaic County Inc",
+        "city": "Park",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 303
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.puyeroflavor.com",
+    "records": [
+      {
+        "name": "Puyero Venezuelan Flavor",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "02-phila-hispanic-chamber-deep-candidates.jsonl",
+        "line": 3
+      },
+      {
+        "name": "Puyero On Campus",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-02-gphcc-member-profiles-candidates.jsonl",
+        "line": 2
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.eatibledelghtscatering.com",
+    "records": [
+      {
+        "name": "Eatible Delights Catering",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-01-aachamber-categories-candidates.jsonl",
+        "line": 6
+      },
+      {
+        "name": "Eatible Delights Catering (8019)",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 42
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.hhwhllc.com",
+    "records": [
+      {
+        "name": "Helping Hands Warming Hearts",
+        "city": "Bala Cynwyd",
+        "state": "PA",
+        "file": "03-01-aachamber-categories-candidates.jsonl",
+        "line": 22
+      },
+      {
+        "name": "Helping Hands Warming Hearts (8933)",
+        "city": "Bala Cynwyd",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 60
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://philadelphiaprintworks.com",
+    "records": [
+      {
+        "name": "Philadelphia Print Works",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-04-phila-small-business-guides-candidates.jsonl",
+        "line": 4
+      },
+      {
+        "name": "Philadelphia Printworks",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-19-phila-online-businesses-deep-candidates.jsonl",
+        "line": 7
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.shopyowie.com",
+    "records": [
+      {
+        "name": "Yowie",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-04-phila-small-business-guides-candidates.jsonl",
+        "line": 7
+      },
+      {
+        "name": "YOWIE Hotel & Shop",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-08-south-philadelphia-businesses-candidates.jsonl",
+        "line": 1
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.philahispanicchamber.org",
+    "records": [
+      {
+        "name": "Greater Philadelphia Hispanic Chamber of Commerce",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-05-phila-latino-small-business-guides-candidates.jsonl",
+        "line": 11
+      },
+      {
+        "name": "Greater Philadelphia Hispanic Chamber of Commerce membership directory",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+        "line": 32
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://altacocinaphilly.com",
+    "records": [
+      {
+        "name": "Alta Cocina Restaurant",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-10-kensington-fishtown-businesses-candidates.jsonl",
+        "line": 9
+      },
+      {
+        "name": "Alta Cocina Restaurant & Alta Cocina Philly Food Truck",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "05-phila-latino-business-guides-candidates.jsonl",
+        "line": 22
+      },
+      {
+        "name": "Alta Cocina Philly",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "21-phila-oed-diverse-business-candidates.jsonl",
+        "line": 26
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://gatherfoodhall.com",
+    "records": [
+      {
+        "name": "Gather Food Hall",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-11-university-city-businesses-candidates.jsonl",
+        "line": 3
+      },
+      {
+        "name": "Mucho Perú",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 478
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www.thebtcsolution.com",
+    "records": [
+      {
+        "name": "BTC Envelopes & Printing",
+        "city": "Plymouth Meeting",
+        "state": "PA",
+        "file": "03-13-phila-suburb-montco-deep-candidates.jsonl",
+        "line": 2
+      },
+      {
+        "name": "BTC Envelopes & Printing LLC",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "04-01-aachamber-member-profiles-verified-candidates.jsonl",
+        "line": 14
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.cfarcounseling.org",
+    "records": [
+      {
+        "name": "Center for Families and Relationships (CFAR)",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-17-phila-everyday-services-deep-candidates.jsonl",
+        "line": 6
+      },
+      {
+        "name": "Center for Families and Relationships (CFAR) - Philadelphia Northeast",
+        "city": "Philadelphia",
+        "state": "PA",
+        "file": "03-17-phila-everyday-services-deep-candidates.jsonl",
+        "line": 11
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "http://www,comcast.com",
+    "records": [
+      {
+        "name": "Comcast",
+        "city": "Franklinville",
+        "state": "NJ",
+        "file": "04-02-shccnj-member-profiles-verified-candidates.jsonl",
+        "line": 51
+      },
+      {
+        "name": "Comcast Franklinville 1 609 680 1190",
+        "city": "Franklinville",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 181
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.instagram.com/dreamcakesnj?igsh=dTY2ZDlzZGsweDZp",
+    "records": [
+      {
+        "name": "Accomplished dreams",
+        "city": "Haledon",
+        "state": "NJ",
+        "file": "04-02-shccnj-member-profiles-verified-candidates.jsonl",
+        "line": 56
+      },
+      {
+        "name": "Accomplished Dreams Haledon",
+        "city": "Haledon",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 149
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.casolcorp.com",
+    "records": [
+      {
+        "name": "CASOL CORPORATION AND SERVICES",
+        "city": "Harrison",
+        "state": "NJ",
+        "file": "04-02-shccnj-member-profiles-verified-candidates.jsonl",
+        "line": 60
+      },
+      {
+        "name": "Casol Corporation And Services Harrison",
+        "city": "Harrison",
+        "state": "NJ",
+        "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+        "line": 175
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://el-pique.com",
+    "records": [
+      {
+        "name": "El Pique - Wilmington",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "16-delaware-hispanic-deep-candidates.jsonl",
+        "line": 6
+      },
+      {
+        "name": "El Pique - Newark",
+        "city": "Newark",
+        "state": "DE",
+        "file": "16-delaware-hispanic-deep-candidates.jsonl",
+        "line": 7
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]
