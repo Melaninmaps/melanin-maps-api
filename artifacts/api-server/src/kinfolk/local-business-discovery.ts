@@ -59,6 +59,7 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   phone: string | null;
   verified: boolean;
   claimed: boolean;
+  isOnlineOnly?: boolean;
   matchReasons: string[];
   provenance: "mwm_public_business";
 }>;
@@ -103,6 +104,7 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
       detailUrl: string;
       verified: boolean;
       claimed: boolean;
+      isOnlineOnly: boolean;
       matchReasons: string[];
     }>;
     neighborhoods: [];
@@ -208,6 +210,7 @@ function platformBusiness(
     phone: business.phone,
     verified: business.verified,
     claimed: business.claimed,
+    isOnlineOnly: business.isOnlineOnly === true,
     matchReasons:
       "matchReasons" in business && Array.isArray(business.matchReasons)
         ? business.matchReasons.filter(
@@ -570,6 +573,7 @@ export async function discoverLocalBusinesses(input: {
               detailUrl: business.detailUrl,
               verified: business.verified,
               claimed: business.claimed,
+              isOnlineOnly: business.isOnlineOnly === true,
               matchReasons: business.matchReasons,
             })),
             neighborhoods: [],

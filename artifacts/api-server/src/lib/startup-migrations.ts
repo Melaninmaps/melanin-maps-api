@@ -155,13 +155,14 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         batch_id UUID NOT NULL REFERENCES directory_import_batches(id) ON DELETE RESTRICT,
         source_row INTEGER NOT NULL,
         target_kind TEXT NOT NULL
-          CHECK (target_kind IN ('business','community_resource','regulated_review','manual_review','internal_only')),
+          CHECK (target_kind IN ('business','online_business','community_resource','regulated_review','manual_review','internal_only')),
         status TEXT NOT NULL DEFAULT 'pending_review'
           CHECK (status IN ('pending_review','needs_research','declined','approved','published')),
         dedupe_key TEXT NOT NULL,
         name TEXT NOT NULL,
         city TEXT NOT NULL,
         state TEXT NOT NULL,
+        country TEXT NOT NULL DEFAULT 'United States',
         category TEXT NOT NULL,
         subcategory TEXT,
         cultural_specialty TEXT,
@@ -317,6 +318,32 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         )) NOT VALID;
       ALTER TABLE directory_import_candidates
         VALIDATE CONSTRAINT directory_import_candidates_target_kind_check;
+    `,
+  },
+  {
+    name: "allow_online_only_directory_businesses_v1",
+    sql: `
+      -- Online shops/services are searchable listings, not physical locations.
+      -- Keeping the distinction in the staging target prevents a fabricated
+      -- address or map pin from being used merely to satisfy legacy columns.
+      ALTER TABLE directory_import_candidates
+        ADD COLUMN IF NOT EXISTS country TEXT NOT NULL DEFAULT 'United States';
+      ALTER TABLE directory_import_candidates
+        DROP CONSTRAINT IF EXISTS directory_import_candidates_target_kind_check;
+      ALTER TABLE directory_import_candidates
+        ADD CONSTRAINT directory_import_candidates_target_kind_check
+        CHECK (target_kind IN (
+          'business', 'online_business', 'community_resource', 'cultural_place',
+          'regulated_review', 'manual_review', 'internal_only'
+        )) NOT VALID;
+      ALTER TABLE directory_import_candidates
+        VALIDATE CONSTRAINT directory_import_candidates_target_kind_check;
+
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS is_online_only BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE businesses ALTER COLUMN address DROP NOT NULL;
+      ALTER TABLE businesses ALTER COLUMN latitude DROP NOT NULL;
+      ALTER TABLE businesses ALTER COLUMN longitude DROP NOT NULL;
     `,
   },
   {

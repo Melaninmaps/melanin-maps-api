@@ -23,6 +23,7 @@ const EXPECTED_LINK_SHA256 = "bdeb98fb8044863d550c7cc9f6feae9c54f2d23fe4ab090fcd
 const PINNED_LINK_CHECKED_AT = "2026-09-04T00:00:00.000Z";
 const ALLOWED_TARGETS = new Set([
   "business",
+  "online_business",
   "community_resource",
   "regulated_review",
   "manual_review",

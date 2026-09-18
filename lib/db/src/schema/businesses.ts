@@ -7,10 +7,14 @@ export const businessesTable = pgTable("businesses", {
   name: varchar("name", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   subcategory: varchar("subcategory", { length: 100 }).notNull(),
-  address: varchar("address", { length: 255 }).notNull(),
+  // Physical listings retain a verified street address and coordinates. A
+  // legitimate online-only business is discoverable by its actual service and
+  // official destination, but must not be assigned a fabricated address/pin.
+  address: varchar("address", { length: 255 }),
   city: varchar("city", { length: 100 }).notNull(),
   state: varchar("state", { length: 50 }),
   country: varchar("country", { length: 100 }),
+  isOnlineOnly: boolean("is_online_only").notNull().default(false),
   province: varchar("province", { length: 100 }),
   listingStatus: varchar("listing_status", { length: 30 }),
   ownerClaimStatus: varchar("owner_claim_status", { length: 30 }),
@@ -30,8 +34,8 @@ export const businessesTable = pgTable("businesses", {
   wouldReturnAlone: integer("would_return_alone"),
   recommendationRate: integer("recommendation_rate"),
   description: text("description").notNull(),
-  latitude: numeric("latitude", { precision: 10, scale: 7 }).notNull(),
-  longitude: numeric("longitude", { precision: 10, scale: 7 }).notNull(),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
   vibes: jsonb("vibes").$type<string[]>().notNull().default([]),
   reviews: jsonb("reviews").$type<Review[]>().notNull().default([]),

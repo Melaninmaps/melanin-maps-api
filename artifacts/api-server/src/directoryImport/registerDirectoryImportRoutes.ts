@@ -41,6 +41,7 @@ type CandidateStatus =
   | "published";
 type CandidateTargetKind =
   | "business"
+  | "online_business"
   | "community_resource"
   | "cultural_place"
   | "regulated_review"
@@ -77,6 +78,7 @@ export interface DirectoryImportCandidate {
   name: string;
   city: string;
   state: string | null;
+  country: string | null;
   category: string;
   subcategory: string | null;
   cultural_specialty: string | null;
@@ -185,7 +187,7 @@ class RouteError extends Error {
 
 const CANDIDATE_COLUMNS = `
   id, batch_id, source_row, target_kind, status, dedupe_key, name, city, state,
-  category, subcategory, cultural_specialty, address, phone, website, source_url,
+  country, category, subcategory, cultural_specialty, address, phone, website, source_url,
   source_name, source_status, ownership_designations, ownership_evidence,
   regulated_profession, public_display_recommendation, instagram_url, facebook_url,
   tiktok_url, social_source_url, price_range, price_basis, suggested_experience_keys,
@@ -203,6 +205,7 @@ const VALID_STATUSES = new Set<CandidateStatus>([
 ]);
 const VALID_TARGET_KINDS = new Set<CandidateTargetKind>([
   "business",
+  "online_business",
   "community_resource",
   "cultural_place",
   "regulated_review",
@@ -1115,9 +1118,16 @@ function memberFacingLink(
   body: DecisionBody,
 ): string | null {
   const override = safeHttpUrl(body.memberFacingUrl);
-  const acceptedWebsite = freshAcceptedLink(candidate, "website");
-  if (override && override === acceptedWebsite) return override;
-  return acceptedWebsite;
+  const acceptedDestination =
+    candidate.target_kind === "online_business"
+      ? freshAcceptedLink(candidate, "website") ??
+        freshAcceptedLink(candidate, "instagram") ??
+        freshAcceptedLink(candidate, "facebook") ??
+        freshAcceptedLink(candidate, "tiktok") ??
+        freshAcceptedLink(candidate, "socialSource")
+      : freshAcceptedLink(candidate, "website");
+  if (override && override === acceptedDestination) return override;
+  return acceptedDestination;
 }
 
 function buildReviewEvidence(
@@ -1165,6 +1175,12 @@ export function evaluatePublicationHolds(
   const rawMemberFacingUrl = asTrimmedString(body.memberFacingUrl, 2_000);
   const overrideUrl = safeHttpUrl(body.memberFacingUrl);
   const acceptedCandidateWebsite = freshAcceptedLink(candidate, "website");
+  const acceptedOnlineDestination =
+    acceptedCandidateWebsite ??
+    freshAcceptedLink(candidate, "instagram") ??
+    freshAcceptedLink(candidate, "facebook") ??
+    freshAcceptedLink(candidate, "tiktok") ??
+    freshAcceptedLink(candidate, "socialSource");
   const resourceEvidence = parseResourceEvidence(
     body.resourceEvidence,
     candidate.id,
@@ -1205,12 +1221,24 @@ export function evaluatePublicationHolds(
   } else if (
     body.action !== "link_existing" &&
     overrideUrl &&
-    (candidate.target_kind === "community_resource"
-      ? overrideUrl !== resourceEvidence?.sourceUrl
-      : overrideUrl !== acceptedCandidateWebsite)
+    overrideUrl !==
+      (candidate.target_kind === "community_resource"
+        ? resourceEvidence?.sourceUrl
+        : candidate.target_kind === "online_business"
+          ? acceptedOnlineDestination
+          : acceptedCandidateWebsite)
   ) {
     holds.push(
       "A member-facing link must match fresh successful link evidence (or the reviewed current resource source).",
+    );
+  }
+  if (
+    body.action !== "link_existing" &&
+    candidate.target_kind === "online_business" &&
+    !acceptedOnlineDestination
+  ) {
+    holds.push(
+      "An online business requires a fresh, successful official website or official social destination.",
     );
   }
   if (
@@ -1259,8 +1287,17 @@ export function evaluatePublicationHolds(
 function isBusinessTarget(candidate: DirectoryImportCandidate): boolean {
   return (
     candidate.target_kind === "business" ||
+    candidate.target_kind === "online_business" ||
     candidate.target_kind === "regulated_review"
   );
+}
+
+function isOnlineBusinessTarget(candidate: DirectoryImportCandidate): boolean {
+  return candidate.target_kind === "online_business";
+}
+
+function isPhysicalBusinessTarget(candidate: DirectoryImportCandidate): boolean {
+  return isBusinessTarget(candidate) && !isOnlineBusinessTarget(candidate);
 }
 
 function resourceCanonicalKey(candidate: DirectoryImportCandidate): string {
@@ -1501,7 +1538,7 @@ async function publishBusiness(
     );
   }
 
-  if (!coordinates) {
+  if (isPhysicalBusinessTarget(candidate) && !coordinates) {
     throw new RouteError(
       409,
       "LOCATION_EVIDENCE_REQUIRED",
@@ -1585,11 +1622,11 @@ async function publishBusiness(
   ];
   const description =
     enrichment.description ??
-    `Founder-curated, unclaimed ${candidate.subcategory ?? canonicalCategory} listing in ${candidate.city}. Not verified by Mapping With Melanin.`;
+    `Founder-curated, unclaimed ${candidate.subcategory ?? canonicalCategory} listing${isOnlineBusinessTarget(candidate) ? ` serving ${candidate.city}` : ` in ${candidate.city}`}. Not verified by Mapping With Melanin.`;
 
   await client.query(
     `INSERT INTO businesses
-       (id, name, category, subcategory, description, address, city, state, country,
+       (id, name, category, subcategory, description, address, city, state, country, is_online_only,
         postal_code, latitude, longitude, phone, website, website_domain, hours,
         price_range, tags, image_url, photos, pending_photos, videos,
         instagram, tiktok, facebook, youtube, social_profiles, source_evidence,
@@ -1600,15 +1637,15 @@ async function publishBusiness(
         normalized_name, dedupe_key, source_provider, source_record_id, published_at,
         created_at, updated_at)
      VALUES
-       ($1,$2,$3,$4,$5,$6,$7,$8,'USA',
-        NULL,$9,$10,$11,$12,$13,$14,
-        $15,$16::jsonb,NULL,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
-        $17,$18,$19,NULL,$20::jsonb,$21::jsonb,
-        $22::jsonb,'[]'::jsonb,$23,false,
+       ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+        NULL,$11,$12,$13,$14,$15,$16,
+        $17,$18::jsonb,NULL,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+        $19,$20,$21,NULL,$22::jsonb,$23::jsonb,
+        $24::jsonb,'[]'::jsonb,$25,false,
         false,false,false,'active','live_unclaimed',
         'community','community_listed','unclaimed',NULL,
-        $24,'founder_directory_import','founder_directory_import',NULL,
-        $25,$26,'founder_directory_import',$27,NOW(),
+        $26,'founder_directory_import','founder_directory_import',NULL,
+        $27,$28,'founder_directory_import',$29,NOW(),
         NOW(),NOW())`,
     [
       businessId,
@@ -1616,11 +1653,13 @@ async function publishBusiness(
       canonicalCategory,
       candidate.subcategory ?? canonicalCategory,
       description,
-      candidate.address ?? candidate.city,
+      isOnlineBusinessTarget(candidate) ? null : candidate.address,
       candidate.city,
       candidate.state,
-      String(coordinates.latitude),
-      String(coordinates.longitude),
+      candidate.country?.trim() || "United States",
+      isOnlineBusinessTarget(candidate),
+      coordinates ? String(coordinates.latitude) : null,
+      coordinates ? String(coordinates.longitude) : null,
       candidate.phone,
       website,
       websiteHost(website),
@@ -1671,22 +1710,24 @@ async function publishBusiness(
     );
   }
 
-  await client.query(
-    `INSERT INTO canonical_record_locations
-       (record_type, record_id, city_name, state_code, neighborhood_name,
-        latitude, longitude, is_primary, verified_at, created_at, updated_at)
-     VALUES ('business',$1,$2,$3,NULL,$4,$5,TRUE,NULL,NOW(),NOW())
-     ON CONFLICT (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
-     DO UPDATE SET latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
-                   is_primary = TRUE, updated_at = NOW()`,
-    [
-      businessId,
-      candidate.city.trim().toLowerCase(),
-      candidate.state?.trim().toUpperCase() ?? null,
-      coordinates.latitude,
-      coordinates.longitude,
-    ],
-  );
+  if (coordinates) {
+    await client.query(
+      `INSERT INTO canonical_record_locations
+         (record_type, record_id, city_name, state_code, neighborhood_name,
+          latitude, longitude, is_primary, verified_at, created_at, updated_at)
+       VALUES ('business',$1,$2,$3,NULL,$4,$5,TRUE,NULL,NOW(),NOW())
+       ON CONFLICT (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
+       DO UPDATE SET latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
+                     is_primary = TRUE, updated_at = NOW()`,
+      [
+        businessId,
+        candidate.city.trim().toLowerCase(),
+        candidate.state?.trim().toUpperCase() ?? null,
+        coordinates.latitude,
+        coordinates.longitude,
+      ],
+    );
+  }
 
   await client.query(
     `INSERT INTO business_review_items
@@ -1696,15 +1737,15 @@ async function publishBusiness(
      VALUES ('founder_directory_import','approved',$1,$2,$3,$4,$5,$6,$7,$8,'founder_directory_import',$9,$10)`,
     [
       candidate.name,
-      candidate.address ?? candidate.city,
+      candidate.address ?? "",
       candidate.city,
       candidate.state,
       website,
-      coordinates.latitude,
-      coordinates.longitude,
+      coordinates?.latitude ?? null,
+      coordinates?.longitude ?? null,
       canonicalCategory,
       businessId,
-      `Published from founder directory candidate ${candidate.id} by admin ${reviewerId}; unclaimed and not verified.`,
+      `Published from founder directory candidate ${candidate.id} by admin ${reviewerId}; ${isOnlineBusinessTarget(candidate) ? "online only, no map pin; " : ""}unclaimed and not verified.`,
     ],
   );
 
@@ -2296,12 +2337,12 @@ export function registerDirectoryImportRoutes(
             .json({ error: "Directory import candidate not found." });
           return;
         }
-        if (!isBusinessTarget(candidate)) {
+        if (!isPhysicalBusinessTarget(candidate)) {
           res
             .status(409)
             .json({
               error:
-                "Location suggestions are available only for business candidates.",
+                "Location suggestions are available only for physical business candidates.",
             });
           return;
         }
@@ -2427,7 +2468,7 @@ export function registerDirectoryImportRoutes(
             "Directory import candidate not found.",
           );
         let coordinates: Coordinates | null = null;
-        if (action === "publish" && isBusinessTarget(preflight)) {
+        if (action === "publish" && isPhysicalBusinessTarget(preflight)) {
           coordinates = parseLocationEvidence(
             body.locationEvidence,
             preflight,
@@ -2520,7 +2561,7 @@ export function registerDirectoryImportRoutes(
             );
           }
           if (isBusinessTarget(candidate)) {
-            if (action === "publish" && !coordinates)
+            if (action === "publish" && isPhysicalBusinessTarget(candidate) && !coordinates)
               throw new RouteError(
                 409,
                 "LOCATION_EVIDENCE_REQUIRED",
