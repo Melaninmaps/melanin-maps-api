@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { summarizeRequiredPublicationSchemaFailure } from "../startup-migrations";
+import {
+  publicationSchemaFailureLogLines,
+  summarizeRequiredPublicationSchemaFailure,
+} from "../startup-migrations";
 
 describe("required publication schema failure diagnostics", () => {
   it("preserves structural verification details without raw driver output", () => {
@@ -19,5 +22,19 @@ describe("required publication schema failure diagnostics", () => {
         new Error("password=secret DATABASE_URL=postgres://private.example"),
       ),
     ).toBe("required_publication_schema_unclassified");
+  });
+
+  it("splits verified structural fields into short safe log lines", () => {
+    const lines = publicationSchemaFailureLogLines(
+      new Error(
+        "Community publication schema verification failed: missing tables [none], columns [businesses.tags], indexes [none], malformed indexes [canonical_record_locations_unique_idx], public view [public.public_businesses], safe public function [yes], safe public view [yes], media public_url nullable [YES].",
+      ),
+    );
+
+    expect(lines).toContain("publication_schema_missing_columns=[businesses.tags]");
+    expect(lines).toContain(
+      "publication_schema_malformed_indexes=[canonical_record_locations_unique_idx]",
+    );
+    expect(lines.join("\n")).not.toMatch(/secret|database_url|postgres:/i);
   });
 });
