@@ -1,0 +1,256 @@
+{
+  "checkedAt": "2026-09-18T22:06:38.066Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-seventh-three-city-review/data/founder-imports/2026-09-18-seventh-three-city-review/review-package/seventh-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 37,
+  "uniqueDestinations": 40,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 40,
+  "counts": {
+    "reachable": 37,
+    "review_required": 2,
+    "timeout": 1
+  },
+  "results": [
+    {
+      "url": "https://allmixdupaz.com/",
+      "status": 200,
+      "finalUrl": "https://allmixdupaz.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bawmhc.org/",
+      "status": 200,
+      "finalUrl": "https://www.bawmhc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://centrosanjuandiego.org/en/",
+      "status": 200,
+      "finalUrl": "https://centrosanjuandiego.org/en/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caccenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.caccenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cbcc.biz/",
+      "status": 200,
+      "finalUrl": "https://cbcc.biz/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/pages/Hispanic-Chamber-of-Commerce-of-Metro-Denver/113456572008467",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/cohispanic/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Human-Rights-Community-Partnerships/Commissions-Advisory-Board/Latino-Commission",
+      "status": 200,
+      "finalUrl": "https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Human-Rights-Community-Partnerships/Commissions-Advisory-Board/Latino-Commission",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://micasaresourcecenter.org/",
+      "status": 200,
+      "finalUrl": "https://micasaresourcecenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://micasaresourcecenter.org/our-values/",
+      "status": 200,
+      "finalUrl": "https://micasaresourcecenter.org/our-values/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mykingsicecream.com/",
+      "status": 200,
+      "finalUrl": "https://mykingsicecream.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://newsed.org/",
+      "status": 200,
+      "finalUrl": "https://newsed.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://serviciosdelaraza.org/",
+      "status": 200,
+      "finalUrl": "https://serviciosdelaraza.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://suteatro.org/",
+      "status": 200,
+      "finalUrl": "http://suteatro.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://suteatro.org/contact-us/",
+      "status": 200,
+      "finalUrl": "http://suteatro.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebettermattress.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebettermattress.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebettermattress.com/index.html",
+      "status": 200,
+      "finalUrl": "https://www.thebettermattress.com/index.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://whittiercafe.com/",
+      "status": 200,
+      "finalUrl": "https://whittiercafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fastsigns.com/gilbert-az/",
+      "status": 403,
+      "finalUrl": "https://www.fastsigns.com/gilbert-az/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/HendersonBlackChamber",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/HendersonBlackChamber",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://acdcnv.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.calabashafricankitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.calabashafricankitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.classicjewellv.com/",
+      "status": 200,
+      "finalUrl": "https://www.classicjewellv.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.echotastesound.com/",
+      "status": 200,
+      "finalUrl": "https://www.echotastesound.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://familysoul.blizzfull.com/",
+      "status": 200,
+      "finalUrl": "https://familysoul.blizzfull.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/lasvegasasianchamberofcommerce/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flasvegasasianchamberofcommerce%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lvlcc.com/",
+      "status": 200,
+      "finalUrl": "https://www.lvlcc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nigeriancuisinetogo.com/",
+      "status": 200,
+      "finalUrl": "https://nigeriancuisinetogo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thecoffeeclass.com/",
+      "status": 200,
+      "finalUrl": "https://thecoffeeclass.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tofuteeslv.com/",
+      "status": 200,
+      "finalUrl": "https://www.tofuteeslv.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/latinochamber/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flatinochamber%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://leftofcenterart.org/",
+      "status": 200,
+      "finalUrl": "https://www.leftofcenterart.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.armygroup.org/",
+      "status": 200,
+      "finalUrl": "https://armygroup.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://atoasiscoffee.com/",
+      "status": 200,
+      "finalUrl": "https://atoasiscoffee.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blacktheatretroupe.org/",
+      "status": 200,
+      "finalUrl": "https://www.blacktheatretroupe.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://grassrootzbookstore.com/",
+      "status": 200,
+      "finalUrl": "https://grassrootzbookstore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://npfy.org/",
+      "status": 200,
+      "finalUrl": "https://npfy.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://palabrasbookstore.com/",
+      "status": 403,
+      "finalUrl": "https://palabrasbookstore.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://stardustandsage.com/",
+      "status": 200,
+      "finalUrl": "https://stardustandsage.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://strawandwool.com/",
+      "status": 200,
+      "finalUrl": "https://strawandwool.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://xico.org/",
+      "status": 200,
+      "finalUrl": "https://xico.org/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}
