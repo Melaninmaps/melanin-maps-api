@@ -533,19 +533,20 @@ router.get("/businesses", async (req: Request, res: Response) => {
           );
         }
 
-        // Geo-proximity filter — Haversine great-circle distance (server-side, miles)
-        // Only applied when lat + lng are both provided; radius defaults to 25 miles.
-        if (hasGeoFilter) {
-          const radiusKm = geoRadiusMi * 1.60934;
-          conditions.push(
-            sql`(
-          6371.0 * 2.0 * ASIN(SQRT(
-            POWER(SIN((RADIANS(${businessesTable.latitude}::float) - RADIANS(${geoLat})) / 2.0), 2) +
-            COS(RADIANS(${geoLat})) * COS(RADIANS(${businessesTable.latitude}::float)) *
-            POWER(SIN((RADIANS(${businessesTable.longitude}::float) - RADIANS(${geoLng})) / 2.0), 2)
-          ))
-        ) <= ${radiusKm}`,
-          );
+        // Geo-proximity filter — Haversine great-circle distance (server-side, miles).
+        // A confirmed device location must also rank local pins nearest-first,
+        // instead of merely filtering an otherwise country-wide confidence sort.
+        const distanceMilesSql = hasGeoFilter
+          ? sql<number>`(
+              3958.7613 * 2.0 * ASIN(SQRT(
+                POWER(SIN((RADIANS(${businessesTable.latitude}::float) - RADIANS(${geoLat})) / 2.0), 2) +
+                COS(RADIANS(${geoLat})) * COS(RADIANS(${businessesTable.latitude}::float)) *
+                POWER(SIN((RADIANS(${businessesTable.longitude}::float) - RADIANS(${geoLng})) / 2.0), 2)
+              ))
+            )`
+          : null;
+        if (distanceMilesSql) {
+          conditions.push(sql`${distanceMilesSql} <= ${geoRadiusMi}`);
         }
 
         // True total count for pagination UI
@@ -559,6 +560,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           .from(businessesTable)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(
+            ...(distanceMilesSql ? [asc(distanceMilesSql)] : []),
             desc(businessesTable.foundingBusiness),
             desc(businessesTable.confidenceScore),
             asc(businessesTable.name),

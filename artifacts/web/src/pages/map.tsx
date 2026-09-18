@@ -289,6 +289,9 @@ export default function MapPage() {
 
   // User's confirmed geolocation — set when browser grants permission
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // A profile home city is useful when a member declines precise location. It is
+  // still a local starting point, never permission to populate the whole map.
+  const [profileCoords, setProfileCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Sidebar + legend filter state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -297,6 +300,10 @@ export default function MapPage() {
   const [showAddPlace, setShowAddPlace] = useState(false);
   // Business search must be explicitly triggered — map does not auto-populate businesses
   const [businessSearchActive, setBusinessSearchActive] = useState(false);
+  // A broad collection is useful for intentional travel planning, but it is not
+  // the default map experience. Normal map use remains close to the member's
+  // confirmed location or a place they explicitly searched for.
+  const [exploreAllAreas, setExploreAllAreas] = useState(false);
   // Sundown layer has its own independent toggle (not subject to legendFilter single-select)
   const [showSundownLayer, setShowSundownLayer] = useState(true);
 
@@ -331,8 +338,9 @@ export default function MapPage() {
   const [discoverabilityPins, setDiscoverabilityPins] = useState<DiscoverabilityPin[]>([]);
   const discoverabilityMarkersRef = useRef<GMarker[]>([]);
 
-  // Near Me mode — radius in miles (null = show all, number = geo-filtered)
-  const [nearMeRadius, setNearMeRadius] = useState<number | null>(null);
+  // Nearby is the default. Members may deliberately broaden it through the
+  // existing control, but a newly opened map never starts as a national list.
+  const [nearMeRadius, setNearMeRadius] = useState<number | null>(25);
 
   // Tracks whether the user explicitly denied location permission so we can
   // show a retry prompt instead of silently falling back to homeCity.
@@ -352,6 +360,29 @@ export default function MapPage() {
   const [detectedLocation, setDetectedLocation] = useState<{
     lat: number; lng: number; name: string;
   } | null>(null);
+
+  const activeLocalScope = useMemo(() => {
+    if (detectedLocation) return { lat: detectedLocation.lat, lng: detectedLocation.lng, label: detectedLocation.name };
+    if (userCoords) return { lat: userCoords.lat, lng: userCoords.lng, label: "your location" };
+    if (profileCoords) return { lat: profileCoords.lat, lng: profileCoords.lng, label: "your home area" };
+    return null;
+  }, [detectedLocation, profileCoords, userCoords]);
+
+  const isWithinActiveLocalScope = useCallback((latitude: number, longitude: number, radiusMiles = 50) => {
+    if (exploreAllAreas) return true;
+    if (!activeLocalScope) return false;
+    return haversineKm(activeLocalScope.lat, activeLocalScope.lng, latitude, longitude) <= radiusMiles * 1.60934;
+  }, [activeLocalScope, exploreAllAreas]);
+
+  const visibleCulturalSites = useMemo(
+    () => culturalSites.filter((site) => isWithinActiveLocalScope(site.latitude, site.longitude)),
+    [culturalSites, isWithinActiveLocalScope],
+  );
+
+  const visibleSundownTowns = useMemo(
+    () => sundownTowns.filter((town) => isWithinActiveLocalScope(town.latitude, town.longitude)),
+    [sundownTowns, isWithinActiveLocalScope],
+  );
 
   // Parses structured phrases like "Black-owned grocery stores in Atlanta"
   // into discrete API parameters so the business endpoint returns real results
@@ -722,18 +753,22 @@ export default function MapPage() {
               (b as any).subcategory?.toLowerCase().includes("apprenticeship")
             : b.category?.toLowerCase().includes(category.toLowerCase()));
       const matchMood = mood === null || matchesMood(b, mood);
-      // Near Me radius filter — only applied when GPS is available and mode is active
-      const matchNear = nearMeRadius === null || !userCoords || (() => {
-        const distKm = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
+      // Nearby is the standard map rule. Precise device location wins; a
+      // geocoded profile home keeps the view useful after a member declines it.
+      // Only an explicit all-area exploration can bypass this local filter.
+      const nearbyOrigin = userCoords ?? profileCoords;
+      const matchNear = exploreAllAreas || nearMeRadius === null || !nearbyOrigin || (() => {
+        const distKm = haversineKm(nearbyOrigin.lat, nearbyOrigin.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
         return distKm <= nearMeRadius * 1.60934; // convert miles → km
       })();
       return matchSearch && matchCat && matchMood && matchNear;
     });
-    // If we have the user's location, sort by proximity (closest first)
-    if (!userCoords) return base;
+    // Sort the local scope by distance, not by a national ordering.
+    const nearbyOrigin = userCoords ?? profileCoords;
+    if (!nearbyOrigin) return base;
     return [...base].sort((a, b) => {
-      const dA = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(a.latitude)), parseFloat(String(a.longitude)));
-      const dB = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
+      const dA = haversineKm(nearbyOrigin.lat, nearbyOrigin.lng, parseFloat(String(a.latitude)), parseFloat(String(a.longitude)));
+      const dB = haversineKm(nearbyOrigin.lat, nearbyOrigin.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
       return dA - dB;
     });
   })();
@@ -743,6 +778,10 @@ export default function MapPage() {
   // remain visible as an unrelated marker layer.
   useEffect(() => {
     if (!ready) return;
+    if (!activeLocalScope && !exploreAllAreas) {
+      setCulturalSites([]);
+      return;
+    }
     const base = BASE.replace(/\/$/, "");
     const loadEntities = (url: string): Promise<{ items?: UniversalMapEntity[] }> =>
       fetch(url, { credentials: "include" })
@@ -757,7 +796,7 @@ export default function MapPage() {
       })
       .then((items) => setCulturalSites([...new Map(items.map((item) => [item.id, item])).values()]))
       .catch(() => {});
-  }, [ready]);
+  }, [activeLocalScope, exploreAllAreas, ready]);
 
   // Older event markers used a separate endpoint from the category panel.
   // Clear any prior instances; recurring events now arrive through the same
@@ -771,11 +810,12 @@ export default function MapPage() {
   // Render cultural site markers whenever sites load
   useEffect(() => {
     const g = (window as any).google?.maps;
-    if (!g || !mapRef.current || culturalSites.length === 0) return;
+    if (!g || !mapRef.current) return;
     culturalMarkersRef.current.forEach((m) => m.setMap(null));
     culturalMarkersRef.current = [];
+    if (visibleCulturalSites.length === 0) return;
 
-    culturalSites.forEach((site) => {
+    visibleCulturalSites.forEach((site) => {
       const lat = site.latitude;
       const lng = site.longitude;
       if (isNaN(lat) || isNaN(lng)) return;
@@ -818,13 +858,13 @@ export default function MapPage() {
       culturalMarkersRef.current.push(marker);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [culturalSites]);
+  }, [visibleCulturalSites]);
 
   // Cultural marker visibility — responds to legendFilter changes
   useEffect(() => {
     if (!mapRef.current) return;
     culturalMarkersRef.current.forEach((marker, i) => {
-      const site = culturalSites[i];
+      const site = visibleCulturalSites[i];
       if (!site) { marker.setMap(null); return; }
       const visible =
         legendFilter !== "business" &&
@@ -833,7 +873,7 @@ export default function MapPage() {
           : siteMatchesFilter(site, legendFilter));
       marker.setMap(visible ? mapRef.current : null);
     });
-  }, [legendFilter, culturalSites]);
+  }, [legendFilter, visibleCulturalSites]);
 
   // ── Historical Sundown Towns layer ──────────────────────────────────────────
   // ALWAYS ON — layer is never hidden per Gate 5 Map UX Spec rule #2.
@@ -841,22 +881,27 @@ export default function MapPage() {
 
   useEffect(() => {
     if (!ready) return;
+    if (!activeLocalScope && !exploreAllAreas) {
+      setSundownTowns([]);
+      return;
+    }
     const base = BASE.replace(/\/$/, "");
     fetch(`${base}/api/sundown-towns`)
       .then((r) => r.json())
       .then((d: any) => { if (Array.isArray(d.towns)) setSundownTowns(d.towns as SundownTown[]); })
       .catch(() => {});
-  }, [ready]);
+  }, [activeLocalScope, exploreAllAreas, ready]);
 
   useEffect(() => {
     const g = (window as any).google?.maps;
-    if (!g || !mapRef.current || sundownTowns.length === 0) return;
+    if (!g || !mapRef.current) return;
 
     // Clear previous markers before re-rendering
     sundownMarkersRef.current.forEach((m) => m.setMap(null));
     sundownMarkersRef.current = [];
+    if (visibleSundownTowns.length === 0) return;
 
-    sundownTowns.forEach((town) => {
+    visibleSundownTowns.forEach((town) => {
       if (isNaN(town.latitude) || isNaN(town.longitude)) return;
       const color = getSundownColor(town.current_state);
       const fillOpacity = getSundownFillOpacity(town.current_state, town.confidence_level);
@@ -907,7 +952,7 @@ export default function MapPage() {
       sundownMarkersRef.current.push(marker);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sundownTowns]);
+  }, [visibleSundownTowns]);
 
   // Render event markers from the events table
   useEffect(() => {
@@ -977,7 +1022,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapRef.current) return;
     sundownMarkersRef.current.forEach((m) => m.setMap(showSundownLayer ? mapRef.current : null));
-  }, [showSundownLayer, sundownTowns]);
+  }, [showSundownLayer, visibleSundownTowns]);
 
   // Subscription check
   useEffect(() => {
@@ -1031,7 +1076,7 @@ export default function MapPage() {
             if (isNaN(lat) || isNaN(lng)) return;
             const marker: GMarker = new g.Marker({
               position: { lat, lng },
-              map: mapRef.current,
+              map: null,
               title: biz.name ?? "",
               icon: {
                 path: g.SymbolPath.CIRCLE,
@@ -1089,8 +1134,10 @@ export default function MapPage() {
           { address: homeCity },
           (results: any[], status: string) => {
             if (!searchViewportLockedRef.current && status === "OK" && results?.[0]?.geometry?.location) {
-              map.setCenter(results[0].geometry.location);
+              const location = results[0].geometry.location;
+              map.setCenter(location);
               map.setZoom(12);
+              setProfileCoords({ lat: location.lat(), lng: location.lng() });
             }
           },
         );
@@ -1119,7 +1166,10 @@ export default function MapPage() {
 
         const marker: GMarker = new g.Marker({
           position: { lat, lng },
-          map,
+          // Construct the marker now to retain its existing click-through
+          // behavior. Its locality-first visibility is set below, so an
+          // unscoped initial map never flashes country-wide pins.
+          map: null,
           title: biz.name ?? "",
           icon: {
             path: g.SymbolPath.CIRCLE,
@@ -1263,7 +1313,7 @@ export default function MapPage() {
     const localSearchOwnsPins = businessSearchActive && (
       detectedLocation !== null || (userCoords !== null && localSearchIntent.usesDeviceLocation === true)
     );
-    const showBiz = businessSearchActive && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
+    const showBiz = businessSearchActive && Boolean(activeLocalScope || exploreAllAreas) && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
     // When universal search returned results, only show those businesses as markers
     const activeIds = universalResults
       ? new Set((universalResults.results.businesses ?? []).map((b: any) => b.id as string))
@@ -1271,11 +1321,11 @@ export default function MapPage() {
     markersRef.current.forEach((marker, id) => {
       marker.setMap(showBiz && activeIds.has(id) ? mapRef.current : null);
     });
-  }, [filtered, legendFilter, businessSearchActive, universalResults]);
+  }, [activeLocalScope, filtered, legendFilter, businessSearchActive, exploreAllAreas, universalResults]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"
-    ? culturalSites.filter((s) => siteMatchesFilter(s, legendFilter))
+    ? visibleCulturalSites.filter((s) => siteMatchesFilter(s, legendFilter))
     : [];
 
   const legendTileLabel = LEGEND_TILES.find((t) => t.key === legendFilter)?.label ?? "";
@@ -1285,7 +1335,7 @@ export default function MapPage() {
     setSidebarOpen(next !== null);
     if (!next || next === "business") return;
 
-    const matching = culturalSites.filter((site) => siteMatchesFilter(site, next));
+    const matching = visibleCulturalSites.filter((site) => siteMatchesFilter(site, next));
     const g = (window as any).google?.maps;
     const map = mapRef.current;
     if (!g || !map || matching.length === 0) return;
@@ -1504,10 +1554,10 @@ export default function MapPage() {
         {!showingCultural && userCoords && (
           <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0 flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">Near Me</span>
-            {[5, ...(nearMeRadius === 5 ? [10] : nearMeRadius === 10 ? [25] : [])].map((r) => (
+            {[5, 10, 25, 50].map((r) => (
               <button
                 key={r}
-                onClick={() => setNearMeRadius(nearMeRadius === r ? null : r as 5 | 10 | 25)}
+                onClick={() => setNearMeRadius(r)}
                 className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
                   nearMeRadius === r
                     ? "bg-[#CA922B] text-white border-[#CA922B]"
@@ -1517,14 +1567,6 @@ export default function MapPage() {
                 {r} mi
               </button>
             ))}
-            {nearMeRadius !== null && (
-              <button
-                onClick={() => setNearMeRadius(null)}
-                className="text-[10px] text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 font-semibold"
-              >
-                ✕ All
-              </button>
-            )}
           </div>
         )}
 
@@ -1629,7 +1671,7 @@ export default function MapPage() {
                   Search businesses, heritage sites,<br />HBCUs, or community events.
                 </p>
                 <p className="text-[10px] text-[#3A1F0E]/35 leading-relaxed">
-                  Cultural sites and HBCUs<br />are always visible on the map.
+                  Start with your location or a city.<br />Use “Explore all areas” only to plan farther away.
                 </p>
               </div>
             ) : (
@@ -1980,6 +2022,16 @@ export default function MapPage() {
                 <span className="text-xs font-semibold text-[#CA922B]">Routing active</span>
               </div>
             )}
+            <button
+              type="button"
+              onClick={() => setExploreAllAreas((current) => !current)}
+              aria-pressed={exploreAllAreas}
+              className={`ml-1 border-l border-[#3A1F0E]/10 pl-3 text-[10px] font-semibold transition-colors ${
+                exploreAllAreas ? "text-[#8D5C17]" : "text-[#3A1F0E]/55 hover:text-[#8D5C17]"
+              }`}
+            >
+              {exploreAllAreas ? "Show nearby" : "Explore all areas"}
+            </button>
           </div>
 
           {/* Row 2: Sundown Town History — always its own row, never overflows */}

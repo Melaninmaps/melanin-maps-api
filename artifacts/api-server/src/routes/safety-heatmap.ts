@@ -54,16 +54,19 @@ const CITY_COORDS: Record<string, { lat: number; lng: number; state: string }> =
 
 router.get("/safety/heatmap", async (req: Request, res: Response) => {
   try {
+    const city = typeof req.query.city === "string" ? req.query.city.trim() : "";
     const result = await pool.query<{ city: string; avg_score: number; count: number }>(
       `SELECT city,
               ROUND(AVG(safety_score)::numeric, 1)::float AS avg_score,
               COUNT(*)::int AS count
        FROM neighborhood_surveys
        WHERE status = 'approved' AND city IS NOT NULL AND city <> ''
+         ${city ? "AND LOWER(city) = LOWER($1)" : ""}
        GROUP BY city
        HAVING COUNT(*) >= 1
        ORDER BY count DESC
-       LIMIT 100`
+       LIMIT 100`,
+      city ? [city] : [],
     );
 
     const points = result.rows

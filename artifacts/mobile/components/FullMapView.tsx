@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -30,6 +31,17 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
+import { useAuth } from "@/lib/auth";
+import {
+  canLoadLocalCollections,
+  isSafeLocalFit,
+  mapCollectionScopeQuery,
+  mapLocalityKey,
+  NEUTRAL_LOCAL_REGION,
+  parseMapSearchLocality,
+  parseProfileHomeLocality,
+  resolveMapLocality,
+} from "@/lib/mapLocality";
 import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
 import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
 
@@ -61,16 +73,9 @@ const HERITAGE_SITES_ENABLED = true;
 const MAX_HERITAGE_MARKERS = 250;
 const MAX_TRAVEL_DESTINATION_MARKERS = 600;
 
-// US-wide overview so all business pins are visible on first load.
-// The map animates to the user's GPS position once permission is granted,
-// but if they're not near any businesses they would see an empty map.
-// Starting zoomed out means pins are always visible before location is known.
-const DEFAULT_REGION: Region = {
-  latitude: 37.0,
-  longitude: -95.0,
-  latitudeDelta: 32,
-  longitudeDelta: 52,
-};
+// Do not open to a country-wide overview. The map moves to a confirmed device
+// location or fits a profile/search locality once that scoped data arrives.
+const DEFAULT_REGION: Region = NEUTRAL_LOCAL_REGION;
 
 interface HeatmapPoint {
   city: string;
@@ -299,18 +304,24 @@ interface FullMapViewProps {
   focusSiteId?: string;
   focusLat?: string;
   focusLng?: string;
+  /** Explicit city/state scope supplied by a search or deep link. */
+  searchCity?: string;
+  searchState?: string;
 }
 
 export function FullMapView({
   focusSiteId,
   focusLat,
   focusLng,
+  searchCity,
+  searchState,
 }: FullMapViewProps = {}) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
-  const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once on load
+  const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once per scope
+  const { user } = useAuth();
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -318,6 +329,17 @@ export function FullMapView({
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [memberPlace, setMemberPlace] = useState<{
+    city?: string | null;
+    state?: string | null;
+  } | null>(null);
+  // Global collections are never a default. This is an explicit exploration
+  // mode; individual travel and deep-link focus actions remain available.
+  const [exploringAllAreas, setExploringAllAreas] = useState(false);
+  const [mapSearchInput, setMapSearchInput] = useState("");
+  const [searchedLocality, setSearchedLocality] = useState<ReturnType<
+    typeof parseMapSearchLocality
+  >>(null);
   const [activeCategory, setActiveCategory] = useState("All");
   const [designationIds, setDesignationIds] = useState<string[]>([]);
   const [showDesignationFilters, setShowDesignationFilters] = useState(false);
@@ -362,6 +384,7 @@ export function FullMapView({
   const [selectedTourSite, setSelectedTourSite] =
     useState<TourHeritageSite | null>(null);
   const isFetchingTourSites = useRef(false);
+  const isFetchingFocusedTourSite = useRef(false);
 
   // Global destination coordinates are an opt-in travel planning layer. They
   // are never mixed with business pins and do not represent verified venues.
@@ -390,13 +413,30 @@ export function FullMapView({
   // a location-based safety action from Safety Hub.
   const pollingEnabled = false;
 
-  // GPS remains on-device.  Once foreground permission is granted, use it only
-  // to ask the canonical business endpoint for nearby, relevance-ranked pins.
+  const profileLocality = parseProfileHomeLocality(user?.homeCity);
+  const routeSearchLocality = parseMapSearchLocality(searchCity, searchState);
+  // A submitted search (including a map deep link) is an explicit geography
+  // choice, so it overrides automatic device/profile locality until cleared.
+  const mapLocality =
+    searchedLocality ??
+    routeSearchLocality ??
+    resolveMapLocality(memberLocation, memberPlace, profileLocality);
+  const hasLocalCollectionScope = canLoadLocalCollections(mapLocality);
+  const localityScopeKey = mapLocalityKey(mapLocality, exploringAllAreas);
+  const collectionScopeQuery = mapCollectionScopeQuery(mapLocality, exploringAllAreas);
+  const collectionScopeSuffix = collectionScopeQuery ? `?${collectionScopeQuery}` : "";
+
+  // GPS remains on-device. Confirmed device coordinates are proximity-ranked;
+  // a profile home locality is a city/state fallback. No ordinary map request
+  // is allowed to omit both locality sources.
   const { businesses } = useBusinesses({
     latitude: memberLocation?.latitude ?? null,
     longitude: memberLocation?.longitude ?? null,
+    city: mapLocality?.city,
+    state: mapLocality?.state,
     radiusMiles: 25,
     designations: designationIds,
+    enabled: exploringAllAreas || mapLocality !== null,
   });
 
   const {
@@ -453,6 +493,33 @@ export function FullMapView({
             ? b.category === "Health & Wellness"
             : b.category === activeCategory)),
   );
+
+  // A focused Kinfolk/travel link is an explicit single-place request. Load only
+  // that item instead of widening the default tour layer to a global collection.
+  useEffect(() => {
+    if (!focusSiteId || !mapReady || isFetchingFocusedTourSite.current) return;
+    if (tourSites.some((site) => site.id === focusSiteId)) return;
+    const base = getApiBase();
+    if (!base) return;
+    isFetchingFocusedTourSite.current = true;
+    fetch(`${base}/api/tour-cultural-sites/${encodeURIComponent(focusSiteId)}`)
+      .then((response) =>
+        response.ok
+          ? (response.json() as Promise<TourHeritageSite & { site_type?: string }>)
+          : null,
+      )
+      .then((site) => {
+        if (!site) return;
+        setTourSites([{
+          ...site,
+          siteType: site.siteType ?? site.site_type,
+        }]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        isFetchingFocusedTourSite.current = false;
+      });
+  }, [focusSiteId, mapReady, tourSites]);
 
   // ── Focus a specific heritage site when navigated from Kinfolk chat ─────────
   // Runs whenever mapReady, tourSites, or focusSiteId changes so it can resolve
@@ -513,31 +580,28 @@ export function FullMapView({
     return () => clearTimeout(timer);
   }, [focusSiteId, focusLat, focusLng, mapReady, tourSites]);
 
-  // ── Auto-fit to business pins on first load ────────────────────────────────
-  // Build 99 crash-blocker note: this effect previously sat ABOVE the
-  // `mapped` declaration — a temporal-dead-zone ReferenceError (TS2448/
-  // TS2454; Hermes throws at component mount). Moved below the declaration;
-  // logic unchanged.
-  // Fires once when both the map is ready and businesses have loaded.
-  // Without this, the map opens at DEFAULT_REGION (US overview) which is fine,
-  // but if the user pans away before businesses arrive they'd miss the pins.
-  // Also handles the common case where the user's GPS location has no nearby
-  // businesses — the fit ensures something is always visible.
+  // A new local/search scope earns a new fit. Ordinary map views must never
+  // fit a country- or world-sized result set; only explicit exploration may.
+  useEffect(() => {
+    hasFitToBusinessesRef.current = false;
+  }, [localityScopeKey]);
+
   useEffect(() => {
     if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current)
       return;
+    const coordinates = mapped.map((b) => ({
+      latitude: b.latitude,
+      longitude: b.longitude,
+    }));
+    if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
-    // Give the map a brief moment to finish rendering before fitting
     setTimeout(() => {
-      mapRef.current?.fitToCoordinates(
-        mapped.map((b) => ({ latitude: b.latitude, longitude: b.longitude })),
-        {
-          edgePadding: { top: 80, right: 40, bottom: 100, left: 40 },
-          animated: true,
-        },
-      );
+      mapRef.current?.fitToCoordinates(coordinates, {
+        edgePadding: { top: 80, right: 40, bottom: 100, left: 40 },
+        animated: true,
+      });
     }, 600);
-  }, [mapReady, mapped]);
+  }, [mapReady, mapped, exploringAllAreas, localityScopeKey]);
 
   const filteredCulturalSites = activeCulturalCategory
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
@@ -547,12 +611,16 @@ export function FullMapView({
     warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
 
   useEffect(() => {
-    if (showHeatmap && heatmapPoints.length === 0) {
+    if (
+      showHeatmap &&
+      heatmapPoints.length === 0 &&
+      (exploringAllAreas || hasLocalCollectionScope)
+    ) {
       void (async () => {
         try {
           const base = getApiBase();
           if (!base) return;
-          const res = await fetch(`${base}/api/safety/heatmap`);
+          const res = await fetch(`${base}/api/safety/heatmap${collectionScopeSuffix}`);
           if (res.ok) {
             const data = (await res.json()) as { points: HeatmapPoint[] };
             setHeatmapPoints(data.points ?? []);
@@ -560,23 +628,36 @@ export function FullMapView({
         } catch {}
       })();
     }
-  }, [showHeatmap, heatmapPoints.length]);
+  }, [
+    showHeatmap,
+    heatmapPoints.length,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    collectionScopeSuffix,
+  ]);
 
   // ── Cultural-sites fetch (resilient) ────────────────────────────────────
   // hasData = true  → refresh in background; keep existing markers on failure
   // hasData = false → initial load; show error banner on failure, no retry storm
   const fetchCulturalSites = useCallback(async (hasData: boolean) => {
     if (!HERITAGE_SITES_ENABLED) return;
+    if (!exploringAllAreas && !hasLocalCollectionScope) return;
     if (isFetchingCulturalSites.current) return;
     isFetchingCulturalSites.current = true;
     if (!hasData) setCulturalSitesLoading(true);
     try {
       const base = getApiBase();
       if (!base) return;
-      const res = await fetch(`${base}/api/cultural-sites`);
+      const res = await fetch(`${base}/api/cultural-sites${collectionScopeSuffix}`);
       if (res.ok) {
-        const data = (await res.json()) as { sites: CulturalSite[] };
-        setCulturalSites(data.sites ?? []);
+        const data = (await res.json()) as {
+          sites?: CulturalSite[];
+          items?: CulturalSite[];
+        };
+        // The canonical map API returns `items`; the legacy route returns
+        // `sites`. Supporting both keeps heritage detail cards intact while
+        // the local-scope API is rolled out additively.
+        setCulturalSites(data.sites ?? data.items ?? []);
         setCulturalSitesError(false);
       } else {
         // Preserve existing markers silently; only surface error when we have nothing
@@ -588,21 +669,53 @@ export function FullMapView({
       setCulturalSitesLoading(false);
       isFetchingCulturalSites.current = false;
     }
-  }, []);
+  }, [exploringAllAreas, hasLocalCollectionScope, collectionScopeSuffix]);
+
+  // Clear stale pins before a changed device/profile/exploration scope reloads.
+  useEffect(() => {
+    setCulturalSites([]);
+    setMapEvents([]);
+    setCommunityOrgs([]);
+    setTourEvents([]);
+    setTourSites([]);
+    setHeatmapPoints([]);
+    setSelectedCulturalSite(null);
+    setSelectedMapEvent(null);
+    setSelectedOrg(null);
+    setSelectedTourEvent(null);
+    setSelectedTourSite(null);
+  }, [localityScopeKey]);
 
   // Heritage Sites load/refresh effects — all guarded by HERITAGE_SITES_ENABLED.
   // fetchCulturalSites() also has its own early-return guard; these effect-level
   // guards prevent any unnecessary setup/teardown while the feature is disabled.
   useEffect(() => {
     if (!HERITAGE_SITES_ENABLED) return;
-    if (showCulturalSites && culturalSites.length === 0 && mapReady) {
+    if (
+      showCulturalSites &&
+      culturalSites.length === 0 &&
+      mapReady &&
+      (exploringAllAreas || hasLocalCollectionScope)
+    ) {
       void Promise.resolve().then(() => fetchCulturalSites(false));
     }
-  }, [showCulturalSites, mapReady, culturalSites.length, fetchCulturalSites]);
+  }, [
+    showCulturalSites,
+    mapReady,
+    culturalSites.length,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    fetchCulturalSites,
+  ]);
 
   useEffect(() => {
     if (!HERITAGE_SITES_ENABLED) return;
-    if (isFocused && showCulturalSites && mapReady) {
+    if (
+      isFocused &&
+      showCulturalSites &&
+      mapReady &&
+      (exploringAllAreas || hasLocalCollectionScope)
+    ) {
       void Promise.resolve().then(() =>
         fetchCulturalSites(culturalSites.length > 0),
       );
@@ -612,17 +725,29 @@ export function FullMapView({
     showCulturalSites,
     mapReady,
     culturalSites.length,
+    exploringAllAreas,
+    hasLocalCollectionScope,
     fetchCulturalSites,
   ]);
 
   useEffect(() => {
     if (!HERITAGE_SITES_ENABLED) return;
-    if (!culturalSitesError || !showCulturalSites) return;
+    if (
+      !culturalSitesError ||
+      !showCulturalSites ||
+      (!exploringAllAreas && !hasLocalCollectionScope)
+    ) return;
     const timer = setInterval(() => {
       void fetchCulturalSites(false);
     }, 30_000);
     return () => clearInterval(timer);
-  }, [culturalSitesError, showCulturalSites, fetchCulturalSites]);
+  }, [
+    culturalSitesError,
+    showCulturalSites,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    fetchCulturalSites,
+  ]);
 
   // ── Tour community layer fetches ──────────────────────────────────────────
   useEffect(() => {
@@ -630,7 +755,8 @@ export function FullMapView({
       !showCommunityOrgs ||
       communityOrgs.length > 0 ||
       isFetchingOrgs.current ||
-      !mapReady
+      !mapReady ||
+      (!exploringAllAreas && !hasLocalCollectionScope)
     )
       return;
     isFetchingOrgs.current = true;
@@ -639,7 +765,7 @@ export function FullMapView({
       isFetchingOrgs.current = false;
       return;
     }
-    fetch(`${base}/api/community-orgs?limit=200`)
+    fetch(`${base}/api/community-orgs?limit=200${collectionScopeQuery ? `&${collectionScopeQuery}` : ""}`)
       .then((r) =>
         r.ok
           ? (r.json() as Promise<{ organizations: TourCommunityOrg[] }>)
@@ -657,14 +783,22 @@ export function FullMapView({
       .finally(() => {
         isFetchingOrgs.current = false;
       });
-  }, [showCommunityOrgs, mapReady, communityOrgs.length]);
+  }, [
+    showCommunityOrgs,
+    mapReady,
+    communityOrgs.length,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    collectionScopeQuery,
+  ]);
 
   useEffect(() => {
     if (
       !showTourEvents ||
       tourEvents.length > 0 ||
       isFetchingTourEvents.current ||
-      !mapReady
+      !mapReady ||
+      (!exploringAllAreas && !hasLocalCollectionScope)
     )
       return;
     isFetchingTourEvents.current = true;
@@ -673,7 +807,7 @@ export function FullMapView({
       isFetchingTourEvents.current = false;
       return;
     }
-    fetch(`${base}/api/recurring-events?limit=200`)
+    fetch(`${base}/api/recurring-events?limit=200${collectionScopeQuery ? `&${collectionScopeQuery}` : ""}`)
       .then((r) =>
         r.ok ? (r.json() as Promise<{ events: TourRecurringEvent[] }>) : null,
       )
@@ -687,14 +821,22 @@ export function FullMapView({
       .finally(() => {
         isFetchingTourEvents.current = false;
       });
-  }, [showTourEvents, mapReady, tourEvents.length]);
+  }, [
+    showTourEvents,
+    mapReady,
+    tourEvents.length,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    collectionScopeQuery,
+  ]);
 
   useEffect(() => {
     if (
       !showTourSites ||
       tourSites.length > 0 ||
       isFetchingTourSites.current ||
-      !mapReady
+      !mapReady ||
+      (!exploringAllAreas && !hasLocalCollectionScope)
     )
       return;
     isFetchingTourSites.current = true;
@@ -703,7 +845,7 @@ export function FullMapView({
       isFetchingTourSites.current = false;
       return;
     }
-    fetch(`${base}/api/tour-cultural-sites?limit=300`)
+    fetch(`${base}/api/tour-cultural-sites?limit=300${collectionScopeQuery ? `&${collectionScopeQuery}` : ""}`)
       .then((r) =>
         r.ok ? (r.json() as Promise<{ sites: TourHeritageSite[] }>) : null,
       )
@@ -717,7 +859,14 @@ export function FullMapView({
       .finally(() => {
         isFetchingTourSites.current = false;
       });
-  }, [showTourSites, mapReady, tourSites.length]);
+  }, [
+    showTourSites,
+    mapReady,
+    tourSites.length,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    collectionScopeQuery,
+  ]);
 
   useEffect(() => {
     if (
@@ -761,16 +910,20 @@ export function FullMapView({
       });
   }, [showTravelDestinations, mapReady, travelDestinations.length]);
 
-  // ── Events fetch — loads once when map is ready, refreshes on focus ───────
+  // ── Events fetch — location scoped unless member explicitly explores ──────
   useEffect(() => {
-    if (!mapReady || isFetchingMapEvents.current) return;
+    if (
+      !mapReady ||
+      isFetchingMapEvents.current ||
+      (!exploringAllAreas && !hasLocalCollectionScope)
+    ) return;
     isFetchingMapEvents.current = true;
     const base = getApiBase();
     if (!base) {
       isFetchingMapEvents.current = false;
       return;
     }
-    fetch(`${base}/api/events`)
+    fetch(`${base}/api/events${collectionScopeSuffix}`)
       .then((r) =>
         r.ok ? (r.json() as Promise<{ events: MapEventItem[] }>) : null,
       )
@@ -785,7 +938,13 @@ export function FullMapView({
       .finally(() => {
         isFetchingMapEvents.current = false;
       });
-  }, [mapReady, isFocused]);
+  }, [
+    mapReady,
+    isFocused,
+    exploringAllAreas,
+    hasLocalCollectionScope,
+    collectionScopeSuffix,
+  ]);
 
   const recenter = async () => {
     setLocating(true);
@@ -805,6 +964,18 @@ export function FullMapView({
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       });
+      try {
+        const [place] = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+        setMemberPlace({
+          city: place?.city ?? place?.subregion ?? null,
+          state: place?.region ?? null,
+        });
+      } catch {
+        // Coordinates still provide a valid nearby-business scope.
+      }
       mapRef.current?.animateToRegion(
         {
           latitude: loc.coords.latitude,
@@ -1229,6 +1400,43 @@ export function FullMapView({
           </TouchableOpacity>
         )}
 
+        {/* An explicit city search narrows every default pin layer. */}
+        <View style={s.localitySearchWrap}>
+          <TextInput
+            value={mapSearchInput}
+            onChangeText={setMapSearchInput}
+            onSubmitEditing={() => {
+              const locality = parseMapSearchLocality(mapSearchInput);
+              if (locality) setSearchedLocality(locality);
+            }}
+            placeholder="Search a city (e.g., Atlanta, GA)"
+            placeholderTextColor="rgba(255,255,255,0.72)"
+            style={s.localitySearchInput}
+            returnKeyType="search"
+            accessibilityLabel="Search map by city"
+          />
+          {(searchedLocality || routeSearchLocality) && (
+            <TouchableOpacity
+              onPress={() => {
+                setMapSearchInput("");
+                setSearchedLocality(null);
+              }}
+              accessibilityLabel="Return to my local map"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={15} color="#F5EBD8" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {!mapLocality && !exploringAllAreas && (
+          <View style={s.localityPrompt}>
+            <Text style={s.localityPromptText}>
+              Choose a city or use your location to see nearby businesses, culture, events, and safety context.
+            </Text>
+          </View>
+        )}
+
         {/* Category filter pills */}
         <ScrollView
           horizontal
@@ -1324,6 +1532,28 @@ export function FullMapView({
 
         {/* Map layer toggles */}
         <View style={s.layerRow}>
+          <TouchableOpacity
+            style={[
+              s.layerBtn,
+              exploringAllAreas && {
+                backgroundColor: "#2563A8",
+                borderColor: "transparent",
+              },
+            ]}
+            onPress={() => setExploringAllAreas((value) => !value)}
+            activeOpacity={0.85}
+            accessibilityLabel="Explore all areas"
+            accessibilityState={{ selected: exploringAllAreas }}
+          >
+            <Feather
+              name="compass"
+              size={12}
+              color={exploringAllAreas ? "#fff" : GOLD}
+            />
+            <Text style={[s.layerBtnTxt, { color: exploringAllAreas ? "#fff" : GOLD }]}>
+              Explore all
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[
               s.layerBtn,
@@ -1618,6 +1848,7 @@ export function FullMapView({
                             (c) => !isNaN(c.latitude) && !isNaN(c.longitude),
                           );
                         if (coords.length > 0) {
+                          if (!exploringAllAreas && !isSafeLocalFit(coords)) return;
                           mapRef.current?.fitToCoordinates(coords, {
                             edgePadding: {
                               top: 140,
@@ -2575,6 +2806,39 @@ const s = StyleSheet.create({
     paddingVertical: 4,
   },
   navTxt: { fontFamily: "Inter_500Medium", fontSize: 11 },
+
+  localitySearchWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.62)",
+    borderWidth: 1,
+    borderColor: "rgba(245,235,216,0.34)",
+  },
+  localitySearchInput: {
+    flex: 1,
+    color: "#fff",
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    paddingVertical: 8,
+  },
+  localityPrompt: {
+    marginHorizontal: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.66)",
+  },
+  localityPromptText: {
+    color: "#F5EBD8",
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+    lineHeight: 16,
+  },
 
   catRow: { paddingHorizontal: 12, paddingVertical: 4, gap: 8 },
 
