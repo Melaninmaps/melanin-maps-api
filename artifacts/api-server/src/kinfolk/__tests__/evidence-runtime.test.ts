@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { routeEvidence } from "../evidence-route";
 import { permittedIdentityContext } from "../permitted-identity-context";
 import {
+  TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
   TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY,
   TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY,
   evidenceFailureReply,
@@ -62,6 +63,15 @@ describe("Kinfolk evidence runtime", () => {
       medicalContextBlock: "",
       hasLiveWebEvidence: true,
     })).toBeNull();
+  });
+
+  it("never summarizes a different article when the requested linked source was unavailable", () => {
+    expect(evidenceFailureReply({
+      route: routeEvidence("Summarize this article: https://example.com/gas-prices"),
+      medicalContextBlock: "",
+      hasLiveWebEvidence: true,
+      requestedArticleEvidenceAvailable: false,
+    })).toBe(TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY);
   });
 
   it("governs evaluative cultural prompts by criteria without an inline cultural label", () => {

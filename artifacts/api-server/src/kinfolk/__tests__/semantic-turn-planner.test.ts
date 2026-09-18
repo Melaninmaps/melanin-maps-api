@@ -114,6 +114,15 @@ describe("semantic turn planner", () => {
     });
   });
 
+  it("plans named custody-status shorthand as a current evidence request", async () => {
+    const message = "Is Durk coming home?";
+    await expect(planSemanticTurn({ message, evidenceRoute: routeEvidence(message) })).resolves.toMatchObject({
+      taskMode: "direct_answer",
+      freshness: "current",
+      evidenceNeeds: ["official_current", "platform_records"],
+    });
+  });
+
   it("keeps a contextual follow-up after arithmetic out of the clarification/Library path", async () => {
     expect(deterministicArithmeticAnswer("10 + 10")).toBe("20");
     const classify = vi.fn();

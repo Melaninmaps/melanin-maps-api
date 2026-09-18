@@ -2022,7 +2022,12 @@ function TravelPage() {
                       )}
                       {/* Source citations — shown for Living Library research answers */}
                       {msg.role === "assistant" && !msg.resultView && msg.sources && msg.sources.length > 0 && (
-                        <KinfolkSourceLinks sources={msg.sources} />
+                        <KinfolkSourceLinks
+                          sources={msg.sources}
+                          onSummarize={(source) => {
+                            void send(`Summarize the linked article “${source.title}” accurately, using this exact source: ${source.url}`);
+                          }}
+                        />
                       )}
                       {/* Library entry link — "Read the full source-cited entry" */}
                       {msg.role === "assistant" && msg.libraryEntry && (

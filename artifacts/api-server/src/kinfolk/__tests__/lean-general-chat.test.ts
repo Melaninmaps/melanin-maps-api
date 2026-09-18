@@ -33,10 +33,17 @@ describe("lean general Kinfolk chat", () => {
   it("requires a minimal safe JSON envelope without fabricated local results", () => {
     const prompt = buildLeanGeneralChatPrompt();
     expect(prompt).toContain("modern chatbot");
+    expect(prompt).toContain("Big Cousin voice");
     expect(prompt).toContain("Do not invent facts, sources, business listings, addresses");
     expect(prompt).toContain('"recommendations": null');
     expect(prompt).toContain('"followUpSuggestions": []');
     expect(prompt).toContain("Do not infer the member's identity");
+  });
+
+  it("honors a selected non-community voice without identity imitation", () => {
+    const prompt = buildLeanGeneralChatPrompt("professional");
+    expect(prompt).toContain("selected conversation voice");
+    expect(prompt).not.toContain("Big Cousin voice");
   });
 
   it("keeps only recent bounded conversation history", () => {

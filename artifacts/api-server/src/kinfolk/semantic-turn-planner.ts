@@ -1,4 +1,5 @@
 import type { EvidenceRoute } from "./evidence-route";
+import { requiresCurrentResearch } from "./current-research";
 
 export type KinfolkTaskMode = "direct_answer" | "recipe_options" | "recipe_instructions" | "cultural_consensus" | "ranked_perspectives" | "entity_explorer" | "local_discovery" | "travel_plan" | "high_consequence" | "clarification";
 export type CandidateMeaning = { label: string; domain: string; confidence: number; evidenceQuery: string | null };
@@ -23,7 +24,7 @@ export type SemanticPlannerInput = {
 };
 
 const cap = (value: unknown, max: number): string => typeof value === "string" ? value.trim().slice(0, max) : "";
-const current = (message: string) => /\b(current|latest|today|tonight|recent|as of|right now)\b/i.test(message);
+const current = (message: string) => requiresCurrentResearch(message);
 const recipe = (message: string) => /\b(recipe|cook|cooking|bake|baking|roast|braise|grill|fry|ingredients?|dish|meal|beef|chicken|pork|fish|rice|pasta|soup|stew|cake|bread)\b/i.test(message);
 const culturalConflict = (message: string) => /\b(diss|feud|rap battle)\b/i.test(message)
   || /\b(?:won|winner|between)\b.{0,40}\bbeef\b|\bbeef\b.{0,40}\b(?:between|winner)\b/i.test(message);

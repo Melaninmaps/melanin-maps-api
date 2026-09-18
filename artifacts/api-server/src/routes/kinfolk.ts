@@ -1,5 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import {
+  openai,
+  resolveOpenAIConfiguration,
+} from "@workspace/integrations-openai-ai-server";
 import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import {
@@ -93,7 +96,11 @@ import {
   resolveNamedBusinessTurn,
 } from "../kinfolk/business-reference";
 import { routeEvidence as classifyEvidenceRoute } from "../kinfolk/evidence-route";
-import { requiresCurrentResearch } from "../kinfolk/current-research";
+import {
+  hasRequestedArticleEvidence,
+  requestedArticleSummaryUrl,
+  requiresCurrentResearch,
+} from "../kinfolk/current-research";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
 import {
   evidenceFailureReply,
@@ -6409,17 +6416,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         primaryAttempted: false,
         fallbackAttempted: false,
       };
-      const openAiConfigured = Boolean(
-        process.env.AI_INTEGRATIONS_OPENAI_API_KEY &&
-        process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      );
-      const nativeProvider = openAiConfigured
+      const openAiConfiguration = resolveOpenAIConfiguration();
+      const nativeProvider = openAiConfiguration
         ? createOpenAiWebResearchProvider({
-            apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-            baseUrl: (
-              process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ??
-              "https://api.openai.com/v1"
-            ).replace(/\/$/, ""),
+            apiKey: openAiConfiguration.apiKey,
+            baseUrl: openAiConfiguration.baseURL.replace(/\/$/, ""),
             model: kinfolkModel("webSearch"),
           })
         : null;
@@ -6883,10 +6884,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (contextualEvidence?.external.length ?? 0) +
         (contextualEvidence?.media.length ?? 0) >
         0;
+    const requestedArticleUrl = requestedArticleSummaryUrl(message);
+    const articleEvidenceSources = [
+      ...healthRetrievalSources
+        .filter((source) => source.source === "kinfolk_web")
+        .map((source) => ({ url: source.url })),
+      ...(contextualEvidence?.external ?? []).map((source) => ({ url: source.url })),
+      ...(contextualEvidence?.media ?? []).map((source) => ({ url: source.url })),
+    ];
     const failClosedReply = evidenceFailureReply({
       route: evidenceRoute,
       medicalContextBlock: healthEvidenceBlock,
       hasLiveWebEvidence,
+      requestedArticleEvidenceAvailable: hasRequestedArticleEvidence(
+        requestedArticleUrl,
+        articleEvidenceSources,
+      ),
     });
     if (failClosedReply) {
       res.json({
@@ -7846,7 +7859,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasRequestedVibes: vibes.length > 0,
     });
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt()}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(voiceMode)}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +

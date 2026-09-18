@@ -684,8 +684,8 @@ export function AIChatWidget() {
 
   if (suppressed) return null;
 
-  const send = async () => {
-    const text = input.trim();
+  const sendMessage = async (rawText: string) => {
+    const text = rawText.trim();
     if (!text) return;
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -761,6 +761,8 @@ export function AIChatWidget() {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
   };
+
+  const send = () => void sendMessage(input);
 
   const submitResponseFeedback = async (
     message: Message,
@@ -1058,16 +1060,26 @@ export function AIChatWidget() {
                 {!item.fromUser && item.sources?.length ? (
                   <View style={[styles.sourceLinks, { marginLeft: 42 }]}>
                     {item.sources.map((source: { title: string; url: string }) => (
-                      <TouchableOpacity
-                        key={`${source.url}-${source.title}`}
-                        onPress={() => void Linking.openURL(source.url)}
-                        accessibilityRole="link"
-                        accessibilityLabel={`Open source: ${source.title}`}
-                      >
-                        <Text style={[styles.sourceLink, { color: colors.primary }]} numberOfLines={2}>
-                          {source.title}
-                        </Text>
-                      </TouchableOpacity>
+                      <View key={`${source.url}-${source.title}`} style={styles.sourceActionRow}>
+                        <TouchableOpacity
+                          style={{ flex: 1 }}
+                          onPress={() => void Linking.openURL(source.url)}
+                          accessibilityRole="link"
+                          accessibilityLabel={`Open source: ${source.title}`}
+                        >
+                          <Text style={[styles.sourceLink, { color: colors.primary }]} numberOfLines={2}>
+                            {source.title}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => void sendMessage(`Summarize the linked article “${source.title}” accurately, using this exact source: ${source.url}`)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ask Kinfolk to summarize ${source.title}`}
+                          style={[styles.sourceSummaryButton, { borderColor: colors.primary }]}
+                        >
+                          <Text style={[styles.sourceSummaryText, { color: colors.primary }]}>Summarize</Text>
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </View>
                 ) : null}
@@ -1390,7 +1402,10 @@ const styles = StyleSheet.create({
   recommendationMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
   sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
   sourceLinks: { maxWidth: "78%", marginTop: 7, gap: 5 },
+  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sourceLink: { fontSize: 11, fontFamily: "Inter_500Medium", lineHeight: 16, textDecorationLine: "underline" },
+  sourceSummaryButton: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
+  sourceSummaryText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
   libraryAction: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, marginTop: 8, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 12, borderWidth: 1 },
   libraryActionText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },

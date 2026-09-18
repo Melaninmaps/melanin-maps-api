@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { requiresCurrentResearch } from "../current-research";
+import {
+  hasRequestedArticleEvidence,
+  requestedArticleSummaryUrl,
+  requiresCurrentResearch,
+} from "../current-research";
 
 describe("current research routing", () => {
   it.each([
@@ -38,6 +42,8 @@ describe("current research routing", () => {
     "schedule",
     "weather",
     "price",
+    "Is Durk coming home?",
+    "Will Lil Durk be released?",
   ])("requires current research for %s", (message) => {
     expect(requiresCurrentResearch(message)).toBe(true);
   });
@@ -50,7 +56,22 @@ describe("current research routing", () => {
     "Plan a trip in Philadelphia",
     "Give me travel recommendations in Atlanta",
     "live music recommendations",
+    "My sister is coming home from school",
   ])("does not mistake stable or entertainment language for freshness in %s", (message) => {
     expect(requiresCurrentResearch(message)).toBe(false);
+  });
+
+  it("routes an explicit linked-article summary to current source retrieval", () => {
+    const message = "Please summarize this linked article about gas prices: https://example.com/news/gas-prices?ref=kinfolk";
+    const requested = requestedArticleSummaryUrl(message);
+    expect(requested).toBe("https://example.com/news/gas-prices");
+    expect(requiresCurrentResearch(message)).toBe(true);
+    expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/news/gas-prices" }])).toBe(true);
+    expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/another-story" }])).toBe(false);
+  });
+
+  it("does not accept a non-public or non-summary URL as an article request", () => {
+    expect(requestedArticleSummaryUrl("Open https://example.com/news/gas-prices")).toBeNull();
+    expect(requestedArticleSummaryUrl("Summarize https://localhost/private")).toBeNull();
   });
 });
