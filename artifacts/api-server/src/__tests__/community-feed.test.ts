@@ -118,7 +118,7 @@ describe("Community feed SQL safety and visibility", () => {
     expect(query.text).toContain("COUNT(*)::integer");
 
     const outer = outerFeedSql(query.text);
-    expect(outer).toContain("cp.requires_moderation = false");
+    expect(outer).toContain("to_jsonb(cp)->>'requires_moderation'");
     expect(outer).toContain("FROM user_blocks ub");
     expect(outer).toContain("to_jsonb(u)->>'is_load_test'");
     expect(outer).toContain("to_jsonb(cp)->>'internal_test_content'");
@@ -129,17 +129,17 @@ describe("Community feed SQL safety and visibility", () => {
     const following = outerFeedSql(queryFor("following").text);
     const forYou = outerFeedSql(queryFor("foryou").text);
 
-    expect(everyone).toContain("WHERE cp.visibility = 'public'");
-    expect(everyone).toContain("u.is_private = false");
+    expect(everyone).toContain("to_jsonb(cp)->>'visibility'");
+    expect(everyone).toContain("to_jsonb(u)->>'is_private'");
     expect(everyone).toContain("uf.status = 'accepted'");
     expect(everyone).toContain("mc.status = 'accepted'");
 
     expect(following).toContain("WHERE (cp.author_id = $1 OR");
-    expect(following).toContain("cp.visibility IN ('public', 'followers_only')");
+    expect(following).toContain("to_jsonb(cp)->>'visibility'");
     expect(following).toContain("uf.status = 'accepted'");
 
-    expect(forYou).toContain("WHERE cp.visibility = 'public'");
-    expect(forYou).toContain("AND (u.is_private = false OR u.id IS NULL)");
+    expect(forYou).toContain("to_jsonb(cp)->>'visibility'");
+    expect(forYou).toContain("to_jsonb(u)->>'is_private'");
     expect(forYou).not.toContain("cp.visibility IN ('public', 'followers_only')");
   });
 
@@ -155,9 +155,9 @@ describe("Community feed SQL safety and visibility", () => {
 
     expect(query.values).toEqual(["author-1", "viewer-1", 10, 0]);
     expect(outer).toContain("WHERE cp.author_id = $1");
-    expect(outer).toContain("cp.requires_moderation = false OR cp.author_id = $2");
-    expect(outer).toContain("cp.visibility IN ('public', 'followers_only')");
-    expect(outer).toContain("u.is_private = false OR u.id IS NULL");
+    expect(outer).toContain("to_jsonb(cp)->>'requires_moderation'");
+    expect(outer).toContain("to_jsonb(cp)->>'visibility'");
+    expect(outer).toContain("to_jsonb(u)->>'is_private'");
     expect(outer).toContain("FROM user_blocks ub");
     expect(outer).toContain("internal_test_content");
   });
@@ -166,6 +166,15 @@ describe("Community feed SQL safety and visibility", () => {
     expect(communityFeedUsesSafeOptionalColumns("SELECT mc.status FROM member_connections mc")).toBe(true);
     expect(communityFeedUsesSafeOptionalColumns("SELECT cp.status FROM community_posts cp")).toBe(false);
     expect(communityFeedUsesSafeOptionalColumns("SELECT c.deleted_at FROM community_post_comments c")).toBe(false);
+  });
+
+  it("reads legacy post fields through JSON while preserving visibility and moderation defaults", () => {
+    const query = queryFor("everyone");
+
+    expect(query.text).toContain("to_jsonb(cp)->'media_urls' AS media_urls");
+    expect(query.text).toContain("to_jsonb(cp)->>'visibility'");
+    expect(query.text).toContain("to_jsonb(cp)->>'requires_moderation'");
+    expect(query.text).not.toMatch(/\bcp\.(post_type|business_id|business_name|business_link|media_urls|saved_place_id|visibility|requires_moderation|comments_count)\b/i);
   });
 
   it("keeps Community behind the global authenticated-member wall", () => {
@@ -178,6 +187,26 @@ describe("Community feed SQL safety and visibility", () => {
 });
 
 describe("For You optional enrichment behavior", () => {
+  it("retries retained posts without the optional comments table", async () => {
+    const legacyPost = samplePost({
+      media_urls: JSON.stringify(["https://www.tiktok.com/@member/video/7481234567890123456"]),
+      comments_count: 7,
+    });
+    const query = vi.fn()
+      .mockRejectedValueOnce(Object.assign(new Error("relation community_post_comments does not exist"), { code: "42P01" }))
+      .mockResolvedValueOnce({ rows: [legacyPost] });
+
+    const rows = await fetchCommunityFeedRows({ query } as never, {
+      viewerId: "viewer-1", feedMode: "everyone", limit: 1, offset: 0,
+    });
+
+    expect(rows).toEqual([legacyPost]);
+    expect(query).toHaveBeenCalledTimes(2);
+    expect(query.mock.calls[0][0]).toContain("FROM community_post_comments c");
+    expect(query.mock.calls[1][0]).not.toContain("FROM community_post_comments c");
+    expect(query.mock.calls[1][0]).toContain("to_jsonb(cp)->>'comments_count'");
+  });
+
   it("fails open only when optional preference storage is absent", async () => {
     const olderRelated = samplePost({
       id: "older-related",

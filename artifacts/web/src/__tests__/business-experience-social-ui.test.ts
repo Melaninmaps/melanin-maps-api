@@ -58,6 +58,15 @@ describe("website social video choices", () => {
     expect(profile).toContain("api/users/me/content-preferences");
   });
 
+  it("keeps canonical TikTok attachments linked to their public provider", () => {
+    const media = source("../components/community/CommunityMedia.tsx");
+    expect(media).toContain("getTikTokPlayerUrl");
+    expect(media).toContain("Open on TikTok");
+    expect(media).toContain("community-tiktok-link-${index}");
+    expect(media).toContain('target="_blank"');
+    expect(media).toContain('rel="noopener noreferrer"');
+  });
+
   it("lets community members paste all supported public social links", () => {
     const community = source("../pages/community.tsx");
     expect(community).toContain("Twitch, Snapchat");

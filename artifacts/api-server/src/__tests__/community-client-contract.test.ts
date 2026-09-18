@@ -26,4 +26,14 @@ describe("Community client contract", () => {
     expect(web).toContain("Block member");
     expect(web).not.toContain("Save Post");
   });
+
+  it("retains a canonical public TikTok attachment from the feed response", () => {
+    const media = source("../../../web/src/components/community/CommunityMedia.tsx");
+    expect(web).toContain("/^https?:\\/\\//i.test(current.trim())");
+    expect(web).toContain("return [current.trim()]");
+    expect(media).toContain("getTikTokPlayerUrl");
+    expect(media).toContain("Open on TikTok");
+    expect(media).toContain('target="_blank"');
+    expect(media).toContain('rel="noopener noreferrer"');
+  });
 });
