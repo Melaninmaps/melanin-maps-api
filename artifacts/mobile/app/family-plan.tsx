@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
+  Alert,
   Modal,
   ScrollView,
   Text,
@@ -18,6 +18,7 @@ import { useFamilyPlan } from "@/hooks/useFamilyPlan";
 import * as SecureStore from "expo-secure-store";
 
 import { getApiBase } from "@/lib/api";
+import { openWebPaymentHandoff } from "@/lib/webPaymentHandoff";
 const apiBase = getApiBase();
 
 // ── AI Pool Bar ─────────────────────────────────────────────────────────────
@@ -224,14 +225,29 @@ export default function FamilyPlanScreen() {
     }
   };
 
+  const handleMembershipUpgrade = async () => {
+    const result = await openWebPaymentHandoff("membership");
+    if (result === "not_enabled") {
+      Alert.alert(
+        "Complete this on the website",
+        "Membership changes are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
+      );
+    } else if (result === "unavailable") {
+      Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
+    }
+  };
+
   const handleAddSeat = async () => {
     setAddSeatLoading(true);
     try {
-      const url = await addFamilySeat();
-      if (url?.startsWith("http")) {
-        void Linking.openURL(url);
-      } else if (url?.startsWith("/")) {
-        router.push(url as Parameters<typeof router.push>[0]);
+      const result = await addFamilySeat();
+      if (result === "not_enabled") {
+        Alert.alert(
+          "Complete this on the website",
+          "Family-seat payments are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
+        );
+      } else if (result === "unavailable") {
+        Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
       }
     } finally {
       setAddSeatLoading(false);
@@ -310,7 +326,7 @@ export default function FamilyPlanScreen() {
             </Text>
             <TouchableOpacity
               style={{ backgroundColor: "#CA922B", borderRadius: 10, paddingVertical: 13, paddingHorizontal: 28, marginTop: 4 }}
-              onPress={() => router.push("/membership")}
+              onPress={() => void handleMembershipUpgrade()}
               activeOpacity={0.85}
             >
               <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFF" }}>View Plans</Text>
@@ -345,7 +361,7 @@ export default function FamilyPlanScreen() {
                     paddingVertical: 7,
                     paddingHorizontal: 13,
                   }}
-                  onPress={() => router.push("/membership")}
+                  onPress={() => void handleMembershipUpgrade()}
                   activeOpacity={0.8}
                 >
                   <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: isHighlight ? "#FFF" : "#CA922B" }}>Upgrade</Text>
