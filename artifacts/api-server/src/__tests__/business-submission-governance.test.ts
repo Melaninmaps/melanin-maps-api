@@ -985,6 +985,7 @@ describe("source contracts", () => {
       safeFunction.replace("AND NOT (", "AND NOT ").replace("\n      );", "\n      ;"),
     ]) expect(communityBusinessIsPublicFunctionIsSafe(unsafeFunction)).toBe(false);
     expect(communityPublicViewDefinitionIsSafe(safeView)).toBe(true);
+    expect(communityPublicViewDefinitionIsSafe(safeView.replace(/public\./g, ""))).toBe(true);
     for (const unsafeView of [
       "SELECT b.* FROM public.businesses b",
       safeView.replace("WHERE public.business_record_is_public", "WHERE NOT public.business_record_is_public"),

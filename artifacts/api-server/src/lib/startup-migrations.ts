@@ -5224,10 +5224,14 @@ export function communityPublicViewDefinitionIsSafe(
   const actualFilter = sql
     .slice(whereAt + " where ".length)
     .replace(/;$/, "")
-    .replace(/^public\./, "");
+    // pg_get_viewdef() omits public. inside objects already in the public
+    // schema, while source SQL includes it. Normalize only that harmless
+    // qualification difference, then require the entire fail-closed function
+    // call to match exactly.
+    .replace(/\bpublic\./g, "");
   const expectedFilter = normalizeCatalogSql(
     PUBLIC_BUSINESSES_VIEW_FILTER,
-  ).replace(/^public\./, "");
+  ).replace(/\bpublic\./g, "");
   return actualFilter === expectedFilter;
 }
 
