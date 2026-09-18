@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-09-18T22:05:55.204Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "denver-candidates.jsonl",
+    "las-vegas-candidates.jsonl",
+    "phoenix-candidates.jsonl"
+  ],
+  "inputRows": 38,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 38,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "physicalAddressCandidates": 38,
+  "onlineOnlyCandidates": 0,
+  "targetKinds": {
+    "business": 17,
+    "community_resource": 15,
+    "cultural_place": 6
+  },
+  "categories": {
+    "food_and_drink": 8,
+    "business_support": 7,
+    "community_services": 4,
+    "arts_culture": 3,
+    "Arts & culture": 2,
+    "Books & media": 2,
+    "retail": 2,
+    "Youth development": 2,
+    "Apparel & accessories": 1,
+    "arts_and_culture": 1,
+    "Beauty & personal care": 1,
+    "Business services": 1,
+    "community_and_civic": 1,
+    "Food & beverage": 1,
+    "government_civic": 1,
+    "Specialty retail": 1
+  },
+  "states": {
+    "Denver, CO": 13,
+    "Las Vegas, NV": 11,
+    "Phoenix, AZ": 9,
+    "Chandler, AZ": 1,
+    "Gilbert, AZ": 1,
+    "Henderson, NV": 1,
+    "Longmont, CO": 1,
+    "North Las Vegas, NV": 1
+  },
+  "officialCustomerDestinationCoverage": 38,
+  "files": {
+    "candidates": "seventh-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "seventh-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "seventh-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "seventh-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "d5b410dfe140d6a788a57ec9b56cd22fe20de639ff4f00a0777339d4c9b2ec1e"
+}
