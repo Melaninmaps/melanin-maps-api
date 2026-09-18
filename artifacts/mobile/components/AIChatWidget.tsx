@@ -46,6 +46,7 @@ interface Message {
   sources?: Array<{ title: string; url: string }>;
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   recommendations?: KinfolkBusinessRecommendation[];
+  intentClass?: string | null;
 }
 
 interface TaskActionPayload {
@@ -135,6 +136,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
   sources: Array<{ title: string; url: string }>;
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   recommendations: KinfolkBusinessRecommendation[];
+  intentClass?: string | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -168,6 +170,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
     sources?: Array<{ title: string; url: string }> | null;
     libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
     recommendations?: { businesses?: KinfolkBusinessRecommendation[] } | null;
+    intentClass?: string | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -182,6 +185,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
       return safe ? [safe] : [];
     }),
     libraryAction: data.libraryAction ?? null,
+    intentClass: data.intentClass ?? null,
     recommendations: Array.isArray(data.recommendations?.businesses)
       ? data.recommendations.businesses
         .filter((business) => Boolean(business?.id && business?.name))
@@ -243,6 +247,9 @@ export function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>(() => [
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
   ]);
+  const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
+  const [responseFeedbackNotes, setResponseFeedbackNotes] = useState<Record<string, string>>({});
+  const [feedbackSavingId, setFeedbackSavingId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -700,6 +707,7 @@ export function AIChatWidget() {
         sources,
         libraryAction,
         recommendations,
+        intentClass,
       } = await sendToKinfolk(text, token, await nearbyCityHint(text));
 
       let taskCreated: Message["taskCreated"] | undefined;
@@ -723,6 +731,7 @@ export function AIChatWidget() {
         sources,
         libraryAction,
         recommendations,
+        intentClass,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -750,6 +759,47 @@ export function AIChatWidget() {
       setTyping(false);
       setWidgetAtBottom(true);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  };
+
+  const submitResponseFeedback = async (
+    message: Message,
+    reaction: "helpful" | "not_helpful",
+    includeNote = false,
+  ) => {
+    const token = await getToken();
+    if (!token) {
+      Alert.alert("Sign in to share feedback", "Please sign in so Kinfolk can apply your feedback to future answers.");
+      return;
+    }
+
+    const previous = responseFeedback[message.id];
+    setResponseFeedback((current) => ({ ...current, [message.id]: reaction }));
+    setFeedbackSavingId(message.id);
+    try {
+      const response = await fetch(`${getApiBase()}/api/kinfolk/response-feedback`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          sessionId,
+          messageId: message.id,
+          reaction,
+          note: includeNote ? responseFeedbackNotes[message.id]?.trim() || null : null,
+          intentClass: message.intentClass ?? null,
+        }),
+      });
+      if (!response.ok) throw new Error("Feedback was not saved");
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      setResponseFeedback((current) => {
+        const next = { ...current };
+        if (previous) next[message.id] = previous;
+        else delete next[message.id];
+        return next;
+      });
+      Alert.alert("Feedback not saved", "Please check your connection and try again.");
+    } finally {
+      setFeedbackSavingId(null);
     }
   };
 
@@ -913,6 +963,54 @@ export function AIChatWidget() {
                       {playingId === item.id ? "Stop" : "Listen"}
                     </Text>
                   </TouchableOpacity>
+                )}
+                {!item.fromUser && item.id !== "0" && (
+                  <View style={[styles.responseFeedback, { marginLeft: 42 }]}>
+                    <Text style={[styles.responseFeedbackQuestion, { color: colors.mutedForeground }]}>Was this helpful?</Text>
+                    <View style={styles.responseFeedbackActions}>
+                      <TouchableOpacity
+                        onPress={() => void submitResponseFeedback(item, "helpful")}
+                        disabled={feedbackSavingId === item.id}
+                        style={[styles.responseFeedbackButton, { borderColor: responseFeedback[item.id] === "helpful" ? colors.primary : colors.border, backgroundColor: responseFeedback[item.id] === "helpful" ? `${colors.primary}18` : colors.card }]}
+                        accessibilityLabel="Mark this Kinfolk answer helpful"
+                      >
+                        <Feather name="thumbs-up" size={12} color={responseFeedback[item.id] === "helpful" ? colors.primary : colors.mutedForeground} />
+                        <Text style={[styles.responseFeedbackButtonText, { color: responseFeedback[item.id] === "helpful" ? colors.primary : colors.mutedForeground }]}>Helpful</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => void submitResponseFeedback(item, "not_helpful")}
+                        disabled={feedbackSavingId === item.id}
+                        style={[styles.responseFeedbackButton, { borderColor: responseFeedback[item.id] === "not_helpful" ? colors.primary : colors.border, backgroundColor: responseFeedback[item.id] === "not_helpful" ? `${colors.primary}18` : colors.card }]}
+                        accessibilityLabel="Mark this Kinfolk answer not helpful"
+                      >
+                        <Feather name="thumbs-down" size={12} color={responseFeedback[item.id] === "not_helpful" ? colors.primary : colors.mutedForeground} />
+                        <Text style={[styles.responseFeedbackButtonText, { color: responseFeedback[item.id] === "not_helpful" ? colors.primary : colors.mutedForeground }]}>Not helpful</Text>
+                      </TouchableOpacity>
+                    </View>
+                    {responseFeedback[item.id] === "not_helpful" && (
+                      <View style={styles.responseFeedbackNoteRow}>
+                        <TextInput
+                          value={responseFeedbackNotes[item.id] ?? ""}
+                          onChangeText={(value) => setResponseFeedbackNotes((current) => ({ ...current, [item.id]: value }))}
+                          placeholder="What should Kinfolk do better? (optional)"
+                          placeholderTextColor={colors.mutedForeground}
+                          style={[styles.responseFeedbackInput, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]}
+                          maxLength={240}
+                        />
+                        <TouchableOpacity
+                          onPress={() => void submitResponseFeedback(item, "not_helpful", true)}
+                          disabled={feedbackSavingId === item.id}
+                          style={[styles.responseFeedbackSend, { backgroundColor: colors.primary, opacity: feedbackSavingId === item.id ? 0.6 : 1 }]}
+                          accessibilityLabel="Send optional Kinfolk feedback note"
+                        >
+                          <Feather name="send" size={12} color="#FFF" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    {responseFeedback[item.id] && (
+                      <Text style={[styles.responseFeedbackThanks, { color: colors.mutedForeground }]}>Thanks — this helps Kinfolk tailor future answers for you.</Text>
+                    )}
+                  </View>
                 )}
                 {item.taskCreated && (
                   <TouchableOpacity onPress={goToTasks} style={[styles.taskCreatedBadge, { backgroundColor: colors.card, borderColor: colors.primary }]}>
@@ -1324,6 +1422,15 @@ const styles = StyleSheet.create({
   locationPillTxt: { fontSize: 10, fontFamily: "Inter_500Medium", opacity: 0.75 },
   listenBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, paddingLeft: 2, alignSelf: "flex-start" },
   listenTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  responseFeedback: { marginTop: 7, alignSelf: "flex-start" },
+  responseFeedbackQuestion: { fontSize: 10, fontFamily: "Inter_400Regular", marginBottom: 5 },
+  responseFeedbackActions: { flexDirection: "row", gap: 6 },
+  responseFeedbackButton: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 14, paddingVertical: 5, paddingHorizontal: 8 },
+  responseFeedbackButtonText: { fontSize: 10, fontFamily: "Inter_500Medium" },
+  responseFeedbackNoteRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 7, maxWidth: "78%" },
+  responseFeedbackInput: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 7, fontSize: 11, fontFamily: "Inter_400Regular" },
+  responseFeedbackSend: { width: 31, height: 31, borderRadius: 15.5, alignItems: "center", justifyContent: "center" },
+  responseFeedbackThanks: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 5, fontStyle: "italic" },
   voiceMeter: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 1 },
   voiceMeterTrack: { height: 3, borderRadius: 2, overflow: "hidden", marginBottom: 5 },
   voiceMeterFill: { height: "100%", borderRadius: 2 },
