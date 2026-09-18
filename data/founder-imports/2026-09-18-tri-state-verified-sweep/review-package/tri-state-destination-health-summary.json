@@ -1,0 +1,2672 @@
+{
+  "manifest": "/home/ubuntu/melanin-maps-tri-state-review/data/founder-imports/2026-09-18-tri-state-verified-sweep/review-package/tri-state-review-only-candidates.jsonl",
+  "linkHealth": "/home/ubuntu/melanin-maps-tri-state-review/data/founder-imports/2026-09-18-tri-state-verified-sweep/review-package/tri-state-destination-health.json",
+  "candidates": 730,
+  "candidatesByTargetKind": {
+    "business": 594,
+    "cultural_place": 22,
+    "community_resource": 96,
+    "regulated_review": 13,
+    "online_business": 5
+  },
+  "uniqueDestinations": 719,
+  "destinationOutcomes": {
+    "reachable": 620,
+    "network_error": 36,
+    "review_required": 51,
+    "timeout": 12
+  },
+  "candidatesWithLinkReviewHold": 110,
+  "candidatesWithLinkReviewHoldByTargetKind": {
+    "business": 82,
+    "community_resource": 23,
+    "regulated_review": 2,
+    "cultural_place": 3
+  },
+  "noAutomatedPreStageHoldCommercialCandidates": 364,
+  "heldCandidates": [
+    {
+      "manifestRow": 9,
+      "name": "Pro Se Appeal Company, LLC | Health care",
+      "city": "Barnegat",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/pro-se-appeal-company-llc-51691",
+      "website": "http://www.proseappealco.com/",
+      "socialSourceUrl": "https://www.facebook.com/profile.php?id=61590965573988",
+      "issues": [
+        {
+          "url": "http://www.proseappealco.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 18,
+      "name": "The Light CIMA Group LLC | Accountants",
+      "city": "Bergenfield",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/the-light-cima-group-llc-bergenfield-51441",
+      "website": "https://www.linkedin.com/in/the-light-cima-group-llc-4a96653a5/",
+      "socialSourceUrl": "https://www.facebook.com/share/1ACqmriqy5/?mibextid=wwXIfr",
+      "issues": [
+        {
+          "url": "https://www.linkedin.com/in/the-light-cima-group-llc-4a96653a5/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/the-light-cima-group-llc-4a96653a5/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 21,
+      "name": "JOP BOOKKEEPING & TAXES | Accountants",
+      "city": "Bloomfield",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/jop-bookkeeping-taxes-46575",
+      "website": "http://ww.joptaxes.com/",
+      "socialSourceUrl": "http://ww.joptaxes.com/",
+      "issues": [
+        {
+          "url": "http://ww.joptaxes.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://ww.joptaxes.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 27,
+      "name": "Myriam Cruz Realtor® | Real Estate Services",
+      "city": "Bridgewater",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/myriam-cruz-realtor-51673",
+      "website": "https://myriamecruz.kw.com/",
+      "socialSourceUrl": "https://www.facebook.com/MyriamECruz",
+      "issues": [
+        {
+          "url": "https://myriamecruz.kw.com/",
+          "status": 403,
+          "finalUrl": "https://myriamecruz.kw.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 28,
+      "name": "TD Bank | Banks & Credit Unions",
+      "city": "Bridgewater",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/td-bank-bridgewater-2820",
+      "website": "http://https//www.tdbank.com/",
+      "socialSourceUrl": "http://https//www.tdbank.com/",
+      "issues": [
+        {
+          "url": "http://https//www.tdbank.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//www.tdbank.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 30,
+      "name": "Logan-Videon Funeral Home",
+      "city": "Broomall",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/logan-videon-funeral-home",
+      "website": "https://www.loganfuneralhomes.com/",
+      "socialSourceUrl": "https://www.loganfuneralhomes.com/",
+      "issues": [
+        {
+          "url": "https://www.loganfuneralhomes.com/",
+          "status": 403,
+          "finalUrl": "https://www.loganfuneralhomes.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.loganfuneralhomes.com/",
+          "status": 403,
+          "finalUrl": "https://www.loganfuneralhomes.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 33,
+      "name": "Oasis Senior Advisors Of Bergen County | Assisted Living",
+      "city": "Budd Lake",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/oasis-senior-advisors-of-bergen-county-51615",
+      "website": "https://www.oasissenioradvisors.com/locations/bergen-county/",
+      "socialSourceUrl": "https://www.facebook.com/profile.php?id=61566549462963",
+      "issues": [
+        {
+          "url": "https://www.oasissenioradvisors.com/locations/bergen-county/",
+          "status": 403,
+          "finalUrl": "https://www.oasissenioradvisors.com/locations/bergen-county/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 34,
+      "name": "Taste of Soul by Ms. Nancy",
+      "city": "Burlington",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://visitsouthjersey.com/support-local-black-owned-businesses/",
+      "website": "http://www.tasteofsoulbymsnancy.com/",
+      "socialSourceUrl": "https://www.instagram.com/tasteofsoul01",
+      "issues": [
+        {
+          "url": "http://www.tasteofsoulbymsnancy.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 38,
+      "name": "La Ingrata",
+      "city": "Camden",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://aemphilly.org/en/our-association/",
+      "website": "https://laingratacamden.com/",
+      "socialSourceUrl": "https://www.instagram.com/laingratacamden/",
+      "issues": [
+        {
+          "url": "https://laingratacamden.com/",
+          "status": 403,
+          "finalUrl": "https://laingratacamden.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 50,
+      "name": "Cloverleaf Stables",
+      "city": "Chadds Ford",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://bestindelco.com/business/cloverleaf-stables-u1ypbr",
+      "website": "https://www.loc8nearme.com/pennsylvania/chadds-ford/cloverleaf-stables/7448568",
+      "socialSourceUrl": "https://www.loc8nearme.com/pennsylvania/chadds-ford/cloverleaf-stables/7448568",
+      "issues": [
+        {
+          "url": "https://www.loc8nearme.com/pennsylvania/chadds-ford/cloverleaf-stables/7448568",
+          "status": 403,
+          "finalUrl": "https://www.loc8nearme.com/pennsylvania/chadds-ford/cloverleaf-stables/7448568",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.loc8nearme.com/pennsylvania/chadds-ford/cloverleaf-stables/7448568",
+          "status": 403,
+          "finalUrl": "https://www.loc8nearme.com/pennsylvania/chadds-ford/cloverleaf-stables/7448568",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 52,
+      "name": "Mexican Spice | Restaurants",
+      "city": "Chatham",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mexican-spice-51662",
+      "website": "http://www.mexicanspice.net/",
+      "socialSourceUrl": "http://www.mexicanspice.net/",
+      "issues": [
+        {
+          "url": "http://www.mexicanspice.net/",
+          "status": 403,
+          "finalUrl": "https://www.mexicanspice.net/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.mexicanspice.net/",
+          "status": 403,
+          "finalUrl": "https://www.mexicanspice.net/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 61,
+      "name": "Aunt Berta’s Kitchen",
+      "city": "Clementon",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://auntbertaskitchen.com/",
+      "socialSourceUrl": "https://www.instagram.com/auntbertaskitchen/",
+      "issues": [
+        {
+          "url": "https://auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 80,
+      "name": "Markit Girl LLC | Marketing",
+      "city": "Denville",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/markit-girl-llc-50328",
+      "website": "https://www.markitgirl.com/",
+      "socialSourceUrl": "https://www.markitgirl.com/",
+      "issues": [
+        {
+          "url": "https://www.markitgirl.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://www.markitgirl.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 97,
+      "name": "Williamson Dental Solutions",
+      "city": "Dover",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://www.mtzionamedover.com/blackownedbusinesses",
+      "website": "http://www.wdssmiles.com/",
+      "socialSourceUrl": "http://www.wdssmiles.com/",
+      "issues": [
+        {
+          "url": "http://www.wdssmiles.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "http://www.wdssmiles.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 98,
+      "name": "Williamson Dental Solutions",
+      "city": "Dover",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://www.mtzionamedover.com/blackownedbusinesses",
+      "website": "http://www.wdssmiles.com/",
+      "socialSourceUrl": "http://www.wdssmiles.com/",
+      "issues": [
+        {
+          "url": "http://www.wdssmiles.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "http://www.wdssmiles.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 109,
+      "name": "Belle Studio by Maxiel Rubel LLC | Beauty Salons/Spas",
+      "city": "Edison",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/belle-studio-by-maxiel-rubel-llc-edison-46662",
+      "website": "https://www.maxielrubel.com/",
+      "socialSourceUrl": "https://www.maxielrubel.com/",
+      "issues": [
+        {
+          "url": "https://www.maxielrubel.com/",
+          "status": 404,
+          "finalUrl": "https://www.maxielrubel.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.maxielrubel.com/",
+          "status": 404,
+          "finalUrl": "https://www.maxielrubel.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 119,
+      "name": "Paint 2 Smile | Entertainment",
+      "city": "Englewood",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/paint-2-smile-51576",
+      "website": "http://www.paint2smile.com/",
+      "socialSourceUrl": "https://www.facebook.com/paint2smile/",
+      "issues": [
+        {
+          "url": "http://www.paint2smile.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 123,
+      "name": "American Red Cross New Jersey Region | Community Organizations",
+      "city": "Fairfield",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/american-red-cross-new-jersey-region-51665",
+      "website": "https://www.redcross.org/local/new-jersey.html",
+      "socialSourceUrl": "https://www.facebook.com/NJRedCross",
+      "issues": [
+        {
+          "url": "https://www.redcross.org/local/new-jersey.html",
+          "status": 403,
+          "finalUrl": "https://www.redcross.org/local/new-jersey.html",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 124,
+      "name": "Kearny Bank | Banks & Credit Unions",
+      "city": "Fairfield",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/kearny-bank-250",
+      "website": "http://https//www.kearnybank.com/",
+      "socialSourceUrl": "http://https//www.kearnybank.com/",
+      "issues": [
+        {
+          "url": "http://https//www.kearnybank.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//www.kearnybank.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 129,
+      "name": "Spa médico | Beauty Salons/Spas | Salon and Spa",
+      "city": "Fort lee",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/spa-m%C3%A9dico-fort-lee-45181",
+      "website": "http://lestheticmedspa.com/",
+      "socialSourceUrl": "http://lestheticmedspa.com/",
+      "issues": [
+        {
+          "url": "http://lestheticmedspa.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://lestheticmedspa.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 131,
+      "name": "Rumba Cafe | Restaurants",
+      "city": "Fort Lee",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/rumba-cafe-fort-lee-45388",
+      "website": "https://rumbacafeleonia.com/",
+      "socialSourceUrl": "https://rumbacafeleonia.com/",
+      "issues": [
+        {
+          "url": "https://rumbacafeleonia.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://rumbacafeleonia.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 136,
+      "name": "The Wing Kitchen",
+      "city": "Glassboro",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://visitsouthjersey.com/support-local-black-owned-businesses/",
+      "website": "https://thewingkitchen.com/",
+      "socialSourceUrl": "https://thewingkitchen.com/",
+      "issues": [
+        {
+          "url": "https://thewingkitchen.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://thewingkitchen.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 141,
+      "name": "Primrose School of Concordville",
+      "city": "Glen Mills",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/primrose-school-of-concordville",
+      "website": "https://www.primroseschools.com/schools/concordville.com",
+      "socialSourceUrl": "https://www.primroseschools.com/schools/concordville.com",
+      "issues": [
+        {
+          "url": "https://www.primroseschools.com/schools/concordville.com",
+          "status": 404,
+          "finalUrl": "https://www.primroseschools.com/schools/concordville.com",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.primroseschools.com/schools/concordville.com",
+          "status": 404,
+          "finalUrl": "https://www.primroseschools.com/schools/concordville.com",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 146,
+      "name": "LaBarbiera & Martinez | Law Firm",
+      "city": "Hackensack",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/labarbiera-martinez-50303",
+      "website": "http://www.attorny-abogado.com/",
+      "socialSourceUrl": "http://www.attorny-abogado.com/",
+      "issues": [
+        {
+          "url": "http://www.attorny-abogado.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://www.attorny-abogado.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 149,
+      "name": "Aunt Berta’s Kitchen",
+      "city": "Haddon Township",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://auntbertaskitchen.com/",
+      "socialSourceUrl": "https://www.instagram.com/auntbertaskitchen/",
+      "issues": [
+        {
+          "url": "https://auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 156,
+      "name": "New Jersey YMCA State Alliance, Inc. | Community Organizations",
+      "city": "Hamilton",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/new-jersey-ymca-state-alliance-inc-51450",
+      "website": "http://www.njymca.org/",
+      "socialSourceUrl": "https://www.facebook.com/NJYMCA/",
+      "issues": [
+        {
+          "url": "http://www.njymca.org/",
+          "status": 403,
+          "finalUrl": "http://www.njymca.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 161,
+      "name": "Llanerch Country Club",
+      "city": "Havertown",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://bestindelco.com/business/llanerch-country-club",
+      "website": "https://www.llanerchcc.com/",
+      "socialSourceUrl": "https://www.llanerchcc.com/",
+      "issues": [
+        {
+          "url": "https://www.llanerchcc.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://www.llanerchcc.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 162,
+      "name": "Wilson's Restaurant & Live Music Lounge",
+      "city": "Hi-Nella",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://wilsonslivemusic.com/",
+      "socialSourceUrl": "https://wilsonslivemusic.com/",
+      "issues": [
+        {
+          "url": "https://wilsonslivemusic.com/",
+          "status": 403,
+          "finalUrl": "https://www.wilsonslivemusic.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://wilsonslivemusic.com/",
+          "status": 403,
+          "finalUrl": "https://www.wilsonslivemusic.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 163,
+      "name": "Wilson's Restaurant & Live Music Lounge",
+      "city": "Hi-Nella",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://visitsouthjersey.com/support-local-black-owned-businesses/",
+      "website": "http://wilsonslivemusic.com/",
+      "socialSourceUrl": "http://wilsonslivemusic.com/",
+      "issues": [
+        {
+          "url": "http://wilsonslivemusic.com/",
+          "status": 403,
+          "finalUrl": "https://www.wilsonslivemusic.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://wilsonslivemusic.com/",
+          "status": 403,
+          "finalUrl": "https://www.wilsonslivemusic.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 164,
+      "name": "Wilson’s Restaurant & Live Music Lounge",
+      "city": "Hi-Nella",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://wilsonslivemusic.com/",
+      "socialSourceUrl": "https://wilsonslivemusic.com/",
+      "issues": [
+        {
+          "url": "https://wilsonslivemusic.com/",
+          "status": 403,
+          "finalUrl": "https://www.wilsonslivemusic.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://wilsonslivemusic.com/",
+          "status": 403,
+          "finalUrl": "https://www.wilsonslivemusic.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 168,
+      "name": "Caidos del Cielo Bakery | Bakery and Cafe",
+      "city": "Hoboken",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/caidos-del-cielo-bakery-hoboken-45382",
+      "website": "https://www.caidosdelcielobakery.com/",
+      "socialSourceUrl": "https://www.caidosdelcielobakery.com/",
+      "issues": [
+        {
+          "url": "https://www.caidosdelcielobakery.com/",
+          "status": 404,
+          "finalUrl": "https://www.caidosdelcielobakery.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.caidosdelcielobakery.com/",
+          "status": 404,
+          "finalUrl": "https://www.caidosdelcielobakery.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 171,
+      "name": "Aunt Berta's Kitchen of Hockessin (COMFORT CLASSICS)",
+      "city": "Hockessin",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://delawareblack.com/black-directory/listing/aunt-bertas-kitchen-of-hockessin-comfort-classics",
+      "website": "http://www.auntbertaskitchen.com/",
+      "socialSourceUrl": "https://www.instagram.com/auntbertaskitchen/",
+      "issues": [
+        {
+          "url": "http://www.auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 192,
+      "name": "PMarrero Business Solutions | Consulting Services | Business Strategies | Consultants",
+      "city": "Keasbey",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/pmarrero-business-solutions-keasbey-46731",
+      "website": "http://www.pmarrerobs.com/",
+      "socialSourceUrl": "https://www.facebook.com/share/15wVE44moS/",
+      "issues": [
+        {
+          "url": "http://www.pmarrerobs.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 197,
+      "name": "Miller Funeral Home & Cremation Services",
+      "city": "Laurel",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://sdarj.org/directory-of-black-owned-businesses-in-southern-delaware/",
+      "website": "http://www.millerfuneralandcremation.com/",
+      "socialSourceUrl": "http://www.millerfuneralandcremation.com/",
+      "issues": [
+        {
+          "url": "http://www.millerfuneralandcremation.com/",
+          "status": 403,
+          "finalUrl": "http://www.millerfuneralandcremation.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.millerfuneralandcremation.com/",
+          "status": 403,
+          "finalUrl": "http://www.millerfuneralandcremation.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 198,
+      "name": "Miller Funeral Home & Cremation Services",
+      "city": "Laurel",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://sdarj.org/directory-of-black-owned-businesses-in-southern-delaware/",
+      "website": "http://www.millerfuneralandcremation.com/",
+      "socialSourceUrl": "http://www.millerfuneralandcremation.com/",
+      "issues": [
+        {
+          "url": "http://www.millerfuneralandcremation.com/",
+          "status": 403,
+          "finalUrl": "http://www.millerfuneralandcremation.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.millerfuneralandcremation.com/",
+          "status": 403,
+          "finalUrl": "http://www.millerfuneralandcremation.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 212,
+      "name": "Aunt Berta's Kitchen",
+      "city": "Lindenwold",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://auntbertaskitchen.com/",
+      "socialSourceUrl": "https://auntbertaskitchen.com/",
+      "issues": [
+        {
+          "url": "https://auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 213,
+      "name": "My Little Preschool | Education",
+      "city": "Little falls",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/my-little-preschool-50418",
+      "website": "http://mylittlepreschoolnj.com/",
+      "socialSourceUrl": "http://mylittlepreschoolnj.com/",
+      "issues": [
+        {
+          "url": "http://mylittlepreschoolnj.com/",
+          "status": 403,
+          "finalUrl": "http://mylittlepreschoolnj.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://mylittlepreschoolnj.com/",
+          "status": 403,
+          "finalUrl": "http://mylittlepreschoolnj.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 217,
+      "name": "HEAVENLYHEALINGSOAPS LLC | Health care | Health Technology",
+      "city": "Long Branch",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/heavenlyhealingsoaps-llc-long-branch-44267",
+      "website": "http://njhhs.org/",
+      "socialSourceUrl": "http://njhhs.org/",
+      "issues": [
+        {
+          "url": "http://njhhs.org/",
+          "status": 402,
+          "finalUrl": "https://www.njhhs.org/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://njhhs.org/",
+          "status": 402,
+          "finalUrl": "https://www.njhhs.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 220,
+      "name": "Da Vincci Construction LLC",
+      "city": "Lyndhurst",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/da-vincci-construction-llc-46592",
+      "website": "https://davincciconstruction.co/",
+      "socialSourceUrl": "https://davincciconstruction.co/",
+      "issues": [
+        {
+          "url": "https://davincciconstruction.co/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://davincciconstruction.co/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 226,
+      "name": "Murphy Business Sales | Business Strategies",
+      "city": "Madison",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/murphy-business-sales-50338",
+      "website": "http://www.murphybusiness.com/madison",
+      "socialSourceUrl": "http://www.murphybusiness.com/madison",
+      "issues": [
+        {
+          "url": "http://www.murphybusiness.com/madison",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "http://www.murphybusiness.com/madison",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 235,
+      "name": "Minshall Shropshire-Bleyler Funeral Home",
+      "city": "Media",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/minshall-shropshire-bleyler-funeral-home",
+      "website": "https://www.msbfh.com/",
+      "socialSourceUrl": "https://www.msbfh.com/",
+      "issues": [
+        {
+          "url": "https://www.msbfh.com/",
+          "status": 403,
+          "finalUrl": "https://www.msbfh.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.msbfh.com/",
+          "status": 403,
+          "finalUrl": "https://www.msbfh.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 237,
+      "name": "Penn State Brandywine",
+      "city": "Media",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/penn-state-brandywine",
+      "website": "https://www.brandywine.psu.edu/",
+      "socialSourceUrl": "https://www.brandywine.psu.edu/",
+      "issues": [
+        {
+          "url": "https://www.brandywine.psu.edu/",
+          "status": 403,
+          "finalUrl": "https://www.brandywine.psu.edu/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.brandywine.psu.edu/",
+          "status": 403,
+          "finalUrl": "https://www.brandywine.psu.edu/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 239,
+      "name": "Rigby Harting & Hagan Funeral Home",
+      "city": "Media",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/rigby-harting-hagan-funeral-home",
+      "website": "https://www.rigbyharting.com/",
+      "socialSourceUrl": "https://www.rigbyharting.com/",
+      "issues": [
+        {
+          "url": "https://www.rigbyharting.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://www.rigbyharting.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 240,
+      "name": "School of Rock Delco",
+      "city": "Media",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/school-of-rock-delco",
+      "website": "https://delco.schoolofrock.com/",
+      "socialSourceUrl": "https://delco.schoolofrock.com/",
+      "issues": [
+        {
+          "url": "https://delco.schoolofrock.com/",
+          "status": 403,
+          "finalUrl": "https://delco.schoolofrock.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://delco.schoolofrock.com/",
+          "status": 403,
+          "finalUrl": "https://delco.schoolofrock.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 241,
+      "name": "Seniors Helping Seniors Delaware County",
+      "city": "Media",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://bestindelco.com/business/seniors-helping-seniors-delaware-county",
+      "website": "https://www.shsdelco.com/",
+      "socialSourceUrl": "https://www.shsdelco.com/",
+      "issues": [
+        {
+          "url": "https://www.shsdelco.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "https://www.shsdelco.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 243,
+      "name": "Veterans Chapel CDC",
+      "city": "Media",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/veterans-chapel-cdc",
+      "website": "https://www.chaplaincohen.us/",
+      "socialSourceUrl": "https://www.chaplaincohen.us/",
+      "issues": [
+        {
+          "url": "https://www.chaplaincohen.us/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://www.chaplaincohen.us/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 246,
+      "name": "Cat's Creation",
+      "city": "Merchantville",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://catscreationsbakerynj.com/",
+      "socialSourceUrl": "https://catscreationsbakerynj.com/",
+      "issues": [
+        {
+          "url": "https://catscreationsbakerynj.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://catscreationsbakerynj.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 255,
+      "name": "Food Bank of Delaware",
+      "city": "Milford",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.fbd.org/contact-us/",
+      "website": "https://www.fbd.org/",
+      "socialSourceUrl": "https://www.fbd.org/",
+      "issues": [
+        {
+          "url": "https://www.fbd.org/",
+          "status": 403,
+          "finalUrl": "https://www.fbd.org/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.fbd.org/",
+          "status": 403,
+          "finalUrl": "https://www.fbd.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 257,
+      "name": "Southern Delaware Medical Group",
+      "city": "Milford",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://sdarj.org/directory-of-black-owned-businesses-in-southern-delaware/",
+      "website": "https://www.mdvip.com/doctors/cedricbarnesdo",
+      "socialSourceUrl": "https://www.mdvip.com/doctors/cedricbarnesdo",
+      "issues": [
+        {
+          "url": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "status": 403,
+          "finalUrl": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "status": 403,
+          "finalUrl": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 258,
+      "name": "Southern Delaware Medical Group",
+      "city": "Milford",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://sdarj.org/directory-of-black-owned-businesses-in-southern-delaware/",
+      "website": "https://www.mdvip.com/doctors/cedricbarnesdo",
+      "socialSourceUrl": "https://www.mdvip.com/doctors/cedricbarnesdo",
+      "issues": [
+        {
+          "url": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "status": 403,
+          "finalUrl": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "status": 403,
+          "finalUrl": "https://www.mdvip.com/doctors/cedricbarnesdo",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 262,
+      "name": "Global Payments | Business Technology Consultants",
+      "city": "Morganville",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/global-payments-51428",
+      "website": "http://www.globalpayments.com/",
+      "socialSourceUrl": "http://www.globalpayments.com/",
+      "issues": [
+        {
+          "url": "http://www.globalpayments.com/",
+          "status": 403,
+          "finalUrl": "https://www.globalpayments.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.globalpayments.com/",
+          "status": 403,
+          "finalUrl": "https://www.globalpayments.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 285,
+      "name": "Read House & Gardens",
+      "city": "New Castle",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "cultural_place",
+      "sourceUrl": "https://dehistory.org/visit/delaware-history-museum/",
+      "website": "https://dehistory.org/",
+      "socialSourceUrl": "https://www.instagram.com/delawarehistoricalsociety",
+      "issues": [
+        {
+          "url": "https://dehistory.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 303,
+      "name": "Food Bank of Delaware",
+      "city": "Newark",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.fbd.org/contact-us/",
+      "website": "https://www.fbd.org/",
+      "socialSourceUrl": "https://www.fbd.org/",
+      "issues": [
+        {
+          "url": "https://www.fbd.org/",
+          "status": 403,
+          "finalUrl": "https://www.fbd.org/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.fbd.org/",
+          "status": 403,
+          "finalUrl": "https://www.fbd.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 305,
+      "name": "Greater Newark Enterprises Corporation | Community Organizations | Personal Services",
+      "city": "Newark",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/greater-newark-enterprises-corporation-6173",
+      "website": "http://www.gnecoro.org/",
+      "socialSourceUrl": "http://www.gnecoro.org/",
+      "issues": [
+        {
+          "url": "http://www.gnecoro.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://www.gnecoro.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 306,
+      "name": "Horizon Blue Cross Blue Shield of New Jersey | Insurance | Health care",
+      "city": "Newark",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/horizon-blue-cross-blue-shield-of-new-jersey-214",
+      "website": "http://https//www.horizonblue.com/",
+      "socialSourceUrl": "http://https//www.horizonblue.com/",
+      "issues": [
+        {
+          "url": "http://https//www.horizonblue.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//www.horizonblue.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 311,
+      "name": "KIPP New Jersey | Education",
+      "city": "Newark",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/kipp-new-jersey-51705",
+      "website": "http://www.linkedin.com/in/kelita-espinal-09178b25b",
+      "socialSourceUrl": "http://www.linkedin.com/in/kelita-espinal-09178b25b",
+      "issues": [
+        {
+          "url": "http://www.linkedin.com/in/kelita-espinal-09178b25b",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/kelita-espinal-09178b25b",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.linkedin.com/in/kelita-espinal-09178b25b",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/kelita-espinal-09178b25b",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 317,
+      "name": "PSEG | Personal Services",
+      "city": "Newark",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/pseg-newark-403",
+      "website": "http://https//www.pseg.com/",
+      "socialSourceUrl": "http://https//www.pseg.com/",
+      "issues": [
+        {
+          "url": "http://https//www.pseg.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//www.pseg.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 323,
+      "name": "United Airlines | Travel Agencies | Transportation",
+      "city": "Newark",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/united-airlines-530",
+      "website": "http://https//www.united.com",
+      "socialSourceUrl": "http://https//www.united.com",
+      "issues": [
+        {
+          "url": "http://https//www.united.com",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//www.united.com",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 329,
+      "name": "HL MEDICAL SPA LLC | Medical, Dental & Nursing Care",
+      "city": "NEWARK",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/hl-medical-spa-llc-50404",
+      "website": "http://www.hlmespa.com/",
+      "socialSourceUrl": "http://www.hlmespa.com/",
+      "issues": [
+        {
+          "url": "http://www.hlmespa.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://www.hlmespa.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 331,
+      "name": "Mass Mutual | Financial & Investment Services",
+      "city": "Newton",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mass-mutual-newton-51463",
+      "website": "https://www.linkedin.com/in/bruno-j-pereira/",
+      "socialSourceUrl": "https://www.linkedin.com/in/bruno-j-pereira/",
+      "issues": [
+        {
+          "url": "https://www.linkedin.com/in/bruno-j-pereira/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/bruno-j-pereira/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.linkedin.com/in/bruno-j-pereira/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/bruno-j-pereira/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 332,
+      "name": "African American Heritage Museum of Southern New Jersey",
+      "city": "Newtonville",
+      "state": "NJ",
+      "country": "United States",
+      "targetKind": "cultural_place",
+      "sourceUrl": "https://www.atlanticcountynj.gov/Home/Components/BusinessDirectory/BusinessDirectory/307/67",
+      "website": "https://www.aahmsnj.org/",
+      "socialSourceUrl": "https://www.atlanticcountynj.gov/Home/Components/BusinessDirectory/BusinessDirectory/307/67",
+      "issues": [
+        {
+          "url": "https://www.atlanticcountynj.gov/Home/Components/BusinessDirectory/BusinessDirectory/307/67",
+          "status": 403,
+          "finalUrl": "https://www.atlanticcountynj.gov/Home/Components/BusinessDirectory/BusinessDirectory/307/67",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 347,
+      "name": "Cavanagh Family Funeral Homes",
+      "city": "Norwood",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/cavanagh-family-funeral-homes",
+      "website": "https://www.cavanaghfuneralhome.com/",
+      "socialSourceUrl": "https://www.cavanaghfuneralhome.com/",
+      "issues": [
+        {
+          "url": "https://www.cavanaghfuneralhome.com/",
+          "status": 403,
+          "finalUrl": "https://www.cavanaghfuneralhome.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.cavanaghfuneralhome.com/",
+          "status": 403,
+          "finalUrl": "https://www.cavanaghfuneralhome.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 348,
+      "name": "B&A Consulting Firm LLC | Consultants",
+      "city": "Nutley",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/b-a-consulting-firm-llc-nutley-46666",
+      "website": "https://xn--mayordomafinancierabblica-hlcm.com/",
+      "socialSourceUrl": "https://xn--mayordomafinancierabblica-hlcm.com/",
+      "issues": [
+        {
+          "url": "https://xn--mayordomafinancierabblica-hlcm.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://xn--mayordomafinancierabblica-hlcm.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 351,
+      "name": "Aunt Berta's Kitchen",
+      "city": "Oaklyn",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/",
+      "website": "https://auntbertaskitchen.com/",
+      "socialSourceUrl": "https://auntbertaskitchen.com/",
+      "issues": [
+        {
+          "url": "https://auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://auntbertaskitchen.com/",
+          "status": 403,
+          "finalUrl": "https://auntbertaskitchen.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 359,
+      "name": "Bergen New Bridge Medical Center | Health care",
+      "city": "Paramus",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/bergen-new-bridge-medical-center-45680",
+      "website": "http://www.newbridgehealth.org/",
+      "socialSourceUrl": "http://www.newbridgehealth.org/",
+      "issues": [
+        {
+          "url": "http://www.newbridgehealth.org/",
+          "status": 403,
+          "finalUrl": "http://www.newbridgehealth.org/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.newbridgehealth.org/",
+          "status": 403,
+          "finalUrl": "http://www.newbridgehealth.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 369,
+      "name": "Ramapo College of New Jersey | Education",
+      "city": "Passaic",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/ramapo-college-of-new-jersey-51700",
+      "website": "http://www.linkedin.com/in/jonathan-huerta-m-ed-02a76b66",
+      "socialSourceUrl": "http://www.linkedin.com/in/jonathan-huerta-m-ed-02a76b66",
+      "issues": [
+        {
+          "url": "http://www.linkedin.com/in/jonathan-huerta-m-ed-02a76b66",
+          "status": 999,
+          "finalUrl": "http://www.linkedin.com/in/jonathan-huerta-m-ed-02a76b66",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.linkedin.com/in/jonathan-huerta-m-ed-02a76b66",
+          "status": 999,
+          "finalUrl": "http://www.linkedin.com/in/jonathan-huerta-m-ed-02a76b66",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 373,
+      "name": "Mexico Magico Inc | Accountants | Tax Preperation",
+      "city": "Passic",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mexico-magico-inc-passic-45355",
+      "website": "https://mexicomagicoinc.com/",
+      "socialSourceUrl": "https://mexicomagicoinc.com/",
+      "issues": [
+        {
+          "url": "https://mexicomagicoinc.com/",
+          "status": 403,
+          "finalUrl": "https://mexicomagicoinc.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://mexicomagicoinc.com/",
+          "status": 403,
+          "finalUrl": "https://mexicomagicoinc.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 377,
+      "name": "Sazonador Clary, Sabor a mi tierra LLC",
+      "city": "Paterson",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/sazonador-clary-sabor-a-mi-tierra-llc-paterson-46707",
+      "website": "https://www.saboramitierra26.com/",
+      "socialSourceUrl": "https://www.saboramitierra26.com/",
+      "issues": [
+        {
+          "url": "https://www.saboramitierra26.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://www.saboramitierra26.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 404,
+      "name": "Bake'n Bacon",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://membership.aachamber.com/list/Search/restaurants-792058",
+      "website": "http://www.bakenbacon.com/",
+      "socialSourceUrl": "http://www.bakenbacon.com/",
+      "issues": [
+        {
+          "url": "http://www.bakenbacon.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "http://www.bakenbacon.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 407,
+      "name": "Between Friends Boutique",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/",
+      "website": "https://betweenfriendsboutiquephl.com/",
+      "socialSourceUrl": "https://betweenfriendsboutiquephl.com/",
+      "issues": [
+        {
+          "url": "https://betweenfriendsboutiquephl.com/",
+          "status": 401,
+          "finalUrl": "https://betweenfriendsboutiquephl.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://betweenfriendsboutiquephl.com/",
+          "status": 401,
+          "finalUrl": "https://betweenfriendsboutiquephl.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 425,
+      "name": "Encanto Kicks & Coffee",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "website": "https://www.encantophl.shop/",
+      "socialSourceUrl": "https://www.encantophl.shop/",
+      "issues": [
+        {
+          "url": "https://www.encantophl.shop/",
+          "status": 402,
+          "finalUrl": "https://encantophl.shop/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.encantophl.shop/",
+          "status": 402,
+          "finalUrl": "https://encantophl.shop/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 458,
+      "name": "Paul Beale's Florist",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/legacyandlove/",
+      "website": "https://www.paulbealesflorist.com/",
+      "socialSourceUrl": "https://www.paulbealesflorist.com/",
+      "issues": [
+        {
+          "url": "https://www.paulbealesflorist.com/",
+          "status": 403,
+          "finalUrl": "https://www.paulbealesflorist.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.paulbealesflorist.com/",
+          "status": 403,
+          "finalUrl": "https://www.paulbealesflorist.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 459,
+      "name": "Paul Beale’s Florist",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/",
+      "website": "https://www.paulbealesflorist.com/",
+      "socialSourceUrl": "https://www.paulbealesflorist.com/",
+      "issues": [
+        {
+          "url": "https://www.paulbealesflorist.com/",
+          "status": 403,
+          "finalUrl": "https://www.paulbealesflorist.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.paulbealesflorist.com/",
+          "status": 403,
+          "finalUrl": "https://www.paulbealesflorist.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 482,
+      "name": "Share Food Program",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "United States",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://membership.aachamber.com/list/Search/non-profit-792052",
+      "website": "http://www.sharefoodprogram.org/",
+      "socialSourceUrl": "http://www.sharefoodprogram.org/",
+      "issues": [
+        {
+          "url": "http://www.sharefoodprogram.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "http://www.sharefoodprogram.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 483,
+      "name": "Sidway Consultants, Inc.",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://beechcompanies.com/files/2021-black-business-directory.pdf",
+      "website": "https://sidwayconsultants.com/",
+      "socialSourceUrl": "https://sidwayconsultants.com/",
+      "issues": [
+        {
+          "url": "https://sidwayconsultants.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://sidwayconsultants.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 492,
+      "name": "The Free Library of Philadelphia Foundation (8967)",
+      "city": "Philadelphia",
+      "state": "PA",
+      "country": "United States",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://membership.aachamber.com/list/Search/non-profit-792052",
+      "website": "http://freelibrary.org/",
+      "socialSourceUrl": "http://freelibrary.org/",
+      "issues": [
+        {
+          "url": "http://freelibrary.org/",
+          "status": 403,
+          "finalUrl": "http://freelibrary.org/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://freelibrary.org/",
+          "status": 403,
+          "finalUrl": "http://freelibrary.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 507,
+      "name": "CONRAD JORGE | Logistics",
+      "city": "Piscataway",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/conrad-jorge-51534",
+      "website": "https://www.linkedin.com/in/conradjorge/",
+      "socialSourceUrl": "https://www.linkedin.com/in/conradjorge/",
+      "issues": [
+        {
+          "url": "https://www.linkedin.com/in/conradjorge/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/conradjorge",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.linkedin.com/in/conradjorge/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/conradjorge",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 516,
+      "name": "Wells Fargo Bank N.A. | Banks & Credit Unions",
+      "city": "Princeton",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/wells-fargo-bank-n-a-3048",
+      "website": "http://https//www.wellsfargo.com/",
+      "socialSourceUrl": "http://https//www.wellsfargo.com/",
+      "issues": [
+        {
+          "url": "http://https//www.wellsfargo.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//www.wellsfargo.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 538,
+      "name": "MP POOL AND SPA LLC | Salon and Spa",
+      "city": "Roselle Park",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mp-pool-and-spa-llc-roselle-park-46679",
+      "website": "https://mydigitalcard.club/pablo-mendez/",
+      "socialSourceUrl": "https://mydigitalcard.club/pablo-mendez/",
+      "issues": [
+        {
+          "url": "https://mydigitalcard.club/pablo-mendez/",
+          "status": 404,
+          "finalUrl": "https://mydigitalcard.club/pablo-mendez/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://mydigitalcard.club/pablo-mendez/",
+          "status": 404,
+          "finalUrl": "https://mydigitalcard.club/pablo-mendez/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 541,
+      "name": "Rooted in Joy LLC | Individual & Family Services",
+      "city": "Rutherford",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/rooted-in-joy-llc-rutherford-45068",
+      "website": "https://www.rootedinjoy.net/",
+      "socialSourceUrl": "https://www.facebook.com/RootedInJoyLLC/",
+      "issues": [
+        {
+          "url": "https://www.rootedinjoy.net/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 543,
+      "name": "Los Radio Plus | Press/Publications/Radio",
+      "city": "Secaucus",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/los-radio-plus-secaucus-35473",
+      "website": "https://www.losradio.com/",
+      "socialSourceUrl": "https://www.losradio.com/",
+      "issues": [
+        {
+          "url": "https://www.losradio.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "https://www.losradio.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 544,
+      "name": "Big Brothers Big Sisters Southeastern Pennsylvania",
+      "city": "Serving Delco",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/big-brothers-big-sisters-southeastern-pennsylvania",
+      "website": "https://www.bbbssepa.org/",
+      "socialSourceUrl": "https://www.bbbssepa.org/",
+      "issues": [
+        {
+          "url": "https://www.bbbssepa.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://www.bbbssepa.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 558,
+      "name": "Dewberry | Engineering",
+      "city": "Somerset",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/dewberry-51414",
+      "website": "http://dewberrry.com/",
+      "socialSourceUrl": "http://dewberrry.com/",
+      "issues": [
+        {
+          "url": "http://dewberrry.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "http://dewberrry.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 559,
+      "name": "GeluSomerset | Food Truck",
+      "city": "Somerset",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/gelusomerset-51474",
+      "website": "https://beacons.ai/gelusomerset",
+      "socialSourceUrl": "https://beacons.ai/gelusomerset",
+      "issues": [
+        {
+          "url": "https://beacons.ai/gelusomerset",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://beacons.ai/gelusomerset",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 560,
+      "name": "Timeless PhotoBooths LLC | Photographers/Photo Finishing/Framing",
+      "city": "Somerset",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/timeless-photobooths-llc-46683",
+      "website": "https://www.timelessphotobooths.com/",
+      "socialSourceUrl": "https://www.timelessphotobooths.com/",
+      "issues": [
+        {
+          "url": "https://www.timelessphotobooths.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "https://www.timelessphotobooths.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 561,
+      "name": "Tintico Colombian Coffee LLC | Food & Beverage/Catering",
+      "city": "Somerville",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/tintico-colombian-coffee-llc-44446",
+      "website": "http://www.tintico.co/",
+      "socialSourceUrl": "http://www.tintico.co/",
+      "issues": [
+        {
+          "url": "http://www.tintico.co/",
+          "status": 500,
+          "finalUrl": "http://www.tintico.co/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.tintico.co/",
+          "status": 500,
+          "finalUrl": "http://www.tintico.co/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 562,
+      "name": "USA Architects | Architectural Design & Building",
+      "city": "Somerville",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/usa-architects-51449",
+      "website": "http://usaarchitects.com/",
+      "socialSourceUrl": "http://usaarchitects.com/",
+      "issues": [
+        {
+          "url": "http://usaarchitects.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://usaarchitects.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 564,
+      "name": "Rodriguez and Roscoe LLC | Grocery Stores | Personal Services",
+      "city": "South Plainfield",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/rodriguez-and-roscoe-llc-south-plainfield-45220",
+      "website": "http://https//google.com",
+      "socialSourceUrl": "http://https//google.com",
+      "issues": [
+        {
+          "url": "http://https//google.com",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://https//google.com",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 565,
+      "name": "O’Leary Funeral Home",
+      "city": "Springfield",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://bestindelco.com/business/o-leary-funeral-home-mo5y46an",
+      "website": "http://www.olearyfuneral.com/",
+      "socialSourceUrl": "http://www.olearyfuneral.com/",
+      "issues": [
+        {
+          "url": "http://www.olearyfuneral.com/",
+          "status": 403,
+          "finalUrl": "http://www.olearyfuneral.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.olearyfuneral.com/",
+          "status": 403,
+          "finalUrl": "http://www.olearyfuneral.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 567,
+      "name": "Rolling Green Golf Club",
+      "city": "Springfield",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://bestindelco.com/business/rolling-green-golf-club",
+      "website": "https://www.rggc.org/",
+      "socialSourceUrl": "https://www.rggc.org/",
+      "issues": [
+        {
+          "url": "https://www.rggc.org/",
+          "status": 403,
+          "finalUrl": "https://www.rggc.org/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.rggc.org/",
+          "status": 403,
+          "finalUrl": "https://www.rggc.org/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 578,
+      "name": "Bakers Depot LLC | Wholesale",
+      "city": "Teterboro",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/bakers-depot-llc-50313",
+      "website": "http://www.bakersusa.com/",
+      "socialSourceUrl": "http://www.bakersusa.com/",
+      "issues": [
+        {
+          "url": "http://www.bakersusa.com/",
+          "status": 403,
+          "finalUrl": "http://www.bakersusa.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.bakersusa.com/",
+          "status": 403,
+          "finalUrl": "http://www.bakersusa.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 579,
+      "name": "GJB Management, LLC | Contractors",
+      "city": "Totowa",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/gjb-management-llc-51432",
+      "website": "http://n/A",
+      "socialSourceUrl": "http://n/A",
+      "issues": [
+        {
+          "url": "http://n/A",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://n/A",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 590,
+      "name": "The Wing Kitchen",
+      "city": "Turnersville",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://visitsouthjersey.com/support-local-black-owned-businesses/",
+      "website": "https://thewingkitchen.com/",
+      "socialSourceUrl": "https://thewingkitchen.com/",
+      "issues": [
+        {
+          "url": "https://thewingkitchen.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://thewingkitchen.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 603,
+      "name": "Prosperity Real Estate Develoepement | Real Estate Services",
+      "city": "Voorhees",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/prosperity-real-estate-develoepement-51521",
+      "website": "https://www.linkedin.com/in/merysantana/",
+      "socialSourceUrl": "https://www.linkedin.com/in/merysantana/",
+      "issues": [
+        {
+          "url": "https://www.linkedin.com/in/merysantana/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/merysantana",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.linkedin.com/in/merysantana/",
+          "status": 999,
+          "finalUrl": "https://www.linkedin.com/in/merysantana",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 607,
+      "name": "The Springhaven Club",
+      "city": "Wallingford",
+      "state": "PA",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://bestindelco.com/business/the-springhaven-club",
+      "website": "https://www.thespringhavenclub.com/",
+      "socialSourceUrl": "https://www.thespringhavenclub.com/",
+      "issues": [
+        {
+          "url": "https://www.thespringhavenclub.com/",
+          "status": 403,
+          "finalUrl": "https://www.thespringhavenclub.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.thespringhavenclub.com/",
+          "status": 403,
+          "finalUrl": "https://www.thespringhavenclub.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 619,
+      "name": "Popular Bank | Banks & Credit Unions",
+      "city": "West New York",
+      "state": "NJ",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/popular-bank-west-new-york-397",
+      "website": "http://www.popularcommunitybank.com/",
+      "socialSourceUrl": "http://www.popularcommunitybank.com/",
+      "issues": [
+        {
+          "url": "http://www.popularcommunitybank.com/",
+          "status": 403,
+          "finalUrl": "https://www.popularcommunitybank.com/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "http://www.popularcommunitybank.com/",
+          "status": 403,
+          "finalUrl": "https://www.popularcommunitybank.com/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 638,
+      "name": "9th Mile Galleria",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://9th-mile-galleria.business.site/",
+      "socialSourceUrl": "https://9th-mile-galleria.business.site/",
+      "issues": [
+        {
+          "url": "https://9th-mile-galleria.business.site/",
+          "status": 404,
+          "finalUrl": "https://9th-mile-galleria.business.site/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://9th-mile-galleria.business.site/",
+          "status": 404,
+          "finalUrl": "https://9th-mile-galleria.business.site/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 652,
+      "name": "Curve Nutrition",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://curve-nutrition.business.site/",
+      "socialSourceUrl": "https://curve-nutrition.business.site/",
+      "issues": [
+        {
+          "url": "https://curve-nutrition.business.site/",
+          "status": 404,
+          "finalUrl": "https://curve-nutrition.business.site/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://curve-nutrition.business.site/",
+          "status": 404,
+          "finalUrl": "https://curve-nutrition.business.site/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 653,
+      "name": "DAIISY SCENTS",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://daiisyscents.com/",
+      "socialSourceUrl": "https://daiisyscents.com/",
+      "issues": [
+        {
+          "url": "https://daiisyscents.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://daiisyscents.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 656,
+      "name": "Delaware History Museum",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "cultural_place",
+      "sourceUrl": "https://dehistory.org/visit/delaware-history-museum/",
+      "website": "https://dehistory.org/",
+      "socialSourceUrl": "https://www.instagram.com/delawarehistoricalsociety",
+      "issues": [
+        {
+          "url": "https://dehistory.org/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 664,
+      "name": "Eat Clean Juice Bar, LLC",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://eatcleande.com/",
+      "socialSourceUrl": "https://eatcleande.com/",
+      "issues": [
+        {
+          "url": "https://eatcleande.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        },
+        {
+          "url": "https://eatcleande.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "manifestRow": 667,
+      "name": "Essem Jewelry Accessories Clothing",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://essemjac.business.site/",
+      "socialSourceUrl": "https://essemjac.business.site/",
+      "issues": [
+        {
+          "url": "https://essemjac.business.site/",
+          "status": 404,
+          "finalUrl": "https://essemjac.business.site/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://essemjac.business.site/",
+          "status": 404,
+          "finalUrl": "https://essemjac.business.site/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 676,
+      "name": "Hedera Yoga Studio",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "business",
+      "sourceUrl": "https://delawareblack.com/black-directory/listing/hedera-yoga-studio",
+      "website": "https://www.hederayoga.com/",
+      "socialSourceUrl": "https://www.instagram.com/hederayogastudio",
+      "issues": [
+        {
+          "url": "https://www.hederayoga.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 678,
+      "name": "His Image Barber Lounge",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "http://www.hisimagebarberlounge.com/",
+      "socialSourceUrl": "http://www.hisimagebarberlounge.com/",
+      "issues": [
+        {
+          "url": "http://www.hisimagebarberlounge.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "http://www.hisimagebarberlounge.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 683,
+      "name": "Jerry Deen’s",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://jerrydeens.com/",
+      "socialSourceUrl": "https://jerrydeens.com/",
+      "issues": [
+        {
+          "url": "https://jerrydeens.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://jerrydeens.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 703,
+      "name": "Platinum2go Cleaning Services",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://platinum2gollc.com/",
+      "socialSourceUrl": "https://platinum2gollc.com/",
+      "issues": [
+        {
+          "url": "https://platinum2gollc.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://platinum2gollc.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 710,
+      "name": "Set Fa Life LLC Construction",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://set-fa-life-llc.business.site/",
+      "socialSourceUrl": "https://set-fa-life-llc.business.site/",
+      "issues": [
+        {
+          "url": "https://set-fa-life-llc.business.site/",
+          "status": 404,
+          "finalUrl": "https://set-fa-life-llc.business.site/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://set-fa-life-llc.business.site/",
+          "status": 404,
+          "finalUrl": "https://set-fa-life-llc.business.site/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 712,
+      "name": "SqueezeBox Records LLC",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://squeezeboxrecords.com/",
+      "socialSourceUrl": "https://squeezeboxrecords.com/",
+      "issues": [
+        {
+          "url": "https://squeezeboxrecords.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        },
+        {
+          "url": "https://squeezeboxrecords.com/",
+          "status": null,
+          "finalUrl": null,
+          "outcome": "network_error"
+        }
+      ]
+    },
+    {
+      "manifestRow": 718,
+      "name": "The Juice Joint 2.0",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "US",
+      "targetKind": "business",
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses",
+      "website": "https://thejuicejoint.de/",
+      "socialSourceUrl": "https://thejuicejoint.de/",
+      "issues": [
+        {
+          "url": "https://thejuicejoint.de/",
+          "status": 404,
+          "finalUrl": "https://thejuicejoint.de/",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://thejuicejoint.de/",
+          "status": 404,
+          "finalUrl": "https://thejuicejoint.de/",
+          "outcome": "review_required"
+        }
+      ]
+    },
+    {
+      "manifestRow": 722,
+      "name": "William \"Hicks\" Anderson Community Center",
+      "city": "Wilmington",
+      "state": "DE",
+      "country": "United States",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+      "website": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+      "socialSourceUrl": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+      "issues": [
+        {
+          "url": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+          "status": 403,
+          "finalUrl": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+          "outcome": "review_required"
+        },
+        {
+          "url": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+          "status": 403,
+          "finalUrl": "https://www.wilmingtonde.gov/government/city-departments/department-of-parks-and-recreation/william-hicks-anderson-community-center",
+          "outcome": "review_required"
+        }
+      ]
+    }
+  ],
+  "publication": "NOT PUBLISHED. This report identifies candidates requiring reviewer attention. The commercial count without automated pre-stage holds is not an approval or publish authorization; every candidate still needs production duplicate reconciliation and reviewer-confirmed map location evidence. This report never determines that a business is closed and never updates or deletes an existing listing."
+}

@@ -1,0 +1,44 @@
+{
+  "package": "2026-09-18-tri-state-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 734,
+  "accepted_review_only_candidates": 730,
+  "held_candidates": 4,
+  "held_reason_counts": {
+    "missing_or_invalid_customer_destination": 4
+  },
+  "accepted_by_target_kind": {
+    "business": 594,
+    "cultural_place": 22,
+    "community_resource": 96,
+    "regulated_review": 13,
+    "online_business": 5
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 551,
+    "needs_research": 179
+  },
+  "manifest_sha256": "a3d9a78ffd41e4b6a42fee8576745fc14d9545d09145f97b2c189fe09b1210a6",
+  "source_manifest": "/home/ubuntu/melanin-maps-tri-state-review/data/founder-imports/2026-09-18-tri-state-verified-sweep/consolidated/tri-state-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "1a7cd78e5f619edd611be6dfec6a85bbe1eab724e5d3bab691e2ab8c869cef60",
+  "destination_health": {
+    "candidates": 730,
+    "unique_destinations": 719,
+    "by_outcome": {
+      "reachable": 554,
+      "network_error": 35,
+      "review_required": 51,
+      "not_checked": 67,
+      "timeout": 12
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}

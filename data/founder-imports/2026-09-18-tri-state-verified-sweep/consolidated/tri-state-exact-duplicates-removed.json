@@ -1,0 +1,306 @@
+[
+  {
+    "duplicateKey": "physical|oath 84|wilmington|de|405 n king street wilmington de 19801",
+    "retained": {
+      "name": "Oath 84",
+      "file": "delaware-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Oath 84",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|green box kitchen|wilmington|de|401 n market st wilmington de 19801",
+    "retained": {
+      "name": "Green Box Kitchen",
+      "file": "delaware-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Green Box Kitchen",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|go vegan philly|wilmington|de|607 n lincoln st wilmington de 19805",
+    "retained": {
+      "name": "Go Vegan Philly",
+      "file": "delaware-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Go Vegan Philly",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|walt s chicken express|wilmington|de|103 n lincoln street wilmington de 19805",
+    "retained": {
+      "name": "Walt’s Chicken Express",
+      "file": "delaware-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Walt's Chicken Express",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|milk and honey cafe on loma|wilmington|de|239 n market street wilmington de",
+    "retained": {
+      "name": "Milk and Honey Cafe on LOMA",
+      "file": "delaware-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Milk and Honey Cafe on LOMA",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the juice joint 2 0|wilmington|de|102 s union street wilmington de 19805",
+    "retained": {
+      "name": "The Juice Joint 2.0",
+      "file": "delaware-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "The Juice Joint 2.0",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|drop squad kitchen|wilmington|de|928 justison street wilmington de 19802",
+    "retained": {
+      "name": "Drop Squad Kitchen",
+      "file": "delaware-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Drop Squad Kitchen",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|e squared cigar bar lounge|wilmington|de|3616 kirkwood hwy 5124 wilmington de 19808",
+    "retained": {
+      "name": "E Squared Cigar Bar & Lounge",
+      "file": "delaware-candidates.jsonl",
+      "line": 10,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "E Squared Cigar Bar & Lounge",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|phat cuts hairstyling|wilmington|de|4 e 7th street wilmington de 19801",
+    "retained": {
+      "name": "Phat Cuts Hairstyling",
+      "file": "delaware-candidates.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Phat Cuts Hairstyling",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 11,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|l arte delle mani|wilmington|de|26a trolley square wilmington de 19806",
+    "retained": {
+      "name": "L’ARTE DELLE MANI",
+      "file": "delaware-candidates.jsonl",
+      "line": 19,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "L'ARTE DELLE MANI",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 12,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|lafate gallery|wilmington|de|227 n market street wilmington de 19801",
+    "retained": {
+      "name": "LaFate Gallery",
+      "file": "delaware-candidates.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "LaFate Gallery",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|squeezebox records llc|wilmington|de|1901 w 11th street wilmington de 19805",
+    "retained": {
+      "name": "SqueezeBox Records LLC",
+      "file": "delaware-candidates.jsonl",
+      "line": 22,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "SqueezeBox Records LLC",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 14,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|cla construction inc|wilmington|de|628 e 3rd st wilmington de 19801",
+    "retained": {
+      "name": "CLA Construction Inc.",
+      "file": "delaware-candidates.jsonl",
+      "line": 31,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "CLA Construction Inc.",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 19,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|act engineering|wilmington|de|1903 n west st wilmington de",
+    "retained": {
+      "name": "ACT Engineering",
+      "file": "delaware-candidates.jsonl",
+      "line": 32,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "ACT Engineering",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|academy for peace|wilmington|de|203 n market st wilmington de 19801",
+    "retained": {
+      "name": "Academy for Peace",
+      "file": "delaware-candidates.jsonl",
+      "line": 35,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Academy for Peace",
+      "file": "10-wilmingtonmade-candidates.jsonl",
+      "line": 21,
+      "sourceUrl": "https://www.wilmingtonmade.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the mind body consortium|dover|de|156 s state street dover de 19904",
+    "retained": {
+      "name": "The Mind & Body Consortium",
+      "file": "delaware-candidates.jsonl",
+      "line": 68,
+      "sourceUrl": "https://www.mtzionamedover.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "The Mind & Body Consortium",
+      "file": "12-mt-zion-dover-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.mtzionamedover.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|heather s holistic health|dover|de|1169 walker road dover de 19904",
+    "retained": {
+      "name": "Heather's Holistic Health",
+      "file": "delaware-candidates.jsonl",
+      "line": 71,
+      "sourceUrl": "https://www.mtzionamedover.com/blackownedbusinesses"
+    },
+    "duplicate": {
+      "name": "Heather's Holistic Health",
+      "file": "12-mt-zion-dover-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.mtzionamedover.com/blackownedbusinesses"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|nuanced cafe|camden|nj|225 market street 1st floor camden nj 08102",
+    "retained": {
+      "name": "Nuanced Café",
+      "file": "new-jersey-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/"
+    },
+    "duplicate": {
+      "name": "Nuanced Café",
+      "file": "15-camden-county-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://www.camdencounty.com/service/national-black-business-month/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|share food program|philadelphia|pa|2901 w hunting park avenue philadelphia pa 19129",
+    "retained": {
+      "name": "Share Food Program",
+      "file": "01-aachamber-candidates.jsonl",
+      "line": 10,
+      "sourceUrl": "https://membership.aachamber.com/list/Search/non-profit-792052"
+    },
+    "duplicate": {
+      "name": "Share Food Program",
+      "file": "01-se-pa-community-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.sharefoodprogram.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

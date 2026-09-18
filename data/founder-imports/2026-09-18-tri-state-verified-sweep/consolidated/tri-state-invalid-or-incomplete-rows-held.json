@@ -1,0 +1,642 @@
+[
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 11,
+    "name": "The Produce Spot",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 14,
+    "name": "Freakishly Awesome by Shaun Anthony",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 15,
+    "name": "New Man Barber Salon",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 16,
+    "name": "NK Hair Braiding",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 18,
+    "name": "Joy’s Hair Boutique",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 24,
+    "name": "Three Kings Kustoms, LLC",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 26,
+    "name": "Little Comforts Childcare",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 27,
+    "name": "Sister Sister Daycare LLC",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 28,
+    "name": "Little Leaders Childcare LLC",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 29,
+    "name": "KIDZ KLUB CHILDCARE",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 30,
+    "name": "Allied Properties & Development, LLC",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 36,
+    "name": "Code Differently",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 37,
+    "name": "Art Buy Price",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 38,
+    "name": "Elegant Styles",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 39,
+    "name": "Bright Beginnings",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 40,
+    "name": "Christa’s Home Day Care",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 41,
+    "name": "Ablazing Grace",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 47,
+    "name": "Sisters Caribbean",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 50,
+    "name": "Barry’s Grass Cutting Service",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 51,
+    "name": "Country Boy Home Repairs",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 52,
+    "name": "Jimaine Eason of Dun-Rite Appliance Repair",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 56,
+    "name": "Simplicity Salon",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 57,
+    "name": "Suds Bar Soap",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 58,
+    "name": "Tina’s Timeless Threads",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 59,
+    "name": "Beach Essentials",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 60,
+    "name": "Miracles of Life Childcare",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 61,
+    "name": "Maxine's Fashions",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 62,
+    "name": "JazMeUpBoutique",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 63,
+    "name": "Fast Feet Shoe Repair & Key Cutting",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 64,
+    "name": "The Scoop on Loockerman",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 65,
+    "name": "Small Engine Repairs",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 66,
+    "name": "Derrick Barbour Appliance Repair",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 67,
+    "name": "K.S. Auto Repair",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 70,
+    "name": "HearSay Services of Delaware",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 72,
+    "name": "Hearts and Desires Beauty Salon",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 73,
+    "name": "Unique Hair Creations LLC",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 74,
+    "name": "Nu Attitude Styling Salon",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 75,
+    "name": "Sas Hair Studio",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 76,
+    "name": "Savvy Hair Studio",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 77,
+    "name": "Nail Salon by TR",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 79,
+    "name": "Posh Passion Beauty Lounge",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "delaware-candidates.jsonl",
+    "line": 80,
+    "name": "Better Days Tax Service",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "new-jersey-candidates.jsonl",
+    "line": 6,
+    "name": "Holmes & Company LLC",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-ambop-candidates.jsonl",
+    "line": 3,
+    "name": "Ñuuxakun",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-ambop-candidates.jsonl",
+    "line": 4,
+    "name": "Nocheztli Clothing",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-ambop-candidates.jsonl",
+    "line": 5,
+    "name": "Sparkle Creation",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-ambop-candidates.jsonl",
+    "line": 6,
+    "name": "Olga Renteria – Intérprete & Traducciones",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-best-in-delco-candidates.jsonl",
+    "line": 6,
+    "name": "Pennsylvania Veterans Museum",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-best-in-delco-candidates.jsonl",
+    "line": 10,
+    "name": "Riverfront Alliance of Delaware County",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-best-in-delco-candidates.jsonl",
+    "line": 38,
+    "name": "Delaware County Symphony",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-best-in-delco-candidates.jsonl",
+    "line": 41,
+    "name": "Spirit Media Group, Inc.",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-visit-philly-additional-candidates.jsonl",
+    "line": 16,
+    "name": "The Colored Girls Museum",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-sdarj-candidates.jsonl",
+    "line": 1,
+    "name": "5 Star Mobile Gaming",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-sdarj-candidates.jsonl",
+    "line": 12,
+    "name": "Summer J. Artisan Ice Pops",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-sdarj-candidates.jsonl",
+    "line": 13,
+    "name": "Wedding Brooms by Alicia",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-mt-zion-dover-candidates.jsonl",
+    "line": 6,
+    "name": "NProductions",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-mt-zion-dover-candidates.jsonl",
+    "line": 8,
+    "name": "Therapy for Black Girls",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "cultural_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "14-nj-hispanic-chamber-candidates.jsonl",
+    "line": 40,
+    "name": "CASOL CORPORATION AND SERVICES | Digital & Social Media/Marketing & Communications",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "14-nj-hispanic-chamber-candidates.jsonl",
+    "line": 173,
+    "name": "New Jersey Business Action Center | Government",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "14-nj-hispanic-chamber-candidates.jsonl",
+    "line": 174,
+    "name": "New Jersey Economic Development Authority - NJEDA | Financial & Investment Services | Loan Agency",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "14-nj-hispanic-chamber-candidates.jsonl",
+    "line": 213,
+    "name": "Rene Martinez | Consultants",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "14-nj-hispanic-chamber-candidates.jsonl",
+    "line": 215,
+    "name": "RetireReady NJ | Financial & Investment Services",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "15-camden-county-candidates.jsonl",
+    "line": 16,
+    "name": "SLK Signings, LLC",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "16-north-jersey-deltas-candidates.jsonl",
+    "line": 3,
+    "name": "African World Imports & Tours",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "16-north-jersey-deltas-candidates.jsonl",
+    "line": 4,
+    "name": "Cultured Expression",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "16-north-jersey-deltas-candidates.jsonl",
+    "line": 5,
+    "name": "Jams By Kim",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "17-visit-south-jersey-candidates.jsonl",
+    "line": 5,
+    "name": "The Juice Bar",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "01-se-pa-community-candidates.jsonl",
+    "line": 13,
+    "name": "MontCo Anti-Hunger Network",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  }
+]

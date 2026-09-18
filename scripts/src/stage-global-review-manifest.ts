@@ -246,15 +246,14 @@ function candidateLinkAssessment(candidate: GlobalCandidate, linkHealth: Map<str
   validation: Record<string, unknown>;
   reviewGates: string[];
 } {
-  const fields = [
+  // The health checker tests customer-facing destinations only. The source URL is
+  // retained as provenance but is not a customer link and must never create a
+  // false link-health hold merely because it was not fetched by that checker.
+  const customerDestinationFields = [
     ["website", candidate.website],
-    ["source", candidate.sourceUrl],
-    ["instagram", candidate.instagramUrl],
-    ["facebook", candidate.facebookUrl],
-    ["tiktok", candidate.tiktokUrl],
     ["socialSource", candidate.socialSourceUrl],
   ] as const;
-  const validation = Object.fromEntries(fields.flatMap(([key, url]) => {
+  const validation = Object.fromEntries(customerDestinationFields.flatMap(([key, url]) => {
     if (!url) return [];
     const result = linkHealth.get(url);
     const finalUrl = asHttpUrl(result?.finalUrl ?? result?.url ?? url);

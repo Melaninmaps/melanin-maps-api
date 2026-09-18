@@ -1,0 +1,25 @@
+# Philadelphia and Southeastern Pennsylvania Source Report
+
+**Collection date:** 2026-09-18
+**Territory:** Philadelphia plus Bucks, Chester, Delaware, and Montgomery Counties, Pennsylvania.
+
+## Sources used
+
+| Source URL | Organization type | Candidate count | Category coverage | Limitations |
+|---|---|---:|---|---|
+| https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/ | Official tourism / convention and visitors bureau editorial guide | 55 | Black-owned bookstores, culture, retail, beauty, wellness, fitness, specialty food, floristry, plants, and other local services | Curated guide rather than a comprehensive directory; some entries have “various locations” or online/pop-up locations and were excluded when no exact physical street address was available; source ownership labels were retained as published and not independently inferred. |
+| https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/ | Official tourism / convention and visitors bureau editorial guide, compiled with the Philadelphia Hispanic Chamber and Association of Mexican Business Owners of Philadelphia | 21 | Latino-owned coffee, specialty retail, cultural goods, dance, arts, books, food, groceries, beverage, gaming, and community culture | Curated guide and lead source; entries with multiple/various locations or online/pop-up-only locations were excluded from the physical inventory; exact public customer phones and hours were not consistently published in the guide. |
+| https://membership.aachamber.com/list | African-American business chamber member directory | 0 direct rows | Directory category taxonomy spanning accounting, education, health care, home health, legal, construction, beauty, finance, retail, food, transportation, culture, and other services | The public landing page exposed categories but not individual member records in the fetched view; used as independent lead/context material, not as evidence for a row. |
+| https://www.philahispanicchamber.org/ | Hispanic business chamber | 0 direct rows | Hispanic business advocacy, membership and community economic development | Public homepage exposed membership-directory promotion but not individual member records in the fetched view; used as source context and ownership-label provenance for the tourism guide, not as evidence for a row. |
+| https://beechcompanies.com/beech-community-services/black-business-directory | Community development organization / Black business directory publisher | 0 direct rows | Philadelphia Black-owned businesses | The public page links to a 2021 PDF directory, but individual records were not extracted in this pass because the available page did not expose structured detail records; used as a lead/context source. |
+| https://bestindelco.com/directory | Delaware County local business directory | 0 direct rows | Healthcare, beauty, retail, contractors, legal, education, childcare, food, senior living, culture, cleaning, finance, and other practical needs | The public landing page exposes names and towns but not full street addresses or official destination links for individual records in the fetched view; used as Delaware County coverage/context, not evidence for rows. |
+
+## Inventory result
+
+The JSONL contains **76 unique physical candidates**. There are no online-only candidates in this pass. The rows use exact street addresses published in the Visit Philadelphia guides and record the guide’s official website or official Instagram/Facebook destination when supplied. Public phones, hours, languages, regulated-profession status, and licensing were left null/false unless directly established by a source; no coordinates were collected or inferred.
+
+Category coverage is intentionally broader than restaurants: culture and books, beauty and wellness, retail, food and specialty groceries, fitness/movement, and community/local services. The source mix is strongest for Philadelphia proper and provides limited direct coverage of Bucks, Chester, Delaware, and Montgomery Counties; two Montgomery County-area candidates (including Lansdale) and one Chester County-area candidate were retained when the guide supplied an exact address. This is a careful verified sweep, not a complete census. Existing-system duplicate checking was not performed, and no production systems were accessed.
+
+## Verification method
+
+Each retained row came from an independently fetched public source page whose entry included a named business and an exact physical address. The source guide also provided an official website or official social destination for the retained entry; that destination was stored where available. Tourism-guide descriptions were treated as factual source material only for the published business description and ownership designation, without inference about ethnicity, gender, language, hours, accessibility, licensing, or services beyond the text. Entries with ambiguous location statements such as “various locations,” “online,” or “pop-up locations” were omitted from the physical candidate file rather than assigned an invented map pin.
