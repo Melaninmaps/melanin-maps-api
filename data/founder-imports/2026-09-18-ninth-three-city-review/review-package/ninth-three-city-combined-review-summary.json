@@ -1,0 +1,39 @@
+{
+  "package": "2026-09-18-ninth-three-city-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 24,
+  "accepted_review_only_candidates": 24,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "business": 10,
+    "cultural_place": 7,
+    "online_business": 1,
+    "community_resource": 5,
+    "regulated_review": 1
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 23,
+    "needs_research": 1
+  },
+  "manifest_sha256": "997e5c9e01d172f4f5cb0a8b53e3b99a00a46a50b09d61bef974c3c8745b93d6",
+  "source_manifest": "/home/ubuntu/melanin-maps-ninth-three-city-review/data/founder-imports/2026-09-18-ninth-three-city-review/consolidated/ninth-three-city-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "b1daf6c50cb65d31e8d306fd344941c6caa8301b73b9692918f70a49314333e7",
+  "destination_health": {
+    "candidates": 24,
+    "unique_destinations": 25,
+    "by_outcome": {
+      "reachable": 24,
+      "timeout": 1
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}

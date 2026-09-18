@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-09-18T22:51:59.643Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "memphis-candidates.jsonl",
+    "nashville-candidates.jsonl",
+    "tulsa-candidates.jsonl"
+  ],
+  "inputRows": 24,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 24,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "addressBackedCandidates": 21,
+  "commercialMapPinReviewCandidates": 11,
+  "maplessCommunityResources": 2,
+  "onlineOnlyCandidates": 1,
+  "targetKinds": {
+    "business": 10,
+    "cultural_place": 7,
+    "community_resource": 5,
+    "online_business": 1,
+    "regulated_review": 1
+  },
+  "categories": {
+    "arts_culture": 4,
+    "Arts & Culture": 3,
+    "community_services": 3,
+    "Food & Dining": 3,
+    "retail_shopping": 2,
+    "arts_culture_history": 1,
+    "business_services": 1,
+    "family_support": 1,
+    "Food & Beverage": 1,
+    "food_and_drink": 1,
+    "food_dining": 1,
+    "grocery": 1,
+    "health": 1,
+    "Professional Services": 1
+  },
+  "states": {
+    "Nashville, TN": 8,
+    "Memphis, TN": 7,
+    "Tulsa, OK": 6,
+    "Brentwood, TN": 1,
+    "Goodlettsville, TN": 1,
+    "Millington, TN": 1
+  },
+  "officialCustomerDestinationCoverage": 24,
+  "files": {
+    "candidates": "ninth-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "ninth-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "ninth-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "ninth-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "b1daf6c50cb65d31e8d306fd344941c6caa8301b73b9692918f70a49314333e7"
+}

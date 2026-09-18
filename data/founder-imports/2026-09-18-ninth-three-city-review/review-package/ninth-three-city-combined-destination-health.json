@@ -1,0 +1,163 @@
+{
+  "checkedAt": "2026-09-18T22:52:09.782Z",
+  "sourceManifest": "ninth-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 24,
+  "uniqueDestinations": 25,
+  "counts": {
+    "reachable": 24,
+    "timeout": 1
+  },
+  "results": [
+    {
+      "url": "https://www.nashvillecomputer.com/",
+      "status": 200,
+      "finalUrl": "https://www.nashvillecomputer.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tacoexpressmexicangrill.com/",
+      "status": 200,
+      "finalUrl": "https://www.tacoexpressmexicangrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.one11madison.com/",
+      "status": 200,
+      "finalUrl": "https://www.one11madison.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://4dmarketing.biz/",
+      "status": 200,
+      "finalUrl": "https://4dmarketing.biz/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hattiloo.org/",
+      "status": 200,
+      "finalUrl": "https://hattiloo.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mandedibi.com/",
+      "status": 200,
+      "finalUrl": "https://www.mandedibi.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://civilrightsmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://civilrightsmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://staxmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://staxmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theteabar901.com/",
+      "status": 200,
+      "finalUrl": "https://www.theteabar901.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/theteabar901",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftheteabar901&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jackiemaesplace.com/",
+      "status": 200,
+      "finalUrl": "https://www.jackiemaesplace.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.conexionamericas.org/",
+      "status": 200,
+      "finalUrl": "https://www.conexionamericas.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hffus.org/",
+      "status": 200,
+      "finalUrl": "https://hffus.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lamisionconarte.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.nashvilleballet.com/",
+      "status": 200,
+      "finalUrl": "https://www.nashvilleballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nashvillecares.org/",
+      "status": 200,
+      "finalUrl": "https://nashvillecares.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nashvillediaperconnection.org/",
+      "status": 200,
+      "finalUrl": "https://nashvillediaperconnection.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nmaam.org/",
+      "status": 200,
+      "finalUrl": "https://www.nmaam.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://plazamariachi.com/",
+      "status": 200,
+      "finalUrl": "https://plazamariachi.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bwstees.com/",
+      "status": 200,
+      "finalUrl": "https://bwstees.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.greenwoodrising.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.greenwoodrising.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oasisfreshmarkets.net/",
+      "status": 200,
+      "finalUrl": "https://www.oasisfreshmarkets.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.silhouettetulsa.com/",
+      "status": 200,
+      "finalUrl": "https://www.silhouettetulsa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sisserousrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://sisserousrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/tulsahispanic/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftulsahispanic%2F&is_from_rle",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
