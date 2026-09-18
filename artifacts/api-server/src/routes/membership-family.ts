@@ -23,8 +23,8 @@ function requireAuth(req: Request, res: Response): boolean {
 
 const TIER_DISPLAY: Record<string, { name: string; monthlyPrice: number; annualPrice: number; color: string }> = {
   free: { name: "Explorer", monthlyPrice: 0, annualPrice: 0, color: "#A87A40" },
-  navigator: { name: "Navigator", monthlyPrice: 7.99, annualPrice: 79.9, color: "#CA922B" },
-  trailblazer: { name: "Trailblazer", monthlyPrice: 19.99, annualPrice: 199.9, color: "#1A6B4A" },
+  navigator: { name: "Navigator", monthlyPrice: 7.99, annualPrice: 79.99, color: "#CA922B" },
+  trailblazer: { name: "Trailblazer", monthlyPrice: 14.99, annualPrice: 149.99, color: "#1A6B4A" },
   community_builder: { name: "Community Builder", monthlyPrice: 29.99, annualPrice: 299.9, color: "#1A3B8B" },
   legacy_member: { name: "Legacy Member", monthlyPrice: 79.99, annualPrice: 799.9, color: "#6B1A8B" },
 };

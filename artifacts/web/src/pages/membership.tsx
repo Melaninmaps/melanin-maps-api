@@ -363,7 +363,7 @@ export default function Membership() {
             className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billing === "annual" ? "bg-[#2B1507] text-white shadow" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"}`}
           >
             Annual
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${billing === "annual" ? "bg-[#CA922B] text-white" : "bg-[#CA922B]/20 text-[#CA922B]"}`}>Save 34%</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${billing === "annual" ? "bg-[#CA922B] text-white" : "bg-[#CA922B]/20 text-[#CA922B]"}`}>Save 16%</span>
           </button>
         </div>
       </div>
@@ -419,11 +419,11 @@ export default function Membership() {
             </div>
             <p className="text-[#3A1F0E]/50 text-sm mb-3">For active users who want deeper insights</p>
             <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
-              {billing === "annual" ? "$63" : "$7.99"}
+              {billing === "annual" ? "$79.99" : "$7.99"}
               <span className="text-lg text-[#3A1F0E]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/month"}</span>
             </div>
             <p className="text-[#3A1F0E]/40 text-xs mb-1">
-              {billing === "annual" ? "That's $5.25/month — save 34%" : "or $63/year (save 34%)"}
+              {billing === "annual" ? "That's $6.67/month — save 16%" : "or $79.99/year (save 16%)"}
             </p>
             <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-full px-3 py-1 mb-6 w-fit">
               <Clock className="w-3 h-3 text-[#CA922B]" />
@@ -480,11 +480,11 @@ export default function Membership() {
             </div>
             <p className="text-[#F5EBD8]/50 text-sm mb-3">For power users and frequent travelers</p>
             <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
-              {billing === "annual" ? "$119" : "$14.99"}
+              {billing === "annual" ? "$149.99" : "$14.99"}
               <span className="text-lg text-[#F5EBD8]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/month"}</span>
             </div>
             <p className="text-[#F5EBD8]/40 text-xs mb-6">
-              {billing === "annual" ? "That's $9.92/month — save 34%" : "or $119/year (save 34%)"}
+              {billing === "annual" ? "That's $12.50/month — save 16%" : "or $149.99/year (save 16%)"}
             </p>
 
             <p className="text-xs font-bold uppercase tracking-wider text-[#CA922B]/70 mb-3">Everything in Navigator, plus</p>
@@ -527,7 +527,7 @@ export default function Membership() {
             {[
               { icon: "🧭", label: "Explorer", sub: "Free" },
               { icon: "🌍", label: "Navigator", sub: "$7.99/mo", highlight: true },
-              { icon: "👑", label: "Trailblazer", sub: "Contact us" },
+              { icon: "👑", label: "Trailblazer", sub: "$14.99/mo" },
             ].map(({ icon, label, sub, highlight }) => (
               <div key={label} className={`p-5 text-center border-l border-white/10 ${highlight ? "bg-[#CA922B]/20" : ""}`}>
                 <div className="text-lg mb-0.5">{icon}</div>
