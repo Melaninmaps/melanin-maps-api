@@ -1,0 +1,22 @@
+[
+  {
+    "destination": "https://www.tandtlifestylelosangeles.com",
+    "records": [
+      {
+        "name": "Colony Cooks",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-candidates.jsonl",
+        "line": 67
+      },
+      {
+        "name": "T&T Lifestyle",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-candidates.jsonl",
+        "line": 129
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]
