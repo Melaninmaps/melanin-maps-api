@@ -38,6 +38,8 @@ export type GovernedKinfolkBusiness = Readonly<{
   city: string;
   stateCode: string | null;
   country: string | null;
+  /** Online-only listings are searchable but never represented as map pins. */
+  isOnlineOnly?: boolean;
   latitude: number | null;
   longitude: number | null;
   distanceMiles: number | null;
@@ -94,6 +96,7 @@ type BusinessRow = {
   city: unknown;
   state_code: unknown;
   country: unknown;
+  is_online_only: unknown;
   latitude: unknown;
   longitude: unknown;
   distance_miles?: unknown;
@@ -167,6 +170,7 @@ const CANONICAL_SELECT = `
   b.city,
   b.state AS state_code,
   b.country,
+  COALESCE(b.is_online_only, false) AS is_online_only,
   b.latitude,
   b.longitude,
   b.phone,
@@ -238,6 +242,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     city: text(row.city),
     stateCode: nullableText(row.state_code),
     country: nullableText(row.country),
+    isOnlineOnly: row.is_online_only === true,
     latitude: numberOrNull(row.latitude),
     longitude: numberOrNull(row.longitude),
     distanceMiles: numberOrNull(row.distance_miles),

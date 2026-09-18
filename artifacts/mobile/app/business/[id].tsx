@@ -366,6 +366,7 @@ export default function BusinessDetailScreen() {
   const claimedCover = ownerManaged && business.imageUrl ? business.imageUrl : null;
   const saved = isSaved(business.id);
   const alreadyCheckedIn = hasCheckedIn(business.id) || checkInDone;
+  const isOnlineOnly = (business as any).isOnlineOnly === true;
 
   const COMMUNITY_SUPPORT_LABELS: Record<number, string> = {
     1: "Worth checking out",
@@ -1022,12 +1023,19 @@ export default function BusinessDetailScreen() {
                 <Text style={[styles.infoText, { color: colors.foreground }]}>{business.hours}</Text>
               </View>
             )}
-            <View style={styles.infoRow}>
-              <Feather name="map-pin" size={16} color={colors.primary} />
-              <Text style={[styles.infoText, { color: colors.foreground }]}>
-                {business.address}, {business.city}, {business.state}
-              </Text>
-            </View>
+            {isOnlineOnly ? (
+              <View style={styles.infoRow}>
+                <Feather name="globe" size={16} color={colors.primary} />
+                <Text style={[styles.infoText, { color: colors.foreground }]}>Online service or shop — no public storefront</Text>
+              </View>
+            ) : business.address ? (
+              <View style={styles.infoRow}>
+                <Feather name="map-pin" size={16} color={colors.primary} />
+                <Text style={[styles.infoText, { color: colors.foreground }]}>
+                  {business.address}, {business.city}, {business.state}
+                </Text>
+              </View>
+            ) : null}
             {business.phone && (
               <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleCall}>
                 <Feather name="phone" size={16} color={colors.primary} />
@@ -1278,17 +1286,24 @@ export default function BusinessDetailScreen() {
             <Feather name="chevron-right" size={18} color="#C9922B" />
           </TouchableOpacity>
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
-          <View style={[styles.mapWrap, { borderColor: colors.border }]}>
-            <BusinessMapView
-              latitude={business.latitude}
-              longitude={business.longitude}
-              name={business.name}
-            />
-          </View>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{isOnlineOnly ? "Availability" : "Location"}</Text>
+          {isOnlineOnly ? (
+            <View style={[styles.mapWrap, { borderColor: colors.border, alignItems: "center", justifyContent: "center", padding: 22 }]}>
+              <Feather name="globe" size={28} color={colors.primary} />
+              <Text style={[styles.infoText, { color: colors.foreground, marginTop: 10, textAlign: "center" }]}>This is an online service or shop. No map pin or directions are shown.</Text>
+            </View>
+          ) : (
+            <View style={[styles.mapWrap, { borderColor: colors.border }]}>
+              <BusinessMapView
+                latitude={business.latitude}
+                longitude={business.longitude}
+                name={business.name}
+              />
+            </View>
+          )}
 
           {/* Get Directions row */}
-          {business.latitude && business.longitude && (
+          {!isOnlineOnly && business.latitude && business.longitude && (
             <TouchableOpacity
               style={[styles.directionsRow, { borderColor: colors.border, backgroundColor: colors.secondary }]}
               activeOpacity={0.75}

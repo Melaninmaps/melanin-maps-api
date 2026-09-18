@@ -27,6 +27,13 @@ describe("source-backed inventory review builder", () => {
     expect(source).toContain("missing_attributable_official_destination");
   });
 
+  it("admits source-backed online services without inventing a street address or map pin", () => {
+    expect(source).toContain('target === "online_business"');
+    expect(source).toContain("online_business_must_not_use_physical_address");
+    expect(source).toContain("online_only_no_map_pin");
+    expect(source).toContain("official website or public social");
+  });
+
   it("preserves a review-only, no-publication boundary", () => {
     expect(source).toContain("This script is intentionally a local-file transform");
     expect(source).toContain("It does not connect to a\n * database");

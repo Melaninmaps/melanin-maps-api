@@ -57,7 +57,7 @@ describe("conversational governed business result view", () => {
     expect(block).toContain("buildConversationalBusinessResultView({");
     expect(block).toContain("businesses: discoveryResult.discovery.platformBusinesses");
     expect(block).toContain("external: discoveryResult.discovery.webFindings");
-    expect(block).toContain("const conciseReply = platformCount > 0");
+    expect(block).toContain("const conciseReply =\n    platformCount > 0");
     expect(block).toContain("reply: conciseReply");
     expect(block).not.toContain("reply: discoveryResult.reply");
     expect(block).toContain("resultView,");

@@ -28,6 +28,7 @@ function candidate(overrides: Partial<DirectoryImportCandidate> = {}): Directory
     name: "Phoenix Climate Service",
     city: "Phoenix",
     state: "AZ",
+    country: "United States",
     category: "Home & Trades",
     subcategory: "HVAC",
     cultural_specialty: null,
@@ -475,6 +476,39 @@ describe("atomic founder directory publication", () => {
     expect(sql).toContain("BEGIN");
     expect(sql).toContain("COMMIT");
     expect(database.release).toHaveBeenCalledOnce();
+  });
+
+  it("publishes a reviewed online service without geocoding, an address, or a map pin", async () => {
+    const record = candidate({
+      target_kind: "online_business",
+      name: "Phoenix Family Learning Shop",
+      address: null,
+      website: "https://shop.example/",
+      social_source_url: null,
+      link_validation: {
+        website: {
+          result: "working",
+          status: 200,
+          finalUrl: "https://shop.example/",
+          finalHost: "shop.example",
+          checkedAt: new Date().toISOString(),
+        },
+        reviewGates: [],
+      },
+    });
+    const database = decisionDatabase(record);
+    const geocode = vi.fn();
+    const response = await request(routeApp(database, "admin", geocode))
+      .post(`/api/founder/directory-import-candidates/${record.id}/decision`)
+      .set("Idempotency-Key", "online-business-publish-1")
+      .send({ action: "publish", expectedRevision: 0, reviewNote: "Reviewed official shop." });
+
+    expect(response.status).toBe(200);
+    expect(geocode).not.toHaveBeenCalled();
+    const sql = database.clientQuery.mock.calls.map(([statement]) => String(statement));
+    const businessInsert = sql.find((statement) => statement.includes("INSERT INTO businesses"));
+    expect(businessInsert).toContain("is_online_only");
+    expect(sql.some((statement) => statement.includes("INSERT INTO canonical_record_locations"))).toBe(false);
   });
 
   it("publishes community resources only to resources, never businesses", async () => {

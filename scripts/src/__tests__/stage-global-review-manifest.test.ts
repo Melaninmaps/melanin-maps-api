@@ -29,4 +29,12 @@ describe("global review-only directory staging", () => {
     expect(migrations).toContain("ALTER COLUMN state DROP NOT NULL");
     expect(migrations).toContain("'cultural_place'");
   });
+
+  it("preserves online-only candidates as searchable listings without map coordinates", () => {
+    expect(source).toContain('"online_business"');
+    expect(source).toContain('row.targetKind === "online_business"');
+    expect(source).toContain('country: candidate.country.trim()');
+    expect(migrations).toContain("allow_online_only_directory_businesses_v1");
+    expect(migrations).toContain("is_online_only BOOLEAN NOT NULL DEFAULT FALSE");
+  });
 });

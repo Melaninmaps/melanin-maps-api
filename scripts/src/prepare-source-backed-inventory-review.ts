@@ -10,8 +10,12 @@ import { basename, resolve } from "node:path";
  * database, geocode, make HTTP requests, publish a business/resource, or write
  * any user, authentication, session, access, or waitlist record.
  *
- * A row may enter the review manifest only when it has an explicit street
- * address, attributable source URL, and an official public social destination.
+ * A physical-business row may enter the review manifest only when it has an
+ * explicit street address, attributable source URL, and an official public
+ * social destination. A genuine online-only product/service may instead be
+ * classified as online_business, with no invented address or map pin, when it
+ * has an attributable source and an official website or public social
+ * destination.
  * Ownership designations are normalized only when their source text expressly
  * identifies ownership. Every retained designation is marked for reviewer
  * evidence confirmation by the staging adapter before public use.
@@ -81,7 +85,7 @@ type RawRecord = Record<string, unknown>;
 
 type ReviewCandidate = {
   sourceRow: number;
-  targetKind: "business" | "community_resource" | "cultural_place" | "regulated_review" | "manual_review";
+  targetKind: "business" | "online_business" | "community_resource" | "cultural_place" | "regulated_review" | "manual_review";
   dedupeKey: string;
   name: string;
   city: string;
@@ -89,7 +93,7 @@ type ReviewCandidate = {
   country: string;
   category: string;
   subcategory: string | null;
-  address: string;
+  address: string | null;
   phone: string | null;
   website: string | null;
   sourceUrl: string;
@@ -101,7 +105,7 @@ type ReviewCandidate = {
   instagramUrl: string | null;
   facebookUrl: string | null;
   tiktokUrl: string | null;
-  socialSourceUrl: string;
+  socialSourceUrl: string | null;
   notes: string;
   servicesSearchTerms: string | null;
 };
@@ -181,7 +185,7 @@ function firstWebsite(record: RawRecord): string | null {
 
 function targetKind(record: RawRecord): ReviewCandidate["targetKind"] {
   const explicitlySupplied = value(record, "target_kind");
-  if (["business", "community_resource", "cultural_place", "regulated_review", "manual_review"].includes(explicitlySupplied)) {
+  if (["business", "online_business", "community_resource", "cultural_place", "regulated_review", "manual_review"].includes(explicitlySupplied)) {
     return explicitlySupplied as ReviewCandidate["targetKind"];
   }
   const text = ["name", "category", "subcategory", "description", "services_search_terms", "notes"]
@@ -229,6 +233,8 @@ function parseRecord(raw: RawRecord, input: string, sourceRow: number): { candid
   const sourceUrl = asHttpUrl(value(raw, "source_url"));
   const socialSourceUrl = primarySocial(raw);
   const website = firstWebsite(raw);
+  const target = targetKind(raw);
+  const isOnlineOnly = target === "online_business";
   const category = value(raw, "category") || "Other services";
   const subcategory = optional(value(raw, "subcategory"));
   const designationText = value(raw, "ownership_designations");
@@ -239,17 +245,17 @@ function parseRecord(raw: RawRecord, input: string, sourceRow: number): { candid
 
   const reason: string[] = [];
   if (!name) reason.push("missing_name");
-  if (address.length < 10 || !/\d/.test(address)) reason.push("missing_public_street_address");
+  if (!isOnlineOnly && (address.length < 10 || !/\d/.test(address))) reason.push("missing_public_street_address");
+  if (isOnlineOnly && address) reason.push("online_business_must_not_use_physical_address");
   if (!city) reason.push("missing_city");
   if (!sourceUrl) reason.push("missing_or_invalid_source_url");
-  if (!socialSourceUrl) reason.push("missing_official_social_destination");
+  if (!isOnlineOnly && !socialSourceUrl) reason.push("missing_official_social_destination");
   if (!website && !socialSourceUrl) reason.push("missing_attributable_official_destination");
   if (reason.length > 0) return { held: { input, sourceRow, name: name || null, reason, rawRecord: raw } };
 
   const instagramUrl = asHttpUrl(value(raw, "instagram_url"));
   const facebookUrl = asHttpUrl(value(raw, "facebook_url"));
   const tiktokUrl = asHttpUrl(value(raw, "tiktok_url"));
-  const target = targetKind(raw);
   const searchTerms = optional(value(raw, "services_search_terms"));
   const sourceFile = value(raw, "source_file") || input;
   const notes = JSON.stringify({
@@ -264,6 +270,7 @@ function parseRecord(raw: RawRecord, input: string, sourceRow: number): { candid
     languages: optional(value(raw, "languages")),
     price_range: optional(value(raw, "price_range")),
     address_enrichment_note: optional(value(raw, "address_enrichment_note")),
+    listing_mode: isOnlineOnly ? "online_only_no_map_pin" : "physical_location_candidate",
     original_source_url: sourceUrl,
   });
 
@@ -278,7 +285,7 @@ function parseRecord(raw: RawRecord, input: string, sourceRow: number): { candid
       country,
       category,
       subcategory,
-      address,
+      address: isOnlineOnly ? null : address,
       phone: optional(value(raw, "phone")),
       website,
       sourceUrl: sourceUrl!,

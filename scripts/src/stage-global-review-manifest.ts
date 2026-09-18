@@ -36,12 +36,12 @@ const DEFAULT_LINK_HEALTH = fileURLToPath(new URL(
 
 const TARGET_KINDS = new Set([
   "business",
+  "online_business",
   "community_resource",
   "cultural_place",
   "regulated_review",
   "manual_review",
 ]);
-const REVIEW_REQUIRED_OUTCOMES = new Set(["review_required", "timeout", "network_error"]);
 
 type GlobalCandidate = {
   sourceRow: number;
@@ -53,7 +53,7 @@ type GlobalCandidate = {
   country: string;
   category: string;
   subcategory?: string | null;
-  address: string;
+  address: string | null;
   phone?: string | null;
   website?: string | null;
   sourceUrl: string;
@@ -65,7 +65,7 @@ type GlobalCandidate = {
   instagramUrl?: string | null;
   facebookUrl?: string | null;
   tiktokUrl?: string | null;
-  socialSourceUrl: string;
+  socialSourceUrl?: string | null;
   notes?: string | null;
   servicesSearchTerms?: string | null;
 };
@@ -81,9 +81,11 @@ type HealthResult = {
   status: number | null;
   finalUrl: string | null;
   outcome: "reachable" | "review_required" | "timeout" | "network_error";
+  checkedAt?: string | null;
 };
 
 type LinkHealth = {
+  checkedAt?: string | null;
   candidates: number;
   results: HealthResult[];
   publication?: string;
@@ -97,10 +99,11 @@ type StagedCandidate = {
   name: string;
   city: string;
   state: string | null;
+  country: string;
   category: string;
   subcategory: string | null;
   cultural_specialty: string | null;
-  address: string;
+  address: string | null;
   phone: string | null;
   website: string | null;
   source_url: string;
@@ -112,7 +115,7 @@ type StagedCandidate = {
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
-  social_source_url: string;
+  social_source_url: string | null;
   suggested_experience_keys: Record<string, unknown>;
   link_validation: Record<string, unknown>;
   notes: string;
@@ -193,6 +196,7 @@ async function readManifest(path: string): Promise<GlobalCandidate[]> {
     lineNumber += 1;
     const row = JSON.parse(line) as GlobalCandidate;
     const address = canonicalAddress(row.address);
+    const isOnlineOnly = row.targetKind === "online_business";
     if (
       !Number.isInteger(row.sourceRow)
       || !TARGET_KINDS.has(row.targetKind)
@@ -200,13 +204,15 @@ async function readManifest(path: string): Promise<GlobalCandidate[]> {
       || !row.city?.trim()
       || !row.country?.trim()
       || !row.category?.trim()
-      || !address
+      || (!isOnlineOnly && !address)
+      || (isOnlineOnly && address)
       || !asHttpUrl(row.sourceUrl)
-      || !asHttpUrl(row.socialSourceUrl)
+      || (!isOnlineOnly && !asHttpUrl(row.socialSourceUrl))
+      || (isOnlineOnly && !asHttpUrl(row.website) && !asHttpUrl(row.socialSourceUrl))
     ) {
       throw new Error(`Invalid global review candidate at manifest line ${lineNumber}.`);
     }
-    result.push({ ...row, address, website: asHttpUrl(row.website), sourceUrl: asHttpUrl(row.sourceUrl)!, socialSourceUrl: asHttpUrl(row.socialSourceUrl)! });
+    result.push({ ...row, address, website: asHttpUrl(row.website), sourceUrl: asHttpUrl(row.sourceUrl)!, socialSourceUrl: asHttpUrl(row.socialSourceUrl) });
   }
   return result;
 }
@@ -230,7 +236,10 @@ function loadLinkHealth(path: string, rowCount: number): Map<string, HealthResul
   if (!Number.isInteger(report.candidates) || report.candidates !== rowCount || !Array.isArray(report.results)) {
     throw new Error("Destination-health report does not match the manifest candidate count.");
   }
-  return new Map(report.results.map((result) => [result.url, result]));
+  return new Map(report.results.map((result) => [result.url, {
+    ...result,
+    checkedAt: result.checkedAt ?? report.checkedAt ?? null,
+  }]));
 }
 
 function candidateLinkAssessment(candidate: GlobalCandidate, linkHealth: Map<string, HealthResult>): {
@@ -238,22 +247,36 @@ function candidateLinkAssessment(candidate: GlobalCandidate, linkHealth: Map<str
   reviewGates: string[];
 } {
   const fields = [
-    ["officialWebsite", candidate.website],
-    ["officialSocial", candidate.socialSourceUrl],
+    ["website", candidate.website],
+    ["source", candidate.sourceUrl],
+    ["instagram", candidate.instagramUrl],
+    ["facebook", candidate.facebookUrl],
+    ["tiktok", candidate.tiktokUrl],
+    ["socialSource", candidate.socialSourceUrl],
   ] as const;
-  const destinations = Object.fromEntries(fields.flatMap(([key, url]) => {
+  const validation = Object.fromEntries(fields.flatMap(([key, url]) => {
     if (!url) return [];
     const result = linkHealth.get(url);
-    return [[key, result ?? { url, status: null, finalUrl: null, outcome: "not_checked" }]];
+    const finalUrl = asHttpUrl(result?.finalUrl ?? result?.url ?? url);
+    return [[key, {
+      url,
+      status: result?.status ?? null,
+      finalUrl,
+      finalHost: finalUrl
+        ? new URL(finalUrl).hostname.toLowerCase().replace(/^www\./, "")
+        : null,
+      result: result?.outcome === "reachable" ? "working" : "not_checked",
+      checkedAt: result?.checkedAt ?? null,
+    }]];
   }));
   const reviewGates: string[] = [];
-  for (const [key, value] of Object.entries(destinations)) {
-    const outcome = (value as { outcome: string }).outcome;
-    if (outcome === "not_checked" || REVIEW_REQUIRED_OUTCOMES.has(outcome)) {
+  for (const [key, value] of Object.entries(validation)) {
+    const result = (value as { result: string }).result;
+    if (result !== "working") {
       reviewGates.push(`${key}_link_requires_review`);
     }
   }
-  return { validation: { destinations, reviewGates }, reviewGates };
+  return { validation: { ...validation, reviewGates }, reviewGates };
 }
 
 function stagedCandidate(
@@ -293,6 +316,7 @@ function stagedCandidate(
     name: candidate.name.trim(),
     city: candidate.city.trim(),
     state: candidate.state?.trim() || null,
+    country: candidate.country.trim(),
     category: candidate.category.trim(),
     subcategory: candidate.subcategory?.trim() || null,
     cultural_specialty: typeof notes.cultural_specialty === "string" ? notes.cultural_specialty : null,
@@ -308,7 +332,7 @@ function stagedCandidate(
     instagram_url: asHttpUrl(candidate.instagramUrl),
     facebook_url: asHttpUrl(candidate.facebookUrl),
     tiktok_url: asHttpUrl(candidate.tiktokUrl),
-    social_source_url: candidate.socialSourceUrl,
+    social_source_url: asHttpUrl(candidate.socialSourceUrl),
     suggested_experience_keys: {
       policyCategory: policy.category,
       atmosphereLabel: policy.atmosphereLabel,
@@ -338,14 +362,14 @@ async function insertChunk(client: PoolClient, batchId: string, rows: StagedCand
   const result = await client.query(
     `INSERT INTO directory_import_candidates (
        batch_id, source_row, target_kind, status, dedupe_key, name, city, state,
-       category, subcategory, cultural_specialty, address, phone, website,
+       country, category, subcategory, cultural_specialty, address, phone, website,
        source_url, source_name, source_status, ownership_designations,
        ownership_evidence, regulated_profession, instagram_url, facebook_url,
        tiktok_url, social_source_url, suggested_experience_keys,
        link_validation, notes, raw_record
      )
      SELECT $1::uuid, x.source_row, x.target_kind, x.status, x.dedupe_key,
-            x.name, x.city, x.state, x.category, x.subcategory,
+            x.name, x.city, x.state, x.country, x.category, x.subcategory,
             x.cultural_specialty, x.address, x.phone, x.website, x.source_url,
             x.source_name, x.source_status, x.ownership_designations,
             x.ownership_evidence, x.regulated_profession, x.instagram_url,
@@ -353,7 +377,7 @@ async function insertChunk(client: PoolClient, batchId: string, rows: StagedCand
             x.suggested_experience_keys, x.link_validation, x.notes, x.raw_record
        FROM jsonb_to_recordset($2::jsonb) AS x(
          source_row integer, target_kind text, status text, dedupe_key text,
-         name text, city text, state text, category text, subcategory text,
+         name text, city text, state text, country text, category text, subcategory text,
          cultural_specialty text, address text, phone text, website text,
          source_url text, source_name text, source_status text,
          ownership_designations jsonb, ownership_evidence text,

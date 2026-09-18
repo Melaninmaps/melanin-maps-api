@@ -22,7 +22,7 @@ import {
 const BASE = import.meta.env.BASE_URL;
 
 type CandidateStatus = "pending_review" | "needs_research" | "declined" | "approved" | "published";
-type TargetKind = "business" | "community_resource" | "regulated_review" | "manual_review" | "internal_only";
+type TargetKind = "business" | "online_business" | "community_resource" | "regulated_review" | "manual_review" | "internal_only";
 type ResourceCategory = "essential_support" | "education" | "jobs" | "business" | "housing" | "safety_rights";
 
 interface Candidate {
@@ -34,6 +34,7 @@ interface Candidate {
   name: string;
   city: string;
   state: string;
+  country: string | null;
   category: string;
   subcategory: string | null;
   cultural_specialty: string | null;
@@ -503,6 +504,7 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
             <select value={targetKind} onChange={(event) => setTargetKind(event.target.value as TargetKind | "all")} className={INPUT_CLASS}>
               <option value="all">All destinations</option>
               <option value="business">Business</option>
+              <option value="online_business">Online service / shop</option>
               <option value="regulated_review">Regulated business</option>
               <option value="community_resource">Resource</option>
               <option value="manual_review">Manual review</option>
@@ -530,6 +532,7 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
             const open = expanded === candidate.id;
             const candidateGates = gates(candidate);
             const isResource = candidate.target_kind === "community_resource";
+            const isOnlineOnly = candidate.target_kind === "online_business";
             const canDecide = candidate.status !== "published" && candidate.status !== "declined" && candidate.target_kind !== "internal_only" && candidate.target_kind !== "manual_review";
             return (
               <section key={candidate.id} className="overflow-hidden rounded-2xl border border-[#D7C3A6] bg-white">
@@ -548,7 +551,7 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-bold text-[#2B1507]">{candidate.name}</h2>
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_STYLES[candidate.status]}`}>{STATUS_LABELS[candidate.status]}</span>
-                      <span className="rounded-full bg-[#F2E8D8] px-2.5 py-0.5 text-xs font-semibold text-[#5B3A1F]">{isResource ? "Resources destination" : candidate.target_kind === "regulated_review" ? "Regulated business review" : candidate.target_kind.replace(/_/g, " ")}</span>
+                      <span className="rounded-full bg-[#F2E8D8] px-2.5 py-0.5 text-xs font-semibold text-[#5B3A1F]">{isResource ? "Resources destination" : isOnlineOnly ? "Online service / shop — no map pin" : candidate.target_kind === "regulated_review" ? "Regulated business review" : candidate.target_kind.replace(/_/g, " ")}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#3A1F0E]/65">
                       <span>{candidate.subcategory ?? candidate.category}</span>
@@ -563,9 +566,9 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
                 {open && selected?.id === candidate.id && (
                   <div className="border-t border-[#E5D5BE] bg-[#FFFCF7] p-5 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div><span className="font-bold text-[#2B1507]">Intended destination:</span> <span className="text-[#3A1F0E]/75">{isResource ? "Resources (never Businesses)" : "Business directory"}</span></div>
+                      <div><span className="font-bold text-[#2B1507]">Intended destination:</span> <span className="text-[#3A1F0E]/75">{isResource ? "Resources (never Businesses)" : isOnlineOnly ? "Online business directory listing (never map-pinned)" : "Business directory with a physical location"}</span></div>
                       <div><span className="font-bold text-[#2B1507]">Source status:</span> <span className="text-[#3A1F0E]/75">{candidate.source_status ?? "Not supplied"}</span></div>
-                      <div><span className="font-bold text-[#2B1507]">Address:</span> <span className="text-[#3A1F0E]/75">{candidate.address ?? "Not supplied"}</span></div>
+                      <div><span className="font-bold text-[#2B1507]">Address:</span> <span className="text-[#3A1F0E]/75">{isOnlineOnly ? "Online only — no physical location is shown" : candidate.address ?? "Not supplied"}</span></div>
                       <div><span className="font-bold text-[#2B1507]">Phone:</span> <span className="text-[#3A1F0E]/75">{candidate.phone ?? "Not supplied"}</span></div>
                       <div><span className="font-bold text-[#2B1507]">Source:</span> <span className="text-[#3A1F0E]/75">{candidate.source_name ?? "Founder master"}</span></div>
                       <div><span className="font-bold text-[#2B1507]">Canonical match:</span> <span className="text-[#3A1F0E]/75">{candidate.matched_business_id ?? "None recorded"}</span></div>
@@ -674,12 +677,12 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
 
                         {!isResource && (
                           <div>
-                            <FieldLabel>Public business website override (optional, reviewed)</FieldLabel>
-                            <input value={memberFacingUrl} onChange={(event) => setMemberFacingUrl(event.target.value)} placeholder="Leave blank if no confirmed official site" className={INPUT_CLASS} />
+                            <FieldLabel>{isOnlineOnly ? "Official customer destination (optional override, reviewed)" : "Public business website override (optional, reviewed)"}</FieldLabel>
+                            <input value={memberFacingUrl} onChange={(event) => setMemberFacingUrl(event.target.value)} placeholder={isOnlineOnly ? "Leave blank to use a validated official site or social profile" : "Leave blank if no confirmed official site"} className={INPUT_CLASS} />
                           </div>
                         )}
 
-                        {!isResource && (
+                        {!isResource && !isOnlineOnly && (
                           <fieldset className="rounded-xl border border-[#D7C3A6] bg-white p-4">
                           <legend className="px-1 text-sm font-bold text-[#2B1507]">Location evidence (required, server-validated, and founder-confirmed)</legend>
                           {candidate.address ? (
@@ -720,7 +723,7 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
                         <div className="flex flex-wrap gap-2">
                           {canDecide && (
                             <button onClick={() => void decide(candidate, "publish")} disabled={processing === candidate.id} className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-800 disabled:opacity-50">
-                              <CheckCircle2 className="w-4 h-4" /> {processing === candidate.id ? "Processing…" : isResource ? "Publish to Resources" : "Publish unclaimed listing"}
+                              <CheckCircle2 className="w-4 h-4" /> {processing === candidate.id ? "Processing…" : isResource ? "Publish to Resources" : isOnlineOnly ? "Publish online listing (no map pin)" : "Publish unclaimed listing"}
                             </button>
                           )}
                           {canDecide && (candidate.matched_business_id || candidateGates.includes("duplicate_within_batch") || existingRecordId) && (

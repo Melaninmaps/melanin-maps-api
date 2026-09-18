@@ -91,7 +91,7 @@ function getOpenStatus(hours: string | null | undefined): { open: boolean; label
   return { open: isOpen, label: isOpen ? "Open Now" : "Closed Now" };
 }
 
-function BusinessMapEmbed({ business }: { business: { name?: string | null; address?: string | null; city?: string | null; state?: string | null } }) {
+function BusinessMapEmbed({ business }: { business: { name?: string | null; address?: string | null; city?: string | null; state?: string | null; isOnlineOnly?: boolean | null } }) {
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -99,13 +99,24 @@ function BusinessMapEmbed({ business }: { business: { name?: string | null; addr
   const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
   useEffect(() => {
+    if (business.isOnlineOnly) { setLoading(false); return; }
     if (!query) { setLoading(false); return; }
     fetch(`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/maps/embed-url?q=${encodeURIComponent(query)}`)
       .then((r) => r.json())
       .then((d) => { if (d.url) setEmbedUrl(d.url); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [query]);
+  }, [business.isOnlineOnly, query]);
+
+  if (business.isOnlineOnly) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#1E1510] p-6 text-center">
+        <Globe className="mb-3 h-8 w-8 text-[#CA922B]" aria-hidden="true" />
+        <p className="font-semibold text-white">Online service or shop</p>
+        <p className="mt-1 text-sm text-white/65">This listing has no public storefront, so no map pin or directions are shown.</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="w-full h-64 rounded-2xl bg-[#1E1510] animate-pulse border border-white/10" aria-label="Loading map" />;
@@ -1253,7 +1264,15 @@ export default function BusinessDetail() {
               <h3 className="font-serif font-bold text-xl text-white mb-6">Contact & Info</h3>
               
               <div className="space-y-5">
-                {business.address && (
+                {(business as any).isOnlineOnly ? (
+                  <div className="flex items-start gap-4 text-white/80 text-sm">
+                    <Globe className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-medium text-white">Online service or shop</div>
+                      <div className="mt-0.5 text-white/60">No public storefront or map pin is shown for this listing.</div>
+                    </div>
+                  </div>
+                ) : business.address && (
                   <div className="flex items-start gap-4 text-white/80 text-sm">
                     <MapPin className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
                     <div>

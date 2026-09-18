@@ -8,6 +8,7 @@ export type ConversationalBusinessResultView = Readonly<{
     id: string;
     title: string;
     supportingText: string;
+    isOnlineOnly: boolean;
     matchReason: string;
     verified: boolean;
     claimed: boolean;
@@ -31,7 +32,10 @@ export function buildConversationalBusinessResultView(input: {
   const cards = input.businesses.slice(0, 5).map((business) => ({
     id: business.id,
     title: business.name,
-    supportingText: business.description || `${business.category} in ${business.city}.`,
+    supportingText: business.isOnlineOnly
+      ? `Online service or shop${business.description ? ` — ${business.description}` : ""}`
+      : business.description || `${business.category} in ${business.city}.`,
+    isOnlineOnly: business.isOnlineOnly === true,
     matchReason: business.matchReasons[0]
       ? `Matched by ${business.matchReasons.join(" and ")}.`
       : `Matched as a ${input.subjectLabel} listing.`,
