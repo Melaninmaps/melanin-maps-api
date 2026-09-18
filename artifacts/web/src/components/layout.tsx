@@ -4,7 +4,6 @@ import { Button } from "./ui/button";
 import { Menu, X, MessageSquare, Bell, Sun, Moon, Compass, Map, Users, Shield, BookOpen, User, Instagram, Facebook, Music2, AtSign, ExternalLink } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/theme";
-import { FeedbackButton } from "./FeedbackButton";
 import { KinfolkOnboarding } from "./KinfolkOnboarding";
 import { OFFICIAL_SOCIAL_LINKS } from "@/lib/socialLinks";
 
@@ -374,9 +373,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-
-      {/* Beta Feedback floating button — authenticated users only */}
-      <FeedbackButton />
 
       {/* ── Mobile Bottom Navigation ─────────────────────────────────────────── */}
       {/* Members get the full 6-tab bar; guests get Map / Businesses / Safety / Sign In */}
