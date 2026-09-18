@@ -64,6 +64,14 @@ type ResearchAnswer = {
   publicationStatus: "published" | "pending";
 };
 
+type LibraryResearchScope = {
+  domain: "medical" | "legal" | "financial" | "education" | "stem" | "history" | "general";
+  sourceStandard: string;
+  requestedGroup: string | null;
+  groupGuidance: string;
+  connectedTopics: Array<{ label: string; href: string }>;
+};
+
 type LibraryResearchResponse = {
   answer: ResearchAnswer;
   origin: "internal" | "researched";
@@ -71,6 +79,7 @@ type LibraryResearchResponse = {
   persisted: boolean;
   published: boolean;
   provider: { name: "internal" | "openai" | "tavily"; status: "available" | "degraded"; message: string };
+  researchScope: LibraryResearchScope;
 };
 
 type ResearchFailure = {
@@ -78,6 +87,7 @@ type ResearchFailure = {
   error?: string;
   retryable?: boolean;
   provider?: { name?: string; status?: ProviderStatus };
+  researchScope?: LibraryResearchScope;
 };
 
 /** Only visible HTTPS links leave the app; unsafe schemes and credentials are rejected. */
@@ -98,16 +108,34 @@ function SourceList({ sources }: { sources: LibrarySourceLink[] }) {
     .filter((source): source is LibrarySourceLink & { href: string } => Boolean(source.href));
   if (safeSources.length === 0) return null;
   return (
-    <ul className="library-research-sources" aria-label="Research sources">
-      {safeSources.map((source) => (
-        <li key={source.href}>
-          <a href={source.href} rel="noopener noreferrer" target="_blank">
-            {source.title}
-          </a>
-          {source.publisher ? <span>{source.publisher}</span> : null}
-        </li>
-      ))}
-    </ul>
+    <section className="library-research-source-section" aria-label="Research sources">
+      <h3>Sources</h3>
+      <ul className="library-research-sources">
+        {safeSources.map((source) => (
+          <li key={source.href}>
+            <a href={source.href} rel="noopener noreferrer" target="_blank">
+              {source.title}
+            </a>
+            {source.publisher ? <span>{source.publisher}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function ResearchBody({ body, title }: { body: string; title: string }) {
+  return (
+    <div className="library-research-body">
+      {body.split(/\n\s*\n/).map((paragraph, index) => {
+        const heading = paragraph.match(/^##\s+(.+)$/);
+        return heading ? (
+          <h3 key={`${title}-${index}`}>{heading[1]}</h3>
+        ) : (
+          <p className="library-search-result__body" key={`${title}-${index}`}>{paragraph}</p>
+        );
+      })}
+    </div>
   );
 }
 
@@ -122,6 +150,7 @@ function ExpandableAnswer({
   disclaimer,
   relatedQuestions = [],
   onRelated,
+  researchScope,
 }: {
   title: string;
   summary: string;
@@ -133,6 +162,7 @@ function ExpandableAnswer({
   disclaimer?: string | null;
   relatedQuestions?: string[];
   onRelated?: (question: string) => void;
+  researchScope?: LibraryResearchScope;
 }) {
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
@@ -142,9 +172,7 @@ function ExpandableAnswer({
       <h2>{title}</h2>
       <p className="library-research-overview">{summary}</p>
       <div hidden={!expanded} id={detailsId}>
-        {body.split(/\n\s*\n/).map((paragraph, index) => (
-          <p className="library-search-result__body" key={`${title}-${index}`}>{paragraph}</p>
-        ))}
+        <ResearchBody body={body} title={title} />
         {disclaimer ? <p className="library-research-disclaimer">{disclaimer}</p> : null}
       </div>
       <button
@@ -156,6 +184,19 @@ function ExpandableAnswer({
       >
         {expanded ? "See Less" : "See More"}
       </button>
+      {researchScope ? (
+        <aside className="library-research-scope" aria-label="Research scope">
+          <h3>How this was researched</h3>
+          <p><strong>Source standard:</strong> {researchScope.sourceStandard}</p>
+          <p>{researchScope.groupGuidance}</p>
+          {researchScope.connectedTopics.length > 0 ? (
+            <div className="library-research-topic-links">
+              <strong>Connected Library topics:</strong>
+              {researchScope.connectedTopics.map((topic) => <Link href={topic.href} key={topic.href}>{topic.label}</Link>)}
+            </div>
+          ) : null}
+        </aside>
+      ) : null}
       <SourceList sources={sources} />
       <div className="library-search-result__footer">
         <span>{sourceCount} {sourceCount === 1 ? "source" : "sources"}</span>
@@ -164,6 +205,7 @@ function ExpandableAnswer({
       {relatedQuestions.length > 0 ? (
         <aside className="library-research-branches" aria-label="Related questions">
           <h3>Related questions and branches</h3>
+          <p>People also explore these evidence-led next questions.</p>
           <div>
             {relatedQuestions.map((question) => (
               <button key={question} onClick={() => onRelated?.(question)} type="button">{question}</button>
@@ -301,9 +343,9 @@ export function LibrarySearchPage() {
       <section className="living-library-hero library-search-hero">
         <Link className="library-search-back" href="/library">← Living Library</Link>
         <p className="living-library-eyebrow">Diaspora-centered knowledge</p>
-        <h1>Begin with what the Library knows. Research what it does not.</h1>
+        <h1>Begin with what the Library knows. Research the next right question.</h1>
         <p className="living-library-introduction">
-          Approved entries are reused first. When coverage is sparse, signed-in members can request current, source-cited research that remains pending review rather than auto-publishing.
+          Search approved Library knowledge first. When coverage is sparse, request a source-governed research brief with the evidence, why it matters, next steps, and related questions.
         </p>
         <form className="living-library-search" onSubmit={submit}>
           <label className="sr-only" htmlFor="library-result-search">Search the Library</label>
@@ -338,9 +380,9 @@ export function LibrarySearchPage() {
         {state === "ready" && response && !research && response.webResearch.status !== "not_needed" ? (
           <section className="library-search-empty library-research-offer">
             <h2>No approved entry answers this yet.</h2>
-            <p>{response.webResearch.message}</p>
+            <p>{response.webResearch.message} Reputable sources depend on the topic: medical research uses clinical and public-health authorities; financial research uses regulators and economic research; other topics use their appropriate public-interest, academic, or archival sources.</p>
             <button disabled={researchState === "loading"} onClick={() => void researchCurrentQuestion()} type="button">
-              {researchState === "loading" ? "Researching current sources…" : "Research this question"}
+              {researchState === "loading" ? "Researching vetted sources…" : "Research vetted sources"}
             </button>
             <p className="library-research-governance">Live research is private to this response and saved only as a governed pending candidate—not approved Library content.</p>
           </section>
@@ -356,6 +398,7 @@ export function LibrarySearchPage() {
               onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(question)}`)}
               refreshedAt={research.answer.refreshedAt}
               relatedQuestions={research.answer.relatedQuestions}
+              researchScope={research.researchScope}
               sourceCount={research.answer.sourceCount}
               sources={research.answer.sources}
               summary={research.answer.summary}

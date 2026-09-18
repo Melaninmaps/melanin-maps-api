@@ -33,9 +33,17 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain('target="_blank"');
   });
 
+  it("formats a governed research brief with source standards and connected Library topics", () => {
+    expect(pageSource).toContain("ResearchBody");
+    expect(pageSource).toContain("How this was researched");
+    expect(pageSource).toContain("Source standard:");
+    expect(pageSource).toContain("Connected Library topics:");
+    expect(pageSource).toContain("People also explore these evidence-led next questions.");
+  });
+
   it("offers current research for sparse internal coverage without claiming it is approved", () => {
     expect(pageSource).toContain("No approved entry answers this yet.");
-    expect(pageSource).toContain("Research this question");
+    expect(pageSource).toContain("Research vetted sources");
     expect(pageSource).toContain("governed pending candidate—not approved Library content");
     expect(pageSource).toContain('response.webResearch.status !== "not_needed"');
   });

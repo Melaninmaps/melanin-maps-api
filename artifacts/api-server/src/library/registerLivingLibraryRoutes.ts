@@ -7,7 +7,11 @@ import {
 } from "express";
 import { db, userPreferencesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { classifyResearchDomain, type ResearchDomain } from "./researchPolicy";
+import {
+  classifyResearchDomain,
+  getLibraryResearchScope,
+  type ResearchDomain,
+} from "./researchPolicy";
 import {
   answerAndArchiveResearchQuestion,
   LibraryEvidenceInsufficientError,
@@ -112,6 +116,7 @@ export function registerLivingLibraryRoutes(
       )
         ? Math.max(0, Math.min(100, Number(request.body.internalResultCount)))
         : 0;
+      const researchScope = getLibraryResearchScope(question);
       if (!researchProvider) {
         await repository
           .recordCoverageSignal({
@@ -134,6 +139,7 @@ export function registerLivingLibraryRoutes(
             "Live Library research is temporarily unavailable. Your internal results are unchanged; please retry.",
           retryable: true,
           provider: { name: "none", status: "unavailable" },
+          researchScope,
         });
       }
 
@@ -166,6 +172,7 @@ export function registerLivingLibraryRoutes(
                   ? "Primary web research was unavailable; a configured fallback supplied the cited research."
                   : "Current web research completed. This answer is live and remains pending Library review.",
           },
+          researchScope,
         });
       } catch (error) {
         if (error instanceof LibraryEvidenceInsufficientError) {
@@ -174,6 +181,7 @@ export function registerLivingLibraryRoutes(
             error: error.message,
             retryable: false,
             provider: { name: researchProvider.name, status: "degraded" },
+            researchScope,
           });
         }
         console.error("Living Library research provider failed", error);
@@ -186,6 +194,7 @@ export function registerLivingLibraryRoutes(
           error: message,
           retryable: true,
           provider: { name: researchProvider.name, status: "unavailable" },
+          researchScope,
         });
       }
     },

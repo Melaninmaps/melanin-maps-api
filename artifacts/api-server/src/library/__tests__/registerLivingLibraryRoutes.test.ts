@@ -129,4 +129,24 @@ describe("POST /api/library/research", () => {
     expect(synthesisWriter.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ disclaimer: expect.stringMatching(/not a medical diagnosis/i), communityLens: expect.stringMatching(/no member identity inferred/i) }));
     expect(JSON.stringify(vi.mocked(researchProvider.search).mock.calls)).not.toContain("invented");
   });
+
+  it("returns an explicit group-level research scope without claiming it is the member's identity", async () => {
+    const repository = createRepository();
+    const researchProvider = provider([
+      { url: "https://www.cdc.gov/a", title: "CDC", content: "A".repeat(220), publisher: "cdc.gov", publishedAt: null },
+      { url: "https://pubmed.ncbi.nlm.nih.gov/123456/", title: "PubMed", content: "B".repeat(220), publisher: "pubmed.ncbi.nlm.nih.gov", publishedAt: null },
+    ]);
+    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider }))
+      .post("/api/library/research")
+      .send({ question: "What should Black women ages 45-50 know about planning for pregnancy?" });
+    expect(response.status).toBe(200);
+    expect(response.body.researchScope).toMatchObject({
+      domain: "medical",
+      requestedGroup: "Black women ages 45–50",
+      groupGuidance: expect.stringMatching(/does not assume that this group describes the reader/i),
+    });
+    expect(response.body.researchScope.connectedTopics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: "Health & Wellness" }),
+    ]));
+  });
 });

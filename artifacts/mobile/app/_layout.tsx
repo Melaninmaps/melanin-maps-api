@@ -919,6 +919,10 @@ function RootLayoutNav() {
         options={{ headerShown: false, presentation: "card" }}
       />
       <Stack.Screen
+        name="library-research"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
         name="library-expert"
         options={{ headerShown: false, presentation: "card" }}
       />
