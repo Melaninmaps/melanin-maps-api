@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-09-18T23:19:13.631Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "boston-candidates.jsonl",
+    "indianapolis-candidates.jsonl",
+    "minneapolis-saint-paul-candidates.jsonl"
+  ],
+  "inputRows": 59,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 59,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "addressBackedCandidates": 58,
+  "commercialMapPinReviewCandidates": 41,
+  "maplessCommunityResources": 0,
+  "onlineOnlyCandidates": 1,
+  "targetKinds": {
+    "business": 39,
+    "community_resource": 12,
+    "cultural_place": 5,
+    "regulated_review": 2,
+    "online_business": 1
+  },
+  "categories": {
+    "food_and_drink": 15,
+    "retail": 11,
+    "community_resources": 10,
+    "food": 7,
+    "professional_services": 4,
+    "arts_culture": 3,
+    "arts_and_culture": 2,
+    "arts_and_education": 1,
+    "arts_and_recreation": 1,
+    "beauty": 1,
+    "family_and_youth": 1,
+    "family_youth": 1,
+    "hair_and_beauty": 1,
+    "recreation": 1
+  },
+  "states": {
+    "Saint Paul, MN": 18,
+    "Indianapolis, IN": 17,
+    "Boston, MA": 15,
+    "Minneapolis, MN": 8,
+    "Bloomington, MN": 1
+  },
+  "officialCustomerDestinationCoverage": 59,
+  "files": {
+    "candidates": "eleventh-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "eleventh-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "eleventh-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "eleventh-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "1a4a7e1ba7eb817dc0b368120b1c1dbf66269a27f37c469f90d02b949e22c6c0"
+}
