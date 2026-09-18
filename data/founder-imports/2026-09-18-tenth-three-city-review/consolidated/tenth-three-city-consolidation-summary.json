@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-09-18T22:56:44.229Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "cincinnati-candidates.jsonl",
+    "cleveland-candidates.jsonl",
+    "columbus-candidates.jsonl"
+  ],
+  "inputRows": 25,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 25,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "addressBackedCandidates": 24,
+  "commercialMapPinReviewCandidates": 15,
+  "maplessCommunityResources": 0,
+  "onlineOnlyCandidates": 1,
+  "targetKinds": {
+    "business": 12,
+    "community_resource": 5,
+    "cultural_place": 4,
+    "regulated_review": 3,
+    "online_business": 1
+  },
+  "categories": {
+    "arts_and_culture": 4,
+    "food_and_drink": 3,
+    "retail": 3,
+    "community_and_civic": 2,
+    "community_services": 2,
+    "shopping": 2,
+    "arts_culture": 1,
+    "beauty_and_personal_care": 1,
+    "business_services": 1,
+    "community_and_social_services": 1,
+    "family_services": 1,
+    "health_and_wellness": 1,
+    "personal_care": 1,
+    "professional_services": 1,
+    "recreation_and_fitness": 1
+  },
+  "states": {
+    "Cincinnati, OH": 6,
+    "Cleveland, OH": 6,
+    "Columbus, OH": 6,
+    "Cleveland Heights, OH": 3,
+    "Lyndhurst, OH": 2,
+    "Warrensville Heights, OH": 1,
+    "Westerville, OH": 1
+  },
+  "officialCustomerDestinationCoverage": 25,
+  "files": {
+    "candidates": "tenth-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "tenth-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "tenth-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "tenth-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "c30d1ca9d0b50be519c72a004f2c4793238778663730cec6f30d413018e620df"
+}
