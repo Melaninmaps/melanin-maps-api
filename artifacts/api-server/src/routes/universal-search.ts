@@ -9,6 +9,10 @@
  */
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
+import {
+  findSafeSearchClarification,
+  type CatalogSearchTerm,
+} from "@workspace/constants";
 import { FEATURE_FLAGS } from "../constants/featureFlags";
 import { requireAuth } from "../middlewares/requireAuth";
 import {
@@ -520,6 +524,31 @@ function safeParseArray(val: unknown): string[] | undefined {
     try { return JSON.parse(val) as string[]; } catch { return []; }
   }
   return undefined;
+}
+
+/**
+ * Suggestions can only use text already read from governed public catalog rows.
+ * The correction utility is intentionally display-only: it never injects a row
+ * or promotes a fuzzy result into an exact match.
+ */
+function catalogTermsFromBusinessResults(
+  businesses: readonly BusinessResult[],
+): CatalogSearchTerm[] {
+  const terms = new Map<string, CatalogSearchTerm>();
+  for (const business of businesses) {
+    for (const value of [
+      business.name,
+      business.category,
+      business.subcategory,
+      business.city,
+      business.state,
+    ]) {
+      if (typeof value !== "string" || !value.trim()) continue;
+      const key = value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
+      if (!terms.has(key)) terms.set(key, { value });
+    }
+  }
+  return [...terms.values()];
 }
 
 function singleQueryValue(value: unknown): string | undefined {
@@ -1830,6 +1859,14 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         : Promise.resolve([]),
     ]);
 
+    // Capture only governed catalog labels from the returned candidate rows.
+    // The quality gate below may rightly withhold a distant fuzzy row; retaining
+    // its term for a hedged correction is safer than presenting it as a match.
+    const searchClarification = findSafeSearchClarification({
+      query: trimmedQ,
+      catalogTerms: catalogTermsFromBusinessResults(businesses),
+    });
+
     // ── Faith intent post-filter (defense-in-depth semantic precision) ────────
     // Even after the extractConcepts bigram-token fix, apply a category check
     // for faith intent: only keep businesses whose category signals a faith or
@@ -2047,6 +2084,10 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       matchTiers,
       fallbackUsed,
       fallbackMessage,
+      // A possible spelling correction is additive metadata only. It is grounded
+      // in a governed catalog term read for this request and never certifies a
+      // business match or changes the relevance/location ordering above.
+      searchClarification,
       unmetDemandRecorded: !privacySafeMode && totalResults === 0 && FEATURE_FLAGS.search_event_logging,
       // Correction 1 fields
       namedBusinessNotFound: namedBusinessNotFound || undefined,

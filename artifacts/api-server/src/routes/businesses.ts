@@ -56,6 +56,7 @@ import {
   ownershipDesignationStorageValues,
   normalizeOwnershipDesignationFilterIds,
   findVibeKeysForSearch,
+  findSafeSearchClarification,
 } from "@workspace/constants";
 
 const communitySubmissionRepository = new SubmissionRepository();
@@ -880,6 +881,21 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const responseTotal = usedFuzzyFallback
           ? finalResults.length
           : Number(totalCount);
+        const searchClarification = typeof search === "string" && search.trim()
+          ? findSafeSearchClarification({
+              query: search,
+              catalogTerms: finalResults.flatMap((business) => [
+                { value: String(business.name ?? "") },
+                { value: String(business.category ?? "") },
+                { value: String(business.subcategory ?? "") },
+              ]).concat(
+                ALL_VALID_CATEGORY_NAMES.map((value) => ({ value })),
+                BUSINESS_CATEGORY_TAXONOMY.flatMap((category) =>
+                  category.subcategories.map((value) => ({ value })),
+                ),
+              ),
+            })
+          : null;
         sendDynamicJson(res, {
           businesses: withDistance.map((business) =>
             toPublicBusinessRecord(business),
@@ -888,6 +904,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
           page: { offset, limit: pageLimit },
           featuredCount: withDistance.filter((b: any) => b.featured).length,
           usedFuzzyFallback,
+          // Metadata only: it never changes the member's query, filters, or
+          // results. Clients choose whether to retry the suggestion.
+          searchClarification,
         });
       },
       req.log,

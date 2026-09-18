@@ -171,7 +171,9 @@ describe("meeting-ready universal web search", () => {
     expect(app).toContain('<Route path="/discover">');
     expect(discover).toContain('surface: "smart_search"');
     expect(discover).toContain('privacy_mode: "discovery_v1"');
-    expect(discover).toContain("<UniversalSearchResults result={result} surface=\"Discover\"");
+    expect(discover).toContain("<UniversalSearchResults");
+    expect(discover).toContain('surface="Discover"');
+    expect(discover).toContain("onClarification={(suggestedQuery) => {");
     expect(map).toContain('surface: "smart_search"');
     expect(map).toContain('privacy_mode: "discovery_v1"');
     expect(map).toContain('includeKinds={["Event", "Library topic / resource", "Community organization"]}');

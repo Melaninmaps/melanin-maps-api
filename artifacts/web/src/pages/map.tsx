@@ -1755,6 +1755,10 @@ export default function MapPage() {
                       compact
                       includeKinds={["Event", "Library topic / resource", "Community organization"]}
                       hideWhenEmpty
+                      onClarification={(suggestedQuery) => {
+                        setSearch(suggestedQuery);
+                        void runUniversalSearch(suggestedQuery);
+                      }}
                     />
                   </div>
                 )}

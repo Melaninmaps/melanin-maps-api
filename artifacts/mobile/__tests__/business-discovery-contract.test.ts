@@ -49,7 +49,9 @@ describe("business discovery data contract", () => {
     expect(searchSource).toContain('allParams.set("search", nameParam)');
     expect(searchSource).toContain('allParams.set("city", cityParam)');
     expect(searchSource).toContain('allParams.set("state", stateParam)');
-    expect(searchSource).toContain('allParams.set("category", category)');
+    // The effective value retains the normal category state and supports a
+    // safe retry override without dropping the rest of the request context.
+    expect(searchSource).toContain('allParams.set("category", searchCategory)');
     expect(searchSource).toContain('allParams.set("limit", "200")');
     expect(searchSource).not.toContain("list = list.filter((b)");
   });

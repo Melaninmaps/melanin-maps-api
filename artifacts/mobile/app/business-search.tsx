@@ -41,6 +41,19 @@ interface Business {
   description?: string;
 }
 
+interface SearchClarification {
+  kind: "possible_spelling";
+  suggestedQuery: string;
+  catalogTerm: string;
+  prompt: string;
+  source: "returned_catalog_term";
+}
+
+interface BusinessSearchResponse {
+  businesses?: unknown;
+  searchClarification?: SearchClarification | null;
+}
+
 type Mode = "search" | "results" | "invite";
 
 export default function BusinessSearchScreen() {
@@ -65,6 +78,7 @@ export default function BusinessSearchScreen() {
   const [searched, setSearched] = useState(false);
   const [mode, setMode] = useState<Mode>("search");
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchClarification, setSearchClarification] = useState<SearchClarification | null>(null);
 
   const [inviteContact, setInviteContact] = useState("");
   const [inviteHandle, setInviteHandle] = useState("");
@@ -113,14 +127,14 @@ export default function BusinessSearchScreen() {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 6000);
-      let data: { businesses?: unknown };
+      let data: BusinessSearchResponse;
       try {
         const res = await fetch(`${getApiBase()}/api/businesses?${allParams.toString()}`, {
           signal: controller.signal,
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        data = await res.json() as { businesses?: unknown };
+        data = await res.json() as BusinessSearchResponse;
         if (!Array.isArray(data.businesses)) throw new Error("Invalid businesses response");
       } finally {
         clearTimeout(timeout);
@@ -129,6 +143,10 @@ export default function BusinessSearchScreen() {
 
       if (requestId !== searchRequestIdRef.current) return;
       setResults(list);
+      setSearchClarification(data.searchClarification?.kind === "possible_spelling"
+        && data.searchClarification.source === "returned_catalog_term"
+        ? data.searchClarification
+        : null);
       setSearched(true);
       setMode(list.length > 0 ? "results" : "invite");
 
@@ -137,6 +155,7 @@ export default function BusinessSearchScreen() {
     } catch {
       if (requestId === searchRequestIdRef.current) {
         setResults([]);
+        setSearchClarification(null);
         setSearched(true);
         setMode("search");
         setSearchError("Unable to search businesses right now. Check your connection and try again.");
@@ -427,6 +446,21 @@ export default function BusinessSearchScreen() {
             <Text style={[styles.resultsHeader, { color: colors.foreground }]}>
               {results.length} {results.length === 1 ? "result" : "results"} found
             </Text>
+            {searchClarification && (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[styles.clarificationChip, { backgroundColor: primaryGold + "12", borderColor: primaryGold + "45" }]}
+                accessibilityRole="button"
+                accessibilityLabel={searchClarification.prompt}
+                onPress={() => {
+                  setName(searchClarification.suggestedQuery);
+                  void handleSearch({ name: searchClarification.suggestedQuery });
+                }}
+              >
+                <Feather name="help-circle" size={14} color={primaryGold} />
+                <Text style={[styles.clarificationText, { color: primaryGold }]}>{searchClarification.prompt}</Text>
+              </TouchableOpacity>
+            )}
             {results.map((item) => (
               <React.Fragment key={item.id}>{renderBusiness({ item })}</React.Fragment>
             ))}
@@ -661,6 +695,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 12,
   },
+  clarificationChip: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  clarificationText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   card: {
     flexDirection: "row",
     alignItems: "center",
