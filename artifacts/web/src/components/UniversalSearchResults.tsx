@@ -31,6 +31,13 @@ export type UniversalSearchResult = {
   intentType?: string;
   totalResults: number;
   fallbackMessage?: string | null;
+  searchClarification?: {
+    kind: "possible_spelling";
+    suggestedQuery: string;
+    catalogTerm: string;
+    prompt: string;
+    source: "returned_catalog_term";
+  } | null;
   results: {
     businesses: UniversalSearchItem[];
     events: UniversalSearchItem[];
@@ -48,6 +55,8 @@ type Props = {
   compact?: boolean;
   includeKinds?: readonly ResultKind[];
   hideWhenEmpty?: boolean;
+  /** Repeats the member's ordinary search with a catalog-supported spelling. */
+  onClarification?: (suggestedQuery: string) => void;
 };
 
 /** Only permit public HTTPS destinations. Private, local, credentialed, and malformed URLs are rejected. */
@@ -181,6 +190,7 @@ export function UniversalSearchResults({
   compact = false,
   includeKinds,
   hideWhenEmpty = false,
+  onClarification,
 }: Props) {
   const allowedKinds = includeKinds ? new Set<ResultKind>(includeKinds) : null;
   const groups = [
@@ -200,6 +210,15 @@ export function UniversalSearchResults({
         <p className="font-bold text-[#2B1507]">{visibleCount} {visibleCount === 1 ? "result" : "results"} across the community</p>
         <p className="mt-1 text-xs text-[#3A1F0E]/60">Results are grouped by truthful record type. Travel destinations appear only when returned as a supported API type.</p>
       </div>
+      {result.searchClarification && onClarification && (
+        <button
+          type="button"
+          className="w-fit rounded-full border border-[#CA922B]/45 bg-[#FDF8F0] px-4 py-2 text-sm font-semibold text-[#8D5C17] transition-colors hover:bg-[#F7EDD7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
+          onClick={() => onClarification(result.searchClarification!.suggestedQuery)}
+        >
+          {result.searchClarification.prompt}
+        </button>
+      )}
       {visibleCount === 0 ? (
         <section className="rounded-2xl border border-[#CA922B]/30 bg-white p-6 text-center">
           <h2 className="font-serif text-xl font-bold text-[#2B1507]">No published matches yet</h2>

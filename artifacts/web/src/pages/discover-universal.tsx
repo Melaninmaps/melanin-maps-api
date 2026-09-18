@@ -98,7 +98,16 @@ export default function DiscoverUniversal() {
             <button type="button" onClick={() => void runSearch(searchedQuery)} className="mt-4 rounded-full bg-[#2B1507] px-5 py-2.5 text-sm font-semibold text-white">Try again</button>
           </section>
         )}
-        {!loading && !error && result && <UniversalSearchResults result={result} surface="Discover" />}
+        {!loading && !error && result && (
+          <UniversalSearchResults
+            result={result}
+            surface="Discover"
+            onClarification={(suggestedQuery) => {
+              setQuery(suggestedQuery);
+              void runSearch(suggestedQuery);
+            }}
+          />
+        )}
         {!loading && !error && !result && (
           <section className="rounded-3xl border border-[#CA922B]/25 bg-white p-8 text-center md:p-12">
             <h2 className="font-serif text-3xl font-bold text-[#2B1507]">What matters today?</h2>

@@ -30,6 +30,16 @@ export {
   matchesBusinessCategoryIntent,
 } from "./business-search-normalization";
 
+// ── Conservative search clarification ─────────────────────────────────────
+export {
+  findSafeSearchClarification,
+  isSafeSearchClarification,
+} from "./search-clarification";
+export type {
+  CatalogSearchTerm,
+  SafeSearchClarification,
+} from "./search-clarification";
+
 // ── Ownership designations ─────────────────────────────────────────────────
 export {
   OWNERSHIP_DESIGNATIONS,
