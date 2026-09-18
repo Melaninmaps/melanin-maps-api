@@ -1,0 +1,541 @@
+{
+  "checkedAt": "2026-09-18T23:45:43.751Z",
+  "sourceManifest": "international-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 63,
+  "uniqueDestinations": 88,
+  "counts": {
+    "reachable": 87,
+    "network_error": 1
+  },
+  "results": [
+    {
+      "url": "https://kyrochebeautysupplies.ca/",
+      "status": 200,
+      "finalUrl": "https://kyrochebeautysupplies.ca/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.berylspepperpot.com/",
+      "status": 200,
+      "finalUrl": "https://www.berylspepperpot.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.berylspepperpot.com/hours-and-locations",
+      "status": 200,
+      "finalUrl": "https://www.berylspepperpot.com/hours-and-locations",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.accacc.org/",
+      "status": 200,
+      "finalUrl": "https://www.accacc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.accacc.org/about-acccef",
+      "status": 200,
+      "finalUrl": "https://www.accacc.org/about-acccef",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bobmarleymuseum.com/",
+      "status": 200,
+      "finalUrl": "https://www.bobmarleymuseum.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bobmarleymuseum/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbobmarleymuseum%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bookophilia/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbookophilia%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chilitosjamexican.com/",
+      "status": 200,
+      "finalUrl": "https://www.chilitosjamexican.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.devonhouseja.com/things-to-do",
+      "status": 200,
+      "finalUrl": "https://www.devonhouseja.com/things-to-do",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://emc.edu.jm/",
+      "status": 200,
+      "finalUrl": "https://emc.edu.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.emancipationpark.org.jm/",
+      "status": 200,
+      "finalUrl": "http://www.emancipationpark.org.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instituteofjamaica.org.jm/",
+      "status": 200,
+      "finalUrl": "https://instituteofjamaica.org.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jbdc.net/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://jamaicachamber.org.jm/",
+      "status": 200,
+      "finalUrl": "https://jamaicachamber.org.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jamaicachamber.org.jm/history/",
+      "status": 200,
+      "finalUrl": "https://jamaicachamber.org.jm/history/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jcdc.gov.jm/",
+      "status": 200,
+      "finalUrl": "https://jcdc.gov.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jcdc.gov.jm/about-us",
+      "status": 200,
+      "finalUrl": "https://jcdc.gov.jm/about-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jls.gov.jm/",
+      "status": 200,
+      "finalUrl": "https://www.jls.gov.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jls.gov.jm/contact-us/",
+      "status": 200,
+      "finalUrl": "https://www.jls.gov.jm/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ksamc.gov.jm/",
+      "status": 200,
+      "finalUrl": "https://www.ksamc.gov.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ksamc.gov.jm/contact-us",
+      "status": 200,
+      "finalUrl": "https://www.ksamc.gov.jm/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kingstoncreative.org/",
+      "status": 200,
+      "finalUrl": "https://kingstoncreative.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kurlykultureltd.com/",
+      "status": 200,
+      "finalUrl": "https://www.kurlykultureltd.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://libertyhall-ioj.org.jm/",
+      "status": 200,
+      "finalUrl": "https://libertyhall-ioj.org.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/M10BarAndGrill/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/M10BarAndGrill/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://myersfletcher.com/",
+      "status": 200,
+      "finalUrl": "https://myersfletcher.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nationalgalleryofjamaica.wordpress.com/",
+      "status": 200,
+      "finalUrl": "https://nationalgalleryofjamaica.wordpress.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://museums-ioj.org.jm/",
+      "status": 200,
+      "finalUrl": "https://museums-ioj.org.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://museums-ioj.org.jm/contact/",
+      "status": 200,
+      "finalUrl": "https://museums-ioj.org.jm/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://onehundredja.com/",
+      "status": 200,
+      "finalUrl": "https://onehundredja.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://supportjamaica.gov.jm/",
+      "status": 200,
+      "finalUrl": "https://supportjamaica.gov.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/sweetwoodjerkjoint/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/sweetwoodjerkjoint/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/artisanstorekc/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fartisanstorekc%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ThingsJamaicanshopping/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/ThingsJamaicanshopping/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://youthjamaica.gov.jm/",
+      "status": 200,
+      "finalUrl": "https://youthjamaica.gov.jm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.198.org.uk/",
+      "status": 200,
+      "finalUrl": "https://www.198.org.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.805restaurants.com/",
+      "status": 200,
+      "finalUrl": "https://www.805restaurants.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/805restaurants/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2F805restaurants%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.almasartfoundation.org/",
+      "status": 200,
+      "finalUrl": "https://www.almasartfoundation.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/almasartfoundationuk/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Falmasartfoundationuk%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.arepaandco.com/",
+      "status": 200,
+      "finalUrl": "https://www.arepaandco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/arepaandco",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Farepaandco&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.asorockfood.com/",
+      "status": 200,
+      "finalUrl": "https://www.asorockfood.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/asorockrestaurant/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fasorockrestaurant%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://autograph.org.uk/",
+      "status": 200,
+      "finalUrl": "https://autograph.org.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/autographabp/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fautographabp%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackculturalarchives.org/",
+      "status": 200,
+      "finalUrl": "https://blackculturalarchives.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bcaheritage/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbcaheritage%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.islington.gov.uk/about-the-council/equality-and-diversity/challenging-inequality/black-cultural-centre",
+      "status": 200,
+      "finalUrl": "https://www.islington.gov.uk/about-the-council/equality-and-diversity/challenging-inequality/black-cultural-centre",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blamuk.org/",
+      "status": 200,
+      "finalUrl": "https://blamuk.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/uk.blackmindsmatter/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/uk.blackmindsmatter/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://black2business.uk/",
+      "status": 200,
+      "finalUrl": "https://black2business.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chishuru.com/",
+      "status": 200,
+      "finalUrl": "https://www.chishuru.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/chishuru",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fchishuru&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chukuslondon.co.uk/",
+      "status": 200,
+      "finalUrl": "https://www.chukuslondon.co.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/chukusldn",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fchukusldn&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://conuco.co.uk/",
+      "status": 200,
+      "finalUrl": "https://conuco.co.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/conuco.london",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fconuco.london&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.elite-evolution.co.uk/",
+      "status": 200,
+      "finalUrl": "https://www.elite-evolution.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/eliteevolution",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Feliteevolution&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.goldentouchcosmetics.co.uk/",
+      "status": 200,
+      "finalUrl": "https://www.goldentouchcosmetics.co.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.latinamericanhouse.org.uk/",
+      "status": 200,
+      "finalUrl": "https://www.latinamericanhouse.org.uk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/latinamericanhouse/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flatinamericanhouse%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.newbeaconbooks.com/",
+      "status": 200,
+      "finalUrl": "https://www.newbeaconbooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/newbeaconbooks",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/newbeaconbooks",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rhythmkitchen.co/",
+      "status": 200,
+      "finalUrl": "https://rhythmkitchen.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/rhythmkitchenuk/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Frhythmkitchenuk%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theflygerians.com/",
+      "status": 200,
+      "finalUrl": "https://theflygerians.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/THEFLYGERIANS/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FTHEFLYGERIANS%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://uklatincommunity.org/",
+      "status": 200,
+      "finalUrl": "https://uklatincommunity.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/UKLatinCommunity/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FUKLatinCommunity%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gooselaw.com/",
+      "status": 200,
+      "finalUrl": "https://gooselaw.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.potluckrestaurant.ca/",
+      "status": 200,
+      "finalUrl": "https://potluckrestaurant.ca/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://accntoronto.com/",
+      "status": 200,
+      "finalUrl": "https://accntoronto.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.toronto.ca/community-people/employment-social-support/employment-support/youth-employment-seekers/",
+      "status": 200,
+      "finalUrl": "https://www.toronto.ca/community-people/employment-social-support/employment-support/youth-job-seekers/?WT.rd_id=%2Fcommunity-people%2Femployment-social-support%2Femployment-support%2Fyouth-employment-seekers%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.adifferentbooklist.com/",
+      "status": 200,
+      "finalUrl": "https://www.adifferentbooklist.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://torontoartsfoundation.org/programs/artworksto-youth/",
+      "status": 200,
+      "finalUrl": "https://torontoartsfoundation.org/programs/artworksto-youth/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://neighbourhoodartsnetwork.org/artworksto",
+      "status": 200,
+      "finalUrl": "https://torontoartsfoundation.org/programs/neighbourhood-arts-network/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackmentalhealth.ca/",
+      "status": 200,
+      "finalUrl": "https://blackmentalhealth.ca/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackhurstcc.org/",
+      "status": 200,
+      "finalUrl": "https://blackhurstcc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mofercoffee.com/",
+      "status": 200,
+      "finalUrl": "https://www.mofercoffee.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://niacentre.org/",
+      "status": 200,
+      "finalUrl": "https://niacentre.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nicedaypilates.ca/",
+      "status": 200,
+      "finalUrl": "https://www.nicedaypilates.ca/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rhapsodytoronto.com/",
+      "status": 200,
+      "finalUrl": "https://rhapsodytoronto.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://roywoods.ca/",
+      "status": 200,
+      "finalUrl": "https://roywoods.ca/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thetyc.ca/",
+      "status": 200,
+      "finalUrl": "https://www.thetyc.ca/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tribaleye.net/",
+      "status": 200,
+      "finalUrl": "https://www.tribaleye.net/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
