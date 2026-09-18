@@ -1,0 +1,174 @@
+{
+  "checkedAt": "2026-09-18T22:57:03.477Z",
+  "sourceManifest": "tenth-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 25,
+  "uniqueDestinations": 27,
+  "counts": {
+    "reachable": 27
+  },
+  "results": [
+    {
+      "url": "https://amiragebeautysalon.com/",
+      "status": 200,
+      "finalUrl": "https://amiragebeautysalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cincinnatiblacktheatre.org/",
+      "status": 200,
+      "finalUrl": "https://cincinnatiblacktheatre.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theaachamber.com/",
+      "status": 200,
+      "finalUrl": "https://theaachamber.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hccusa.us/",
+      "status": 200,
+      "finalUrl": "https://hccusa.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://originalitees.com/",
+      "status": 200,
+      "finalUrl": "https://originalitees.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.redbrickchildcare.com/",
+      "status": 200,
+      "finalUrl": "https://redbrickchildcare.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aaacg.org/",
+      "status": 200,
+      "finalUrl": "https://www.aaacg.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.extraordinairephotos.com/",
+      "status": 200,
+      "finalUrl": "https://www.extraordinairephotos.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.extraordinairephotos.com/contact/",
+      "status": 200,
+      "finalUrl": "https://www.extraordinairephotos.com/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://juliadeburgos.org/",
+      "status": 200,
+      "finalUrl": "https://juliadeburgos.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://perfectpineapplewraps.com/",
+      "status": 200,
+      "finalUrl": "https://perfectpineapplewraps.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://spanishamerican.org/",
+      "status": 200,
+      "finalUrl": "https://spanishamerican.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://spanishamerican.org/contact/",
+      "status": 200,
+      "finalUrl": "https://spanishamerican.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://villageofhealingcle.com/",
+      "status": 200,
+      "finalUrl": "https://villageofhealingcle.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blankcanvascle.com/",
+      "status": 200,
+      "finalUrl": "https://www.blankcanvascle.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jasminerene.com/",
+      "status": 200,
+      "finalUrl": "https://www.jasminerene.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thesweetfixbakery.com/home",
+      "status": 200,
+      "finalUrl": "https://www.thesweetfixbakery.com/home",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/artofrepublic/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/artofrepublic/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dfscmh.org/",
+      "status": 200,
+      "finalUrl": "https://dfscmh.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.druncheatery.com/",
+      "status": 200,
+      "finalUrl": "https://www.druncheatery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ransom.supply/",
+      "status": 200,
+      "finalUrl": "https://ransom.supply/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soleclassics.com/",
+      "status": 200,
+      "finalUrl": "https://www.soleclassics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://stonewallcolumbus.org/",
+      "status": 200,
+      "finalUrl": "https://stonewallcolumbus.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackboxfix.com/",
+      "status": 200,
+      "finalUrl": "https://blackboxfix.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.themakeupinstitute.org/",
+      "status": 200,
+      "finalUrl": "https://www.themakeupinstitute.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.balancecheergym.com/",
+      "status": 200,
+      "finalUrl": "https://www.balancecheergym.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gfetrailers.com/",
+      "status": 200,
+      "finalUrl": "https://www.gfetrailers.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
