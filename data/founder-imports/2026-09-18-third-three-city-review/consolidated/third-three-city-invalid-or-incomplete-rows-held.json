@@ -1,0 +1,13 @@
+[
+  {
+    "file": "columbia-candidates.jsonl",
+    "line": 32,
+    "name": "Columbia SC 63: Our Story Matters",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": true,
+    "destinationProblem": false
+  }
+]
