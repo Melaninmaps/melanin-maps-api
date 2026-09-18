@@ -1,0 +1,5363 @@
+{
+  "generatedAt": "2026-09-18T12:23:03.682Z",
+  "candidates": 1354,
+  "repeatedCustomerDestinationCount": 15,
+  "recordsWithRepeatedDestinationOnly": 97,
+  "recordsWithAlternativeCustomerDestination": 58,
+  "repeatedDestinations": [
+    {
+      "url": "https://x.com/SHCCNJ",
+      "records": [
+        {
+          "sourceRow": 1,
+          "name": "El rey latin food",
+          "city": "\\clifton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/el-rey-latin-food-50554"
+        },
+        {
+          "sourceRow": 1,
+          "name": "El rey latin food",
+          "city": "\\clifton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/el-rey-latin-food-50554"
+        },
+        {
+          "sourceRow": 25,
+          "name": "Areli Rosado | Real Estate Services",
+          "city": "Basking Ridged",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/areli-rosado-51507"
+        },
+        {
+          "sourceRow": 25,
+          "name": "Areli Rosado | Real Estate Services",
+          "city": "Basking Ridged",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/areli-rosado-51507"
+        },
+        {
+          "sourceRow": 28,
+          "name": "Lydia I Rentas-Santiago | Business Strategies",
+          "city": "Bayonne",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/lydia-i-rentas-santiago-50481"
+        },
+        {
+          "sourceRow": 28,
+          "name": "Lydia I Rentas-Santiago | Business Strategies",
+          "city": "Bayonne",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/lydia-i-rentas-santiago-50481"
+        },
+        {
+          "sourceRow": 42,
+          "name": "Busy Bees Learning Center",
+          "city": "Bloomfield",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/busy-bees-learning-center-50551"
+        },
+        {
+          "sourceRow": 42,
+          "name": "Busy Bees Learning Center",
+          "city": "Bloomfield",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/busy-bees-learning-center-50551"
+        },
+        {
+          "sourceRow": 49,
+          "name": "El sazo de Josefina | Food Truck",
+          "city": "Bogota",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/el-sazo-de-josefina-51577"
+        },
+        {
+          "sourceRow": 49,
+          "name": "El sazo de Josefina | Food Truck",
+          "city": "Bogota",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/el-sazo-de-josefina-51577"
+        },
+        {
+          "sourceRow": 51,
+          "name": "Devine Alignment | Health care",
+          "city": "Boonton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/devine-alignment-boonton-46677"
+        },
+        {
+          "sourceRow": 70,
+          "name": "Julie’s tours | Travel Agencies",
+          "city": "Budd lake",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/julie-s-tours-46664"
+        },
+        {
+          "sourceRow": 101,
+          "name": "Ivy Antonio | Academ/Educational Trainings Programs",
+          "city": "Chester",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/ivy-antonio-51614"
+        },
+        {
+          "sourceRow": 105,
+          "name": "Velvet Art Floral Studio",
+          "city": "Clark",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/velvet-art-floral-studio-50525"
+        },
+        {
+          "sourceRow": 105,
+          "name": "Velvet Art Floral Studio",
+          "city": "Clark",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/velvet-art-floral-studio-50525"
+        },
+        {
+          "sourceRow": 112,
+          "name": "Tech Doors and Windows LLC",
+          "city": "Clifton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/tech-doors-and-windows-llc-50197"
+        },
+        {
+          "sourceRow": 112,
+          "name": "Tech Doors and Windows LLC",
+          "city": "Clifton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/tech-doors-and-windows-llc-50197"
+        },
+        {
+          "sourceRow": 134,
+          "name": "AmeriHealth | Hospitals & Clinics | Health Insurance",
+          "city": "Cranbury",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/amerihealth-810"
+        },
+        {
+          "sourceRow": 134,
+          "name": "AmeriHealth | Hospitals & Clinics | Health Insurance",
+          "city": "Cranbury",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/amerihealth-810"
+        },
+        {
+          "sourceRow": 172,
+          "name": "Provident Bank | Banks & Credit Unions",
+          "city": "Dumont",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/provident-bank-dumont-973-449-1814-51869"
+        },
+        {
+          "sourceRow": 172,
+          "name": "Provident Bank | Banks & Credit Unions",
+          "city": "Dumont",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/provident-bank-dumont-973-449-1814-51869"
+        },
+        {
+          "sourceRow": 182,
+          "name": "Construction/Construcción",
+          "city": "Easton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/construction-construcci%C3%B3n-51126"
+        },
+        {
+          "sourceRow": 182,
+          "name": "Construction/Construcción",
+          "city": "Easton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/construction-construcci%C3%B3n-51126"
+        },
+        {
+          "sourceRow": 203,
+          "name": "Vital Home Spa",
+          "city": "Elizabeth",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/vital-home-spa-elizabeth-45159"
+        },
+        {
+          "sourceRow": 203,
+          "name": "Vital Home Spa",
+          "city": "Elizabeth",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/vital-home-spa-elizabeth-45159"
+        },
+        {
+          "sourceRow": 221,
+          "name": "Alzheimer’s Association | non",
+          "city": "Florham Park",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/alzheimer-s-association-51511"
+        },
+        {
+          "sourceRow": 221,
+          "name": "Alzheimer’s Association | non",
+          "city": "Florham Park",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/alzheimer-s-association-51511"
+        },
+        {
+          "sourceRow": 223,
+          "name": "Casa Bagel",
+          "city": "Fords",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/casa-bagel-fords-51118"
+        },
+        {
+          "sourceRow": 223,
+          "name": "Casa Bagel",
+          "city": "Fords",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/casa-bagel-fords-51118"
+        },
+        {
+          "sourceRow": 224,
+          "name": "ECR Dealings LLC | Real Estate Services",
+          "city": "Fords",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/ecr-dealings-llc-fords-46869"
+        },
+        {
+          "sourceRow": 224,
+          "name": "ECR Dealings LLC | Real Estate Services",
+          "city": "Fords",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/ecr-dealings-llc-fords-46869"
+        },
+        {
+          "sourceRow": 235,
+          "name": "Skindex Studios",
+          "city": "Freehold",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/skindex-studios-51132"
+        },
+        {
+          "sourceRow": 235,
+          "name": "Skindex Studios",
+          "city": "Freehold",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/skindex-studios-51132"
+        },
+        {
+          "sourceRow": 254,
+          "name": "Homelynx Realty LLC | Real Estate Services",
+          "city": "Hackensack",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/homelynx-realty-llc-50173"
+        },
+        {
+          "sourceRow": 254,
+          "name": "Homelynx Realty LLC | Real Estate Services",
+          "city": "Hackensack",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/homelynx-realty-llc-50173"
+        },
+        {
+          "sourceRow": 255,
+          "name": "J. Fletcher Creamer & Son, Inc. | Construction Management",
+          "city": "Hackensack",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/j-fletcher-creamer-son-inc-hackensack-201-488-9860-46749"
+        },
+        {
+          "sourceRow": 255,
+          "name": "J. Fletcher Creamer & Son, Inc. | Construction Management",
+          "city": "Hackensack",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/j-fletcher-creamer-son-inc-hackensack-201-488-9860-46749"
+        },
+        {
+          "sourceRow": 258,
+          "name": "Mahalo Holistiv Beauty Bar",
+          "city": "Hackensack",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/mahalo-holistiv-beauty-bar-50523"
+        },
+        {
+          "sourceRow": 258,
+          "name": "Mahalo Holistiv Beauty Bar",
+          "city": "Hackensack",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/mahalo-holistiv-beauty-bar-50523"
+        },
+        {
+          "sourceRow": 270,
+          "name": "Lopez Repair Construction, LLC | Construction Management",
+          "city": "Hamilton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/lopez-repair-construction-llc-hamilton-43739"
+        },
+        {
+          "sourceRow": 270,
+          "name": "Lopez Repair Construction, LLC | Construction Management",
+          "city": "Hamilton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/lopez-repair-construction-llc-hamilton-43739"
+        },
+        {
+          "sourceRow": 271,
+          "name": "Matilde Molina KW premier | Real Estate Services",
+          "city": "Hamilton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/matilde-molina-kw-premier-50484"
+        },
+        {
+          "sourceRow": 298,
+          "name": "LiftCentro LLC | Marketing",
+          "city": "Hoboken",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/liftcentro-llc-50179"
+        },
+        {
+          "sourceRow": 298,
+          "name": "LiftCentro LLC | Marketing",
+          "city": "Hoboken",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/liftcentro-llc-50179"
+        },
+        {
+          "sourceRow": 312,
+          "name": "conSHINEment",
+          "city": "Jersey city",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/conshinement-51114"
+        },
+        {
+          "sourceRow": 312,
+          "name": "conSHINEment",
+          "city": "Jersey city",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/conshinement-51114"
+        },
+        {
+          "sourceRow": 315,
+          "name": "City of Jersey City",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/city-of-jersey-city-jersey-city-1019"
+        },
+        {
+          "sourceRow": 315,
+          "name": "City of Jersey City",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/city-of-jersey-city-jersey-city-1019"
+        },
+        {
+          "sourceRow": 321,
+          "name": "Flores de Azucar | Restaurants",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/flores-de-azucar-jersey-city-45350"
+        },
+        {
+          "sourceRow": 322,
+          "name": "Hudson County Community College | Education | Academ/Educational Trainings Programs",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/hudson-county-community-college-jersey-city-1392"
+        },
+        {
+          "sourceRow": 322,
+          "name": "Hudson County Community College | Education | Academ/Educational Trainings Programs",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/hudson-county-community-college-jersey-city-1392"
+        },
+        {
+          "sourceRow": 332,
+          "name": "Strawberry & Me | Restaurants | Restaurants & Specialty Dining",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/strawberry-me-jersey-city-44671"
+        },
+        {
+          "sourceRow": 332,
+          "name": "Strawberry & Me | Restaurants | Restaurants & Specialty Dining",
+          "city": "Jersey City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/strawberry-me-jersey-city-44671"
+        },
+        {
+          "sourceRow": 335,
+          "name": "Maxis Fashion",
+          "city": "kearny",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/maxis-fashion-kearny-46708"
+        },
+        {
+          "sourceRow": 337,
+          "name": "R&I FLOWER SHOP | Florists",
+          "city": "Kearny",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/r-i-flower-shop-kearny-46697"
+        },
+        {
+          "sourceRow": 337,
+          "name": "R&I FLOWER SHOP | Florists",
+          "city": "Kearny",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/r-i-flower-shop-kearny-46697"
+        },
+        {
+          "sourceRow": 338,
+          "name": "Salamandras Spiritual shop",
+          "city": "Kearny",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/salamandras-spiritual-shop-50536"
+        },
+        {
+          "sourceRow": 338,
+          "name": "Salamandras Spiritual shop",
+          "city": "Kearny",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/salamandras-spiritual-shop-50536"
+        },
+        {
+          "sourceRow": 339,
+          "name": "PMarrero Business Solutions | Consulting Services",
+          "city": "Keasbey",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/pmarrero-business-solutions-keasbey-732-589-0932-46617"
+        },
+        {
+          "sourceRow": 339,
+          "name": "PMarrero Business Solutions | Consulting Services",
+          "city": "Keasbey",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/pmarrero-business-solutions-keasbey-732-589-0932-46617"
+        },
+        {
+          "sourceRow": 351,
+          "name": "Realty Executives Property Squad",
+          "city": "Lake Hopatcong",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/realty-executives-property-squad-lake-hopatcong-43269"
+        },
+        {
+          "sourceRow": 351,
+          "name": "Realty Executives Property Squad",
+          "city": "Lake Hopatcong",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/realty-executives-property-squad-lake-hopatcong-43269"
+        },
+        {
+          "sourceRow": 395,
+          "name": "Tex Mex Restaurant",
+          "city": "Long branch",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/tex-mex-restaurant-long-branch-45261"
+        },
+        {
+          "sourceRow": 395,
+          "name": "Tex Mex Restaurant",
+          "city": "Long branch",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/tex-mex-restaurant-long-branch-45261"
+        },
+        {
+          "sourceRow": 406,
+          "name": "LeGurt",
+          "city": "Lyndhurst",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/legurt-lyndhurst-46681"
+        },
+        {
+          "sourceRow": 408,
+          "name": "Love At First Boxx",
+          "city": "Lyndhurst",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/love-at-first-boxx-lyndhurst-44481"
+        },
+        {
+          "sourceRow": 408,
+          "name": "Love At First Boxx",
+          "city": "Lyndhurst",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/love-at-first-boxx-lyndhurst-44481"
+        },
+        {
+          "sourceRow": 410,
+          "name": "Statewide Hispanic Chamber of Commerce of NJ | Personal Services | Consultants | Education | Government",
+          "city": "Lyndhurst",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/statewide-hispanic-chamber-of-commerce-of-nj-20684"
+        },
+        {
+          "sourceRow": 410,
+          "name": "Statewide Hispanic Chamber of Commerce of NJ | Personal Services | Consultants | Education | Government",
+          "city": "Lyndhurst",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/statewide-hispanic-chamber-of-commerce-of-nj-20684"
+        },
+        {
+          "sourceRow": 416,
+          "name": "Nicolas Rodriguez Ananin | Student",
+          "city": "Madison",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/nicolas-rodriguez-ananin-50531"
+        },
+        {
+          "sourceRow": 416,
+          "name": "Nicolas Rodriguez Ananin | Student",
+          "city": "Madison",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/nicolas-rodriguez-ananin-50531"
+        },
+        {
+          "sourceRow": 418,
+          "name": "Greenco Trading LLC | Restaurants",
+          "city": "Mahwah",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/greenco-trading-llc-mahwah-45238"
+        },
+        {
+          "sourceRow": 429,
+          "name": "EN Business Consulting | Business Strategies",
+          "city": "maywood",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/en-business-consulting-51677"
+        },
+        {
+          "sourceRow": 429,
+          "name": "EN Business Consulting | Business Strategies",
+          "city": "maywood",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/en-business-consulting-51677"
+        },
+        {
+          "sourceRow": 451,
+          "name": "Mac Cleaning Services LLC",
+          "city": "Middlesx",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/mac-cleaning-services-llc-50414"
+        },
+        {
+          "sourceRow": 451,
+          "name": "Mac Cleaning Services LLC",
+          "city": "Middlesx",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/mac-cleaning-services-llc-50414"
+        },
+        {
+          "sourceRow": 476,
+          "name": "Castle & Brother Logistics LLP | Logistics",
+          "city": "Morristown",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/castle-brother-logistics-llp-46637"
+        },
+        {
+          "sourceRow": 476,
+          "name": "Castle & Brother Logistics LLP | Logistics",
+          "city": "Morristown",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/castle-brother-logistics-llp-46637"
+        },
+        {
+          "sourceRow": 485,
+          "name": "Ama la vida",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/ama-la-vida-50524"
+        },
+        {
+          "sourceRow": 485,
+          "name": "Ama la vida",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/ama-la-vida-50524"
+        },
+        {
+          "sourceRow": 486,
+          "name": "El Sazon Restaurant",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/el-sazon-restaurant-50526"
+        },
+        {
+          "sourceRow": 486,
+          "name": "El Sazon Restaurant",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/el-sazon-restaurant-50526"
+        },
+        {
+          "sourceRow": 487,
+          "name": "Johnson & Johnson",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/johnson-johnson-1694"
+        },
+        {
+          "sourceRow": 487,
+          "name": "Johnson & Johnson",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/johnson-johnson-1694"
+        },
+        {
+          "sourceRow": 488,
+          "name": "TaxPros Service",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/taxpros-service-50507"
+        },
+        {
+          "sourceRow": 488,
+          "name": "TaxPros Service",
+          "city": "New Brunswick",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/taxpros-service-50507"
+        },
+        {
+          "sourceRow": 511,
+          "name": "Clean and on time llc",
+          "city": "New Milford",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/clean-and-on-time-llc-51536"
+        },
+        {
+          "sourceRow": 511,
+          "name": "Clean and on time llc",
+          "city": "New Milford",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/clean-and-on-time-llc-51536"
+        },
+        {
+          "sourceRow": 555,
+          "name": "Partnership West Inc. Business Improvement District | Business Strategies",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/partnership-west-inc-business-improvement-district-51664"
+        },
+        {
+          "sourceRow": 555,
+          "name": "Partnership West Inc. Business Improvement District | Business Strategies",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/partnership-west-inc-business-improvement-district-51664"
+        },
+        {
+          "sourceRow": 559,
+          "name": "Rhythm N Food Glocal LLC",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/rhythm-n-food-glocal-llc-50205"
+        },
+        {
+          "sourceRow": 559,
+          "name": "Rhythm N Food Glocal LLC",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/rhythm-n-food-glocal-llc-50205"
+        },
+        {
+          "sourceRow": 568,
+          "name": "University Hospital | Health care",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/university-hospital-2935"
+        },
+        {
+          "sourceRow": 568,
+          "name": "University Hospital | Health care",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/university-hospital-2935"
+        },
+        {
+          "sourceRow": 571,
+          "name": "Yenyere Art Academy",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/yenyere-art-academy-50545"
+        },
+        {
+          "sourceRow": 571,
+          "name": "Yenyere Art Academy",
+          "city": "Newark",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/yenyere-art-academy-50545"
+        },
+        {
+          "sourceRow": 593,
+          "name": "Lashkmi Glow, LLC",
+          "city": "North Bergen",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/lashkmi-glow-llc-north-bergen-46714"
+        },
+        {
+          "sourceRow": 596,
+          "name": "Mis Anhelos LLC",
+          "city": "NORTH BERGEN",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/mis-anhelos-llc-north-bergen-46631"
+        },
+        {
+          "sourceRow": 598,
+          "name": "Jersey Financials",
+          "city": "North Brunswick",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/jersey-financials-north-brunswick-46505"
+        },
+        {
+          "sourceRow": 598,
+          "name": "Jersey Financials",
+          "city": "North Brunswick",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/jersey-financials-north-brunswick-46505"
+        },
+        {
+          "sourceRow": 599,
+          "name": "Dulce Tentacion | Food & Beverage/Catering",
+          "city": "North Haledon",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/dulce-tentacion-50395"
+        },
+        {
+          "sourceRow": 599,
+          "name": "Dulce Tentacion | Food & Beverage/Catering",
+          "city": "North Haledon",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/dulce-tentacion-50395"
+        },
+        {
+          "sourceRow": 600,
+          "name": "Pretty Lash",
+          "city": "North Haledon",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/pretty-lash-50216"
+        },
+        {
+          "sourceRow": 600,
+          "name": "Pretty Lash",
+          "city": "North Haledon",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/pretty-lash-50216"
+        },
+        {
+          "sourceRow": 603,
+          "name": "Otro Rollo Films | Digital & Social Media/Marketing & Communications | Online Media | TV Media",
+          "city": "North Plainfield",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/otro-rollo-films-43505"
+        },
+        {
+          "sourceRow": 603,
+          "name": "Otro Rollo Films | Digital & Social Media/Marketing & Communications | Online Media | TV Media",
+          "city": "North Plainfield",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/otro-rollo-films-43505"
+        },
+        {
+          "sourceRow": 611,
+          "name": "Guaranteed Rate | Brokers",
+          "city": "Oakland",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/guaranteed-rate-51462"
+        },
+        {
+          "sourceRow": 611,
+          "name": "Guaranteed Rate | Brokers",
+          "city": "Oakland",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/guaranteed-rate-51462"
+        },
+        {
+          "sourceRow": 616,
+          "name": "Industrial Painting Group | Contractors",
+          "city": "Orange",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/industrial-painting-group-51461"
+        },
+        {
+          "sourceRow": 616,
+          "name": "Industrial Painting Group | Contractors",
+          "city": "Orange",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/industrial-painting-group-51461"
+        },
+        {
+          "sourceRow": 617,
+          "name": "Riverside Digital Productions, Inc.",
+          "city": "Orange",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/riverside-digital-productions-inc-50302"
+        },
+        {
+          "sourceRow": 617,
+          "name": "Riverside Digital Productions, Inc.",
+          "city": "Orange",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/riverside-digital-productions-inc-50302"
+        },
+        {
+          "sourceRow": 626,
+          "name": "Go fresh produce market",
+          "city": "Paramus",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/go-fresh-produce-market-50204"
+        },
+        {
+          "sourceRow": 626,
+          "name": "Go fresh produce market",
+          "city": "Paramus",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/go-fresh-produce-market-50204"
+        },
+        {
+          "sourceRow": 634,
+          "name": "Agave Cantina Mexicana",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/agave-cantina-mexicana-passaic-46734"
+        },
+        {
+          "sourceRow": 634,
+          "name": "Agave Cantina Mexicana",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/agave-cantina-mexicana-passaic-46734"
+        },
+        {
+          "sourceRow": 637,
+          "name": "C&C Immigration Paralegals, LLC",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/c-c-immigration-paralegals-llc-50252"
+        },
+        {
+          "sourceRow": 637,
+          "name": "C&C Immigration Paralegals, LLC",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/c-c-immigration-paralegals-llc-50252"
+        },
+        {
+          "sourceRow": 639,
+          "name": "Charry’s | Food & Beverage/Catering",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/charry-s-50251"
+        },
+        {
+          "sourceRow": 639,
+          "name": "Charry’s | Food & Beverage/Catering",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/charry-s-50251"
+        },
+        {
+          "sourceRow": 644,
+          "name": "Tacolgando Taquerias LLC",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/tacolgando-taquerias-llc-50443"
+        },
+        {
+          "sourceRow": 644,
+          "name": "Tacolgando Taquerias LLC",
+          "city": "Passaic",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/tacolgando-taquerias-llc-50443"
+        },
+        {
+          "sourceRow": 656,
+          "name": "Resina GEJA",
+          "city": "Paterson",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/resina-geja-paterson-46626"
+        },
+        {
+          "sourceRow": 656,
+          "name": "Resina GEJA",
+          "city": "Paterson",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/resina-geja-paterson-46626"
+        },
+        {
+          "sourceRow": 659,
+          "name": "SR Staffing LLC | Entertainment",
+          "city": "Paterson",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/sr-staffing-llc-51531"
+        },
+        {
+          "sourceRow": 659,
+          "name": "SR Staffing LLC | Entertainment",
+          "city": "Paterson",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/sr-staffing-llc-51531"
+        },
+        {
+          "sourceRow": 1002,
+          "name": "RJS PRODUCTIONS | Photographers/Photo Finishing/Framing",
+          "city": "Piscataway",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/rjs-productions-piscataway-46710"
+        },
+        {
+          "sourceRow": 1005,
+          "name": "Lucas Renovation and Painting LLC",
+          "city": "Plainfield",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/lucas-renovation-and-painting-llc-50261"
+        },
+        {
+          "sourceRow": 1005,
+          "name": "Lucas Renovation and Painting LLC",
+          "city": "Plainfield",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/lucas-renovation-and-painting-llc-50261"
+        },
+        {
+          "sourceRow": 1006,
+          "name": "TeamLogic IT",
+          "city": "Plainsboro",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/teamlogic-it-plainsboro-46568"
+        },
+        {
+          "sourceRow": 1006,
+          "name": "TeamLogic IT",
+          "city": "Plainsboro",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/teamlogic-it-plainsboro-46568"
+        },
+        {
+          "sourceRow": 1007,
+          "name": "Latinas Unidas en AC New Jersey",
+          "city": "Pleasantville",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/latinas-unidas-en-ac-new-jersey-pleasantville-46851"
+        },
+        {
+          "sourceRow": 1007,
+          "name": "Latinas Unidas en AC New Jersey",
+          "city": "Pleasantville",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/latinas-unidas-en-ac-new-jersey-pleasantville-46851"
+        },
+        {
+          "sourceRow": 1020,
+          "name": "LCGG Business LLC",
+          "city": "Rahway",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/lcgg-business-llc-rahway-45168"
+        },
+        {
+          "sourceRow": 1020,
+          "name": "LCGG Business LLC",
+          "city": "Rahway",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/lcgg-business-llc-rahway-45168"
+        },
+        {
+          "sourceRow": 1021,
+          "name": "Learn, Love and Grow Counseling",
+          "city": "Rahway",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/learn-love-and-grow-counseling-rahway-50503"
+        },
+        {
+          "sourceRow": 1021,
+          "name": "Learn, Love and Grow Counseling",
+          "city": "Rahway",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/learn-love-and-grow-counseling-rahway-50503"
+        },
+        {
+          "sourceRow": 1030,
+          "name": "OceanFirst Bank | Banks & Credit Unions | Banks & Credit Unions | Banks & Credit Unions",
+          "city": "Red Bank",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/oceanfirst-bank-red-bank-4282"
+        },
+        {
+          "sourceRow": 1030,
+          "name": "OceanFirst Bank | Banks & Credit Unions | Banks & Credit Unions | Banks & Credit Unions",
+          "city": "Red Bank",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/oceanfirst-bank-red-bank-4282"
+        },
+        {
+          "sourceRow": 1039,
+          "name": "NYXARA | Arts & Crafts",
+          "city": "Ridgefield park",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/nyxara-51494"
+        },
+        {
+          "sourceRow": 1044,
+          "name": "LeadJet | Consultants",
+          "city": "RIDGEFIELD PARK",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/leadjet-46580"
+        },
+        {
+          "sourceRow": 1044,
+          "name": "LeadJet | Consultants",
+          "city": "RIDGEFIELD PARK",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/leadjet-46580"
+        },
+        {
+          "sourceRow": 1055,
+          "name": "J&M Industrial Cleaning and Construction LLC | Cleaning Services",
+          "city": "Roselle",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/j-m-industrial-cleaning-and-construction-llc-roselle-46660"
+        },
+        {
+          "sourceRow": 1055,
+          "name": "J&M Industrial Cleaning and Construction LLC | Cleaning Services",
+          "city": "Roselle",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/j-m-industrial-cleaning-and-construction-llc-roselle-46660"
+        },
+        {
+          "sourceRow": 1081,
+          "name": "Gallo Felix",
+          "city": "Some rest",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/gallo-felix-some-rest-45169"
+        },
+        {
+          "sourceRow": 1081,
+          "name": "Gallo Felix",
+          "city": "Some rest",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/gallo-felix-some-rest-45169"
+        },
+        {
+          "sourceRow": 1082,
+          "name": "La Tia Peruvian Cuisine",
+          "city": "Somers Point",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/la-tia-peruvian-cuisine-51160"
+        },
+        {
+          "sourceRow": 1082,
+          "name": "La Tia Peruvian Cuisine",
+          "city": "Somers Point",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/la-tia-peruvian-cuisine-51160"
+        },
+        {
+          "sourceRow": 1085,
+          "name": "Beauty boutique",
+          "city": "Somerset",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/beauty-boutique-51144"
+        },
+        {
+          "sourceRow": 1085,
+          "name": "Beauty boutique",
+          "city": "Somerset",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/beauty-boutique-51144"
+        },
+        {
+          "sourceRow": 1134,
+          "name": "Quadratín Hispano",
+          "city": "Trenton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/quadrat%C3%ADn-hispano-46857"
+        },
+        {
+          "sourceRow": 1134,
+          "name": "Quadratín Hispano",
+          "city": "Trenton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/quadrat%C3%ADn-hispano-46857"
+        },
+        {
+          "sourceRow": 1135,
+          "name": "The Station Restaurant LLC | Restaurants & Specialty Dining",
+          "city": "Trenton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/the-station-restaurant-llc-50188"
+        },
+        {
+          "sourceRow": 1135,
+          "name": "The Station Restaurant LLC | Restaurants & Specialty Dining",
+          "city": "Trenton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/the-station-restaurant-llc-50188"
+        },
+        {
+          "sourceRow": 1143,
+          "name": "Kean University",
+          "city": "Union",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/kean-university-1736"
+        },
+        {
+          "sourceRow": 1143,
+          "name": "Kean University",
+          "city": "Union",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/kean-university-1736"
+        },
+        {
+          "sourceRow": 1144,
+          "name": "Stunning Med Spa",
+          "city": "Union",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/stunning-med-spa-50243"
+        },
+        {
+          "sourceRow": 1144,
+          "name": "Stunning Med Spa",
+          "city": "Union",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/stunning-med-spa-50243"
+        },
+        {
+          "sourceRow": 1151,
+          "name": "Airy Affairs, LLC | Event Planning",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/airy-affairs-llc-union-city-51880"
+        },
+        {
+          "sourceRow": 1151,
+          "name": "Airy Affairs, LLC | Event Planning",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/airy-affairs-llc-union-city-51880"
+        },
+        {
+          "sourceRow": 1154,
+          "name": "LAMONGE INSURANCE SERVICES INC/COMBINE | Health Insurance",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/lamonge-insurance-services-inc-combine-51726"
+        },
+        {
+          "sourceRow": 1154,
+          "name": "LAMONGE INSURANCE SERVICES INC/COMBINE | Health Insurance",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/lamonge-insurance-services-inc-combine-51726"
+        },
+        {
+          "sourceRow": 1155,
+          "name": "MEDICARE ADVISORS | Health Insurance",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/medicare-advisors-union-city-44886"
+        },
+        {
+          "sourceRow": 1155,
+          "name": "MEDICARE ADVISORS | Health Insurance",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/medicare-advisors-union-city-44886"
+        },
+        {
+          "sourceRow": 1156,
+          "name": "NJ Home Health Care Academy | Health care",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/nj-home-health-care-academy-50412"
+        },
+        {
+          "sourceRow": 1156,
+          "name": "NJ Home Health Care Academy | Health care",
+          "city": "Union City",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/nj-home-health-care-academy-50412"
+        },
+        {
+          "sourceRow": 1190,
+          "name": "Banks Industrial Group | Contractors",
+          "city": "West Berlin",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/banks-industrial-group-51644"
+        },
+        {
+          "sourceRow": 1190,
+          "name": "Banks Industrial Group | Contractors",
+          "city": "West Berlin",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/banks-industrial-group-51644"
+        },
+        {
+          "sourceRow": 1210,
+          "name": "Archipielago LLC",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/archipielago-llc-50518"
+        },
+        {
+          "sourceRow": 1210,
+          "name": "Archipielago LLC",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/archipielago-llc-50518"
+        },
+        {
+          "sourceRow": 1212,
+          "name": "Los Tamales de Ana y mas | Food & Beverage/Catering",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/los-tamales-de-ana-y-mas-west-new-york-45366"
+        },
+        {
+          "sourceRow": 1215,
+          "name": "Team Wellness Massage Spa",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/team-wellness-massage-spa-west-new-york-35577"
+        },
+        {
+          "sourceRow": 1215,
+          "name": "Team Wellness Massage Spa",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/team-wellness-massage-spa-west-new-york-35577"
+        },
+        {
+          "sourceRow": 1216,
+          "name": "Yanet Garcia Coching Services LLC",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/yanet-garcia-coching-services-llc-50539"
+        },
+        {
+          "sourceRow": 1216,
+          "name": "Yanet Garcia Coching Services LLC",
+          "city": "West New York",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/yanet-garcia-coching-services-llc-50539"
+        },
+        {
+          "sourceRow": 1218,
+          "name": "Multifiestas Mary",
+          "city": "West orange",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/multifiestas-mary-50260"
+        },
+        {
+          "sourceRow": 1218,
+          "name": "Multifiestas Mary",
+          "city": "West orange",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/multifiestas-mary-50260"
+        },
+        {
+          "sourceRow": 1222,
+          "name": "NJM Insurance Group | Insurance",
+          "city": "West Trenton",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://business.shccnj.org/list/member/njm-insurance-group-2170"
+        },
+        {
+          "sourceRow": 1222,
+          "name": "NJM Insurance Group | Insurance",
+          "city": "West Trenton",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://business.shccnj.org/list/member/njm-insurance-group-2170"
+        }
+      ]
+    },
+    {
+      "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "records": [
+        {
+          "sourceRow": 67,
+          "name": "Quality Touch Solutions",
+          "city": "Broomall",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 99,
+          "name": "Chester Cultural Arts and Technology Center",
+          "city": "Chester",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 170,
+          "name": "Casey’s Drexel Hill",
+          "city": "Drexel Hill",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 171,
+          "name": "Gordon Policy Group",
+          "city": "Drexel Hill",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 178,
+          "name": "Vision Academy Charter School",
+          "city": "East Lansdowne",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 282,
+          "name": "Lifefire Weight & Wellness",
+          "city": "Havertown",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 350,
+          "name": "It Takes A Village To Feed One Child, Inc.",
+          "city": "King of Prussia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 428,
+          "name": "MightyLion",
+          "city": "Marcus Hook",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 433,
+          "name": "Chosen Tweed",
+          "city": "Media",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 435,
+          "name": "Gameday Men’s Health Media",
+          "city": "Media",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 443,
+          "name": "School of Rock Delco",
+          "city": "Media",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 1009,
+          "name": "LSN Contractors & Construction Managers",
+          "city": "Plymouth Meeting",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 1110,
+          "name": "Top Rail Fence",
+          "city": "Springfield",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 1118,
+          "name": "Nerds To Go",
+          "city": "Swarthmore",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 1159,
+          "name": "Girls Auto Clinic & Clutch Beauty Bar",
+          "city": "Upper Darby",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 1347,
+          "name": "Pet Passages of Philadelphia",
+          "city": "Woodlyn",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ]
+    },
+    {
+      "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "records": [
+        {
+          "sourceRow": 163,
+          "name": "Bucks County Bar Association & Foundation",
+          "city": "Doylestown",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 165,
+          "name": "Bucks County Historical Society",
+          "city": "Doylestown",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 169,
+          "name": "Simply Brilliantz",
+          "city": "Dresher",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 309,
+          "name": "Big Brothers Big Sisters of Bucks County",
+          "city": "Jamison",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 310,
+          "name": "Blumberg Advisory Group, Inc.",
+          "city": "Jamison",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 349,
+          "name": "Bookminders",
+          "city": "King of Prussia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 376,
+          "name": "BlackClover Cyber Security",
+          "city": "Levittown",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 1102,
+          "name": "Brenner Dental Group",
+          "city": "Southampton",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 1176,
+          "name": "Body By Blueprint",
+          "city": "Warminster",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 1178,
+          "name": "Bucks County Housing Group",
+          "city": "Warminster",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 1182,
+          "name": "Bristol House Memory Care",
+          "city": "Warrington",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        },
+        {
+          "sourceRow": 1354,
+          "name": "Biondo Creative",
+          "city": "Yardley",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ]
+    },
+    {
+      "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia",
+      "records": [
+        {
+          "sourceRow": 710,
+          "name": "Bean2Bean Coffee Co.",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 741,
+          "name": "Casa Vida",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 748,
+          "name": "Centro Musical",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 754,
+          "name": "ChocoArte",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 790,
+          "name": "Encanto Kicks & Coffee",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 791,
+          "name": "Encanto Kicks & Coffee",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 794,
+          "name": "Estilo Dance Studio",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 801,
+          "name": "FAIYA",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        },
+        {
+          "sourceRow": 842,
+          "name": "Julia de Burgos Bookstore at Taller Puertorriqueño",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.instagram.com/laccdelaware",
+      "records": [
+        {
+          "sourceRow": 501,
+          "name": "La Fiesta III Early Learning Center",
+          "city": "New Castle",
+          "state": "DE",
+          "field": "instagram",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 501,
+          "name": "La Fiesta III Early Learning Center",
+          "city": "New Castle",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1292,
+          "name": "La Fiesta II Infant and Toddler Center",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "instagram",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1292,
+          "name": "La Fiesta II Infant and Toddler Center",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1296,
+          "name": "Latin American Community Center - Main Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "instagram",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1296,
+          "name": "Latin American Community Center - Main Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1297,
+          "name": "Latin American Community Center - Manuelita Olson Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "instagram",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1297,
+          "name": "Latin American Community Center - Manuelita Olson Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.facebook.com/www.independentresourcesincde.org",
+      "records": [
+        {
+          "sourceRow": 152,
+          "name": "Independent Resources, Inc. - Kent County",
+          "city": "Dover",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 152,
+          "name": "Independent Resources, Inc. - Kent County",
+          "city": "Dover",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 462,
+          "name": "Independent Resources, Inc. - Sussex County",
+          "city": "Milford",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 462,
+          "name": "Independent Resources, Inc. - Sussex County",
+          "city": "Milford",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 1284,
+          "name": "Independent Resources, Inc. - New Castle County",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 1284,
+          "name": "Independent Resources, Inc. - New Castle County",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "socialSource",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        }
+      ]
+    },
+    {
+      "url": "https://cfbnj.org",
+      "records": [
+        {
+          "sourceRow": 192,
+          "name": "Community FoodBank of New Jersey - Egg Harbor Township",
+          "city": "Egg Harbor Township",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 192,
+          "name": "Community FoodBank of New Jersey - Egg Harbor Township",
+          "city": "Egg Harbor Township",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 236,
+          "name": "Garfield Unity Pantry",
+          "city": "Garfield",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 236,
+          "name": "Garfield Unity Pantry",
+          "city": "Garfield",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 290,
+          "name": "Community FoodBank of New Jersey - Hillside Headquarters",
+          "city": "Hillside",
+          "state": "NJ",
+          "field": "website",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 290,
+          "name": "Community FoodBank of New Jersey - Hillside Headquarters",
+          "city": "Hillside",
+          "state": "NJ",
+          "field": "socialSource",
+          "sourceUrl": "https://cfbnj.org/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.thelatincenter.org",
+      "records": [
+        {
+          "sourceRow": 501,
+          "name": "La Fiesta III Early Learning Center",
+          "city": "New Castle",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1292,
+          "name": "La Fiesta II Infant and Toddler Center",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1296,
+          "name": "Latin American Community Center - Main Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1297,
+          "name": "Latin American Community Center - Manuelita Olson Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        }
+      ]
+    },
+    {
+      "url": "http://www.facebook.com/pages/Latin-American-Community-Center/66431910957",
+      "records": [
+        {
+          "sourceRow": 501,
+          "name": "La Fiesta III Early Learning Center",
+          "city": "New Castle",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1292,
+          "name": "La Fiesta II Infant and Toddler Center",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1296,
+          "name": "Latin American Community Center - Main Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        },
+        {
+          "sourceRow": 1297,
+          "name": "Latin American Community Center - Manuelita Olson Building",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "facebook",
+          "sourceUrl": "https://www.thelatincenter.org/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia",
+      "records": [
+        {
+          "sourceRow": 760,
+          "name": "Concilio",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/"
+        },
+        {
+          "sourceRow": 771,
+          "name": "Dominican Chamber of Commerce",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/"
+        },
+        {
+          "sourceRow": 816,
+          "name": "Greater Philadelphia Hispanic Chamber of Commerce",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/"
+        },
+        {
+          "sourceRow": 820,
+          "name": "HACE (Hispanic Association of Contractors and Enterprises)",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/"
+        }
+      ]
+    },
+    {
+      "url": "https://hakimsbookstore.com",
+      "records": [
+        {
+          "sourceRow": 822,
+          "name": "Hakim's Bookstore",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "website",
+          "sourceUrl": "https://www.visitphilly.com/legacyandlove/"
+        },
+        {
+          "sourceRow": 823,
+          "name": "Hakim's Bookstore & Gift Shop",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "website",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/"
+        },
+        {
+          "sourceRow": 823,
+          "name": "Hakim's Bookstore & Gift Shop",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/"
+        },
+        {
+          "sourceRow": 825,
+          "name": "Hakim’s Bookstore and Giftshop",
+          "city": "Philadelphia",
+          "state": "PA",
+          "field": "website",
+          "sourceUrl": "https://thephiladelphiacitizen.org/black-owned-businesses-philadelphia/"
+        }
+      ]
+    },
+    {
+      "url": "http://girlsautoclinic.com",
+      "records": [
+        {
+          "sourceRow": 1158,
+          "name": "Girls Auto Clinic",
+          "city": "Upper Darby",
+          "state": "PA",
+          "field": "website",
+          "sourceUrl": "https://mainlinetoday.com/life-style/black-owned-main-line/"
+        },
+        {
+          "sourceRow": 1159,
+          "name": "Girls Auto Clinic & Clutch Beauty Bar",
+          "city": "Upper Darby",
+          "state": "PA",
+          "field": "website",
+          "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        },
+        {
+          "sourceRow": 1160,
+          "name": "Girls Auto Clinic Repair Center",
+          "city": "Upper Darby",
+          "state": "PA",
+          "field": "website",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/"
+        },
+        {
+          "sourceRow": 1160,
+          "name": "Girls Auto Clinic Repair Center",
+          "city": "Upper Darby",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007",
+      "records": [
+        {
+          "sourceRow": 60,
+          "name": "2 No End Vintage and More",
+          "city": "Bristol",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/"
+        },
+        {
+          "sourceRow": 62,
+          "name": "New Beginnings Mind, Body & Soul Wellness Center",
+          "city": "Bristol",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/"
+        },
+        {
+          "sourceRow": 478,
+          "name": "Rosetta's Jazz Cafe",
+          "city": "Morrisville",
+          "state": "PA",
+          "field": "socialSource",
+          "sourceUrl": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.iri-delaware.org",
+      "records": [
+        {
+          "sourceRow": 152,
+          "name": "Independent Resources, Inc. - Kent County",
+          "city": "Dover",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 462,
+          "name": "Independent Resources, Inc. - Sussex County",
+          "city": "Milford",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        },
+        {
+          "sourceRow": 1284,
+          "name": "Independent Resources, Inc. - New Castle County",
+          "city": "Wilmington",
+          "state": "DE",
+          "field": "website",
+          "sourceUrl": "https://www.iri-delaware.org/"
+        }
+      ]
+    },
+    {
+      "url": "https://www.facebook.com/cfbnj",
+      "records": [
+        {
+          "sourceRow": 192,
+          "name": "Community FoodBank of New Jersey - Egg Harbor Township",
+          "city": "Egg Harbor Township",
+          "state": "NJ",
+          "field": "facebook",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 236,
+          "name": "Garfield Unity Pantry",
+          "city": "Garfield",
+          "state": "NJ",
+          "field": "facebook",
+          "sourceUrl": "https://cfbnj.org/"
+        },
+        {
+          "sourceRow": 290,
+          "name": "Community FoodBank of New Jersey - Hillside Headquarters",
+          "city": "Hillside",
+          "state": "NJ",
+          "field": "facebook",
+          "sourceUrl": "https://cfbnj.org/"
+        }
+      ]
+    }
+  ],
+  "rowsWithGenericOnly": [
+    {
+      "sourceRow": 1,
+      "name": "El rey latin food",
+      "city": "\\clifton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/el-rey-latin-food-50554",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 25,
+      "name": "Areli Rosado | Real Estate Services",
+      "city": "Basking Ridged",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/areli-rosado-51507",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 28,
+      "name": "Lydia I Rentas-Santiago | Business Strategies",
+      "city": "Bayonne",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/lydia-i-rentas-santiago-50481",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 42,
+      "name": "Busy Bees Learning Center",
+      "city": "Bloomfield",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/busy-bees-learning-center-50551",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 49,
+      "name": "El sazo de Josefina | Food Truck",
+      "city": "Bogota",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/el-sazo-de-josefina-51577",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 105,
+      "name": "Velvet Art Floral Studio",
+      "city": "Clark",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/velvet-art-floral-studio-50525",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 112,
+      "name": "Tech Doors and Windows LLC",
+      "city": "Clifton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/tech-doors-and-windows-llc-50197",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 134,
+      "name": "AmeriHealth | Hospitals & Clinics | Health Insurance",
+      "city": "Cranbury",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/amerihealth-810",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 152,
+      "name": "Independent Resources, Inc. - Kent County",
+      "city": "Dover",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.iri-delaware.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.iri-delaware.org"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/www.independentresourcesincde.org"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/www.independentresourcesincde.org"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 172,
+      "name": "Provident Bank | Banks & Credit Unions",
+      "city": "Dumont",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/provident-bank-dumont-973-449-1814-51869",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 182,
+      "name": "Construction/Construcción",
+      "city": "Easton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/construction-construcci%C3%B3n-51126",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 192,
+      "name": "Community FoodBank of New Jersey - Egg Harbor Township",
+      "city": "Egg Harbor Township",
+      "state": "NJ",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://cfbnj.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://cfbnj.org"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/cfbnj"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://cfbnj.org"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 203,
+      "name": "Vital Home Spa",
+      "city": "Elizabeth",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/vital-home-spa-elizabeth-45159",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 221,
+      "name": "Alzheimer’s Association | non",
+      "city": "Florham Park",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/alzheimer-s-association-51511",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 223,
+      "name": "Casa Bagel",
+      "city": "Fords",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/casa-bagel-fords-51118",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 224,
+      "name": "ECR Dealings LLC | Real Estate Services",
+      "city": "Fords",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/ecr-dealings-llc-fords-46869",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 235,
+      "name": "Skindex Studios",
+      "city": "Freehold",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/skindex-studios-51132",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 236,
+      "name": "Garfield Unity Pantry",
+      "city": "Garfield",
+      "state": "NJ",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://cfbnj.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://cfbnj.org"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/cfbnj"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://cfbnj.org"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 254,
+      "name": "Homelynx Realty LLC | Real Estate Services",
+      "city": "Hackensack",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/homelynx-realty-llc-50173",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 255,
+      "name": "J. Fletcher Creamer & Son, Inc. | Construction Management",
+      "city": "Hackensack",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/j-fletcher-creamer-son-inc-hackensack-201-488-9860-46749",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 258,
+      "name": "Mahalo Holistiv Beauty Bar",
+      "city": "Hackensack",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mahalo-holistiv-beauty-bar-50523",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 270,
+      "name": "Lopez Repair Construction, LLC | Construction Management",
+      "city": "Hamilton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/lopez-repair-construction-llc-hamilton-43739",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 290,
+      "name": "Community FoodBank of New Jersey - Hillside Headquarters",
+      "city": "Hillside",
+      "state": "NJ",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://cfbnj.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://cfbnj.org"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/cfbnj"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://cfbnj.org"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 298,
+      "name": "LiftCentro LLC | Marketing",
+      "city": "Hoboken",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/liftcentro-llc-50179",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 312,
+      "name": "conSHINEment",
+      "city": "Jersey city",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/conshinement-51114",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 315,
+      "name": "City of Jersey City",
+      "city": "Jersey City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/city-of-jersey-city-jersey-city-1019",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 322,
+      "name": "Hudson County Community College | Education | Academ/Educational Trainings Programs",
+      "city": "Jersey City",
+      "state": "NJ",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/hudson-county-community-college-jersey-city-1392",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 332,
+      "name": "Strawberry & Me | Restaurants | Restaurants & Specialty Dining",
+      "city": "Jersey City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/strawberry-me-jersey-city-44671",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 337,
+      "name": "R&I FLOWER SHOP | Florists",
+      "city": "Kearny",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/r-i-flower-shop-kearny-46697",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 338,
+      "name": "Salamandras Spiritual shop",
+      "city": "Kearny",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/salamandras-spiritual-shop-50536",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 339,
+      "name": "PMarrero Business Solutions | Consulting Services",
+      "city": "Keasbey",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/pmarrero-business-solutions-keasbey-732-589-0932-46617",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 351,
+      "name": "Realty Executives Property Squad",
+      "city": "Lake Hopatcong",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/realty-executives-property-squad-lake-hopatcong-43269",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 395,
+      "name": "Tex Mex Restaurant",
+      "city": "Long branch",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/tex-mex-restaurant-long-branch-45261",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 408,
+      "name": "Love At First Boxx",
+      "city": "Lyndhurst",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/love-at-first-boxx-lyndhurst-44481",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 410,
+      "name": "Statewide Hispanic Chamber of Commerce of NJ | Personal Services | Consultants | Education | Government",
+      "city": "Lyndhurst",
+      "state": "NJ",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/statewide-hispanic-chamber-of-commerce-of-nj-20684",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 416,
+      "name": "Nicolas Rodriguez Ananin | Student",
+      "city": "Madison",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/nicolas-rodriguez-ananin-50531",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 429,
+      "name": "EN Business Consulting | Business Strategies",
+      "city": "maywood",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/en-business-consulting-51677",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 451,
+      "name": "Mac Cleaning Services LLC",
+      "city": "Middlesx",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mac-cleaning-services-llc-50414",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 462,
+      "name": "Independent Resources, Inc. - Sussex County",
+      "city": "Milford",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.iri-delaware.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.iri-delaware.org"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/www.independentresourcesincde.org"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/www.independentresourcesincde.org"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 476,
+      "name": "Castle & Brother Logistics LLP | Logistics",
+      "city": "Morristown",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/castle-brother-logistics-llp-46637",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 485,
+      "name": "Ama la vida",
+      "city": "New Brunswick",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/ama-la-vida-50524",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 486,
+      "name": "El Sazon Restaurant",
+      "city": "New Brunswick",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/el-sazon-restaurant-50526",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 487,
+      "name": "Johnson & Johnson",
+      "city": "New Brunswick",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/johnson-johnson-1694",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 488,
+      "name": "TaxPros Service",
+      "city": "New Brunswick",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/taxpros-service-50507",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 501,
+      "name": "La Fiesta III Early Learning Center",
+      "city": "New Castle",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.thelatincenter.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.thelatincenter.org"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/laccdelaware"
+        },
+        {
+          "field": "facebook",
+          "url": "http://www.facebook.com/pages/Latin-American-Community-Center/66431910957"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/laccdelaware"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 511,
+      "name": "Clean and on time llc",
+      "city": "New Milford",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/clean-and-on-time-llc-51536",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 555,
+      "name": "Partnership West Inc. Business Improvement District | Business Strategies",
+      "city": "Newark",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/partnership-west-inc-business-improvement-district-51664",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 559,
+      "name": "Rhythm N Food Glocal LLC",
+      "city": "Newark",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/rhythm-n-food-glocal-llc-50205",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 568,
+      "name": "University Hospital | Health care",
+      "city": "Newark",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/university-hospital-2935",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 571,
+      "name": "Yenyere Art Academy",
+      "city": "Newark",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/yenyere-art-academy-50545",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 598,
+      "name": "Jersey Financials",
+      "city": "North Brunswick",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/jersey-financials-north-brunswick-46505",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 599,
+      "name": "Dulce Tentacion | Food & Beverage/Catering",
+      "city": "North Haledon",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/dulce-tentacion-50395",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 600,
+      "name": "Pretty Lash",
+      "city": "North Haledon",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/pretty-lash-50216",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 603,
+      "name": "Otro Rollo Films | Digital & Social Media/Marketing & Communications | Online Media | TV Media",
+      "city": "North Plainfield",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/otro-rollo-films-43505",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 611,
+      "name": "Guaranteed Rate | Brokers",
+      "city": "Oakland",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/guaranteed-rate-51462",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 616,
+      "name": "Industrial Painting Group | Contractors",
+      "city": "Orange",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/industrial-painting-group-51461",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 617,
+      "name": "Riverside Digital Productions, Inc.",
+      "city": "Orange",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/riverside-digital-productions-inc-50302",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 626,
+      "name": "Go fresh produce market",
+      "city": "Paramus",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/go-fresh-produce-market-50204",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 634,
+      "name": "Agave Cantina Mexicana",
+      "city": "Passaic",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/agave-cantina-mexicana-passaic-46734",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 637,
+      "name": "C&C Immigration Paralegals, LLC",
+      "city": "Passaic",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/c-c-immigration-paralegals-llc-50252",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 639,
+      "name": "Charry’s | Food & Beverage/Catering",
+      "city": "Passaic",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/charry-s-50251",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 644,
+      "name": "Tacolgando Taquerias LLC",
+      "city": "Passaic",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/tacolgando-taquerias-llc-50443",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 656,
+      "name": "Resina GEJA",
+      "city": "Paterson",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/resina-geja-paterson-46626",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 659,
+      "name": "SR Staffing LLC | Entertainment",
+      "city": "Paterson",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/sr-staffing-llc-51531",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 823,
+      "name": "Hakim's Bookstore & Gift Shop",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://hakimsbookstore.com"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://hakimsbookstore.com"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 825,
+      "name": "Hakim’s Bookstore and Giftshop",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://thephiladelphiacitizen.org/black-owned-businesses-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://hakimsbookstore.com"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1005,
+      "name": "Lucas Renovation and Painting LLC",
+      "city": "Plainfield",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/lucas-renovation-and-painting-llc-50261",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1006,
+      "name": "TeamLogic IT",
+      "city": "Plainsboro",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/teamlogic-it-plainsboro-46568",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1007,
+      "name": "Latinas Unidas en AC New Jersey",
+      "city": "Pleasantville",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/latinas-unidas-en-ac-new-jersey-pleasantville-46851",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1020,
+      "name": "LCGG Business LLC",
+      "city": "Rahway",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/lcgg-business-llc-rahway-45168",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1021,
+      "name": "Learn, Love and Grow Counseling",
+      "city": "Rahway",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/learn-love-and-grow-counseling-rahway-50503",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1030,
+      "name": "OceanFirst Bank | Banks & Credit Unions | Banks & Credit Unions | Banks & Credit Unions",
+      "city": "Red Bank",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/oceanfirst-bank-red-bank-4282",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1044,
+      "name": "LeadJet | Consultants",
+      "city": "RIDGEFIELD PARK",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/leadjet-46580",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1055,
+      "name": "J&M Industrial Cleaning and Construction LLC | Cleaning Services",
+      "city": "Roselle",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/j-m-industrial-cleaning-and-construction-llc-roselle-46660",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1081,
+      "name": "Gallo Felix",
+      "city": "Some rest",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/gallo-felix-some-rest-45169",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1082,
+      "name": "La Tia Peruvian Cuisine",
+      "city": "Somers Point",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/la-tia-peruvian-cuisine-51160",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1085,
+      "name": "Beauty boutique",
+      "city": "Somerset",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/beauty-boutique-51144",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1134,
+      "name": "Quadratín Hispano",
+      "city": "Trenton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/quadrat%C3%ADn-hispano-46857",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1135,
+      "name": "The Station Restaurant LLC | Restaurants & Specialty Dining",
+      "city": "Trenton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/the-station-restaurant-llc-50188",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1143,
+      "name": "Kean University",
+      "city": "Union",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/kean-university-1736",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1144,
+      "name": "Stunning Med Spa",
+      "city": "Union",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/stunning-med-spa-50243",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1151,
+      "name": "Airy Affairs, LLC | Event Planning",
+      "city": "Union City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/airy-affairs-llc-union-city-51880",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1154,
+      "name": "LAMONGE INSURANCE SERVICES INC/COMBINE | Health Insurance",
+      "city": "Union City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/lamonge-insurance-services-inc-combine-51726",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1155,
+      "name": "MEDICARE ADVISORS | Health Insurance",
+      "city": "Union City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/medicare-advisors-union-city-44886",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1156,
+      "name": "NJ Home Health Care Academy | Health care",
+      "city": "Union City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/nj-home-health-care-academy-50412",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1158,
+      "name": "Girls Auto Clinic",
+      "city": "Upper Darby",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://mainlinetoday.com/life-style/black-owned-main-line/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "http://girlsautoclinic.com"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1160,
+      "name": "Girls Auto Clinic Repair Center",
+      "city": "Upper Darby",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/black-owned-shops-and-boutiques-in-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "http://girlsautoclinic.com"
+        },
+        {
+          "field": "socialSource",
+          "url": "http://girlsautoclinic.com"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1190,
+      "name": "Banks Industrial Group | Contractors",
+      "city": "West Berlin",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/banks-industrial-group-51644",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1210,
+      "name": "Archipielago LLC",
+      "city": "West New York",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/archipielago-llc-50518",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1215,
+      "name": "Team Wellness Massage Spa",
+      "city": "West New York",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/team-wellness-massage-spa-west-new-york-35577",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1216,
+      "name": "Yanet Garcia Coching Services LLC",
+      "city": "West New York",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/yanet-garcia-coching-services-llc-50539",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1218,
+      "name": "Multifiestas Mary",
+      "city": "West orange",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/multifiestas-mary-50260",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1222,
+      "name": "NJM Insurance Group | Insurance",
+      "city": "West Trenton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/njm-insurance-group-2170",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1284,
+      "name": "Independent Resources, Inc. - New Castle County",
+      "city": "Wilmington",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.iri-delaware.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.iri-delaware.org"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/www.independentresourcesincde.org"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/www.independentresourcesincde.org"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1292,
+      "name": "La Fiesta II Infant and Toddler Center",
+      "city": "Wilmington",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.thelatincenter.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.thelatincenter.org"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/laccdelaware"
+        },
+        {
+          "field": "facebook",
+          "url": "http://www.facebook.com/pages/Latin-American-Community-Center/66431910957"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/laccdelaware"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1296,
+      "name": "Latin American Community Center - Main Building",
+      "city": "Wilmington",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.thelatincenter.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.thelatincenter.org"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/laccdelaware"
+        },
+        {
+          "field": "facebook",
+          "url": "http://www.facebook.com/pages/Latin-American-Community-Center/66431910957"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/laccdelaware"
+        }
+      ],
+      "alternatives": []
+    },
+    {
+      "sourceRow": 1297,
+      "name": "Latin American Community Center - Manuelita Olson Building",
+      "city": "Wilmington",
+      "state": "DE",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.thelatincenter.org/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://www.thelatincenter.org"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/laccdelaware"
+        },
+        {
+          "field": "facebook",
+          "url": "http://www.facebook.com/pages/Latin-American-Community-Center/66431910957"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/laccdelaware"
+        }
+      ],
+      "alternatives": []
+    }
+  ],
+  "rowsWithAlternative": [
+    {
+      "sourceRow": 51,
+      "name": "Devine Alignment | Health care",
+      "city": "Boonton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/devine-alignment-boonton-46677",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://instagram.com/devinealignment"
+        }
+      ]
+    },
+    {
+      "sourceRow": 60,
+      "name": "2 No End Vintage and More",
+      "city": "Bristol",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/2noendvintageandmore"
+        }
+      ]
+    },
+    {
+      "sourceRow": 62,
+      "name": "New Beginnings Mind, Body & Soul Wellness Center",
+      "city": "Bristol",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/profile.php?id=100028486585544"
+        }
+      ]
+    },
+    {
+      "sourceRow": 67,
+      "name": "Quality Touch Solutions",
+      "city": "Broomall",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://qualitytouchsolutions.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 70,
+      "name": "Julie’s tours | Travel Agencies",
+      "city": "Budd lake",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/julie-s-tours-46664",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/share/15HcCU885j/?mibextid=LQQJ4d"
+        }
+      ]
+    },
+    {
+      "sourceRow": 99,
+      "name": "Chester Cultural Arts and Technology Center",
+      "city": "Chester",
+      "state": "PA",
+      "targetKind": "cultural_place",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/ChesterCAATCenter"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/ChesterCaatCenter"
+        }
+      ]
+    },
+    {
+      "sourceRow": 101,
+      "name": "Ivy Antonio | Academ/Educational Trainings Programs",
+      "city": "Chester",
+      "state": "NJ",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://business.shccnj.org/list/member/ivy-antonio-51614",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/ivy.calahorranoantonio"
+        }
+      ]
+    },
+    {
+      "sourceRow": 163,
+      "name": "Bucks County Bar Association & Foundation",
+      "city": "Doylestown",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://bucksbar.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 165,
+      "name": "Bucks County Historical Society",
+      "city": "Doylestown",
+      "state": "PA",
+      "targetKind": "cultural_place",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://mercermuseum.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 169,
+      "name": "Simply Brilliantz",
+      "city": "Dresher",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.simplybrilliantz.com"
+        },
+        {
+          "field": "instagram",
+          "url": "http://simplybrilliantz"
+        }
+      ]
+    },
+    {
+      "sourceRow": 170,
+      "name": "Casey’s Drexel Hill",
+      "city": "Drexel Hill",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://caseysdh.com"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/caseys.drexelhill"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/caseysdh"
+        }
+      ]
+    },
+    {
+      "sourceRow": 171,
+      "name": "Gordon Policy Group",
+      "city": "Drexel Hill",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.gordonpg.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 178,
+      "name": "Vision Academy Charter School",
+      "city": "East Lansdowne",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.vacharter.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 271,
+      "name": "Matilde Molina KW premier | Real Estate Services",
+      "city": "Hamilton",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/matilde-molina-kw-premier-50484",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/share/1KaKyBAVYk/?mibextid=wwXIfr"
+        }
+      ]
+    },
+    {
+      "sourceRow": 282,
+      "name": "Lifefire Weight & Wellness",
+      "city": "Havertown",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.lifefireweight.com"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/lifefireweight"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/profile.php?id=100090411259022"
+        }
+      ]
+    },
+    {
+      "sourceRow": 309,
+      "name": "Big Brothers Big Sisters of Bucks County",
+      "city": "Jamison",
+      "state": "PA",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.bbbsbc.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 310,
+      "name": "Blumberg Advisory Group, Inc.",
+      "city": "Jamison",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.blumbergadvisor.com"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/michael.blumberg1"
+        }
+      ]
+    },
+    {
+      "sourceRow": 321,
+      "name": "Flores de Azucar | Restaurants",
+      "city": "Jersey City",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/flores-de-azucar-jersey-city-45350",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/_flores_de_azucar_?igsh=MTVmOXptazdvZjN5ag%3D%3D"
+        }
+      ]
+    },
+    {
+      "sourceRow": 335,
+      "name": "Maxis Fashion",
+      "city": "kearny",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/maxis-fashion-kearny-46708",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/Maxisfashion"
+        }
+      ]
+    },
+    {
+      "sourceRow": 349,
+      "name": "Bookminders",
+      "city": "King of Prussia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://bookminders.com"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.facebook.com/BookmindersPhiladelphia"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/BookmindersPhiladelphia"
+        }
+      ]
+    },
+    {
+      "sourceRow": 350,
+      "name": "It Takes A Village To Feed One Child, Inc.",
+      "city": "King of Prussia",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.itavtfoc.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 376,
+      "name": "BlackClover Cyber Security",
+      "city": "Levittown",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.blackclover-cyber.com"
+        },
+        {
+          "field": "instagram",
+          "url": "http://bclovercyber07"
+        }
+      ]
+    },
+    {
+      "sourceRow": 406,
+      "name": "LeGurt",
+      "city": "Lyndhurst",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/legurt-lyndhurst-46681",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/legurt_yogurt"
+        }
+      ]
+    },
+    {
+      "sourceRow": 418,
+      "name": "Greenco Trading LLC | Restaurants",
+      "city": "Mahwah",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/greenco-trading-llc-mahwah-45238",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "http://www.instagram.com/greencoproduce?igshid=MTNiYzNiMzkwZA%3D%3D"
+        }
+      ]
+    },
+    {
+      "sourceRow": 428,
+      "name": "MightyLion",
+      "city": "Marcus Hook",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.mightylionai.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 433,
+      "name": "Chosen Tweed",
+      "city": "Media",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.chosentweed.com"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/chosentweed"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/Chosentweed"
+        }
+      ]
+    },
+    {
+      "sourceRow": 435,
+      "name": "Gameday Men’s Health Media",
+      "city": "Media",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.gamedaymenshealth.com/media-pa"
+        }
+      ]
+    },
+    {
+      "sourceRow": 443,
+      "name": "School of Rock Delco",
+      "city": "Media",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://delco.schoolofrock.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 478,
+      "name": "Rosetta's Jazz Cafe",
+      "city": "Morrisville",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/RosettasJazzCafe"
+        }
+      ]
+    },
+    {
+      "sourceRow": 593,
+      "name": "Lashkmi Glow, LLC",
+      "city": "North Bergen",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/lashkmi-glow-llc-north-bergen-46714",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/kathebarreneche"
+        }
+      ]
+    },
+    {
+      "sourceRow": 596,
+      "name": "Mis Anhelos LLC",
+      "city": "NORTH BERGEN",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/mis-anhelos-llc-north-bergen-46631",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/isabelluisinversiones"
+        }
+      ]
+    },
+    {
+      "sourceRow": 710,
+      "name": "Bean2Bean Coffee Co.",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://bean2bean.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 741,
+      "name": "Casa Vida",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://casavida.style"
+        }
+      ]
+    },
+    {
+      "sourceRow": 748,
+      "name": "Centro Musical",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.facebook.com/CentroMusicalPA"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/CentroMusicalPA"
+        }
+      ]
+    },
+    {
+      "sourceRow": 754,
+      "name": "ChocoArte",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.facebook.com/chocolateartsandcrafts"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/chocolateartsandcrafts"
+        }
+      ]
+    },
+    {
+      "sourceRow": 760,
+      "name": "Concilio",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.elconcilio.net"
+        }
+      ]
+    },
+    {
+      "sourceRow": 771,
+      "name": "Dominican Chamber of Commerce",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.dominicanchamberpa.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 790,
+      "name": "Encanto Kicks & Coffee",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.encantophl.shop"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/encanto.phl"
+        }
+      ]
+    },
+    {
+      "sourceRow": 791,
+      "name": "Encanto Kicks & Coffee",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.encantophl.shop"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/encanto.phl"
+        }
+      ]
+    },
+    {
+      "sourceRow": 794,
+      "name": "Estilo Dance Studio",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://estilodancestudio.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 801,
+      "name": "FAIYA",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.faiya.co"
+        }
+      ]
+    },
+    {
+      "sourceRow": 816,
+      "name": "Greater Philadelphia Hispanic Chamber of Commerce",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.philahispanicchamber.org"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/gphcc"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/PHLHispanicChamber"
+        }
+      ]
+    },
+    {
+      "sourceRow": 820,
+      "name": "HACE (Hispanic Association of Contractors and Enterprises)",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.impactomedia.com/region/avisos-a-la-comunidad/resource-guide-for-the-latino-community-in-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.hacecdc.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 822,
+      "name": "Hakim's Bookstore",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/legacyandlove/",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://hakimsbookstore.com"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/hakimsbookstore"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/hakimsbookstore"
+        }
+      ]
+    },
+    {
+      "sourceRow": 842,
+      "name": "Julia de Burgos Bookstore at Taller Puertorriqueño",
+      "city": "Philadelphia",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia/",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://www.visitphilly.com/articles/philadelphia/latino-owned-shops-boutiques-in-greater-philadelphia"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.shoptallerpr.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1002,
+      "name": "RJS PRODUCTIONS | Photographers/Photo Finishing/Framing",
+      "city": "Piscataway",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/rjs-productions-piscataway-46710",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.facebook.com/rojasphotographystudio"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1009,
+      "name": "LSN Contractors & Construction Managers",
+      "city": "Plymouth Meeting",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.lsn.construction"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1039,
+      "name": "NYXARA | Arts & Crafts",
+      "city": "Ridgefield park",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/nyxara-51494",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "tiktok",
+          "url": "https://www.tiktok.com/@oficialnyxara?_r=1&_t=ZP-94aaH9lYqx5"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://www.tiktok.com/@oficialnyxara?_r=1&_t=ZP-94aaH9lYqx5"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1102,
+      "name": "Brenner Dental Group",
+      "city": "Southampton",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.brennerdentalgroup.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1110,
+      "name": "Top Rail Fence",
+      "city": "Springfield",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://toprailfences.com/media"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/toprailfencemedia"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/TopRailFenceMediaPA"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1118,
+      "name": "Nerds To Go",
+      "city": "Swarthmore",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.nerdstogo.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1159,
+      "name": "Girls Auto Clinic & Clutch Beauty Bar",
+      "city": "Upper Darby",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "http://girlsautoclinic.com"
+        },
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/GirlsAutoClinic"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/GirlsAutoClinic"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1176,
+      "name": "Body By Blueprint",
+      "city": "Warminster",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.bodybyblueprint.net"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1178,
+      "name": "Bucks County Housing Group",
+      "city": "Warminster",
+      "state": "PA",
+      "targetKind": "community_resource",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.bchg.org"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1182,
+      "name": "Bristol House Memory Care",
+      "city": "Warrington",
+      "state": "PA",
+      "targetKind": "regulated_review",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.bristolhousememorycare.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1212,
+      "name": "Los Tamales de Ana y mas | Food & Beverage/Catering",
+      "city": "West New York",
+      "state": "NJ",
+      "targetKind": "business",
+      "sourceUrl": "https://business.shccnj.org/list/member/los-tamales-de-ana-y-mas-west-new-york-45366",
+      "genericDestinations": [
+        {
+          "field": "website",
+          "url": "https://x.com/SHCCNJ"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "socialSource",
+          "url": "https://www.instagram.com/los_tamales_de_ana?igsh=cjV1bzc2MTU1enJr"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1347,
+      "name": "Pet Passages of Philadelphia",
+      "city": "Woodlyn",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://web.delcochamber.org/directory/results/results.aspx?affcode=MBE"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "http://www.philadelphia.pa.petpassages.com"
+        }
+      ]
+    },
+    {
+      "sourceRow": 1354,
+      "name": "Biondo Creative",
+      "city": "Yardley",
+      "state": "PA",
+      "targetKind": "business",
+      "sourceUrl": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx",
+      "genericDestinations": [
+        {
+          "field": "socialSource",
+          "url": "https://cca.bucksmontchamber.com/WebForms/37__memberdirectory.aspx"
+        }
+      ],
+      "alternatives": [
+        {
+          "field": "website",
+          "url": "https://www.biondocreative.com"
+        },
+        {
+          "field": "instagram",
+          "url": "https://www.instagram.com/biondocreative"
+        },
+        {
+          "field": "facebook",
+          "url": "https://www.facebook.com/biondocreative"
+        }
+      ]
+    }
+  ]
+}

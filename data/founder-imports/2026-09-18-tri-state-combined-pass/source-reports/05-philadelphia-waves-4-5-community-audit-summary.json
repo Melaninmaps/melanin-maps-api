@@ -1,0 +1,98 @@
+{
+  "sourceFiles": [
+    "wave-4-01-01-aachamber-candidates.jsonl",
+    "wave-4-02-02-gphcc-candidates.jsonl",
+    "wave-4-03-03-shccnj-candidates.jsonl",
+    "wave-4-04-04-philly-oed-candidates.jsonl",
+    "wave-4-05-05-pa-dgs-candidates.jsonl",
+    "wave-4-06-06-black-business-philly-candidates.jsonl",
+    "wave-4-07-07-latino-philly-candidates.jsonl",
+    "wave-4-08-08-delaware-black-candidates.jsonl",
+    "wave-4-09-09-delaware-hispanic-candidates.jsonl",
+    "wave-4-10-10-south-jersey-candidates.jsonl",
+    "wave-4-11-11-west-philly-candidates.jsonl",
+    "wave-4-12-12-neighborhood-retail-candidates.jsonl",
+    "wave-5-01-all-black-directory-candidates.jsonl",
+    "wave-5-02-beech-pdf-candidates.jsonl",
+    "wave-5-07-northern-liberties-candidates.jsonl",
+    "wave-5-09-south-jersey-business-candidates.jsonl",
+    "wave-5-10-bucksmont-candidates.jsonl",
+    "wave-5-11-western-delco-candidates.jsonl"
+  ],
+  "rawRecords": 1851,
+  "rawBySourceFile": {
+    "wave-4-01-01-aachamber-candidates.jsonl": 161,
+    "wave-4-03-03-shccnj-candidates.jsonl": 180,
+    "wave-4-05-05-pa-dgs-candidates.jsonl": 352,
+    "wave-4-06-06-black-business-philly-candidates.jsonl": 119,
+    "wave-4-07-07-latino-philly-candidates.jsonl": 89,
+    "wave-4-08-08-delaware-black-candidates.jsonl": 9,
+    "wave-4-09-09-delaware-hispanic-candidates.jsonl": 23,
+    "wave-4-10-10-south-jersey-candidates.jsonl": 533,
+    "wave-4-11-11-west-philly-candidates.jsonl": 3,
+    "wave-5-01-all-black-directory-candidates.jsonl": 1,
+    "wave-5-02-beech-pdf-candidates.jsonl": 30,
+    "wave-5-07-northern-liberties-candidates.jsonl": 210,
+    "wave-5-09-south-jersey-business-candidates.jsonl": 15,
+    "wave-5-10-bucksmont-candidates.jsonl": 91,
+    "wave-5-11-western-delco-candidates.jsonl": 35
+  },
+  "rawByTargetKind": {
+    "business": 1525,
+    "community_resource": 162,
+    "cultural_place": 26,
+    "online_business": 4,
+    "regulated_review": 134
+  },
+  "readyPreDedupe": 569,
+  "readyUniqueWithinWave": 567,
+  "exactDuplicatesWithinReady": 2,
+  "heldInvalidOrMapless": 79,
+  "heldGeneralDirectoryLead": 1203,
+  "readyByTargetKind": {
+    "business": 476,
+    "community_resource": 26,
+    "cultural_place": 25,
+    "online_business": 2,
+    "regulated_review": 38
+  },
+  "readyByState": {
+    "DE": 12,
+    "NJ": 191,
+    "PA": 364
+  },
+  "heldInvalidReasons": {
+    "incomplete_business_name": 4,
+    "missing_direct_customer_destination": 21,
+    "missing_qualified_physical_address": 54,
+    "shared_noncustomer_destination": 13
+  },
+  "destinationCollisionsForReview": [
+    {
+      "url": "https://maps.app.goo.gl/dxwz6nv5utzviv2w5",
+      "records": 13,
+      "names": [
+        "The HTE4 Group LLC",
+        "Project Primacy Foundation",
+        "Izzard Investigations and Security LLC",
+        "Stylist Graceful Cathering",
+        "Tasco Contractors, Inc",
+        "Luxury Locksmith LLC",
+        "Empire Supplies and Services LLC",
+        "Community Property Management",
+        "PECO",
+        "Progressive Life Center",
+        "AT&T",
+        "INFLUENCE ENTERTAINMENT LLC",
+        "Miss Mahogany"
+      ]
+    }
+  ],
+  "files": {
+    "readyForCrossSourceConsolidation": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/waves-4-5-ready-for-cross-source-consolidation.jsonl",
+    "heldInvalidOrMapless": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/waves-4-5-held-invalid-or-mapless.jsonl",
+    "heldGeneralDirectoryLeads": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/waves-4-5-held-general-directory-leads.jsonl",
+    "possibleDuplicates": "/home/ubuntu/melanin-maps-inventory-staging/data/founder-imports/2026-09-18-philadelphia-source-wave-4/audit/waves-4-5-possible-duplicates.json"
+  },
+  "readyManifestSha256": "157962575da161140b06b94c06425900218bbfbee3aacd7bafa8096130422728"
+}

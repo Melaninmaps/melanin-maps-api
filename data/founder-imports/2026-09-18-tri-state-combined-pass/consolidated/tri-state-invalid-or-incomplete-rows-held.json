@@ -1,0 +1,2011 @@
+[
+  {
+    "file": "03-03-phila-oeo-certified-candidates.jsonl",
+    "line": 1,
+    "name": "Philadelphia OEO Certified Vendor Directory (CCRS)",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-03-phila-oeo-certified-candidates.jsonl",
+    "line": 2,
+    "name": "Philadelphia OEO Registry legacy MWDSBE portal",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-03-phila-oeo-certified-candidates.jsonl",
+    "line": 3,
+    "name": "Pennsylvania Unified Certification Program DBE Directory",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-03-phila-oeo-certified-candidates.jsonl",
+    "line": 4,
+    "name": "Philadelphia International Airport PHL Supplier Diversity Management System",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-08-south-philadelphia-businesses-candidates.jsonl",
+    "line": 10,
+    "name": "Association of Mexican Business Owners of Philadelphia (AEM / AMBOP)",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-10-kensington-fishtown-businesses-candidates.jsonl",
+    "line": 11,
+    "name": "Lua Vietnamese Restaurant",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-14-phila-suburb-bucks-deep-candidates.jsonl",
+    "line": 16,
+    "name": "Greater BucksMont Chamber of Commerce",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-14-phila-suburb-bucks-deep-candidates.jsonl",
+    "line": 17,
+    "name": "Greater New Hope Chamber of Commerce",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 5,
+    "name": "Little Faces Childcare Center",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 14,
+    "name": "Claranda Tay Hair & Lifestyle Boutique",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 15,
+    "name": "dermHA",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 16,
+    "name": "KSQ Barber Lounge",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 17,
+    "name": "Royalty Hair Salon",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 18,
+    "name": "McCullers Road Rescue",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-15-phila-suburb-chester-deep-candidates.jsonl",
+    "line": 19,
+    "name": "Stingy Brims Hat Company",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "03-17-phila-everyday-services-deep-candidates.jsonl",
+    "line": 12,
+    "name": "Philadelphia Office of Children and Families",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 1,
+    "name": "American Grammar",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 2,
+    "name": "Atomic City Comics",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 3,
+    "name": "Black and Nobel",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 4,
+    "name": "Hakim's Bookstore & Gift Shop",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 5,
+    "name": "Harriett's Bookshop",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 6,
+    "name": "Multiverse",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 7,
+    "name": "Uncle Bobbie’s Coffee & Books",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 14,
+    "name": "Love Yourself by Shea Elizabeth",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 22,
+    "name": "Philadelphia Diamond Company",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 27,
+    "name": "De'Village",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 42,
+    "name": "Faheem's Hands of Precision",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 52,
+    "name": "Wash Day",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "04-phila-black-business-guides-candidates.jsonl",
+    "line": 57,
+    "name": "Vault + Vine",
+    "missing": [],
+    "invalidTargetKind": "retail",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 324,
+    "name": "American Grammar",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 325,
+    "name": "Atomic City Comics",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 326,
+    "name": "Black and Nobel",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 327,
+    "name": "Hakim's Bookstore & Gift Shop",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 328,
+    "name": "Harriett's Bookshop",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 329,
+    "name": "Multiverse",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 330,
+    "name": "Uncle Bobbie's Coffee & Books",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 331,
+    "name": "Between Friends Boutique",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 332,
+    "name": "CADRÆ",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 333,
+    "name": "Common Ground",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 334,
+    "name": "Dolly's Boutique & Consignment",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 335,
+    "name": "Jonesys Accessories",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 336,
+    "name": "Loomen Labs",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 337,
+    "name": "Love Yourself by Shea Elizabeth",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 338,
+    "name": "Moore Vintage Archive",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 339,
+    "name": "Mount Airy Candle Co.",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 340,
+    "name": "The Movement Philly",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 341,
+    "name": "Retro Rewind Vintage & Thrift",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 342,
+    "name": "Senoj Clothing",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 343,
+    "name": "Blue Sole Shoes",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 344,
+    "name": "Love & Liberty",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 345,
+    "name": "Philadelphia Diamond Company",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 346,
+    "name": "Style by Blain",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 347,
+    "name": "1040 Creative",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 348,
+    "name": "ARTrageous Brush & Flow",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 349,
+    "name": "Expect Lace",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 350,
+    "name": "Kellijane",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 351,
+    "name": "NoName Gallery",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 352,
+    "name": "South Street Art Mart",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 353,
+    "name": "Trunc",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 354,
+    "name": "Ubuntu Fine Art",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 355,
+    "name": "Urban Art Gallery",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 356,
+    "name": "Vamp Boutique",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 357,
+    "name": "Yowie",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 358,
+    "name": "Avenue 215 Self Care Studio",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 359,
+    "name": "Dope Botanicals",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 360,
+    "name": "Dosso Beauty",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 361,
+    "name": "Duafe Holistic Hair Care",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 362,
+    "name": "Faheem's Hand of Precision",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 363,
+    "name": "The Naked Peach Waxing Boutique",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 364,
+    "name": "Nbeauty Inc.",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 365,
+    "name": "Philly Hair Healer at Cosset Beauty Lounge",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 366,
+    "name": "Posh Hair Artistry",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 367,
+    "name": "Remedy Spa & Wellness",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 368,
+    "name": "Rise and Ritual",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 369,
+    "name": "Salon A'Marie",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 370,
+    "name": "Safi Skinsentials",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 371,
+    "name": "Sistah Scents Fragrance Bar",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 372,
+    "name": "Wash Day",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 373,
+    "name": "BeautiFitStrong",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 374,
+    "name": "DanceFit Chestnut Hill",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 375,
+    "name": "Paul Beale's Florist",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 376,
+    "name": "Plant and People",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 377,
+    "name": "Vault + Vine",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 378,
+    "name": "48th Street Grille",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 379,
+    "name": "Abyssinia",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 380,
+    "name": "African Small Pot",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 381,
+    "name": "All the Way Live",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 382,
+    "name": "Amina",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 383,
+    "name": "Avana at Park Towne Place",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 384,
+    "name": "Bake'n Bacon Philadelphia",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 385,
+    "name": "Bar Jawn",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 386,
+    "name": "Barkley's BBQ",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 387,
+    "name": "Black Dragon Takeout",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 388,
+    "name": "BlackHen Fried Chicken",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 389,
+    "name": "Booker's Restaurant & Bar",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 390,
+    "name": "Breakfast Boutique",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 391,
+    "name": "Butter's Soul Food To Go",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 392,
+    "name": "Caribbean Feast Restaurant",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 393,
+    "name": "Chateau Rouge",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 394,
+    "name": "Cray Taste",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 395,
+    "name": "Dahlak",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 396,
+    "name": "Dibbs BBQ",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 397,
+    "name": "Doro Bet",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 398,
+    "name": "Down North Pizza",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 399,
+    "name": "Fallin Off the Bone",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 400,
+    "name": "Farina Pasta Bar",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 401,
+    "name": "Friday Saturday Sunday",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 402,
+    "name": "Halal Fusion Chinese Restaurant",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 403,
+    "name": "Honeysuckle Restaurant",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 404,
+    "name": "iMunch Cafe",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 405,
+    "name": "In Crust We Trust",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 406,
+    "name": "Jim’s West",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 407,
+    "name": "Kilimandjaro",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 408,
+    "name": "Kitchen + Kocktails Philadelphia",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 409,
+    "name": "Lè Mandingue African Restaurant",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 410,
+    "name": "Lou & Choo's Lounge",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 411,
+    "name": "Ma Lessie's Chicken & Waffles",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 412,
+    "name": "Maxwells Caribbean/American Takeout",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 413,
+    "name": "New Barber’s Hall",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 414,
+    "name": "The Nile Cafe",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 415,
+    "name": "Reggae Reggae Vibes",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 416,
+    "name": "Savú",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 417,
+    "name": "South Flavors",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 418,
+    "name": "SOUTH Restaurant & Jazz Club",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 419,
+    "name": "Star Fusion Express",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 420,
+    "name": "Suya Suya West African Grill",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 421,
+    "name": "Sy’s Palace",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 422,
+    "name": "Taste Cheesesteak Bar",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 423,
+    "name": "Tasties",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 424,
+    "name": "Alif Brew & Mini Mart Inc.",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 425,
+    "name": "Arterial Coffee",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 426,
+    "name": "Bower Penn",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 427,
+    "name": "Coffee Cream & Dreams",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 428,
+    "name": "Good Karma Café",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 429,
+    "name": "Haven Café",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 430,
+    "name": "Thunder Mug Cafe",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 431,
+    "name": "Banana Mousse",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 432,
+    "name": "Cloud Cups Gelato Fishtown",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 433,
+    "name": "Darnel's Cakes",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 434,
+    "name": "Denise’s Delicacies",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 435,
+    "name": "Second Daughter Artisanal Bakery",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 436,
+    "name": "Sweet 45",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 437,
+    "name": "Sweet T's Bakery",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 438,
+    "name": "The Sweet Life Bakeshop",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 439,
+    "name": "Akwaaba Tea Salon",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 440,
+    "name": "Blkberry Juice Bar",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 441,
+    "name": "Two Locals Brewing Company",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "05-philadelphia-waves-4-5-community-audited-candidates.jsonl",
+    "line": 442,
+    "name": "Young American Hard Cider",
+    "missing": [
+      "sourceRow"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 3,
+    "name": "Redcross & Martin and Associates",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 5,
+    "name": "Seven Hair Salon",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 11,
+    "name": "McCullers Road Rescue",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 12,
+    "name": "Stingy Brims Hat Company",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 13,
+    "name": "Candle Studio 1422",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 14,
+    "name": "DeBaptiste Funeral Homes",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 15,
+    "name": "Royalty Hair Salon",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 16,
+    "name": "Rosa's Greek Boutique",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 17,
+    "name": "Sweeetheat Sauces & Rubs",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 18,
+    "name": "MadeByZoe",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "06-phila-suburbs-montgomery-bucks-chester-candidates.jsonl",
+    "line": 19,
+    "name": "Love n Honey Candles",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "08-pa-houses-of-worship-candidates.jsonl",
+    "line": 6,
+    "name": "First African Baptist Church of Philadelphia",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "08-pa-houses-of-worship-candidates.jsonl",
+    "line": 7,
+    "name": "Ebenezer Haitian Baptist Church",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "08-pa-houses-of-worship-candidates.jsonl",
+    "line": 8,
+    "name": "First Spanish (La Primera Iglesia)",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": true,
+    "destinationProblem": true
+  },
+  {
+    "file": "08-pa-houses-of-worship-candidates.jsonl",
+    "line": 9,
+    "name": "Spanish, Second (Segunda Iglesia)",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "09-nj-statewide-hispanic-deep-candidates.jsonl",
+    "line": 57,
+    "name": "Inmayra Taveras Event Planning LLC",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "09-nj-statewide-hispanic-deep-candidates.jsonl",
+    "line": 58,
+    "name": "RetireReady NJ",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "09-nj-statewide-hispanic-deep-candidates.jsonl",
+    "line": 81,
+    "name": "New Jersey Economic Development Authority - NJEDA",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "10-nj-black-chambers-deep-candidates.jsonl",
+    "line": 4,
+    "name": "Love Yourself All Natural",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "10-nj-black-chambers-deep-candidates.jsonl",
+    "line": 5,
+    "name": "Cultured Expression",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "10-nj-black-chambers-deep-candidates.jsonl",
+    "line": 6,
+    "name": "Jams By Kim",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-camden-south-jersey-deep-candidates.jsonl",
+    "line": 2,
+    "name": "Holmes & Company LLC",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-camden-south-jersey-deep-candidates.jsonl",
+    "line": 5,
+    "name": "We See You Security",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-camden-south-jersey-deep-candidates.jsonl",
+    "line": 11,
+    "name": "SLK Signings LLC",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "11-camden-south-jersey-deep-candidates.jsonl",
+    "line": 13,
+    "name": "Latin American Economic Development Association, Inc. (LAEDA)",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-nj-essex-hudson-union-candidates.jsonl",
+    "line": 1,
+    "name": "T G Advisor Tax and Financial",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": false,
+    "destinationProblem": true
+  },
+  {
+    "file": "12-nj-essex-hudson-union-candidates.jsonl",
+    "line": 10,
+    "name": "The Halal Guys",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-nj-essex-hudson-union-candidates.jsonl",
+    "line": 11,
+    "name": "Technic Services",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-nj-essex-hudson-union-candidates.jsonl",
+    "line": 12,
+    "name": "PKMAX Consulting",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-nj-essex-hudson-union-candidates.jsonl",
+    "line": 13,
+    "name": "New Ark Plumbing",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "12-nj-essex-hudson-union-candidates.jsonl",
+    "line": 14,
+    "name": "C21 Alliance Realty",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": true
+  },
+  {
+    "file": "15-delaware-black-chambers-deep-candidates.jsonl",
+    "line": 28,
+    "name": "Palmetto Blend - Soul Food Seasoning Mix",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "15-delaware-black-chambers-deep-candidates.jsonl",
+    "line": 29,
+    "name": "Living Great Medical Assoc",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "15-delaware-black-chambers-deep-candidates.jsonl",
+    "line": 30,
+    "name": "E Squared Cigar Sports Bar",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "15-delaware-black-chambers-deep-candidates.jsonl",
+    "line": 31,
+    "name": "Every Man Counts (Better Dads * Better Lives)",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "15-delaware-black-chambers-deep-candidates.jsonl",
+    "line": 32,
+    "name": "Bethel AME Church",
+    "missing": [],
+    "invalidTargetKind": "cultural_place",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 9,
+    "name": "East Coast Window Cleaning",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 12,
+    "name": "Monarch Transportation Services",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 13,
+    "name": "Wedding Brooms by Alicia",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 14,
+    "name": "Sunshine Food Market",
+    "missing": [],
+    "invalidTargetKind": "manual_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 15,
+    "name": "Past Your Bedtime Childcare Center",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 16,
+    "name": "Mickie Davis Hair Studio",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 17,
+    "name": "AM Electric, Inc.",
+    "missing": [],
+    "invalidTargetKind": "regulated_review",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "19-tristate-everyday-services-candidates.jsonl",
+    "line": 18,
+    "name": "Rocks + Cornerstones",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "20-tristate-online-businesses-candidates.jsonl",
+    "line": 1,
+    "name": "Mommy in MI",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "online_business",
+    "locationProblem": false,
+    "destinationProblem": false
+  }
+]

@@ -1,0 +1,13 @@
+# Bucks County suburban source pass 14: evidence report
+
+## Scope and method
+This pass covers public business sources and local chambers for Bensalem, Bristol, Levittown, Doylestown, and surrounding Bucks County communities. The primary business source was the [Bucks County Courier Times/PhillyBurbs Black-owned business feature](https://www.phillyburbs.com/story/lifestyle/2024/02/16/shop-dine-and-more-at-these-26-black-owned-businesses-in-bucks-county-montgomery-restaurants-shops/72520933007/), supplemented by the [Visit Bucks County Black-owned business guide](https://www.visitbuckscounty.com/blog/stories/post/black-owned-businesses-in-bucks-county/), the [official Aldo's site](https://aldosbensalem.com/?page_id=19), and the [Bucks County government chamber directory](https://www.buckscounty.gov/715/Bucks-County-Chambers-of-Commerce).
+
+## Candidate evidence
+The JSONL contains 19 sequential candidates. The Courier Times article explicitly labels its listed businesses as Black-owned and, where available, names owners; it also supplies customer-facing websites or social profiles. Aldo's official page identifies the restaurant as Hispanic and publishes its address, phone, menu, and social links. Chamber rows are community resources only: the county directory establishes organization name, contact details, and website, but chamber membership is not treated as ownership evidence.
+
+## Accessibility limits and exclusions
+The Visit Bucks County page was accessible and corroborated several names, but its extracted page did not provide full street addresses for every listing; those records were not duplicated unless the Courier Times article supplied a qualifying address and customer destination. The Central Bucks Chamber business-directory page was accessible as a directory interface but exposed no individual member records in the text extraction, so no unsupported member businesses were added. Generic Yelp/Yellow Pages pages, Facebook groups, chamber social accounts, Google map pages, and directory home pages were excluded as business customer destinations. Pop-up-only businesses with no stable street address were excluded from physical map candidates. Regulated_review is used for childcare and wellness candidates to flag verification needs; no license, credentials, insurance, hours, language, accessibility, or availability is inferred.
+
+## Coverage note
+The resulting set includes direct coverage in Bensalem, Bristol, Levittown, and Doylestown, plus surrounding Morrisville, Newtown, New Hope, and Hatboro. It is a source-backed candidate inventory, not proof of current operation or ownership beyond the cited published statements.
