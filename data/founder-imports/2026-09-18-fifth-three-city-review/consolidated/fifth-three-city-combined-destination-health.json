@@ -1,0 +1,297 @@
+{
+  "checkedAt": "2026-09-18T21:34:12.056Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-fifth-three-city-review/data/founder-imports/2026-09-18-fifth-three-city-review/review-package/fifth-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 39,
+  "uniqueDestinations": 47,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 47,
+  "counts": {
+    "reachable": 46,
+    "review_required": 1
+  },
+  "results": [
+    {
+      "url": "https://www.treasuringtresses.com/",
+      "status": 200,
+      "finalUrl": "https://www.treasuringtresses.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://islandflavorsandtings.com/",
+      "status": 200,
+      "finalUrl": "https://islandflavorsandtings.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://1foxyladycafe.com/",
+      "status": 200,
+      "finalUrl": "https://1foxyladycafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://1foxyladycafe.com/1flc-on-social-media-1",
+      "status": 200,
+      "finalUrl": "https://1foxyladycafe.com/1flc-on-social-media-1",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://annieleesbakeryanddiners.com/",
+      "status": 200,
+      "finalUrl": "https://annieleesbakeryanddiners.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.visitjacksonville.com/directory/annie-lees-bakery-diner/",
+      "status": 200,
+      "finalUrl": "https://www.visitjacksonville.com/directory/annie-lees-bakery-diner/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://auraplantstudio.com/",
+      "status": 200,
+      "finalUrl": "https://auraplantstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://auraplantstudio.com/contact",
+      "status": 200,
+      "finalUrl": "https://auraplantstudio.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caferesistance.com/",
+      "status": 200,
+      "finalUrl": "https://caferesistance.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.visitjacksonville.com/directory/cafe-resistance/",
+      "status": 200,
+      "finalUrl": "https://www.visitjacksonville.com/directory/cafe-resistance/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clarawhitemission.org/",
+      "status": 200,
+      "finalUrl": "https://clarawhitemission.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://imanicowrie.com/",
+      "status": 200,
+      "finalUrl": "https://imanicowrie.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://johnsonsmeatmarkets.com/",
+      "status": 200,
+      "finalUrl": "https://johnsonsmeatmarkets.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jtbbeautysupply.com/",
+      "status": 200,
+      "finalUrl": "https://jtbbeautysupply.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jtbbeautysupply.com/contact",
+      "status": 200,
+      "finalUrl": "https://jtbbeautysupply.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nps.gov/timu/learn/historyculture/kp_visiting.htm",
+      "status": 200,
+      "finalUrl": "https://www.nps.gov/timu/learn/historyculture/kp_visiting.htm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://meowandbarksboutique.com/",
+      "status": 200,
+      "finalUrl": "https://meowandbarksboutique.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://meowandbarksboutique.com/pages/contact-us",
+      "status": 200,
+      "finalUrl": "https://meowandbarksboutique.com/pages/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.newlifehealthwellness.org/",
+      "status": 200,
+      "finalUrl": "https://www.newlifehealthwellness.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theritz.jaxevents.com/",
+      "status": 200,
+      "finalUrl": "https://theritz.jaxevents.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/RitzJacksonville",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/RitzJacksonville",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shiningbrightcleaning.com/",
+      "status": 200,
+      "finalUrl": "https://shiningbrightcleaning.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.clarawhitemission.org/museum",
+      "status": 200,
+      "finalUrl": "https://clarawhitemission.org/museum",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.beccouncil.org/",
+      "status": 200,
+      "finalUrl": "https://www.bechamber.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackbeehoneyhq.com/Home",
+      "status": 200,
+      "finalUrl": "https://www.blackbeehoneyhq.com/Home",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://equip2supply.com/",
+      "status": 200,
+      "finalUrl": "https://equip2supply.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://harmonywaycandles.com/",
+      "status": 200,
+      "finalUrl": "https://harmonywaycandles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.smileicecream.co/",
+      "status": 200,
+      "finalUrl": "https://www.smileicecream.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flavazjamaicangrille.com/",
+      "status": 200,
+      "finalUrl": "https://www.flavazjamaicangrille.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.culturedbooks.org/",
+      "status": 200,
+      "finalUrl": "https://www.culturedbooks.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://greenbooktampabay.org/",
+      "status": 200,
+      "finalUrl": "https://greenbooktampabay.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hoggbatch.com/",
+      "status": 200,
+      "finalUrl": "https://www.hoggbatch.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://racewithoutism.com/",
+      "status": 200,
+      "finalUrl": "https://racewithoutism.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.raysvegansoul.com/",
+      "status": 200,
+      "finalUrl": "https://www.raysvegansoul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://woodsonmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://woodsonmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.7thandgrove.com/",
+      "status": 200,
+      "finalUrl": "https://7thandgrove.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tampamagazines.com/black-owned-tampa-bay-businesses-to-support/",
+      "status": 200,
+      "finalUrl": "https://tampamagazines.com/black-owned-tampa-bay-businesses-to-support/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.alsybor.com/",
+      "status": 200,
+      "finalUrl": "https://www.alsybor.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.debonairprints.com/",
+      "status": 200,
+      "finalUrl": "https://www.debonairprints.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kyvintageshop.com/",
+      "status": 200,
+      "finalUrl": "https://kyvintageshop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nc100bwtampabay.org/",
+      "status": 200,
+      "finalUrl": "https://www.nc100bwtampabay.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://noiterose.com/",
+      "status": 402,
+      "finalUrl": "https://noiterose.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://tbbcci.org/",
+      "status": 200,
+      "finalUrl": "https://tbbcci.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tampabaylatinchamber.com/contact-us/",
+      "status": 200,
+      "finalUrl": "https://tampabaylatinchamber.com/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://winterparkplayhouse.org/",
+      "status": 200,
+      "finalUrl": "https://winterparkplayhouse.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.winterparkplayhouse.org/",
+      "status": 200,
+      "finalUrl": "http://www.winterparkplayhouse.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.corwinscatering.com/",
+      "status": 200,
+      "finalUrl": "https://www.corwinscatering.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}

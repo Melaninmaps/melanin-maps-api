@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-09-18T21:33:22.995Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "jacksonville-candidates.jsonl",
+    "orlando-candidates.jsonl",
+    "tampa-candidates.jsonl"
+  ],
+  "inputRows": 39,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 39,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "physicalAddressCandidates": 37,
+  "onlineOnlyCandidates": 2,
+  "targetKinds": {
+    "business": 21,
+    "community_resource": 9,
+    "cultural_place": 5,
+    "online_business": 2,
+    "regulated_review": 2
+  },
+  "categories": {
+    "food_and_drink": 8,
+    "retail": 7,
+    "community_services": 6,
+    "arts and culture": 3,
+    "food and drink": 3,
+    "shopping_and_retail": 2,
+    "arts_and_culture": 1,
+    "arts_culture": 1,
+    "beauty_and_personal_care": 1,
+    "books and gifts": 1,
+    "business_services": 1,
+    "community support": 1,
+    "community_and_civic": 1,
+    "health and wellness": 1,
+    "home services": 1,
+    "youth_and_mentoring": 1
+  },
+  "states": {
+    "Jacksonville, FL": 14,
+    "Tampa, FL": 9,
+    "St. Petersburg, FL": 6,
+    "Orlando, FL": 4,
+    "Altamonte Springs, FL": 1,
+    "Gulfport, FL": 1,
+    "Kissimmee, FL": 1,
+    "Riverview, FL": 1,
+    "Winter Park, FL": 1,
+    "Winter Springs, FL": 1
+  },
+  "officialCustomerDestinationCoverage": 39,
+  "files": {
+    "candidates": "fifth-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "fifth-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "fifth-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "fifth-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "abad2f01bff93432836b61123f6de8f667693d087976f43d36ce5050f848c80d"
+}
