@@ -26,6 +26,16 @@ describe("Kinfolk web voice upload", () => {
     expect(recorder).toContain('payload.message || "Kinfolk could not transcribe that recording."');
     expect(recorder).not.toContain('"Content-Type": "multipart/form-data"');
   });
+
+  it("uses server-supported recording types and discards hidden-page recordings", () => {
+    const travel = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
+    expect(travel).toContain('SUPPORTED_RECORDING_MIME_TYPES = ["audio/webm", "audio/mp4", "audio/wav"]');
+    expect(travel).not.toContain('"audio/ogg"');
+    expect(travel).toContain('transcription_timeout');
+    expect(travel).toContain('document.addEventListener("visibilitychange", handleVisibilityChange)');
+    expect(travel).toContain('discardRecording("page_hidden")');
+    expect(travel).toContain('recorder?.stream?.getTracks().forEach(t => t.stop())');
+  });
 });
 
 describe("Kinfolk automatic spoken replies", () => {

@@ -1007,13 +1007,16 @@ function TravelPage() {
   }, [releaseAudio]);
 
   // ── Voice input state ──────────────────────────────────────────────────────
-  type VoiceState = "idle" | "notice" | "requesting" | "denied" | "recording" | "processing";
+  type VoiceState = "idle" | "notice" | "requesting" | "denied" | "unsupported" | "recording" | "processing";
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const mediaRecorderRef        = useRef<MediaRecorder | null>(null);
   const audioChunksRef          = useRef<Blob[]>([]);
   const recordingStartedAtRef   = useRef<number | null>(null); // wall-clock ms for duration
   const elapsedTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const discardedRecordingRef = useRef(false);
+  const transcriptionControllerRef = useRef<AbortController | null>(null);
+  const transcriptionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const privacyNoticeSeen = useRef(false); // shown once per session
 
   // Load preferences — always merge with DEFAULT_PREFS so every array field is
@@ -1075,7 +1078,7 @@ function TravelPage() {
     setPrefs(p);
   }, []);
 
-  // ── Voice: stop recording and clean up ─────────────────────────────────────
+  // ── Voice: stop recording and submit the captured clip ─────────────────────
   const stopRecording = useCallback(() => {
     if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -1085,6 +1088,30 @@ function TravelPage() {
     mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
   }, []);
 
+  const abortTranscription = useCallback((reason: string) => {
+    if (transcriptionTimeoutRef.current) {
+      clearTimeout(transcriptionTimeoutRef.current);
+      transcriptionTimeoutRef.current = null;
+    }
+    transcriptionControllerRef.current?.abort(reason);
+  }, []);
+
+  // Lifecycle cancellation intentionally differs from the member's Stop action:
+  // audio captured when the page is hidden or left must be discarded, not uploaded.
+  const discardRecording = useCallback((reason: string) => {
+    const recorder = mediaRecorderRef.current;
+    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
+    recordingStartedAtRef.current = null;
+    audioChunksRef.current = [];
+    abortTranscription(reason);
+    if (recorder && recorder.state !== "inactive") {
+      discardedRecordingRef.current = true;
+      recorder.stop();
+    }
+    recorder?.stream?.getTracks().forEach(t => t.stop());
+    setVoiceState("idle");
+  }, [abortTranscription]);
+
   // ── Voice: encode captured chunks and call /transcribe ─────────────────────
   // Uses multipart/form-data (binary — no base64 expansion) + wall-clock
   // duration so a 2-second clip is never labelled "over 60 seconds" due to
@@ -1092,16 +1119,22 @@ function TravelPage() {
   // `error` code, not the HTTP status alone.
   const MAX_VOICE_DURATION_MS = 60_000;
   const MAX_VOICE_BYTES = 4 * 1024 * 1024; // 4 MB binary
+  const TRANSCRIPTION_TIMEOUT_MS = 25_000;
+  const SUPPORTED_RECORDING_MIME_TYPES = ["audio/webm", "audio/mp4", "audio/wav"] as const;
+  type SupportedRecordingMimeType = typeof SUPPORTED_RECORDING_MIME_TYPES[number];
 
   function classifyVoiceError(status: number, body: { error?: string; message?: string }): string {
     if (body.error === "AUDIO_DURATION_EXCEEDED") return "That recording is over 60 seconds. Please send a shorter clip.";
     if (body.error === "AUDIO_PAYLOAD_TOO_LARGE" || status === 413) return "This voice clip is too large to upload. Please try a shorter or lower-quality recording.";
     if (body.error === "AUDIO_UNREADABLE" || status === 400) return "Kinfolk could not read that audio. Please try again or type your question.";
     if (status === 429) return "Voice input limit reached. Give it a few minutes.";
+    if (status === 415) return "This recording format is not supported. Please type your question.";
+    if (status === 422) return "Kinfolk could not process that recording. Please try again or type your question.";
+    if (status === 503) return "Voice transcription is temporarily unavailable. Please type your question.";
     return "Voice transcription is unavailable right now. You can still type your question.";
   }
 
-  const finishRecording = useCallback(async (chunks: Blob[], mimeType: string) => {
+  const finishRecording = useCallback(async (chunks: Blob[], mimeType: SupportedRecordingMimeType) => {
     setVoiceState("processing");
     // Wall-clock duration from the ref set when recording started
     const durationMs = recordingStartedAtRef.current !== null
@@ -1109,6 +1142,7 @@ function TravelPage() {
       : 0;
     recordingStartedAtRef.current = null;
 
+    let controller: AbortController | null = null;
     try {
       const blob = new Blob(chunks, { type: mimeType });
       if (blob.size < 100) { setVoiceState("idle"); return; }
@@ -1125,18 +1159,26 @@ function TravelPage() {
         return;
       }
 
-      // Multipart binary upload — avoids base64 expansion that causes spurious 413s
-      const ext = mimeType.includes("mp4") ? "m4a" : "webm";
+      // Multipart binary upload — avoids base64 expansion that causes spurious 413s.
+      // Blob type and filename come from the recorder's actual supported MIME.
+      const ext = mimeType === "audio/mp4" ? "m4a" : mimeType === "audio/wav" ? "wav" : "webm";
       const form = new FormData();
       form.append("audio", blob, `kinfolk-voice.${ext}`);
       form.append("durationMs", String(durationMs));
-      form.append("mimeType", mimeType || "audio/webm");
+      form.append("mimeType", mimeType);
 
+      controller = new AbortController();
+      transcriptionControllerRef.current = controller;
+      transcriptionTimeoutRef.current = setTimeout(
+        () => controller?.abort("transcription_timeout"),
+        TRANSCRIPTION_TIMEOUT_MS,
+      );
       const r = await fetch(`${BASE}api/kinfolk/transcribe`, {
         method: "POST",
         credentials: "include",
         // Do NOT set Content-Type manually — browser must supply the multipart boundary
         body: form,
+        signal: controller.signal,
       });
 
       if (!r.ok) {
@@ -1156,10 +1198,19 @@ function TravelPage() {
 
       // Focus input so member can edit before sending
       setTimeout(() => inputRef.current?.focus(), 50);
-    } catch {
-      setInput("Transcription failed — please type your question.");
+    } catch (error) {
+      const timedOut = error instanceof Error
+        && error.name === "AbortError"
+        && controller?.signal.reason === "transcription_timeout";
+      if (timedOut) setInput("Voice transcription took too long. Please type your question.");
+      else if (!controller?.signal.aborted) setInput("Transcription failed — please type your question.");
       setVoiceState("idle");
     } finally {
+      if (transcriptionTimeoutRef.current) {
+        clearTimeout(transcriptionTimeoutRef.current);
+        transcriptionTimeoutRef.current = null;
+      }
+      if (transcriptionControllerRef.current === controller) transcriptionControllerRef.current = null;
       audioChunksRef.current = [];
     }
   }, []);
@@ -1170,20 +1221,45 @@ function TravelPage() {
   const beginVoiceRecording = useCallback(async () => {
     setVoiceState("requesting");
     try {
+      // Do not request the microphone when this browser cannot produce a format
+      // the server accepts; in particular, Ogg is not an upload fallback.
+      if (typeof MediaRecorder === "undefined") {
+        setVoiceState("unsupported");
+        return;
+      }
+      const requestedMimeType = SUPPORTED_RECORDING_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
+      if (!requestedMimeType) {
+        setVoiceState("unsupported");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Choose the best supported MIME type
-      const preferredTypes = ["audio/webm", "audio/mp4", "audio/wav", "audio/ogg"];
-      const mimeType = preferredTypes.find(t => MediaRecorder.isTypeSupported(t)) ?? "";
-      const options = mimeType ? { mimeType } : {};
-
-      const recorder = new MediaRecorder(stream, options);
+      if (document.visibilityState !== "visible") {
+        stream.getTracks().forEach((track) => track.stop());
+        setVoiceState("idle");
+        return;
+      }
+      const recorder = new MediaRecorder(stream, { mimeType: requestedMimeType });
+      const actualMimeType = recorder.mimeType.split(";", 1)[0].trim().toLowerCase() as SupportedRecordingMimeType;
+      if (!SUPPORTED_RECORDING_MIME_TYPES.includes(actualMimeType)) {
+        stream.getTracks().forEach((track) => track.stop());
+        setVoiceState("unsupported");
+        return;
+      }
       const chunks: Blob[] = [];
       audioChunksRef.current = chunks;
       mediaRecorderRef.current = recorder;
+      discardedRecordingRef.current = false;
 
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-      recorder.onstop = () => finishRecording(chunks, mimeType || "audio/webm");
+      recorder.onstop = () => {
+        mediaRecorderRef.current = null;
+        if (discardedRecordingRef.current) {
+          discardedRecordingRef.current = false;
+          audioChunksRef.current = [];
+          return;
+        }
+        void finishRecording(chunks, actualMimeType);
+      };
 
       recorder.start(250); // collect chunks every 250ms
       recordingStartedAtRef.current = performance.now(); // wall-clock start for duration
@@ -1230,6 +1306,22 @@ function TravelPage() {
     privacyNoticeSeen.current = true;
     await beginVoiceRecording();
   }, [beginVoiceRecording]);
+  useEffect(() => {
+    const discardForPageLifecycle = () => {
+      if (mediaRecorderRef.current?.state === "recording") discardRecording("page_hidden");
+      else abortTranscription("page_hidden");
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") discardForPageLifecycle();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", discardForPageLifecycle);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", discardForPageLifecycle);
+      discardRecording("unmount");
+    };
+  }, [abortTranscription, discardRecording]);
 
   // Cleanup on unmount
   useEffect(() => () => {
@@ -2160,12 +2252,14 @@ function TravelPage() {
                   </div>
                 )}
 
-                {/* Mic denied fallback */}
-                {voiceState === "denied" && (
+                {/* Mic fallback */}
+                {(voiceState === "denied" || voiceState === "unsupported") && (
                   <div aria-live="polite" className="mb-3 max-w-3xl mx-auto px-4 py-2 bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-2xl">
                     <p className="text-xs text-[#3A1F0E]/60">
                       <MicOff size={10} className="inline mr-1" aria-hidden />
-                      Microphone access was denied. You can still type your question below.
+                      {voiceState === "unsupported"
+                        ? "Voice recording is not supported in this browser. Please type your question below."
+                        : "Microphone access was denied. You can still type your question below."}
                     </p>
                   </div>
                 )}
