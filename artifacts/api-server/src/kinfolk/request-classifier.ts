@@ -50,7 +50,7 @@ const FOOD_RE =
 const NIGHTLIFE_RE =
   /\b(nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party)\b/i;
 const TRAVEL_RE =
-  /\b(heading|going|traveling|travelling|visit|visiting|trip|weekend|getaway|staying|hotel|spots? in|things to do)\b/i;
+  /\b(heading\s+to|going\s+to|traveling|travelling|visit|visiting|trip|weekend getaway|staying\s+(?:in|at)|hotel|spots? in|things to do)\b/i;
 // "brunch" is intentionally excluded — handled by the brunch-specific block above.
 const BUSINESS_RE =
   /\b(find|recommend|locate|where|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?|restaurants?)\b/i;
