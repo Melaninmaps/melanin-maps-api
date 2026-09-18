@@ -5218,20 +5218,23 @@ export function malformedCommunityPublicationIndexes(
 export function communityPublicViewDefinitionIsSafe(
   definition: string | null | undefined,
 ): boolean {
-  const sql = normalizeCatalogSql(definition);
+  // Normalize the source-only b. qualifier before normalizeCatalogSql removes
+  // parentheses; after that rendering step, `business_record_is_public(b.`
+  // would no longer have a word boundary before b.
+  const normalizeViewSql = (value: string | null | undefined): string =>
+    normalizeCatalogSql((value ?? "").replace(/\bb\./g, ""))
+      .replace(/\bpublic\./g, "");
+  const sql = normalizeViewSql(definition);
   const whereAt = sql.lastIndexOf(" where ");
   if (whereAt < 0) return false;
   const actualFilter = sql
     .slice(whereAt + " where ".length)
-    .replace(/;$/, "")
-    // pg_get_viewdef() omits public. inside objects already in the public
-    // schema, while source SQL includes it. Normalize only that harmless
-    // qualification difference, then require the entire fail-closed function
-    // call to match exactly.
-    .replace(/\bpublic\./g, "");
-  const expectedFilter = normalizeCatalogSql(
-    PUBLIC_BUSINESSES_VIEW_FILTER,
-  ).replace(/\bpublic\./g, "");
+    .replace(/;$/, "");
+  // pg_get_viewdef() omits public. inside objects already in the public schema
+  // and removes a single-table alias in the function arguments, while source
+  // SQL includes both. Require the entire normalized fail-closed function call
+  // to match exactly after only those harmless rendering differences.
+  const expectedFilter = normalizeViewSql(PUBLIC_BUSINESSES_VIEW_FILTER);
   return actualFilter === expectedFilter;
 }
 
