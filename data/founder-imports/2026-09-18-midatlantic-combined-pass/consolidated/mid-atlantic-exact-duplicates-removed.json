@@ -1,0 +1,210 @@
+[
+  {
+    "duplicateKey": "physical|skin beauty bar|washington|dc|749 8th st se 2nd floor",
+    "retained": {
+      "name": "Skin Beauty Bar",
+      "file": "expansion-02-dc-black-guides-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://washington.org/visit-dc/black-owned-business"
+    },
+    "duplicate": {
+      "name": "Skin Beauty Bar",
+      "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://washington.org/visit-dc/black-owned-business"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the spice suite|washington|dc|2201 channing st ne",
+    "retained": {
+      "name": "The Spice Suite",
+      "file": "expansion-02-dc-black-guides-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://washington.org/visit-dc/black-owned-business"
+    },
+    "duplicate": {
+      "name": "The Spice Suite",
+      "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://washington.org/visit-dc/black-owned-business"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|cajou creamery|baltimore|md|411 n howard st",
+    "retained": {
+      "name": "Cajou Creamery",
+      "file": "expansion-06-baltimore-black-guides-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://charmcitytable.com/black-owned-food-businesses/"
+    },
+    "duplicate": {
+      "name": "Cajou Creamery",
+      "file": "expansion-16-midatlantic-everyday-services-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://baltimore.org/what-to-do/black-owned-businesses/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|cajou creamery|baltimore|md|411 north howard st",
+    "retained": {
+      "name": "Cajou Creamery",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://baltimore.org/listings/cajou/"
+    },
+    "duplicate": {
+      "name": "Cajou Creamery",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://baltimore.org/listings/cajou/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|natasha s just brittle|baltimore|md|6615 harford rd",
+    "retained": {
+      "name": "Natasha's Just Brittle",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://baltimore.org/listings/natashas-just-brittle/"
+    },
+    "duplicate": {
+      "name": "Natasha's Just Brittle",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://baltimore.org/listings/natashas-just-brittle/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|hiatus cheesecake|baltimore|md|5609 hess ave",
+    "retained": {
+      "name": "Hiatus Cheesecake",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://baltimore.org/listings/hiatus-cheesecake/"
+    },
+    "duplicate": {
+      "name": "Hiatus Cheesecake",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://baltimore.org/listings/hiatus-cheesecake/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the dollhouse boutique|baltimore|md|525 n charles st 1st floor",
+    "retained": {
+      "name": "The Dollhouse Boutique",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://baltimore.org/listings/the-dollhouse-boutique/"
+    },
+    "duplicate": {
+      "name": "The Dollhouse Boutique",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://baltimore.org/listings/the-dollhouse-boutique/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|differentregard|baltimore|md|825 n charles st",
+    "retained": {
+      "name": "DIFFERENTREGARD",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://baltimore.org/listings/differentregard/"
+    },
+    "duplicate": {
+      "name": "DIFFERENTREGARD",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://baltimore.org/listings/differentregard/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|phina s fine linens gifts|baltimore|md|919 s charles st",
+    "retained": {
+      "name": "Phina's Fine Linens & Gifts",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://baltimore.org/listings/phinas-fine-linens-gifts/"
+    },
+    "duplicate": {
+      "name": "Phina's Fine Linens & Gifts",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://baltimore.org/listings/phinas-fine-linens-gifts/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|ksm candle co|baltimore|md|3600 clipper mill rd ste 123",
+    "retained": {
+      "name": "KSM Candle Co.",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://baltimore.org/listings/ksm-candle-co/"
+    },
+    "duplicate": {
+      "name": "KSM Candle Co.",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://baltimore.org/listings/ksm-candle-co/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|sankofa african world bazaar|baltimore|md|4330 pimlico rd",
+    "retained": {
+      "name": "Sankofa African & World Bazaar",
+      "file": "source2-04-baltimore-black-directory-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://baltimore.org/listings/sankofa-african-world-bazaar/"
+    },
+    "duplicate": {
+      "name": "Sankofa African & World Bazaar",
+      "file": "source2-05-baltimore-heritage-community-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://baltimore.org/listings/sankofa-african-world-bazaar/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|fort myer construction corporation|washington|dc|2237 33rd st ne",
+    "retained": {
+      "name": "Fort Myer Construction Corporation",
+      "file": "expansion-01-dc-minority-chamber-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://members.dcchamber.org/directory/category/minority-owned-business/fort-myer-construction-corporation-146"
+    },
+    "duplicate": {
+      "name": "Fort Myer Construction Corporation",
+      "file": "source2-06-dc-chamber-minority-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://members.dcchamber.org/directory/category/minority-owned-business/fort-myer-construction-corporation-146"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|image hair salon|washington|dc|3453 14th st nw",
+    "retained": {
+      "name": "Image Hair Salon",
+      "file": "expansion-03-dc-latino-guides-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.gwhcc.org/uploads/1/2/9/4/129415236/sbta_catalog_final_aug312017.pdf"
+    },
+    "duplicate": {
+      "name": "Image Hair Salon",
+      "file": "source2-08-dc-hispanic-business-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.gwhcc.org/uploads/1/2/9/4/129415236/sbta_catalog_final_aug312017.pdf"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]
