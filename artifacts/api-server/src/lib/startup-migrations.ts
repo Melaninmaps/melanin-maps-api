@@ -5240,6 +5240,28 @@ export function communityBusinessIsPublicFunctionIsSafe(
   );
 }
 
+/**
+ * The required publication schema guard intentionally stops startup when its
+ * public-record safety contract is incomplete. Return only known structural
+ * categories so production logs explain an operator action without including a
+ * database URL, a raw driver error, member data, or any secret.
+ */
+export function summarizeRequiredPublicationSchemaFailure(error: unknown): string {
+  const message = error instanceof Error ? error.message : "unknown";
+  const safePrefixes = [
+    "Community publication schema verification failed:",
+    "Directory publication schema verification failed:",
+    "Required directory publication migrations are missing from source.",
+    "Required business listing-status migration is missing from source.",
+    "Directory review requires ",
+    "Directory review cannot run when ",
+    "Directory review database name must begin with ",
+  ];
+  return safePrefixes.some((prefix) => message.startsWith(prefix))
+    ? message.slice(0, 2_000)
+    : "required_publication_schema_unclassified";
+}
+
 export async function ensureRequiredPublicationSchema(
   directoryImportEnabled: boolean,
   logger?: Logger,

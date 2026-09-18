@@ -6,7 +6,11 @@ import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/h
 import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
-import { ensureRequiredPublicationSchema, runStartupMigrations } from "./lib/startup-migrations";
+import {
+  ensureRequiredPublicationSchema,
+  runStartupMigrations,
+  summarizeRequiredPublicationSchemaFailure,
+} from "./lib/startup-migrations";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
 
@@ -117,7 +121,10 @@ try {
   );
   logger.info("Required publication schema ready before traffic acceptance");
 } catch (error) {
-  logger.fatal({ error }, "Required publication schema failed — server will not accept traffic");
+  logger.fatal(
+    { reason: summarizeRequiredPublicationSchemaFailure(error) },
+    "Required publication schema failed — server will not accept traffic",
+  );
   await pool.end().catch(() => undefined);
   process.exit(1);
 }
