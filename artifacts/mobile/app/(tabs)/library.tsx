@@ -660,6 +660,19 @@ export default function LibraryScreen() {
               </View>
             )}
           </View>
+          <TouchableOpacity
+            accessibilityRole="button"
+            activeOpacity={0.85}
+            onPress={() => router.push("/library-research" as never)}
+            style={[styles.libraryResearchShortcut, { backgroundColor: "#CA922B12", borderColor: "#CA922B45" }]}
+          >
+            <Feather name="book-open" size={15} color="#8D5C17" />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.libraryResearchShortcutTitle, { color: colors.foreground }]}>Research the Library</Text>
+              <Text style={[styles.libraryResearchShortcutCopy, { color: colors.mutedForeground }]}>Vetted sources, context, and the next right question</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#8D5C17" />
+          </TouchableOpacity>
 
           {/* Tab switcher */}
           <View style={[styles.tabRow, { backgroundColor: colors.background }]}>
@@ -1657,6 +1670,9 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: "800" },
   headerSub: { fontSize: 12, marginTop: 1 },
   kPlusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  libraryResearchShortcut: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9, flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  libraryResearchShortcutTitle: { fontSize: 13, fontWeight: "800" },
+  libraryResearchShortcutCopy: { fontSize: 11, marginTop: 1 },
   tabRow: { flexDirection: "row", borderTopWidth: 0 },
   tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabTxt: { fontSize: 12, fontWeight: "700" },

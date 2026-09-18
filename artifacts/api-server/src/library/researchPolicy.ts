@@ -29,13 +29,21 @@ export type ResearchPolicy = {
   searchPrefix: boolean;
 };
 
+export type LibraryResearchScope = {
+  domain: ResearchDomain;
+  sourceStandard: string;
+  requestedGroup: string | null;
+  groupGuidance: string;
+  connectedTopics: Array<{ label: string; href: string }>;
+};
+
 // ── Domain classification ────────────────────────────────────────────────────
 
 const DOMAIN_PATTERNS: Array<{ domain: ResearchDomain; pattern: RegExp }> = [
   {
     domain: "medical",
     pattern:
-      /\b(health|medical|doctor|nurse|clinic|hospital|symptom|diagnos|treatment|medicine|mental health|pregnan|wellness|disease|cancer|diabetes|blood pressure|vaccine|nutrition|therapy|immuniz|mammogram|screenings?|menopause|fibroid|sickle cell|hiv|aids|chronic)\b/i,
+      /\b(health|medical|doctor|nurse|clinic|hospital|symptom|diagnos\w*|treatment|medicine|mental health|pregnan\w*|wellness|disease|cancer|diabetes|blood pressure|vaccine|nutrition|therapy|immuniz\w*|mammogram|screenings?|menopause|fibroid|sickle cell|hiv|aids|chronic)\b/i,
   },
   {
     domain: "legal",
@@ -45,7 +53,7 @@ const DOMAIN_PATTERNS: Array<{ domain: ResearchDomain; pattern: RegExp }> = [
   {
     domain: "financial",
     pattern:
-      /\b(debt|credit|tax|invest|insurance|mortgage|loan|retirement|budget|money|finance|bank|savings|credit score|student loan|credit card|reparations|wealth|asset|financial literacy|cfpb|irs)\b/i,
+      /\b(debt|credit|tax|invest\w*|insurance|mortgage|loan|retirement|budget|money|financ\w*|bank|savings|credit score|student loan|credit card|reparations|wealth|asset|financial literacy|cfpb|irs)\b/i,
   },
   {
     domain: "stem",
@@ -85,6 +93,14 @@ const DOMAIN_POLICIES: Record<
       "health.gov",
       "womenshealth.gov",
       "fda.gov",
+      "pubmed.ncbi.nlm.nih.gov",
+      "cochranelibrary.com",
+      "jamanetwork.com",
+      "nejm.org",
+      "bmj.com",
+      "annals.org",
+      "kff.org",
+      "commonwealthfund.org",
     ],
     archiveTtlHours: 24 * 7, // 1 week
     disclaimer:
@@ -124,6 +140,11 @@ const DOMAIN_POLICIES: Record<
       "mymoney.gov",
       "studentaid.gov",
       "finra.org",
+      "brookings.edu",
+      "urban.org",
+      "ncrc.org",
+      "aspeninstitute.org",
+      "rooseveltinstitute.org",
     ],
     archiveTtlHours: 24 * 7,
     disclaimer:
@@ -223,6 +244,79 @@ export function getResearchPolicy(question: string): ResearchPolicy {
 
 export function buildCommunityResearchQuery(question: string, _domain: ResearchDomain): string {
   return question.trim().replace(/\s+/g, " ");
+}
+
+function groupLanguageFromQuestion(question: string): string | null {
+  const normalized = question.normalize("NFKC").replace(/\s+/g, " ").trim();
+  const group = normalized.match(
+    /\b(?:black|african[ -]?american|latina|latino|latinx|hispanic|indigenous|native american|afro[ -]?caribbean|afro[ -]?latina?)(?:\s+(?:american|people|community|women|woman|men|man))?\b/i,
+  )?.[0];
+  if (!group) return null;
+
+  const afterGroup = normalized.slice(normalized.toLowerCase().indexOf(group.toLowerCase()) + group.length);
+  const age = afterGroup.match(
+    /^\s*(?:ages?\s*)?(\d{1,3})\s*(?:-|–|to|through)\s*(\d{1,3})\b/i,
+  ) ?? afterGroup.match(/^\s*(?:ages?\s*)(\d{1,3})\b/i);
+  if (!age) return group;
+  return age[2] ? `${group} ages ${age[1]}–${age[2]}` : `${group} age ${age[1]}`;
+}
+
+/**
+ * Public explanation of the source and group boundaries used for a Library
+ * research turn. A group is used only when it appears in the current question;
+ * it is never a persistent attribute or an assumption about the reader.
+ */
+export function getLibraryResearchScope(question: string): LibraryResearchScope {
+  const policy = getResearchPolicy(question);
+  const sourceStandard: Record<ResearchDomain, string> = {
+    medical: "Public-health authorities, peer-reviewed medical journals, systematic reviews, and established health research organizations.",
+    legal: "Government, court, legal-aid, bar-association, and established civil-rights or academic legal sources.",
+    financial: "Financial regulators, government agencies, academic and established nonprofit economic research organizations.",
+    education: "Education agencies, accredited institutions, official student-aid sources, and established scholarship organizations.",
+    stem: "Government science agencies, academic institutions, and established scientific or professional organizations.",
+    history: "Archives, museums, government records, universities, and established historical research organizations.",
+    general: "Established public-interest, educational, archival, and research organizations matched to the question.",
+  };
+  const connectedTopics: Record<ResearchDomain, Array<{ label: string; href: string }>> = {
+    medical: [
+      { label: "Health & Wellness", href: "/library/topics/health-wellness" },
+      { label: "Community Resources", href: "/library/topics/community-resources-help" },
+    ],
+    legal: [
+      { label: "Housing & Home", href: "/library/topics/housing-home" },
+      { label: "Community Resources", href: "/library/topics/community-resources-help" },
+    ],
+    financial: [
+      { label: "Money & Economic Mobility", href: "/library/topics/money-economic-mobility" },
+      { label: "Careers & Professional Life", href: "/library/topics/careers-professional-life" },
+    ],
+    education: [
+      { label: "Education & Learning", href: "/library/topics/education-learning" },
+      { label: "Trades & Certifications", href: "/library/topics/trades-skills-certifications" },
+    ],
+    stem: [
+      { label: "Education & Learning", href: "/library/topics/education-learning" },
+      { label: "Careers & Professional Life", href: "/library/topics/careers-professional-life" },
+    ],
+    history: [
+      { label: "Culture & Heritage", href: "/library/topics/culture-heritage" },
+      { label: "Community Resources", href: "/library/topics/community-resources-help" },
+    ],
+    general: [
+      { label: "Community Resources", href: "/library/topics/community-resources-help" },
+      { label: "Careers & Professional Life", href: "/library/topics/careers-professional-life" },
+    ],
+  };
+  const requestedGroup = groupLanguageFromQuestion(question);
+  return {
+    domain: policy.domain,
+    sourceStandard: sourceStandard[policy.domain],
+    requestedGroup,
+    groupGuidance: requestedGroup
+      ? `This research addresses the explicitly requested group: ${requestedGroup}. It does not assume that this group describes the reader.`
+      : "No community, demographic, or life-stage group was assumed. Add one to the question when it would change the evidence you want to review.",
+    connectedTopics: connectedTopics[policy.domain],
+  };
 }
 
 /**

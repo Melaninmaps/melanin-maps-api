@@ -64,4 +64,15 @@ describe("OpenAI Library writer request compatibility", () => {
     });
     expect(body).not.toHaveProperty("max_completion_tokens");
   });
+
+  it("requires evidence-led sections and explicit-group safeguards in the research brief", async () => {
+    const body = await requestFor("gpt-5-mini");
+    const messages = body.messages as Array<{ role: string; content: string }>;
+    const system = messages.find((message) => message.role === "system")?.content ?? "";
+    expect(system).toContain("## What the evidence says");
+    expect(system).toContain("## What to consider next");
+    expect(system).toMatch(/only about the group explicitly named/i);
+    expect(system).toMatch(/does not work for a demographic group unless supplied high-quality evidence/i);
+    expect(system).toMatch(/Do not claim a source author has an identity/i);
+  });
 });
