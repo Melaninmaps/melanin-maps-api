@@ -1,6 +1,6 @@
 {
-  "lastIosSubmitted": 107,
-  "lastAndroidSubmitted": 73,
+  "lastIosSubmitted": 110,
+  "lastAndroidSubmitted": 80,
   "iosEasBuildId": "7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
   "iosEasSubmissionId": "c5193c56-2e49-450f-ab43-194a4baf52e8",
   "iosArtifactUrl": "https://expo.dev/accounts/tlindsay428/projects/mobile/builds/7db1fa04-04a5-4d3f-badb-23fa0b80e21e",
@@ -9,5 +9,5 @@
   "androidArtifactUrl": "https://expo.dev/artifacts/eas/3kdQyf7pgJgqCpZM4Yat2mG4dYV69_jA-TYGtyxwUJ4.aab",
   "androidSubmissionStatus": "BUILD_COMPLETE_SUBMIT_PENDING_CREDENTIAL",
   "sourceCommit": "4af512bc70e030beafd4f256aa8034be0c833bc8",
-  "notes": "iOS builds 106 and 107 already exist in EAS/App Store Connect history. Build 108 is reserved for the next production iOS archive so it can be uploaded without a duplicate build-number rejection. Android VC73 is the last locally recorded Android submission; confirm Google Play's current highest version code before submitting a new Android bundle."
+  "notes": "Store release history confirmed by the owner: iOS 1.1.8 (build 110) and Android 1.1.6 (versionCode 80) are the last submitted versions. The next release is iOS 1.1.9 (build 111) and Android 1.1.7 (versionCode 81). Reconfirm the store consoles before submission if another release is uploaded first."
 }
