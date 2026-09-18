@@ -912,6 +912,10 @@ function TravelPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [feedback, setFeedback] = useState<Record<string, "like" | "dislike">>({});
+  const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
+  const [responseFeedbackNotes, setResponseFeedbackNotes] = useState<Record<string, string>>({});
+  const [responseFeedbackSaving, setResponseFeedbackSaving] = useState<string | null>(null);
+  const [responseFeedbackError, setResponseFeedbackError] = useState<Record<string, string>>({});
   const [showPrefs, setShowPrefs] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
@@ -1600,6 +1604,47 @@ function TravelPage() {
     });
   };
 
+  const submitResponseFeedback = async (
+    message: Message,
+    reaction: "helpful" | "not_helpful",
+    includeNote = false,
+  ) => {
+    if (!isLoggedIn) return;
+    const previous = responseFeedback[message.id];
+    setResponseFeedback(prev => ({ ...prev, [message.id]: reaction }));
+    setResponseFeedbackError(prev => {
+      const next = { ...prev };
+      delete next[message.id];
+      return next;
+    });
+    setResponseFeedbackSaving(message.id);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/response-feedback`, {
+        method: "PUT",
+        credentials: "include",
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          sessionId,
+          messageId: message.id,
+          reaction,
+          note: includeNote ? responseFeedbackNotes[message.id]?.trim() || null : null,
+          intentClass: message.intentClass ?? null,
+        }),
+      });
+      if (!response.ok) throw new Error("Feedback was not saved");
+    } catch {
+      setResponseFeedback(current => {
+        const next = { ...current };
+        if (previous) next[message.id] = previous;
+        else delete next[message.id];
+        return next;
+      });
+      setResponseFeedbackError(prev => ({ ...prev, [message.id]: "Feedback was not saved. Please try again." }));
+    } finally {
+      setResponseFeedbackSaving(null);
+    }
+  };
+
   const shareTrip = async () => {
     if (!sessionId) return;
     try {
@@ -1868,6 +1913,65 @@ function TravelPage() {
                             {playingId === msg.id ? "Stop" : "Listen"}
                           </button>
                           {voiceStatus[msg.id] && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/40">{voiceStatus[msg.id]}</span>}
+                        </div>
+                      )}
+                      {msg.role === "assistant" && isLoggedIn && msg.content.trim() && (
+                        <div className="mt-2" data-testid="kinfolk-response-feedback">
+                          <p className="mb-1 text-[10px] text-[#3A1F0E]/45">Was this helpful?</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => submitResponseFeedback(msg, "helpful")}
+                              disabled={responseFeedbackSaving === msg.id}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                                responseFeedback[msg.id] === "helpful"
+                                  ? "border-[#CA922B]/50 bg-[#CA922B]/10 text-[#8D5C17]"
+                                  : "border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/45 hover:border-[#CA922B]/35 hover:text-[#8D5C17]"
+                              }`}
+                              aria-label="Mark this Kinfolk answer helpful"
+                            >
+                              <ThumbsUp size={11} /> Helpful
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => submitResponseFeedback(msg, "not_helpful")}
+                              disabled={responseFeedbackSaving === msg.id}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                                responseFeedback[msg.id] === "not_helpful"
+                                  ? "border-[#CA922B]/50 bg-[#CA922B]/10 text-[#8D5C17]"
+                                  : "border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/45 hover:border-[#CA922B]/35 hover:text-[#8D5C17]"
+                              }`}
+                              aria-label="Mark this Kinfolk answer not helpful"
+                            >
+                              <ThumbsDown size={11} /> Not helpful
+                            </button>
+                            {responseFeedback[msg.id] && (
+                              <span className="text-[10px] italic text-[#3A1F0E]/40">Thanks — this helps Kinfolk tailor future answers for you.</span>
+                            )}
+                          </div>
+                          {responseFeedback[msg.id] === "not_helpful" && (
+                            <div className="mt-2 flex max-w-md items-center gap-2">
+                              <input
+                                value={responseFeedbackNotes[msg.id] ?? ""}
+                                onChange={(event) => setResponseFeedbackNotes(prev => ({ ...prev, [msg.id]: event.target.value }))}
+                                maxLength={240}
+                                placeholder="What should Kinfolk do better? (optional)"
+                                className="min-w-0 flex-1 rounded-lg border border-[#3A1F0E]/12 bg-white px-2.5 py-1.5 text-[11px] text-[#3A1F0E] outline-none placeholder:text-[#3A1F0E]/35 focus:border-[#CA922B]/50"
+                                aria-label="Optional Kinfolk feedback note"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => submitResponseFeedback(msg, "not_helpful", true)}
+                                disabled={responseFeedbackSaving === msg.id}
+                                className="rounded-lg bg-[#2B1507] px-2.5 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-[#5A3517] disabled:opacity-60"
+                              >
+                                Send note
+                              </button>
+                            </div>
+                          )}
+                          {responseFeedbackError[msg.id] && (
+                            <p role="status" className="mt-1 text-[10px] text-red-700">{responseFeedbackError[msg.id]}</p>
+                          )}
                         </div>
                       )}
                       {hasItineraryDays(msg.itinerary) && (

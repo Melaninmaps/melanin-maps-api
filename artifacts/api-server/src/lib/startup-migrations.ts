@@ -86,6 +86,23 @@ const PUBLIC_BUSINESSES_VIEW_FILTER =
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "kinfolk_response_feedback_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_response_feedback (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      session_id VARCHAR(255),
+      message_id VARCHAR(128) NOT NULL,
+      reaction VARCHAR(16) NOT NULL CHECK (reaction IN ('helpful', 'not_helpful')),
+      note TEXT,
+      intent_class VARCHAR(64),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, message_id)
+    );
+    CREATE INDEX IF NOT EXISTS kinfolk_response_feedback_user_created_idx
+      ON kinfolk_response_feedback (user_id, created_at DESC);`,
+  },
+  {
     name: "user_preferences_recommendation_life_stage_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS recommendation_life_stage VARCHAR(20) NOT NULL DEFAULT 'unspecified';

@@ -29,6 +29,7 @@ import {
   kinfolkSessionsTable,
   kinfolkPrivateMemoriesTable,
   kinfolkFeedbackTable,
+  kinfolkResponseFeedbackTable,
   savedPlacesTable,
   businessesTable,
   businessIdentityTable,
@@ -59,6 +60,7 @@ import {
   responseStyleToDelivery,
   type ResponseStyle,
 } from "../kinfolk/delivery-profile";
+import { buildKinfolkResponseFeedbackPrompt } from "../kinfolk/response-feedback";
 import {
   classifyKinfolkRequest,
   buildDiscoveryInstruction,
@@ -4832,6 +4834,63 @@ router.post("/kinfolk/feedback", async (req: Request, res: Response) => {
   }
 });
 
+// ─── PUT /api/kinfolk/response-feedback ──────────────────────────────────────
+// Feedback on Kinfolk's written answer. This is deliberately separate from a
+// like/dislike on a recommended business so the two signals cannot be confused.
+router.put("/kinfolk/response-feedback", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const { sessionId, messageId, reaction, note, intentClass } = req.body as Record<string, unknown>;
+  if (
+    typeof messageId !== "string" ||
+    messageId.trim().length === 0 ||
+    !["helpful", "not_helpful"].includes(reaction as string)
+  ) {
+    res.status(400).json({ error: "messageId and a valid reaction are required" });
+    return;
+  }
+  if (note !== undefined && note !== null && typeof note !== "string") {
+    res.status(400).json({ error: "note must be text when supplied" });
+    return;
+  }
+
+  // Keep personal free text deliberately small. The note is only a private
+  // preference cue for future answers, never a transcript or factual source.
+  const normalizedNote = typeof note === "string" ? note.trim().slice(0, 240) || null : null;
+  try {
+    await db
+      .insert(kinfolkResponseFeedbackTable)
+      .values({
+        userId: req.user.id,
+        sessionId: typeof sessionId === "string" ? sessionId : null,
+        messageId: messageId.trim(),
+        reaction: reaction as "helpful" | "not_helpful",
+        note: normalizedNote,
+        intentClass: typeof intentClass === "string" ? intentClass.slice(0, 64) : null,
+      })
+      .onConflictDoUpdate({
+        target: [
+          kinfolkResponseFeedbackTable.userId,
+          kinfolkResponseFeedbackTable.messageId,
+        ],
+        set: {
+          reaction: reaction as "helpful" | "not_helpful",
+          note: normalizedNote,
+          intentClass: typeof intentClass === "string" ? intentClass.slice(0, 64) : null,
+          sessionId: typeof sessionId === "string" ? sessionId : null,
+          updatedAt: new Date(),
+        },
+      });
+    res.json({ ok: true, reaction });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save Kinfolk response feedback");
+    res.status(500).json({ error: "KINFOLK_RESPONSE_FEEDBACK_SAVE_FAILED" });
+  }
+});
+
 // ─── GET /api/kinfolk/sessions ────────────────────────────────────────────────
 // Cache: 15-second per-user single-flight via getCachedSessions(). Hit/miss logged.
 router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
@@ -5746,6 +5805,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let likedSpots: string[] = [];
     let dislikedSpots: string[] = [];
     let savedPlaces: string[] = [];
+    let responseFeedbackPrompt = "";
 
     if (req.user?.id) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
@@ -5782,6 +5842,35 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         /* non-critical — proceed without feedback history */
       }
 
+      // Prior answer feedback is a member-owned preference signal. It never
+      // supplies facts and it is ignored when the member disables personalized
+      // suggestions below.
+      try {
+        const responseFeedback = await db
+          .select({
+            reaction: kinfolkResponseFeedbackTable.reaction,
+            note: kinfolkResponseFeedbackTable.note,
+            intentClass: kinfolkResponseFeedbackTable.intentClass,
+          })
+          .from(kinfolkResponseFeedbackTable)
+          .where(eq(kinfolkResponseFeedbackTable.userId, req.user.id))
+          .orderBy(desc(kinfolkResponseFeedbackTable.updatedAt))
+          .limit(12);
+        responseFeedbackPrompt = buildKinfolkResponseFeedbackPrompt(
+          responseFeedback.flatMap((feedback) =>
+            feedback.reaction === "helpful" || feedback.reaction === "not_helpful"
+              ? [{
+                  reaction: feedback.reaction,
+                  note: feedback.note,
+                  intentClass: feedback.intentClass,
+                }]
+              : [],
+          ),
+        );
+      } catch {
+        /* non-critical — proceed without response-feedback personalization */
+      }
+
       // Saved places
       try {
         const saved = await db
@@ -5808,6 +5897,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           likedSpots = [];
           dislikedSpots = [];
           savedPlaces = [];
+          responseFeedbackPrompt = "";
         }
       } catch {
         /* non-critical */
@@ -7756,10 +7846,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasRequestedVibes: vibes.length > 0,
     });
     const systemPromptWithLibrary = leanGeneralChat
-      ? buildLeanGeneralChatPrompt()
+      ? `${buildLeanGeneralChatPrompt()}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
+        (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
 
