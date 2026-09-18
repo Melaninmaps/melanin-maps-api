@@ -13,10 +13,14 @@ const BUSINESS_LOAD_ERROR =
 interface UseBusinessesOptions {
   search?: string;
   category?: string;
+  city?: string;
+  state?: string;
   latitude?: number | null;
   longitude?: number | null;
   radiusMiles?: number;
   designations?: readonly string[];
+  /** Prevent an unscoped request while a map surface awaits a locality. */
+  enabled?: boolean;
 }
 
 interface UseBusinessesResult {
@@ -123,10 +127,13 @@ export function useBusinesses(
   const {
     search = "",
     category = "All",
+    city = "",
+    state = "",
     latitude = null,
     longitude = null,
     radiusMiles = 25,
     designations = [],
+    enabled = true,
   } = options;
   const designationKey =
     normalizeOwnershipDesignationFilterIds(designations).join(",");
@@ -136,7 +143,15 @@ export function useBusinesses(
   const requestIdRef = useRef(0);
 
   const fetchBusinesses = useCallback(async () => {
+    // Advance first so disabling a map scope also invalidates an in-flight
+    // unscoped response before it can paint stale pins.
     const requestId = ++requestIdRef.current;
+    if (!enabled) {
+      setBusinesses([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -145,6 +160,8 @@ export function useBusinesses(
       const params = new URLSearchParams();
       if (search.length > 0) params.set("search", search);
       if (category && category !== "All") params.set("category", category);
+      if (city.trim()) params.set("city", city.trim());
+      if (state.trim()) params.set("state", state.trim());
       if (designationKey) params.set("designations", designationKey);
       if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
         params.set("lat", String(latitude));
@@ -184,7 +201,7 @@ export function useBusinesses(
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [search, category, latitude, longitude, radiusMiles, designationKey]);
+  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);

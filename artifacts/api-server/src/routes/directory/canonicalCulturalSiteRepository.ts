@@ -5,8 +5,20 @@ export type CanonicalCulturalSite = {
   slug: string;
   name: string;
   description: string | null;
+  category: string | null;
+  heritageCategory: string | null;
+  subcategory: string | null;
+  culturalCommunity: string | null;
+  visitTip: string | null;
+  contentNote: string | null;
+  pinType: string | null;
+  listingStatus: string | null;
+  era: string | null;
+  significance: string | null;
+  yearEstablished: number | null;
   city: string | null;
   stateCode: string | null;
+  address: string | null;
   latitude: number | null;
   longitude: number | null;
   imageUrl: string | null;
@@ -27,8 +39,13 @@ export class CanonicalCulturalSiteRepository {
 
   async findById(id: string): Promise<CanonicalCulturalSite | null> {
     const { rows } = await this.pool.query<CanonicalCulturalSite>(
-      `SELECT id, ${DERIVED_SLUG_SQL} AS slug, name, description, city, state AS "stateCode",
-              latitude, longitude, image_url AS "imageUrl",
+      `SELECT id, ${DERIVED_SLUG_SQL} AS slug, name, description, category,
+              heritage_category AS "heritageCategory", subcategory,
+              cultural_community AS "culturalCommunity", visit_tip AS "visitTip",
+              content_note AS "contentNote", pin_type AS "pinType",
+              listing_status AS "listingStatus", era, significance,
+              year_established AS "yearEstablished", city, state AS "stateCode",
+              address, latitude, longitude, image_url AS "imageUrl",
               external_url AS "learnMoreUrl"
        FROM cultural_sites
        WHERE id = $1
@@ -49,17 +66,33 @@ export class CanonicalCulturalSiteRepository {
     return rows[0] ?? null;
   }
 
-  async listMapCards(cityId?: string) {
-    // cityId filter is optional — when absent returns all geocoded sites.
-    // Note: cultural_sites uses a city text column, not a city_id FK in production.
-    void cityId;
+  async listMapCards(city?: string, state?: string) {
+    // cultural_sites stores city/state text rather than a city FK. Optional
+    // filters make local map views locality-first while preserving explicit
+    // all-area exploration for callers that omit them.
+    const conditions = ["latitude IS NOT NULL", "longitude IS NOT NULL"];
+    const params: string[] = [];
+    if (city?.trim()) {
+      params.push(city.trim());
+      conditions.push(`LOWER(city) = LOWER($${params.length})`);
+    }
+    if (state?.trim()) {
+      params.push(state.trim());
+      conditions.push(`UPPER(state) = UPPER($${params.length})`);
+    }
     const { rows } = await this.pool.query<CanonicalCulturalSite>(
-      `SELECT id, ${DERIVED_SLUG_SQL} AS slug, name, description, city, state AS "stateCode",
-              latitude, longitude, image_url AS "imageUrl",
+      `SELECT id, ${DERIVED_SLUG_SQL} AS slug, name, description, category,
+              heritage_category AS "heritageCategory", subcategory,
+              cultural_community AS "culturalCommunity", visit_tip AS "visitTip",
+              content_note AS "contentNote", pin_type AS "pinType",
+              listing_status AS "listingStatus", era, significance,
+              year_established AS "yearEstablished", city, state AS "stateCode",
+              address, latitude, longitude, image_url AS "imageUrl",
               external_url AS "learnMoreUrl"
        FROM cultural_sites
-       WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+       WHERE ${conditions.join(" AND ")}
        ORDER BY name ASC`,
+      params,
     );
     return rows.map((site) => ({ ...site, detailUrl: canonicalCulturalSitePath(site) }));
   }

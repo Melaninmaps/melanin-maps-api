@@ -30,9 +30,10 @@ const repository = new CanonicalCulturalSiteRepository(pool);
 
 router.get("/cultural-sites", async (req: Request, res: Response, next) => {
   try {
-    const cityId = typeof req.query.cityId === "string" ? req.query.cityId : undefined;
+    const city = typeof req.query.city === "string" ? req.query.city : undefined;
+    const state = typeof req.query.state === "string" ? req.query.state : undefined;
     res.setHeader("Cache-Control", "no-store");
-    const items = (await repository.listMapCards(cityId)).map((site) => ({
+    const items = (await repository.listMapCards(city, state)).map((site) => ({
       ...site,
       state: site.stateCode,
       externalUrl: site.learnMoreUrl,

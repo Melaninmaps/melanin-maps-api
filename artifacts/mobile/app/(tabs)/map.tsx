@@ -7,12 +7,16 @@ export default function MapScreen() {
     focusSiteId?: string;
     focusLat?: string;
     focusLng?: string;
+    city?: string;
+    state?: string;
   }>();
   return (
     <FullMapView
       focusSiteId={params.focusSiteId}
       focusLat={params.focusLat}
       focusLng={params.focusLng}
+      searchCity={params.city}
+      searchState={params.state}
     />
   );
 }
