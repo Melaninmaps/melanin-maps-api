@@ -1,0 +1,220 @@
+{
+  "checkedAt": "2026-09-18T21:51:16.316Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-sixth-three-city-review/data/founder-imports/2026-09-18-sixth-three-city-review/review-package/sixth-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 33,
+  "uniqueDestinations": 34,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 34,
+  "counts": {
+    "reachable": 31,
+    "review_required": 1,
+    "timeout": 2
+  },
+  "results": [
+    {
+      "url": "https://www.houseofgladitude.com/",
+      "status": 200,
+      "finalUrl": "https://www.houseofgladitude.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackarchives.org/",
+      "status": 200,
+      "finalUrl": "https://blackarchives.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/bccgkc/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fbccgkc%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blissbooksandwine.com/",
+      "status": 200,
+      "finalUrl": "https://www.blissbooksandwine.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bluenilekc.com/",
+      "status": 403,
+      "finalUrl": "https://bluenilekc.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.fanniescuisine.com/",
+      "status": 200,
+      "finalUrl": "https://www.fanniescuisine.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fbckcmo.org/",
+      "status": 200,
+      "finalUrl": "https://fbckcmo.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/heartlandblackchamber/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fheartlandblackchamber%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/hispanicchamberkc?igsh=NTc4MTIwNjQ2YQ==",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhispanicchamberkc%3Figsh%3DNTc4MTIwNjQ2YQ%253D%253D&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.islandspicekc.com/",
+      "status": 200,
+      "finalUrl": "https://www.islandspicekc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kchispanicnews.com/",
+      "status": 200,
+      "finalUrl": "https://kchispanicnews.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kcblackowned.org/",
+      "status": 200,
+      "finalUrl": "https://www.kcblackowned.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kchealthinitiative.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.nlbm.com/",
+      "status": 200,
+      "finalUrl": "https://www.nlbm.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rubyjeansjuicery.com/",
+      "status": 200,
+      "finalUrl": "https://www.rubyjeansjuicery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ulkc.org/",
+      "status": 200,
+      "finalUrl": "https://www.ulkc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lxvemxffin.com/",
+      "status": 200,
+      "finalUrl": "https://www.lxvemxffin.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blissfullypopped.com/",
+      "status": 200,
+      "finalUrl": "https://www.blissfullypopped.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cherylsherbs.com/",
+      "status": 200,
+      "finalUrl": "https://cherylsherbs.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.naildoctor.net/",
+      "status": 200,
+      "finalUrl": "https://www.naildoctor.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.saintlouisboxingclub.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.sistalovebykimmie.com/",
+      "status": 200,
+      "finalUrl": "https://www.sistalovebykimmie.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/SweetToothBakeryStl/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/SweetToothBakeryStl/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/profile.php?id=100063898009518",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/people/Vintage-Gold/100063898009518/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.100blackmensa.org/",
+      "status": 200,
+      "finalUrl": "https://www.100blackmensa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.adreamweaverflorist.com/",
+      "status": 200,
+      "finalUrl": "http://adreamweaverflorist.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://esperanzacenter.org/",
+      "status": 200,
+      "finalUrl": "https://esperanzacenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://esperanzacenter.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://esperanzacenter.org/join-us/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://guadalupeculturalarts.org/",
+      "status": 200,
+      "finalUrl": "https://guadalupeculturalarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://guadalupeculturalarts.org/guadalupe-latino-bookstore/",
+      "status": 200,
+      "finalUrl": "https://guadalupeculturalarts.org/guadalupe-latino-bookstore/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://saaacam.org/",
+      "status": 200,
+      "finalUrl": "https://saaacam.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sagesa.org/",
+      "status": 200,
+      "finalUrl": "https://sagesa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/sahispaniccc/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsahispaniccc%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebigbib.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebigbib.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}

@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-09-18T21:50:29.822Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "kansas-city-candidates.jsonl",
+    "san-antonio-candidates.jsonl",
+    "st-louis-candidates.jsonl"
+  ],
+  "inputRows": 34,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 34,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "physicalAddressCandidates": 34,
+  "onlineOnlyCandidates": 0,
+  "targetKinds": {
+    "business": 16,
+    "community_resource": 12,
+    "cultural_place": 5,
+    "regulated_review": 1
+  },
+  "categories": {
+    "Community & Civic": 7,
+    "Food & Beverage": 6,
+    "Community services": 5,
+    "Arts & culture": 3,
+    "Retail": 3,
+    "Beauty & Personal Care": 2,
+    "Culture & Heritage": 2,
+    "Fitness & Recreation": 1,
+    "Fitness & Wellness": 1,
+    "Food & beverage": 1,
+    "Media": 1,
+    "Shopping": 1,
+    "Shopping & services": 1
+  },
+  "states": {
+    "Kansas City, MO": 15,
+    "San Antonio, TX": 10,
+    "Maplewood, MO": 7,
+    "Grandview, MO": 1,
+    "Live Oak, TX": 1
+  },
+  "officialCustomerDestinationCoverage": 34,
+  "files": {
+    "candidates": "sixth-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "sixth-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "sixth-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "sixth-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "3e886935bc03f1fa2984009b310c920cd55c2b3a6653c702691c742acd2b9aac"
+}
