@@ -47,6 +47,17 @@ import {
 } from "@/lib/kinfolkVoicePreferences";
 import { createVoicePlaybackGuard } from "@/lib/voicePlaybackGuard";
 import { useAgeAssurance } from "@/hooks/useAgeAssurance";
+import {
+  isNearConversationBottom,
+  scrollConversationToBottom,
+  shouldScrollConversation,
+  type ConversationScrollReason,
+} from "@/features/kinfolk/conversationScroll";
+import {
+  isExplicitSavingsGoalPrompt,
+  PRIVATE_FINANCIAL_GOAL_OFFER_COPY,
+  PRIVATE_FINANCIAL_GOAL_ROUTE,
+} from "@/features/financial-goals/privateFinancialGoalMath";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -159,6 +170,8 @@ interface Message {
   imageUrls?: string[];
   experience?: KinfolkExperience | null;
   resultView?: ConversationalBusinessResultView | null;
+  /** Client-only, conservative navigation offer. No prompt data is transferred. */
+  privateFinancialGoalOffer?: boolean;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -929,6 +942,8 @@ function TravelPage() {
   );
 
   const msgContainerRef = useRef<HTMLDivElement>(null);
+  const isConversationNearBottomRef = useRef(true);
+  const pendingConversationScrollRef = useRef<ConversationScrollReason>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const responseStatusTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
@@ -1416,13 +1431,30 @@ function TravelPage() {
 
   useEffect(() => { loadSessions(); loadPrefs(); }, [loadSessions, loadPrefs]);
 
-  // Scroll the message container — not the window — when messages or sending
-  // state change. Using scrollTop directly on the container ref prevents
-  // scrollIntoView from escalating past the container to the browser window,
-  // which was exposing the global site footer on every message send.
+  // The viewport scrolls only inside the dedicated conversation pane. In this
+  // flex layout `min-h-0` on the pane's ancestors is required for overflow-y-auto
+  // to be the active scroll element rather than letting the document (and footer)
+  // grow. A submitted prompt and its completed answer are explicit navigation
+  // events; other updates follow only when the person stayed near the bottom.
+  const handleConversationScroll = useCallback(() => {
+    const element = msgContainerRef.current;
+    if (element) isConversationNearBottomRef.current = isNearConversationBottom(element);
+  }, []);
+
+  const requestConversationScroll = useCallback((reason: Exclude<ConversationScrollReason, null>) => {
+    pendingConversationScrollRef.current = reason;
+  }, []);
+
   useEffect(() => {
-    const el = msgContainerRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    const element = msgContainerRef.current;
+    if (!element) return;
+
+    const reason = pendingConversationScrollRef.current;
+    if (shouldScrollConversation(isConversationNearBottomRef.current, reason)) {
+      scrollConversationToBottom(element);
+      isConversationNearBottomRef.current = true;
+    }
+    pendingConversationScrollRef.current = null;
   }, [messages, sending]);
 
   const uploadKinfolkImage = useCallback(async (file: File) => {
@@ -1454,6 +1486,7 @@ function TravelPage() {
     const attachedImages = [...imageUrls];
     const shouldRemember = rememberThis;
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString(), imageUrls: attachedImages };
+    requestConversationScroll("send");
     setMessages(prev => [...prev, userMsg]);
     // Status stages describe only local elapsed request time. Clear any prior
     // stage before starting a new request so stale copy can never linger.
@@ -1499,6 +1532,7 @@ function TravelPage() {
             errMsg = "Kinfolk took a little too long on that one. Try again in a moment.";
           }
         } catch { /* ignore parse error */ }
+        requestConversationScroll("completion");
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: errMsg, timestamp: new Date().toISOString() }]);
         if (isBusy) return; // Input already restored — don't clear it in finally
         return;
@@ -1561,6 +1595,7 @@ function TravelPage() {
       }
       // Capture the ID so we can wire the clarifier to this specific message.
       const assistantMsgId = crypto.randomUUID();
+      requestConversationScroll("completion");
       setMessages(prev => [...prev, {
         id: assistantMsgId, role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
@@ -1589,6 +1624,7 @@ function TravelPage() {
         needsClarification: data.needsClarification === true,
         originalQuery: data.originalQuery ?? trimmed,
         experience: data.experience ?? null,
+        privateFinancialGoalOffer: Boolean(data.reply?.trim()) && isExplicitSavingsGoalPrompt(trimmed),
       }]);
       if (shouldAutoSpeakNewReply({
         autoSpeak: prefs.autoSpeak,
@@ -1613,6 +1649,7 @@ function TravelPage() {
         const msg = isTimeout
           ? "Kinfolk is taking longer than expected. Try again in a moment."
           : "Something went sideways on my end — try again in a sec.";
+        requestConversationScroll("completion");
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: msg, timestamp: new Date().toISOString() }]);
       }
     } finally {
@@ -1772,7 +1809,7 @@ function TravelPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-screen bg-[#FAF6EF] overflow-hidden">
+    <div className="flex h-[calc(100dvh-8rem)] min-h-0 flex-col overflow-hidden bg-[#FAF6EF] sm:h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)]">
       {/* Copy toast */}
       {copyToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2B1507] text-[#F5EBD8] px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
@@ -1886,7 +1923,7 @@ function TravelPage() {
         </div>
 
         {/* Main chat area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 flex flex-col overflow-hidden">
 
           {/* Not logged in */}
           {!authLoading && !isLoggedIn && (
@@ -1910,7 +1947,7 @@ function TravelPage() {
           {/* Chat */}
           {isLoggedIn && (
             <>
-              <div ref={msgContainerRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+              <div ref={msgContainerRef} onScroll={handleConversationScroll} data-testid="kinfolk-conversation-scroll-region" className="min-h-0 flex-1 overflow-y-auto px-4 py-6 space-y-4">
                 {isEmpty && (
                   <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
                     <div className="w-16 h-16 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center mb-5">
@@ -2080,6 +2117,18 @@ function TravelPage() {
                       {msg.resultView && <ConversationalBusinessCards view={msg.resultView} />}
                       {msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
+                      )}
+                      {msg.role === "assistant" && msg.privateFinancialGoalOffer && (
+                        <aside data-testid="kinfolk-private-financial-goal-offer" className="mt-3 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4">
+                          <p className="text-xs font-semibold text-[#2B1507]">Want a separate place to try simple savings-goal math?</p>
+                          <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/65">{PRIVATE_FINANCIAL_GOAL_OFFER_COPY}</p>
+                          <Link
+                            href={PRIVATE_FINANCIAL_GOAL_ROUTE}
+                            className="mt-3 inline-flex rounded-full bg-[#2B1507] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#3D2210]"
+                          >
+                            Create a private financial goal
+                          </Link>
+                        </aside>
                       )}
                       {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">

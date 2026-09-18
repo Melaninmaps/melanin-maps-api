@@ -62,6 +62,7 @@ import Mentorship from "@/pages/mentorship";
 import RateNeighborhood from "@/pages/rate-neighborhood";
 import ReferralRedirect from "@/pages/referral-redirect";
 import Resources from "@/pages/resources";
+import FinancialGoals from "@/pages/financial-goals";
 import SharedTrip from "@/pages/shared-trip";
 import DeleteAccount from "@/pages/delete-account";
 import BusinessResponse from "@/pages/business-response";
@@ -375,6 +376,9 @@ function Router() {
       </Route>
       <Route path="/travel">
         <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/resources/financial-goals">
+        <Layout><PreLaunchRoute><FinancialGoals /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/resources">
         <Layout><PreLaunchRoute><Resources /></PreLaunchRoute></Layout>

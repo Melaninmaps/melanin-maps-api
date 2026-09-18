@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ExternalLink, Phone, MessageCircle, Heart, MapPin, Search, Shield, AlertCircle } from "lucide-react";
+import { ExternalLink, Phone, MessageCircle, Heart, MapPin, Search, Shield, AlertCircle, Target } from "lucide-react";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { Link } from "wouter";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -86,6 +87,31 @@ function ResourceCard({ r }: { r: Resource }) {
         {r.action}
       </a>
     </div>
+  );
+}
+
+function FinancialGoalsResourceCard() {
+  return (
+    <section className="rounded-2xl border border-[#CA922B]/30 bg-[#FFF8EC] p-6 shadow-sm">
+      <div className="flex items-start gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#CA922B]/15">
+          <Target className="h-5 w-5 text-[#8D5C17]" aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8D5C17]">Private worksheet</p>
+          <h2 className="mt-1 font-serif text-2xl font-bold text-[#2B1507]">Financial Goals</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#3A1F0E]/75">
+            Optional, on-page planning math for a savings goal such as a car. Details stay in temporary browser state and are not stored by the app.
+          </p>
+          <Link
+            href="/resources/financial-goals"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#2B1507] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3D2210]"
+          >
+            Create a private financial goal
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -204,6 +230,8 @@ export default function Resources() {
 
       {/* Sections */}
       <div className="container mx-auto px-4 md:px-6 py-16 flex flex-col gap-16">
+        <FinancialGoalsResourceCard />
+
         <section>
           <div className="mb-6">
             <h2 className="font-serif text-3xl font-bold text-[#2B1507]">Search Community Resources</h2>
