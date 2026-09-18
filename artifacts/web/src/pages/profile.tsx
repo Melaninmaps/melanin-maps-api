@@ -53,6 +53,7 @@ import {
   Trash2,
   Sparkles,
   X,
+  Pencil,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import KinfolkTonePreference from "@/components/kinfolk/KinfolkTonePreference";
@@ -790,6 +791,311 @@ function BadgePanel({
   );
 }
 
+// ─── Social profile hub ───────────────────────────────────────────────────────
+
+type ProfileHubSection = "overview" | "activity" | "saved" | "circles" | "settings";
+
+type ProfileHubProps = {
+  activeSection: ProfileHubSection;
+  onSectionChange: (section: ProfileHubSection) => void;
+  profile: any;
+  avatarPreview: string | null;
+  isPrivate: boolean;
+  savedIds: string[];
+  reviewCount: number | null;
+  postCount: number | null;
+  followersCount: number | null;
+  followingCount: number | null;
+  connectionsCount: number | null;
+  recentReviews: Array<{
+    id: string;
+    businessId: string;
+    rating: number;
+    body: string | null;
+    badge: string | null;
+    createdAt: string;
+  }>;
+  circles: Array<{ id: string; name: string; memberCount?: number; description?: string }>;
+  isBusinessOwner: boolean;
+};
+
+/**
+ * A member-owned, information-first profile landing area. It deliberately uses
+ * only account-scoped data that the existing endpoints already return. Public
+ * member privacy remains enforced by the server-side member profile endpoint.
+ */
+function SocialProfileHub({
+  activeSection,
+  onSectionChange,
+  profile,
+  avatarPreview,
+  isPrivate,
+  savedIds,
+  reviewCount,
+  postCount,
+  followersCount,
+  followingCount,
+  connectionsCount,
+  recentReviews,
+  circles,
+  isBusinessOwner,
+}: ProfileHubProps) {
+  const displayName = [profile?.firstName, profile?.lastName]
+    .filter(Boolean)
+    .join(" ") || profile?.username || "Your profile";
+  const initial = profile?.firstName?.[0] || profile?.username?.[0] || "M";
+  const tabs: Array<{ id: ProfileHubSection; label: string }> = [
+    { id: "overview", label: "Overview" },
+    { id: "activity", label: "Activity" },
+    { id: "saved", label: "Saved" },
+    { id: "circles", label: "Circles" },
+    { id: "settings", label: "Account & settings" },
+  ];
+
+  return (
+    <section aria-label="Social profile hub" className="mb-8 overflow-hidden rounded-3xl border border-[#3A1F0E]/10 bg-white shadow-sm">
+      <div className="bg-gradient-to-r from-[#2B1507] via-[#4A2711] to-[#8D5C17] px-5 pb-7 pt-8 sm:px-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex min-w-0 items-end gap-4">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#CA922B] text-2xl font-serif font-bold text-white shadow-lg">
+              {avatarPreview || profile?.profileImageUrl ? (
+                <img src={avatarPreview ?? profile.profileImageUrl} alt="Your profile" className="h-full w-full object-cover" />
+              ) : initial.toUpperCase()}
+            </div>
+            <div className="min-w-0 pb-0.5 text-white">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#F5EBD8]/70">Member profile</p>
+              <h1 className="truncate font-serif text-3xl font-bold tracking-tight sm:text-4xl">{displayName}</h1>
+              {profile?.username ? <p className="mt-0.5 text-sm text-[#F5EBD8]/80">@{profile.username}</p> : null}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <button
+              type="button"
+              onClick={() => onSectionChange("settings")}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-[#2B1507] transition-colors hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#4A2711]"
+            >
+              <Pencil className="h-4 w-4" /> Edit profile
+            </button>
+            <button
+              type="button"
+              onClick={() => onSectionChange("settings")}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3.5 py-2 text-sm font-bold text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#4A2711]"
+            >
+              <Settings className="h-4 w-4" /> Account controls
+            </button>
+          </div>
+        </div>
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-[#F5EBD8]/90">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 font-semibold">
+            {isPrivate ? <Lock className="h-3.5 w-3.5" /> : <Globe className="h-3.5 w-3.5" />}
+            {isPrivate ? "Private profile" : "Community-visible profile"}
+          </span>
+          {profile?.jobTitle || profile?.industry ? <span className="text-[#F5EBD8]/80">{[profile.jobTitle, profile.industry].filter(Boolean).join(" · ")}</span> : null}
+        </div>
+        {profile?.bio ? <p className="mt-3 max-w-3xl text-sm leading-6 text-[#F5EBD8]/90">{profile.bio}</p> : <p className="mt-3 max-w-3xl text-sm leading-6 text-[#F5EBD8]/70">Add a short bio in Account & settings to help people understand what you want to share.</p>}
+      </div>
+
+      <div className="grid grid-cols-2 divide-x divide-y divide-[#3A1F0E]/8 sm:grid-cols-6 sm:divide-y-0">
+        <Link href="/connections" className="group p-4 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#CA922B]">
+          <div className="font-serif text-2xl font-bold text-[#2B1507]">{connectionsCount ?? "—"}</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#3A1F0E]/55 group-hover:text-[#CA922B]">Connections</div>
+        </Link>
+        <Link href="/connections" className="group p-4 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#CA922B]">
+          <div className="font-serif text-2xl font-bold text-[#2B1507]">{followersCount ?? "—"}</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#3A1F0E]/55 group-hover:text-[#CA922B]">Followers</div>
+        </Link>
+        <Link href="/connections" className="group p-4 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#CA922B]">
+          <div className="font-serif text-2xl font-bold text-[#2B1507]">{followingCount ?? "—"}</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#3A1F0E]/55 group-hover:text-[#CA922B]">Following</div>
+        </Link>
+        <button type="button" onClick={() => onSectionChange("activity")} className="p-4 text-center transition-colors hover:bg-[#FAF6EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#CA922B]">
+          <div className="font-serif text-2xl font-bold text-[#2B1507]">{postCount ?? "—"}</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#3A1F0E]/55">Community posts</div>
+        </button>
+        <button type="button" onClick={() => onSectionChange("activity")} className="p-4 text-center transition-colors hover:bg-[#FAF6EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#CA922B]">
+          <div className="font-serif text-2xl font-bold text-[#2B1507]">{reviewCount ?? "—"}</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#3A1F0E]/55">Reviews</div>
+        </button>
+        <button type="button" onClick={() => onSectionChange("saved")} className="p-4 text-center transition-colors hover:bg-[#FAF6EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#CA922B]">
+          <div className="font-serif text-2xl font-bold text-[#2B1507]">{savedIds.length}</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#3A1F0E]/55">Saved places</div>
+        </button>
+      </div>
+
+      <div className="border-y border-[#3A1F0E]/10 bg-[#FFFDF9] px-3 sm:px-5">
+        <div role="tablist" aria-label="Profile sections" className="flex gap-1 overflow-x-auto py-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={`profile-tab-${tab.id}`}
+              aria-selected={activeSection === tab.id}
+              aria-controls={`profile-panel-${tab.id}`}
+              onClick={() => onSectionChange(tab.id)}
+              className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] ${activeSection === tab.id ? "bg-[#2B1507] text-white" : "text-[#3A1F0E]/65 hover:bg-[#F5EBD8] hover:text-[#2B1507]"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div
+        id={`profile-panel-${activeSection}`}
+        role="tabpanel"
+        aria-labelledby={`profile-tab-${activeSection}`}
+        className="p-5 sm:p-7"
+      >
+        {activeSection === "overview" && (
+          <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+            <section className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-serif text-2xl font-bold text-[#2B1507]">At a glance</h2>
+                  <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">Your social information stays organized here; public visibility still follows your current privacy setting.</p>
+                </div>
+                <Users className="h-6 w-6 shrink-0 text-[#CA922B]" />
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <Link href="/connections" className="rounded-xl border border-[#3A1F0E]/10 bg-white p-4 transition-colors hover:border-[#CA922B]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                  <Users className="h-5 w-5 text-[#CA922B]" />
+                  <h3 className="mt-2 font-bold text-[#2B1507]">Connections</h3>
+                  <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{connectionsCount === null ? "Manage connections and requests." : `${connectionsCount} accepted ${connectionsCount === 1 ? "connection" : "connections"}.`} Follow counts remain labeled as followers and following.</p>
+                </Link>
+                <Link href="/community" className="rounded-xl border border-[#3A1F0E]/10 bg-white p-4 transition-colors hover:border-[#CA922B]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                  <MessageCircle className="h-5 w-5 text-[#CA922B]" />
+                  <h3 className="mt-2 font-bold text-[#2B1507]">Community activity</h3>
+                  <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">Open your existing Community conversations and posts.</p>
+                </Link>
+                <button type="button" onClick={() => onSectionChange("saved")} className="rounded-xl border border-[#3A1F0E]/10 bg-white p-4 text-left transition-colors hover:border-[#CA922B]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                  <Save className="h-5 w-5 text-[#CA922B]" />
+                  <h3 className="mt-2 font-bold text-[#2B1507]">Saved businesses</h3>
+                  <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">Only your account can see this real saved-place list.</p>
+                </button>
+                <button type="button" onClick={() => onSectionChange("circles")} className="rounded-xl border border-[#3A1F0E]/10 bg-white p-4 text-left transition-colors hover:border-[#CA922B]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                  <Users className="h-5 w-5 text-[#CA922B]" />
+                  <h3 className="mt-2 font-bold text-[#2B1507]">Circles</h3>
+                  <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">Visit your existing Circle spaces and their member-managed conversations.</p>
+                </button>
+              </div>
+            </section>
+            <section className="rounded-2xl border border-dashed border-[#3A1F0E]/20 bg-white p-5">
+              <Camera className="h-6 w-6 text-[#CA922B]" />
+              <h2 className="mt-3 font-serif text-xl font-bold text-[#2B1507]">Photos & videos</h2>
+              <p className="mt-2 text-sm leading-6 text-[#3A1F0E]/65">A separate profile media gallery is not available. Existing community photos and videos remain in their original posts.</p>
+              <Link href="/community" className="mt-4 inline-flex text-sm font-bold text-[#8D5C17] hover:underline">View Community activity →</Link>
+            </section>
+          </div>
+        )}
+
+        {activeSection === "activity" && (
+          <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+            <section className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Reviews & comments</h2>
+                  <p className="mt-1 text-sm text-[#3A1F0E]/60">Recent reviews from your account. Comments stay with the Community posts where they were made.</p>
+                </div>
+                <Star className="h-6 w-6 text-[#CA922B]" />
+              </div>
+              {recentReviews.length ? (
+                <div className="mt-5 space-y-3">
+                  {recentReviews.map((review) => (
+                    <Link key={review.id} href={`/businesses/${review.businessId}`} className="block rounded-xl bg-[#FAF6EF] p-4 transition-colors hover:bg-[#F0E8D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-bold text-[#8D5C17]" aria-label={`${review.rating} out of 5 stars`}>{"★".repeat(Math.min(5, review.rating))}</span>
+                        <span className="text-xs text-[#3A1F0E]/45">{new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                      </div>
+                      <p className="mt-2 text-sm text-[#3A1F0E]/75">{review.badge ?? review.body ?? "Review without a written note"}</p>
+                      <span className="mt-2 inline-block text-xs font-bold text-[#8D5C17]">View business →</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-xl border border-dashed border-[#3A1F0E]/20 p-6 text-center">
+                  <p className="text-sm text-[#3A1F0E]/60">No reviews are available yet.</p>
+                  <Link href="/discover" className="mt-3 inline-flex text-sm font-bold text-[#8D5C17] hover:underline">Explore businesses →</Link>
+                </div>
+              )}
+            </section>
+            <section className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-5">
+              <MessageCircle className="h-6 w-6 text-[#CA922B]" />
+              <h2 className="mt-3 font-serif text-xl font-bold text-[#2B1507]">Community conversations</h2>
+              <p className="mt-2 text-sm leading-6 text-[#3A1F0E]/65">{postCount === null ? "Your post count is loading." : `${postCount} community ${postCount === 1 ? "post is" : "posts are"} currently associated with your account.`} Existing post, comment, follower, and block rules continue to determine what others can view.</p>
+              <Link href="/community" className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#8D5C17] hover:underline">Open Community <ChevronRight className="h-4 w-4" /></Link>
+            </section>
+          </div>
+        )}
+
+        {activeSection === "saved" && (
+          <section>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Saved businesses</h2>
+                <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/60">Your actual saved places, visible only in your account.</p>
+              </div>
+              <Link href="/discover" className="inline-flex rounded-xl bg-[#2B1507] px-3.5 py-2 text-sm font-bold text-white hover:bg-[#3A1F0E]">Explore businesses</Link>
+            </div>
+            {savedIds.length ? <div className="mt-5 grid gap-3 md:grid-cols-2">{savedIds.map((id) => <SavedPlaceCard key={id} id={id} />)}</div> : (
+              <div className="mt-5 rounded-2xl border border-dashed border-[#3A1F0E]/20 bg-[#FFFDF9] p-8 text-center">
+                <Map className="mx-auto h-9 w-9 text-[#CA922B]/55" />
+                <h3 className="mt-3 font-serif text-xl font-bold text-[#2B1507]">No saved places yet</h3>
+                <p className="mt-2 text-sm text-[#3A1F0E]/60">Save businesses from their existing listing pages to find them here.</p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeSection === "circles" && (
+          <section className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+            <div className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Your Circles</h2>
+                  <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/60">Circle membership remains private to the people and controls already configured in each Circle.</p>
+                </div>
+                <Link href="/circles" className="shrink-0 text-sm font-bold text-[#8D5C17] hover:underline">View all →</Link>
+              </div>
+              {circles.length ? <div className="mt-5 space-y-3">{circles.map((circle) => (
+                <Link key={circle.id} href="/circles" className="flex items-center gap-3 rounded-xl bg-[#FAF6EF] p-4 transition-colors hover:bg-[#F0E8D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#CA922B]/10"><Users className="h-5 w-5 text-[#CA922B]" /></div>
+                  <div className="min-w-0 flex-1"><h3 className="truncate font-bold text-[#2B1507]">{circle.name}</h3>{circle.description ? <p className="mt-0.5 truncate text-sm text-[#3A1F0E]/60">{circle.description}</p> : null}</div>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-[#3A1F0E]/35" />
+                </Link>
+              ))}</div> : (
+                <div className="mt-5 rounded-xl border border-dashed border-[#3A1F0E]/20 p-6 text-center"><p className="text-sm text-[#3A1F0E]/60">No Circles are available in this account yet.</p><Link href="/circles" className="mt-3 inline-flex text-sm font-bold text-[#8D5C17] hover:underline">Browse or create a Circle →</Link></div>
+              )}
+            </div>
+            <div className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-5">
+              <Users className="h-6 w-6 text-[#CA922B]" />
+              <h2 className="mt-3 font-serif text-xl font-bold text-[#2B1507]">Build your circle</h2>
+              <p className="mt-2 text-sm leading-6 text-[#3A1F0E]/65">Use the existing Circle experience to manage invitations, recommendations, and group-specific choices.</p>
+              <Link href="/circles" className="mt-4 inline-flex text-sm font-bold text-[#8D5C17] hover:underline">Go to Circles →</Link>
+            </div>
+          </section>
+        )}
+
+        {activeSection === "settings" && (
+          <section className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Account & settings</h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-[#3A1F0E]/65">Profile editing, privacy, password, safety alerts, Kinfolk preferences, badges, and other existing account controls are available below. Nothing has been moved to a new data source.</p>
+              </div>
+              {isBusinessOwner ? <Link href="/business-dashboard" className="inline-flex items-center gap-2 rounded-xl border border-[#CA922B]/40 bg-white px-3.5 py-2 text-sm font-bold text-[#8D5C17] hover:bg-[#F5EBD8]"><Building2 className="h-4 w-4" /> Business dashboard</Link> : null}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3 text-sm">
+              <a href="#legacy-account-controls" className="font-bold text-[#8D5C17] hover:underline">Profile & privacy controls ↓</a>
+              <a href="#legacy-community-badges" className="font-bold text-[#8D5C17] hover:underline">Community badges ↓</a>
+            </div>
+          </section>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Profile() {
@@ -856,6 +1162,7 @@ export default function Profile() {
   // ── Network (followers / following) ───────────────────────────────────────
   const [followersCount, setFollowersCount] = useState<number | null>(null);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
+  const [connectionsCount, setConnectionsCount] = useState<number | null>(null);
 
   // ── Community posts count ─────────────────────────────────────────────────
   const [postCount, setPostCount] = useState<number | null>(null);
@@ -917,6 +1224,7 @@ export default function Profile() {
       description?: string;
     }>
   >([]);
+  const [activeProfileSection, setActiveProfileSection] = useState<ProfileHubSection>("overview");
 
   useEffect(() => {
     if (!auth?.user) return;
@@ -951,6 +1259,16 @@ export default function Profile() {
         })
         .catch(() => {});
     }
+    // Accepted connections use the existing member-connections endpoint; this
+    // stays distinct from followers/following so the profile does not call them friends.
+    fetch(`${base}/api/connections`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.connections) {
+          setConnectionsCount(d.connections.filter((connection: { status?: string }) => connection.status === "accepted").length);
+        }
+      })
+      .catch(() => {});
     // Post count (posts authored by me)
     fetch(`${base}/api/community/posts?authorId=${userId}&limit=1`, {
       credentials: "include",
@@ -1313,6 +1631,32 @@ export default function Profile() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
+      <div className="container mx-auto max-w-6xl px-4 pb-2 pt-6 md:px-6 md:pt-10">
+        <SocialProfileHub
+          activeSection={activeProfileSection}
+          onSectionChange={setActiveProfileSection}
+          profile={profile}
+          avatarPreview={avatarPreview}
+          isPrivate={isPrivate}
+          savedIds={savedPlaces?.businessIds ?? []}
+          reviewCount={reviewCount}
+          postCount={postCount}
+          followersCount={followersCount}
+          followingCount={followingCount}
+          connectionsCount={connectionsCount}
+          recentReviews={recentReviews}
+          circles={myCircles}
+          isBusinessOwner={Boolean((auth?.user as any)?.isBusinessOwner)}
+        />
+      </div>
+
+      {/* The legacy management surface is retained intact, but it is no longer the
+          first screen. It is intentionally shown from the Account & settings tab
+          so profile editing and safety/security decisions remain distinct. */}
+      {activeProfileSection === "settings" && (
+        <>
+          <div id="legacy-account-controls" className="sr-only">Profile and account controls</div>
+    <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Dark header band — tall enough on mobile to cover the two-row header + stats */}
       <div className="bg-[#2B1507] h-72 sm:h-60 md:h-52 w-full absolute top-0 z-0" />
 
@@ -1622,7 +1966,7 @@ export default function Profile() {
 
           {/* Right 2 columns: full badge panel + quick links */}
           <div className="md:col-span-2 mt-8 md:mt-0 space-y-6">
-            <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm">
+            <div id="legacy-community-badges" className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm">
               <BadgePanel
                 savedCount={savedCount}
                 isEarlyTester={isEarlyTester}
@@ -2529,6 +2873,9 @@ export default function Profile() {
           </div>
         </div>
       </div>
+    </div>
+        </>
+      )}
     </div>
   );
 }

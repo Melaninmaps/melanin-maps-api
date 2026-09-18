@@ -374,6 +374,8 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
         memberType: usersTable.memberType,
         isPrivate: usersTable.isPrivate,
         allowDm: usersTable.allowDm,
+        followersCount: usersTable.followersCount,
+        followingCount: usersTable.followingCount,
       })
       .from(usersTable)
       .where(eq(usersTable.id, targetId))
@@ -464,9 +466,13 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
     }
 
     const { isPrivate, allowDm, ...profile } = user;
+    const { followersCount, followingCount, ...publicProfile } = profile;
     res.json({
-      user: profile,
-      profile,
+      user: publicProfile,
+      profile: publicProfile,
+      // Follow totals are returned only to the account owner. Other member
+      // profile reads retain their current privacy-shaped response.
+      ...(callerId === targetId ? { followersCount, followingCount } : {}),
       reviews: canSeeContent ? reviews : [],
       tags: canSeeContent ? tags : [],
       connectionStatus,
