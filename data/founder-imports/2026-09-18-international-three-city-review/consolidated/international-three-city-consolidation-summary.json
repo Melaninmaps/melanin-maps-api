@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-09-18T23:45:41.757Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "kingston-jamaica-candidates.jsonl",
+    "london-uk-candidates.jsonl",
+    "toronto-candidates.jsonl"
+  ],
+  "inputRows": 63,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 63,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "addressBackedCandidates": 60,
+  "commercialMapPinReviewCandidates": 33,
+  "maplessCommunityResources": 0,
+  "onlineOnlyCandidates": 2,
+  "targetKinds": {
+    "business": 26,
+    "cultural_place": 15,
+    "community_resource": 13,
+    "regulated_review": 7,
+    "online_business": 2
+  },
+  "categories": {
+    "arts and culture": 8,
+    "arts_culture": 8,
+    "food_dining": 8,
+    "community resources": 6,
+    "retail": 6,
+    "food": 5,
+    "family_youth": 4,
+    "food and drink": 4,
+    "recreation": 3,
+    "beauty": 2,
+    "community_resources": 2,
+    "professional_services": 2,
+    "beauty and personal care": 1,
+    "education": 1,
+    "family_youth_education": 1,
+    "health_community": 1,
+    "professional services": 1
+  },
+  "states": {
+    "Kingston,": 25,
+    "London,": 20,
+    "Toronto, Ontario": 11,
+    "Mississauga, Ontario": 2,
+    "Scarborough, Ontario": 2,
+    "Ajax, Ontario": 1,
+    "Etobicoke, Ontario": 1,
+    "null,": 1
+  },
+  "officialCustomerDestinationCoverage": 63,
+  "files": {
+    "candidates": "international-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "international-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "international-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "international-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "dbf86fe261bd747d50b44ec15c2599a573eaaa5526715455d32fc45666dd170d"
+}
