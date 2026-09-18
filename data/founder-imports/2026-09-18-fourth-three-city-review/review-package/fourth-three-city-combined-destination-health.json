@@ -1,0 +1,349 @@
+{
+  "checkedAt": "2026-09-18T21:15:35.464Z",
+  "sourceManifest": "fourth-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 52,
+  "uniqueDestinations": 56,
+  "counts": {
+    "reachable": 53,
+    "review_required": 3
+  },
+  "results": [
+    {
+      "url": "https://adanne.co/",
+      "status": 200,
+      "finalUrl": "https://adanne.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allansbakery.com/",
+      "status": 200,
+      "finalUrl": "https://www.allansbakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://auntsetuncles.com/",
+      "status": 200,
+      "finalUrl": "https://auntsetuncles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://restorationplaza.org/",
+      "status": 200,
+      "finalUrl": "https://restorationplaza.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bestbitesrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://bestbitesrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cafeconlibrosbk.com/",
+      "status": 200,
+      "finalUrl": "https://www.cafeconlibrosbk.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/caribbeanvibesrestaurant/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcaribbeanvibesrestaurant%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sandbox.biz/",
+      "status": 200,
+      "finalUrl": "https://www.sandbox.biz/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/cocoabeanjuiceandsaladbar/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcocoabeanjuiceandsaladbar%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hairandcobklyn.com/",
+      "status": 200,
+      "finalUrl": "https://hairandcobklyn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lizsbookbar.com/",
+      "status": 200,
+      "finalUrl": "https://lizsbookbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.makemanifestbk.com/",
+      "status": 200,
+      "finalUrl": "https://www.makemanifestbk.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.peaceandriot.com/",
+      "status": 200,
+      "finalUrl": "https://www.peaceandriot.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.weeksvillesociety.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.weeksvillesociety.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://smokingjacketcl.com/",
+      "status": 200,
+      "finalUrl": "https://smokingjacketcl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://aamdallas.org/",
+      "status": 200,
+      "finalUrl": "https://aamdallas.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://brendanbass.com/",
+      "status": 200,
+      "finalUrl": "https://brendanbass.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://imocproductions.com/",
+      "status": 200,
+      "finalUrl": "https://www.imocproductions.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lcc.dallasculture.org/",
+      "status": 200,
+      "finalUrl": "https://lcc.dallasculture.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.recipeoc.com/",
+      "status": 200,
+      "finalUrl": "https://www.recipeoc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soulrep.org/",
+      "status": 200,
+      "finalUrl": "https://www.soulrep.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sdcc.dallasculture.org/",
+      "status": 200,
+      "finalUrl": "https://sdcc.dallasculture.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.browardcountyblackchamberofcommerce.com/",
+      "status": 200,
+      "finalUrl": "https://www.browardcountyblackchamberofcommerce.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://destinationsistrunk.com/blvd/",
+      "status": 404,
+      "finalUrl": "https://www.destinationsistrunk.com/blvd/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://oovo.com/",
+      "status": 200,
+      "finalUrl": "https://oovo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackpagesmiami.com/listing-item/chwa-hollywood",
+      "status": 200,
+      "finalUrl": "https://www.blackpagesmiami.com/listing-item/chwa-hollywood",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ablebusinessservices.com/",
+      "status": 200,
+      "finalUrl": "https://www.ablebusinessservices.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bahlt.org/",
+      "status": 200,
+      "finalUrl": "https://www.bahlt.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://historicalblackprecinct.org/",
+      "status": 200,
+      "finalUrl": "https://historicalblackprecinct.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://camacol.org/",
+      "status": 200,
+      "finalUrl": "https://camacol.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cfbi.org/",
+      "status": 403,
+      "finalUrl": "https://www.cfbi.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.miamidade.gov/resource-centers/",
+      "status": 200,
+      "finalUrl": "https://www.miamidade.gov/resource-centers/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jncyjewelers.com/",
+      "status": 200,
+      "finalUrl": "https://jncyjewelers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.miami.gov/LHCC/Home",
+      "status": 200,
+      "finalUrl": "https://www.miami.gov/LHCC/Home",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wearemajor.com/",
+      "status": 200,
+      "finalUrl": "https://wearemajor.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackpagesmiami.com/listing-item/major-2",
+      "status": 200,
+      "finalUrl": "https://www.blackpagesmiami.com/listing-item/major-2",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mia_dadechamber/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmia_dadechamber%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nnamdicontemporary.com/",
+      "status": 200,
+      "finalUrl": "https://www.nnamdicontemporary.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackpagesmiami.com/listing-item/nnamdi-contemporary",
+      "status": 200,
+      "finalUrl": "https://www.blackpagesmiami.com/listing-item/nnamdi-contemporary",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://purplecarpet.com/",
+      "status": 200,
+      "finalUrl": "https://purplecarpet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackpagesmiami.com/listing-item/purple-carpet",
+      "status": 200,
+      "finalUrl": "https://www.blackpagesmiami.com/listing-item/purple-carpet",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://socialbrim.cloud/waterking/",
+      "status": 500,
+      "finalUrl": "https://socialbrim.cloud/waterking/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.blackpagesmiami.com/listing-item/water-king-bottled-drinking-water",
+      "status": 200,
+      "finalUrl": "https://www.blackpagesmiami.com/listing-item/water-king-bottled-drinking-water",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackpagesmiami.com/listing-item/cafe-des-fleurs",
+      "status": 200,
+      "finalUrl": "https://www.blackpagesmiami.com/listing-item/cafe-des-fleurs",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oasisatmiamigardens.com/",
+      "status": 200,
+      "finalUrl": "https://www.oasisatmiamigardens.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://homesweetharlem.nyc/",
+      "status": 200,
+      "finalUrl": "https://homesweetharlem.nyc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.raysbarbershopnyc.com/",
+      "status": 200,
+      "finalUrl": "https://www.raysbarbershopnyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nypl.org/locations/schomburg",
+      "status": 200,
+      "finalUrl": "https://www.nypl.org/locations/schomburg",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.studiomuseum.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.studiomuseum.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sugarhillcreamery.com/",
+      "status": 200,
+      "finalUrl": "https://www.sugarhillcreamery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.apollotheater.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.apollotheater.org/visit-the-apollo",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://afrikin.org/",
+      "status": 200,
+      "finalUrl": "https://afrikin.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.santla.org/",
+      "status": 200,
+      "finalUrl": "https://www.santla.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/islandspace/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fislandspace%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oakspysignsandgraphics.com/",
+      "status": 200,
+      "finalUrl": "https://oakspysignsandgraphics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.officefurnitureplus.com/fort-worth-showroom/",
+      "status": 200,
+      "finalUrl": "https://www.officefurnitureplus.com/fort-worth-showroom/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}

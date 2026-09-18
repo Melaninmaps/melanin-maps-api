@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-09-18T21:15:08.289Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "dallas-candidates.jsonl",
+    "miami-candidates.jsonl",
+    "new-york-city-candidates.jsonl"
+  ],
+  "inputRows": 52,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 52,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "physicalAddressCandidates": 52,
+  "onlineOnlyCandidates": 0,
+  "targetKinds": {
+    "business": 29,
+    "cultural_place": 14,
+    "community_resource": 9
+  },
+  "categories": {
+    "retail": 8,
+    "arts_culture": 7,
+    "community_services": 7,
+    "dining": 7,
+    "Arts & culture": 5,
+    "cultural institution": 4,
+    "beauty and personal care": 2,
+    "food_and_drink": 2,
+    "Home & garden": 2,
+    "Retail": 2,
+    "business_services": 1,
+    "community development": 1,
+    "Food & beverage": 1,
+    "government_services": 1,
+    "Retail & leisure": 1,
+    "shipping and business services": 1
+  },
+  "states": {
+    "Brooklyn, NY": 14,
+    "Miami, FL": 13,
+    "Dallas, TX": 7,
+    "New York, NY": 6,
+    "Fort Lauderdale, FL": 2,
+    "North Miami, FL": 2,
+    "Richland Hills, TX": 2,
+    "Cedar Hill, TX": 1,
+    "Grand Prairie, TX": 1,
+    "Hollywood, FL": 1,
+    "Miami Beach, FL": 1,
+    "Miami Gardens, FL": 1,
+    "Plantation, FL": 1
+  },
+  "officialCustomerDestinationCoverage": 52,
+  "files": {
+    "candidates": "fourth-three-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "fourth-three-city-exact-duplicates-removed.json",
+    "destinationCollisions": "fourth-three-city-destination-collisions-review.json",
+    "invalidRowsHeld": "fourth-three-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "a52f5915d4d107944c3cc5a2936f589012aa61a2d18d915e82c99f0b58f91c7e"
+}
