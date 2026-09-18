@@ -121,6 +121,32 @@ describe("classifyKinfolkRequest — stylist proof-of-concept", () => {
   });
 });
 
+describe("classifyKinfolkRequest — general current-affairs protection", () => {
+  it("keeps the reported named-person question in general chat", () => {
+    const result = classifyKinfolkRequest("what's going on with Sarah Paulson and Sterling K Brown");
+    expect(result).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      clarification: null,
+      reason: "no_discovery_signal",
+    });
+  });
+
+  it("does not mistake 'going on' in an ordinary question for travel planning", () => {
+    const result = classifyKinfolkRequest("What is going on with the war in Iran?");
+    expect(result).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      clarification: null,
+    });
+  });
+
+  it("retains explicit travel planning as an additive capability", () => {
+    expect(classifyKinfolkRequest("I am going to Atlanta this weekend").route).toBe("travel_planning");
+    expect(classifyKinfolkRequest("I am traveling to Atlanta").route).toBe("travel_planning");
+  });
+});
+
 // ── Voice duration validation ─────────────────────────────────────────────────
 
 describe("validateVoiceRecording", () => {
