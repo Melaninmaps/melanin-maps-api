@@ -286,6 +286,7 @@ import {
   inspectVoiceAudio,
   VoiceAudioInspectionError,
 } from "../kinfolk/voice/audioInspection";
+import { retrieveCommunityHashtagContext } from "../kinfolk/community-hashtag-context";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -5557,6 +5558,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     voiceMode = "community",
     imageUrls = [],
     cityHint,
+    includeCommunityPerspective,
   } = req.body as {
     sessionId?: string;
     message: string;
@@ -5564,6 +5566,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     voiceMode?: string;
     imageUrls?: unknown;
     cityHint?: unknown;
+    includeCommunityPerspective?: unknown;
   };
 
   if (!message?.trim()) {
@@ -6211,6 +6214,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         return;
       }
     }
+
+    // Community excerpts are optional, topic-matched perspective only. Retrieval
+    // enforces a stricter public visibility boundary than the member feed and never
+    // supplies citations or high-consequence evidence.
+    const communityHashtagContext = await retrieveCommunityHashtagContext(pool, {
+      viewerId: req.user.id,
+      message,
+      optedIn: includeCommunityPerspective === true,
+      evidenceRoute,
+      intentPolicy,
+    });
 
     // The contextual planner is intentionally downstream of deterministic safety
     // routing and governed business handling. It receives the locked route and no
@@ -7828,7 +7842,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (!contextualHighConsequence && webSearchBlock
         ? `\n\n${webSearchBlock}`
         : "") +
-      (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
+      (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "") +
+      (communityHashtagContext.promptBlock
+        ? `\n\n${communityHashtagContext.promptBlock}`
+        : "");
 
     // Build bounded history according to the selected experience policy.
     // Standard remains exactly last 8 / 400 chars; staff demo uses last 12 / 1200.
@@ -7850,7 +7867,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       requiresCurrentEvidence: requiresCurrentResearch(message),
       hasLocation: Boolean(destination),
       hasImages: verifiedImageUrls.length > 0,
-      hasContextualResearch: Boolean(contextualEvidence),
+      hasContextualResearch:
+        Boolean(contextualEvidence) || Boolean(communityHashtagContext.promptBlock),
       hasNamedBusiness: Boolean(namedBusiness),
       isTravelPlanning: travelPlanning,
       hasCircleContext: Boolean(circleContext),
@@ -8090,6 +8108,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       renderableValues: [modelPayload.valid ? modelPayload.value : rawContent],
       protectedValues: [
         ...activePrivateMemories.map((memory) => memory.content),
+        ...communityHashtagContext.protectedValues,
         ...systemPromptWithLibrary
           .split("\n")
           .map((line) => line.trim())
@@ -8462,6 +8481,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       smartPromotion,
       taskAction,
       libraryAction,
+      // This metadata is generic by design: Community posts have no safe permalink
+      // contract, so Kinfolk never emits a post URL, author, or post excerpt.
+      communityPerspective: communityHashtagContext.memberFacingPerspective,
       // Map-linkable heritage site pins — only present when the message asked about
       // cultural sites in a known city and matching records exist in tour_cultural_sites.
       heritageSites: heritageSitePins.length > 0 ? heritageSitePins : undefined,

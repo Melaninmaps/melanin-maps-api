@@ -117,6 +117,12 @@ interface LibraryAction {
 }
 interface KinfolkSource { title: string; url: string }
 interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
+interface CommunityPerspective {
+  label: "Community perspective";
+  topics: string[];
+  itemCount: number;
+  note: string;
+}
 // Returned only to eligible staff-demo participants. This is display metadata,
 // not a client-side authorization check or security boundary.
 type KinfolkExperience = KinfolkStaffDemoExperience;
@@ -152,6 +158,8 @@ interface Message {
   // Research sources + library entry link (Living Library branch)
   sources?: KinfolkSource[] | null;
   libraryEntry?: KinfolkLibraryEntry | null;
+  // Generic metadata only; post content, authors, and URLs are intentionally absent.
+  communityPerspective?: CommunityPerspective | null;
   // Hair-loss / alopecia care paths
   hairLossCarePlan?: HairLossCarePlan | null;
   // Adaptive depth fields (Show more / Show less)
@@ -920,6 +928,7 @@ function TravelPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [rememberThis, setRememberThis] = useState(false);
+  const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -1507,7 +1516,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective }),
         signal: controller.signal,
       });
 
@@ -1554,6 +1563,7 @@ function TravelPage() {
         intentClass?: string | null;
         provenanceNote?: string | null;
         sourceNote?: string | null;
+        communityPerspective?: CommunityPerspective | null;
         // Research sources + library entry link
         sources?: KinfolkSource[] | null;
         libraryEntry?: KinfolkLibraryEntry | null;
@@ -1611,6 +1621,7 @@ function TravelPage() {
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
         sourceNote: data.sourceNote ?? null,
+        communityPerspective: data.communityPerspective ?? null,
         sources: data.sources ?? null,
         libraryEntry: data.libraryEntry ?? null,
         hairLossCarePlan: data.hairLossCarePlan ?? null,
@@ -2114,6 +2125,14 @@ function TravelPage() {
                           researchStatus={msg.researchStatus}
                         />
                       )}
+                      {msg.role === "assistant" && msg.communityPerspective && (
+                        <div data-testid="kinfolk-community-perspective" className="mt-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF8EC] px-4 py-3">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#8D5C17]">{msg.communityPerspective.label}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-[#3A1F0E]/65">
+                            Recent public discussion about {msg.communityPerspective.topics.map((topic) => `#${topic}`).join(", ")} was considered as unverified perspective, not as evidence or a recommendation.
+                          </p>
+                        </div>
+                      )}
                       {msg.resultView && <ConversationalBusinessCards view={msg.resultView} />}
                       {msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
@@ -2323,6 +2342,10 @@ function TravelPage() {
                     <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Only this account can use this memory. You can forget it any time.">
                       <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} />
                       Remember this privately
+                    </label>
+                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Use only recent public Community posts with matching hashtags. Never used as evidence for current, medical, legal, financial, safety, or political answers.">
+                      <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} />
+                      Include public Community perspective
                     </label>
                     <button onClick={() => setShowMemoryManager(true)} className="text-[11px] font-bold text-[#CA922B] hover:underline">Manage</button>
                   </div>
