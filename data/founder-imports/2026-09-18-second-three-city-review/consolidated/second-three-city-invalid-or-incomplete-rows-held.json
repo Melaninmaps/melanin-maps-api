@@ -1,0 +1,29 @@
+[
+  {
+    "file": "charlotte-candidates.jsonl",
+    "line": 38,
+    "name": "Charlotte Black-Owned",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "charlotte-candidates.jsonl",
+    "line": 39,
+    "name": "Charlotte Latin American Chamber of Commerce",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  },
+  {
+    "file": "charlotte-candidates.jsonl",
+    "line": 40,
+    "name": "Metrolina Minority Contractors Association",
+    "missing": [],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": true,
+    "destinationProblem": false
+  }
+]
