@@ -93,6 +93,7 @@ export default function UserProfileScreen() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [tags, setTags] = useState<ProfileTag[]>([]);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [canSeeContent, setCanSeeContent] = useState(false);
   const [selectedWallPost, setSelectedWallPost] = useState<CommunityPost | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
   const [connectionId, setConnectionId] = useState<number | null>(null);
@@ -113,49 +114,53 @@ export default function UserProfileScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const [profileRes, postsRes] = await Promise.all([
-        fetch(`${getApiBase()}/api/users/${userId}/profile`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }),
-        fetch(`${getApiBase()}/api/community/posts?authorId=${userId}&limit=50`),
-      ]);
-      if (profileRes.ok) {
-        const data = await profileRes.json() as {
-          user: UserProfile;
-          reviews: ReviewItem[];
-          tags: ProfileTag[];
-          connectionStatus: string | null;
-          connectionId: number | null;
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const profileRes = await fetch(`${getApiBase()}/api/users/${userId}/profile`, { headers });
+      if (!profileRes.ok) return;
+
+      const data = await profileRes.json() as {
+        user: UserProfile;
+        reviews: ReviewItem[];
+        tags: ProfileTag[];
+        connectionStatus: string | null;
+        connectionId: number | null;
+        canSeeContent?: boolean;
+      };
+      const permitted = data.canSeeContent === true;
+      setProfile(data.user);
+      setReviews(permitted ? data.reviews ?? [] : []);
+      setTags(permitted ? data.tags ?? [] : []);
+      setCanSeeContent(permitted);
+      setConnectionStatus(data.connectionStatus);
+      setConnectionId(data.connectionId);
+      if (!permitted) {
+        setPosts([]);
+        return;
+      }
+
+      const postsRes = await fetch(`${getApiBase()}/api/community/posts?authorId=${userId}&limit=50`, { headers });
+      if (!postsRes.ok) { setPosts([]); return; }
+      const postsData = await postsRes.json() as { posts: Record<string, unknown>[] };
+      const now = Date.now();
+      const mapped: CommunityPost[] = (postsData.posts ?? []).map((p) => {
+        const ms = now - new Date(p["createdAt"] as string).getTime();
+        const m = Math.floor(ms / 60000);
+        const timeAgo = m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`;
+        return {
+          id: p["id"] as string,
+          author: p["authorName"] as string,
+          authorInitials: p["authorInitials"] as string,
+          authorColor: p["authorColor"] as string,
+          content: p["content"] as string,
+          likes: (p["upvotes"] as number) ?? 0,
+          comments: (p["commentsCount"] as number) ?? 0,
+          timeAgo,
+          category: (p["category"] as CommunityPost["category"]) ?? "discussion",
+          postType: (p["postType"] as CommunityPost["postType"]) ?? "community",
+          liked: false,
         };
-        setProfile(data.user);
-        setReviews(data.reviews ?? []);
-        setTags(data.tags ?? []);
-        setConnectionStatus(data.connectionStatus);
-        setConnectionId(data.connectionId);
-      }
-      if (postsRes.ok) {
-        const data = await postsRes.json() as { posts: Record<string, unknown>[] };
-        const now = Date.now();
-        const mapped: CommunityPost[] = (data.posts ?? []).map((p) => {
-          const ms = now - new Date(p["createdAt"] as string).getTime();
-          const m = Math.floor(ms / 60000);
-          const timeAgo = m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`;
-          return {
-            id: p["id"] as string,
-            author: p["authorName"] as string,
-            authorInitials: p["authorInitials"] as string,
-            authorColor: p["authorColor"] as string,
-            content: p["content"] as string,
-            likes: (p["upvotes"] as number) ?? 0,
-            comments: (p["commentsCount"] as number) ?? 0,
-            timeAgo,
-            category: (p["category"] as CommunityPost["category"]) ?? "discussion",
-            postType: (p["postType"] as CommunityPost["postType"]) ?? "community",
-            liked: false,
-          };
-        });
-        setPosts(mapped);
-      }
+      });
+      setPosts(mapped);
     } catch { /* silent */ }
     finally { setLoading(false); }
   }, [userId]);
@@ -396,7 +401,7 @@ export default function UserProfileScreen() {
             </View>
 
             {/* Tag input (only for other users' profiles) */}
-            {!isOwnProfile && isAuthenticated && (
+            {!isOwnProfile && isAuthenticated && canSeeContent && (
               <View style={[s.tagInputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <TextInput
                   style={[s.tagInput, { color: colors.foreground }]}
@@ -451,7 +456,9 @@ export default function UserProfileScreen() {
         ListEmptyComponent={
           <View style={s.emptyTab}>
             <Text style={[s.emptyTabText, { color: colors.mutedForeground }]}>
-              {activeTab === "posts" ? "No posts yet." : activeTab === "reviews" ? "No reviews posted yet." : "No profile tags yet."}
+              {!canSeeContent
+                ? "This profile is private. Follow requests must be accepted before activity is shown."
+                : activeTab === "posts" ? "No posts yet." : activeTab === "reviews" ? "No reviews posted yet." : "No profile tags yet."}
             </Text>
           </View>
         }

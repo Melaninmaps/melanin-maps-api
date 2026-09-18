@@ -53,7 +53,7 @@ const SETTINGS = [
   { icon: "bookmark" as const, label: "Trips I'd Love", sub: "Your KinfolkAI™ saved spots", route: "/wishlist" as const },
   { icon: "grid" as const, label: "My Dashboard", sub: "Saved places, activity & stats", route: "/dashboard" as const },
   { icon: "globe" as const, label: "Community Preference", sub: "Personalise results by cultural identity", route: "/cultural-preference" as const },
-  { icon: "users" as const, label: "My Connections", sub: "Friends, requests & people you follow", route: "/connections" as const },
+  { icon: "users" as const, label: "My Connections", sub: "Connection requests and people you follow", route: "/connections" as const },
   { icon: "video" as const, label: "Creator Profile", sub: "Connect your channels — send fans to where you create", route: "/creator-profile" as const },
   { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
@@ -64,6 +64,15 @@ const SETTINGS = [
   { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Share a business with our review team", route: "/nominate-business" as const },
   { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
   { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
+];
+
+const SOCIAL_PROFILE_ACTIONS = [
+  { icon: "users" as const, label: "Connections", detail: "Followers, following & requests", route: "/connections" as const },
+  { icon: "message-circle" as const, label: "Community activity", detail: "Posts, comments & conversations", route: "/(tabs)/community" as const },
+  { icon: "bookmark" as const, label: "Saved places", detail: "Businesses you have saved", route: "/dashboard" as const },
+  { icon: "users" as const, label: "Circles", detail: "Your private group spaces", route: "/circles" as const },
+  { icon: "shield" as const, label: "Privacy & safety", detail: "Visibility and message choices", route: "/privacy" as const },
+  { icon: "settings" as const, label: "Account settings", detail: "Profile, alerts & account", route: "/settings" as const },
 ];
 
 const INDUSTRIES = [
@@ -978,6 +987,35 @@ export default function ProfileScreen() {
             ))}
           </View>
 
+          <View style={[styles.socialHubCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]} accessibilityLabel="Social profile shortcuts">
+            <View style={styles.socialHubHeader}>
+              <View>
+                <Text style={[styles.socialHubTitle, { color: colors.foreground }]}>Your social hub</Text>
+                <Text style={[styles.socialHubSub, { color: colors.mutedForeground }]}>Quick links to your existing community spaces</Text>
+              </View>
+              <Feather name="grid" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.socialHubGrid}>
+              {SOCIAL_PROFILE_ACTIONS.map((action) => (
+                <TouchableOpacity
+                  key={action.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${action.label}. ${action.detail}`}
+                  style={[styles.socialHubAction, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                  onPress={() => router.push(action.route as any)}
+                  activeOpacity={0.76}
+                >
+                  <Feather name={action.icon} size={16} color={colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.socialHubActionLabel, { color: colors.foreground }]} numberOfLines={1}>{action.label}</Text>
+                    <Text style={[styles.socialHubActionDetail, { color: colors.mutedForeground }]} numberOfLines={2}>{action.detail}</Text>
+                  </View>
+                  <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
             <View style={[styles.newUserBanner, { backgroundColor: colors.card, shadowColor: colors.foreground, borderColor: colors.border }]}>
               <View style={[styles.newUserIconRow]}>
@@ -1744,6 +1782,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
+  },
+  socialHubCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  socialHubHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  socialHubTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+  },
+  socialHubSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  socialHubGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  socialHubAction: {
+    width: "48%",
+    minHeight: 76,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+  },
+  socialHubActionLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+  },
+  socialHubActionDetail: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 2,
   },
   statsRow: {
     flexDirection: "row",
