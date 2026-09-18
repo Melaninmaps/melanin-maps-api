@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 
 import { getApiBase } from "@/lib/api";
+import { openWebPaymentHandoff } from "@/lib/webPaymentHandoff";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -96,22 +97,10 @@ export function useFamilyPlan() {
     void Promise.resolve().then(fetchPlan);
   }, [fetchPlan]);
 
-  const addFamilySeat = useCallback(async (): Promise<string | null> => {
-    try {
-      const headers = await getAuthHeaders();
-      if (!headers.Authorization) return null;
-      const res = await fetch(`${apiBase}/api/membership/family/add-seat`, {
-        method: "POST",
-        headers,
-      });
-      const data = (await res.json()) as { checkoutUrl?: string; error?: string; upgradeUrl?: string };
-      if (!res.ok) {
-        return data.upgradeUrl ?? null;
-      }
-      return data.checkoutUrl ?? null;
-    } catch {
-      return null;
-    }
+  const addFamilySeat = useCallback(async () => {
+    // The authenticated website, not the native app, performs the existing
+    // eligibility check and creates the Stripe Checkout URL for a seat.
+    return openWebPaymentHandoff("familyPlan");
   }, []);
 
   return { plan, isLoading, error, refetch: fetchPlan, addFamilySeat };

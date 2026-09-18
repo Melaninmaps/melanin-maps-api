@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
+import { openBusinessListingWebsite } from "@/lib/webPaymentHandoff";
 
 function getApiBaseUrl(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -69,21 +70,10 @@ export function useListings(businessId: string) {
   useEffect(() => { void Promise.resolve().then(fetchListings); }, [fetchListings]);
 
   const openCheckout = async (listing: Listing) => {
-    if (!listing.stripePriceId) return null;
-    try {
-      const base = getApiBaseUrl();
-      const token = await getToken();
-      const res = await fetch(`${base}/api/connect/listings/${listing.id}/checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ quantity: 1 }),
-      });
-      if (!res.ok) return null;
-      const data = await res.json() as { url: string | null };
-      return data.url;
-    } catch {
-      return null;
-    }
+    // The website reads the current listing, seller setup, and amount before
+    // creating its existing Stripe Checkout session. Native does not receive
+    // or open a direct checkout URL.
+    return openBusinessListingWebsite(businessId, listing.id);
   };
 
   return { listings, loading, refetch: fetchListings, openCheckout };

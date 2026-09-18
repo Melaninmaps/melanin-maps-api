@@ -1,6 +1,9 @@
 import * as SecureStore from "expo-secure-store";
-import { Linking } from "react-native";
 import { useCallback, useEffect, useState } from "react";
+import {
+  openWebPaymentHandoff,
+  type WebPaymentHandoffResult,
+} from "@/lib/webPaymentHandoff";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -35,6 +38,11 @@ export interface ActiveSubscription {
   productName: string | null;
 }
 
+/**
+ * Membership reads remain in the app. Payment starts and payment management are
+ * handed to their corresponding website screens; the mobile app never asks the
+ * API to create a Stripe Checkout or Customer Portal URL.
+ */
 export function useMembership() {
   const [products, setProducts] = useState<StripeProduct[]>([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -91,56 +99,27 @@ export function useMembership() {
     if (productsLoaded) void Promise.resolve().then(loadSubscription);
   }, [productsLoaded, loadSubscription]);
 
-  const initiateCheckout = useCallback(async (priceId: string | null, planKey?: string | null): Promise<"ok" | "no_auth" | "no_price" | "error"> => {
-    if (!priceId) return "no_price";
-
-    const token = await getToken();
-    if (!token) return "no_auth";
-
-    const apiBase = getApiBase();
-    if (!apiBase) return "error";
-
+  const initiateCheckout = useCallback(async (
+    _priceId: string | null,
+    planKey?: string | null,
+  ): Promise<WebPaymentHandoffResult> => {
     setCheckoutLoading(true);
     setCheckoutPlanId(planKey ?? null);
     try {
-      const res = await fetch(`${apiBase}/api/stripe/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ priceId }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { url: string };
-        if (data.url) {
-          await Linking.openURL(data.url);
-          return "ok";
-        }
-      }
-      return "error";
-    } catch {
-      return "error";
+      // The price identifier stays in the signature to avoid breaking callers.
+      // Website checkout resolves the current plan, price, account, and Stripe
+      // session only after the member deliberately arrives there.
+      return await openWebPaymentHandoff("membership");
     } finally {
       setCheckoutLoading(false);
       setCheckoutPlanId(null);
     }
   }, []);
 
-  const openPortal = useCallback(async (): Promise<void> => {
-    const token = await getToken();
-    const apiBase = getApiBase();
-    if (!token || !apiBase) return;
-    try {
-      const res = await fetch(`${apiBase}/api/stripe/portal`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { url: string };
-        if (data.url) await Linking.openURL(data.url);
-      }
-    } catch {}
+  const openPortal = useCallback(async (): Promise<WebPaymentHandoffResult> => {
+    // The website validates the existing session and creates the private Stripe
+    // Customer Portal URL after the member arrives at the billing screen.
+    return openWebPaymentHandoff("billing");
   }, []);
 
   return {

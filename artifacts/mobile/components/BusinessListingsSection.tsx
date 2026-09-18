@@ -7,7 +7,6 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
-  Linking,
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -127,15 +126,18 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Continue to Checkout",
+          text: "Continue on Website",
           onPress: async () => {
             setBuyingId(listing.id);
             try {
-              const url = await openCheckout(listing);
-              if (url) {
-                await Linking.openURL(url);
-              } else {
-                Alert.alert("Oops", "Couldn't open checkout. Try again.");
+              const result = await openCheckout(listing);
+              if (result === "not_enabled") {
+                Alert.alert(
+                  "Complete this on the website",
+                  "Purchases are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
+                );
+              } else if (result === "unavailable") {
+                Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
               }
             } finally {
               setBuyingId(null);

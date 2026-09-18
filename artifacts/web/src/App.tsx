@@ -53,6 +53,7 @@ import UniversalPlaceDetailPage, { LegacyPlaceRedirect } from "@/pages/universal
 import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
 import Billing from "@/pages/billing";
+import FamilyPlan from "@/pages/family-plan";
 import VerifyBusiness from "@/pages/verify-business";
 import Welcome from "@/pages/welcome";
 import BusinessDashboard from "@/pages/business-dashboard";
@@ -396,6 +397,9 @@ function Router() {
       </Route>
       <Route path="/billing">
         <Layout><ProtectedRoute><Billing /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/family-plan">
+        <Layout><ProtectedRoute><FamilyPlan /></ProtectedRoute></Layout>
       </Route>
       <Route path="/business-dashboard">
         <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>

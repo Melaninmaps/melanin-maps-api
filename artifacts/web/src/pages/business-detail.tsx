@@ -196,6 +196,90 @@ function BusinessHeroPlaceholder({ business }: { business: BusinessHeroRecord })
   );
 }
 
+type BusinessShopListing = {
+  id: string;
+  name: string;
+  description: string | null;
+  priceInCents: number;
+  currency: string;
+  imageUrl: string | null;
+  category: string | null;
+  listingType: string | null;
+  active: boolean;
+};
+
+/**
+ * Public business-shop presentation. The associated mobile action links here;
+ * only this website component invokes the existing server-side marketplace
+ * checkout route after showing the member the selected listing and price.
+ */
+function BusinessShop({ businessId, focusedListingId }: { businessId: string; focusedListingId: string | null }) {
+  const [listings, setListings] = useState<BusinessShopListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [checkoutId, setCheckoutId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+  useEffect(() => {
+    if (!businessId) return;
+    setLoading(true);
+    fetch(`${base}/api/businesses/${businessId}/listings`)
+      .then((response) => response.ok ? response.json() : { listings: [] })
+      .then((data: { listings?: BusinessShopListing[] }) => setListings((data.listings ?? []).filter((listing) => listing.active)))
+      .catch(() => setListings([]))
+      .finally(() => setLoading(false));
+  }, [base, businessId]);
+
+  useEffect(() => {
+    if (focusedListingId && listings.some((listing) => listing.id === focusedListingId)) {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedListingId, listings]);
+
+  async function startWebsiteCheckout(listing: BusinessShopListing) {
+    setCheckoutId(listing.id);
+    setError(null);
+    try {
+      const response = await fetch(`${base}/api/connect/listings/${listing.id}/checkout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!response.ok || !data.url) throw new Error(data.error ?? "Could not open secure checkout.");
+      window.location.assign(data.url);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not open secure checkout.");
+    } finally {
+      setCheckoutId(null);
+    }
+  }
+
+  if (loading || listings.length === 0) return null;
+
+  return (
+    <section ref={sectionRef} data-testid="business-shop" className="rounded-2xl border border-[#CA922B]/25 bg-[#1E1510] p-5">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="rounded-xl bg-[#CA922B]/15 p-2"><ShoppingBag className="h-5 w-5 text-[#CA922B]" /></div>
+        <div><h3 className="font-serif text-xl font-bold text-white">Shop</h3><p className="mt-1 text-sm text-white/65">Purchase directly from this independent business through secure website checkout.</p></div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {listings.map((listing) => {
+          const highlighted = listing.id === focusedListingId;
+          const price = new Intl.NumberFormat("en-US", { style: "currency", currency: listing.currency.toUpperCase() }).format(listing.priceInCents / 100);
+          return <article key={listing.id} className={`overflow-hidden rounded-xl border ${highlighted ? "border-[#CA922B] ring-1 ring-[#CA922B]/40" : "border-white/10"}`}>
+            {listing.imageUrl ? <img src={listing.imageUrl} alt="" className="h-36 w-full object-cover" /> : null}
+            <div className="p-4"><p className="text-xs font-semibold uppercase tracking-wider text-[#CA922B]">{listing.category ?? listing.listingType ?? "Listing"}</p><h4 className="mt-1 font-semibold text-white">{listing.name}</h4>{listing.description ? <p className="mt-1 line-clamp-2 text-sm text-white/65">{listing.description}</p> : null}<div className="mt-4 flex items-center justify-between gap-3"><p className="font-semibold text-[#F5EBD8]">{price}</p><Button onClick={() => void startWebsiteCheckout(listing)} disabled={checkoutId === listing.id} className="rounded-full bg-[#CA922B] text-white hover:bg-[#B38024]">{checkoutId === listing.id ? "Opening…" : "Buy securely"}</Button></div></div>
+          </article>;
+        })}
+      </div>
+      {error ? <p role="alert" className="mt-3 text-sm text-red-300">{error}</p> : null}
+    </section>
+  );
+}
+
 export default function BusinessDetail() {
   const [, paramsLong] = useRoute("/businesses/:id");
   const [, paramsShort] = useRoute("/business/:id");
@@ -273,6 +357,7 @@ export default function BusinessDetail() {
 
   // ── Community media contribution state ──────────────────────────────────────
   const search = useSearch();
+  const focusedListingId = new URLSearchParams(search).get("shop");
   const [showContribModal, setShowContribModal] = useState(false);
   const [contribUrl, setContribUrl] = useState("");
   const [contribCaption, setContribCaption] = useState("");
@@ -1063,6 +1148,8 @@ export default function BusinessDetail() {
                   businessId={business.id}
                   isAuthenticated={Boolean(auth?.user)}
                 />
+
+                <BusinessShop businessId={business.id} focusedListingId={focusedListingId} />
 
                 {/* ── Community Safety & Trust (#240) ─────────────────────────────── */}
                 {(() => {

@@ -24,6 +24,7 @@ import { SellerAgreementModal } from "@/components/SellerAgreementModal";
 import { BusinessImprovementPlanModal } from "@/components/BusinessImprovementPlanModal";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
+import { openWebPaymentHandoff } from "@/lib/webPaymentHandoff";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -500,26 +501,36 @@ export default function BusinessDashboardScreen() {
     } catch {} finally { setGrowthLoading(false); }
   }, [growthLoading, growthTools]);
 
+  async function openMembershipWebsite() {
+    const result = await openWebPaymentHandoff("membership");
+    if (result === "not_enabled") {
+      Alert.alert(
+        "Complete this on the website",
+        "Membership changes are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
+      );
+    } else if (result === "unavailable") {
+      Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
+    }
+  }
+
   async function startGrowthToolCheckout(type: GrowthPromotion["type"]) {
     if (growthCheckoutLoading) return;
     setGrowthCheckoutLoading(type);
     try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const base = getApiBase();
-      if (!token || !base) return;
-      const res = await fetch(`${base}/api/businesses/mine/growth-tools/checkout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
-      });
-      const data = await res.json() as { checkoutUrl?: string; error?: string };
-      if (data.checkoutUrl) {
-        await Linking.openURL(data.checkoutUrl);
-      } else {
-        Alert.alert("Error", data.error ?? "Could not start checkout. Please try again.");
+      // No pending promotion is created from the native app. The website
+      // rechecks the business owner’s current eligibility, price, and tool
+      // availability before it creates its existing Checkout session.
+      const result = await openWebPaymentHandoff("businessPromotions");
+      if (result === "not_enabled") {
+        Alert.alert(
+          "Complete this on the website",
+          "Business memberships and promotions are completed securely on Mapping with Melanin’s website. This app build does not currently offer that external website handoff.",
+        );
+      } else if (result === "unavailable") {
+        Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
       }
     } catch {
-      Alert.alert("Error", "Could not start checkout. Check your connection and try again.");
+      Alert.alert("Could not open the website", "Please try again, or visit Mapping with Melanin in your browser.");
     } finally {
       setGrowthCheckoutLoading(null);
     }
@@ -570,7 +581,7 @@ export default function BusinessDashboardScreen() {
       if (res.status === 403) {
         Alert.alert("Upgrade Required", "AI Business Insights require a Navigator or Trailblazer membership.", [
           { text: "Cancel", style: "cancel" },
-          { text: "Upgrade", onPress: () => router.push("/membership") },
+          { text: "Upgrade", onPress: () => { void openMembershipWebsite(); } },
         ]);
         return;
       }
@@ -2204,7 +2215,7 @@ export default function BusinessDashboardScreen() {
                 </Text>
                 <TouchableOpacity
                   style={[styles.paywallBtn, { backgroundColor: colors.primary }]}
-                  onPress={() => router.push("/membership")}
+                  onPress={() => void openMembershipWebsite()}
                   activeOpacity={0.85}
                 >
                   <Feather name="zap" size={15} color="#FFF" />
@@ -2580,7 +2591,7 @@ export default function BusinessDashboardScreen() {
                           {A.tier === "navigator" && (
                             <TouchableOpacity
                               style={[styles.aiInsightBtn, { backgroundColor: "#CA922B" }]}
-                              onPress={() => router.push("/membership")}
+                              onPress={() => void openMembershipWebsite()}
                               activeOpacity={0.8}
                             >
                               <Feather name="award" size={12} color="#FFF" />
@@ -2679,7 +2690,7 @@ export default function BusinessDashboardScreen() {
                   {A.tier === "navigator" && (
                     <TouchableOpacity
                       style={[styles.upgradeStrip, { backgroundColor: "#CA922B" }]}
-                      onPress={() => router.push("/membership")}
+                      onPress={() => void openMembershipWebsite()}
                       activeOpacity={0.85}
                     >
                       <Feather name="award" size={16} color="#CA922B" />
@@ -3160,7 +3171,7 @@ export default function BusinessDashboardScreen() {
             <View style={[styles.growPaymentFooter, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Feather name="shield" size={14} color={colors.mutedForeground} />
               <Text style={[styles.growPaymentFooterTxt, { color: colors.mutedForeground }]}>
-                All payments open in your browser — processed securely by Stripe. No payment is taken inside the app.
+                Business memberships and promotions are completed securely on the Mapping with Melanin website. No payment is taken inside the app.
               </Text>
             </View>
 
