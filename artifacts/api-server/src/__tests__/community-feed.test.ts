@@ -177,6 +177,18 @@ describe("Community feed SQL safety and visibility", () => {
     expect(query.text).not.toMatch(/\bcp\.(post_type|business_id|business_name|business_link|media_urls|saved_place_id|visibility|requires_moderation|comments_count)\b/i);
   });
 
+  it("keeps legacy malformed optional numeric metadata from failing the entire feed", () => {
+    const query = queryFor("everyone");
+
+    expect(query.text).toContain("to_jsonb(cp)->>'mentioned_business_rating'");
+    expect(query.text).toContain("to_jsonb(cp)->>'thread_position'");
+    expect(query.text).toContain("to_jsonb(cp)->>'thread_total'");
+    expect(query.text).toContain("~ '^[0-9]+$'");
+    expect(query.text).toContain("ELSE NULL\n  END AS mentioned_business_rating");
+    expect(query.text).toContain("ELSE 1\n  END AS thread_position");
+    expect(query.text).toContain("ELSE 1\n  END AS thread_total");
+  });
+
   it("keeps Community behind the global authenticated-member wall", () => {
     const authWall = routesIndexSource.indexOf("router.use(requireAuth)");
     const communityMount = routesIndexSource.indexOf("router.use(communityRouter)");

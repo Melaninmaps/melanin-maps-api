@@ -159,13 +159,25 @@ function communityPostProjection(capabilities: CommunityFeedCapabilities): strin
   to_jsonb(cp)->>'mentioned_business_id' AS mentioned_business_id,
   to_jsonb(cp)->>'mentioned_business_name' AS mentioned_business_name,
   to_jsonb(cp)->>'mentioned_business_tag' AS mentioned_business_tag,
-  (to_jsonb(cp)->>'mentioned_business_rating')::integer AS mentioned_business_rating,
+  CASE
+    WHEN COALESCE(to_jsonb(cp)->>'mentioned_business_rating', '') ~ '^[0-9]+$'
+      THEN (to_jsonb(cp)->>'mentioned_business_rating')::integer
+    ELSE NULL
+  END AS mentioned_business_rating,
   cp.upvotes,
   cp.downvotes,
   ${commentsCount} AS comments_count,
   to_jsonb(cp)->>'thread_id' AS thread_id,
-  COALESCE((to_jsonb(cp)->>'thread_position')::integer, 1) AS thread_position,
-  COALESCE((to_jsonb(cp)->>'thread_total')::integer, 1) AS thread_total,
+  CASE
+    WHEN COALESCE(to_jsonb(cp)->>'thread_position', '') ~ '^[0-9]+$'
+      THEN (to_jsonb(cp)->>'thread_position')::integer
+    ELSE 1
+  END AS thread_position,
+  CASE
+    WHEN COALESCE(to_jsonb(cp)->>'thread_total', '') ~ '^[0-9]+$'
+      THEN (to_jsonb(cp)->>'thread_total')::integer
+    ELSE 1
+  END AS thread_total,
   cp.created_at`;
 }
 

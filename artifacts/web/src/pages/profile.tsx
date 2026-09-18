@@ -1225,6 +1225,12 @@ export default function Profile() {
     }>
   >([]);
   const [activeProfileSection, setActiveProfileSection] = useState<ProfileHubSection>("overview");
+  const legacyAccountControlsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeProfileSection !== "settings") return;
+    legacyAccountControlsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeProfileSection]);
 
   useEffect(() => {
     if (!auth?.user) return;
@@ -1654,102 +1660,46 @@ export default function Profile() {
           first screen. It is intentionally shown from the Account & settings tab
           so profile editing and safety/security decisions remain distinct. */}
       {activeProfileSection === "settings" && (
-        <>
-          <div id="legacy-account-controls" className="sr-only">Profile and account controls</div>
-    <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
-      {/* Dark header band — tall enough on mobile to cover the two-row header + stats */}
-      <div className="bg-[#2B1507] h-72 sm:h-60 md:h-52 w-full absolute top-0 z-0" />
-
-      <div className="container mx-auto px-4 md:px-6 pt-10 pb-28 sm:pb-10 relative z-10 max-w-6xl">
-        {/* Top bar — stacks vertically on mobile, horizontal on sm+ */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
-          <h1 className="text-3xl md:text-5xl font-serif font-bold text-white tracking-tight">
-            Your Profile
-          </h1>
-
-          {/* Controls — on mobile: admin button full-width, then security buttons share a row */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            {isAdminUser && (
-              <Link href="/admin" className="block sm:inline-block">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto rounded-full bg-[#CA922B]/20 text-[#CA922B] border-[#CA922B]/40 hover:bg-[#CA922B] hover:text-white hover:border-[#CA922B] backdrop-blur h-10 text-xs font-bold"
-                >
-                  <svg
-                    className="mr-1.5 h-3.5 w-3.5 shrink-0"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="1" y="1" width="5" height="5" rx="1" />
-                    <rect x="8" y="1" width="5" height="5" rx="1" />
-                    <rect x="1" y="8" width="5" height="5" rx="1" />
-                    <rect x="8" y="8" width="5" height="5" rx="1" />
-                  </svg>
-                  Switch to Admin Dashboard
-                </Button>
-              </Link>
-            )}
-            {/* All Devices + Sign Out share a row on mobile */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={handleSignOutAll}
-                disabled={signOutAllLoading}
-                title="Sign out of every device and session"
-                className="flex-1 sm:flex-none rounded-full bg-white/10 text-white border-white/20 hover:bg-red-600 hover:text-white hover:border-red-600 backdrop-blur h-10 text-xs"
-              >
+        <div
+          ref={legacyAccountControlsRef}
+          id="legacy-account-controls"
+          className="container mx-auto max-w-6xl scroll-mt-24 px-4 pb-12 md:px-6"
+        >
+          <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Profile & account controls</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#3A1F0E]/65">Edit your profile, manage privacy and safety choices, or use existing account controls. This section adds no new account data source.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {isAdminUser && (
+                <Link href="/admin">
+                  <Button variant="outline" className="h-10 rounded-full border-[#CA922B]/40 bg-[#CA922B]/10 text-xs font-bold text-[#8D5C17] hover:bg-[#CA922B] hover:text-white">
+                    <svg className="mr-1.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="1" width="5" height="5" rx="1" />
+                      <rect x="8" y="1" width="5" height="5" rx="1" />
+                      <rect x="1" y="8" width="5" height="5" rx="1" />
+                      <rect x="8" y="8" width="5" height="5" rx="1" />
+                    </svg>
+                    Switch to Admin Dashboard
+                  </Button>
+                </Link>
+              )}
+              <Button variant="outline" onClick={handleSignOutAll} disabled={signOutAllLoading} title="Sign out of every device and session" className="h-10 rounded-full border-[#3A1F0E]/15 bg-[#FAF6EF] text-xs text-[#3A1F0E] hover:border-red-500 hover:bg-red-600 hover:text-white">
                 <Shield className="mr-1.5 h-3.5 w-3.5 shrink-0" />
                 {signOutAllLoading ? "Signing out…" : "All Devices"}
               </Button>
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                className="flex-1 sm:flex-none rounded-full bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#2B1507] backdrop-blur h-10"
-              >
+              <Button variant="outline" onClick={handleLogout} className="h-10 rounded-full border-[#3A1F0E]/15 bg-[#FAF6EF] text-[#3A1F0E] hover:bg-[#2B1507] hover:text-white">
                 <LogOut className="mr-2 h-4 w-4 shrink-0" /> Sign Out
               </Button>
             </div>
           </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-2xl font-serif font-bold text-[#CA922B]">
-              {savedCount}
-            </div>
-            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">
-              Saved
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-2xl font-serif font-bold text-[#CA922B]">
-              {reviewCount !== null ? reviewCount : "—"}
-            </div>
-            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">
-              Reviews
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-2xl font-serif font-bold text-[#CA922B]">
-              {kinfolkPoints !== null ? kinfolkPoints : "—"}
-            </div>
-            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">
-              Kinfolk Pts
-            </div>
-          </div>
-        </div>
 
         {/* Main content grid */}
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left column: profile card */}
           <div className="md:col-span-1">
-            <div className="bg-white rounded-3xl p-8 border border-[#3A1F0E]/5 shadow-sm text-center relative mt-8 md:mt-0">
-              <div className="relative w-24 h-24 mx-auto -mt-16 mb-4">
+            <div className="bg-white rounded-3xl p-8 border border-[#3A1F0E]/5 shadow-sm text-center relative">
+              <div className="relative w-24 h-24 mx-auto mb-4">
                 <div className="w-24 h-24 rounded-full bg-[#FAF6EF] border-4 border-white shadow-lg flex items-center justify-center text-[#CA922B] text-3xl font-serif font-bold overflow-hidden">
                   {avatarPreview ? (
                     <img
@@ -2873,8 +2823,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-    </div>
-        </>
       )}
     </div>
   );
