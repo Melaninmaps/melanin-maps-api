@@ -7,6 +7,7 @@
  */
 
 import { permittedIdentityContext } from "./permitted-identity-context";
+import { getLifeIntentGuidance } from "./life-intent-guidance";
 
 const NIH_MEDLINEPLUS_API = "https://wsearch.nlm.nih.gov/ws/query";
 const HEALTH_RETRIEVAL_TIMEOUT_MS = 6000;
@@ -54,6 +55,10 @@ const CONDITION_PATTERNS: Array<[RegExp, string]> = [
 /** Extract a neutral condition-first NIH query from the current turn. */
 export function extractHealthTopic(message: string): string {
   const msg = message.trim();
+  const lifeGuidance = getLifeIntentGuidance(msg);
+  if (lifeGuidance?.kind === "pregnancy_planning") {
+    return lifeGuidance.sourceQuery.replace(/\s+official guidance$/i, "");
+  }
   const condition = CONDITION_PATTERNS.find(([pattern]) => pattern.test(msg))?.[1];
   const identity = permittedIdentityContext(msg);
   const population = identity.demographicQualifier;

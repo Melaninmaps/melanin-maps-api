@@ -159,6 +159,10 @@ import {
   extractHealthTopic,
 } from "../kinfolk/health-retrieval";
 import {
+  buildLifeIntentSourceQuery,
+  getLifeIntentGuidance,
+} from "../kinfolk/life-intent-guidance";
+import {
   loadKinfolkMemberContext,
   buildLifeStageInstruction,
   buildPronounInstruction,
@@ -6096,6 +6100,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       TRAVEL_POLICY_OVERRIDE.test(message)
         ? "legal_regulated"
         : rawIntentClass;
+    // A current-turn life goal can add source selection, next-step prompts, and
+    // a concise explanation of why sources apply. It never reads profile data or
+    // changes the existing health and education evidence safeguards.
+    const lifeGuidance = getLifeIntentGuidance(message);
     const memberCtx = req.user?.id
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
       : {
@@ -6112,7 +6120,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
 
     const shouldResearchInLibrary =
-      intentClass === "medical_health" ||
+      (!lifeGuidance && intentClass === "medical_health") ||
       intentClass === "legal_regulated" ||
       (intentClass === "general_knowledge" && requiresCurrentResearch(message));
 
@@ -6282,6 +6290,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           }
         },
       });
+      // Pregnancy planning is deliberately mapped to preconception care, while
+      // a named school remains in its own official admissions/aid query.
+      if (lifeGuidance) {
+        const lifeIntentSourceQuery = buildLifeIntentSourceQuery(
+          message,
+          lifeGuidance,
+        );
+        contextualPlan = {
+          ...contextualPlan,
+          retrievalQueries: [
+            lifeIntentSourceQuery,
+            ...contextualPlan.retrievalQueries.filter(
+              (query) =>
+                query.toLowerCase() !== lifeIntentSourceQuery.toLowerCase(),
+            ),
+          ].slice(0, 3),
+        };
+      }
       if (
         contextualPlan.needsClarification &&
         contextualPlan.clarificationQuestion
@@ -6737,6 +6763,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const LENS_ELIGIBLE_INTENTS = new Set([
       "medical_health",
       "safety_emergency",
+      "education_discovery",
     ]);
     const lensEligible =
       LENS_ELIGIBLE_INTENTS.has(intentClass) ||
@@ -6754,7 +6781,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         });
 
         const searchPlan = buildSearchPlan(
-          message,
+          lifeGuidance
+            ? buildLifeIntentSourceQuery(message, lifeGuidance)
+            : message,
           memberProfile,
           ENTITY_INDEX,
         );
@@ -7737,6 +7766,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         catalogSource,
         intentClass,
       }) +
+      (lifeGuidance ? `\n\n${lifeGuidance.responseInstruction}` : "") +
       ownerBusinessContext +
       privateMemoryBlock +
       (contextualPlan
@@ -8128,6 +8158,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       proposedModelDestination = null;
     }
 
+    // For recognized life-planning requests, the next questions are a stable
+    // server contract rather than optional model prose. This makes it easier to
+    // continue from “I want to…” to a useful, practical follow-up.
+    if (lifeGuidance && !protectedReply.blocked) {
+      followUpSuggestions = [...lifeGuidance.followUpSuggestions];
+    }
+
     // A named business response stays scoped to exactly the canonical visible row.
     // Persisting this recommendation object safely retains its ID inside the existing
     // session messages JSON; no schema migration or new broad cultural field is used.
@@ -8511,6 +8548,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                   ? "For an immediate emergency, contact local emergency services. Confirm current alerts with official local authorities."
                   : intentPolicy.provenanceLabel
           : undefined,
+      // Source relevance is server-authored guidance, not a model-generated
+      // claim. Clients display it directly above the existing source links.
+      sourceContext: lifeGuidance?.sourceContext ?? undefined,
       // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
       sources: [
