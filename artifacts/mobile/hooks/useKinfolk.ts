@@ -148,6 +148,8 @@ export type ChatMessage = {
   provenanceNote?: string | null;
   /** Quiet source attribution, returned only when a material detail lacks support. */
   sourceNote?: string | null;
+  /** Brief server-authored explanation of why the linked sources apply. */
+  sourceContext?: string | null;
   /** Optional, opt-in public Community discussion disclosure; never evidence. */
   communityPerspective?: CommunityPerspective | null;
   /** Set on KINFOLK_BUSY/KINFOLK_RATE_LIMITED errors — original question can be retried */
@@ -240,6 +242,7 @@ export function useKinfolk() {
           intentClass?: string | null;
           provenanceNote?: string | null;
           sourceNote?: string | null;
+          sourceContext?: string | null;
           communityPerspective?: CommunityPerspective | null;
           sources?: Array<{ title: string; url: string }> | null;
           clarificationSteps?: KinfolkClarificationStep[] | null;
@@ -277,6 +280,7 @@ export function useKinfolk() {
           intentClass: data.intentClass ?? null,
           provenanceNote: data.provenanceNote ?? null,
           sourceNote: data.sourceNote ?? null,
+          sourceContext: data.sourceContext ?? null,
           communityPerspective: data.communityPerspective ?? null,
           sources: data.sources ?? null,
           clarificationSteps: data.clarificationSteps ?? undefined,

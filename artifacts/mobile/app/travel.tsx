@@ -923,6 +923,15 @@ function AiMessageBubble({
           </View>
         ) : null}
 
+        {msg.sourceContext && !msg.resultView && msg.sources && msg.sources.length > 0 ? (
+          <View testID="kinfolk-source-context" style={[aiStyles.sourceContextBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
+            <Text style={[aiStyles.sourceContextText, { color: "#3A1F0E99" }]}>
+              <Text style={[aiStyles.sourceContextLabel, { color: "#3A1F0E" }]}>Why these sources fit: </Text>
+              {msg.sourceContext}
+            </Text>
+          </View>
+        ) : null}
+
         {!msg.resultView && msg.sources && msg.sources.length > 0 && (
           <View style={[aiStyles.sourcesBox, { borderColor: colors.border }]}>
             <Text style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}>Sources</Text>
@@ -988,6 +997,9 @@ const aiStyles = StyleSheet.create({
   provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
   provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
   sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },
+  sourceContextBox: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 8, marginTop: 6, marginBottom: 6 },
+  sourceContextText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  sourceContextLabel: { fontFamily: "Inter_700Bold" },
   communityPerspectiveBox: { flexDirection: "row", gap: 7, borderWidth: 1, borderRadius: 10, marginTop: 8, padding: 9 },
   communityPerspectiveTitle: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
   communityPerspectiveText: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 },

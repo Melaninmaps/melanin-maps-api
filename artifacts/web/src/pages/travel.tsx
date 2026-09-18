@@ -155,6 +155,8 @@ interface Message {
   intentClass?: string | null;
   provenanceNote?: string | null;
   sourceNote?: string | null;
+  /** Brief server-authored explanation of why the linked sources apply. */
+  sourceContext?: string | null;
   // Research sources + library entry link (Living Library branch)
   sources?: KinfolkSource[] | null;
   libraryEntry?: KinfolkLibraryEntry | null;
@@ -1563,6 +1565,7 @@ function TravelPage() {
         intentClass?: string | null;
         provenanceNote?: string | null;
         sourceNote?: string | null;
+        sourceContext?: string | null;
         communityPerspective?: CommunityPerspective | null;
         // Research sources + library entry link
         sources?: KinfolkSource[] | null;
@@ -1621,6 +1624,7 @@ function TravelPage() {
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
         sourceNote: data.sourceNote ?? null,
+        sourceContext: data.sourceContext ?? null,
         communityPerspective: data.communityPerspective ?? null,
         sources: data.sources ?? null,
         libraryEntry: data.libraryEntry ?? null,
@@ -2178,6 +2182,12 @@ function TravelPage() {
                               <ChevronRight size={9} className="-rotate-90" />Show more
                             </button>
                           )}
+                        </div>
+                      )}
+                      {msg.role === "assistant" && msg.sourceContext && msg.sources && msg.sources.length > 0 && (
+                        <div data-testid="kinfolk-source-context" className="mt-3 rounded-xl border border-[#CA922B]/20 bg-[#FFF8EC] px-3 py-2 text-xs leading-relaxed text-[#3A1F0E]/70">
+                          <span className="font-semibold text-[#3A1F0E]">Why these sources fit: </span>
+                          {msg.sourceContext}
                         </div>
                       )}
                       {/* Source citations — shown for Living Library research answers */}
