@@ -5262,6 +5262,35 @@ export function summarizeRequiredPublicationSchemaFailure(error: unknown): strin
     : "required_publication_schema_unclassified";
 }
 
+/**
+ * Railway's compact log view truncates one long structured reason. Emit the
+ * already-sanitized publication-contract fields as individual short messages so
+ * an operator can identify the failed schema prerequisite without querying or
+ * printing database records, connection strings, or credentials.
+ */
+export function publicationSchemaFailureLogLines(error: unknown): string[] {
+  const summary = summarizeRequiredPublicationSchemaFailure(error);
+  if (!summary.startsWith("Community publication schema verification failed:")) {
+    return [`publication_schema_failure_category=${summary}`];
+  }
+
+  const fieldMap: ReadonlyArray<readonly [string, string]> = [
+    ["missing tables", "missing_tables"],
+    ["columns", "missing_columns"],
+    ["indexes", "missing_indexes"],
+    ["malformed indexes", "malformed_indexes"],
+    ["public view", "public_view"],
+    ["safe public function", "safe_public_function"],
+    ["safe public view", "safe_public_view"],
+    ["media public_url nullable", "media_public_url_nullable"],
+  ];
+  return fieldMap.map(([label, key]) => {
+    const match = summary.match(new RegExp(`${label} \\[(.*?)\\]`, "i"));
+    const value = match?.[1]?.slice(0, 500) ?? "unknown";
+    return `publication_schema_${key}=[${value}]`;
+  });
+}
+
 export async function ensureRequiredPublicationSchema(
   directoryImportEnabled: boolean,
   logger?: Logger,

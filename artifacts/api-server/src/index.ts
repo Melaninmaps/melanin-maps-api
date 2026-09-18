@@ -8,8 +8,8 @@ import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
   ensureRequiredPublicationSchema,
+  publicationSchemaFailureLogLines,
   runStartupMigrations,
-  summarizeRequiredPublicationSchemaFailure,
 } from "./lib/startup-migrations";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
@@ -121,8 +121,11 @@ try {
   );
   logger.info("Required publication schema ready before traffic acceptance");
 } catch (error) {
+  for (const detail of publicationSchemaFailureLogLines(error)) {
+    logger.error(detail);
+  }
   logger.fatal(
-    { reason: summarizeRequiredPublicationSchemaFailure(error) },
+    { code: "required_publication_schema_failed" },
     "Required publication schema failed — server will not accept traffic",
   );
   await pool.end().catch(() => undefined);
