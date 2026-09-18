@@ -1,0 +1,457 @@
+{
+  "checkedAt": "2026-09-18T23:19:18.918Z",
+  "sourceManifest": "eleventh-three-city-combined-review-only-candidates.jsonl",
+  "candidates": 59,
+  "uniqueDestinations": 74,
+  "counts": {
+    "reachable": 72,
+    "review_required": 2
+  },
+  "results": [
+    {
+      "url": "https://www.levelsfashion.com/",
+      "status": 200,
+      "finalUrl": "https://www.levelsfashion.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://826boston.org/",
+      "status": 200,
+      "finalUrl": "https://826boston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://boingtoys.com/",
+      "status": 200,
+      "finalUrl": "https://boingtoys.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://boingtoys.com/pages/our-location",
+      "status": 200,
+      "finalUrl": "https://boingtoys.com/pages/our-location",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackownedbos.com/bos-shop",
+      "status": 200,
+      "finalUrl": "https://www.blackownedbos.com/bos-shop",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boston.gov/departments/boston-centers-youth-and-families",
+      "status": 200,
+      "finalUrl": "https://www.boston.gov/departments/boston-centers-youth-and-families",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bostoncookiekitchen.com/",
+      "status": 200,
+      "finalUrl": "https://bostoncookiekitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.comfortkitchenbos.com/",
+      "status": 200,
+      "finalUrl": "https://www.comfortkitchenbos.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://frugalbookstore.net/",
+      "status": 200,
+      "finalUrl": "https://frugalbookstore.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bostonblackbiz.com/places/united-states/massachusetts/boston/bookstore/frugal-bookstore/",
+      "status": 200,
+      "finalUrl": "https://bostonblackbiz.com/places/united-states/massachusetts/boston/bookstore/frugal-bookstore/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.graccboston.org/",
+      "status": 200,
+      "finalUrl": "https://www.graccboston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hydesquare.org/",
+      "status": 200,
+      "finalUrl": "https://www.hydesquare.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ibaboston.org/la-casa",
+      "status": 200,
+      "finalUrl": "https://ibaboston.org/la-casa",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mandmbbq.com/",
+      "status": 200,
+      "finalUrl": "https://www.mandmbbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ncaaa.org/",
+      "status": 200,
+      "finalUrl": "https://ncaaa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sociedadlatina.org/",
+      "status": 200,
+      "finalUrl": "https://www.sociedadlatina.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.styllistik.com/contact-us",
+      "status": 200,
+      "finalUrl": "https://www.styllistik.com/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trill.fit/contact",
+      "status": 200,
+      "finalUrl": "https://trill.fit/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://100blackmenindy.org/",
+      "status": 200,
+      "finalUrl": "https://100blackmenindy.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/100blackmenindy/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2F100blackmenindy%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://artisanbakeryinc.com/",
+      "status": 200,
+      "finalUrl": "https://artisanbakeryinc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/artisanbakeryindy",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fartisanbakeryindy&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/blackleafvegan/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fblackleafvegan%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/profile.php?id=100054190484617",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/people/Cleos-Bodega-Cafe/100054190484617/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dabluelagoon.com/",
+      "status": 403,
+      "finalUrl": "https://dabluelagoon.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://deckademics.com/",
+      "status": 200,
+      "finalUrl": "https://deckademics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/deckademics/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdeckademics%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/milkshakeindy/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmilkshakeindy%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hisplaceeatery.com/",
+      "status": 200,
+      "finalUrl": "https://hisplaceeatery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/hisplaceeatery/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhisplaceeatery%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://isponline24.com/",
+      "status": 200,
+      "finalUrl": "https://isponline24.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/Impactsp/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/Impactsp/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.indianablackexpo.com/",
+      "status": 200,
+      "finalUrl": "https://www.indianablackexpo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/inblackexpoinc/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Finblackexpoinc%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.indplsul.org/",
+      "status": 200,
+      "finalUrl": "https://www.indplsul.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/indyurbanleague/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Findyurbanleague%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kheprw.org/",
+      "status": 200,
+      "finalUrl": "https://kheprw.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kheprw/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkheprw%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kicassoindy.com/",
+      "status": 200,
+      "finalUrl": "https://www.kicassoindy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/kicasso.indy",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/kicasso.indy",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.leecomp.net/",
+      "status": 200,
+      "finalUrl": "https://www.leecomp.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/leeinfinitesolutions/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fleeinfinitesolutions%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://madamwalkerlegacycenter.com/",
+      "status": 200,
+      "finalUrl": "https://madamwalkerlegacycenter.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/walkertheatre/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fwalkertheatre%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theblockbistro.com/",
+      "status": 200,
+      "finalUrl": "https://www.theblockbistro.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/blockbistro/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fblockbistro%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/indybeautysupply/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/indybeautysupply/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.centromn.org/",
+      "status": 200,
+      "finalUrl": "https://www.centromn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fannisminimarket.com/",
+      "status": 200,
+      "finalUrl": "https://www.fannisminimarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lovekobico.com/",
+      "status": 200,
+      "finalUrl": "https://www.lovekobico.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mannystortas.com/",
+      "status": 200,
+      "finalUrl": "https://mannystortas.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://studiiyo23.com/",
+      "status": 200,
+      "finalUrl": "https://studiiyo23.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tacoselprimo.com/",
+      "status": 200,
+      "finalUrl": "https://www.tacoselprimo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.b-suite.co/",
+      "status": 200,
+      "finalUrl": "https://www.b-suite.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thedrippingrootjuicebar.com/",
+      "status": 200,
+      "finalUrl": "https://www.thedrippingrootjuicebar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://2scoopseatery.com/",
+      "status": 200,
+      "finalUrl": "https://2scoopseatery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackgarnetbooks.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackgarnetbooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bouquetsbycarolyn.net/",
+      "status": 202,
+      "finalUrl": "https://www.bouquetsbycarolyn.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clues.org/",
+      "status": 200,
+      "finalUrl": "https://clues.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cookiecart.org/",
+      "status": 200,
+      "finalUrl": "https://cookiecart.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.elburritomercado.com/",
+      "status": 200,
+      "finalUrl": "https://www.elburritomercado.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flavacafe.org/",
+      "status": 200,
+      "finalUrl": "https://www.flavacafe.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.groominghouse.biz/",
+      "status": 200,
+      "finalUrl": "http://www.groominghouse.biz/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hyacinthstpaul.com/",
+      "status": 200,
+      "finalUrl": "https://www.hyacinthstpaul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://la-marg.com/",
+      "status": 200,
+      "finalUrl": "https://la-marg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.latinoleadmn.org/",
+      "status": 200,
+      "finalUrl": "https://www.latinoleadmn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lipesteem.com/",
+      "status": 200,
+      "finalUrl": "https://lipesteem.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://metronomebrewery.com/",
+      "status": 200,
+      "finalUrl": "https://metronomebrewery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nashvillecoop.com/",
+      "status": 403,
+      "finalUrl": "https://nashvillecoop.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://penumbracenter.org/",
+      "status": 200,
+      "finalUrl": "https://penumbracenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://penumbracenter.org/contact/",
+      "status": 200,
+      "finalUrl": "https://penumbracenter.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecoven.com/",
+      "status": 200,
+      "finalUrl": "https://www.thecoven.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tommiespizza.com/",
+      "status": 200,
+      "finalUrl": "https://tommiespizza.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theurbanlightsmusic.com/",
+      "status": 200,
+      "finalUrl": "https://theurbanlightsmusic.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
