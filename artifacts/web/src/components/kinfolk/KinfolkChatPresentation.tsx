@@ -198,20 +198,20 @@ export function KinfolkStaffDemoBadge({
 }: {
   experience: KinfolkStaffDemoExperience | null | undefined;
 }) {
-  if (!isStaffDemoExperience(experience)) return null;
-
-  return (
-    <span
-      data-testid="kinfolk-staff-demo-badge"
-      className="mb-2 inline-flex items-center rounded-full border border-[#CA922B]/35 bg-[#FFF8EC] px-2.5 py-1 text-xs font-semibold text-[#8D5C17]"
-      aria-label="Staff demo, quality conversation"
-    >
-      Staff demo <span className="mx-1 text-[#CA922B]" aria-hidden="true">·</span> Quality conversation
-    </span>
-  );
+  // Quality-routing metadata is internal. Testers and members receive the
+  // conversation, citations, recommendation cards, and feedback controls—not a
+  // “demo” label that makes the production experience look unfinished.
+  void experience;
+  return null;
 }
 
-export function KinfolkSourceLinks({ sources }: { sources: KinfolkPresentationSource[] }) {
+export function KinfolkSourceLinks({
+  sources,
+  onSummarize,
+}: {
+  sources: KinfolkPresentationSource[];
+  onSummarize?: (source: KinfolkPresentationSource) => void;
+}) {
   const safeSources = sources.flatMap((source) => {
     const href = safeExternalSourceHref(source.url);
     return href ? [{ ...source, href }] : [];
@@ -224,16 +224,27 @@ export function KinfolkSourceLinks({ sources }: { sources: KinfolkPresentationSo
       <h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Sources</h3>
       <div className="space-y-1.5">
         {safeSources.map((source) => (
-          <a
-            key={source.url}
-            href={source.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-xl border border-[#3A1F0E]/8 bg-[#FAF6EF] px-3 py-2 text-xs font-semibold text-[#8D5C17] transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]"
-          >
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#CA922B]" aria-hidden="true" />
-            {source.title}
-          </a>
+          <div key={source.url} className="flex flex-wrap items-center gap-2">
+            <a
+              href={source.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-[#3A1F0E]/8 bg-[#FAF6EF] px-3 py-2 text-xs font-semibold text-[#8D5C17] transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]"
+            >
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#CA922B]" aria-hidden="true" />
+              {source.title}
+            </a>
+            {onSummarize ? (
+              <button
+                type="button"
+                onClick={() => onSummarize({ title: source.title, url: source.href })}
+                className="rounded-full border border-[#CA922B]/30 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#8D5C17] transition-colors hover:border-[#CA922B] hover:text-[#CA922B]"
+                aria-label={`Ask Kinfolk to summarize ${source.title}`}
+              >
+                Summarize with Kinfolk
+              </button>
+            ) : null}
+          </div>
         ))}
       </div>
     </section>

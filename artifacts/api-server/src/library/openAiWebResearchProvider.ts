@@ -123,6 +123,8 @@ export function createOpenAiWebResearchProvider(input: {
                 "Do not infer race, sex, religion, nationality, or any other identity attribute.",
                 "For spiritual, religious, or existential questions, describe multiple relevant traditions and secular perspectives and do not present an unknowable answer as settled fact.",
                 "For medical, legal, or financial questions, provide general education only, rely on authoritative sources, state uncertainty, and do not personalize advice.",
+                "For current public affairs, separate verified facts, an official's or speaker's claim, and material facts that cannot be confirmed. Do not create false balance or call an unsupported claim a fact.",
+                "When a member explicitly asks for perspectives from a named community or public-facing group, seek a compact range of directly attributed on-record perspectives from reliable sources. Never claim a group has one view and never infer a speaker's identity.",
                 "Use current sources, include inline citations, and distinguish disputed or changing claims.",
               ].join(" "),
             },

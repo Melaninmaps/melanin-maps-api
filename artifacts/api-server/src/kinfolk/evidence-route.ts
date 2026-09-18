@@ -5,6 +5,7 @@ import {
   type Consequence,
   type KinfolkIntent,
 } from "./intent-router";
+import { requiresCurrentResearch } from "./current-research";
 
 /** How the answer should treat the central claim. */
 export type ClaimMode = "factual" | "evaluative";
@@ -36,8 +37,6 @@ export interface EvidenceRoute {
   /** Stable, verified facts about public figures and their work remain answerable. */
   accuratePublicFigureFactsAllowed: true;
 }
-
-const LIVE_WEB_SIGNALS = /\b(current|currently|recent|recently|latest|today|today's|right now|this week|this month|tonight|tomorrow|this weekend|breaking|news|new release|as of)\b/i;
 
 const CURRENT_WORDS = /\b(current|currently|recent|recently|latest|today|today's|right now|this week|this month|tonight|tomorrow|this weekend|breaking|news|new release|as of)\b/gi;
 
@@ -81,7 +80,7 @@ const SOURCE_POLICY: Record<
       "verified_platform_record",
     ],
     sourceGuidance:
-      "Use live web results with a publication or update date. Prefer official or primary sources and corroborate material current claims with reputable reporting.",
+      "Use live web results with a publication or update date. Prefer official or primary sources and corroborate material current claims with reputable reporting. For public affairs, separate verified facts, the speaker's claim or interpretation, and material facts that cannot yet be confirmed. Do not create false balance or treat a politician's claim as a fact. If the member explicitly asks for perspectives from a named community or public-facing group, include a compact range of directly attributed on-record perspectives where reliable sources support them; do not claim that any community has one view or infer a speaker's identity.",
   },
   culture: {
     allowedSources: [
@@ -143,7 +142,9 @@ export function routeEvidence(message: string): EvidenceRoute {
   const cleanMessage = message.trim();
   if (!cleanMessage) throw new Error("MESSAGE_REQUIRED");
 
-  const liveWebRequired = LIVE_WEB_SIGNALS.test(cleanMessage);
+  // Keep the evidence route aligned with the chat-route freshness guard,
+  // including concise named-person custody or release questions.
+  const liveWebRequired = requiresCurrentResearch(cleanMessage);
   const domain = semanticDomain(cleanMessage, liveWebRequired);
   const claimMode = classifyCulturalClaimMode(cleanMessage);
   const baseRisk = getEvidencePolicy(domain).consequence;

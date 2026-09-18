@@ -170,7 +170,7 @@ describe("Kinfolk chat presentation", () => {
     expect(hasItineraryDays({ days: [] })).toBe(false);
   });
 
-  it("shows the staff demo quality badge only for the staff-demo response metadata", () => {
+  it("keeps internal staff quality metadata out of the member conversation", () => {
     const staffDemoMarkup = renderToStaticMarkup(React.createElement(KinfolkStaffDemoBadge, {
       experience: { mode: "staff_demo", label: "Staff demo", qualityTier: "quality", contextTurns: 6 },
     }));
@@ -178,8 +178,7 @@ describe("Kinfolk chat presentation", () => {
       experience: null,
     }));
 
-    expect(staffDemoMarkup).toContain("Staff demo");
-    expect(staffDemoMarkup).toContain("Quality conversation");
+    expect(staffDemoMarkup).toBe("");
     expect(standardMarkup).toBe("");
   });
 
@@ -191,12 +190,15 @@ describe("Kinfolk chat presentation", () => {
         { title: "Unsafe source", url: "javascript:alert(1)" },
         { title: "Protocol-relative source", url: "//evil.example/path" },
       ],
+      onSummarize: () => {},
     }));
 
     expect(markup).toContain('href="https://example.com/research"');
     expect(markup).toContain('target="_blank"');
     expect(markup).toContain('rel="noopener noreferrer"');
     expect(markup).toContain("Trusted source");
+    expect(markup).toContain("Summarize with Kinfolk");
+    expect(markup).toContain("Ask Kinfolk to summarize Trusted source");
     expect(markup).not.toContain('href="/places/for-keeps-books"');
     expect(markup).not.toContain("Unapproved internal path");
     expect(markup).not.toContain("Unsafe source");

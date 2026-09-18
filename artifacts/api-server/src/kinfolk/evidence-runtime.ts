@@ -7,6 +7,9 @@ export const TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY =
 export const TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY =
   "I can’t retrieve claim-relevant authoritative medical evidence for that right now, so I won’t fill the gap from memory. Please check an official public-health source or ask a licensed clinician; call local emergency services for urgent symptoms.";
 
+export const TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY =
+  "I can’t retrieve cited content for that linked article right now, so I won’t summarize a similar story from memory. Please open the original source or try the summary again later.";
+
 export function hasRetrievedMedicalEvidence(contextBlock: string): boolean {
   return /RETRIEVED FROM NIH MEDLINEPLUS/i.test(contextBlock)
     && !/AUTHORITATIVE RETRIEVAL INCOMPLETE/i.test(contextBlock);
@@ -20,12 +23,20 @@ export function evidenceFailureReply(input: {
   route: EvidenceRoute;
   medicalContextBlock: string;
   hasLiveWebEvidence: boolean;
+  requestedArticleEvidenceAvailable?: boolean;
 }): string | null {
   if (
     input.route.domain === "medical_health"
     && !hasRetrievedMedicalEvidence(input.medicalContextBlock)
   ) {
     return TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY;
+  }
+  if (
+    input.route.retrievalRequirement === "web_required"
+    && input.route.allowedSources.includes("reputable_current_reporting")
+    && input.requestedArticleEvidenceAvailable === false
+  ) {
+    return TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY;
   }
   if (
     input.route.retrievalRequirement === "web_required"

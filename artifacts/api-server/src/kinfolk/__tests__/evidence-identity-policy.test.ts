@@ -86,6 +86,19 @@ describe("deterministic evidence route", () => {
       expect(routeEvidence(`${term} Sinners cast updates`).retrievalRequirement).toBe("web_required");
     },
   );
+
+  it("requires current cited research for a named person's custody-status shorthand", () => {
+    const route = routeEvidence("Is Durk coming home?");
+    expect(route).toMatchObject({
+      domain: "current_information",
+      risk: "medium",
+      retrievalRequirement: "web_required",
+      failClosed: true,
+    });
+    expect(route.allowedSources).toContain("reputable_current_reporting");
+    expect(route.sourceGuidance).toMatch(/separate verified facts, the speaker's claim/i);
+    expect(route.sourceGuidance).toMatch(/directly attributed on-record perspectives/i);
+  });
 });
 
 describe("cultural claim mode and inline provenance", () => {

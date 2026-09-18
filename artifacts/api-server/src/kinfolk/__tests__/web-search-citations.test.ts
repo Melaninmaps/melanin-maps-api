@@ -2,12 +2,22 @@ import { describe, expect, it } from "vitest";
 import {
   KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS,
   KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS,
+  openAiWebSearchConfigured,
   parseOpenAiResponseCitations,
 } from "../web-search";
 
 const query = [{ text: "current Maryland news", role: "general" as const, reason: "current" }];
 
 describe("Responses web-search citation contract", () => {
+  it("accepts a normal OpenAI key without requiring legacy integration variable names", () => {
+    expect(openAiWebSearchConfigured({ OPENAI_API_KEY: "test-key" })).toBe(true);
+    expect(openAiWebSearchConfigured({
+      AI_INTEGRATIONS_OPENAI_API_KEY: "legacy-key",
+      AI_INTEGRATIONS_OPENAI_BASE_URL: "https://provider.example/v1",
+    })).toBe(true);
+    expect(openAiWebSearchConfigured({ AI_INTEGRATIONS_OPENAI_API_KEY: "legacy-key" })).toBe(false);
+  });
+
   it("uses the provider-proven bounded timeout for cited current research", () => {
     expect(KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS).toBe(30_000);
     expect(KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS).toBe(4_000);

@@ -915,10 +915,20 @@ function AiMessageBubble({
           <View style={[aiStyles.sourcesBox, { borderColor: colors.border }]}>
             <Text style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}>Sources</Text>
             {msg.sources.slice(0, 5).map((source, index) => (
-              <TouchableOpacity key={`${source.url}-${index}`} onPress={() => void openExternalUrl(source.url, { kind: "web" })} style={aiStyles.sourceRow}>
-                <Ionicons name="open-outline" size={12} color={GOLD} />
-                <Text numberOfLines={2} style={[aiStyles.sourceLink, { color: GOLD }]}>{source.title}</Text>
-              </TouchableOpacity>
+              <View key={`${source.url}-${index}`} style={aiStyles.sourceActionRow}>
+                <TouchableOpacity onPress={() => void openExternalUrl(source.url, { kind: "web" })} style={[aiStyles.sourceRow, { flex: 1 }]}>
+                  <Ionicons name="open-outline" size={12} color={GOLD} />
+                  <Text numberOfLines={2} style={[aiStyles.sourceLink, { color: GOLD }]}>{source.title}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => onQuickReply(`Summarize the linked article “${source.title}” accurately, using this exact source: ${source.url}`)}
+                  style={[aiStyles.sourceSummaryButton, { borderColor: GOLD }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ask Kinfolk to summarize ${source.title}`}
+                >
+                  <Text style={[aiStyles.sourceSummaryText, { color: GOLD }]}>Summarize</Text>
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         )}
@@ -968,8 +978,11 @@ const aiStyles = StyleSheet.create({
   sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },
   sourcesBox: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 8, gap: 6 },
   sourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 },
+  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
   sourceLink: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
+  sourceSummaryButton: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
+  sourceSummaryText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 

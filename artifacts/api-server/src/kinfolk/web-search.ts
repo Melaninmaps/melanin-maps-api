@@ -5,7 +5,10 @@
  * become result rows. Model prose and consulted-source lists are not evidence.
  */
 
-import { openai } from "@workspace/integrations-openai-ai-server";
+import {
+  openai,
+  resolveOpenAIConfiguration,
+} from "@workspace/integrations-openai-ai-server";
 import type { SearchQuery } from "./lens-planner.js";
 import { enforceDiasporaFirstProviderQuery } from "./diasporaFirstResearchPolicy.js";
 import { kinfolkModel } from "./model-config.js";
@@ -86,11 +89,10 @@ export const KINFOLK_OPENAI_WEB_SEARCH_TIMEOUT_MS = 30_000;
 // message or citations. This matches the real provider-readiness probe.
 export const KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS = 4_000;
 
-function openAiConfigured(): boolean {
-  return Boolean(
-    process.env.AI_INTEGRATIONS_OPENAI_BASE_URL?.trim()
-    && process.env.AI_INTEGRATIONS_OPENAI_API_KEY?.trim(),
-  );
+export function openAiWebSearchConfigured(
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return resolveOpenAIConfiguration(environment) !== null;
 }
 
 function citationPublisher(url: string): string {
@@ -182,10 +184,13 @@ async function searchOpenAiQuery(
           ? "Research current local-business options for this query:"
           : "Research this current-information question:",
         query.text,
-        purpose === "local_business"
-          ? "Prefer official business websites, official tourism/chamber sources, and reputable local reporting."
-          : "Prefer current authoritative primary sources and reputable reporting appropriate to the question.",
-        "Return concise factual findings with web citations. Do not invent facts or sources.",
+          purpose === "local_business"
+            ? "Prefer official business websites, official tourism/chamber sources, and reputable local reporting."
+            : "Prefer current authoritative primary sources and reputable reporting appropriate to the question.",
+          purpose === "general_current"
+            ? "For public affairs, separate verified facts, a speaker's claim, and unconfirmed material. If the question explicitly requests perspectives from a named community or public-facing group, seek multiple directly attributed on-record perspectives; do not generalize a group or infer identities."
+            : "",
+          "Return concise factual findings with web citations. Do not invent facts or sources.",
       ].join("\n"),
       reasoning: { effort: "low" },
       max_output_tokens: KINFOLK_OPENAI_WEB_SEARCH_MAX_OUTPUT_TOKENS,
@@ -254,7 +259,7 @@ async function searchQueryWithFallback(
   location?: SearchLocation,
 ): Promise<QuerySearchOutcome> {
   const safeQuery = { ...query, text: enforceDiasporaFirstProviderQuery(query.text) };
-  if (openAiConfigured()) {
+  if (openAiWebSearchConfigured()) {
     const primary = await searchOpenAiQuery(safeQuery, purpose, location);
     const primaryAttempt = { provider: "openai" as const, used: primary.kind !== "provider_error", outcome: primary.kind };
     if (primary.kind === "cited") {
@@ -286,7 +291,7 @@ async function searchQueriesWithState(
   _imageRequested: boolean,
   location?: SearchLocation,
 ): Promise<WebSearchOutcome> {
-  const hasOpenAi = openAiConfigured();
+  const hasOpenAi = openAiWebSearchConfigured();
   const hasTavily = Boolean(kinfolkTavilyApiKey());
   if (!queries.length || (!hasOpenAi && !hasTavily)) {
     return {
