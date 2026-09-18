@@ -2,8 +2,8 @@
 cmds = [
   "corepack enable",
   "pnpm install --frozen-lockfile",
+  "rm -rf artifacts/web/dist artifacts/api-server/web-static",
   "pnpm --filter @workspace/web run build",
-  "rm -rf artifacts/api-server/web-static",
   "mkdir -p artifacts/api-server/web-static",
   "cp -R artifacts/web/dist/public/. artifacts/api-server/web-static/",
   "pnpm --filter @workspace/api-server run build",
