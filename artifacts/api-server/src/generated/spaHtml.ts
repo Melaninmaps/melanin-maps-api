@@ -34,7 +34,6 @@ export const SPA_HTML = `<!DOCTYPE html>
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/brand/apple-touch-icon.png" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -83,8 +82,8 @@ export const SPA_HTML = `<!DOCTYPE html>
         _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-DNhdbzxd.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BhtTnbfG.css">
+    <script type="module" crossorigin src="/assets/index-Bb7aZcN7.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-x7pcm8Bk.css">
   </head>
   <body>
     <div id="root"></div>
