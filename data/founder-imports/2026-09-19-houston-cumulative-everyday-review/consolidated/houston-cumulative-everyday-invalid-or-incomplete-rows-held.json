@@ -1,0 +1,11 @@
+[
+  {
+    "file": "houston-candidates.jsonl",
+    "line": 32,
+    "name": "Privilege Rooftop Lounge",
+    "missing": [],
+    "invalidTargetKind": "business",
+    "locationProblem": true,
+    "destinationProblem": false
+  }
+]
