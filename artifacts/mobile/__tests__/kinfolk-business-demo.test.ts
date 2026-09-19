@@ -28,6 +28,15 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain("External sources are not MWM-verified business listings.");
   });
 
+  it("opens each compact Kinfolk pick on its MWM business page while retaining quick options", () => {
+    expect(widgetSource).toContain("const openRecommendationBusiness = useCallback");
+    expect(widgetSource).toContain('pathname: "/business/[id]"');
+    expect(widgetSource).toContain("onPress={() => openRecommendationBusiness(recommendation.id)}");
+    expect(widgetSource).toContain('accessibilityLabel={`Open ${recommendation.name} on Mapping with Melanin`}');
+    expect(widgetSource).toContain("setSelectedRecommendation(recommendation)");
+    expect(widgetSource).toContain('accessibilityLabel={`More options for ${recommendation.name}`}');
+  });
+
   it("invalidates deferred widget voice responses after background or close", async () => {
     let active = true;
     let open = true;

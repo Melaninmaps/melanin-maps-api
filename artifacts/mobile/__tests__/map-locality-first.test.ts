@@ -85,6 +85,15 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("enabled: exploringAllAreas || mapLocality !== null");
   });
 
+  it("requests precise foreground location once on the first native map visit", () => {
+    expect(fullMapSource).toContain("const hasRequestedInitialLocationRef = useRef(false)");
+    expect(fullMapSource).toContain("Location.requestForegroundPermissionsAsync()");
+    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Highest");
+    expect(fullMapSource).toContain("hasRequestedInitialLocationRef.current = true");
+    expect(fullMapSource).toContain("void recenter()");
+    expect(fullMapSource).toContain('if (Platform.OS === "web" || !isFocused || hasRequestedInitialLocationRef.current) return;');
+  });
+
   it("scopes cultural, event, safety, and tour collections until explicit all-area exploration", () => {
     expect(fullMapSource).toContain("(!exploringAllAreas && !hasLocalCollectionScope)");
     expect(fullMapSource).toContain("/api/cultural-sites${collectionScopeSuffix}");

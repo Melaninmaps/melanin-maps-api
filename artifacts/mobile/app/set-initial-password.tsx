@@ -22,13 +22,23 @@ export default function SetInitialPasswordScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { refreshUser } = useAuth();
+  const { refreshUser, logout } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
   const valid = password.length >= 8 && password === confirmation;
+
+  async function returnToSignIn() {
+    if (loading || signingOut) return;
+    setSigningOut(true);
+    // Temporary-password members may leave this screen, but cannot bypass the
+    // password-change requirement while remaining signed in.
+    await logout().catch(() => {});
+    router.replace("/login");
+  }
 
   async function submit() {
     Keyboard.dismiss();
@@ -99,6 +109,19 @@ export default function SetInitialPasswordScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
+        <TouchableOpacity
+          onPress={() => void returnToSignIn()}
+          disabled={loading || signingOut}
+          style={styles.returnToSignIn}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out and return to sign in"
+          accessibilityHint="Leaves this required password screen without changing the temporary-password policy"
+        >
+          <Feather name="arrow-left" size={17} color={colors.mutedForeground} />
+          <Text style={[styles.returnToSignInText, { color: colors.mutedForeground }]}>
+            {signingOut ? "Signing out…" : "Return to sign in"}
+          </Text>
+        </TouchableOpacity>
         <View style={[styles.icon, { backgroundColor: colors.primary + "18" }]}>
           <Feather name="lock" size={32} color={colors.primary} />
         </View>
@@ -195,6 +218,16 @@ export default function SetInitialPasswordScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: 24, alignItems: "stretch" },
+  returnToSignIn: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingVertical: 8,
+    paddingRight: 10,
+  },
+  returnToSignInText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   icon: {
     width: 72,
     height: 72,

@@ -6,6 +6,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   StyleSheet,
   Text,
@@ -169,6 +170,18 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     onClose();
   };
 
+  const sheetDismissResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_event, gesture) =>
+          gesture.dy > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+        onPanResponderRelease: (_event, gesture) => {
+          if (gesture.dy > 72 || gesture.vy > 1.1) handleClose();
+        },
+      }),
+    [handleClose],
+  );
+
   const handleSubmit = () => {
     if (rating === 0 || wouldReturn === null) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -203,7 +216,19 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
       >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <View style={styles.sheetDismissRow} {...sheetDismissResponder.panHandlers}>
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            <TouchableOpacity
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close review"
+              accessibilityHint="Closes this review without submitting"
+              hitSlop={10}
+              style={styles.closeButton}
+            >
+              <Feather name="x" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
 
           {phase === "appreciation" && businessId ? (
             <CommunityAppreciationFlow
@@ -720,7 +745,20 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     alignSelf: "center",
-    marginBottom: 20,
+  },
+  sheetDismissRow: {
+    minHeight: 34,
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  closeButton: {
+    position: "absolute",
+    right: -4,
+    top: -8,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontFamily: "Inter_700Bold",

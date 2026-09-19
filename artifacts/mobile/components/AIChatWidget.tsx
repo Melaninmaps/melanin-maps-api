@@ -488,6 +488,15 @@ export function AIChatWidget() {
     if (!nextOpen) stopPlayback("widget_closed");
   }, [stopPlayback]);
 
+  const openRecommendationBusiness = useCallback((businessId: string) => {
+    // A Kinfolk pick is a Mapping with Melanin listing, so its primary tap
+    // should take the member directly to that listing rather than making them
+    // discover a second action in a sheet.
+    setSelectedRecommendation(null);
+    setWidgetOpen(false);
+    router.push({ pathname: "/business/[id]", params: { id: businessId } } as never);
+  }, [router, setWidgetOpen]);
+
   // ── Play audio only while the app is active and the widget remains open ──
   useEffect(() => {
     const request = queuedPlaybackRequestRef.current;
@@ -1030,25 +1039,40 @@ export function AIChatWidget() {
                   <View style={[styles.recommendationList, { marginLeft: 42 }]}>
                     <Text style={[styles.recommendationHeading, { color: colors.mutedForeground }]}>KINFOLK PICKS</Text>
                     {item.recommendations.map((recommendation: KinfolkBusinessRecommendation) => (
-                      <TouchableOpacity
+                      <View
                         key={recommendation.id}
-                        onPress={() => setSelectedRecommendation(recommendation)}
                         style={[styles.recommendationCard, { backgroundColor: colors.card, borderColor: "#CA922B66" }]}
-                        activeOpacity={0.82}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Open ${recommendation.name}`}
                       >
-                        <View style={[styles.recommendationIcon, { backgroundColor: "#CA922B1A" }]}>
-                          <Feather name="briefcase" size={16} color={colors.primary} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.recommendationName, { color: colors.foreground }]} numberOfLines={1}>{recommendation.name}</Text>
-                          <Text style={[styles.recommendationMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
-                            {[recommendation.category, recommendation.city, recommendation.state].filter(Boolean).join(" · ")}
-                          </Text>
-                        </View>
-                        <Feather name="chevron-right" size={18} color={colors.primary} />
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => openRecommendationBusiness(recommendation.id)}
+                          style={styles.recommendationPrimaryHit}
+                          activeOpacity={0.82}
+                          accessibilityRole="link"
+                          accessibilityLabel={`Open ${recommendation.name} on Mapping with Melanin`}
+                          accessibilityHint="Opens this business's Mapping with Melanin listing page"
+                        >
+                          <View style={[styles.recommendationIcon, { backgroundColor: "#CA922B1A" }]}>
+                            <Feather name="briefcase" size={16} color={colors.primary} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.recommendationName, { color: colors.foreground }]} numberOfLines={1}>{recommendation.name}</Text>
+                            <Text style={[styles.recommendationMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                              {[recommendation.category, recommendation.city, recommendation.state].filter(Boolean).join(" · ")}
+                            </Text>
+                          </View>
+                          <Feather name="chevron-right" size={18} color={colors.primary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setSelectedRecommendation(recommendation)}
+                          style={styles.recommendationOptions}
+                          activeOpacity={0.82}
+                          accessibilityRole="button"
+                          accessibilityLabel={`More options for ${recommendation.name}`}
+                          accessibilityHint="Shows directions, website, phone, and listing options"
+                        >
+                          <Feather name="more-horizontal" size={19} color={colors.primary} />
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </View>
                 ) : null}
@@ -1321,10 +1345,7 @@ export function AIChatWidget() {
         recommendation={selectedRecommendation}
         visible={selectedRecommendation !== null}
         onClose={() => setSelectedRecommendation(null)}
-        onViewBusiness={(businessId) => {
-          setWidgetOpen(false);
-          router.push({ pathname: "/business/[id]", params: { id: businessId } } as never);
-        }}
+        onViewBusiness={openRecommendationBusiness}
       />
     </>
   );
@@ -1396,7 +1417,9 @@ const styles = StyleSheet.create({
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
   recommendationList: { marginTop: 10, gap: 7, maxWidth: "86%" },
   recommendationHeading: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.9, marginBottom: 1 },
-  recommendationCard: { flexDirection: "row", alignItems: "center", gap: 9, borderWidth: 1, borderRadius: 14, padding: 10 },
+  recommendationCard: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 14, overflow: "hidden" },
+  recommendationPrimaryHit: { flex: 1, flexDirection: "row", alignItems: "center", gap: 9, padding: 10 },
+  recommendationOptions: { alignSelf: "stretch", minWidth: 42, alignItems: "center", justifyContent: "center", borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "#CA922B66" },
   recommendationIcon: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   recommendationName: { fontSize: 13, fontFamily: "Inter_700Bold" },
   recommendationMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
