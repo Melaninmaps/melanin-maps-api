@@ -86,7 +86,7 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
             columnType: "PgVarchar";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
@@ -155,6 +155,23 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             length: 100;
         }>;
+        isOnlineOnly: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_online_only";
+            tableName: "businesses";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         province: import("drizzle-orm/pg-core").PgColumn<{
             name: "province";
             tableName: "businesses";
@@ -463,7 +480,7 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
             columnType: "PgNumeric";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
@@ -480,7 +497,7 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
             columnType: "PgNumeric";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
@@ -1833,15 +1850,16 @@ export declare const insertBusinessSchema: z.ZodObject<{
     state: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     sourceUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     verified: z.ZodOptional<z.ZodBoolean>;
-    latitude: z.ZodString;
-    longitude: z.ZodString;
+    latitude: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    longitude: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     category: z.ZodString;
     subcategory: z.ZodString;
     tags: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;
     imageUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     featured: z.ZodOptional<z.ZodBoolean>;
     country: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    address: z.ZodString;
+    address: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    isOnlineOnly: z.ZodOptional<z.ZodBoolean>;
     province: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     listingStatus: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     ownerClaimStatus: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -2051,7 +2069,7 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
         columnType: "PgVarchar";
         data: string;
         driverParam: string;
-        notNull: true;
+        notNull: false;
         hasDefault: false;
         isPrimaryKey: false;
         isAutoincrement: false;
@@ -2120,6 +2138,23 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
     }, {}, {
         length: 100;
     }>;
+    isOnlineOnly: import("drizzle-orm/pg-core").PgColumn<{
+        name: "is_online_only";
+        tableName: "businesses";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     province: import("drizzle-orm/pg-core").PgColumn<{
         name: "province";
         tableName: "businesses";
@@ -2428,7 +2463,7 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
         columnType: "PgNumeric";
         data: string;
         driverParam: string;
-        notNull: true;
+        notNull: false;
         hasDefault: false;
         isPrimaryKey: false;
         isAutoincrement: false;
@@ -2445,7 +2480,7 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
         columnType: "PgNumeric";
         data: string;
         driverParam: string;
-        notNull: true;
+        notNull: false;
         hasDefault: false;
         isPrimaryKey: false;
         isAutoincrement: false;
