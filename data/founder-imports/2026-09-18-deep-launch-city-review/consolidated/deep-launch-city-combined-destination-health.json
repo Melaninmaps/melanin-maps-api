@@ -1,0 +1,232 @@
+{
+  "checkedAt": "2026-09-19T00:06:21.484Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-deep-launch-city-review/data/founder-imports/2026-09-18-deep-launch-city-review/review-package/deep-launch-city-combined-review-only-candidates.jsonl",
+  "candidates": 30,
+  "uniqueDestinations": 36,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 36,
+  "counts": {
+    "timeout": 5,
+    "reachable": 28,
+    "network_error": 3
+  },
+  "results": [
+    {
+      "url": "https://404coffeeatl.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://404coffeeatl.com/contact-us",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.adamatl.org/",
+      "status": 200,
+      "finalUrl": "https://www.adamatl.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blushedbynaomie.com/",
+      "status": 200,
+      "finalUrl": "https://www.blushedbynaomie.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://essentialwealthmanagement.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://essentialwealthmanagement.com/contact/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://gatecitybar.org/",
+      "status": 200,
+      "finalUrl": "https://gatecitybar.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gabwa.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://thelaa.org/",
+      "status": 200,
+      "finalUrl": "https://thelaa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mancaveatlanta.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.facebook.com/themancaveatlanta",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/themancaveatlanta",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ymcaatlanta.org/learning/early-learning",
+      "status": 200,
+      "finalUrl": "https://www.ymcaatlanta.org/learning/early-learning",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thewellnessspotatl.com/",
+      "status": 200,
+      "finalUrl": "https://www.thewellnessspotatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.servpropanthersville.com/",
+      "status": 200,
+      "finalUrl": "https://www.servpro.com/locations/ga/servpro-of-panthersville",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackartdepot.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackartdepot.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackartdepot.com/pages/about-us",
+      "status": 200,
+      "finalUrl": "https://www.blackartdepot.com/pages/about-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/aliefneighborhoodcenter.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/aliefneighborhoodcenter.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/communitycenters/southwest.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/communitycenters/southwest.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.choicepharmacyinc.com/",
+      "status": 200,
+      "finalUrl": "https://www.choicepharmacyinc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/obo/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/obo/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hccs.edu/hcc-in-the-community/entrepreneurial-initiatives/mbda/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.facebook.com/McHenryMechanicalAC/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/McHenryMechanicalAC/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oursaviorschurch-houston.org/",
+      "status": 200,
+      "finalUrl": "https://oursaviorschurch-houston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhealth.org/services/multi-service-centers/sunnyside-multi-service-center",
+      "status": 200,
+      "finalUrl": "https://www.houstonhealth.org/services/multi-service-centers/sunnyside-multi-service-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/texas_african_grocery_store/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftexas_african_grocery_store%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trendbarbercollege.org/",
+      "status": 200,
+      "finalUrl": "https://trendbarbercollege.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.globalpaints.org/",
+      "status": 200,
+      "finalUrl": "https://www.globalpaints.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.globalpaints.org/contact/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.mygnp.com/pharmacies/davis-pharmacy-philadelphia-pa-19143/",
+      "status": 200,
+      "finalUrl": "https://www.mygnp.com/pharmacies/davis-pharmacy-philadelphia-pa-19143/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://detailsbarber.com/",
+      "status": 200,
+      "finalUrl": "https://detailsbarber.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fibilaw.com/philadelphia-pa",
+      "status": 200,
+      "finalUrl": "https://fibilaw.com/philadelphia-pa",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://littledarlings.dev/",
+      "status": 200,
+      "finalUrl": "https://littledarlings.dev/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tallerpr.org/",
+      "status": 200,
+      "finalUrl": "https://tallerpr.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.yourmozaik.com/",
+      "status": 200,
+      "finalUrl": "https://www.yourmozaik.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hanaofgeorgia.com/",
+      "status": 200,
+      "finalUrl": "https://hanaofgeorgia.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caribbeangeorgia.org/",
+      "status": 200,
+      "finalUrl": "https://www.caribbeangeorgia.org/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}

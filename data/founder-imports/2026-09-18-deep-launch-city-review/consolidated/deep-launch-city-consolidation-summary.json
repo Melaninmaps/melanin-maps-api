@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-09-19T00:05:27.246Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "atlanta-deep-pass-candidates.jsonl",
+    "houston-deep-pass-candidates.jsonl",
+    "philadelphia-deep-pass-candidates.jsonl"
+  ],
+  "inputRows": 30,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 30,
+  "potentialSameDestinationCollisionsHeldForReview": 0,
+  "addressBackedCandidates": 28,
+  "commercialMapPinReviewCandidates": 19,
+  "maplessCommunityResources": 2,
+  "onlineOnlyCandidates": 0,
+  "targetKinds": {
+    "regulated_review": 15,
+    "community_resource": 8,
+    "business": 4,
+    "cultural_place": 3
+  },
+  "categories": {
+    "Business & workforce support": 2,
+    "Health": 2,
+    "Legal community resource": 2,
+    "Arts and recreation": 1,
+    "Childcare and family support": 1,
+    "childcare/family": 1,
+    "Community and culture": 1,
+    "Community and household resource": 1,
+    "Dining": 1,
+    "Financial services": 1,
+    "Grocery & retail": 1,
+    "Health & family support": 1,
+    "Health and wellness": 1,
+    "Health community resource": 1,
+    "health leads": 1,
+    "Home & trades": 1,
+    "Legal and family support": 1,
+    "legal leads": 1,
+    "Personal care & education": 1,
+    "Recreation & community": 1,
+    "Retail": 1,
+    "Salons and barbers": 1,
+    "Salons and beauty": 1,
+    "salons/barbers/braiders": 1,
+    "Trades and household services": 1,
+    "Worship & community": 1,
+    "worship/community": 1
+  },
+  "states": {
+    "Atlanta, GA": 9,
+    "Houston, TX": 9,
+    "Philadelphia, PA": 5,
+    "Decatur, GA": 2,
+    "College Park, GA": 1,
+    "Peachtree Corners, GA": 1,
+    "Smyrna, GA": 1,
+    "Snellville, GA": 1,
+    "Stockbridge, GA": 1
+  },
+  "officialCustomerDestinationCoverage": 30,
+  "files": {
+    "candidates": "deep-launch-city-consolidated-candidates.jsonl",
+    "exactDuplicates": "deep-launch-city-exact-duplicates-removed.json",
+    "destinationCollisions": "deep-launch-city-destination-collisions-review.json",
+    "invalidRowsHeld": "deep-launch-city-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "0ca55d37d0557c6ff393ae7d0f915674f3077f307df80dd9cf7fcb57e659ada2"
+}
