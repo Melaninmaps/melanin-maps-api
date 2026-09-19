@@ -1,0 +1,24 @@
+[
+  {
+    "file": "bucks-family-culture-sixth-depth-candidates.jsonl",
+    "line": 18,
+    "name": "Youth Orchestra of Bucks County",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": false,
+    "destinationProblem": false
+  },
+  {
+    "file": "bucks-family-culture-sixth-depth-candidates.jsonl",
+    "line": 20,
+    "name": "Bucks County Opportunity Council",
+    "missing": [
+      "city"
+    ],
+    "invalidTargetKind": "community_resource",
+    "locationProblem": false,
+    "destinationProblem": false
+  }
+]

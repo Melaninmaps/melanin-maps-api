@@ -1,0 +1,41 @@
+{
+  "package": "2026-09-19-philly-bucks-sixth-depth-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 80,
+  "accepted_review_only_candidates": 80,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "online_business": 1,
+    "cultural_place": 27,
+    "community_resource": 27,
+    "business": 17,
+    "regulated_review": 8
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 75,
+    "needs_research": 5
+  },
+  "manifest_sha256": "2a5ffcbe9f9470fc602b0f916127801e9099cbcb4a41323b76bd2bdab288ba88",
+  "source_manifest": "/home/ubuntu/melanin-maps-philly-bucks-sixth-depth-review/data/founder-imports/2026-09-19-philly-bucks-sixth-depth-review/consolidated/philly-bucks-sixth-depth-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "e0281361b35660fa4ac49a33564245465549a6e4358296852fe2cc07f5f642b5",
+  "destination_health": {
+    "candidates": 80,
+    "unique_destinations": 100,
+    "by_outcome": {
+      "reachable": 95,
+      "network_error": 2,
+      "review_required": 2,
+      "timeout": 1
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}

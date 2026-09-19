@@ -1,0 +1,50 @@
+[
+  {
+    "duplicateKey": "physical|tyler park center for the arts|richboro|pa|10 stable mill rd",
+    "retained": {
+      "name": "Tyler Park Center for the Arts",
+      "file": "bucks-family-culture-sixth-depth-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://tylerparkarts.org/"
+    },
+    "duplicate": {
+      "name": "Tyler Park Center for the Arts",
+      "file": "philly-bucks-specialty-services-sixth-depth-candidates.jsonl",
+      "line": 18,
+      "sourceUrl": "https://tylerparkarts.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|philadelphia youth sports collaborative|philadelphia|pa|1501 cherry st",
+    "retained": {
+      "name": "Philadelphia Youth Sports Collaborative",
+      "file": "philly-bucks-specialty-services-sixth-depth-candidates.jsonl",
+      "line": 10,
+      "sourceUrl": "https://pysc.org/"
+    },
+    "duplicate": {
+      "name": "Philadelphia Youth Sports Collaborative",
+      "file": "philly-family-everyday-sixth-depth-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://pysc.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|asian arts initiative|philadelphia|pa|1219 vine st",
+    "retained": {
+      "name": "Asian Arts Initiative",
+      "file": "philly-family-everyday-sixth-depth-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://asianartsinitiative.org/education"
+    },
+    "duplicate": {
+      "name": "Asian Arts Initiative",
+      "file": "philly-nightlife-culture-sixth-depth-candidates.jsonl",
+      "line": 15,
+      "sourceUrl": "https://asianartsinitiative.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

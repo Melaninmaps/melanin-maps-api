@@ -1,0 +1,615 @@
+{
+  "checkedAt": "2026-09-19T12:46:29.780Z",
+  "sourceManifest": "philly-bucks-sixth-depth-combined-review-only-candidates.jsonl",
+  "candidates": 80,
+  "uniqueDestinations": 100,
+  "counts": {
+    "reachable": 95,
+    "network_error": 2,
+    "review_required": 2,
+    "timeout": 1
+  },
+  "results": [
+    {
+      "url": "https://yogamazia.com/",
+      "status": 200,
+      "finalUrl": "https://yogamazia.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pa.gov/agencies/dcnr/recreation/where-to-go/state-parks/find-a-park/neshaminy-state-park",
+      "status": 200,
+      "finalUrl": "https://www.pa.gov/agencies/dcnr/recreation/where-to-go/state-parks/find-a-park/neshaminy-state-park",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://brtstage.org/",
+      "status": 200,
+      "finalUrl": "https://brtstage.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://buckslib.org/",
+      "status": 200,
+      "finalUrl": "https://buckslib.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bcoc.org/",
+      "status": 200,
+      "finalUrl": "https://bcoc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.buckscountysymphony.org/education-and-youth/",
+      "status": 200,
+      "finalUrl": "https://www.buckscountysymphony.org/education-and-youth/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ymcarivercrossing.org/locations/doylestown-ymca",
+      "status": 200,
+      "finalUrl": "https://www.ymcarivercrossing.org/locations/doylestown-ymca",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fcpartnership.org/",
+      "status": 200,
+      "finalUrl": "https://fcpartnership.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.junctionpc.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.mercermuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.mercermuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://michenerartmuseum.org/",
+      "status": 403,
+      "finalUrl": "https://michenerartmuseum.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.thetileworks.org/",
+      "status": 200,
+      "finalUrl": "https://www.thetileworks.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aamuseumbucks.org/",
+      "status": 200,
+      "finalUrl": "https://www.aamuseumbucks.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://belmontsgarage.com/",
+      "status": 200,
+      "finalUrl": "https://belmontsgarage.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.buckscounty.gov/facilities/facility/details/Core-Creek-Park-1",
+      "status": 200,
+      "finalUrl": "https://www.buckscounty.gov/facilities/facility/details/Core-Creek-Park-1",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fsabc.org/",
+      "status": 200,
+      "finalUrl": "https://fsabc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://premiumbarbershop.net/",
+      "status": 200,
+      "finalUrl": "https://premiumbarbershop.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bcptheater.org/",
+      "status": 200,
+      "finalUrl": "https://bcptheater.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theburgerly.com/",
+      "status": 200,
+      "finalUrl": "https://theburgerly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://waxnscentstudio.com/",
+      "status": 200,
+      "finalUrl": "https://waxnscentstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mamiecolettebakery.com/",
+      "status": 200,
+      "finalUrl": "https://www.mamiecolettebakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pearlsbuck.org/",
+      "status": 200,
+      "finalUrl": "https://pearlsbuck.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sofreshjuiceco.com/",
+      "status": 200,
+      "finalUrl": "https://www.sofreshjuiceco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aampmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.aampmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://amritayogawellness.com/",
+      "status": 200,
+      "finalUrl": "https://amritayogawellness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://instagram.com/amritayoga215",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Famritayoga215&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://asianartsinitiative.org/education",
+      "status": 200,
+      "finalUrl": "https://asianartsinitiative.org/education",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.associationforpublicart.org/",
+      "status": 200,
+      "finalUrl": "https://associationforpublicart.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.associationforpublicart.org/contact/",
+      "status": 200,
+      "finalUrl": "https://associationforpublicart.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barnesfoundation.org/",
+      "status": 200,
+      "finalUrl": "https://www.barnesfoundation.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackstarprojects.org/",
+      "status": 200,
+      "finalUrl": "https://blackstarprojects.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackstarprojects.org/about",
+      "status": 200,
+      "finalUrl": "https://blackstarprojects.org/about",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.childrensvillagephila.org/",
+      "status": 200,
+      "finalUrl": "https://www.childrensvillagephila.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/childrensvillagephila/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fchildrensvillagephila%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chrisjazzcafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.chrisjazzcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/departments/department-of-human-services/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/departments/department-of-human-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jeffersonhealthplans.com/community-engagement/cwc-west-philadelphia.html",
+      "status": 200,
+      "finalUrl": "https://www.jeffersonhealthplans.com/community-engagement/cwc-west-philadelphia/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.creativephl.org/public-art/",
+      "status": 200,
+      "finalUrl": "https://www.creativephl.org/public-art/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dreesephotography.com/",
+      "status": 200,
+      "finalUrl": "https://www.dreesephotography.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://davinciartalliance.org/",
+      "status": 200,
+      "finalUrl": "https://davinciartalliance.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dbhids.org/services/children-and-youth-services/",
+      "status": 200,
+      "finalUrl": "https://dbhids.org/services/children-and-youth-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/DBHIDS",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FDBHIDS&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.esperanzaartscenter.us/",
+      "status": 200,
+      "finalUrl": "https://www.esperanzaartscenter.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fdrparkphilly.org/",
+      "status": 200,
+      "finalUrl": "https://www.fdrparkphilly.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/programs/financial-empowerment-centers/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/programs/financial-empowerment-centers/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fitlerclub.com/",
+      "status": 200,
+      "finalUrl": "https://fitlerclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fleisher.org/take-a-class/saturday-young-artist-program/",
+      "status": 200,
+      "finalUrl": "https://fleisher.org/take-a-class/saturday-young-artist-program/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/fleisherart/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ffleisherart%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gpca-phila.org/",
+      "status": 200,
+      "finalUrl": "https://www.gpca-phila.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/gpca_phila/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fgpca_phila%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.habitatphiladelphia.org/home-repair/",
+      "status": 200,
+      "finalUrl": "https://www.habitatphiladelphia.org/home-repair/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/habitatphilly/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhabitatphilly%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.legendsinlocs.com/",
+      "status": 200,
+      "finalUrl": "https://www.legendsinlocs.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/legendsnaturalhair/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flegendsnaturalhair%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://middlechildphilly.com/",
+      "status": 200,
+      "finalUrl": "https://middlechildphilly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://muralarts.org/",
+      "status": 200,
+      "finalUrl": "https://muralarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://muralarts.org/contact/",
+      "status": 200,
+      "finalUrl": "https://muralarts.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/departments/office-of-children-and-families/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/departments/office-of-children-and-families/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/phlfamilies/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fphlfamilies%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/departments/office-of-community-empowerment-and-opportunity/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/departments/office-of-community-empowerment-and-opportunity/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/PHLCEO",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/PHLCEO",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/programs/out-of-school-time-ost/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/programs/out-of-school-time-ost/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pafa.org/education/center-for-art-education/youth-and-family",
+      "status": 200,
+      "finalUrl": "https://www.pafa.org/education/center-for-art-education/youth-and-family",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/pafacademy/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fpafacademy%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clefclubofjazz.org/",
+      "status": 200,
+      "finalUrl": "https://clefclubofjazz.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clefclubofjazz.org/contact/",
+      "status": 200,
+      "finalUrl": "https://clefclubofjazz.org/about/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.philacricket.com/",
+      "status": 403,
+      "finalUrl": "https://www.philacricket.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.philamuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.philamuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pyninc.org/",
+      "status": 200,
+      "finalUrl": "https://www.pyninc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pysc.org/",
+      "status": 200,
+      "finalUrl": "https://pysc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phillymagicgardens.org/",
+      "status": 200,
+      "finalUrl": "https://www.phillymagicgardens.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phillylovesfamilies.com/philly-families-can",
+      "status": 200,
+      "finalUrl": "https://www.phillylovesfamilies.com/philly-families-can",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phonerepairphilly.com/",
+      "status": 200,
+      "finalUrl": "https://www.phonerepairphilly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phonerepairphilly.com/temple-campus.html",
+      "status": 200,
+      "finalUrl": "https://www.phonerepairphilly.com/temple-campus.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://playonphilly.org/",
+      "status": 200,
+      "finalUrl": "https://playonphilly.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://playonphilly.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://playonphilly.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.preferred-auto.net/",
+      "status": 200,
+      "finalUrl": "https://www.preferred-auto.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pridefittraining.com/",
+      "status": 200,
+      "finalUrl": "https://www.pridefittraining.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pridefittraining.com/contact/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://rocktothefuture.org/",
+      "status": 200,
+      "finalUrl": "https://rocktothefuture.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rosenbach.org/",
+      "status": 200,
+      "finalUrl": "https://www.rosenbach.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.southjazzkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.southjazzkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.southjazzkitchen.com/jazz-club/",
+      "status": 200,
+      "finalUrl": "https://www.southjazzkitchen.com/jazz-club/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theclaystudio.org/",
+      "status": 200,
+      "finalUrl": "https://www.theclaystudio.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cosclub.org/",
+      "status": 200,
+      "finalUrl": "https://www.cosclub.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fabricworkshopandmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://fabricworkshopandmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://philaedfund.org/",
+      "status": 200,
+      "finalUrl": "https://philaedfund.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.timerestaurant.net/",
+      "status": 200,
+      "finalUrl": "https://www.timerestaurant.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://undergroundarts.org/",
+      "status": 200,
+      "finalUrl": "https://undergroundarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://utphilly.com/",
+      "status": 200,
+      "finalUrl": "https://utphilly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.waynesgarageinc.net/",
+      "status": 200,
+      "finalUrl": "https://www.waynesgarageinc.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theweitzman.org/",
+      "status": 200,
+      "finalUrl": "https://theweitzman.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://woodmeremuseum.org/",
+      "status": 200,
+      "finalUrl": "https://woodmeremuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.worldcafelive.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://yeahphilly.org/",
+      "status": 200,
+      "finalUrl": "https://yeahphilly.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://yeahphilly.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://yeahphilly.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tylerparkarts.org/",
+      "status": 200,
+      "finalUrl": "https://tylerparkarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pa.gov/agencies/dcnr/recreation/where-to-go/state-parks/find-a-park/washington-crossing-historic-park",
+      "status": 200,
+      "finalUrl": "https://www.pa.gov/agencies/dcnr/recreation/where-to-go/state-parks/find-a-park/washington-crossing-historic-park",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aoyarts.org/",
+      "status": 200,
+      "finalUrl": "https://www.aoyarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aoyarts.org/About-Us",
+      "status": 200,
+      "finalUrl": "https://www.aoyarts.org/About-Us",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
