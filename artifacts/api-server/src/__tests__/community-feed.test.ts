@@ -219,6 +219,32 @@ describe("For You optional enrichment behavior", () => {
     expect(query.mock.calls[1][0]).toContain("to_jsonb(cp)->>'comments_count'");
   });
 
+  it("falls back to retained public posts when the recent personalized window is empty", async () => {
+    const retainedPost = samplePost({
+      id: "retained-public-post",
+      created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+    });
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [retainedPost] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const rows = await fetchCommunityFeedRows({ query } as never, {
+      viewerId: "viewer-1",
+      feedMode: "foryou",
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(rows).toEqual([retainedPost]);
+    expect(query).toHaveBeenCalledTimes(4);
+    expect(query.mock.calls[0][0]).toContain("INTERVAL '30 days'");
+    expect(query.mock.calls[1][0]).not.toContain("INTERVAL '30 days'");
+    expect(query.mock.calls[1][0]).toContain("FROM user_blocks ub");
+    expect(query.mock.calls[1][0]).toContain("internal_test_content");
+  });
+
   it("fails open only when optional preference storage is absent", async () => {
     const olderRelated = samplePost({
       id: "older-related",

@@ -94,6 +94,11 @@ const ALL_COMMUNITY_FEED_CAPABILITIES: CommunityFeedCapabilities = {
   communityPostComments: true,
 };
 
+type CommunityFeedQueryOptions = {
+  /** A blank recent window must not hide retained public Community posts. */
+  recentOnly?: boolean;
+};
+
 // Only the original post shape and safety-critical columns are referenced by
 // identifier. Additive display fields are read from the row JSON, so an older
 // instance can serve core posts while a safe migration is still rolling out.
@@ -238,6 +243,7 @@ const INTERNAL_CONTENT_EXCLUSION = `
 export function buildCommunityFeedQuery(
   input: CommunityFeedQueryInput,
   capabilities: CommunityFeedCapabilities = ALL_COMMUNITY_FEED_CAPABILITIES,
+  options: CommunityFeedQueryOptions = {},
 ): CommunitySqlQuery {
   const projection = communityPostProjection(capabilities);
   if (input.authorId) {
@@ -279,6 +285,9 @@ export function buildCommunityFeedQuery(
   }
 
   if (input.feedMode === "foryou") {
+    const recentWindow = options.recentOnly === false
+      ? ""
+      : "AND cp.created_at > NOW() - INTERVAL '30 days'";
     return {
       text: `SELECT ${projection}
         FROM community_posts cp
@@ -288,7 +297,7 @@ export function buildCommunityFeedQuery(
           AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL)
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$1")}
-          AND cp.created_at > NOW() - INTERVAL '30 days'
+          ${recentWindow}
         ORDER BY cp.created_at DESC
         LIMIT $2`,
       values: [input.viewerId, Math.min(input.limit * 4, 300)],
@@ -396,6 +405,24 @@ export async function fetchCommunityFeedRows(
     if (!isOptionalSchemaError(error)) throw error;
     query = buildCommunityFeedQuery(input, { communityPostComments: false });
     ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
+  }
+  // A ranking window must never make the Community look deleted. Fall back to
+  // older public posts only when the recent, privacy-filtered for-you result is
+  // empty. Visibility, moderation, block, and internal-test exclusions remain
+  // unchanged; this changes ranking reach, not access control.
+  if (!input.authorId && input.feedMode === "foryou" && rows.length === 0) {
+    query = buildCommunityFeedQuery(input, ALL_COMMUNITY_FEED_CAPABILITIES, {
+      recentOnly: false,
+    });
+    try {
+      ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
+    } catch (error) {
+      if (!isOptionalSchemaError(error)) throw error;
+      query = buildCommunityFeedQuery(input, { communityPostComments: false }, {
+        recentOnly: false,
+      });
+      ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
+    }
   }
   if (input.authorId || input.feedMode !== "foryou") return rows;
 
