@@ -1,0 +1,743 @@
+[
+  {
+    "destination": "http://dandelionhouston.com",
+    "records": [
+      {
+        "name": "Dandelion Cafe – Heights",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 6
+      },
+      {
+        "name": "Dandelion Cafe – Bellaire",
+        "city": "Bellaire",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 9
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://mocahtx.com/moca-restaurant",
+    "records": [
+      {
+        "name": "Moca HTX Restaurant & Lounge",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 13
+      },
+      {
+        "name": "MOCA 4212",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-wellness-social-candidates.jsonl",
+        "line": 6
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.kilwins.com/cypress",
+    "records": [
+      {
+        "name": "Kilwins Cypress – The Boardwalk at Towne Lake",
+        "city": "Cypress",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 16
+      },
+      {
+        "name": "Kilwins — Cypress Towne Lake",
+        "city": "Cypress",
+        "state": "TX",
+        "file": "houston-expanded-dining-jazz-social.jsonl",
+        "line": 12
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://adoralmeda.com",
+    "records": [
+      {
+        "name": "Ador Almeda",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 17
+      },
+      {
+        "name": "A’dor Almeda Kitchen & Cocktail",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-dining-jazz-social.jsonl",
+        "line": 13
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://mysthouston.com",
+    "records": [
+      {
+        "name": "Myst Lounge and Kitchen",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 27
+      },
+      {
+        "name": "Myst Lounge & Kitchen",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-dining-jazz-social.jsonl",
+        "line": 16
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.thesavoyhtx.com",
+    "records": [
+      {
+        "name": "The Savoy Bar & Grill",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 34
+      },
+      {
+        "name": "The Savoy",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-dining-jazz-social.jsonl",
+        "line": 21
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.thegypsypoet.us",
+    "records": [
+      {
+        "name": "The Gypsy Poet – Midtown",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 55
+      },
+      {
+        "name": "The Gypsy Poet – Heights",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 56
+      },
+      {
+        "name": "The Gypsy Poet – Rice Village",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-candidates.jsonl",
+        "line": 57
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.houstontx.gov/parks/youthsports-recreation.html",
+    "records": [
+      {
+        "name": "Houston Parks and Recreation Department Youth Basketball Program",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-culture-sports-candidates.jsonl",
+        "line": 9
+      },
+      {
+        "name": "Houston Parks and Recreation — After-School Enrichment Program, Almeda Community Center",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-enrichment.jsonl",
+        "line": 2
+      },
+      {
+        "name": "H-Town Soccer Academy — Alief Park Fields",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-enrichment.jsonl",
+        "line": 4
+      },
+      {
+        "name": "Houston Parks and Recreation Department — Youth Sports & Recreation",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-sports.jsonl",
+        "line": 1
+      },
+      {
+        "name": "H-Town Soccer Academy — Alief Park",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-sports.jsonl",
+        "line": 2
+      },
+      {
+        "name": "H-Town Soccer Academy Legacy Program — Alief Park Fields",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-family-childcare-candidates.jsonl",
+        "line": 10
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.meca-houston.org",
+    "records": [
+      {
+        "name": "Multicultural Education and Counseling through the Arts (MECA)",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-culture-sports-candidates.jsonl",
+        "line": 10
+      },
+      {
+        "name": "MECA",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-family-childcare-candidates.jsonl",
+        "line": 14
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.keematgrocers.com",
+    "records": [
+      {
+        "name": "Keemat Grocers — Hillcroft",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 15
+      },
+      {
+        "name": "Keemat Grocers — FM 1960",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 16
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.southwestfarmersmarket.com",
+    "records": [
+      {
+        "name": "Southwest Farmers Market — Bissonnet",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 18
+      },
+      {
+        "name": "Southwest Farmers Market — Highway 6",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 19
+      },
+      {
+        "name": "Southwest Farmers Market — Cypress FM 529",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 20
+      },
+      {
+        "name": "Southwest Farmers Market — FM 1960",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 21
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.shophongkongmarket.com/store-info",
+    "records": [
+      {
+        "name": "Hong Kong Food Market — Veterans Memorial Drive",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 22
+      },
+      {
+        "name": "Hong Kong Food Market — Houston",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 23
+      },
+      {
+        "name": "Hong Kong Food Market — Sagewood",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 24
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.wingmankitchens.com",
+    "records": [
+      {
+        "name": "Wingman Kitchens — Aldine Mail Route",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 27
+      },
+      {
+        "name": "Wingman Kitchens — Pinemont",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-culinary-food.jsonl",
+        "line": 28
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://headstart.hcde-texas.org",
+    "records": [
+      {
+        "name": "Compton EHS & HS Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 1
+      },
+      {
+        "name": "Coolwood EHS & HS Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 2
+      },
+      {
+        "name": "Dogan Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 3
+      },
+      {
+        "name": "Fonwood Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 4
+      },
+      {
+        "name": "Sheffield Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 5
+      },
+      {
+        "name": "Tidwell EHS & HS Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 6
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://bakerripley.org/programs-and-services/head-start",
+    "records": [
+      {
+        "name": "BakerRipley Head Start — Albury",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 7
+      },
+      {
+        "name": "BakerRipley Head Start — Cook Road",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 8
+      },
+      {
+        "name": "BakerRipley Head Start — Hiram Clarke",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 9
+      },
+      {
+        "name": "BakerRipley Head Start — Kingdom Builder’s Center",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 10
+      },
+      {
+        "name": "BakerRipley Head Start — Klein",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 11
+      },
+      {
+        "name": "BakerRipley Early Childhood Development Center",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 12
+      },
+      {
+        "name": "BakerRipley Head Start — Sharpview",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 13
+      },
+      {
+        "name": "BakerRipley Head Start — Spring Branch",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 14
+      },
+      {
+        "name": "BakerRipley Head Start — Benavidez",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 15
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.avancehouston.org/programs/earlyheadstart",
+    "records": [
+      {
+        "name": "AVANCE-Houston Head Start — Acres Homes",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 16
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Bammel",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 17
+      },
+      {
+        "name": "AVANCE-Houston Early Head Start — Bammel Middle",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 18
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Browning",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 19
+      },
+      {
+        "name": "AVANCE-Houston Early Head Start — Dekaney",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 20
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Eickenroht",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 21
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Janowski",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 22
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Jensen Drive",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 23
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Lewis",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 24
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Walters Road",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 25
+      },
+      {
+        "name": "AVANCE-Houston Head Start — Mangum Education Center",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 26
+      },
+      {
+        "name": "AVANCE-Houston Early Head Start — Krayola Kidz Child Care Partnership",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 27
+      },
+      {
+        "name": "AVANCE-Houston Early Head Start — Wesley Child Care Partnership",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 28
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://ssnc.org",
+    "records": [
+      {
+        "name": "Small Steps Nurturing Center — Fifth Ward Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 29
+      },
+      {
+        "name": "Small Steps Nurturing Center — Gulfton Campus",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 30
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://ymcahouston.org/programs/childcare-and-camps/early-care/toddler-preschool",
+    "records": [
+      {
+        "name": "YMCA Children’s Academy at Avenue Center",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 31
+      },
+      {
+        "name": "YMCA Children’s Academy at Texas Medical Center",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 32
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://houstonlibrary.org/early-literacy",
+    "records": [
+      {
+        "name": "HPL Family Place — Alief-David M. Henington Regional Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 35
+      },
+      {
+        "name": "HPL Family Place — Carnegie Neighborhood Library & Center for Learning",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 36
+      },
+      {
+        "name": "HPL Family Place — Central Library, Jesse H. Jones",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 37
+      },
+      {
+        "name": "HPL Family Place — Collier Regional Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 38
+      },
+      {
+        "name": "HPL Family Place — Jungman Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 39
+      },
+      {
+        "name": "HPL Family Place — Kendall Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 40
+      },
+      {
+        "name": "HPL Family Place — McCrane-Kashmere Gardens Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 41
+      },
+      {
+        "name": "HPL Family Place — McGovern-Stella Link Regional Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 42
+      },
+      {
+        "name": "HPL Family Place — Park Place Regional Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 43
+      },
+      {
+        "name": "HPL Family Place — Scenic Woods Regional Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 44
+      },
+      {
+        "name": "HPL Family Place — Walker Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 45
+      },
+      {
+        "name": "HPL Family Place — Stanaker Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 46
+      },
+      {
+        "name": "HPL Family Place — Stimley-Blue Ridge Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 47
+      },
+      {
+        "name": "HPL Family Place — Young Neighborhood Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-early-childhood.jsonl",
+        "line": 48
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.lonestarlegal.org",
+    "records": [
+      {
+        "name": "Lone Star Legal Aid",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-family-practical.jsonl",
+        "line": 23
+      },
+      {
+        "name": "Lone Star Legal Aid — Main Office",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-newcomer-resources-candidates.jsonl",
+        "line": 11
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.communityfamilycenters.org",
+    "records": [
+      {
+        "name": "Community Family Centers",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-family-practical.jsonl",
+        "line": 26
+      },
+      {
+        "name": "Community Family Centers — John P. McGovern M.D. Community Sports and Recreation Building",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-sports.jsonl",
+        "line": 14
+      },
+      {
+        "name": "Community Family Centers — Main Building",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-newcomer-resources-candidates.jsonl",
+        "line": 6
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://houstonlibrary.org/kids",
+    "records": [
+      {
+        "name": "Houston Public Library — Central Library, Jesse H. Jones",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-enrichment.jsonl",
+        "line": 1
+      },
+      {
+        "name": "Houston Public Library",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-expanded-kids-sports.jsonl",
+        "line": 25
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

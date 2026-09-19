@@ -1,0 +1,123 @@
+[
+  {
+    "destination": "https://www.lccc.edu/about/campuses/lccc-allentown",
+    "records": [
+      {
+        "name": "Lehigh Carbon Community College — Donley Center FAFSA and Educational Support",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-college-basketball-candidates.jsonl",
+        "line": 3
+      },
+      {
+        "name": "LCCC Allentown at the Donley Center",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-expanded-college-basketball-career.jsonl",
+        "line": 1
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.bgcallentown.org/sandbox/club-locations",
+    "records": [
+      {
+        "name": "Boys & Girls Club of Allentown — 6th Street Clubhouse",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-expanded-children-family.jsonl",
+        "line": 14
+      },
+      {
+        "name": "Boys & Girls Club of Allentown — Turner Street Clubhouse",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-expanded-children-family.jsonl",
+        "line": 15
+      },
+      {
+        "name": "Boys & Girls Club of Allentown — Cumberland Gardens Clubhouse",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-expanded-children-family.jsonl",
+        "line": 16
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.historicbethlehem.org",
+    "records": [
+      {
+        "name": "Moravian Museum of Bethlehem",
+        "city": "Bethlehem",
+        "state": "PA",
+        "file": "allentown-expanded-museums-art-culture.jsonl",
+        "line": 15
+      },
+      {
+        "name": "Kemerer Museum of Decorative Arts",
+        "city": "Bethlehem",
+        "state": "PA",
+        "file": "allentown-expanded-museums-art-culture.jsonl",
+        "line": 16
+      },
+      {
+        "name": "1750 Smithy",
+        "city": "Bethlehem",
+        "state": "PA",
+        "file": "allentown-expanded-museums-art-culture.jsonl",
+        "line": 17
+      },
+      {
+        "name": "1782 / 1834 Grist Miller’s House",
+        "city": "Bethlehem",
+        "state": "PA",
+        "file": "allentown-expanded-museums-art-culture.jsonl",
+        "line": 18
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://galleries.lafayette.edu",
+    "records": [
+      {
+        "name": "Grossman Gallery at Lafayette College",
+        "city": "Easton",
+        "state": "PA",
+        "file": "allentown-expanded-museums-art-culture.jsonl",
+        "line": 30
+      },
+      {
+        "name": "Williams Center Gallery at Lafayette College",
+        "city": "Easton",
+        "state": "PA",
+        "file": "allentown-expanded-museums-art-culture.jsonl",
+        "line": 31
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.hao-lv.org",
+    "records": [
+      {
+        "name": "Hispanic American Organization, Inc.",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-family-resources-candidates.jsonl",
+        "line": 2
+      },
+      {
+        "name": "Hispanic American Organization, Inc. (HAO)",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-social-dining-candidates.jsonl",
+        "line": 10
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

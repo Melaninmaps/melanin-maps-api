@@ -1,0 +1,930 @@
+[
+  {
+    "duplicateKey": "physical|project row houses|houston|tx|2521 holman st",
+    "retained": {
+      "name": "Project Row Houses",
+      "file": "houston-candidates.jsonl",
+      "line": 52,
+      "sourceUrl": "https://www.visithoustontexas.com/blog/post/supporting-black-owned-business-in-houston/"
+    },
+    "duplicate": {
+      "name": "Project Row Houses",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://projectrowhouses.org/visit/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|city of houston office of business opportunity|houston|tx|611 walker st 7th floor",
+    "retained": {
+      "name": "City of Houston Office of Business Opportunity",
+      "file": "houston-candidates.jsonl",
+      "line": 66,
+      "sourceUrl": "https://www.houstontx.gov/obo/certification_overview.html"
+    },
+    "duplicate": {
+      "name": "City of Houston Office of Business Opportunity",
+      "file": "houston-deep-pass-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.houstontx.gov/obo/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|lolo s chicken waffles htx|houston|tx|3611 gulf fwy",
+    "retained": {
+      "name": "Lolo’s Chicken & Waffles HTX",
+      "file": "houston-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "duplicate": {
+      "name": "Lolo’s Chicken & Waffles HTX",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 1,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|dandelion cafe heights|houston|tx|611 w 22nd st suite 1b",
+    "retained": {
+      "name": "Dandelion Cafe – Heights",
+      "file": "houston-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "duplicate": {
+      "name": "Dandelion Cafe — Heights",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 4,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|jamaica pon di road|houston|tx|2213 s victory dr",
+    "retained": {
+      "name": "Jamaica Pon Di Road",
+      "file": "houston-candidates.jsonl",
+      "line": 10,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "duplicate": {
+      "name": "Jamaica Pon Di Road",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 7,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|winsome prime|houston|tx|5888 westheimer rd",
+    "retained": {
+      "name": "Winsome Prime",
+      "file": "houston-candidates.jsonl",
+      "line": 12,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "duplicate": {
+      "name": "Winsome Prime",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 8,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|moca htx restaurant lounge|houston|tx|4212 almeda rd",
+    "retained": {
+      "name": "Moca HTX Restaurant & Lounge",
+      "file": "houston-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "duplicate": {
+      "name": "MOCA HTX Restaurant & Lounge",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 9,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the puddery|pearland|tx|5517 broadway st suite e",
+    "retained": {
+      "name": "The Puddery",
+      "file": "houston-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "duplicate": {
+      "name": "The Puddery",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 10,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|guzel cakes|houston|tx|7613 katy fwy suite d",
+    "retained": {
+      "name": "Guzel Cakes",
+      "file": "houston-candidates.jsonl",
+      "line": 14,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "duplicate": {
+      "name": "Güzel Cakes",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 11,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|creole kitchen and daiquiris|houston|tx|3250 old spanish trail",
+    "retained": {
+      "name": "Creole Kitchen and Daiquiris",
+      "file": "houston-candidates.jsonl",
+      "line": 20,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/3/"
+    },
+    "duplicate": {
+      "name": "Creole Kitchen and Daiquiris",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 15,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/3/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|haii keii|houston|tx|3300 kirby dr suite 9 a",
+    "retained": {
+      "name": "Haii Keii",
+      "file": "houston-candidates.jsonl",
+      "line": 33,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/4/"
+    },
+    "duplicate": {
+      "name": "Haii Keii",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 20,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/4/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|doves restaurant|houston|tx|3101 main st",
+    "retained": {
+      "name": "Doves Restaurant",
+      "file": "houston-candidates.jsonl",
+      "line": 38,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/5/"
+    },
+    "duplicate": {
+      "name": "Doves Restaurant",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 22,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/5/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston farmers market|houston|tx|2520 airline dr",
+    "retained": {
+      "name": "Houston Farmers Market",
+      "file": "houston-expanded-culinary-food.jsonl",
+      "line": 12,
+      "sourceUrl": "https://thehoustonfarmersmarket.com/market-faqs/"
+    },
+    "duplicate": {
+      "name": "Houston Farmers Market",
+      "file": "houston-expanded-family-practical.jsonl",
+      "line": 33,
+      "sourceUrl": "https://thehoustonfarmersmarket.com/market-faqs/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|greater houston black chamber|houston|tx|4828 loop central dr suite 1000",
+    "retained": {
+      "name": "Greater Houston Black Chamber",
+      "file": "houston-candidates.jsonl",
+      "line": 63,
+      "sourceUrl": "https://ghbcc.com/"
+    },
+    "duplicate": {
+      "name": "Greater Houston Black Chamber",
+      "file": "houston-expanded-family-practical.jsonl",
+      "line": 35,
+      "sourceUrl": "https://houstonbuyblack.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston museum of african american culture|houston|tx|4807 caroline st",
+    "retained": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houmuse.org/institution/houston-museum-of-african-american-culture/"
+    },
+    "duplicate": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 17,
+      "sourceUrl": "https://hmaac.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|first tee greater houston|houston|tx|8400 mykawa rd",
+    "retained": {
+      "name": "First Tee — Greater Houston",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 14,
+      "sourceUrl": "https://firstteegreaterhouston.org/"
+    },
+    "duplicate": {
+      "name": "First Tee — Greater Houston",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 13,
+      "sourceUrl": "https://firstteegreaterhouston.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|children s museum houston|houston|tx|1500 binz st",
+    "retained": {
+      "name": "Children’s Museum Houston",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 5,
+      "sourceUrl": "https://www.cmhouston.org/"
+    },
+    "duplicate": {
+      "name": "Children’s Museum Houston",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.cmhouston.org/visiting/directions-and-parking"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the health museum|houston|tx|1515 hermann dr",
+    "retained": {
+      "name": "The Health Museum",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 18,
+      "sourceUrl": "https://thehealthmuseum.org/"
+    },
+    "duplicate": {
+      "name": "The Health Museum",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 18,
+      "sourceUrl": "https://thehealthmuseum.org/visit/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|miller outdoor theatre|houston|tx|6000 hermann park dr",
+    "retained": {
+      "name": "Miller Outdoor Theatre",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 14,
+      "sourceUrl": "https://www.milleroutdoortheatre.com/performances/"
+    },
+    "duplicate": {
+      "name": "Miller Outdoor Theatre",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 24,
+      "sourceUrl": "https://www.milleroutdoortheatre.com/location/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the heritage society|houston|tx|1100 bagby st",
+    "retained": {
+      "name": "The Heritage Society",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 15,
+      "sourceUrl": "https://www.heritagesociety.org/visitors-information"
+    },
+    "duplicate": {
+      "name": "The Heritage Society",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 21,
+      "sourceUrl": "https://www.heritagesociety.org/visitors-information"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|miller outdoor theatre|houston|tx|6000 hermann park dr",
+    "retained": {
+      "name": "Miller Outdoor Theatre",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 14,
+      "sourceUrl": "https://www.milleroutdoortheatre.com/performances/"
+    },
+    "duplicate": {
+      "name": "Miller Outdoor Theatre",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 22,
+      "sourceUrl": "https://www.milleroutdoortheatre.com/location/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston museum of african american culture|houston|tx|4807 caroline st",
+    "retained": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houmuse.org/institution/houston-museum-of-african-american-culture/"
+    },
+    "duplicate": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 23,
+      "sourceUrl": "https://hmaac.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|project row houses|houston|tx|2521 holman st",
+    "retained": {
+      "name": "Project Row Houses",
+      "file": "houston-candidates.jsonl",
+      "line": 52,
+      "sourceUrl": "https://www.visithoustontexas.com/blog/post/supporting-black-owned-business-in-houston/"
+    },
+    "duplicate": {
+      "name": "Project Row Houses",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 24,
+      "sourceUrl": "https://projectrowhouses.org/visit/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|community artists collective|houston|tx|4111 fannin st suite 100a",
+    "retained": {
+      "name": "Community Artists’ Collective",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.thecollective.org/"
+    },
+    "duplicate": {
+      "name": "Community Artists’ Collective",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 25,
+      "sourceUrl": "https://www.thecollective.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|african american history research center at the gregory school|houston|tx|1300 victor st",
+    "retained": {
+      "name": "African American History Research Center at the Gregory School",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://houstonlibrary.org/aahrc"
+    },
+    "duplicate": {
+      "name": "African American History Research Center at the Gregory School",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 26,
+      "sourceUrl": "https://houstonlibrary.org/aahrc"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|asia society texas center|houston|tx|1370 southmore blvd",
+    "retained": {
+      "name": "Asia Society Texas Center",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 12,
+      "sourceUrl": "https://houmuse.org/institution/asia-society-texas/"
+    },
+    "duplicate": {
+      "name": "Asia Society Texas Center",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 27,
+      "sourceUrl": "https://asiasociety.org/texas/plan-your-visit"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|multicultural education and counseling through the arts meca|houston|tx|1900 kane st",
+    "retained": {
+      "name": "Multicultural Education and Counseling through the Arts (MECA)",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 10,
+      "sourceUrl": "https://www.meca-houston.org/meca-history.html"
+    },
+    "duplicate": {
+      "name": "Multicultural Education and Counseling through the Arts (MECA)",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 28,
+      "sourceUrl": "https://www.meca-houston.org/meca-history.html"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|institute of hispanic culture of houston|houston|tx|3315 sul ross st",
+    "retained": {
+      "name": "Institute of Hispanic Culture of Houston",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 11,
+      "sourceUrl": "https://ihch.org/"
+    },
+    "duplicate": {
+      "name": "Institute of Hispanic Culture of Houston",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 29,
+      "sourceUrl": "https://ihch.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|chinese community center|houston|tx|9800 town park dr",
+    "retained": {
+      "name": "Chinese Community Center",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://ccchouston.org/"
+    },
+    "duplicate": {
+      "name": "Chinese Community Center",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 30,
+      "sourceUrl": "https://ccchouston.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the health museum|houston|tx|1515 hermann dr",
+    "retained": {
+      "name": "The Health Museum",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 18,
+      "sourceUrl": "https://thehealthmuseum.org/"
+    },
+    "duplicate": {
+      "name": "The Health Museum",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 31,
+      "sourceUrl": "https://thehealthmuseum.org/visit/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|discovery green|houston|tx|1500 mckinney st",
+    "retained": {
+      "name": "Discovery Green",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.discoverygreen.com/visit/"
+    },
+    "duplicate": {
+      "name": "Discovery Green",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 33,
+      "sourceUrl": "https://www.discoverygreen.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|emancipation park|houston|tx|3018 emancipation ave",
+    "retained": {
+      "name": "Emancipation Park",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://epconservancy.org/recreation-center/"
+    },
+    "duplicate": {
+      "name": "Emancipation Park",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 34,
+      "sourceUrl": "https://epconservancy.org/contact/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|s h a p e community center|houston|tx|3815 live oak st",
+    "retained": {
+      "name": "S.H.A.P.E. Community Center",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://shape.org/"
+    },
+    "duplicate": {
+      "name": "S.H.A.P.E. Community Center",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 35,
+      "sourceUrl": "https://shape.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the ensemble theatre|houston|tx|3535 main st",
+    "retained": {
+      "name": "The Ensemble Theatre",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://www.ensemblehouston.com/"
+    },
+    "duplicate": {
+      "name": "The Ensemble Theatre",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 36,
+      "sourceUrl": "https://www.ensemblehouston.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston public library central library jesse h jones|houston|tx|500 mckinney st",
+    "retained": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houstonlibrary.org/kids"
+    },
+    "duplicate": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-expanded-nursing-life.jsonl",
+      "line": 11,
+      "sourceUrl": "https://houstonlibrary.org/all-locations"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|hermann park|houston|tx|6100 hermann park dr",
+    "retained": {
+      "name": "Hermann Park",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 23,
+      "sourceUrl": "https://hermannpark.org/hours/"
+    },
+    "duplicate": {
+      "name": "Hermann Park",
+      "file": "houston-expanded-nursing-life.jsonl",
+      "line": 13,
+      "sourceUrl": "https://hermannpark.org/hours/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|discovery green|houston|tx|1500 mckinney st",
+    "retained": {
+      "name": "Discovery Green",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.discoverygreen.com/visit/"
+    },
+    "duplicate": {
+      "name": "Discovery Green",
+      "file": "houston-expanded-nursing-life.jsonl",
+      "line": 14,
+      "sourceUrl": "https://www.discoverygreen.com/about/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|rothko chapel|houston|tx|3900 yupon st",
+    "retained": {
+      "name": "Rothko Chapel",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 14,
+      "sourceUrl": "https://rothkochapel.org/visit"
+    },
+    "duplicate": {
+      "name": "Rothko Chapel",
+      "file": "houston-expanded-nursing-life.jsonl",
+      "line": 15,
+      "sourceUrl": "https://rothkochapel.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the menil collection|houston|tx|1533 sul ross st",
+    "retained": {
+      "name": "The Menil Collection",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.menil.org/visit"
+    },
+    "duplicate": {
+      "name": "The Menil Collection",
+      "file": "houston-expanded-nursing-life.jsonl",
+      "line": 16,
+      "sourceUrl": "https://www.menil.org/visit"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|children s museum houston|houston|tx|1500 binz st",
+    "retained": {
+      "name": "Children’s Museum Houston",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 5,
+      "sourceUrl": "https://www.cmhouston.org/"
+    },
+    "duplicate": {
+      "name": "Children's Museum Houston",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houmuse.org/institution/childrens-museum-houston/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the health museum|houston|tx|1515 hermann dr",
+    "retained": {
+      "name": "The Health Museum",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 18,
+      "sourceUrl": "https://thehealthmuseum.org/"
+    },
+    "duplicate": {
+      "name": "The Health Museum",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://houmuse.org/institution/the-health-museum/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|holocaust museum houston|houston|tx|5401 caroline st",
+    "retained": {
+      "name": "Holocaust Museum Houston",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 10,
+      "sourceUrl": "https://hmh.org/visit/"
+    },
+    "duplicate": {
+      "name": "Holocaust Museum Houston",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://houmuse.org/institution/holocaust-museum-houston/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston zoo|houston|tx|6200 hermann park dr",
+    "retained": {
+      "name": "Houston Zoo",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 16,
+      "sourceUrl": "https://www.houstonzoo.org/plan-your-visit/"
+    },
+    "duplicate": {
+      "name": "Houston Zoo",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://houmuse.org/institution/houston-zoo/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|discovery green|houston|tx|1500 mckinney st",
+    "retained": {
+      "name": "Discovery Green",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.discoverygreen.com/visit/"
+    },
+    "duplicate": {
+      "name": "Discovery Green",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://downtownhouston.org/go/discovery-green"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston public library central library jesse h jones|houston|tx|500 mckinney st",
+    "retained": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houstonlibrary.org/kids"
+    },
+    "duplicate": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://houstonlibrary.org/all-locations"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|glassell school of art|houston|tx|5101 montrose blvd",
+    "retained": {
+      "name": "Glassell School of Art",
+      "file": "houston-expanded-museums-public-art.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.mfah.org/learn/glassell-school-art"
+    },
+    "duplicate": {
+      "name": "Glassell School of Art",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.mfah.org/learn/glassell-school-art"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|alief community center|houston|tx|11903 bellaire blvd",
+    "retained": {
+      "name": "Alief Community Center",
+      "file": "houston-deep-pass-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.houstontx.gov/parks/communitycenters/southwest.html"
+    },
+    "duplicate": {
+      "name": "Alief Community Center",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.houstontx.gov/parks/communitycenters/southwest.html"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|young audiences of houston|houston|tx|675 bering dr 300",
+    "retained": {
+      "name": "Young Audiences of Houston",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 15,
+      "sourceUrl": "https://www.yahouston.org/"
+    },
+    "duplicate": {
+      "name": "Young Audiences of Houston",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://unitedwayhouston.org/what-we-do/youth-success/out2learn/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston public library central library jesse h jones|houston|tx|500 mckinney st",
+    "retained": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-expanded-kids-enrichment.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houstonlibrary.org/kids"
+    },
+    "duplicate": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://houstonlibrary.org/all-locations"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston museum of african american culture|houston|tx|4807 caroline st",
+    "retained": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houmuse.org/institution/houston-museum-of-african-american-culture/"
+    },
+    "duplicate": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://hmaac.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|institute of hispanic culture of houston|houston|tx|3315 sul ross st",
+    "retained": {
+      "name": "Institute of Hispanic Culture of Houston",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 11,
+      "sourceUrl": "https://ihch.org/"
+    },
+    "duplicate": {
+      "name": "Institute of Hispanic Culture of Houston",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 14,
+      "sourceUrl": "https://ihch.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|greater houston black chamber|houston|tx|4828 loop central dr suite 1000",
+    "retained": {
+      "name": "Greater Houston Black Chamber",
+      "file": "houston-candidates.jsonl",
+      "line": 63,
+      "sourceUrl": "https://ghbcc.com/"
+    },
+    "duplicate": {
+      "name": "Greater Houston Black Chamber",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 15,
+      "sourceUrl": "https://ghbcc.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston hispanic chamber of commerce|houston|tx|1801 main st 890",
+    "retained": {
+      "name": "Houston Hispanic Chamber of Commerce",
+      "file": "houston-candidates.jsonl",
+      "line": 64,
+      "sourceUrl": "https://www.houstonhispanicchamber.com/"
+    },
+    "duplicate": {
+      "name": "Houston Hispanic Chamber of Commerce",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 16,
+      "sourceUrl": "https://www.houstonhispanicchamber.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|sanctuary spa|houston|tx|1701 s shepherd suite c",
+    "retained": {
+      "name": "Sanctuary Spa",
+      "file": "houston-expanded-beauty-spa.jsonl",
+      "line": 13,
+      "sourceUrl": "https://www.houstoniamag.com/health-and-wellness/best-massage-facial-day-spas-houston"
+    },
+    "duplicate": {
+      "name": "Sanctuary Spa",
+      "file": "houston-wellness-social-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://www.visithoustontexas.com/things-to-do/spas-and-fitness/unique-and-natural-spa-treatments/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|davis street at hermann park|houston|tx|5925 almeda rd a",
+    "retained": {
+      "name": "Davis Street at Hermann Park",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 2,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/"
+    },
+    "duplicate": {
+      "name": "Davis Street at Hermann Park",
+      "file": "houston-wellness-social-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://blackrestaurantweeks.com/houston-black-restaurant-week/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|winsome prime|houston|tx|5888 westheimer rd",
+    "retained": {
+      "name": "Winsome Prime",
+      "file": "houston-candidates.jsonl",
+      "line": 12,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "duplicate": {
+      "name": "Winsome Prime",
+      "file": "houston-wellness-social-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://blackrestaurantweeks.com/houston-black-restaurant-week/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|juliet|houston|tx|5857 westheimer rd suite p",
+    "retained": {
+      "name": "Juliet",
+      "file": "houston-expanded-dining-jazz-social.jsonl",
+      "line": 14,
+      "sourceUrl": "https://blackrestaurantweeks.com/brw-campaigns/category/houston-brw/page/2/"
+    },
+    "duplicate": {
+      "name": "Juliet",
+      "file": "houston-wellness-social-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://blackrestaurantweeks.com/houston-black-restaurant-week/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|discovery green|houston|tx|1500 mckinney st",
+    "retained": {
+      "name": "Discovery Green",
+      "file": "houston-expanded-kids-sports.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.discoverygreen.com/visit/"
+    },
+    "duplicate": {
+      "name": "Discovery Green",
+      "file": "houston-wellness-social-candidates.jsonl",
+      "line": 12,
+      "sourceUrl": "https://www.discoverygreen.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

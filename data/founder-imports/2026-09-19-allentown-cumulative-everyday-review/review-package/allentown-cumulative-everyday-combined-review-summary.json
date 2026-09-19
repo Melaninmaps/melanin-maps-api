@@ -1,0 +1,40 @@
+{
+  "package": "2026-09-19-allentown-cumulative-everyday-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 170,
+  "accepted_review_only_candidates": 170,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "business": 59,
+    "cultural_place": 24,
+    "community_resource": 69,
+    "regulated_review": 17,
+    "online_business": 1
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 141,
+    "needs_research": 29
+  },
+  "manifest_sha256": "350bddce16c6d9da92f9bb04b011486b2efb8589220f62d6f3222251a9c4496c",
+  "source_manifest": "/home/ubuntu/melanin-maps-houston-allentown-cumulative-review/data/founder-imports/2026-09-19-allentown-cumulative-everyday-review/consolidated/allentown-cumulative-everyday-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "ad3b67e56b2954254b41bb62c62678b14d40ca62b0bb0bb0a4e1ac6816a57663",
+  "destination_health": {
+    "candidates": 170,
+    "unique_destinations": 184,
+    "by_outcome": {
+      "reachable": 155,
+      "review_required": 20,
+      "network_error": 9
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}

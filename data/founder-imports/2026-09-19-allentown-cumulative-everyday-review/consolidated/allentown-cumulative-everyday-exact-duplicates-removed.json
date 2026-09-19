@@ -1,0 +1,354 @@
+[
+  {
+    "duplicateKey": "physical|allentown public library|allentown|pa|1210 hamilton st",
+    "retained": {
+      "name": "Allentown Public Library",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.allentownpl.org/a-family-place/"
+    },
+    "duplicate": {
+      "name": "Allentown Public Library",
+      "file": "allentown-expanded-college-basketball-career.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.allentownpl.org/homework-help/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|hispanic center lehigh valley|bethlehem|pa|520 east 4th st",
+    "retained": {
+      "name": "Hispanic Center Lehigh Valley",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 24,
+      "sourceUrl": "https://web.lehighvalleychamber.org/Community-Engagement,-Growth-and-Development/Hispanic-Center-Lehigh-Valley-13548"
+    },
+    "duplicate": {
+      "name": "Hispanic Center Lehigh Valley",
+      "file": "allentown-expanded-college-basketball-career.jsonl",
+      "line": 8,
+      "sourceUrl": "https://web.lehighvalleychamber.org/Community-Engagement,-Growth-and-Development/Hispanic-Center-Lehigh-Valley-13548"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|lehigh valley steel basketball club|bethlehem|pa|5847 monocacy dr",
+    "retained": {
+      "name": "Lehigh Valley Steel Basketball Club",
+      "file": "allentown-college-basketball-candidates.jsonl",
+      "line": 10,
+      "sourceUrl": "https://lvsteelbasketball.com/"
+    },
+    "duplicate": {
+      "name": "Lehigh Valley Steel Basketball Club",
+      "file": "allentown-expanded-college-basketball-career.jsonl",
+      "line": 18,
+      "sourceUrl": "https://lvsteelbasketball.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|allentown art museum|allentown|pa|31 north fifth st",
+    "retained": {
+      "name": "Allentown Art Museum",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 11,
+      "sourceUrl": "https://www.allentownartmuseum.org/"
+    },
+    "duplicate": {
+      "name": "Allentown Art Museum",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 1,
+      "sourceUrl": "https://www.allentownartmuseum.org/visit/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|da vinci science center at ppl pavilion|allentown|pa|815 w hamilton st",
+    "retained": {
+      "name": "Da Vinci Science Center at PPL Pavilion",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.davincisciencecenter.org/for-families/"
+    },
+    "duplicate": {
+      "name": "Da Vinci Science Center at PPL Pavilion",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.davincisciencecenter.org/visitor-info/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the baum school of art|allentown|pa|510 linden st",
+    "retained": {
+      "name": "The Baum School of Art",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 21,
+      "sourceUrl": "https://www.baumschool.org/"
+    },
+    "duplicate": {
+      "name": "The Baum School of Art",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 5,
+      "sourceUrl": "https://www.baumschool.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|children s art classes allentown west end|allentown|pa|327 south cedar crest blvd",
+    "retained": {
+      "name": "Children’s Art Classes — Allentown (West End)",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 22,
+      "sourceUrl": "https://pa-allentown.childrensartclasses.com/"
+    },
+    "duplicate": {
+      "name": "Children's Art Classes — Allentown (West End)",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 9,
+      "sourceUrl": "https://pa-allentown.childrensartclasses.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|steelstacks|bethlehem|pa|101 founders way",
+    "retained": {
+      "name": "SteelStacks",
+      "file": "allentown-expanded-beauty-spa-social.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.discoverlehighvalley.com/directory/steelstacks-attractions/"
+    },
+    "duplicate": {
+      "name": "SteelStacks",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 12,
+      "sourceUrl": "https://www.artsquest.org/where-we-are/steelstacks/getting-to-steelstacks/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|pennsylvania youth theatre|bethlehem|pa|2020 worthington ave",
+    "retained": {
+      "name": "Pennsylvania Youth Theatre",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 13,
+      "sourceUrl": "https://123pyt.org/"
+    },
+    "duplicate": {
+      "name": "Pennsylvania Youth Theatre",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 21,
+      "sourceUrl": "https://123pyt.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|bethlehem area public library main library|bethlehem|pa|11 west church st",
+    "retained": {
+      "name": "Bethlehem Area Public Library — Main Library",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.bapl.org/"
+    },
+    "duplicate": {
+      "name": "Bethlehem Area Public Library — Main Library",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 25,
+      "sourceUrl": "https://www.bapl.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|city of allentown child family services|allentown|pa|245 n 6th st",
+    "retained": {
+      "name": "City of Allentown Child & Family Services",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.allentownpa.gov/en-us/Government/Departments/Community-Economic-Development/Health-Bureau/Injury-Prevention-Program/Child-Family-Services"
+    },
+    "duplicate": {
+      "name": "City of Allentown Child & Family Services",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://www.allentownpa.gov/en-us/Government/Departments/Community-Economic-Development/Health-Bureau/Injury-Prevention-Program/Child-Family-Services"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|pa careerlink lehigh valley|allentown|pa|555 union blvd",
+    "retained": {
+      "name": "PA CareerLink® Lehigh Valley",
+      "file": "allentown-expanded-college-basketball-career.jsonl",
+      "line": 7,
+      "sourceUrl": "https://careerlinklehighvalley.org/about-us/services/"
+    },
+    "duplicate": {
+      "name": "PA CareerLink® Lehigh Valley",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://careerlinklehighvalley.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|allentown public library|allentown|pa|1210 hamilton st",
+    "retained": {
+      "name": "Allentown Public Library",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.allentownpl.org/a-family-place/"
+    },
+    "duplicate": {
+      "name": "Allentown Public Library",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.allentownpl.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|allentown art museum|allentown|pa|31 north fifth st",
+    "retained": {
+      "name": "Allentown Art Museum",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 11,
+      "sourceUrl": "https://www.allentownartmuseum.org/"
+    },
+    "duplicate": {
+      "name": "Allentown Art Museum",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 16,
+      "sourceUrl": "https://www.allentownartmuseum.org/about/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|museum of indian culture|allentown|pa|2825 fish hatchery rd",
+    "retained": {
+      "name": "Museum of Indian Culture",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 10,
+      "sourceUrl": "https://www.museumofindianculture.org/"
+    },
+    "duplicate": {
+      "name": "Museum of Indian Culture",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.museumofindianculture.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|lehigh valley heritage museum|allentown|pa|432 west walnut st",
+    "retained": {
+      "name": "Lehigh Valley Heritage Museum",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.lehighcountyhistoricalsociety.org/"
+    },
+    "duplicate": {
+      "name": "Lehigh Valley Heritage Museum",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 18,
+      "sourceUrl": "https://www.lehighcountyhistoricalsociety.org/?page_id=905"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|da vinci science center at ppl pavilion|allentown|pa|815 w hamilton st",
+    "retained": {
+      "name": "Da Vinci Science Center at PPL Pavilion",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.davincisciencecenter.org/for-families/"
+    },
+    "duplicate": {
+      "name": "Da Vinci Science Center at PPL Pavilion",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 19,
+      "sourceUrl": "https://www.davincisciencecenter.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|city of allentown department of parks recreation|allentown|pa|3000 pkwy blvd",
+    "retained": {
+      "name": "City of Allentown Department of Parks & Recreation",
+      "file": "allentown-expanded-children-family.jsonl",
+      "line": 18,
+      "sourceUrl": "https://www.allentownpa.gov/en-us/Government/Departments/Parks-Recreation"
+    },
+    "duplicate": {
+      "name": "City of Allentown Department of Parks & Recreation",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.allentownpa.gov/en-us/Government/Departments/Parks-Recreation"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|gems joe|allentown|pa|1019 hamilton st",
+    "retained": {
+      "name": "Gems & Joe",
+      "file": "allentown-expanded-beauty-spa-social.jsonl",
+      "line": 23,
+      "sourceUrl": "https://aablc.prismaiconsultants.com/business/gems-joe/"
+    },
+    "duplicate": {
+      "name": "Gems & Joe",
+      "file": "allentown-social-dining-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.lehighvalleychamber.org/black-owned-businesses.html; https://www.gemsandjoe.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|steelstacks|bethlehem|pa|101 founders way",
+    "retained": {
+      "name": "SteelStacks",
+      "file": "allentown-expanded-beauty-spa-social.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.discoverlehighvalley.com/directory/steelstacks-attractions/"
+    },
+    "duplicate": {
+      "name": "SteelStacks",
+      "file": "allentown-social-dining-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://www.discoverlehighvalley.com/things-to-do/attractions/steelstacks/; https://www.artsquest.org/where-we-are/steelstacks/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|state theatre center for the arts|easton|pa|453 northampton st",
+    "retained": {
+      "name": "State Theatre Center for the Arts",
+      "file": "allentown-expanded-museums-art-culture.jsonl",
+      "line": 27,
+      "sourceUrl": "https://www.statetheatre.org/"
+    },
+    "duplicate": {
+      "name": "State Theatre Center for the Arts",
+      "file": "allentown-social-dining-candidates.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.statetheatre.org/; https://www.discoverlehighvalley.com/things-to-do/arts-culture/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|hispanic american organization inc|allentown|pa|462 w walnut st",
+    "retained": {
+      "name": "Hispanic American Organization, Inc.",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.hao-lv.org/"
+    },
+    "duplicate": {
+      "name": "Hispanic American Organization, Inc.",
+      "file": "allentown-wellness-survivorship-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.hao-lv.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

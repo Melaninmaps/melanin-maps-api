@@ -1,0 +1,2391 @@
+{
+  "checkedAt": "2026-09-19T05:10:24.553Z",
+  "sourceManifest": "houston-cumulative-everyday-combined-review-only-candidates.jsonl",
+  "candidates": 396,
+  "uniqueDestinations": 396,
+  "counts": {
+    "reachable": 348,
+    "review_required": 38,
+    "timeout": 6,
+    "network_error": 4
+  },
+  "results": [
+    {
+      "url": "https://avibecalledhair.square.site/",
+      "status": 200,
+      "finalUrl": "https://avibecalledhair.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://dandelionhouston.com/",
+      "status": 202,
+      "finalUrl": "http://dandelionhouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/dandelionhouston",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdandelionhouston&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://idealabkids.com/location/central-houston/",
+      "status": 200,
+      "finalUrl": "https://idealabkids.com/location/central-houston/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lushrx.com/",
+      "status": 200,
+      "finalUrl": "https://www.lushrx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://werockthespectrumbellaire.com/",
+      "status": 200,
+      "finalUrl": "https://werockthespectrumbellaire.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.godsgarage.org/",
+      "status": 200,
+      "finalUrl": "https://www.godsgarage.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kkcheesecakes.com/",
+      "status": 403,
+      "finalUrl": "https://kkcheesecakes.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/kkcheesecakes/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkkcheesecakes%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kilwins.com/cypress",
+      "status": 200,
+      "finalUrl": "https://www.kilwins.com/location/stores-near-me-cypress-tx-77433-0239/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kilwinscypress/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkilwinscypress%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.4k-autodetailing.com/",
+      "status": 200,
+      "finalUrl": "https://www.4k-autodetailing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://24hourtireconnectionllc.com/",
+      "status": 200,
+      "finalUrl": "https://24hourtireconnectionllc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/arellcservice.org/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Farellcservice.org%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://adoralmeda.com/",
+      "status": 200,
+      "finalUrl": "https://adoralmeda.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aama.org/",
+      "status": 200,
+      "finalUrl": "https://www.aama.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aama.org/apps/pages/index.jsp?uREC_ID=4388086&type=d",
+      "status": 200,
+      "finalUrl": "https://www.aama.org/apps/pages/work-and-learn-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/adoralmeda/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fadoralmeda%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://adorhouston.com/",
+      "status": 200,
+      "finalUrl": "https://adorhouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/adorhouston?igshid=YmMyMTA2M2Y=",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fadorhouston%3Figshid%3DYmMyMTA2M2Y%253D&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonlibrary.org/aahrc",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/aahrc",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.africanfoodembassy.com/",
+      "status": 200,
+      "finalUrl": "https://www.africanfoodembassy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/aliefneighborhoodcenter.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/aliefneighborhoodcenter.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/communitycenters/southwest.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/communitycenters/southwest.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.apdroofing.com/",
+      "status": 200,
+      "finalUrl": "https://www.apdroofing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.artleaguehouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.artleaguehouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://asiasociety.org/texas/register-now-asia-societys-2026-summer-youth-programs",
+      "status": 200,
+      "finalUrl": "https://asiasociety.org/texas/register-now-asia-societys-2026-summer-youth-programs",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://asiasociety.org/texas",
+      "status": 200,
+      "finalUrl": "https://asiasociety.org/texas",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://anpdh.nursingnetwork.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://avancehouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.avancehouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.avancehouston.org/programs/earlyheadstart/",
+      "status": 200,
+      "finalUrl": "https://www.avancehouston.org/programs/earlyheadstart/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.avancehouston.org/locations/",
+      "status": 404,
+      "finalUrl": "https://www.avancehouston.org/locations/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://avant-gardehome.com/",
+      "status": 200,
+      "finalUrl": "https://avant-gardehome.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://avda.org/",
+      "status": 200,
+      "finalUrl": "https://avda.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.axelradhouston.com/",
+      "status": 200,
+      "finalUrl": "https://www.axelradhouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bakerripley.org/programs-and-services/head-start/",
+      "status": 200,
+      "finalUrl": "https://bakerripley.org/programs-and-services/head-start/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bakerripley.org/locations/ripley-house/",
+      "status": 200,
+      "finalUrl": "https://bakerripley.org/locations/ripley-house/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://buffalobayou.org/location/buffalo-bayou-park/",
+      "status": 200,
+      "finalUrl": "https://buffalobayou.org/location/buffalo-bayou-park/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jordan.houstonisd.org/academics-programs/academic-offerings/programs-of-study/automotive-technology",
+      "status": 200,
+      "finalUrl": "https://jordan.houstonisd.org/academics-programs/academic-offerings/programs-of-study/automotive-technology",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bnwax.com/",
+      "status": 200,
+      "finalUrl": "https://bnwax.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bezosacademy.org/schools/houston-denver-harbor-tx/",
+      "status": 200,
+      "finalUrl": "https://bezosacademy.org/schools/houston-denver-harbor-tx/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://bigkatshouston.com/",
+      "status": 200,
+      "finalUrl": "http://bigkatshouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bisonggallery.com/",
+      "status": 200,
+      "finalUrl": "https://bisonggallery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bnagh.org/",
+      "status": 200,
+      "finalUrl": "https://bnagh.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blafferartmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://blafferartmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bgcgh.org/locations-maps/",
+      "status": 200,
+      "finalUrl": "https://www.bgcgh.org/locations-maps/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bgcgh.org/",
+      "status": 200,
+      "finalUrl": "https://www.bgcgh.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://brashaesbeautysupplytx.com/",
+      "status": 200,
+      "finalUrl": "https://www.brashaesbeautysupplytx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ymcahouston.org/locations/brenda-and-john-duncan-ymca",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/locations/brenda-and-john-duncan-ymca",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://bungalowdining.com/",
+      "status": 200,
+      "finalUrl": "https://bungalowdining.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bungalowdining/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbungalowdining%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/buried.seeds/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fburied.seeds%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bussitdowneateryhtx/?hl=en",
+      "status": 429,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbussitdowneateryhtx%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/butterfunkhouston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbutterfunkhouston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.camelliaalise.com/",
+      "status": 200,
+      "finalUrl": "https://www.camelliaalise.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caracol.net/",
+      "status": 403,
+      "finalUrl": "https://www.caracol.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://caribbeanjerkpalacetx.com/",
+      "status": 200,
+      "finalUrl": "https://caribbeanjerkpalacetx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://catholiccharities.org/needhelp/",
+      "status": 403,
+      "finalUrl": "https://catholiccharities.org/needhelp/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://cbgsharedkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://cbgsharedkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.centralmarket.com/locations/houston",
+      "status": 403,
+      "finalUrl": "https://www.centralmarket.com/locations/houston",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.cheveuxbymone.com/",
+      "status": 200,
+      "finalUrl": "https://www.cheveuxbymone.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://childrenslearninginstitute.org/",
+      "status": 200,
+      "finalUrl": "https://childrenslearninginstitute.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cmhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.cmhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cmhouston.org/exhibits/maker-annex",
+      "status": 200,
+      "finalUrl": "https://www.cmhouston.org/exhibits/maker-annex",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cmhouston.org/exhibits/tot-spot",
+      "status": 200,
+      "finalUrl": "https://www.cmhouston.org/exhibits/tot-spot",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ccchouston.org/",
+      "status": 200,
+      "finalUrl": "https://ccchouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ccchouston.org/cdc/",
+      "status": 200,
+      "finalUrl": "https://ccchouston.org/cdc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.choicepharmacyinc.com/",
+      "status": 200,
+      "finalUrl": "https://www.choicepharmacyinc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstontx.gov/hcdrecovery/dr24/hrp/",
+      "status": 200,
+      "finalUrl": "https://houstontx.gov/hcdrecovery/dr24/hrp/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/education/early-childhood-education.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/education/early-childhood-education.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/obo/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/obo/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/obo/certification_overview.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/obo/certification_overview.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/na/index.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/na/index.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/na/services.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/na/services.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/solidwaste/reuse.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/solidwaste/reuse.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/towandgo/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/towandgo/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nursing.uth.edu/continuing-professional-development/",
+      "status": 200,
+      "finalUrl": "https://nursing.uth.edu/continuing-professional-development/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cfthhouston.org/gethelp",
+      "status": 200,
+      "finalUrl": "https://www.cfthhouston.org/gethelp",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.homelesshouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.cfthhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thesmokehtx.online/",
+      "status": 200,
+      "finalUrl": "https://thesmokehtx.online/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thesmokehtx",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthesmokehtx&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://collabforchildren.org/resources-for-families/",
+      "status": 200,
+      "finalUrl": "https://collabforchildren.org/resources-for-families/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.combinedarms.us/",
+      "status": 200,
+      "finalUrl": "https://www.combinedarms.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecollective.org/",
+      "status": 200,
+      "finalUrl": "https://www.thecollective.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.communityfamilycenters.org/",
+      "status": 200,
+      "finalUrl": "https://www.communityfamilycenters.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.communityfamilycenters.org/services/toddler-infant-parent-services/",
+      "status": 200,
+      "finalUrl": "https://www.communityfamilycenters.org/services/toddler-infant-parent-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhealth.org/services/community-re-entry",
+      "status": 200,
+      "finalUrl": "https://www.houstonhealth.org/services/community-re-entry",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://headstart.hcde-texas.org/",
+      "status": 200,
+      "finalUrl": "https://headstart.hcde-texas.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://camh.org/",
+      "status": 200,
+      "finalUrl": "https://camh.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://creole-kitchen.com/",
+      "status": 403,
+      "finalUrl": "https://creole-kitchen.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/creolehtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcreolehtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://creoles.net/",
+      "status": 403,
+      "finalUrl": "https://creoles.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/thecreolelounge/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthecreolelounge%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culinaryinstitute.edu/",
+      "status": 200,
+      "finalUrl": "https://culinaryinstitute.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cwshouston.org/",
+      "status": 200,
+      "finalUrl": "https://cwshouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cwshouston.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://cwshouston.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.czechcenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.czechcenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://czechcenter.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.czechcenter.org/hours-admissions",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.davisstreet.com/",
+      "status": 200,
+      "finalUrl": "https://www.davisstreet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/davissthouston",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdavissthouston&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dayandnightalmeda.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/dayandnightalmeda",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdayandnightalmeda&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.depelchin.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.discoverygreen.com/visit/",
+      "status": 200,
+      "finalUrl": "https://www.discoverygreen.com/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.discoverygreen.com/event/toddler-tuesday/",
+      "status": 200,
+      "finalUrl": "https://www.discoverygreen.com/signature-experiences/toddler-tuesday/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.diverseworks.org/",
+      "status": 200,
+      "finalUrl": "https://diverseworks.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://doveshouston.com/",
+      "status": 200,
+      "finalUrl": "https://doveshouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/doveshtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdoveshtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://eastersealshouston.org/houston-financial-education/",
+      "status": 200,
+      "finalUrl": "https://eastersealshouston.org/houston-financial-education/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://eastersealshouston.org/eci-infant-development-program/",
+      "status": 200,
+      "finalUrl": "https://eastersealshouston.org/eci-infant-development-program/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://epconservancy.org/",
+      "status": 200,
+      "finalUrl": "https://epconservancy.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://epconservancy.org/contact/",
+      "status": 200,
+      "finalUrl": "https://epconservancy.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://emlerswimschool.com/locations/texas/houston-meyerland/",
+      "status": 200,
+      "finalUrl": "https://emlerswimschool.com/locations/texas/houston-meyerland/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.estherscajunsoul.com/",
+      "status": 200,
+      "finalUrl": "https://www.estherscajunsoul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/estherscajuncafe/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Festherscajuncafe%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.erjcchouston.org/arts-culture/culinary/",
+      "status": 403,
+      "finalUrl": "https://www.erjcchouston.org/arts-culture/culinary/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.exiliolatinflair.com/",
+      "status": 200,
+      "finalUrl": "https://www.exiliolatinflair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/communitysupport",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/communitysupport",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/contact",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://firstteegreaterhouston.org/",
+      "status": 200,
+      "finalUrl": "https://firstteegreaterhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackfarmerbox.com/fresh-houwse-grocery",
+      "status": 200,
+      "finalUrl": "https://www.blackfarmerbox.com/fresh-houwse-grocery",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackfarmerbox.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackfarmerbox.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gatlinsbbq.com/",
+      "status": 403,
+      "finalUrl": "https://gatlinsbbq.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mfah.org/learn/glassell-junior-school",
+      "status": 403,
+      "finalUrl": "https://www.mfah.org/learn/glassell-junior-school",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mfah.org/learn/glassell-school-art",
+      "status": 403,
+      "finalUrl": "https://www.mfah.org/learn/glassell-school-art",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://www.goodmanjanitorialsupplies.com/",
+      "status": 200,
+      "finalUrl": "http://www.goodmanjanitorialsupplies.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/houblackchamber/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhoublackchamber%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonfairhousing.org/",
+      "status": 200,
+      "finalUrl": "https://www.houstonfairhousing.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://greenzkitchen.com/",
+      "status": 200,
+      "finalUrl": "http://greenzkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/greenz.kitchen/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fgreenz.kitchen%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.gcakelovers.com/",
+      "status": 200,
+      "finalUrl": "https://www.gcakelovers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hmart.com/store/houston-blalock-tx-77055/901e825a-261f-4a52-a8a8-281b4e82abe7",
+      "status": 200,
+      "finalUrl": "https://www.hmart.com/store/houston-blalock-tx-77055/901e825a-261f-4a52-a8a8-281b4e82abe7",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/youthsports-recreation.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/youthsports-recreation.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.habitatnwhc.org/restore/our-store.html",
+      "status": 200,
+      "finalUrl": "https://www.habitatnwhc.org/restore/our-store.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haiikeii.com/",
+      "status": 200,
+      "finalUrl": "https://www.haiikeii.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/haiikeii.htx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhaiikeii.htx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thehammamspa.com/",
+      "status": 200,
+      "finalUrl": "https://www.thehammamspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cjo.harriscountytx.gov/kids",
+      "status": 200,
+      "finalUrl": "https://cjo.harriscountytx.gov/kids",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hcd.harriscountytx.gov/Residents/Home-Repair-Program",
+      "status": 200,
+      "finalUrl": "https://hcd.harriscountytx.gov/Residents/Home-Repair-Program",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hcd.harriscountytx.gov/",
+      "status": 200,
+      "finalUrl": "https://hcd.harriscountytx.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://publichealth.harriscountytx.gov/",
+      "status": 200,
+      "finalUrl": "https://publichealth.harriscountytx.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harriscountylawlibrary.org/",
+      "status": 200,
+      "finalUrl": "https://www.harriscountylawlibrary.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://himfoodpantry.org/",
+      "status": 200,
+      "finalUrl": "https://himfoodpantry.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hermannpark.org/hours/",
+      "status": 200,
+      "finalUrl": "https://hermannpark.org/hours/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.highfashionhome.com/",
+      "status": 200,
+      "finalUrl": "https://www.highfashionhome.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hitmenautodetailing.com/",
+      "status": 200,
+      "finalUrl": "https://www.hitmenautodetailing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmh.org/",
+      "status": 200,
+      "finalUrl": "https://hmh.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.shophongkongmarket.com/store-info/",
+      "status": 462,
+      "finalUrl": "https://www.shophongkongmarket.com/store-info/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.hopechc.org/",
+      "status": 200,
+      "finalUrl": "https://www.hopechc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonarboretum.org/",
+      "status": 200,
+      "finalUrl": "https://houstonarboretum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonarboretum.org/programs-trips/childrens-programs/preschool/",
+      "status": 200,
+      "finalUrl": "https://houstonarboretum.org/programs-trips/childrens-programs/preschool/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonarboretum.org/programs-trips/childrens-programs/camps/summer/",
+      "status": 200,
+      "finalUrl": "https://houstonarboretum.org/programs-trips/childrens-programs/camps/summer/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonarboretum.org/visit/",
+      "status": 200,
+      "finalUrl": "https://houstonarboretum.org/visitors-get-batty-at-wine-cheese-bats/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haul.org/",
+      "status": 200,
+      "finalUrl": "https://www.haul.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haul.org/workforce-development-training/",
+      "status": 200,
+      "finalUrl": "https://www.haul.org/workforce-development-training/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haul.org/youth-and-family/",
+      "status": 200,
+      "finalUrl": "https://www.haul.org/youth-and-family/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hawc.org/",
+      "status": 200,
+      "finalUrl": "https://hawc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonballet.org/about/academy/academy-programs/",
+      "status": 200,
+      "finalUrl": "https://www.houstonballet.org/about/academy/academy-programs/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hbg.org/visit/",
+      "status": 403,
+      "finalUrl": "https://hbg.org/visit/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://hbg.org/",
+      "status": 403,
+      "finalUrl": "https://hbg.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://crafthouston.org/",
+      "status": 200,
+      "finalUrl": "https://crafthouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hcponline.org/",
+      "status": 200,
+      "finalUrl": "https://hcponline.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hcponline.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.edu.hcponline.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hccs.edu/programs--courses/explore-all-programs/culinary-arts/",
+      "status": 200,
+      "finalUrl": "https://www.hccs.edu/programs--courses/explore-all-programs/culinary-arts/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hccs.edu/about-us/campus-locations/automotive-technology-training-center/",
+      "status": 200,
+      "finalUrl": "https://www.hccs.edu/about-us/campus-locations/automotive-technology-training-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thehoustonfarmersmarket.com/",
+      "status": 200,
+      "finalUrl": "https://thehoustonfarmersmarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonfoodbank.org/",
+      "status": 403,
+      "finalUrl": "https://www.houstonfoodbank.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.houstonfoodbank.org/find-help/find-food-map/",
+      "status": 403,
+      "finalUrl": "https://www.houstonfoodbank.org/find-help/find-food-map/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://houstonfurniturebank.org/",
+      "status": 200,
+      "finalUrl": "https://houstonfurniturebank.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhabitat.org/build-repair/critical-repair/",
+      "status": 200,
+      "finalUrl": "https://www.houstonhabitat.org/build-repair/critical-repair/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhabitat.org/restore/",
+      "status": 200,
+      "finalUrl": "https://www.houstonhabitat.org/restore/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhealth.org/",
+      "status": 200,
+      "finalUrl": "https://www.houstonhealth.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhealth.org/contact-us",
+      "status": 200,
+      "finalUrl": "https://www.houstonhealth.org/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/hispanic_houston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fhispanic_houston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonimmigration.org/",
+      "status": 202,
+      "finalUrl": "https://houstonimmigration.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonisd.org/schools-academics/academics/pre-k-early-childhood",
+      "status": 200,
+      "finalUrl": "https://www.houstonisd.org/schools-academics/academics/pre-k-early-childhood",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hccs.edu/hcc-in-the-community/entrepreneurial-initiatives/mbda/",
+      "status": 200,
+      "finalUrl": "https://www.hccs.edu/community--partners/entrepreneurial-initiatives/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.metdance.org/",
+      "status": 200,
+      "finalUrl": "https://www.metdance.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonmethodist.org/education/nursing/nursing-continuing-education/",
+      "status": 200,
+      "finalUrl": "https://www.houstonmethodist.org/education/nursing/nursing-continuing-education/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmsdc.org/",
+      "status": 200,
+      "finalUrl": "https://hmsdc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmaac.org/",
+      "status": 200,
+      "finalUrl": "https://hmaac.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmaac.org/hmaac-history",
+      "status": 200,
+      "finalUrl": "https://hmaac.org/hmaac-history",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hmns.org/",
+      "status": 200,
+      "finalUrl": "https://www.hmns.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hnef.org/",
+      "status": 200,
+      "finalUrl": "https://hnef.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/youthtennis.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/youthtennis.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/contact.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/contact.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/police/auto_theft/pdfs/Information-Letter-for-68A.pdf",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/police/auto_theft/pdfs/Information-Letter-for-68A.pdf",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/police/auto_dealers_detail/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/police/auto_dealers_detail/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonlibrary.org/kids",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/kids",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonlibrary.org/community-resources",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/community-resources",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonlibrary.org/techlink",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/techlink",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonrecoverycenter.org/",
+      "status": 200,
+      "finalUrl": "https://houstonrecoverycenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonswimclub.com/sharpstown",
+      "status": 200,
+      "finalUrl": "https://www.houstonswimclub.com/sharpstown",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ymcahouston.org/locations/houston-texans-ymca",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/locations/houston-texans-ymca",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.houstontoolbank.org/",
+      "status": 200,
+      "finalUrl": "https://www.houstontoolbank.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontoolbank.org/borrow/",
+      "status": 200,
+      "finalUrl": "https://www.houstontoolbank.org/borrow/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.makejusticehappen.org/",
+      "status": 200,
+      "finalUrl": "https://www.makejusticehappen.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonzoo.org/plan-your-visit/",
+      "status": 200,
+      "finalUrl": "https://www.houstonzoo.org/plan-your-visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonlibrary.org/early-literacy",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/early-literacy",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hugosrestaurant.net/",
+      "status": 403,
+      "finalUrl": "https://www.hugosrestaurant.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.i9sports.com/venues/southwest-houston-the-gardens-youth-sports-programs/11611",
+      "status": 403,
+      "finalUrl": "https://www.i9sports.com/venues/southwest-houston-the-gardens-youth-sports-programs/11611",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ihch.org/",
+      "status": 200,
+      "finalUrl": "https://ihch.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ymcahouston.org/programs/community/adaptive-programs",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/programs/community/adaptive-programs",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.jamaicapondiroad.com/",
+      "status": 200,
+      "finalUrl": "https://jamaicapondiroad.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/jamaicapondiroad/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjamaicapondiroad%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.juliethtx.com/",
+      "status": 200,
+      "finalUrl": "https://www.juliethtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/juliet.htx/",
+      "status": 429,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjuliet.htx%2F&is_from_rle",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/kamphouston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkamphouston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.keematgrocers.com/",
+      "status": 200,
+      "finalUrl": "https://www.keematgrocers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kefita.coffee/",
+      "status": 200,
+      "finalUrl": "https://www.kefita.coffee/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kefita.coffee",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkefita.coffee&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kickymats.com/",
+      "status": 200,
+      "finalUrl": "https://kickymats.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kidsmealsinc.org/",
+      "status": 200,
+      "finalUrl": "https://kidsmealsinc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kindredstorieshtx.com/",
+      "status": 200,
+      "finalUrl": "https://kindredstorieshtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kindredstorieshtx.com/pages/our-story",
+      "status": 200,
+      "finalUrl": "https://kindredstorieshtx.com/pages/our-story",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kulture_houston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkulture_houston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lafisheriahtx.com/",
+      "status": 200,
+      "finalUrl": "https://lafisheriahtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lawndaleartcenter.org/",
+      "status": 200,
+      "finalUrl": "https://lawndaleartcenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lawndaleartcenter.org/visit",
+      "status": 200,
+      "finalUrl": "https://lawndaleartcenter.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.levyparkhouston.org/visit/",
+      "status": 403,
+      "finalUrl": "https://www.levyparkhouston.org/visit/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.litcommercialkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.litcommercialkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.livingdesignsfurniture.com/",
+      "status": 200,
+      "finalUrl": "https://www.livingdesignsfurniture.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.llulo.com/",
+      "status": 200,
+      "finalUrl": "https://www.llulo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lnesc.org/centers/houston/",
+      "status": 403,
+      "finalUrl": "https://www.lnesc.org/centers/houston/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://www.loloschickenandwaffleshtx.com/",
+      "status": 200,
+      "finalUrl": "https://www.loloschickenandwaffleshtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/loloschickenandwaffleshtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Floloschickenandwaffleshtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lonestarlegal.org/",
+      "status": 200,
+      "finalUrl": "https://www.lonestarlegal.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/lostandfoundmidtown/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flostandfoundmidtown%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.loveandmake.com/",
+      "status": 200,
+      "finalUrl": "https://www.loveandmake.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.loveandmake.com/about.html",
+      "status": 200,
+      "finalUrl": "https://www.loveandmake.com/about.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lucilleshouston.net/",
+      "status": 200,
+      "finalUrl": "https://www.lucilleshouston.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houston.madscience.org/",
+      "status": 200,
+      "finalUrl": "https://houston.madscience.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mainstreettheater.com/mst-rice-village/",
+      "status": 200,
+      "finalUrl": "https://mainstreettheater.com/mst-rice-village/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/McHenryMechanicalAC/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/McHenryMechanicalAC/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.meca-houston.org/",
+      "status": 200,
+      "finalUrl": "https://www.meca-houston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://camh.org/event/around-houston-memoria-memory-east-end-mural/",
+      "status": 200,
+      "finalUrl": "https://camh.org/event/around-houston-memoria-memory-east-end-mural/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mamhouston.org/financialed",
+      "status": 200,
+      "finalUrl": "https://www.mamhouston.org/financialed",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mhahouston.org/",
+      "status": 200,
+      "finalUrl": "https://mhahouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ridemetro.org/riding-metro/transit-services/curb2curb",
+      "status": 200,
+      "finalUrl": "https://www.ridemetro.org/riding-metro/transit-services/curb2curb",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ridemetro.org/",
+      "status": 200,
+      "finalUrl": "https://www.ridemetro.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.metroridestore.org/RideStore-Locations-a/258.htm",
+      "status": 200,
+      "finalUrl": "https://www.metroridestore.org/RideStore-Locations-a/258.htm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ridemetro.org/riding-metro/transit-services/vanpool",
+      "status": 200,
+      "finalUrl": "https://www.ridemetro.org/riding-metro/transit-services/vanpool",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.milleroutdoortheatre.com/",
+      "status": 200,
+      "finalUrl": "https://www.milleroutdoortheatre.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.milleroutdoortheatre.com/performances/",
+      "status": 200,
+      "finalUrl": "https://www.milleroutdoortheatre.com/performances/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mimiscajuncafe_and_catering",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmimiscajuncafe_and_catering&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mitochondriagallery.com/",
+      "status": 202,
+      "finalUrl": "https://mitochondriagallery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mocahtx.com/moca-restaurant/",
+      "status": 200,
+      "finalUrl": "https://mocahtx.com/moca-restaurant/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mocahtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmocahtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://moody.rice.edu/",
+      "status": 200,
+      "finalUrl": "https://moody.rice.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://moody.rice.edu/visit",
+      "status": 200,
+      "finalUrl": "https://moody.rice.edu/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moonlightmiso.com/",
+      "status": 200,
+      "finalUrl": "https://www.moonlightmiso.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/moonlightmisohtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmoonlightmisohtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://morejobshouston.com/",
+      "status": 200,
+      "finalUrl": "https://morejobshouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.msmyrtlesbakery.com/",
+      "status": 200,
+      "finalUrl": "https://msmyrtlesbakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/msmyrtlesbakery",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmsmyrtlesbakery&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mfah.org/",
+      "status": 403,
+      "finalUrl": "https://www.mfah.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://www.myspajoy.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://mysthouston.com/",
+      "status": 403,
+      "finalUrl": "https://mysthouston.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/mystloungeandkitchen/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmystloungeandkitchen%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/northwayside.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/northwayside.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/nbbreads/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnbbreads%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.namonline.org/",
+      "status": 200,
+      "finalUrl": "https://www.namonline.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ONealConstruction/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FONealConstruction%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oasisfinogallery.com/",
+      "status": 200,
+      "finalUrl": "https://www.oasisfinogallery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oasismassagesalon.com/",
+      "status": 200,
+      "finalUrl": "https://oasismassagesalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/disabilities/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/disabilities/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/vetaffairs/",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/vetaffairs/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/omg_baked_potatoes_llc/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/omg_baked_potatoes_llc/?hl=en",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.orangeshow.org/beer-can-house",
+      "status": 200,
+      "finalUrl": "https://www.orangeshow.org/beer-can-house",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.orangeshow.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.orangeshow.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oursaviorschurch-houston.org/",
+      "status": 200,
+      "finalUrl": "https://oursaviorschurch-houston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houston.my.site.com/",
+      "status": 200,
+      "finalUrl": "https://houston.my.site.com/s/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shoppalomaandco.com/",
+      "status": 200,
+      "finalUrl": "https://shoppalomaandco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://personamedicalspa.com/",
+      "status": 200,
+      "finalUrl": "https://personamedicalspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pflaghouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.pflaghouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://phoeniciafoods.com/locations/downtown-market/",
+      "status": 200,
+      "finalUrl": "https://phoeniciafoods.com/locations/downtown-market/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://phoeniciafoods.com/locations/westheimer-market/",
+      "status": 200,
+      "finalUrl": "https://phoeniciafoods.com/locations/westheimer-market/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.plantitforward.farm/",
+      "status": 200,
+      "finalUrl": "https://www.plantitforward.farm/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.plushbarandgrill.com/",
+      "status": 200,
+      "finalUrl": "https://plushbarandgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/plushbarandgrill/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fplushbarandgrill%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://prepkitchens.com/houston/",
+      "status": 200,
+      "finalUrl": "https://prepkitchens.com/houston/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pressedroots.com/",
+      "status": 200,
+      "finalUrl": "https://pressedroots.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pressedroots.com/locations",
+      "status": 200,
+      "finalUrl": "https://pressedroots.com/locations",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://privilegehou.com/",
+      "status": 200,
+      "finalUrl": "https://privilegehou.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://projectrowhouses.org/",
+      "status": 200,
+      "finalUrl": "https://projectrowhouses.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ravenmechanical.com/",
+      "status": 200,
+      "finalUrl": "https://www.ravenmechanical.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.buyblack.org/united-states/houston/home-services/raven-mechanical-lp",
+      "status": 200,
+      "finalUrl": "https://www.buyblack.org/united-states/houston/home-services/raven-mechanical-lp",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rebuildingtogetherhouston.org/",
+      "status": 200,
+      "finalUrl": "https://rebuildingtogetherhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rebuildingtogetherhouston.org/contact",
+      "status": 200,
+      "finalUrl": "https://rebuildingtogetherhouston.org/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.reggaehutcafe.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/reggaehutcafehouston/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freggaehutcafehouston%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/rhaysrestaurant",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Frhaysrestaurant&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://research.rice.edu/rstem/programs/k-12-students-parents",
+      "status": 200,
+      "finalUrl": "https://research.rice.edu/rstem/programs/k-12-students-parents",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rogmedspa.com/",
+      "status": 200,
+      "finalUrl": "https://rogmedspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://booking.rogmedspa.com/",
+      "status": 404,
+      "finalUrl": "https://booking.rogmedspa.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://rothkochapel.org/",
+      "status": 200,
+      "finalUrl": "https://rothkochapel.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shape.org/",
+      "status": 200,
+      "finalUrl": "https://shape.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salonmeyerland.com/",
+      "status": 307,
+      "finalUrl": "https://www.salonmeyerland.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salonrose.co/",
+      "status": 200,
+      "finalUrl": "https://www.salonrose.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.besanctuary.com/",
+      "status": 200,
+      "finalUrl": "https://www.besanctuary.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sawyeryards.com/",
+      "status": 200,
+      "finalUrl": "https://www.sawyeryards.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://locations.scrubsandbeyond.com/tx/houston/houston",
+      "status": 200,
+      "finalUrl": "https://locations.scrubsandbeyond.com/tx/houston/houston",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://scrubstotherescue.com/",
+      "status": 200,
+      "finalUrl": "https://scrubstotherescue.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shape.org/asep",
+      "status": 200,
+      "finalUrl": "https://shape.org/asep",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shape.org/summerprogram",
+      "status": 200,
+      "finalUrl": "https://shape.org/summerprogram",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sharecommercialkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://sharecommercialkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.shiningstarkid.com/",
+      "status": 200,
+      "finalUrl": "https://www.shiningstarkid.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shiningstarkid.ueniweb.com/",
+      "status": 200,
+      "finalUrl": "https://shiningstarkid.ueniweb.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sigslagoon.com/",
+      "status": 200,
+      "finalUrl": "https://www.sigslagoon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ssnc.org/",
+      "status": 200,
+      "finalUrl": "https://ssnc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://smilesofmidtown.com/",
+      "status": 200,
+      "finalUrl": "https://www.smilesofmidtown.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.orangeshow.org/smither-park",
+      "status": 200,
+      "finalUrl": "https://www.orangeshow.org/smither-park",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/southernjerkshtx",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsouthernjerkshtx&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.southwestfarmersmarket.com/",
+      "status": 403,
+      "finalUrl": "https://www.southwestfarmersmarket.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://spacecenter.org/contact/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://spacecenter.org/education-programs/explorer-camps/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "http://www.sticktalkhouston.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.instagram.com/sticktalkcajunhibachi/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsticktalkcajunhibachi%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhealth.org/services/multi-service-centers/sunnyside-multi-service-center",
+      "status": 200,
+      "finalUrl": "https://www.houstonhealth.org/services/multi-service-centers/sunnyside-multi-service-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sunsetbodyworks.com/",
+      "status": 200,
+      "finalUrl": "https://www.sunsetbodyworks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.surlatable.com/locations/tx/houston/store-89.html",
+      "status": 200,
+      "finalUrl": "https://www.surlatable.com/locations/tx/houston/store-89.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.surlatable.com/locations/tx/houston/store-14.html",
+      "status": 200,
+      "finalUrl": "https://www.surlatable.com/locations/tx/houston/store-14.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/texas_african_grocery_store/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftexas_african_grocery_store%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dps.texas.gov/apps/rsd/vi/VIactiveStationLocator/",
+      "status": 200,
+      "finalUrl": "https://www.dps.texas.gov/apps/rsd/vi/VIactiveStationLocator/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://texas.freelegalanswers.org/",
+      "status": 200,
+      "finalUrl": "https://texas.freelegalanswers.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beautyvaulta.com/",
+      "status": 200,
+      "finalUrl": "https://beautyvaulta.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thebeautyvaulthtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthebeautyvaulthtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebodyshophtx.com/",
+      "status": 200,
+      "finalUrl": "https://thebodyshophtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebreakfastklub.com/",
+      "status": 200,
+      "finalUrl": "https://thebreakfastklub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecarezone.com/",
+      "status": 200,
+      "finalUrl": "https://www.thecarezone.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://continentalclub.com/houstonclub",
+      "status": 200,
+      "finalUrl": "https://continentalclub.com/houstonclub",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecookeryhouston.com/",
+      "status": 403,
+      "finalUrl": "https://www.thecookeryhouston.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.councilonrecovery.org/",
+      "status": 200,
+      "finalUrl": "https://www.councilonrecovery.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ensemblehouston.com/",
+      "status": 200,
+      "finalUrl": "https://ensemblehouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ensemblehouston.com/our-story",
+      "status": 200,
+      "finalUrl": "https://ensemblehouston.com/our-story",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thegreasyspoonhtx.com/",
+      "status": 200,
+      "finalUrl": "https://thegreasyspoonhtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://thegreasyspoonhtx.com/",
+      "status": 200,
+      "finalUrl": "https://thegreasyspoonhtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/TheGreasySpoonHTX",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FTheGreasySpoonHTX&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thegypsypoet.us/",
+      "status": 200,
+      "finalUrl": "https://thegypsypoet.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theharriscenter.org/eci",
+      "status": 200,
+      "finalUrl": "https://www.theharriscenter.org/eci",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thehealthmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://thehealthmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.heritagesociety.org/",
+      "status": 200,
+      "finalUrl": "https://www.heritagesociety.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.heritagesociety.org/visitors-information",
+      "status": 200,
+      "finalUrl": "https://www.heritagesociety.org/visitors-information",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.junghouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.junghouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.menil.org/",
+      "status": 200,
+      "finalUrl": "https://www.menil.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.menil.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.menil.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thesavoyhtx.com/",
+      "status": 403,
+      "finalUrl": "https://www.thesavoyhtx.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/meetmeatthesavoy/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmeetmeatthesavoy%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://library.tmc.edu/",
+      "status": 200,
+      "finalUrl": "https://library.tmc.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://library.tmc.edu/about/",
+      "status": 200,
+      "finalUrl": "https://library.tmc.edu/about/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tigerrockmartialarts.com/locations/houston",
+      "status": 200,
+      "finalUrl": "https://www.tigerrockmartialarts.com/locations/houston",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonian.com/trellis-spa",
+      "status": 404,
+      "finalUrl": "https://www.houstonian.com/trellis-spa",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://trendbarbercollege.org/",
+      "status": 200,
+      "finalUrl": "https://trendbarbercollege.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trendzbytammy.com/",
+      "status": 200,
+      "finalUrl": "https://trendzbytammy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.txrxlabs.org/",
+      "status": 200,
+      "finalUrl": "https://apps.txrxlabs.org//",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.uh.edu/kgmca/community/camps-festivals-workshops/art-camp.php",
+      "status": 200,
+      "finalUrl": "https://www.uh.edu/kgmca/community/camps-festivals-workshops/art-camp.php",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://unitedwayhouston.org/",
+      "status": 200,
+      "finalUrl": "https://unitedwayhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://unitedwayhouston.org/for-nonprofits/community-resource-center/",
+      "status": 200,
+      "finalUrl": "https://unitedwayhouston.org/for-nonprofits/community-resource-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.uptowncarcare.com/",
+      "status": 200,
+      "finalUrl": "https://www.uptowncarcare.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urbanharvest.org/urban-harvest-farmers-market/",
+      "status": 202,
+      "finalUrl": "https://www.urbanharvest.org/urban-harvest-farmers-market/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/wafflebaeshtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fwafflebaeshtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wesleyhousehouston.org/",
+      "status": 200,
+      "finalUrl": "https://wesleyhousehouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.westheimerplumbing.com/",
+      "status": 403,
+      "finalUrl": "https://www.westheimerplumbing.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.williams-sonoma.com/stores/us-tx-houston-highland-village/",
+      "status": 500,
+      "finalUrl": "https://www.williams-sonoma.com/stores/us-tx-houston-highland-village/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.wingmankitchens.com/",
+      "status": 200,
+      "finalUrl": "https://www.wingmankitchens.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.winsomeprime.com/houston",
+      "status": 200,
+      "finalUrl": "https://www.winsomeprime.com/houston",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/winsomeprime/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fwinsomeprime%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wrksolutions.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.wrksolutions.com/find-a-career-office",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://workshophouston.com/",
+      "status": 200,
+      "finalUrl": "https://workshophouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wowhairbraiding.com/",
+      "status": 200,
+      "finalUrl": "https://wowhairbraiding.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.xochihouston.com/",
+      "status": 403,
+      "finalUrl": "https://www.xochihouston.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ymcahouston.org/programs/childcare-and-camps/early-care/toddler-preschool",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/programs/childcare-and-camps/early-care/toddler-preschool",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ymcahouston.org/locations/ymca-childrens-academy-texas-medical-center",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/locations/ymca-childrens-academy-texas-medical-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ymcahouston.org/programs/childcare-and-camps/early-care",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/programs/childcare-and-camps/early-care",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.yahouston.org/after-school-programs",
+      "status": 200,
+      "finalUrl": "https://www.yahouston.org/after-school-programs",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.yahouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.yahouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hcpl.net/locations/BB",
+      "status": 202,
+      "finalUrl": "https://hcpl.net/locations/BB",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.kidkreolekooking.com/",
+      "status": 200,
+      "finalUrl": "https://kidkreolekooking.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kidkreolekooking",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkidkreolekooking&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://rocosgrill.com/",
+      "status": 200,
+      "finalUrl": "https://rocosgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/Rocosgrill",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FRocosgrill&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sanjac.edu/programs/areas-of-study/manufacturing/automotive-tech/index.php",
+      "status": 200,
+      "finalUrl": "https://www.sanjac.edu/programs/areas-of-study/manufacturing/automotive-tech/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tbotw.org/",
+      "status": 200,
+      "finalUrl": "https://tbotw.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.jamburritos.com/",
+      "status": 200,
+      "finalUrl": "https://jamburritos.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.instagram.com/jamburritoscajun",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjamburritoscajun&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thepuddery.com/",
+      "status": 200,
+      "finalUrl": "https://thepuddery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thepuddery/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthepuddery%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://mealprepcafe.square.site/",
+      "status": 200,
+      "finalUrl": "https://mealprepcafe.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/WeLuvSpudz",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FWeLuvSpudz&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hcpl.net/locations/EV",
+      "status": 202,
+      "finalUrl": "https://hcpl.net/locations/EV",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cookingwithatwisthouston.com/",
+      "status": 202,
+      "finalUrl": "https://cookingwithatwisthouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tastedowntownhtx.com/menu",
+      "status": 200,
+      "finalUrl": "https://www.tastehtx.com/menu",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/tastekitchenbar/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftastekitchenbar%2F&is_from_rle",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
