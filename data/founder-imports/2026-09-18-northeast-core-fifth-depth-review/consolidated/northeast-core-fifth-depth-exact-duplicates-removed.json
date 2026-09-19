@@ -1,0 +1,18 @@
+[
+  {
+    "duplicateKey": "physical|runnemede plumbing heating cooling electric|runnemede|nj|39 n black horse pike",
+    "retained": {
+      "name": "Runnemede Plumbing, Heating, Cooling & Electric",
+      "file": "new-jersey-high-yield-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.southjerseybusinessassociation.org/listings/runnemede-plumbing-heating-cooling-electric/"
+    },
+    "duplicate": {
+      "name": "Runnemede Plumbing, Heating, Cooling & Electric",
+      "file": "new-jersey-third-depth-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://www.southjerseybusinessassociation.org/listings/runnemede-plumbing-heating-cooling-electric/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]
