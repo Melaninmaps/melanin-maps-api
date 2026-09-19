@@ -1,0 +1,29 @@
+[
+  {
+    "destination": "https://www.dcls.org",
+    "records": [
+      {
+        "name": "Madeline L. Olewine Memorial Library",
+        "city": "Harrisburg",
+        "state": "PA",
+        "file": "harrisburg-reentry-education-employment.jsonl",
+        "line": 22
+      },
+      {
+        "name": "McCormick Riverfront Library",
+        "city": "Harrisburg",
+        "state": "PA",
+        "file": "harrisburg-reentry-education-employment.jsonl",
+        "line": 23
+      },
+      {
+        "name": "George & Hettie Love Memorial Library",
+        "city": "Harrisburg",
+        "state": "PA",
+        "file": "harrisburg-reentry-education-employment.jsonl",
+        "line": 24
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-09-19T23:14:23.204Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "harrisburg-reentry-education-employment.jsonl",
+    "harrisburg-social-nightlife-everyday.jsonl",
+    "philly-caregiver-health-faith-support.jsonl"
+  ],
+  "inputRows": 65,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 0,
+  "consolidatedCandidates": 65,
+  "potentialSameDestinationCollisionsHeldForReview": 1,
+  "addressBackedCandidates": 65,
+  "commercialMapPinReviewCandidates": 12,
+  "maplessCommunityResources": 0,
+  "onlineOnlyCandidates": 0,
+  "targetKinds": {
+    "community_resource": 40,
+    "cultural_place": 13,
+    "regulated_review": 7,
+    "business": 5
+  },
+  "categories": {
+    "Arts & culture": 10,
+    "behavioral health and recovery": 4,
+    "education and training": 4,
+    "housing and basic needs": 4,
+    "behavioral health and recovery support": 3,
+    "benefits and identification": 3,
+    "faith and community support": 3,
+    "Family & recreation": 3,
+    "family support": 3,
+    "library and community support": 3,
+    "Music & nightlife": 3,
+    "reentry and navigation": 3,
+    "Social & community": 3,
+    "cancer support": 2,
+    "Dining & nightlife": 2,
+    "employment": 2,
+    "food and nutrition support": 2,
+    "grief and bereavement support": 2,
+    "cancer care and support": 1,
+    "diet and nutrition support": 1,
+    "health navigation and support": 1,
+    "legal aid": 1,
+    "older-adult and caregiver support": 1,
+    "older-adult support": 1
+  },
+  "states": {
+    "Harrisburg, PA": 45,
+    "Philadelphia, PA": 20
+  },
+  "officialCustomerDestinationCoverage": 65,
+  "files": {
+    "candidates": "philly-harrisburg-support-consolidated-candidates.jsonl",
+    "exactDuplicates": "philly-harrisburg-support-exact-duplicates-removed.json",
+    "destinationCollisions": "philly-harrisburg-support-destination-collisions-review.json",
+    "invalidRowsHeld": "philly-harrisburg-support-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "3e7061a3a8f7bc7c38768203397ec3792d707afab5c21ea8e912fc15033e47c1"
+}

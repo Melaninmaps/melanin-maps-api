@@ -1,0 +1,40 @@
+{
+  "package": "2026-09-19-philly-harrisburg-support-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 65,
+  "accepted_review_only_candidates": 65,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "community_resource": 40,
+    "cultural_place": 13,
+    "business": 5,
+    "regulated_review": 7
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 61,
+    "needs_research": 4
+  },
+  "manifest_sha256": "978b849284bfe69fcc9c47a016bbec1e39a4f4308976a346b143302c253e4efd",
+  "source_manifest": "/home/ubuntu/melanin-maps-philly-harrisburg-support-review/data/founder-imports/2026-09-19-philly-harrisburg-support-review/consolidated/philly-harrisburg-support-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "3e7061a3a8f7bc7c38768203397ec3792d707afab5c21ea8e912fc15033e47c1",
+  "destination_health": {
+    "candidates": 65,
+    "unique_destinations": 85,
+    "by_outcome": {
+      "reachable": 81,
+      "network_error": 1,
+      "timeout": 2,
+      "review_required": 1
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}
