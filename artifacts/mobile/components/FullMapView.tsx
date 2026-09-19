@@ -321,6 +321,7 @@ export function FullMapView({
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once per scope
+  const hasRequestedInitialLocationRef = useRef(false);
   const { user } = useAuth();
 
   const [locationGranted, setLocationGranted] = useState(false);
@@ -956,7 +957,7 @@ export function FullMapView({
     collectionScopeSuffix,
   ]);
 
-  const recenter = async () => {
+  const recenter = useCallback(async () => {
     setLocating(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -998,7 +999,17 @@ export function FullMapView({
     } catch {} finally {
       setLocating(false);
     }
-  };
+  }, []);
+
+  // Ask once when the native map is first opened so nearby results and the
+  // camera can use the member's precise device location. A declined request
+  // remains safe: profile/search locality stays available and no worldwide
+  // default request is introduced.
+  useEffect(() => {
+    if (Platform.OS === "web" || !isFocused || hasRequestedInitialLocationRef.current) return;
+    hasRequestedInitialLocationRef.current = true;
+    void recenter();
+  }, [isFocused, recenter]);
 
   const anyCardVisible =
     selectedBusiness !== null ||

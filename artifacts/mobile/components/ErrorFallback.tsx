@@ -25,7 +25,15 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const handleRestart = async () => {
+  const handleTryAgain = () => {
+    // A render failure can be transient (for example, a screen mounting while
+    // a session refresh completes). Resetting the boundary preserves the local
+    // session and lets the normal screen retry before asking the member to
+    // reload the entire application.
+    resetError();
+  };
+
+  const handleReload = async () => {
     try {
       await reloadAppAsync();
     } catch (restartError) {
@@ -78,7 +86,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
         </Text>
 
         <Pressable
-          onPress={handleRestart}
+          onPress={handleTryAgain}
           style={({ pressed }) => [
             styles.button,
             {
@@ -95,6 +103,16 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             ]}
           >
             Try Again
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => void handleReload()}
+          accessibilityRole="button"
+          accessibilityLabel="Reload application"
+          style={({ pressed }) => [styles.reloadLink, { opacity: pressed ? 0.65 : 1 }]}
+        >
+          <Text style={[styles.reloadLinkText, { color: colors.mutedForeground }]}>
+            Reload the app if this keeps happening
           </Text>
         </Pressable>
       </View>
@@ -228,6 +246,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     fontSize: 16,
+  },
+  reloadLink: {
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  reloadLinkText: {
+    fontSize: 14,
+    textAlign: "center",
+    textDecorationLine: "underline",
   },
   modalOverlay: {
     flex: 1,

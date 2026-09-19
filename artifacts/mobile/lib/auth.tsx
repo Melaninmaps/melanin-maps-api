@@ -363,7 +363,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     // Step 1: Read token while the authenticated screen is still mounted.
-    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    let token: string | null = null;
+    try {
+      token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    } catch {
+      // Local logout must still complete if a device storage read is briefly
+      // unavailable. The delete, in-memory reset, and login return below are
+      // intentionally not conditional on this best-effort server revocation.
+    }
 
     // Step 2: Delete both local keys before the login screen can mount.
     // Auto-restore cannot find a token after this point.
