@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-09-19T04:18:08.524Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "minneapolis-beauty-wellness-candidates.jsonl",
+    "minneapolis-culture-connection-candidates.jsonl",
+    "minneapolis-dining-social-candidates.jsonl",
+    "minneapolis-fitness-shopping-candidates.jsonl",
+    "minneapolis-professional-services-candidates.jsonl"
+  ],
+  "inputRows": 72,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 3,
+  "consolidatedCandidates": 69,
+  "potentialSameDestinationCollisionsHeldForReview": 1,
+  "addressBackedCandidates": 67,
+  "commercialMapPinReviewCandidates": 51,
+  "maplessCommunityResources": 0,
+  "onlineOnlyCandidates": 2,
+  "targetKinds": {
+    "business": 45,
+    "community_resource": 9,
+    "cultural_place": 7,
+    "regulated_review": 6,
+    "online_business": 2
+  },
+  "categories": {
+    "Minneapolis culture and connection": 19,
+    "Dining & social": 12,
+    "Professional Services": 12,
+    "Beauty & Wellness": 11,
+    "Shopping": 11,
+    "Fitness": 4
+  },
+  "states": {
+    "Minneapolis, MN": 46,
+    "Saint Paul, MN": 20,
+    "Brooklyn Park, MN": 1,
+    "Crystal, MN": 1,
+    "Robbinsdale, MN": 1
+  },
+  "officialCustomerDestinationCoverage": 69,
+  "files": {
+    "candidates": "minneapolis-profile-consolidated-candidates.jsonl",
+    "exactDuplicates": "minneapolis-profile-exact-duplicates-removed.json",
+    "destinationCollisions": "minneapolis-profile-destination-collisions-review.json",
+    "invalidRowsHeld": "minneapolis-profile-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "6fe163b03e74e4a4a60957f04577cb5d1281b42b0cc6f9f668c2c08db95ae4e8"
+}

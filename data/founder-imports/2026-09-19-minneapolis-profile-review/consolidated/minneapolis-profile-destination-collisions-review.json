@@ -1,0 +1,22 @@
+[
+  {
+    "destination": "https://pimento.com",
+    "records": [
+      {
+        "name": "Pimento Jamaican Kitchen",
+        "city": "Minneapolis",
+        "state": "MN",
+        "file": "minneapolis-culture-connection-candidates.jsonl",
+        "line": 16
+      },
+      {
+        "name": "Pimento Jamaican Kitchen & Rum Bar",
+        "city": "Minneapolis",
+        "state": "MN",
+        "file": "minneapolis-dining-social-candidates.jsonl",
+        "line": 3
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

@@ -1,0 +1,488 @@
+{
+  "checkedAt": "2026-09-19T04:19:15.731Z",
+  "sourceManifest": "minneapolis-profile-combined-review-only-candidates.jsonl",
+  "candidates": 69,
+  "uniqueDestinations": 79,
+  "counts": {
+    "reachable": 72,
+    "review_required": 6,
+    "network_error": 1
+  },
+  "results": [
+    {
+      "url": "https://www.top2bottomfashion.com/",
+      "status": 200,
+      "finalUrl": "https://www.top2bottomfashion.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://square.site/book/6K217T00PF53W/bella-beauty-and-hair-minneapolis-mn",
+      "status": 200,
+      "finalUrl": "https://bellabeautyandhair.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/bellabeautymn/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fbellabeautymn%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.faceoflelas.com/",
+      "status": 200,
+      "finalUrl": "https://www.faceoflelas.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.36lyn.com/",
+      "status": 200,
+      "finalUrl": "https://www.36lyn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.57fit.com/",
+      "status": 200,
+      "finalUrl": "https://www.57fit.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.612jungle.com/",
+      "status": 200,
+      "finalUrl": "https://www.612jungle.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.adcminnesota.org/",
+      "status": 200,
+      "finalUrl": "https://www.adcminnesota.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.adcminnesota.org/mission-and-history",
+      "status": 200,
+      "finalUrl": "https://www.adcminnesota.org/mission-and-history",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.afrodeli.com/locations/stadium-village",
+      "status": 200,
+      "finalUrl": "https://www.afrodeli.com/locations/stadium-village",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mplsbeautylounge.com/",
+      "status": 200,
+      "finalUrl": "https://www.mplsbeautylounge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thecapri.org/",
+      "status": 200,
+      "finalUrl": "https://thecapri.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thecapri.org/about/history/",
+      "status": 200,
+      "finalUrl": "https://thecapri.org/about/history/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.centromn.org/",
+      "status": 200,
+      "finalUrl": "https://www.centromn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cobblempls.com/",
+      "status": 200,
+      "finalUrl": "https://cobblempls.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://copalmn.org/",
+      "status": 200,
+      "finalUrl": "https://copalmn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://latinocentermn.com/",
+      "status": 200,
+      "finalUrl": "https://latinocentermn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cooperlawmn.com/",
+      "status": 200,
+      "finalUrl": "https://cooperlawmn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.designbymelo.com/",
+      "status": 200,
+      "finalUrl": "https://www.designbymelo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dimensionsinhairsalon.com/",
+      "status": 200,
+      "finalUrl": "https://dimensionsinhairsalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.embellishalc.com/",
+      "status": 200,
+      "finalUrl": "https://www.embellishalc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hayatbeautysalon.com/",
+      "status": 200,
+      "finalUrl": "https://www.hayatbeautysalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.healingbylauryn.com/",
+      "status": 200,
+      "finalUrl": "https://www.healingbylauryn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lovekobico.com/",
+      "status": 200,
+      "finalUrl": "https://www.lovekobico.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lovekobico.com/pages/contact",
+      "status": 200,
+      "finalUrl": "https://www.lovekobico.com/pages/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/latinochambermn/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flatinochambermn%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://vaquerobootsmn.com/",
+      "status": 200,
+      "finalUrl": "https://vaquerobootsmn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.malobenaturalhair.com/",
+      "status": 401,
+      "finalUrl": "https://www.malobenaturalhair.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://mimercadocentral.com/",
+      "status": 200,
+      "finalUrl": "http://mimercadocentral.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://maahmg.org/",
+      "status": 200,
+      "finalUrl": "https://maahmg.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.minnesotablackcollectivefoundation.org/",
+      "status": 200,
+      "finalUrl": "https://www.minnesotablackcollectivefoundation.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.movskyn.com/",
+      "status": 200,
+      "finalUrl": "https://www.movskyn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.naturessyrupbeauty.com/",
+      "status": 200,
+      "finalUrl": "https://www.naturessyrupbeauty.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.newrulesmn.com/",
+      "status": 200,
+      "finalUrl": "https://www.newrulesmn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.northsideepicenter.com/",
+      "status": 200,
+      "finalUrl": "https://www.northsideepicenter.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.northsideepicenter.com/contact",
+      "status": 200,
+      "finalUrl": "https://www.northsideepicenter.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pimento.com/",
+      "status": 200,
+      "finalUrl": "https://pimento.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sabriproperties.com/plaza-mexico",
+      "status": 404,
+      "finalUrl": "https://www.sabriproperties.com/plaza-mexico",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/PlazaMexicoMinneapolis",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FPlazaMexicoMinneapolis",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://the-rocky-robinson-store.square.site/",
+      "status": 200,
+      "finalUrl": "https://the-rocky-robinson-store.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://soulbowlmn.com/",
+      "status": 200,
+      "finalUrl": "https://soulbowlmn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tamugrill.com/",
+      "status": 200,
+      "finalUrl": "https://tamugrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thealchemylabglow.glossgenius.com/",
+      "status": 200,
+      "finalUrl": "https://thealchemylabglow.glossgenius.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thecamdensocial.com/",
+      "status": 200,
+      "finalUrl": "https://thecamdensocial.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecoven.com/northeast",
+      "status": 200,
+      "finalUrl": "https://www.thecoven.com/northeast",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thedrippingrootjuicebar.com/",
+      "status": 200,
+      "finalUrl": "https://www.thedrippingrootjuicebar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thelegacybuilding.org/",
+      "status": 200,
+      "finalUrl": "https://www.thelegacybuilding.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.somalimuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.somalimuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mntillmanlawfirm.com/",
+      "status": 200,
+      "finalUrl": "https://www.mntillmanlawfirm.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/trioplantbasedmn/",
+      "status": 429,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftrioplantbasedmn%2F&is_from_rle",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ultcmn.org/",
+      "status": 200,
+      "finalUrl": "https://ultcmn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/viphairandnail/",
+      "status": 429,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fviphairandnail%2F&is_from_rle",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.wiseink.com/",
+      "status": 200,
+      "finalUrl": "https://www.wiseink.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.zomahouse.com/",
+      "status": 200,
+      "finalUrl": "https://www.zomahouse.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lionsgym.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.abigaildominguez.com/",
+      "status": 403,
+      "finalUrl": "https://www.abigaildominguez.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.afrodeli.com/",
+      "status": 200,
+      "finalUrl": "https://www.afrodeli.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackbusinessnetworkmn.org/",
+      "status": 200,
+      "finalUrl": "https://blackbusinessnetworkmn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackgarnetbooks.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackgarnetbooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bouquetsbycarolyn.net/",
+      "status": 202,
+      "finalUrl": "https://www.bouquetsbycarolyn.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clues.org/latino-art-events/",
+      "status": 200,
+      "finalUrl": "https://clues.org/latino-art-events/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clues.org/",
+      "status": 200,
+      "finalUrl": "https://clues.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/DemeraMN/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/DemeraMN/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.essienlaw.com/",
+      "status": 500,
+      "finalUrl": "http://www.essienlaw.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.flavacafe.org/",
+      "status": 200,
+      "finalUrl": "https://www.flavacafe.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hacer-mn.org/",
+      "status": 200,
+      "finalUrl": "https://hacer-mn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hmongcc.org/",
+      "status": 200,
+      "finalUrl": "https://www.hmongcc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hyacinthstpaul.com/",
+      "status": 200,
+      "finalUrl": "https://www.hyacinthstpaul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hyacinthstpaul.com/contact",
+      "status": 200,
+      "finalUrl": "https://www.hyacinthstpaul.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://la-marg.com/",
+      "status": 200,
+      "finalUrl": "https://la-marg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lafusioncafe.com/",
+      "status": 200,
+      "finalUrl": "https://lafusioncafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lipesteem.com/",
+      "status": 200,
+      "finalUrl": "https://lipesteem.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://metronomebrewery.com/",
+      "status": 200,
+      "finalUrl": "https://metronomebrewery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://minnesotablackchamber.org/",
+      "status": 200,
+      "finalUrl": "https://minnesotablackchamber.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mnblackchamber/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmnblackchamber%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://penumbracenter.org/",
+      "status": 200,
+      "finalUrl": "https://penumbracenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://penumbracenter.org/contact/",
+      "status": 200,
+      "finalUrl": "https://penumbracenter.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.thefitlabinc.com/",
+      "status": 200,
+      "finalUrl": "http://thefitlabinc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.westindiessoulfoods.com/",
+      "status": 200,
+      "finalUrl": "https://www.westindiessoulfoods.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
