@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Redirect } from "wouter";
 import {
   Check,
@@ -34,7 +41,6 @@ import {
   BookOpen,
   AlertCircle,
   Eye,
-  ChevronDown,
 } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
@@ -1879,31 +1885,47 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Dashboard section selector. Keep all tab routes and actions intact while
+          avoiding a long horizontal scroll on desktop, tablet, and mobile. */}
       <div className="border-b border-[#3A1F0E]/10 bg-white sticky top-0 z-10">
-        <div className="max-w-[1500px] mx-auto px-6 flex gap-0 items-center justify-between overflow-x-auto">
-          <div className="flex">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`px-5 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
-                  tab === t.id
-                    ? "border-[#CA922B] text-[#3A1F0E]"
-                    : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"
-                }`}
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <label
+              htmlFor="admin-dashboard-section"
+              className="shrink-0 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/55"
+            >
+              Dashboard section
+            </label>
+            <Select value={tab} onValueChange={(value) => setTab(value as Tab)}>
+              <SelectTrigger
+                id="admin-dashboard-section"
+                aria-label="Choose an admin dashboard section"
+                className="h-10 w-full min-w-0 max-w-[32rem] border-[#3A1F0E]/20 bg-[#FAF6EF] px-3 font-bold text-[#3A1F0E] shadow-none focus:ring-[#CA922B] sm:w-[22rem]"
               >
-                {t.icon}
-                {t.label}
-                {t.badge !== undefined && t.badge > 0 && (
-                  <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                    {t.badge}
-                  </span>
-                )}
-              </button>
-            ))}
+                <SelectValue placeholder="Choose a dashboard section" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[min(60vh,32rem)] border-[#3A1F0E]/15 bg-white text-[#3A1F0E]">
+                {tabs.map((t) => (
+                  <SelectItem
+                    key={t.id}
+                    value={t.id}
+                    className="min-h-10 cursor-pointer pr-10 font-medium focus:bg-[#FAF6EF] focus:text-[#3A1F0E]"
+                  >
+                    <span className="flex items-center gap-2">
+                      {t.icon}
+                      <span>{t.label}</span>
+                      {t.badge !== undefined && t.badge > 0 && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                          {t.badge}
+                        </span>
+                      )}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center gap-3 pr-2">
+          <div className="flex flex-wrap items-center gap-3 xl:justify-end">
             <span className="text-[#3A1F0E]/30 text-xs">
               {secondsSinceUpdate < 5
                 ? "Just updated"
