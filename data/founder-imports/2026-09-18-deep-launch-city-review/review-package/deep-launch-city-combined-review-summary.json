@@ -1,0 +1,39 @@
+{
+  "package": "2026-09-18-deep-launch-city-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 30,
+  "accepted_review_only_candidates": 30,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "business": 4,
+    "cultural_place": 3,
+    "regulated_review": 15,
+    "community_resource": 8
+  },
+  "preliminary_review_status_counts": {
+    "needs_research": 6,
+    "pending_review": 24
+  },
+  "manifest_sha256": "31d4badabec490fb5b33f8c25e791607fdc03c766bcf8290282a1aa1dc739c2b",
+  "source_manifest": "/home/ubuntu/melanin-maps-deep-launch-city-review/data/founder-imports/2026-09-18-deep-launch-city-review/consolidated/deep-launch-city-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "0ca55d37d0557c6ff393ae7d0f915674f3077f307df80dd9cf7fcb57e659ada2",
+  "destination_health": {
+    "candidates": 30,
+    "unique_destinations": 36,
+    "by_outcome": {
+      "timeout": 5,
+      "reachable": 28,
+      "network_error": 3
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}
