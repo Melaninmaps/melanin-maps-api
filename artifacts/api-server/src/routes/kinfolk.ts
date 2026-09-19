@@ -4196,6 +4196,7 @@ Kinfolk can answer the same broad non-coding questions a capable general assista
 - AGE-APPROPRIATE LEARNING: When the server provides a permitted age band or the member says the work is for a child, help them understand and complete the learning task without doing dishonest schoolwork for them. Use kid-appropriate language and offer an overlooked African, Indigenous, Asian, Latino, Caribbean, or diaspora connection only when reliable evidence supports it. Adults may receive deeper historiography, media criticism, or debate context.
 - AMBIGUOUS CULTURAL WORKS: Resolve the member's purpose before over-specializing. A question about The Odyssey may be a child's project, an adult revisiting the work, or a casting/history debate. Answer the common core first; then explore African-Mediterranean contact, reception, or representation only when it fits the question and supplied evidence. Never assume a disputed premise is true.
 - CURRENT QUESTIONS: Current interest rates, news, laws, prices, elections, schedules, and similar changing facts require current authoritative evidence. Peppa Pig or another ordinary entertainment question gets a normal useful answer; cultural context appears only if the member asks for it or it is genuinely relevant.
+- PRACTICAL CURRENT-EVENT RELEVANCE: Keep current-event facts impartial, complete for the question asked, and grounded in current authoritative sources for every member. Never change source selection, causal claims, material uncertainty, or the factual conclusion because of a member's views, profile, prior searches, age, gender, race, income, politics, health, or other personal context. After the factual answer and source links, offer an optional, clearly labeled “Explore next” prompt only when it follows from an explicit current-turn need or a non-sensitive preference/history signal that the server already supplied. Treat that signal as a relevance cue, never as a fact to repeat back or an identity to infer. For example, a member who has explicitly asked about military service may be offered “Want the official military-readiness view?” with authoritative service-member, family, or travel-readiness links; a member who has repeatedly raised transportation costs may be offered “Want a gas-price and household-cost breakdown?” Use neutral, conditional wording such as “If you are tracking fuel costs…” or “If you are following military involvement…”, never “Because you are…”. Do not surface a sensitive topic, private memory, hidden profile field, age, gender, race, health detail, or protected characteristic unless the member explicitly raises it in this turn. The factual answer and cited sources always come first; the optional follow-up never replaces, filters, or distorts the broader evidence.
 - KINFOLK/LIBRARY BRIDGE: Kinfolk answers in the conversation first. When a supported pattern or topic has meaningful depth, optionally suggest a Library path for sources, history, and connected diaspora perspectives. The Library handoff is never a gate and never substitutes for answering the member.
 - PRIVACY: A culturally aware answer does not prove or imply the member's race, ethnicity, nationality, sex, religion, or politics. Use only current-turn or server-permitted context and never reveal private personalization logic.
 
@@ -4906,6 +4907,139 @@ router.put("/kinfolk/response-feedback", async (req: Request, res: Response) => 
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to save Kinfolk response feedback");
     res.status(500).json({ error: "KINFOLK_RESPONSE_FEEDBACK_SAVE_FAILED" });
+  }
+});
+
+// ─── DELETE /api/kinfolk/reset ────────────────────────────────────────────────
+// A member-controlled fresh start for Kinfolk only. This deliberately leaves the
+// account, authentication, profile, Community, circles, saves, memberships, and
+// non-Kinfolk product data untouched.
+router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    return void res.status(401).json({ error: "Authentication required" });
+  }
+  if ((req.body as { confirmation?: unknown } | undefined)?.confirmation !== true) {
+    return void res.status(400).json({
+      error: "Explicit confirmation is required before resetting Kinfolk.",
+      code: "KINFOLK_RESET_CONFIRMATION_REQUIRED",
+    });
+  }
+
+  const userId = req.user.id;
+  try {
+    const receipt = await db.transaction(async (tx) => {
+      const deletedSessions = await tx
+        .delete(kinfolkSessionsTable)
+        .where(eq(kinfolkSessionsTable.userId, userId))
+        .returning({ id: kinfolkSessionsTable.id });
+      const deletedBusinessFeedback = await tx
+        .delete(kinfolkFeedbackTable)
+        .where(eq(kinfolkFeedbackTable.userId, userId))
+        .returning({ id: kinfolkFeedbackTable.id });
+      const deletedResponseFeedback = await tx
+        .delete(kinfolkResponseFeedbackTable)
+        .where(eq(kinfolkResponseFeedbackTable.userId, userId))
+        .returning({ id: kinfolkResponseFeedbackTable.id });
+      const revokedMemories = await tx
+        .update(kinfolkPrivateMemoriesTable)
+        .set({ revokedAt: new Date(), updatedAt: new Date() })
+        .where(eq(kinfolkPrivateMemoriesTable.userId, userId))
+        .returning({ id: kinfolkPrivateMemoriesTable.id });
+
+      // Reset only preferences owned by Kinfolk. Product-wide profile choices
+      // (for example support filters and Library context) remain available to
+      // their own surfaces, and personalisedSuggestions below keeps Kinfolk
+      // from using them unless the member explicitly enables it again.
+      await tx
+        .insert(userPreferencesTable)
+        .values({
+          userId,
+          recommendationLifeStage: "unspecified",
+          favoriteCategories: [],
+          favoriteCities: [],
+          avoidCategories: [],
+          budgetRange: "any",
+          tripStyle: [],
+          travelCompanion: "solo",
+          dietaryNotes: null,
+          communicationStyle: "friendly",
+          personalityMode: "neighborhood_guide",
+          emojiLevel: "some",
+          humorLevel: "light",
+          culturalInterests: [],
+          knowBeforeYouGo: true,
+          regionalFlavor: "off",
+          kinfolkVoice: "onyx",
+          autoSpeak: false,
+          lifestyleServices: [],
+          searchHistory: [],
+          aaveLevel: 0,
+          personalizationContextCompletedAt: null,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: userPreferencesTable.userId,
+          set: {
+            recommendationLifeStage: "unspecified",
+            favoriteCategories: [],
+            favoriteCities: [],
+            avoidCategories: [],
+            budgetRange: "any",
+            tripStyle: [],
+            travelCompanion: "solo",
+            dietaryNotes: null,
+            communicationStyle: "friendly",
+            personalityMode: "neighborhood_guide",
+            emojiLevel: "some",
+            humorLevel: "light",
+            culturalInterests: [],
+            knowBeforeYouGo: true,
+            regionalFlavor: "off",
+            kinfolkVoice: "onyx",
+            autoSpeak: false,
+            lifestyleServices: [],
+            searchHistory: [],
+            aaveLevel: 0,
+            personalizationContextCompletedAt: null,
+            updatedAt: new Date(),
+          },
+        });
+      await tx
+        .insert(userSettingsTable)
+        .values({
+          userId,
+          kinfolkMemoryEnabled: false,
+          personalisedSuggestions: false,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: userSettingsTable.userId,
+          set: {
+            kinfolkMemoryEnabled: false,
+            personalisedSuggestions: false,
+            updatedAt: new Date(),
+          },
+        });
+
+      return {
+        deletedSessions: deletedSessions.length,
+        deletedBusinessFeedback: deletedBusinessFeedback.length,
+        deletedResponseFeedback: deletedResponseFeedback.length,
+        revokedMemories: revokedMemories.length,
+      };
+    });
+
+    invalidatePrefsCache(userId);
+    invalidateSessionsCache(userId);
+    res.json({
+      ok: true,
+      receipt,
+      message:
+        "Kinfolk has started fresh. Chat memory and personalised suggestions are off until you choose to enable them again.",
+    });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to reset Kinfolk");
+    res.status(500).json({ error: "KINFOLK_RESET_FAILED" });
   }
 });
 

@@ -5,6 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -89,6 +90,7 @@ export default function KinfolkSettingsScreen() {
   const [behavior, setBehavior] = useState<BehaviorSettings>(BEHAVIOR_DEFAULTS);
   const [voice, setVoice] = useState<VoicePrefs>(VOICE_DEFAULTS);
   const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
   const behaviorSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -175,6 +177,45 @@ export default function KinfolkSettingsScreen() {
       saveVoice(next);
       return next;
     });
+  };
+
+  const resetKinfolk = () => {
+    Alert.alert(
+      "Start Kinfolk fresh?",
+      "This permanently clears your Kinfolk chats, private Kinfolk memories, feedback, and Kinfolk-only preferences. It does not delete your account, password, profile, Community posts, DMs, circles, saved places, memberships, or other Mapping With Melanin data.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Start fresh",
+          style: "destructive",
+          onPress: () => { void confirmKinfolkReset(); },
+        },
+      ],
+    );
+  };
+
+  const confirmKinfolkReset = async () => {
+    setResetting(true);
+    try {
+      const token = await getAuthToken();
+      const base = getApiBase();
+      if (!token || !base) throw new Error("Please sign in again before resetting Kinfolk.");
+      const response = await fetch(`${base}/api/kinfolk/reset`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ confirmation: true }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Kinfolk could not reset. Please try again.");
+      setBehavior({ kinfolkMemoryEnabled: false, personalisedSuggestions: false });
+      setVoice(VOICE_DEFAULTS);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Kinfolk is fresh", "Memory and personalised suggestions are off until you choose to turn them back on.");
+    } catch (cause) {
+      Alert.alert("Kinfolk could not reset", cause instanceof Error ? cause.message : "Please try again.");
+    } finally {
+      setResetting(false);
+    }
   };
 
   if (loading) {
@@ -386,6 +427,21 @@ export default function KinfolkSettingsScreen() {
               </View>
             </TouchableOpacity>
           </View>
+
+          <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />
+
+          <View style={styles.resetRow}>
+            <View style={[styles.rowIcon, { backgroundColor: "#FEF2F2" }]}>
+              <Feather name="rotate-ccw" size={16} color="#B91C1C" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Reset Kinfolk</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Clear chats, private Kinfolk memories, feedback, and Kinfolk-only preferences. Your account and other app data stay untouched.</Text>
+              <TouchableOpacity accessibilityLabel="Reset Kinfolk" disabled={resetting} activeOpacity={0.85} style={[styles.resetButton, { borderColor: "#FCA5A5", backgroundColor: "#FFF" }]} onPress={resetKinfolk}>
+                {resetting ? <ActivityIndicator size="small" color="#B91C1C" /> : <Text style={styles.resetButtonText}>Start Kinfolk fresh</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Reassurance note */}
@@ -439,6 +495,9 @@ const styles = StyleSheet.create({
   segBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
   segText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   toggleRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
+  resetRow: { flexDirection: "row", alignItems: "flex-start", paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
+  resetButton: { alignSelf: "flex-start", marginTop: 10, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, minWidth: 132, alignItems: "center" },
+  resetButtonText: { color: "#B91C1C", fontSize: 12, fontFamily: "Inter_600SemiBold" },
   sw: { width: 46, height: 26, borderRadius: 13, justifyContent: "center" },
   swThumb: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#FFF", shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
   note: {
