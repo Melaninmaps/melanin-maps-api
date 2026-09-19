@@ -1,0 +1,42 @@
+[
+  {
+    "destination": "https://www.houstontx.gov/parks/youthsports-recreation.html",
+    "records": [
+      {
+        "name": "Houston Parks and Recreation Department Youth Basketball Program",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-culture-sports-candidates.jsonl",
+        "line": 9
+      },
+      {
+        "name": "H-Town Soccer Academy Legacy Program — Alief Park Fields",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-family-childcare-candidates.jsonl",
+        "line": 10
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.meca-houston.org",
+    "records": [
+      {
+        "name": "Multicultural Education and Counseling through the Arts (MECA)",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-culture-sports-candidates.jsonl",
+        "line": 10
+      },
+      {
+        "name": "MECA",
+        "city": "Houston",
+        "state": "TX",
+        "file": "houston-family-childcare-candidates.jsonl",
+        "line": 14
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

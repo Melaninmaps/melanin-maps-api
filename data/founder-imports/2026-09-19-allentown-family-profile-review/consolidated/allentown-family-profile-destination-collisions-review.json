@@ -1,0 +1,22 @@
+[
+  {
+    "destination": "https://www.hao-lv.org",
+    "records": [
+      {
+        "name": "Hispanic American Organization, Inc.",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-family-resources-candidates.jsonl",
+        "line": 2
+      },
+      {
+        "name": "Hispanic American Organization, Inc. (HAO)",
+        "city": "Allentown",
+        "state": "PA",
+        "file": "allentown-social-dining-candidates.jsonl",
+        "line": 10
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

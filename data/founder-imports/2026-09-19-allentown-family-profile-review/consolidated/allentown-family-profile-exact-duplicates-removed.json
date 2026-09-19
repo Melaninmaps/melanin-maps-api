@@ -1,0 +1,18 @@
+[
+  {
+    "duplicateKey": "physical|hispanic american organization inc|allentown|pa|462 w walnut st",
+    "retained": {
+      "name": "Hispanic American Organization, Inc.",
+      "file": "allentown-family-resources-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.hao-lv.org/"
+    },
+    "duplicate": {
+      "name": "Hispanic American Organization, Inc.",
+      "file": "allentown-wellness-survivorship-candidates.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.hao-lv.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]
