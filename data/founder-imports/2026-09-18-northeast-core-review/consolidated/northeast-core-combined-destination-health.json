@@ -1,0 +1,453 @@
+{
+  "checkedAt": "2026-09-19T00:34:30.827Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-northeast-core-review/data/founder-imports/2026-09-18-northeast-core-review/review-package/northeast-core-combined-review-only-candidates.jsonl",
+  "candidates": 68,
+  "uniqueDestinations": 73,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 73,
+  "counts": {
+    "reachable": 68,
+    "review_required": 5
+  },
+  "results": [
+    {
+      "url": "https://www.thelitbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.thelitbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ambrosiahealthfoods.com/",
+      "status": 200,
+      "finalUrl": "https://ambrosiahealthfoods.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barrysbeautybar.com/",
+      "status": 200,
+      "finalUrl": "https://www.barrysbeautybar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fenoellittlecaribbean.com/",
+      "status": 200,
+      "finalUrl": "https://fenoellittlecaribbean.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://flatbushcentral.com/",
+      "status": 200,
+      "finalUrl": "https://flatbushcentral.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://insideouttours.com/",
+      "status": 200,
+      "finalUrl": "https://www.insideouttours.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kaoscomputing.com/",
+      "status": 200,
+      "finalUrl": "https://kaoscomputing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://qualitytouchsolutions.com/",
+      "status": 200,
+      "finalUrl": "https://qualitytouchsolutions.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fade-antique-factory-flow.base44.app/contact",
+      "status": 200,
+      "finalUrl": "https://fade-antique-factory-flow.base44.app/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cathedralkitchen.org/",
+      "status": 200,
+      "finalUrl": "https://cathedralkitchen.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.victorspub.com/",
+      "status": 200,
+      "finalUrl": "https://www.victorspub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.acehandymanservices.com/offices/south-jersey-and-philadelphia",
+      "status": 200,
+      "finalUrl": "https://www.acehandymanservices.com/offices/south-jersey-and-philadelphia",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/acehandymanservicessjphilly/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Facehandymanservicessjphilly%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chestercommunitycoalition.org/",
+      "status": 200,
+      "finalUrl": "https://www.chestercommunitycoalition.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://electriciandelco.com/",
+      "status": 200,
+      "finalUrl": "https://electriciandelco.com/electrician-collingdale-pa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mywealthbuildingblocks.com/",
+      "status": 200,
+      "finalUrl": "https://mywealthbuildingblocks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.enspirecg.com/",
+      "status": 200,
+      "finalUrl": "https://www.enspirecg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.darlingtonarts.org/",
+      "status": 200,
+      "finalUrl": "https://www.darlingtonarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aurummedispa.com/",
+      "status": 200,
+      "finalUrl": "https://www.aurummedispa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/calderonnn.bakery/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/calderonnn.bakery/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gibbstownchiro.com/",
+      "status": 403,
+      "finalUrl": "https://gibbstownchiro.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.briarcliffeautoservice.com/",
+      "status": 200,
+      "finalUrl": "https://www.briarcliffeautoservice.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.stithhealthinsurance.com/",
+      "status": 200,
+      "finalUrl": "https://www.stithhealthinsurance.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://maxxortho.com/",
+      "status": 200,
+      "finalUrl": "https://maxxortho.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parklandchurch.org/",
+      "status": 200,
+      "finalUrl": "https://parklandchurch.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theglamgirly.com/",
+      "status": 200,
+      "finalUrl": "https://theglamgirly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dreamteampa.com/",
+      "status": 200,
+      "finalUrl": "https://dreamteampa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://victoriousgracecharityfoundation.org/",
+      "status": 200,
+      "finalUrl": "https://victoriousgracecharityfoundation.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.21plus.org/",
+      "status": 200,
+      "finalUrl": "https://www.21plus.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mightylionai.com/",
+      "status": 200,
+      "finalUrl": "https://www.mightylionai.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thinkdmg.com/",
+      "status": 200,
+      "finalUrl": "https://thinkdmg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ThinkDigitalMKTG",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FThinkDigitalMKTG",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.genesisofcherryhill.com/",
+      "status": 403,
+      "finalUrl": "https://www.genesisofcherryhill.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.schoolofrock.com/locations/delco",
+      "status": 403,
+      "finalUrl": "https://www.schoolofrock.com/locations/delco",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://dabarhomebuilders.com/",
+      "status": 200,
+      "finalUrl": "https://dabarhomebuilders.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thefallsbanquet.com/",
+      "status": 200,
+      "finalUrl": "https://thefallsbanquet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.luminoussolar.com/",
+      "status": 200,
+      "finalUrl": "https://www.luminoussolar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://waxnscentstudio.com/",
+      "status": 200,
+      "finalUrl": "https://waxnscentstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boutfightclub.com/",
+      "status": 200,
+      "finalUrl": "https://www.boutfightclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://prettywellbeauty.com/",
+      "status": 200,
+      "finalUrl": "https://prettywellbeauty.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sistersuptownbookstore.com/",
+      "status": 200,
+      "finalUrl": "https://www.sistersuptownbookstore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.smilebritedelaware.com/",
+      "status": 200,
+      "finalUrl": "https://www.smilebritedelaware.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bchip.org/",
+      "status": 401,
+      "finalUrl": "http://23.21.124.144/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.fordbrothers.net/",
+      "status": 200,
+      "finalUrl": "https://www.fordbrothers.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://southernpestcontrolnj.com/",
+      "status": 200,
+      "finalUrl": "https://southernpestcontrolnj.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sofreshjuiceco.com/",
+      "status": 200,
+      "finalUrl": "https://www.sofreshjuiceco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://amritayogawellness.com/",
+      "status": 200,
+      "finalUrl": "https://amritayogawellness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://archwayfishtown.com/",
+      "status": 200,
+      "finalUrl": "https://archwayfishtown.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barefootclinic.com/",
+      "status": 200,
+      "finalUrl": "https://www.barefootclinic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bee-flowers.com/",
+      "status": 200,
+      "finalUrl": "https://www.bee-flowers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackvulturegallery.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackvulturegallery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boltbrow.com/",
+      "status": 200,
+      "finalUrl": "https://www.boltbrow.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://boltbrow.com/contact",
+      "status": 200,
+      "finalUrl": "https://www.boltbrow.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bornfreebarber.com/",
+      "status": 200,
+      "finalUrl": "https://bornfreebarber.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caretrustpharmacy.com/",
+      "status": 200,
+      "finalUrl": "https://www.caretrustpharmacy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://cexagency.com/",
+      "status": 200,
+      "finalUrl": "http://cexagency.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.circlethrift.com/",
+      "status": 200,
+      "finalUrl": "https://www.circlethrift.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cloud9clay.com/",
+      "status": 200,
+      "finalUrl": "https://cloud9clay.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebigredr.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebigredr.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lync-transport.com/",
+      "status": 200,
+      "finalUrl": "https://lync-transport.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://toprailfences.com/media/",
+      "status": 200,
+      "finalUrl": "https://toprailfences.com/media/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nerdstogo.com/",
+      "status": 403,
+      "finalUrl": "https://www.nerdstogo.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.maccakes.com/",
+      "status": 200,
+      "finalUrl": "https://www.maccakes.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.girlsautoclinic.com/",
+      "status": 200,
+      "finalUrl": "https://www.girlsautoclinic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://go-agconnect.org/",
+      "status": 200,
+      "finalUrl": "https://go-agconnect.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://getafreshstartrestoration.com/",
+      "status": 200,
+      "finalUrl": "https://getafreshstartrestoration.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fixedbybricks.com/",
+      "status": 200,
+      "finalUrl": "https://www.fixedbybricks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/fixedbybricks/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ffixedbybricks%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.decowilmington.com/",
+      "status": 200,
+      "finalUrl": "https://www.decowilmington.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://firstascentdesign.com/",
+      "status": 200,
+      "finalUrl": "https://firstascentdesign.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://firstascentdesign.com/contact/",
+      "status": 200,
+      "finalUrl": "https://firstascentdesign.com/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://huxleyandhiro.com/",
+      "status": 200,
+      "finalUrl": "https://huxleyandhiro.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://torrescafede.com/",
+      "status": 200,
+      "finalUrl": "https://torrescafede.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}
