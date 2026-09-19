@@ -1,0 +1,22 @@
+[
+  {
+    "destination": "https://wilmington.lib.de.us",
+    "records": [
+      {
+        "name": "Wilmington Public Library",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "delaware-fourth-depth-candidates.jsonl",
+        "line": 5
+      },
+      {
+        "name": "Wilmington Public Library - North Branch",
+        "city": "Wilmington",
+        "state": "DE",
+        "file": "delaware-fourth-depth-candidates.jsonl",
+        "line": 7
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]
