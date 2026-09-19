@@ -9,6 +9,8 @@ type PublicBusinessCandidate = {
   status?: string | null;
   isDuplicate?: boolean | null;
   is_duplicate?: boolean | null;
+  duplicateOfId?: string | null;
+  duplicate_of_id?: string | null;
   permanentlyHidden?: boolean | null;
   permanently_hidden?: boolean | null;
 };
@@ -17,8 +19,10 @@ type PublicBusinessCandidate = {
 export function isPublicBusinessRecord(record: PublicBusinessCandidate): boolean {
   const listingStatus = record.listingStatus ?? record.listing_status ?? "live_unclaimed";
   const isDuplicate = record.isDuplicate ?? record.is_duplicate ?? false;
+  const superseded = record.duplicateOfId ?? record.duplicate_of_id;
   const permanentlyHidden = record.permanentlyHidden ?? record.permanently_hidden ?? false;
   return !isDuplicate
+    && !superseded
     && !permanentlyHidden
     && record.status === "active"
     && PUBLIC_BUSINESS_LISTING_STATUSES.includes(

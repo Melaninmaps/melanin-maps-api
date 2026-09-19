@@ -123,6 +123,13 @@ export const businessesTable = pgTable("businesses", {
   // claimed          = owner has joined and can edit the profile
   // participating    = actively participates; eligible for featured/promotion
   profileStatus: varchar("profile_status", { length: 30 }).notNull().default("community_listed"),
+  // Reconciliation is reversible: duplicate rows remain intact and point at
+  // the selected canonical row. Public queries must exclude these rows.
+  dedupeKey: varchar("dedupe_key", { length: 500 }),
+  isDuplicate: boolean("is_duplicate").notNull().default(false),
+  duplicateOfId: varchar("duplicate_of_id"),
+  permanentlyHidden: boolean("permanently_hidden").notNull().default(false),
+  dataSource: varchar("data_source", { length: 100 }),
   // Community-provided audience type (limited options, set during submission or community edit)
   // Values: all_ages | family_friendly | adults_18plus | adults_21plus | unknown
   communityAudienceType: varchar("community_audience_type", { length: 30 }).notNull().default("unknown"),

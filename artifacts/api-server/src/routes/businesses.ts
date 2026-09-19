@@ -48,6 +48,7 @@ import { reportLimiter } from "../middleware/rateLimiter";
 import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
+import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -244,6 +245,10 @@ function publicBusinessVisibilityCondition() {
     ${businessesTable.description},
     ${sql.raw('"businesses"."data_source"')},
     ${businessesTable.phone}
+  ) AND NOT EXISTS (
+    SELECT 1
+      FROM public.business_duplicate_resolutions directory_resolution
+     WHERE directory_resolution.superseded_business_id = ${businessesTable.id}
   )`;
 }
 
@@ -2020,7 +2025,16 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
   // Public read — guests can view business details.
   // Write interactions (save, vibe, review) check auth individually at point of use.
   try {
-    const id = String(req.params.id);
+    const requestedId = String(req.params.id);
+    const id = await resolveCanonicalBusinessId(pool, requestedId);
+    if (!id) {
+      res.status(404).json({ error: "Business not found" });
+      return;
+    }
+    if (id !== requestedId) {
+      res.setHeader("Content-Location", `/api/businesses/${encodeURIComponent(id)}`);
+      res.setHeader("X-Canonical-Business-Id", id);
+    }
     const [business] = await db
       .select()
       .from(businessesTable)

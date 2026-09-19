@@ -57,7 +57,10 @@ import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRou
 import { registerMediaRoutes } from "./media/registerMediaRoutes";
 import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
 import { registerDirectoryImportRoutes } from "./directoryImport/registerDirectoryImportRoutes";
+import { registerReconciliationRoutes } from "./directoryReconciliation/registerReconciliationRoutes";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
+import { createDirectoryReviewPool } from "./directoryImport/reviewDatabase";
+import { registerAutomatedDirectoryRoutes } from "./directoryImport/automatedDirectoryRoutes";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -92,6 +95,8 @@ for (const dir of SPA_SEARCH_DIRS) {
 
 assertKinfolkModelEnvironment();
 const app: Express = express();
+// Never fall back to the production pool for review data.
+export const directoryReviewPool = createDirectoryReviewPool(process.env);
 
 // Trust the proxy in front of us (Replit's reverse proxy sets X-Forwarded-For)
 app.set("trust proxy", 1);
@@ -373,8 +378,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
+registerReconciliationRoutes(app);
 if (assertDirectoryReviewLocalStaging(process.env)) {
   registerDirectoryImportRoutes(app);
+}
+if (process.env.DIRECTORY_REVIEW_ENABLED === "1" && directoryReviewPool) {
+  registerAutomatedDirectoryRoutes(app, directoryReviewPool);
 }
 
 // ── Living Library public read routes ──────────────────────────────────────

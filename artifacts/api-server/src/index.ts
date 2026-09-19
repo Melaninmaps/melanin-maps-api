@@ -1,4 +1,4 @@
-import app from "./app";
+import app, { directoryReviewPool } from "./app";
 import { logger } from "./lib/logger";
 import { setDbLogger, pool, getPool, getPoolStats, initPoolInstrumentation } from "@workspace/db";
 import { getStripeSync, endStripeSyncPool } from "./stripeClient";
@@ -13,6 +13,8 @@ import {
 } from "./lib/startup-migrations";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
+import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase";
+import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
@@ -102,6 +104,14 @@ async function initStripe() {
 })();
 
 try {
+  if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
+      (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+    throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+  }
+  if (directoryReviewPool) {
+    await bootstrapDirectoryReviewSchema(directoryReviewPool);
+    logger.info("Isolated directory review schema ready");
+  }
   await ensureRequiredSafetyReportSchema(pool);
   logger.info("Required safety report schema ready");
 } catch (error) {
@@ -116,7 +126,7 @@ try {
     throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
   }
   await ensureRequiredPublicationSchema(
-    directoryReviewEnabled,
+    false,
     logger,
   );
   logger.info("Required publication schema ready before traffic acceptance");
@@ -146,6 +156,7 @@ const onListening = (err?: Error) => {
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
+  if (directoryReviewPool) startDirectoryPublicationWorker(directoryReviewPool, pool);
 
   // Route monitor log events through pino so they appear in Railway's log stream.
   setMonitorLogger(logger);

@@ -11,6 +11,11 @@ import {
   ChevronDown,
   ExternalLink,
   FileSearch,
+  Download,
+  Pause,
+  Play,
+  Receipt,
+  ClipboardCheck,
   Link2,
   MapPin,
   RefreshCw,
@@ -88,6 +93,20 @@ interface BatchSummary {
   business_count: number;
   resource_count: number;
   regulated_count: number;
+  receipt_count?: number;
+  exception_count?: number;
+  reconciled_count?: number;
+  paused_at?: string | null;
+  reconciliation_status?: string;
+}
+
+interface ReconciliationSummary {
+  total: number;
+  reconciled: number;
+  exceptions: number;
+  receipts: number;
+  last_reconciled_at?: string | null;
+  status?: string;
 }
 
 const RESOURCE_CATEGORIES: Array<{ value: ResourceCategory; label: string }> = [
@@ -156,9 +175,9 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState<CandidateStatus | "all">("needs_research");
   const [targetKind, setTargetKind] = useState<TargetKind | "all">("all");
-  const [city, setCity] = useState("Phoenix");
-  const [state, setState] = useState("AZ");
-  const [query, setQuery] = useState("HVAC");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -190,6 +209,8 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
   const [validatingEvidence, setValidatingEvidence] = useState<"regulated" | "resource" | null>(null);
   const [memberFacingUrl, setMemberFacingUrl] = useState("");
   const [existingRecordId, setExistingRecordId] = useState("");
+  const [reconciliation, setReconciliation] = useState<ReconciliationSummary | null>(null);
+  const [batchProcessing, setBatchProcessing] = useState(false);
 
   if (!authLoading && (!user?.id || user.role !== "admin")) return <Redirect to="/" />;
 
@@ -255,10 +276,29 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
     }
   };
 
+  const loadReconciliation = async () => {
+    if (!batchId) {
+      setReconciliation(null);
+      return;
+    }
+    try {
+      const response = await authenticatedFetch(`${BASE}api/founder/directory-import-batches/${batchId}/reconciliation`);
+      if (!response.ok) return;
+      const data = await response.json() as { summary?: ReconciliationSummary };
+      setReconciliation(data.summary ?? null);
+    } catch {
+      // The queue remains usable when reconciliation is not available for an older batch.
+    }
+  };
+
   useEffect(() => {
     if (user?.role !== "admin") return;
     loadBatches().catch(() => setError("Failed to load import batches."));
   }, [user?.role]);
+
+  useEffect(() => {
+    if (user?.role === "admin") void loadReconciliation();
+  }, [user?.role, batchId]);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -425,6 +465,72 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
     }
   };
 
+  const toggleBatchPause = async () => {
+    if (!batchId || batchProcessing) return;
+    const batch = batches.find((item) => item.id === batchId);
+    if (!batch) return;
+    setBatchProcessing(true);
+    setError(null);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/founder/directory-import-batches/${batchId}/pause`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paused: !batch.paused_at }),
+      });
+      const data = await response.json() as { error?: string; message?: string };
+      if (!response.ok) throw new Error(data.error ?? "Unable to update batch status.");
+      setNotice(data.message ?? (batch.paused_at ? "Batch resumed." : "Batch paused."));
+      await loadBatches();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Unable to update batch status.");
+    } finally {
+      setBatchProcessing(false);
+    }
+  };
+
+  const markException = async (candidate: Candidate) => {
+    if (processing) return;
+    setProcessing(candidate.id);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/founder/directory-import-candidates/${candidate.id}/exception`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: reviewNote.trim() || undefined }),
+      });
+      const data = await response.json() as { error?: string; message?: string };
+      if (!response.ok) throw new Error(data.error ?? "Unable to record exception.");
+      setNotice(data.message ?? "Exception recorded.");
+      setExpanded(null);
+      await Promise.all([loadBatches(), loadCandidates(), loadReconciliation()]);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Unable to record exception.");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const downloadAuditReport = async () => {
+    if (!batchId) return;
+    setBatchProcessing(true);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/founder/directory-import-batches/${batchId}/audit-report`, { credentials: "include" });
+      if (!response.ok) throw new Error("Audit report is not available.");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `directory-import-${batchId}-audit.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Unable to download audit report.");
+    } finally {
+      setBatchProcessing(false);
+    }
+  };
+
   const content = (
     <div className={embedded ? "max-w-6xl mx-auto" : "max-w-6xl mx-auto px-4 py-10"}>
       {!embedded && (
@@ -456,19 +562,53 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
       </div>
 
       {batches[0] && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div className="mb-6 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 rounded-2xl border border-[#D7C3A6] bg-[#FFFDF9] p-4">
+            <div className="flex-1">
+              <FieldLabel>Import batch</FieldLabel>
+              <select value={batchId} onChange={(event) => setBatchId(event.target.value)} className={INPUT_CLASS}>
+                {batches.map((batch) => <option key={batch.id} value={batch.id}>{batch.source_name} · {batch.id}</option>)}
+              </select>
+            </div>
+            {(() => {
+              const activeBatch = batches.find((batch) => batch.id === batchId) ?? batches[0];
+              return (
+                <div className="flex flex-wrap gap-2">
+                  <span className={`inline-flex items-center rounded-full px-3 py-2 text-xs font-bold ${activeBatch.paused_at ? "bg-slate-200 text-slate-800" : "bg-emerald-100 text-emerald-800"}`}>
+                    {activeBatch.paused_at ? "Batch paused" : `Batch ${activeBatch.status}`}
+                  </span>
+                  <button type="button" onClick={() => void toggleBatchPause()} disabled={batchProcessing} className="inline-flex items-center gap-1.5 rounded-xl border border-[#B9945C] bg-white px-3 py-2 text-sm font-bold text-[#6E4A25] disabled:opacity-50">
+                    {activeBatch.paused_at ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    {activeBatch.paused_at ? "Resume batch" : "Pause batch"}
+                  </button>
+                  <button type="button" onClick={() => void downloadAuditReport()} disabled={batchProcessing} className="inline-flex items-center gap-1.5 rounded-xl border border-[#B9945C] bg-white px-3 py-2 text-sm font-bold text-[#6E4A25] disabled:opacity-50">
+                    <Download className="w-4 h-4" /> Download audit report
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
-            ["Candidates", batches[0].candidate_count],
-            ["Pending", batches[0].pending_review_count],
-            ["Held", batches[0].needs_research_count],
-            ["Published", batches[0].published_count],
-            ["Resources", batches[0].resource_count],
+            ["Candidates", (batches.find((batch) => batch.id === batchId) ?? batches[0]).candidate_count],
+            ["Exceptions", reconciliation?.exceptions ?? (batches.find((batch) => batch.id === batchId) ?? batches[0]).exception_count ?? (batches.find((batch) => batch.id === batchId) ?? batches[0]).needs_research_count],
+            ["Reconciled", reconciliation?.reconciled ?? (batches.find((batch) => batch.id === batchId) ?? batches[0]).reconciled_count ?? 0],
+            ["Receipts", reconciliation?.receipts ?? (batches.find((batch) => batch.id === batchId) ?? batches[0]).receipt_count ?? 0],
+            ["Published", (batches.find((batch) => batch.id === batchId) ?? batches[0]).published_count],
           ].map(([label, value]) => (
             <div key={String(label)} className="rounded-xl border border-[#D7C3A6] bg-white px-4 py-3">
               <div className="text-2xl font-bold text-[#2B1507]">{value}</div>
               <div className="text-xs font-semibold uppercase tracking-wide text-[#3A1F0E]/55">{label}</div>
             </div>
           ))}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#3A1F0E]/65">
+            <ClipboardCheck className="w-4 h-4 text-[#9A6B18]" />
+            <span>Exceptions-only queue · ordinary row-by-row approval is not the default.</span>
+            {reconciliation?.last_reconciled_at && <span>Last reconciled {new Date(reconciliation.last_reconciled_at).toLocaleString()}.</span>}
+            <Receipt className="ml-2 w-4 h-4 text-[#9A6B18]" />
+            <span>Receipts are retained in the downloadable audit report.</span>
+          </div>
         </div>
       )}
 
@@ -731,8 +871,8 @@ export default function FounderDirectoryImports({ embedded = false }: { embedded
                               <Link2 className="w-4 h-4" /> Link existing record
                             </button>
                           )}
-                          <button onClick={() => void decide(candidate, "needs_research")} disabled={processing === candidate.id} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50">
-                            <AlertTriangle className="w-4 h-4" /> Keep held for research
+                          <button onClick={() => void markException(candidate)} disabled={processing === candidate.id} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50">
+                            <AlertTriangle className="w-4 h-4" /> Record exception / hold
                           </button>
                           <button onClick={() => void decide(candidate, "decline")} disabled={processing === candidate.id} className="inline-flex items-center gap-2 rounded-xl bg-red-100 px-4 py-2.5 text-sm font-bold text-red-800 hover:bg-red-200 disabled:opacity-50">
                             <XCircle className="w-4 h-4" /> Decline

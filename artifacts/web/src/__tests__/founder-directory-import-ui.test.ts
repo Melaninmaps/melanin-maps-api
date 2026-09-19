@@ -42,6 +42,18 @@ describe("founder directory review UI", () => {
     expect(admin).toContain('id: "directory-imports"');
     expect(admin).toContain("<FounderDirectoryImports embedded />");
   });
+
+  it("defaults to exception handling with batch controls and an auditable export", () => {
+    const page = source("../pages/founder-directory-imports.tsx");
+    expect(page).toContain('useState<CandidateStatus | "all">("needs_research")');
+    expect(page).toContain("reconciliation");
+    expect(page).toContain("receipt_count");
+    expect(page).toContain("/pause");
+    expect(page).toContain("/exception");
+    expect(page).toContain("audit-report");
+    expect(page).toContain("Download audit report");
+    expect(page).toContain("ordinary row-by-row approval is not the default");
+  });
 });
 
 describe("canonical Resources web search", () => {

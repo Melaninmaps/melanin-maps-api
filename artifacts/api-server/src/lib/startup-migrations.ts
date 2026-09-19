@@ -82,7 +82,7 @@ const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
 `;
 
 const PUBLIC_BUSINESSES_VIEW_FILTER =
-  "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)";
+  "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone) AND NOT EXISTS (SELECT 1 FROM public.business_duplicate_resolutions d WHERE d.superseded_business_id = b.id)";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -5345,6 +5345,22 @@ export async function ensureRequiredPublicationSchema(
     );
     CREATE INDEX IF NOT EXISTS business_publication_identities_business_idx
       ON business_publication_identities (business_id);
+    CREATE TABLE IF NOT EXISTS directory_publication_inbox (
+      event_key TEXT PRIMARY KEY, payload_hash TEXT NOT NULL,
+      received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      processed_at TIMESTAMPTZ, error TEXT, outcome TEXT, record_id VARCHAR
+    );
+    CREATE TABLE IF NOT EXISTS directory_publication_provenance (
+      event_key TEXT PRIMARY KEY, source_batch_id UUID NOT NULL,
+      source_row INTEGER NOT NULL, source_sha256 TEXT NOT NULL,
+      record_id TEXT NOT NULL, payload_hash TEXT NOT NULL,
+      published_at TIMESTAMPTZ NOT NULL DEFAULT now(), outcome TEXT NOT NULL DEFAULT 'created'
+    );
+    CREATE TABLE IF NOT EXISTS business_duplicate_resolutions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_key TEXT NOT NULL UNIQUE,
+      canonical_business_id VARCHAR NOT NULL, resolved_by TEXT NOT NULL,
+      resolved_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `);
   const listingStatusMigration = MIGRATIONS.find(
     (migration) => migration.name === "businesses_listing_status_col",
@@ -5359,23 +5375,9 @@ export async function ensureRequiredPublicationSchema(
   // prerequisite must run before ensureBetaSafetyColumns creates the view.
   await pool.query(listingStatusMigration.sql);
 
-  if (directoryImportEnabled) {
-    const stagingMigration = MIGRATIONS.find(
-      (migration) =>
-        migration.name === "create_governed_directory_import_staging_v1",
-    );
-    const publicationMigration = MIGRATIONS.find(
-      (migration) =>
-        migration.name === "create_governed_directory_publication_v2",
-    );
-    if (!stagingMigration || !publicationMigration) {
-      throw new Error(
-        "Required directory publication migrations are missing from source.",
-      );
-    }
-    await pool.query(stagingMigration.sql);
-    await pool.query(publicationMigration.sql);
-  }
+  // Directory review tables are deliberately excluded here. They belong to
+  // DIRECTORY_REVIEW_DATABASE_URL and are bootstrapped by reviewDatabase.ts.
+  // This production pool only owns the inbox/provenance tables above.
 
   const strictWarn = (message: string) => fail(message);
   await ensureBusinessDedupSchema(log, strictWarn);
@@ -14783,6 +14785,17 @@ async function ensureVisibilityAndDedupeHardening(
   warn: (msg: string) => void,
 ): Promise<void> {
   try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.business_duplicate_resolutions (
+        job_id uuid NOT NULL,
+        canonical_business_id varchar(255) NOT NULL REFERENCES public.businesses(id),
+        superseded_business_id varchar(255) PRIMARY KEY REFERENCES public.businesses(id),
+        identity_evidence jsonb NOT NULL,
+        policy_version varchar(80) NOT NULL,
+        scoring jsonb NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
     await pool.query(`
       CREATE OR REPLACE FUNCTION public.business_is_public(
         p_status text,
