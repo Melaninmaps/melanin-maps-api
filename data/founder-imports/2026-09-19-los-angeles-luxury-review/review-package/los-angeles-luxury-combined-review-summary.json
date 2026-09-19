@@ -1,0 +1,41 @@
+{
+  "package": "2026-09-19-los-angeles-luxury-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 416,
+  "accepted_review_only_candidates": 416,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "online_business": 4,
+    "business": 286,
+    "regulated_review": 24,
+    "community_resource": 40,
+    "cultural_place": 62
+  },
+  "preliminary_review_status_counts": {
+    "needs_research": 59,
+    "pending_review": 357
+  },
+  "manifest_sha256": "57b2961a763c7db9838a5b28e9f5c2b1821a07b32aebad7d98748284b81884f2",
+  "source_manifest": "/home/ubuntu/melanin-maps-los-angeles-luxury-review/data/founder-imports/2026-09-19-los-angeles-luxury-review/consolidated/los-angeles-luxury-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "3261a1dd1e5bf69bbc229a71ebc3846954e013b07a1b0b0db915c92fd2fe6d02",
+  "destination_health": {
+    "candidates": 416,
+    "unique_destinations": 400,
+    "by_outcome": {
+      "review_required": 55,
+      "reachable": 342,
+      "timeout": 2,
+      "network_error": 1
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}
