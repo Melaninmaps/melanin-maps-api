@@ -1,0 +1,66 @@
+[
+  {
+    "duplicateKey": "physical|houston public library central library jesse h jones|houston|tx|500 mckinney st",
+    "retained": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://houstonlibrary.org/all-locations"
+    },
+    "duplicate": {
+      "name": "Houston Public Library — Central Library, Jesse H. Jones",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 3,
+      "sourceUrl": "https://houstonlibrary.org/all-locations"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|houston museum of african american culture|houston|tx|4807 caroline st",
+    "retained": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 1,
+      "sourceUrl": "https://houmuse.org/institution/houston-museum-of-african-american-culture/"
+    },
+    "duplicate": {
+      "name": "Houston Museum of African American Culture",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 13,
+      "sourceUrl": "https://hmaac.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|institute of hispanic culture of houston|houston|tx|3315 sul ross st",
+    "retained": {
+      "name": "Institute of Hispanic Culture of Houston",
+      "file": "houston-culture-sports-candidates.jsonl",
+      "line": 11,
+      "sourceUrl": "https://ihch.org/"
+    },
+    "duplicate": {
+      "name": "Institute of Hispanic Culture of Houston",
+      "file": "houston-newcomer-resources-candidates.jsonl",
+      "line": 14,
+      "sourceUrl": "https://ihch.org/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|discovery green|houston|tx|1500 mckinney st",
+    "retained": {
+      "name": "Discovery Green",
+      "file": "houston-family-childcare-candidates.jsonl",
+      "line": 6,
+      "sourceUrl": "https://downtownhouston.org/go/discovery-green"
+    },
+    "duplicate": {
+      "name": "Discovery Green",
+      "file": "houston-wellness-social-candidates.jsonl",
+      "line": 12,
+      "sourceUrl": "https://www.discoverygreen.com/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

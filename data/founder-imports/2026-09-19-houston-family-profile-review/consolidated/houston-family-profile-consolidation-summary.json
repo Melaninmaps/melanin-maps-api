@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-09-19T04:30:18.873Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "houston-culture-sports-candidates.jsonl",
+    "houston-family-childcare-candidates.jsonl",
+    "houston-newcomer-resources-candidates.jsonl",
+    "houston-wellness-social-candidates.jsonl"
+  ],
+  "inputRows": 61,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 4,
+  "consolidatedCandidates": 57,
+  "potentialSameDestinationCollisionsHeldForReview": 2,
+  "addressBackedCandidates": 55,
+  "commercialMapPinReviewCandidates": 16,
+  "maplessCommunityResources": 1,
+  "onlineOnlyCandidates": 1,
+  "targetKinds": {
+    "community_resource": 28,
+    "business": 13,
+    "cultural_place": 12,
+    "regulated_review": 3,
+    "online_business": 1
+  },
+  "categories": {
+    "Youth enrichment": 7,
+    "Arts and culture": 6,
+    "dining": 6,
+    "After-school programs": 4,
+    "Family-friendly activities": 4,
+    "New-resident resources": 4,
+    "wellness": 3,
+    "Family support": 2,
+    "Job and financial education": 2,
+    "music": 2,
+    "Parks and recreation": 2,
+    "Practical professional services": 2,
+    "Arts and cultural events": 1,
+    "Arts education and family enrichment": 1,
+    "Arts, culture and community events": 1,
+    "Arts, history and family experiences": 1,
+    "Books and social connection": 1,
+    "Child care": 1,
+    "Community and youth enrichment": 1,
+    "Diaspora community and family support": 1,
+    "Education": 1,
+    "Health-related resources": 1,
+    "Legal aid": 1,
+    "Sports and youth recreation": 1,
+    "Sports, recreation and heritage": 1
+  },
+  "states": {
+    "Houston, TX": 57
+  },
+  "officialCustomerDestinationCoverage": 57,
+  "files": {
+    "candidates": "houston-family-profile-consolidated-candidates.jsonl",
+    "exactDuplicates": "houston-family-profile-exact-duplicates-removed.json",
+    "destinationCollisions": "houston-family-profile-destination-collisions-review.json",
+    "invalidRowsHeld": "houston-family-profile-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "1a65d5eeb94ceda86e5f381da9505da4eb305ce8362386cc93eae820fab5e1af"
+}

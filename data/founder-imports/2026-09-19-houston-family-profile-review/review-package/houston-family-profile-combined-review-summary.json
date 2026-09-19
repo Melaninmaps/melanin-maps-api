@@ -1,0 +1,40 @@
+{
+  "package": "2026-09-19-houston-family-profile-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 57,
+  "accepted_review_only_candidates": 57,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "community_resource": 28,
+    "cultural_place": 12,
+    "business": 13,
+    "regulated_review": 3,
+    "online_business": 1
+  },
+  "preliminary_review_status_counts": {
+    "needs_research": 8,
+    "pending_review": 49
+  },
+  "manifest_sha256": "99b9c1836dc0d8a2e01112274933629b85f9994b22ba868cfffbe80bb5b43a30",
+  "source_manifest": "/home/ubuntu/melanin-maps-houston-allentown-profile-review/data/founder-imports/2026-09-19-houston-family-profile-review/consolidated/houston-family-profile-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "1a65d5eeb94ceda86e5f381da9505da4eb305ce8362386cc93eae820fab5e1af",
+  "destination_health": {
+    "candidates": 57,
+    "unique_destinations": 70,
+    "by_outcome": {
+      "timeout": 3,
+      "reachable": 61,
+      "review_required": 6
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}

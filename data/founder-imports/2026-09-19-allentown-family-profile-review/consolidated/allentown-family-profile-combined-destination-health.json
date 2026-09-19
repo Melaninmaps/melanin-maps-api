@@ -1,0 +1,376 @@
+{
+  "checkedAt": "2026-09-19T04:32:47.906Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-houston-allentown-profile-review/data/founder-imports/2026-09-19-allentown-family-profile-review/review-package/allentown-family-profile-combined-review-only-candidates.jsonl",
+  "candidates": 57,
+  "uniqueDestinations": 60,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 60,
+  "counts": {
+    "reachable": 46,
+    "review_required": 8,
+    "network_error": 6
+  },
+  "results": [
+    {
+      "url": "https://www.1812pianolounge.com/",
+      "status": 200,
+      "finalUrl": "https://www.1812pianolounge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownartmuseum.org/",
+      "status": 403,
+      "finalUrl": "https://www.allentownartmuseum.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.allentownartmuseum.org/about/",
+      "status": 403,
+      "finalUrl": "https://www.allentownartmuseum.org/about/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://thebrewworks.com/",
+      "status": 200,
+      "finalUrl": "https://thebrewworks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.discoverlehighvalley.com/directory/allentown-brew-works/",
+      "status": 200,
+      "finalUrl": "https://www.discoverlehighvalley.com/directory/allentown-brew-works/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownedc.com/urban-made/",
+      "status": 200,
+      "finalUrl": "https://www.allentownedc.com/urban-made/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownfarmersmarket.com/",
+      "status": 200,
+      "finalUrl": "https://www.allentownfarmersmarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Community-Economic-Development/Health-Bureau",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Community-Economic-Development/Health-Bureau/Public-Health-Engagement-Outreach",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.allentownpl.org/",
+      "status": 200,
+      "finalUrl": "https://www.allentownpl.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ymcarivercrossing.org/locations/allentown-ymca",
+      "status": 200,
+      "finalUrl": "https://www.ymcarivercrossing.org/locations/allentown-ymca",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bgcallentown.org/programs/",
+      "status": 200,
+      "finalUrl": "https://www.bgcallentown.org/programs/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cscglv.gnosishosting.net/Events/Listing",
+      "status": 200,
+      "finalUrl": "https://cscglv.gnosishosting.net/Events/Listing",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lvhn.org/locations/cancer-support-services-cedar-crest",
+      "status": 403,
+      "finalUrl": "https://www.lvhn.org/locations/cancer-support-services-cedar-crest",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://cascadesalonandwellness.com/",
+      "status": 200,
+      "finalUrl": "https://cascadesalonandwellness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://allentownpa.myrec.com/info/facilities/area_info.aspx?FacilityID=14717&AreaID=14722",
+      "status": 200,
+      "finalUrl": "https://allentownpa.myrec.com/info/facilities/area_info.aspx?FacilityID=14717&AreaID=14722",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://center4mindfulmovement.com/yoga/",
+      "status": 200,
+      "finalUrl": "https://center4mindfulmovement.com/yoga/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Parks-Recreation/Recreation/Athletic-Programming",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://allentownpa.myrec.com/info/contact/default.aspx",
+      "status": 200,
+      "finalUrl": "https://allentownpa.myrec.com/info/contact/default.aspx",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Community-Economic-Development/Health-Bureau/Injury-Prevention-Program/Child-Family-Services",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Parks-Recreation",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://allentownpa.myrec.com/info/activities/program_details.aspx?ProgramID=30077",
+      "status": 200,
+      "finalUrl": "https://allentownpa.myrec.com/info/activities/program_details.aspx?ProgramID=30077",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Community-Economic-Development/Business-Development-Office",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.davincisciencecenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.davincisciencecenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://esycallentown.com/basketball/",
+      "status": 200,
+      "finalUrl": "https://esycallentown.com/basketball/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fplehighvalley.org/",
+      "status": 200,
+      "finalUrl": "https://fplehighvalley.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flclv.org/",
+      "status": 200,
+      "finalUrl": "https://www.flclv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/FinancialLiteracyCenter/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FFinancialLiteracyCenter%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gemsandjoe.com/",
+      "status": 200,
+      "finalUrl": "https://www.gemsandjoe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hao-lv.org/",
+      "status": 200,
+      "finalUrl": "https://www.hao-lv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lehighvalleychamber.org/hispanicchamber.html",
+      "status": 200,
+      "finalUrl": "https://www.lehighvalleychamber.org/hispanicchamber.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lvjcc.org/recreation/basketball/",
+      "status": 403,
+      "finalUrl": "https://lvjcc.org/recreation/basketball/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://labicicletaarepabar.toast.site/",
+      "status": 403,
+      "finalUrl": "https://labicicletaarepabar.toast.site/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://lespalv.com/",
+      "status": 200,
+      "finalUrl": "https://lespalv.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lccc.edu/about/campuses/lccc-allentown/",
+      "status": 200,
+      "finalUrl": "https://www.lccc.edu/about/campuses/lccc-allentown/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://web.lehighvalleychamber.org/search",
+      "status": 200,
+      "finalUrl": "https://web.lehighvalleychamber.org/search",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lehighcountyhistoricalsociety.org/?page_id=905",
+      "status": 200,
+      "finalUrl": "https://www.lehighcountyhistoricalsociety.org/?page_id=905",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.museumofindianculture.org/",
+      "status": 200,
+      "finalUrl": "https://www.museumofindianculture.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oliverssalonspa.com/",
+      "status": 200,
+      "finalUrl": "https://www.oliverssalonspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://careerlinklehighvalley.org/",
+      "status": 200,
+      "finalUrl": "https://careerlinklehighvalley.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sixthstreetshelter.org/",
+      "status": 200,
+      "finalUrl": "https://www.sixthstreetshelter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.slhn.org/locations/stlukes-hematology-oncology-specialists-allentown",
+      "status": 403,
+      "finalUrl": "https://www.slhn.org/locations/stlukes-hematology-oncology-specialists-allentown",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://allentownparknership.org/project/stevens-park-new-full-court-basketball-court/",
+      "status": 202,
+      "finalUrl": "https://allentownparknership.org/project/stevens-park-new-full-court-basketball-court/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.teampahoops.com/program-locations/lehigh-valley/",
+      "status": 200,
+      "finalUrl": "https://www.teampahoops.com/program-locations/lehigh-valley/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecaringplace.org/our-programs.html",
+      "status": 200,
+      "finalUrl": "https://www.thecaringplace.org/our-programs.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.unitedwayglv.org/",
+      "status": 200,
+      "finalUrl": "https://www.unitedwayglv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.valleywellnesscenter.co/",
+      "status": 200,
+      "finalUrl": "https://www.valleywellnesscenter.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vibepoweryoga.com/",
+      "status": 200,
+      "finalUrl": "https://www.vibepoweryoga.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.weyogacenter.com/who-we-are/location-directions/",
+      "status": 403,
+      "finalUrl": "https://www.weyogacenter.com/who-we-are/location-directions/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.communityactionlv.org/",
+      "status": 200,
+      "finalUrl": "https://www.communityactionlv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.communityactionlv.org/generationnext",
+      "status": 200,
+      "finalUrl": "https://www.communityactionlv.org/generationnext",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lvsteelbasketball.com/",
+      "status": 200,
+      "finalUrl": "https://lvsteelbasketball.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.northampton.edu/cost-and-financial-aid/financial-aid/",
+      "status": 200,
+      "finalUrl": "https://www.northampton.edu/cost-and-financial-aid/financial-aid/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://business.lehigh.edu/centers/small-business-development-center",
+      "status": 200,
+      "finalUrl": "https://business.lehigh.edu/centers/small-business-development-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.artsquest.org/where-we-are/steelstacks/",
+      "status": 200,
+      "finalUrl": "https://www.artsquest.org/where-we-are/steelstacks/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.datbayoulv.com/",
+      "status": 200,
+      "finalUrl": "https://www.datbayoulv.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urbanobethlehem.com/",
+      "status": 200,
+      "finalUrl": "https://www.urbanobethlehem.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lehighvalley.psu.edu/admission/admissions-events",
+      "status": 403,
+      "finalUrl": "https://lehighvalley.psu.edu/admission/admissions-events",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.latinfestivaleaston.com/",
+      "status": 200,
+      "finalUrl": "https://www.latinfestivaleaston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.statetheatre.org/",
+      "status": 200,
+      "finalUrl": "https://www.statetheatre.org/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}

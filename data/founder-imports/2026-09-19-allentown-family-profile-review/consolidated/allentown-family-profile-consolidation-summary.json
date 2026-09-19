@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-09-19T04:31:54.690Z",
+  "publicationStatus": "REVIEW_ONLY_NOT_PUBLISHED",
+  "inputFiles": [
+    "allentown-college-basketball-candidates.jsonl",
+    "allentown-family-resources-candidates.jsonl",
+    "allentown-social-dining-candidates.jsonl",
+    "allentown-wellness-survivorship-candidates.jsonl"
+  ],
+  "inputRows": 58,
+  "invalidOrIncompleteRowsHeld": 0,
+  "exactCrossSourceDuplicatesRemoved": 1,
+  "consolidatedCandidates": 57,
+  "potentialSameDestinationCollisionsHeldForReview": 1,
+  "addressBackedCandidates": 56,
+  "commercialMapPinReviewCandidates": 16,
+  "maplessCommunityResources": 0,
+  "onlineOnlyCandidates": 1,
+  "targetKinds": {
+    "community_resource": 33,
+    "business": 14,
+    "cultural_place": 7,
+    "regulated_review": 2,
+    "online_business": 1
+  },
+  "categories": {
+    "family services": 7,
+    "wellness": 6,
+    "professional services": 5,
+    "cultural organizations": 4,
+    "athletic_organization": 3,
+    "everyday resources": 3,
+    "financial_aid_education": 3,
+    "restaurants": 3,
+    "basketball_court": 2,
+    "basketball_program": 2,
+    "drinks": 2,
+    "health resource": 2,
+    "music and arts": 2,
+    "social experiences": 2,
+    "college_access": 1,
+    "community connection": 1,
+    "financial education": 1,
+    "health and wellness": 1,
+    "nails and beauty": 1,
+    "public health": 1,
+    "salon and spa": 1,
+    "salon and wellness": 1,
+    "shopping": 1,
+    "tutoring": 1,
+    "youth_to_college_transition": 1
+  },
+  "states": {
+    "Allentown, PA": 46,
+    "Bethlehem, PA": 8,
+    "Easton, PA": 2,
+    "Center Valley, PA": 1
+  },
+  "officialCustomerDestinationCoverage": 57,
+  "files": {
+    "candidates": "allentown-family-profile-consolidated-candidates.jsonl",
+    "exactDuplicates": "allentown-family-profile-exact-duplicates-removed.json",
+    "destinationCollisions": "allentown-family-profile-destination-collisions-review.json",
+    "invalidRowsHeld": "allentown-family-profile-invalid-or-incomplete-rows-held.json"
+  },
+  "candidatesSha256": "e8ab0f9be1b960af11832108a48fc2e3d036e6968caea340b4a0f0e8a935f36d"
+}

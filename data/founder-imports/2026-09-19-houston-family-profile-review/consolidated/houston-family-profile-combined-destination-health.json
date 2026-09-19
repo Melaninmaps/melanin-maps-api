@@ -1,0 +1,436 @@
+{
+  "checkedAt": "2026-09-19T04:31:54.514Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-houston-allentown-profile-review/data/founder-imports/2026-09-19-houston-family-profile-review/review-package/houston-family-profile-combined-review-only-candidates.jsonl",
+  "candidates": 57,
+  "uniqueDestinations": 70,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 70,
+  "counts": {
+    "timeout": 3,
+    "reachable": 61,
+    "review_required": 6
+  },
+  "results": [
+    {
+      "url": "https://www.aama.org/apps/pages/index.jsp?uREC_ID=4388086&type=d",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://houstonlibrary.org/aahrc",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/aahrc",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/aliefneighborhoodcenter.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/aliefneighborhoodcenter.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/parks/youthsports-recreation.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/parks/youthsports-recreation.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://asiasociety.org/texas",
+      "status": 200,
+      "finalUrl": "https://asiasociety.org/texas",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.axelradhouston.com/",
+      "status": 200,
+      "finalUrl": "https://www.axelradhouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caracol.net/",
+      "status": 403,
+      "finalUrl": "https://www.caracol.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.cmhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.cmhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ccchouston.org/",
+      "status": 200,
+      "finalUrl": "https://ccchouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/na/index.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/na/index.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstontx.gov/na/services.html",
+      "status": 200,
+      "finalUrl": "https://www.houstontx.gov/na/services.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecollective.org/",
+      "status": 200,
+      "finalUrl": "https://www.thecollective.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.communityfamilycenters.org/",
+      "status": 200,
+      "finalUrl": "https://www.communityfamilycenters.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cwshouston.org/",
+      "status": 200,
+      "finalUrl": "https://cwshouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cwshouston.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://cwshouston.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.davisstreet.com/",
+      "status": 200,
+      "finalUrl": "https://www.davisstreet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.discoverygreen.com/",
+      "status": 200,
+      "finalUrl": "https://www.discoverygreen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://epconservancy.org/",
+      "status": 200,
+      "finalUrl": "https://epconservancy.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://epconservancy.org/contact/",
+      "status": 200,
+      "finalUrl": "https://epconservancy.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/contact",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mfah.org/learn/glassell-school-art",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://ghbcc.com/",
+      "status": 200,
+      "finalUrl": "https://ghbcc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmh.org/",
+      "status": 200,
+      "finalUrl": "https://hmh.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hopechc.org/",
+      "status": 200,
+      "finalUrl": "https://www.hopechc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haul.org/",
+      "status": 200,
+      "finalUrl": "https://www.haul.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haul.org/workforce-development-training/",
+      "status": 200,
+      "finalUrl": "https://www.haul.org/workforce-development-training/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haul.org/youth-and-family/",
+      "status": 200,
+      "finalUrl": "https://www.haul.org/youth-and-family/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hbg.org/",
+      "status": 200,
+      "finalUrl": "https://hbg.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhispanicchamber.com/",
+      "status": 200,
+      "finalUrl": "https://www.houstonhispanicchamber.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonimmigration.org/",
+      "status": 200,
+      "finalUrl": "https://houstonimmigration.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmaac.org/",
+      "status": 200,
+      "finalUrl": "https://hmaac.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmaac.org/hmaac-history",
+      "status": 200,
+      "finalUrl": "https://hmaac.org/hmaac-history",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstonlibrary.org/kids",
+      "status": 200,
+      "finalUrl": "https://houstonlibrary.org/kids",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonzoo.org/",
+      "status": 200,
+      "finalUrl": "https://www.houstonzoo.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonzoo.org/make-memories/kids-families/",
+      "status": 200,
+      "finalUrl": "https://www.houstonzoo.org/make-memories/kids-families/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ihch.org/",
+      "status": 200,
+      "finalUrl": "https://ihch.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.juliethtx.com/",
+      "status": 200,
+      "finalUrl": "https://www.juliethtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/juliet.htx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fjuliet.htx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kindredstorieshtx.com/",
+      "status": 200,
+      "finalUrl": "https://kindredstorieshtx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kindredstorieshtx.com/pages/our-story",
+      "status": 200,
+      "finalUrl": "https://kindredstorieshtx.com/pages/our-story",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lnesc.org/centers/houston/",
+      "status": 403,
+      "finalUrl": "https://www.lnesc.org/centers/houston/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lonestarlegal.org/",
+      "status": 200,
+      "finalUrl": "https://www.lonestarlegal.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.meca-houston.org/",
+      "status": 200,
+      "finalUrl": "https://www.meca-houston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ridemetro.org/",
+      "status": 200,
+      "finalUrl": "https://www.ridemetro.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.metroridestore.org/RideStore-Locations-a/258.htm",
+      "status": 200,
+      "finalUrl": "https://www.metroridestore.org/RideStore-Locations-a/258.htm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.milleroutdoortheatre.com/",
+      "status": 200,
+      "finalUrl": "https://www.milleroutdoortheatre.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.milleroutdoortheatre.com/performances/",
+      "status": 200,
+      "finalUrl": "https://www.milleroutdoortheatre.com/performances/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mocahtx.com/moca-restaurant/",
+      "status": 200,
+      "finalUrl": "https://mocahtx.com/moca-restaurant/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houston.my.site.com/",
+      "status": 200,
+      "finalUrl": "https://houston.my.site.com/s/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://personamedicalspa.com/",
+      "status": 200,
+      "finalUrl": "https://personamedicalspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://projectrowhouses.org/",
+      "status": 200,
+      "finalUrl": "https://projectrowhouses.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://projectrowhouses.org/visit/",
+      "status": 200,
+      "finalUrl": "https://projectrowhouses.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shape.org/",
+      "status": 200,
+      "finalUrl": "https://shape.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.besanctuary.com/",
+      "status": 200,
+      "finalUrl": "https://www.besanctuary.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shape.org/asep",
+      "status": 200,
+      "finalUrl": "https://shape.org/asep",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://continentalclub.com/houstonclub",
+      "status": 200,
+      "finalUrl": "https://continentalclub.com/houstonclub",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ensemblehouston.com/",
+      "status": 200,
+      "finalUrl": "https://ensemblehouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thehealthmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://thehealthmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thehealthmuseum.org/programs/",
+      "status": 200,
+      "finalUrl": "https://thehealthmuseum.org/programs/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.heritagesociety.org/",
+      "status": 200,
+      "finalUrl": "https://www.heritagesociety.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.heritagesociety.org/visitors-information",
+      "status": 200,
+      "finalUrl": "https://www.heritagesociety.org/visitors-information",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonian.com/trellis-spa",
+      "status": 404,
+      "finalUrl": "https://www.houstonian.com/trellis-spa",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.winsomeprime.com/houston",
+      "status": 200,
+      "finalUrl": "https://www.winsomeprime.com/houston",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wrksolutions.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://workshophouston.com/",
+      "status": 200,
+      "finalUrl": "https://workshophouston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.xochihouston.com/",
+      "status": 403,
+      "finalUrl": "https://www.xochihouston.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ymcahouston.org/locations/ymca-childrens-academy-texas-medical-center",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/locations/ymca-childrens-academy-texas-medical-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ymcahouston.org/programs/childcare-and-camps/early-care",
+      "status": 403,
+      "finalUrl": "https://ymcahouston.org/programs/childcare-and-camps/early-care",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.yahouston.org/after-school-programs",
+      "status": 200,
+      "finalUrl": "https://www.yahouston.org/after-school-programs",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}
