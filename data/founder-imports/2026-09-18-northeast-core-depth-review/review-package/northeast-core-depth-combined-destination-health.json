@@ -1,0 +1,1137 @@
+{
+  "checkedAt": "2026-09-19T00:59:36.516Z",
+  "sourceManifest": "northeast-core-depth-combined-review-only-candidates.jsonl",
+  "candidates": 151,
+  "uniqueDestinations": 187,
+  "counts": {
+    "reachable": 177,
+    "network_error": 1,
+    "review_required": 8,
+    "timeout": 1
+  },
+  "results": [
+    {
+      "url": "https://www.culturedexpressions.com/",
+      "status": 200,
+      "finalUrl": "https://www.culturedexpressions.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fivestarmobilegaming.com/",
+      "status": 200,
+      "finalUrl": "https://fivestarmobilegaming.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jamsbykim.com/",
+      "status": 200,
+      "finalUrl": "https://jamsbykim.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.loveyourselfallnatural.com/",
+      "status": 200,
+      "finalUrl": "https://www.loveyourselfallnatural.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://act2.org/cms2/",
+      "status": 200,
+      "finalUrl": "https://act2.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://anotheramazingdeck.com/",
+      "status": 200,
+      "finalUrl": "https://anotheramazingdeck.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/Amazing-Decks-211733564469/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FAmazing-Decks-211733564469%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.amblercoal.com/",
+      "status": 200,
+      "finalUrl": "https://www.amblercoal.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/amblercoal/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Famblercoal%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.amblerflowershop.com/",
+      "status": 200,
+      "finalUrl": "https://www.amblerflowershop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/amblerflowershop/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Famblerflowershop%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fpcambler.org/",
+      "status": 200,
+      "finalUrl": "https://www.fpcambler.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/fpcambler/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ffpcambler%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kanna.fit/",
+      "status": 200,
+      "finalUrl": "https://kanna.fit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kanna_fitness/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkanna_fitness%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://community-cupboard.org/",
+      "status": 200,
+      "finalUrl": "https://www.community-cupboard.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mdcupboard/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmdcupboard%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.privesalonps.net/",
+      "status": 200,
+      "finalUrl": "https://www.privesalonps.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/privesalonps/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fprivesalonps%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://weaversway.coop/",
+      "status": 200,
+      "finalUrl": "https://weaversway.coop/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/weaversway/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fweaversway%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thelitbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.thelitbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salon718.com/",
+      "status": 200,
+      "finalUrl": "https://www.salon718.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ambrosiahealthfoods.com/",
+      "status": 200,
+      "finalUrl": "https://ambrosiahealthfoods.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barrysbeautybar.com/",
+      "status": 200,
+      "finalUrl": "https://www.barrysbeautybar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklynparamount.com/",
+      "status": 200,
+      "finalUrl": "https://www.brooklynparamount.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklynparamount.com/contact",
+      "status": 200,
+      "finalUrl": "https://www.brooklynparamount.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklynprospect.org/schools/downtown-elementary/",
+      "status": 200,
+      "finalUrl": "https://www.brooklynprospect.org/schools/downtown-elementary/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklyntabernacle.org/",
+      "status": 200,
+      "finalUrl": "https://www.brooklyntabernacle.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.colorseffect.com/",
+      "status": 200,
+      "finalUrl": "https://www.colorseffect.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fenoellittlecaribbean.com/",
+      "status": 200,
+      "finalUrl": "https://fenoellittlecaribbean.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://flatbushcentral.com/",
+      "status": 200,
+      "finalUrl": "https://flatbushcentral.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fdlbeauty.com/",
+      "status": 200,
+      "finalUrl": "https://www.fdlbeauty.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.granrumarket.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://insideouttours.com/",
+      "status": 200,
+      "finalUrl": "https://www.insideouttours.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://kaoscomputing.com/",
+      "status": 200,
+      "finalUrl": "https://kaoscomputing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nostrandhealthfood.net/",
+      "status": 404,
+      "finalUrl": "https://www.nostrandhealthfood.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.sofive.com/",
+      "status": 200,
+      "finalUrl": "https://www.sofive.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wrightandgoebel.com/",
+      "status": 200,
+      "finalUrl": "https://wrightandgoebel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://qualitytouchsolutions.com/",
+      "status": 200,
+      "finalUrl": "https://qualitytouchsolutions.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fade-antique-factory-flow.base44.app/contact",
+      "status": 200,
+      "finalUrl": "https://fade-antique-factory-flow.base44.app/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cathedralkitchen.org/",
+      "status": 200,
+      "finalUrl": "https://cathedralkitchen.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ejmphoto.com/",
+      "status": 200,
+      "finalUrl": "https://www.ejmphoto.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.launiquebookstore.com/",
+      "status": 200,
+      "finalUrl": "https://www.launiquebookstore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nuancedcafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.nuancedcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thomaslift.com/",
+      "status": 200,
+      "finalUrl": "https://thomaslift.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.victorspub.com/",
+      "status": 200,
+      "finalUrl": "https://www.victorspub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brandywinefinancialadvisors.com/",
+      "status": 200,
+      "finalUrl": "https://www.brandywinefinancialadvisors.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/profile.php?id=61566343815339",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/people/Brandywine-Financial-Advisors-LLC/61566343815339/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.acehandymanservices.com/offices/south-jersey-and-philadelphia",
+      "status": 200,
+      "finalUrl": "https://www.acehandymanservices.com/offices/south-jersey-and-philadelphia",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/acehandymanservicessjphilly/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Facehandymanservicessjphilly%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chestercommunitycoalition.org/",
+      "status": 200,
+      "finalUrl": "https://www.chestercommunitycoalition.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://electriciandelco.com/",
+      "status": 200,
+      "finalUrl": "https://electriciandelco.com/electrician-collingdale-pa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mywealthbuildingblocks.com/",
+      "status": 200,
+      "finalUrl": "https://mywealthbuildingblocks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thesoutherngrilles.com/",
+      "status": 200,
+      "finalUrl": "https://www.thesoutherngrilles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.enspirecg.com/",
+      "status": 200,
+      "finalUrl": "https://www.enspirecg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.darlingtonarts.org/",
+      "status": 200,
+      "finalUrl": "https://www.darlingtonarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aurummedispa.com/",
+      "status": 200,
+      "finalUrl": "https://www.aurummedispa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/calderonnn.bakery/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fcalderonnn.bakery%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gibbstownchiro.com/",
+      "status": 403,
+      "finalUrl": "https://gibbstownchiro.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.briarcliffeautoservice.com/",
+      "status": 200,
+      "finalUrl": "https://www.briarcliffeautoservice.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.stithhealthinsurance.com/",
+      "status": 200,
+      "finalUrl": "https://www.stithhealthinsurance.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.auntbertaskitchen.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.hunterfamilyacupuncture.com/",
+      "status": 200,
+      "finalUrl": "https://www.hunterfamilyacupuncture.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kennettsquarefamilydentistry.com/",
+      "status": 200,
+      "finalUrl": "https://www.kennettsquarefamilydentistry.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/ksqfamilydentistry",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fksqfamilydentistry&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ksqmassage.com/",
+      "status": 200,
+      "finalUrl": "https://www.ksqmassage.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/ksqmassage",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fksqmassage&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.countrybutcherksq.com/",
+      "status": 200,
+      "finalUrl": "https://www.countrybutcherksq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.yogasecretspa.com/",
+      "status": 200,
+      "finalUrl": "https://www.yogasecretspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://maxxortho.com/",
+      "status": 200,
+      "finalUrl": "https://maxxortho.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parklandchurch.org/",
+      "status": 200,
+      "finalUrl": "https://parklandchurch.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theglamgirly.com/",
+      "status": 200,
+      "finalUrl": "https://theglamgirly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dreamteampa.com/",
+      "status": 200,
+      "finalUrl": "https://dreamteampa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://victoriousgracecharityfoundation.org/",
+      "status": 200,
+      "finalUrl": "https://victoriousgracecharityfoundation.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.21plus.org/",
+      "status": 200,
+      "finalUrl": "https://www.21plus.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mightylionai.com/",
+      "status": 200,
+      "finalUrl": "https://www.mightylionai.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thinkdmg.com/",
+      "status": 200,
+      "finalUrl": "https://thinkdmg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ThinkDigitalMKTG",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FThinkDigitalMKTG",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.genesisofcherryhill.com/",
+      "status": 403,
+      "finalUrl": "https://www.genesisofcherryhill.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.schoolofrock.com/locations/delco",
+      "status": 403,
+      "finalUrl": "https://www.schoolofrock.com/locations/delco",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://dabarhomebuilders.com/",
+      "status": 200,
+      "finalUrl": "https://dabarhomebuilders.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thefallsbanquet.com/",
+      "status": 200,
+      "finalUrl": "https://thefallsbanquet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.luminoussolar.com/",
+      "status": 200,
+      "finalUrl": "https://www.luminoussolar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://waxnscentstudio.com/",
+      "status": 200,
+      "finalUrl": "https://waxnscentstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ayonstudio.com/",
+      "status": 200,
+      "finalUrl": "https://www.ayonstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boutfightclub.com/",
+      "status": 200,
+      "finalUrl": "https://www.boutfightclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://newyorkbiltong.com/",
+      "status": 200,
+      "finalUrl": "https://newyorkbiltong.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://prettywellbeauty.com/",
+      "status": 200,
+      "finalUrl": "https://prettywellbeauty.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sistersuptownbookstore.com/",
+      "status": 200,
+      "finalUrl": "https://www.sistersuptownbookstore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.smilebritedelaware.com/",
+      "status": 200,
+      "finalUrl": "https://www.smilebritedelaware.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bchip.org/",
+      "status": 200,
+      "finalUrl": "https://www.bchip.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fordbrothers.net/",
+      "status": 200,
+      "finalUrl": "https://www.fordbrothers.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://southernpestcontrolnj.com/",
+      "status": 200,
+      "finalUrl": "https://southernpestcontrolnj.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://mirandas-daycare.square.site/",
+      "status": 200,
+      "finalUrl": "https://mirandas-daycare.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sofreshjuiceco.com/",
+      "status": 200,
+      "finalUrl": "https://www.sofreshjuiceco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.2020visualmedia.com/",
+      "status": 200,
+      "finalUrl": "https://www.2020visualmedia.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/2020VisualMedia/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/2020VisualMedia/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://3dpt.com/locations/old-city-philadelphia/",
+      "status": 200,
+      "finalUrl": "https://3dpt.com/locations/old-city-philadelphia/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://50watts.com/",
+      "status": 200,
+      "finalUrl": "https://50watts.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/50wattsbooks/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2F50wattsbooks%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.afourfootprune.com/",
+      "status": 200,
+      "finalUrl": "https://www.afourfootprune.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aaabrasives.com/",
+      "status": 403,
+      "finalUrl": "https://www.aaabrasives.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://aoapets.com/",
+      "status": 200,
+      "finalUrl": "https://aoapets.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/AOApets/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/AOApets/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://actionkarate.net/locations/manayunk/",
+      "status": 200,
+      "finalUrl": "https://actionkarate.net/locations/manayunk/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ActionKarateManayunk/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FActionKarateManayunk%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shopaiyah.com/",
+      "status": 200,
+      "finalUrl": "https://shopaiyah.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/shopaiyah",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/shopaiyah",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.anykidwilldo.org/",
+      "status": 200,
+      "finalUrl": "https://anykidwilldo.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://byaliza.com/",
+      "status": 200,
+      "finalUrl": "http://byaliza.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://byaliza.com/contact",
+      "status": 200,
+      "finalUrl": "http://byaliza.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://amritayogawellness.com/",
+      "status": 200,
+      "finalUrl": "https://amritayogawellness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wemeananygarment.com/philly",
+      "status": 200,
+      "finalUrl": "https://www.wemeananygarment.com/philly",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/AnyGarmentCleaners/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/AnyGarmentCleaners/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://archwayfishtown.com/",
+      "status": 200,
+      "finalUrl": "https://archwayfishtown.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://artisansontheavenue.com/",
+      "status": 200,
+      "finalUrl": "https://artisansontheavenue.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ArtisansontheAve",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/ArtisansontheAve",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://askaliesh.com/",
+      "status": 200,
+      "finalUrl": "https://www.askaliesh.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barefootclinic.com/",
+      "status": 200,
+      "finalUrl": "https://www.barefootclinic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bario-neal.com/",
+      "status": 200,
+      "finalUrl": "https://bario-neal.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/BarioNealJewelry/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/BarioNealJewelry/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bee-flowers.com/",
+      "status": 200,
+      "finalUrl": "https://www.bee-flowers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bellfloorcovering.com/",
+      "status": 200,
+      "finalUrl": "https://www.bellfloorcovering.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.benedumlaw.com/",
+      "status": 200,
+      "finalUrl": "https://www.benedumlaw.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.benedumlaw.com/contact-us/",
+      "status": 200,
+      "finalUrl": "https://www.benedumlaw.com/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://blackvulturegallery.com/",
+      "status": 200,
+      "finalUrl": "https://www.blackvulturegallery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.bodygraphics.com/contact-hours-locations.php",
+      "status": 200,
+      "finalUrl": "http://www.bodygraphics.com/contact-hours-locations.php",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boltbrow.com/",
+      "status": 200,
+      "finalUrl": "https://www.boltbrow.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://boltbrow.com/contact",
+      "status": 200,
+      "finalUrl": "https://www.boltbrow.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bonitastudiospa.com/",
+      "status": 200,
+      "finalUrl": "https://bonitastudiospa.wordpress.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bornfreebarber.com/",
+      "status": 200,
+      "finalUrl": "https://bornfreebarber.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bralowmedicalgroup.com/",
+      "status": 200,
+      "finalUrl": "https://bralowmedicalgroup.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caretrustpharmacy.com/",
+      "status": 200,
+      "finalUrl": "https://www.caretrustpharmacy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://cexagency.com/",
+      "status": 200,
+      "finalUrl": "http://cexagency.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.circlethrift.com/",
+      "status": 200,
+      "finalUrl": "https://www.circlethrift.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cityplanter.com/",
+      "status": 200,
+      "finalUrl": "https://www.cityplanter.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/CityPlanterPhiladelphia/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FCityPlanterPhiladelphia%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cloud9clay.com/",
+      "status": 200,
+      "finalUrl": "https://cloud9clay.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shopcreep.com/",
+      "status": 200,
+      "finalUrl": "https://shopcreep.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/CreepRecordsStore/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FCreepRecordsStore%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://denteek.com/",
+      "status": 403,
+      "finalUrl": "https://denteek.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://www.essenemarket.com/",
+      "status": 200,
+      "finalUrl": "http://www.essenemarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/Essene-Market-Caf%C3%A9-51496132898/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FEssene-Market-Caf%25C3%25A9-51496132898%2F",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://forbiddencloset.online/",
+      "status": 200,
+      "finalUrl": "https://www.forbiddencloset.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://goodthingsphl.com/place/forbidden-closet-vintage",
+      "status": 200,
+      "finalUrl": "https://goodthingsphl.com/place/forbidden-closet-vintage",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.activecarerx.com/",
+      "status": 200,
+      "finalUrl": "https://www.activecarerx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cdpchildren.org/",
+      "status": 200,
+      "finalUrl": "https://cdpchildren.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.masteryplumbing.com/",
+      "status": 200,
+      "finalUrl": "https://www.masteryplumbing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/plumbingmastery/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fplumbingmastery%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ymcarivercrossing.org/locations/quakertown-ymca",
+      "status": 200,
+      "finalUrl": "https://www.ymcarivercrossing.org/locations/quakertown-ymca",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/ymcaquakertown/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fymcaquakertown%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.devoredancecenter.com/",
+      "status": 200,
+      "finalUrl": "https://www.devoredancecenter.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allencathedral.org/",
+      "status": 200,
+      "finalUrl": "https://www.allencathedral.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kingmanor.org/",
+      "status": 200,
+      "finalUrl": "https://www.kingmanor.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vprecords.com/",
+      "status": 200,
+      "finalUrl": "https://vprecords.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vprecords.com/contact/",
+      "status": 200,
+      "finalUrl": "https://vprecords.com/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.paganolawyers.com/",
+      "status": 501,
+      "finalUrl": "https://www.paganolawyers.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/ThePaganoLawFirmLlc/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/ThePaganoLawFirmLlc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebigredr.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebigredr.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lync-transport.com/",
+      "status": 200,
+      "finalUrl": "https://lync-transport.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.focuspharmacyde.com/",
+      "status": 200,
+      "finalUrl": "https://www.focuspharmacyde.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://toprailfences.com/media/",
+      "status": 200,
+      "finalUrl": "https://toprailfences.com/media/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nerdstogo.com/",
+      "status": 403,
+      "finalUrl": "https://www.nerdstogo.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.maccakes.com/",
+      "status": 200,
+      "finalUrl": "https://www.maccakes.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://1911bbq.com/",
+      "status": 200,
+      "finalUrl": "https://1911bbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.basecamptrenton.com/",
+      "status": 200,
+      "finalUrl": "https://www.basecamptrenton.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.muchbetterworld.com/",
+      "status": 200,
+      "finalUrl": "https://www.muchbetterworld.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://skillitcafe.com/",
+      "status": 200,
+      "finalUrl": "https://skillitcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://warrenstservices.com/",
+      "status": 200,
+      "finalUrl": "https://warrenstservices.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.girlsautoclinic.com/",
+      "status": 200,
+      "finalUrl": "https://www.girlsautoclinic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://go-agconnect.org/",
+      "status": 200,
+      "finalUrl": "https://go-agconnect.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://getafreshstartrestoration.com/",
+      "status": 200,
+      "finalUrl": "https://getafreshstartrestoration.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harperscafenj.com/",
+      "status": 200,
+      "finalUrl": "https://www.harperscafenj.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harperscafenj.com/west-orange-new-jersey",
+      "status": 200,
+      "finalUrl": "https://www.harperscafenj.com/west-orange-new-jersey",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fixedbybricks.com/",
+      "status": 200,
+      "finalUrl": "https://www.fixedbybricks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/fixedbybricks/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ffixedbybricks%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theshoppizzeriamarket.com/",
+      "status": 200,
+      "finalUrl": "https://theshoppizzeriamarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.casanonnade.com/",
+      "status": 200,
+      "finalUrl": "https://www.casanonnade.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://curriedayspa.com/",
+      "status": 200,
+      "finalUrl": "https://curriedayspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.decowilmington.com/",
+      "status": 200,
+      "finalUrl": "https://www.decowilmington.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.delawaresymphony.org/",
+      "status": 200,
+      "finalUrl": "https://www.delawaresymphony.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://firstascentdesign.com/",
+      "status": 200,
+      "finalUrl": "https://firstascentdesign.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://firstascentdesign.com/contact/",
+      "status": 200,
+      "finalUrl": "https://firstascentdesign.com/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://huxleyandhiro.com/",
+      "status": 200,
+      "finalUrl": "https://huxleyandhiro.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://studioonmarket.com/",
+      "status": 200,
+      "finalUrl": "https://www.studioonmarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://torrescafede.com/",
+      "status": 200,
+      "finalUrl": "https://torrescafede.com/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
