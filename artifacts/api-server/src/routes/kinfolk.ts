@@ -6504,6 +6504,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               },
             }
           : undefined,
+        // A source from “Summarize with Kinfolk” is retrieved separately from
+        // ordinary topic research. The orchestrator only admits an exact URL
+        // match, never a same-publisher or related-story substitute.
+        requestedArticleUrl: requestedArticleSummaryUrl(message),
         timeoutMs: 8_000,
         signal: contextualRequestAbort.signal,
       });

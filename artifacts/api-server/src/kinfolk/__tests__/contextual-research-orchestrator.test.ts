@@ -101,6 +101,110 @@ describe("contextual research orchestrator", () => {
     expect(result.external[0]).toMatchObject({ supports: ["one", "two", "three"] });
   });
 
+  it("retrieves an explicit article source before topic research and keeps only its exact URL", async () => {
+    const requestedArticleUrl = "https://www.britannica.com/event/example-article";
+    const search = vi.fn().mockImplementation(async ({ allowedDomains }) => ({
+      documents: allowedDomains.length > 0
+        ? [
+            document(1, {
+              title: "Exact article",
+              url: `${requestedArticleUrl}?utm_source=ignored`,
+              content: "Retrieved article text.",
+            }),
+            document(2, {
+              title: "Related story",
+              url: "https://www.britannica.com/event/related-story",
+              content: "This must not be accepted as the requested article.",
+            }),
+          ]
+        : [document(3, { title: "Independent reporting", url: "https://news.example.org/report" })],
+      provider: "openai",
+      status: "available",
+    }));
+    const result = await orchestrateContextualResearch(plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: ["article topic"],
+    }), {
+      primaryProvider: { name: "openai", search },
+      requestedArticleUrl,
+      now: () => NOW,
+    });
+
+    expect(search.mock.calls[0][0]).toMatchObject({
+      allowedDomains: ["www.britannica.com"],
+      maxResults: 3,
+    });
+    expect(search.mock.calls[0][0].query).toContain(requestedArticleUrl);
+    expect(result.external).toContainEqual(expect.objectContaining({
+      title: "Exact article",
+      url: requestedArticleUrl,
+      excerpt: "Retrieved article text.",
+    }));
+    expect(result.external).not.toContainEqual(expect.objectContaining({
+      title: "Related story",
+    }));
+  });
+
+  it("preserves retrieved exact article evidence when ordinary topic research fails", async () => {
+    const requestedArticleUrl = "https://www.britannica.com/event/example-article";
+    const result = await orchestrateContextualResearch(plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: ["article topic"],
+    }), {
+      primaryProvider: {
+        name: "openai",
+        search: vi.fn().mockResolvedValue({
+          documents: [document(1, {
+            title: "Exact article",
+            url: requestedArticleUrl,
+            content: "Retrieved article text.",
+          })],
+          provider: "openai",
+          status: "available",
+        }),
+      },
+      searchLive: async () => { throw new Error("ordinary topic retrieval failed"); },
+      requestedArticleUrl,
+      now: () => NOW,
+    });
+
+    expect(result.external).toEqual([expect.objectContaining({
+      url: requestedArticleUrl,
+      title: "Exact article",
+    })]);
+    expect(result).toMatchObject({
+      degraded: true,
+      degradedReason: "A retrieval provider was unavailable.",
+    });
+  });
+
+  it("does not treat a same-publisher page as an explicit article retrieval", async () => {
+    const requestedArticleUrl = "https://www.britannica.com/event/example-article";
+    const search = vi.fn().mockResolvedValue({
+      documents: [document(1, {
+        title: "Different Britannica page",
+        url: "https://www.britannica.com/event/different-article",
+        content: "A different page must not pass the exact-source check.",
+      })],
+      provider: "openai",
+      status: "available",
+    });
+    const result = await orchestrateContextualResearch(plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: [],
+    }), {
+      primaryProvider: { name: "openai", search },
+      requestedArticleUrl,
+      now: () => NOW,
+    });
+
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(result.external).toEqual([]);
+  });
+
   it("uses fallback when the primary errors or returns zero accepted citations", async () => {
     const primaryProvider: ExternalResearchProvider = {
       name: "openai",

@@ -34,6 +34,13 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+  it("passes an explicit article source into exact-source retrieval", () => {
+    expect(chatRoute).toContain(
+      "requestedArticleUrl: requestedArticleSummaryUrl(message)",
+    );
+    expect(routeSource).toContain("same-publisher or related-story substitute");
+  });
+
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {
     const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
     const audienceFilter = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
@@ -119,7 +126,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(approvedLookup).toBeLessThan(semanticPlanner);
     expect(approvedLookup).toBeLessThan(providerCall);
     expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*!shouldResearchInLibrary\s*&&\s*!namedBusiness/);
-    expect(routeSource).toContain('import { requiresCurrentResearch } from "../kinfolk/current-research"');
+    expect(routeSource).toContain("requiresCurrentResearch,");
     expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*requiresCurrentResearch\(message\)/);
     expect(chatRoute).toContain('answerMode: "approved_library"');
     expect(chatRoute).toContain("usedInternal: true");
