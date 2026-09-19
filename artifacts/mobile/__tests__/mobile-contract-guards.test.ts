@@ -159,7 +159,8 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
     expect(home).not.toContain('useAlerts("GA")');
     expect(safetyHub).toContain("Authorization: `Bearer ${token}`");
     expect(safetyHub).toContain("Could not verify nearby conditions");
-    expect(safetyHub).toContain("!intelError && intelAlerts.length === 0");
+    expect(safetyHub).toContain("!intelLoading && !intelError && intelChecked && intelAlerts.length === 0");
+    expect(safetyHub).toContain("!intelLoading && !intelError && !intelChecked");
     expect(safetyHub).toContain("if (!token) throw new Error");
     expect(safetyHub).toContain("setProtectedDataError");
     expect(safetyHub).toContain("Protected safety records unavailable");
