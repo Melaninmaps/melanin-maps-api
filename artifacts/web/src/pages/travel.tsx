@@ -2414,7 +2414,21 @@ function TravelPage() {
                   {isLoggedIn ? "Enter to send · Shift+Enter for new line · Add up to 2 images · Memory is opt-in" : "Enter to send · Shift+Enter for new line"}
                 </p>
                 <DisclaimerBanner type="ai" className="mt-2 mx-auto max-w-3xl" />
-                {showMemoryManager && <KinfolkMemoryManager onClose={() => setShowMemoryManager(false)} />}
+                {showMemoryManager && <KinfolkMemoryManager
+                  onClose={() => setShowMemoryManager(false)}
+                  onReset={() => {
+                    setMessages([]);
+                    setSessionId(undefined);
+                    setSessions([]);
+                    setFeedback({});
+                    setResponseFeedback({});
+                    setResponseFeedbackNotes({});
+                    setResponseFeedbackError({});
+                    setShowHistory(false);
+                    setRememberThis(false);
+                    setIncludeCommunityPerspective(false);
+                  }}
+                />}
               </div>
             </>
           )}
