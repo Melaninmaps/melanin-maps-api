@@ -1,0 +1,39 @@
+{
+  "package": "2026-09-18-northeast-core-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 68,
+  "accepted_review_only_candidates": 68,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "business": 37,
+    "regulated_review": 22,
+    "community_resource": 8,
+    "cultural_place": 1
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 63,
+    "needs_research": 5
+  },
+  "manifest_sha256": "0ced9cf88f04f34dec90b1802521fb4bc07a1e81addd91fc8aa4900ebd0c9a2a",
+  "source_manifest": "/home/ubuntu/melanin-maps-northeast-core-review/data/founder-imports/2026-09-18-northeast-core-review/consolidated/northeast-core-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "dd7ac6f8f72c367e212cce78c8f1d7996a239e63dfc23cee44f6e0843b3ef052",
+  "destination_health": {
+    "candidates": 68,
+    "unique_destinations": 73,
+    "by_outcome": {
+      "reachable": 68,
+      "review_required": 5
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ],
+  "source_leads_held_preconsolidation": 52
+}
