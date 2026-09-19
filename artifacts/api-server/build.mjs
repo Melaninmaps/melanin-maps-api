@@ -186,7 +186,10 @@ async function buildAll() {
       "puppeteer-core",
       "electron",
     ],
-    sourcemap: "linked",
+    // Railway runs the committed production bundle. Keep it small enough for
+    // GitHub's Git Data API and do not publish server source maps.
+    minify: true,
+    sourcemap: false,
     plugins: [
       // pino relies on workers to handle logging, instead of externalizing it we use a plugin to handle it
       esbuildPluginPino({ transports: ["pino-pretty"] })
