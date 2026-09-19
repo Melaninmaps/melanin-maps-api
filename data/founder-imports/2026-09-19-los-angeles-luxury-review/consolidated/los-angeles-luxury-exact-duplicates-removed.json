@@ -1,0 +1,274 @@
+[
+  {
+    "duplicateKey": "physical|micky s west hollywood|west hollywood|ca|8857 santa monica blvd",
+    "retained": {
+      "name": "Micky's West Hollywood",
+      "file": "los-angeles-luxury-fine-dining-drinks.jsonl",
+      "line": 10,
+      "sourceUrl": "https://mickys.com/"
+    },
+    "duplicate": {
+      "name": "Micky’s West Hollywood",
+      "file": "los-angeles-luxury-lgbtq-community.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.visitwesthollywood.com/experiences/lgbtq/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|hammer museum|los angeles|ca|10899 wilshire blvd",
+    "retained": {
+      "name": "Hammer Museum",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 42,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Hammer Museum",
+      "file": "los-angeles-luxury-live-music-events.jsonl",
+      "line": 12,
+      "sourceUrl": "https://www.discoverlosangeles.com/events/the-guide-to-outdoor-music-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|getty center|los angeles|ca|1200 getty center dr",
+    "retained": {
+      "name": "Getty Center",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 39,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Getty Center",
+      "file": "los-angeles-luxury-live-music-events.jsonl",
+      "line": 13,
+      "sourceUrl": "https://www.discoverlosangeles.com/events/the-guide-to-outdoor-music-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|santa monica proper hotel|santa monica|ca|700 wilshire blvd",
+    "retained": {
+      "name": "Santa Monica Proper Hotel",
+      "file": "los-angeles-luxury-fitness-wellness.jsonl",
+      "line": 20,
+      "sourceUrl": "https://www.santamonica.com/things-to-do/wellness-activities/"
+    },
+    "duplicate": {
+      "name": "Santa Monica Proper Hotel",
+      "file": "los-angeles-luxury-luxury-hospitality-travel.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.forbestravelguide.com/hotels/los-angeles-california/santa-monica-proper-hotel"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the broad|los angeles|ca|221 s grand ave",
+    "retained": {
+      "name": "The Broad",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 34,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "The Broad",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 3,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|california african american museum|los angeles|ca|600 state dr exposition park",
+    "retained": {
+      "name": "California African American Museum",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 35,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "California African American Museum",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|getty center|los angeles|ca|1200 getty center dr",
+    "retained": {
+      "name": "Getty Center",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 39,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Getty Center",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 8,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|hammer museum|los angeles|ca|10899 wilshire blvd",
+    "retained": {
+      "name": "Hammer Museum",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 42,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Hammer Museum",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|los angeles county museum of art lacma|los angeles|ca|5905 wilshire blvd",
+    "retained": {
+      "name": "Los Angeles County Museum of Art (LACMA)",
+      "file": "los-angeles-luxury-live-music-events.jsonl",
+      "line": 11,
+      "sourceUrl": "https://www.discoverlosangeles.com/events/the-guide-to-outdoor-music-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Los Angeles County Museum of Art (LACMA)",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 10,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|la plaza de cultura y artes|los angeles|ca|501 n main st",
+    "retained": {
+      "name": "LA Plaza de Cultura y Artes",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 44,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "LA Plaza de Cultura y Artes",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 11,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|skirball cultural center|los angeles|ca|2701 n sepulveda blvd",
+    "retained": {
+      "name": "Skirball Cultural Center",
+      "file": "los-angeles-luxury-live-music-events.jsonl",
+      "line": 14,
+      "sourceUrl": "https://www.discoverlosangeles.com/events/the-guide-to-outdoor-music-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Skirball Cultural Center",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 14,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the wende museum|culver city|ca|10808 culver blvd",
+    "retained": {
+      "name": "The Wende Museum",
+      "file": "los-angeles-luxury-academic-culture.jsonl",
+      "line": 47,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/discover-free-museums-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "The Wende Museum",
+      "file": "los-angeles-luxury-museums-art-design.jsonl",
+      "line": 15,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-guide-to-museums-free-for-all-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the ritz carlton spa los angeles|los angeles|ca|900 w olympic blvd",
+    "retained": {
+      "name": "The Ritz-Carlton Spa, Los Angeles",
+      "file": "los-angeles-luxury-grooming-spa.jsonl",
+      "line": 2,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/the-ritz-carlton-spa-los-angeles"
+    },
+    "duplicate": {
+      "name": "The Ritz-Carlton Spa, Los Angeles",
+      "file": "los-angeles-luxury-outdoors-recreation.jsonl",
+      "line": 42,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/your-moment-of-zen-the-best-spas-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|wi spa|los angeles|ca|2700 wilshire blvd",
+    "retained": {
+      "name": "Wi Spa",
+      "file": "los-angeles-luxury-grooming-spa.jsonl",
+      "line": 9,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/your-moment-of-zen-the-best-spas-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "Wi Spa",
+      "file": "los-angeles-luxury-outdoors-recreation.jsonl",
+      "line": 43,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/your-moment-of-zen-the-best-spas-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the raven spa santa monica|santa monica|ca|208 pier ave",
+    "retained": {
+      "name": "The Raven Spa — Santa Monica",
+      "file": "los-angeles-luxury-grooming-spa.jsonl",
+      "line": 10,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/your-moment-of-zen-the-best-spas-in-los-angeles"
+    },
+    "duplicate": {
+      "name": "The Raven Spa — Santa Monica",
+      "file": "los-angeles-luxury-outdoors-recreation.jsonl",
+      "line": 44,
+      "sourceUrl": "https://www.discoverlosangeles.com/things-to-do/your-moment-of-zen-the-best-spas-in-los-angeles"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|harold belle s|los angeles|ca|2920 w jefferson blvd",
+    "retained": {
+      "name": "Harold & Belle's",
+      "file": "los-angeles-luxury-fine-dining-drinks.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.discoverlosangeles.com/visit/the-guide-to-black-owned-businesses-in-la"
+    },
+    "duplicate": {
+      "name": "Harold & Belle's",
+      "file": "los-angeles-prior-candidates.jsonl",
+      "line": 82,
+      "sourceUrl": "https://services5.arcgis.com/7nsPwEMP38bSkCjy/arcgis/rest/services/Black_Owned_Businesses/FeatureServer/0/query?f=json&where=1%3D1&outFields=F__OBJECTID%2Cname%2Cdisplay_name%2Ccategories%2Cdisplay_categories%2Cdescription%2Caddress%2Cphone%2Cwebsite%2Csource&returnGeometry=false&resultRecordCount=2000"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|meals by genet|los angeles|ca|1053 s fairfax ave",
+    "retained": {
+      "name": "Meals by Genet",
+      "file": "los-angeles-luxury-fine-dining-drinks.jsonl",
+      "line": 3,
+      "sourceUrl": "https://www.discoverlosangeles.com/visit/the-guide-to-black-owned-businesses-in-la"
+    },
+    "duplicate": {
+      "name": "Meals by Genet",
+      "file": "los-angeles-prior-candidates.jsonl",
+      "line": 102,
+      "sourceUrl": "https://services5.arcgis.com/7nsPwEMP38bSkCjy/arcgis/rest/services/Black_Owned_Businesses/FeatureServer/0/query?f=json&where=1%3D1&outFields=F__OBJECTID%2Cname%2Cdisplay_name%2Ccategories%2Cdisplay_categories%2Cdescription%2Caddress%2Cphone%2Cwebsite%2Csource&returnGeometry=false&resultRecordCount=2000"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

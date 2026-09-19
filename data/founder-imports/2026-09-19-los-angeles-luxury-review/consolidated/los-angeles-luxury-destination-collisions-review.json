@@ -1,0 +1,82 @@
+[
+  {
+    "destination": "https://www.altaadams.com",
+    "records": [
+      {
+        "name": "Alta Adams",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-luxury-fine-dining-drinks.jsonl",
+        "line": 2
+      },
+      {
+        "name": "Alta West Adams",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-prior-candidates.jsonl",
+        "line": 50
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.moca.org/visit",
+    "records": [
+      {
+        "name": "MOCA Grand Avenue",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-luxury-museums-art-design.jsonl",
+        "line": 12
+      },
+      {
+        "name": "The Geffen Contemporary at MOCA",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-luxury-museums-art-design.jsonl",
+        "line": 13
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://recreation.parks.lacity.gov/parks",
+    "records": [
+      {
+        "name": "Griffith Park",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-luxury-outdoors-recreation.jsonl",
+        "line": 36
+      },
+      {
+        "name": "Runyon Canyon Park",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-luxury-outdoors-recreation.jsonl",
+        "line": 37
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  },
+  {
+    "destination": "https://www.tandtlifestylelosangeles.com",
+    "records": [
+      {
+        "name": "Colony Cooks",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-prior-candidates.jsonl",
+        "line": 67
+      },
+      {
+        "name": "T&T Lifestyle",
+        "city": "Los Angeles",
+        "state": "CA",
+        "file": "los-angeles-prior-candidates.jsonl",
+        "line": 129
+      }
+    ],
+    "reason": "same_customer_destination_different_name_manual_reconciliation_required"
+  }
+]

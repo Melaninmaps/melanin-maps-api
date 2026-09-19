@@ -1,0 +1,2417 @@
+{
+  "checkedAt": "2026-09-19T05:36:37.518Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-los-angeles-luxury-review/data/founder-imports/2026-09-19-los-angeles-luxury-review/review-package/los-angeles-luxury-combined-review-only-candidates.jsonl",
+  "candidates": 416,
+  "uniqueDestinations": 400,
+  "reusedReachableResults": 0,
+  "freshlyCheckedDestinations": 400,
+  "counts": {
+    "review_required": 55,
+    "reachable": 342,
+    "timeout": 2,
+    "network_error": 1
+  },
+  "results": [
+    {
+      "url": "https://accesshousingla.org/",
+      "status": 403,
+      "finalUrl": "https://accesshousingla.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://housing.lacounty.gov/",
+      "status": 200,
+      "finalUrl": "https://housing.lacounty.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wilsonsbbqribshack.com/",
+      "status": 200,
+      "finalUrl": "https://www.wilsonsbbqribshack.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://services5.arcgis.com/7nsPwEMP38bSkCjy/arcgis/rest/services/Black_Owned_Businesses/FeatureServer/0/query?f=json&where=1%3D1&outFields=F__OBJECTID%2Cname%2Cdisplay_name%2Ccategories%2Cdisplay_categories%2Cdescription%2Caddress%2Cphone%2Cwebsite%2Csource&returnGeometry=false&resultRecordCount=2000",
+      "status": 200,
+      "finalUrl": "https://services5.arcgis.com/7nsPwEMP38bSkCjy/arcgis/rest/services/Black_Owned_Businesses/FeatureServer/0/query?f=json&where=1%3D1&outFields=F__OBJECTID%2Cname%2Cdisplay_name%2Ccategories%2Cdisplay_categories%2Cdescription%2Caddress%2Cphone%2Cwebsite%2Csource&returnGeometry=false&resultRecordCount=2000",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/altadena-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/altadena-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/santa-anita-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/santa-anita-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.2ndhealthyeatery.com/home",
+      "status": 200,
+      "finalUrl": "https://2ndhealthyeatery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fourseasons.com/beverlywilshire/",
+      "status": 403,
+      "finalUrl": "https://www.fourseasons.com/beverlywilshire/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.damoneroberts.com/",
+      "status": 200,
+      "finalUrl": "https://www.damoneroberts.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hilarystevens.com/",
+      "status": 403,
+      "finalUrl": "https://hilarystevens.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lermitagebeverlyhills.com/",
+      "status": 200,
+      "finalUrl": "https://www.lermitagebeverlyhills.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dorchestercollection.com/los-angeles/the-beverly-hills-hotel/",
+      "status": 403,
+      "finalUrl": "https://www.dorchestercollection.com/los-angeles/the-beverly-hills-hotel/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.dorchestercollection.com/en/los-angeles/the-beverly-hills-hotel/spa/",
+      "status": 403,
+      "finalUrl": "https://www.dorchestercollection.com/en/los-angeles/the-beverly-hills-hotel/spa/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.maybournebeverlyhills.com/",
+      "status": 200,
+      "finalUrl": "https://www.maybourne.com/en/hotels/the-maybourne-beverly-hills",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.peninsula.com/en/beverly-hills/wellness/luxury-hotel-spa",
+      "status": 200,
+      "finalUrl": "https://www.peninsula.com/en/beverly-hills/wellness/luxury-hotel-spa",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fourseasons.com/beverlywilshire/spa/",
+      "status": 403,
+      "finalUrl": "https://www.fourseasons.com/beverlywilshire/spa/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.discoverlosangeles.com/things-to-do/the-spa-at-the-beverly-wilshire",
+      "status": 200,
+      "finalUrl": "https://www.discoverlosangeles.com/things-to-do/the-spa-at-the-beverly-wilshire",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tomokospa.com/",
+      "status": 200,
+      "finalUrl": "https://tomokospa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tomokospa.com/contact/",
+      "status": 200,
+      "finalUrl": "https://tomokospa.com/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fourseasons.com/beverlywilshire/spa/salon_services/",
+      "status": 403,
+      "finalUrl": "https://www.fourseasons.com/beverlywilshire/spa/salon_services/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.hilton.com/en/hotels/laxwawa-waldorf-astoria-beverly-hills/",
+      "status": 200,
+      "finalUrl": "https://www.hilton.com/en/hotels/laxwawa-waldorf-astoria-beverly-hills/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lapride.org/",
+      "status": 200,
+      "finalUrl": "https://lapride.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.louthefrenchontheblock.com/",
+      "status": 200,
+      "finalUrl": "https://www.louthefrenchontheblock.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.darrowsneworleansgrill.com/",
+      "status": 200,
+      "finalUrl": "https://www.darrowsneworleansgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://kensicecream.net/",
+      "status": 200,
+      "finalUrl": "https://www.kensicecream.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/victoria-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/victoria-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sally-w.com/",
+      "status": 200,
+      "finalUrl": "https://sally-w.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.patriacoffee.com/",
+      "status": 200,
+      "finalUrl": "https://www.patriacoffee.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tamuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.tamuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.delvignecroissant.com/",
+      "status": 200,
+      "finalUrl": "https://www.delvignecroissant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.faithblakeney.com/",
+      "status": 200,
+      "finalUrl": "https://www.faithblakeney.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://honeyskettle.com/",
+      "status": 200,
+      "finalUrl": "https://honeyskettle.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://jangabyderricks.com/",
+      "status": 200,
+      "finalUrl": "http://jangabyderricks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://jrs-bbq.com/",
+      "status": 200,
+      "finalUrl": "https://www.jrs-bbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://jerkspotla.com/index.html",
+      "status": 200,
+      "finalUrl": "https://porter-prize.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wendemuseum.org/visit/",
+      "status": 200,
+      "finalUrl": "https://wendemuseum.org/visit-the-wende/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.wlac.edu/",
+      "status": 403,
+      "finalUrl": "http://www.wlac.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://parks.lacounty.gov/diamond-bar-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/diamond-bar-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.columbiaspacescience.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.columbiaspacescience.org/hours-admission",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/los-amigos-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/los-amigos-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://marscaribbean.com/",
+      "status": 200,
+      "finalUrl": "https://marscaribbean.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mrfriesman.com/",
+      "status": 200,
+      "finalUrl": "https://www.mrfriesman.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blessedbeautysupply.com/",
+      "status": 200,
+      "finalUrl": "https://www.blessedbeautysupply.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://forestlawn.com/exhibits-and-events/museum/",
+      "status": 200,
+      "finalUrl": "https://museum.forestlawn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/knollwood-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/knollwood-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://bandrburgers.com/",
+      "status": 200,
+      "finalUrl": "https://bandrburgers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.busybaking.info/",
+      "status": 200,
+      "finalUrl": "https://iptvpremiumpro.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barshalife.com/",
+      "status": 200,
+      "finalUrl": "https://barshalife.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacountylibrary.org/american-indian-resource-center/",
+      "status": 200,
+      "finalUrl": "https://lacountylibrary.org/american-indian-resource-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacountylibrary.org/cultural-resource-centers/",
+      "status": 200,
+      "finalUrl": "https://lacountylibrary.org/cultural-resource-centers/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://1010wineandevents.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.bayougrille.net/",
+      "status": 200,
+      "finalUrl": "https://www.bayougrille.net/index-2.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bigchicken.com/",
+      "status": 200,
+      "finalUrl": "https://www.bigchicken.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cobblerscakesandkream.com/",
+      "status": 200,
+      "finalUrl": "https://cobblerscakesandkream.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dulans-sfk.com/",
+      "status": 200,
+      "finalUrl": "https://www.dulans-sfk.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.familyfishmarket.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://jamzcreamery.com/",
+      "status": 200,
+      "finalUrl": "https://jamzcreamery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.lavenderbluela.com/",
+      "status": 200,
+      "finalUrl": "https://www.lavenderbluela.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://littlebelizerestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://littlebelizerestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://minglesteabar.com/",
+      "status": 200,
+      "finalUrl": "https://www.minglesteabar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.msbsmandmsoulfoodrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.msbsmandmsoulfoodrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.naildega.com/",
+      "status": 200,
+      "finalUrl": "https://www.naildega.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.redsflavortable.com/",
+      "status": 200,
+      "finalUrl": "https://www.redsflavortable.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rustypotcafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.sunnyspizzaandwings.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sipandsonder.com/",
+      "status": 200,
+      "finalUrl": "https://www.sipandsonder.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.stuffieat.com/",
+      "status": 200,
+      "finalUrl": "https://www.stuffieat.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sweetredpeach.com/",
+      "status": 200,
+      "finalUrl": "https://www.sweetredpeach.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theservingspoon.net/",
+      "status": 200,
+      "finalUrl": "https://theservingspoon.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.yourbakery1st.com/",
+      "status": 200,
+      "finalUrl": "https://www.yourbakery1st.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.descansogardens.org/",
+      "status": 200,
+      "finalUrl": "https://www.descansogardens.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/la-mirada-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/la-mirada-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/marshall-canyon-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/marshall-canyon-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/lakewood-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/lakewood-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/alondra-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/alondra-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://abeautifulcalflorist.com/",
+      "status": 200,
+      "finalUrl": "https://abeautifulcalflorist.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.bundtsonmelrose.com/",
+      "status": 200,
+      "finalUrl": "http://www.bundtsonmelrose.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.centerlb.org/",
+      "status": 200,
+      "finalUrl": "https://www.centerlb.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://robertearlsbbq.com/",
+      "status": 200,
+      "finalUrl": "https://robertearlsbbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shadesofafrika.com/",
+      "status": 200,
+      "finalUrl": "https://shadesofafrika.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecorner10th.com/",
+      "status": 200,
+      "finalUrl": "https://www.thecorner10th.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.twinssmokehouse.com/",
+      "status": 200,
+      "finalUrl": "https://revolutionsbselect.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ittpattyhut.com/",
+      "status": 200,
+      "finalUrl": "https://infoslot.live/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://27thstreetbakery.com/",
+      "status": 200,
+      "finalUrl": "https://www.27thstreetbakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.academymuseum.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.academymuseum.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://ackeebamboojacuisine.com/",
+      "status": 200,
+      "finalUrl": "https://ackeebamboojacuisine.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aaffmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.aaffmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://akbarsilverlake.com/",
+      "status": 200,
+      "finalUrl": "https://akbarsilverlake.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.altaadams.com/",
+      "status": 200,
+      "finalUrl": "https://www.altaadams.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.antiquestoveheaven.com/",
+      "status": 200,
+      "finalUrl": "https://antiquestoveheaven.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.argcreate.com/",
+      "status": 200,
+      "finalUrl": "https://www.argcreate.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fidmmuseum.org/visit",
+      "status": 200,
+      "finalUrl": "https://fidmmuseum.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theautry.org/visit",
+      "status": 200,
+      "finalUrl": "https://theautry.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://awash.cafes-world.com/?fbclid=IwAR0qaupV4ZIPPgn0ClWlYCzX-Bw5HmrN6S6eYzjwpxofVzyEfqkAVYoKaJY",
+      "status": 200,
+      "finalUrl": "https://awash.cafes-world.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://azlavegan.com/",
+      "status": 200,
+      "finalUrl": "https://koitoto03.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bandofvices.com/",
+      "status": 200,
+      "finalUrl": "https://www.bandofvices.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/barnsdall-arts-center",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/barnsdall-arts-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/barnsdall-gallery-theatre",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/barnsdall-gallery-theatre",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://beyondveganlifestyle.com/",
+      "status": 200,
+      "finalUrl": "https://www.beyondveganlifestyle.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacountylibrary.org/black-resource-center/",
+      "status": 200,
+      "finalUrl": "https://lacountylibrary.org/black-resource-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barandque.com/",
+      "status": 200,
+      "finalUrl": "https://www.bludsosbbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bluenotejazz.com/la/",
+      "status": 200,
+      "finalUrl": "https://www.bluenotejazz.com/la/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.theblvdkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.theblvdkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bmostadium.com/",
+      "status": 200,
+      "finalUrl": "https://bmostadium.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bodaddys.com/",
+      "status": 200,
+      "finalUrl": "https://www.bodaddys.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bohemianchai.com/",
+      "status": 200,
+      "finalUrl": "https://www.bohemianchai.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://usa.kinokuniya.com/stores-kinokuniya-los-angeles",
+      "status": 200,
+      "finalUrl": "https://usa.kinokuniya.com/blog-top/2025/8/11/kinokuniya-la-pop-up-shop-at-the-bloc",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boukasjamaicanrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.boukasjamaicanrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bringsomethingtothepartyla.com/",
+      "status": 200,
+      "finalUrl": "https://bringsomethingtothepartyla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.brotherbarbequecatering.com/",
+      "status": 200,
+      "finalUrl": "http://www.brotherbarbequecatering.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bunaethiopianmarket.com/",
+      "status": 200,
+      "finalUrl": "https://bunaethiopianmarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caferuisseau.com/",
+      "status": 200,
+      "finalUrl": "https://caferuisseau.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caamuseum.org/visit",
+      "status": 200,
+      "finalUrl": "https://caamuseum.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caamuseum.org/",
+      "status": 200,
+      "finalUrl": "https://caamuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://californiasciencecenter.org/visit",
+      "status": 403,
+      "finalUrl": "https://californiasciencecenter.org/visit",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.castlescatering.com/",
+      "status": 200,
+      "finalUrl": "https://www.castleconcepts.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.catalinajazzclub.com/",
+      "status": 200,
+      "finalUrl": "https://catalinajazzclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/center-for-the-arts-eagle-rock",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/center-for-the-arts-eagle-rock",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.chefmarilyns2638.com/",
+      "status": 200,
+      "finalUrl": "https://www.chefmarilyns2638.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/chester-l-washington-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/chester-l-washington-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacountylibrary.org/chicano-resource-center/",
+      "status": 200,
+      "finalUrl": "https://lacountylibrary.org/chicano-resource-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tandtlifestylelosangeles.com/",
+      "status": 200,
+      "finalUrl": "https://www.tandtlifestylelosangeles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.eatcomfortla.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://comptonvegan.com/",
+      "status": 200,
+      "finalUrl": "https://comptonvegan.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.craftcontemporary.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.craftcontemporary.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.crusteeseatery.com/",
+      "status": 200,
+      "finalUrl": "https://www.crusteeseatery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cryptoarena.com/",
+      "status": 200,
+      "finalUrl": "https://www.cryptoarena.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.culturalinteriors.com/",
+      "status": 200,
+      "finalUrl": "https://www.culturalinteriors.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.damiandtla.com/",
+      "status": 200,
+      "finalUrl": "https://damiandtla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dmyla.com/",
+      "status": 200,
+      "finalUrl": "https://www.dharmayogala.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.differentspokes.com/",
+      "status": 200,
+      "finalUrl": "https://www.differentspokes.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.discoverlosangeles.com/events",
+      "status": 200,
+      "finalUrl": "https://www.discoverlosangeles.com/events",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://divinedipsicecreme.com/",
+      "status": 200,
+      "finalUrl": "http://divinedipsicecreme.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.properhotel.com/downtown-la/",
+      "status": 200,
+      "finalUrl": "https://www.properhotel.com/downtown-la/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dulansoncrenshaw.com/",
+      "status": 200,
+      "finalUrl": "https://dulansoncrenshaw.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://earlesrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.earlesrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.esowonbookstore.com/",
+      "status": 200,
+      "finalUrl": "https://beautifulkhaos-salon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fairmont.com/en/hotels/los-angeles/fairmont-century-plaza.html",
+      "status": 200,
+      "finalUrl": "https://www.fairmont.com/en/hotels/los-angeles/fairmont-century-plaza.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fourseasons.com/losangeles/",
+      "status": 403,
+      "finalUrl": "https://www.fourseasons.com/losangeles/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://fowler.ucla.edu/visit",
+      "status": 202,
+      "finalUrl": "https://fowler.ucla.edu/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bestturkeyburgerlosangeles.com/",
+      "status": 200,
+      "finalUrl": "https://www.bestturkeyburgerlosangeles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://downtownla.com/go/funculo",
+      "status": 200,
+      "finalUrl": "https://downtownla.com/maps/getting-around/find-a-business",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gmcla.org/",
+      "status": 200,
+      "finalUrl": "https://www.gmcla.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.getty.edu/visit/center/",
+      "status": 200,
+      "finalUrl": "https://www.getty.edu/visit/center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.grandperformances.org/",
+      "status": 200,
+      "finalUrl": "https://www.grandperformances.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://glaaacc.org/",
+      "status": 200,
+      "finalUrl": "https://glaaacc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://griffithobservatory.lacity.gov/visit/",
+      "status": 200,
+      "finalUrl": "https://griffithobservatory.lacity.gov/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://recreation.parks.lacity.gov/parks",
+      "status": 403,
+      "finalUrl": "https://recreation.parks.lacity.gov/parks",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://hammer.ucla.edu/visit",
+      "status": 200,
+      "finalUrl": "https://hammer.ucla.edu/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://happyicela.com/",
+      "status": 200,
+      "finalUrl": "https://www.happyicela.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://haroldandbelles.com/",
+      "status": 200,
+      "finalUrl": "https://haroldandbelles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.haroldschickenla.com/",
+      "status": 200,
+      "finalUrl": "https://www.haroldschickenla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://harunintl.com/",
+      "status": 200,
+      "finalUrl": "https://harunintl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.hawkinsburgers.com/",
+      "status": 200,
+      "finalUrl": "https://www.hawkinsburgers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hennesseyingalls.com/",
+      "status": 403,
+      "finalUrl": "https://hennesseyingalls.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/bridge-gallery-city-hall",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/bridge-gallery-city-hall",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.vibratogrilljazz.com/",
+      "status": 200,
+      "finalUrl": "https://www.vibratogrilljazz.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.findyourhilltop.com/",
+      "status": 200,
+      "finalUrl": "https://www.findyourhilltop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.holboxla.com/",
+      "status": 200,
+      "finalUrl": "https://www.holboxla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/hollyhock-house",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/hollyhock-house",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.hollywoodbowl.com/",
+      "status": 200,
+      "finalUrl": "https://www.hollywoodbowl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hollywoodbowl.com/visit/when-youre-here/hollywood-bowl-museum",
+      "status": 200,
+      "finalUrl": "https://www.hollywoodbowl.com/visit/when-youre-here/hollywood-bowl-museum",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.honeysla.com/",
+      "status": 409,
+      "finalUrl": "https://www.honeysla.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://hotandcoolcafe.com/",
+      "status": 200,
+      "finalUrl": "https://hotandcoolcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dorchestercollection.com/los-angeles/hotel-bel-air/",
+      "status": 403,
+      "finalUrl": "https://www.dorchestercollection.com/los-angeles/hotel-bel-air/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.hotvillechicken.com/",
+      "status": 200,
+      "finalUrl": "https://www.hotvillechicken.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.housingrightscenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.housingrightscenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theicala.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.theicala.org/en/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jackfruitcafe.com/",
+      "status": 200,
+      "finalUrl": "https://jackfruitcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jamafoxpress.com/",
+      "status": 200,
+      "finalUrl": "https://childrensshelterhome.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jordanshotdogsla.com/",
+      "status": 200,
+      "finalUrl": "https://expireddomains.com/domain/jordanshotdogsla.com?utm_source=redi",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shopkutula.com/",
+      "status": 200,
+      "finalUrl": "https://shopkutula.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lalive.com/events",
+      "status": 200,
+      "finalUrl": "https://www.lalive.com/events",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://homeless.lacounty.gov/",
+      "status": 200,
+      "finalUrl": "https://homeless.lacounty.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oneinstitute.org/la-lgbtq-arts-culture-coalition/",
+      "status": 200,
+      "finalUrl": "https://www.oneinstitute.org/la-lgbtq-arts-culture-coalition/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lapca.org/",
+      "status": 200,
+      "finalUrl": "https://lapca.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lapca.org/visit/",
+      "status": 200,
+      "finalUrl": "https://lapca.org/visit-a-view-from-here-via-your-cellphone/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lalibelala.com/",
+      "status": 200,
+      "finalUrl": "https://www.lalibelala.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/lankershim-arts-center",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/lankershim-arts-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.larryedmunds.com/",
+      "status": 200,
+      "finalUrl": "https://www.larryedmunds.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.somoslea.org/",
+      "status": 200,
+      "finalUrl": "https://www.somoslea.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://littleamsterdamcoffee.net/",
+      "status": 200,
+      "finalUrl": "https://littleamsterdamcoffee.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.lacitycollege.edu/",
+      "status": 403,
+      "finalUrl": "http://www.lacitycollege.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.laccd.edu/our-colleges",
+      "status": 403,
+      "finalUrl": "https://www.laccd.edu/our-colleges",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.laconservancy.org/",
+      "status": 200,
+      "finalUrl": "https://www.laconservancy.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lacountyarts.org/",
+      "status": 200,
+      "finalUrl": "https://www.lacountyarts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/health/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/health/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lacma.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.lacma.org/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lacma.org/programs/music",
+      "status": 200,
+      "finalUrl": "https://www.lacma.org/programs/music",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lafrontrunners.com/",
+      "status": 200,
+      "finalUrl": "https://www.lafrontrunners.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://housing.lacity.gov/residents/handyworker",
+      "status": 403,
+      "finalUrl": "https://housing.lacity.gov/residents/handyworker",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://lalgbtcenter.org/",
+      "status": 403,
+      "finalUrl": "https://lalgbtcenter.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://lalgbtcenter.org/services/housing/",
+      "status": 403,
+      "finalUrl": "https://lalgbtcenter.org/services/housing/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/los-angeles-municipal-art-gallery-lamag",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/los-angeles-municipal-art-gallery-lamag",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lapl.org/branches/central-library",
+      "status": 200,
+      "finalUrl": "https://www.lapl.org/branches/central-library",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lapl.org/branches",
+      "status": 200,
+      "finalUrl": "https://www.lapl.org/branches",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rebellionrugby.org/playrugby/",
+      "status": 200,
+      "finalUrl": "https://rebellionrugby.org/playrugby/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.lasc.edu/",
+      "status": 403,
+      "finalUrl": "http://www.lasc.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lataweb.com/",
+      "status": 200,
+      "finalUrl": "https://www.lataweb.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/los-angeles-theatre-center-latc",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/los-angeles-theatre-center-latc",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lattc.edu/",
+      "status": 403,
+      "finalUrl": "https://www.lattc.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://adulted.lausd.org/",
+      "status": 403,
+      "finalUrl": "https://adulted.lausd.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lmu.edu/",
+      "status": 200,
+      "finalUrl": "https://www.lmu.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://m-and-t-donuts.square.site/",
+      "status": 200,
+      "finalUrl": "https://m-and-t-donuts.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mdears.net/",
+      "status": 200,
+      "finalUrl": "https://www.mdears.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mac-la.org/",
+      "status": 200,
+      "finalUrl": "https://mac-la.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/maggie-hathaway-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/maggie-hathaway-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://malikbooks.com/",
+      "status": 200,
+      "finalUrl": "https://malikbooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.mamaschicken.name/",
+      "status": 200,
+      "finalUrl": "http://www.mamaschicken.name/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/mcgroarty-arts-center",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/mcgroarty-arts-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mealsbygenetla.com/",
+      "status": 200,
+      "finalUrl": "https://www.mealsbygenetla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://melsfishshack.com/",
+      "status": 200,
+      "finalUrl": "https://communitybakeshop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.messob.com/",
+      "status": 200,
+      "finalUrl": "https://www.messob.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moca.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.moca.org/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mooscraftbarbecue.com/",
+      "status": 200,
+      "finalUrl": "https://www.mooscraftbbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://maaala.org/",
+      "status": 200,
+      "finalUrl": "https://maaala.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moca.org/plan-your-visit",
+      "status": 200,
+      "finalUrl": "https://www.moca.org/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://mytwocentsla.com/",
+      "status": 200,
+      "finalUrl": "https://tektok777.shop/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/nate-holden-performing-arts-center",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/nate-holden-performing-arts-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://nhm.org/plan-your-visit",
+      "status": 200,
+      "finalUrl": "https://nhm.org/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://eatnest.com/",
+      "status": 200,
+      "finalUrl": "https://eatnest.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nobodyjones.bigcartel.com/",
+      "status": 200,
+      "finalUrl": "https://nobodyjones.bigcartel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nowservingla.com/",
+      "status": 200,
+      "finalUrl": "https://nowservingla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oxy.edu/",
+      "status": 200,
+      "finalUrl": "https://www.oxy.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.omgivning.com/",
+      "status": 200,
+      "finalUrl": "https://www.omgivning.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://one.usc.edu/",
+      "status": 200,
+      "finalUrl": "https://one.usc.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.1ofakindhats.com/",
+      "status": 200,
+      "finalUrl": "https://www.1ofakindhats.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://orleansandyorkdeli.com/",
+      "status": 200,
+      "finalUrl": "https://www.orleansandyorkdeli.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.otis.edu/extension",
+      "status": 200,
+      "finalUrl": "https://www.otis.edu/extension/index.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.outprofessionals.org/chapters/california/los-angeles/",
+      "status": 403,
+      "finalUrl": "https://www.outprofessionals.org/chapters/california/los-angeles/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.cinema.ucla.edu/collections/outfest-ucla-legacy-project/",
+      "status": 200,
+      "finalUrl": "https://www.cinema.ucla.edu/collections/outfest-ucla-legacy-project/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://outloudsports.com/losangeles",
+      "status": 200,
+      "finalUrl": "https://outloudsports.com/losangeles",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://locations.papajohns.com/united-states",
+      "status": 200,
+      "finalUrl": "https://locations.papajohns.com/united-states",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.peacelabyrinth.org/",
+      "status": 200,
+      "finalUrl": "https://www.peacelabyrinth.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://phatbirds.com/",
+      "status": 200,
+      "finalUrl": "https://phatbirds.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pinkyroseboutique.com/",
+      "status": 200,
+      "finalUrl": "https://www.pinkyroseboutique.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://powderbeautyco.com/",
+      "status": 200,
+      "finalUrl": "https://www.powderbeautyco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.redcat.org/",
+      "status": 200,
+      "finalUrl": "https://www.redcat.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culturalarts.lalgbtcenter.org/",
+      "status": 403,
+      "finalUrl": "https://culturalarts.lalgbtcenter.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://rep.club/",
+      "status": 200,
+      "finalUrl": "https://rep.club/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rideonbikeshop.com/",
+      "status": 200,
+      "finalUrl": "https://www.rideonbikeshop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.roosterfishla.com/",
+      "status": 200,
+      "finalUrl": "https://www.roosterfishla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rosalindsla.com/",
+      "status": 200,
+      "finalUrl": "https://www.rosalindsla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.roscoeschickenandwaffles.com/",
+      "status": 200,
+      "finalUrl": "https://www.roscoeschickenandwaffles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.samfirstbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.samfirstbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.saycheeselosangeles.com/",
+      "status": 200,
+      "finalUrl": "https://www.saycheeselosangeles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://silverbackcoffee.com/",
+      "status": 200,
+      "finalUrl": "https://silverbackcoffee.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://simplydliciousla.com/",
+      "status": 200,
+      "finalUrl": "https://meditechhospital.com/gynecology.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.simplywholesome.com/",
+      "status": 200,
+      "finalUrl": "https://simplywholesome.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sistercitiesofla.org/culture-and-education/",
+      "status": 200,
+      "finalUrl": "https://sistercitiesofla.org/culture-and-education/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.skirball.org/",
+      "status": 200,
+      "finalUrl": "https://www.skirball.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.skylightbooks.com/",
+      "status": 403,
+      "finalUrl": "https://skylightbooks.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.sosorella.com/",
+      "status": 200,
+      "finalUrl": "https://www.sosorella.com/password",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.southlacafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.southlacafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.southerngirldesserts.com/",
+      "status": 200,
+      "finalUrl": "https://southerngirldesserts.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.steviescreolecafe.com/",
+      "status": 200,
+      "finalUrl": "https://steviescreolecafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sweetblessingsla.com/",
+      "status": 200,
+      "finalUrl": "https://sweetblessingsla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://swift-la.com/",
+      "status": 200,
+      "finalUrl": "https://swift-la.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tacobarla.com/",
+      "status": 200,
+      "finalUrl": "https://tacobarla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://tacomell.net/",
+      "status": 200,
+      "finalUrl": "https://tacomell.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/taxco",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/taxco",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.thebroad.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.thebroad.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thedresden.com/",
+      "status": 200,
+      "finalUrl": "https://www.thedresden.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theford.com/",
+      "status": 200,
+      "finalUrl": "https://www.theford.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://girlcavela.com/",
+      "status": 200,
+      "finalUrl": "https://girlcavela.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lagreektheatre.com/",
+      "status": 200,
+      "finalUrl": "https://www.lagreektheatre.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thejuicela.com/",
+      "status": 200,
+      "finalUrl": "https://thejuicela.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://thekobblerking.com/",
+      "status": 200,
+      "finalUrl": "https://www.thekobblerking.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thelacelounge.com/",
+      "status": 200,
+      "finalUrl": "https://www.thelacelounge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thememphisgrill.com/",
+      "status": 200,
+      "finalUrl": "https://www.thememphisgrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://themintla.com/",
+      "status": 200,
+      "finalUrl": "https://themintla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.musiccenter.org/event-calendar/",
+      "status": 403,
+      "finalUrl": "https://www.musiccenter.org/event-calendar/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.ritzcarlton.com/en/hotels/laxlz-the-ritz-carlton-los-angeles/spa/",
+      "status": 200,
+      "finalUrl": "https://www.ritzcarlton.com/en/hotels/laxlz-the-ritz-carlton-los-angeles/spa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thesmallshopla.com/",
+      "status": 200,
+      "finalUrl": "https://www.thesmallshopla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.omnihotels.com/hotels/los-angeles-california-plaza/spa/details",
+      "status": 403,
+      "finalUrl": "https://www.omnihotels.com/hotels/los-angeles-california-plaza/spa/details",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.translatinacoalition.org/",
+      "status": 200,
+      "finalUrl": "https://www.translatinacoalition.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://the-underground-museum.square.site/",
+      "status": 200,
+      "finalUrl": "https://the-underground-museum.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lalgbtcenter.org/about/locations/trans-wellness-center/",
+      "status": 403,
+      "finalUrl": "https://lalgbtcenter.org/about/locations/trans-wellness-center/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://trencherla.com/",
+      "status": 200,
+      "finalUrl": "https://trencherla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.uclaextension.edu/",
+      "status": 200,
+      "finalUrl": "https://www.uclaextension.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.undergrindcafe.com/",
+      "status": 200,
+      "finalUrl": "https://undergrindcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ucla.edu/",
+      "status": 200,
+      "finalUrl": "https://www.ucla.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.usc.edu/",
+      "status": 200,
+      "finalUrl": "https://www.usc.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.verdebuildingco.com/",
+      "status": 404,
+      "finalUrl": "https://www.verdebuildingco.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.laphil.com/visit/plan-your-visit",
+      "status": 200,
+      "finalUrl": "https://www.laphil.com/visit/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/watts-towers-campus",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/watts-towers-campus",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.whoshungrycatering.com/",
+      "status": 200,
+      "finalUrl": "https://whoshungrycatering.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wijammincafe.com/",
+      "status": 200,
+      "finalUrl": "https://wijammincafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wispausa.com/",
+      "status": 200,
+      "finalUrl": "https://wispausa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/william-grant-still-arts-center",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/william-grant-still-arts-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://culture.lacity.gov/cultural-centers/william-reagh-la-photography-center",
+      "status": 403,
+      "finalUrl": "https://culture.lacity.gov/cultural-centers/william-reagh-la-photography-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "http://everlastingbbq.com/Home_Page.html",
+      "status": 200,
+      "finalUrl": "http://everlastingbbq.com/Home_Page.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/dan-blocker-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/dan-blocker-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/malibu-surfrider-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/malibu-surfrider-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/nicholas-canyon-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/nicholas-canyon-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/point-dume-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/point-dume-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/zuma-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/zuma-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.calyachtclub.com/",
+      "status": 200,
+      "finalUrl": "https://calyachtclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dryc.org/",
+      "status": 200,
+      "finalUrl": "https://www.dryc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fantaseayachts.com/",
+      "status": 200,
+      "finalUrl": "https://www.fantaseayachts.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/marina-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/marina-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://marinasailing.com/",
+      "status": 200,
+      "finalUrl": "https://marinasailing.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.prosupshop.com/",
+      "status": 200,
+      "finalUrl": "https://www.prosupshop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://recreation.ucla.edu/rec-programs/marina-aquatic-center",
+      "status": 200,
+      "finalUrl": "https://recreation.ucla.edu/rec-programs/marina-aquatic-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.elac.edu/",
+      "status": 403,
+      "finalUrl": "https://www.elac.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.bwtile.com/",
+      "status": 200,
+      "finalUrl": "https://www.bwtile.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.iliadbooks.com/",
+      "status": 200,
+      "finalUrl": "https://iliadbooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/don-knabe-golf-center-and-junior-academy/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/don-knabe-golf-center-and-junior-academy/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.getty.edu/visit/villa/",
+      "status": 200,
+      "finalUrl": "https://www.getty.edu/visit/villa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/will-rogers-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/will-rogers-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.leeesthers.com/",
+      "status": 200,
+      "finalUrl": "https://www.leeesthers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bonniebssmokin.com/",
+      "status": 200,
+      "finalUrl": "https://www.bonniebssmokin.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caltech.edu/",
+      "status": 200,
+      "finalUrl": "https://www.caltech.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.langhamhotels.com/en/the-langham/los-angeles/wellness/chuan-spa/",
+      "status": 200,
+      "finalUrl": "https://www.langhamhotels.com/en/the-langham/los-angeles/wellness/chuan-spa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/eaton-canyon-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/eaton-canyon-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.gregsylvis.com/",
+      "status": 200,
+      "finalUrl": "https://www.gregsylvis.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.leberrybakery.com/",
+      "status": 200,
+      "finalUrl": "https://leberrybakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://perrysjoint.com/",
+      "status": 200,
+      "finalUrl": "https://perrysjoint.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cobblerfactorypasadena.com/",
+      "status": 200,
+      "finalUrl": "https://www.minigrill.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://store.unionlosangeles.com/",
+      "status": 200,
+      "finalUrl": "https://store.unionlosangeles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/dockweiler-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/dockweiler-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://days-bbq-and-waffle.top-cafes.com/",
+      "status": 200,
+      "finalUrl": "https://days-bbq-and-waffle.top-cafes.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jjbbqfish.com/",
+      "status": 200,
+      "finalUrl": "https://expireddomains.com/domain/jjbbqfish.com?utm_source=redi",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/mountain-meadows-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/mountain-meadows-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/los-verdes-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/los-verdes-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.terranea.com/",
+      "status": 200,
+      "finalUrl": "https://www.terranea.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.terranea.com/spa/",
+      "status": 200,
+      "finalUrl": "https://www.terranea.com/spa",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cakebuzzla.com/",
+      "status": 200,
+      "finalUrl": "https://cakebuzzla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/redondo-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/redondo-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacountylibrary.org/asian-pacific-resource-center/",
+      "status": 200,
+      "finalUrl": "https://lacountylibrary.org/asian-pacific-resource-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/whittier-narrows-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/whittier-narrows-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.huntington.org/",
+      "status": 429,
+      "finalUrl": "https://www.huntington.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lalcc.org/",
+      "status": 200,
+      "finalUrl": "https://www.lalcc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beachyogasocal.com/",
+      "status": 200,
+      "finalUrl": "https://beachyogasocal.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bodyrok.com/studios/santa-monica/",
+      "status": 200,
+      "finalUrl": "https://bodyrok.com/studio/santa-monica/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boxunion.com/location/santa-monica",
+      "status": 200,
+      "finalUrl": "https://www.boxunion.com/location/santa-monica",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://burnfitness.com/",
+      "status": 200,
+      "finalUrl": "https://burnfitness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://paintworks.us/",
+      "status": 200,
+      "finalUrl": "https://paintworks.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dripology.co/",
+      "status": 200,
+      "finalUrl": "https://dripology.co/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.goodbodypilates.com/",
+      "status": 200,
+      "finalUrl": "https://www.goodbodypilates.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hotelcasadelmar.com/",
+      "status": 200,
+      "finalUrl": "https://www.hotelcasadelmar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hoteloceanasantamonica.com/",
+      "status": 200,
+      "finalUrl": "https://www.hoteloceanasantamonica.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.perspiresaunastudio.com/locations/santa-monica/",
+      "status": 200,
+      "finalUrl": "https://www.perspiresaunastudio.com/locations/santa-monica",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://phoenixclassicalpilates.com/",
+      "status": 200,
+      "finalUrl": "https://phoenixclassicalpilates.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.puroclean.com/west-los-angeles-ca/",
+      "status": 403,
+      "finalUrl": "https://www.puroclean.com/west-los-angeles-ca/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://santamonica.regenthotels.com/",
+      "status": 200,
+      "finalUrl": "https://santamonica.regenthotels.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebikecenter.com/santa-monica/",
+      "status": 200,
+      "finalUrl": "https://thebikecenter.com/santa-monica/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.santamonica.com/things-to-do/santa-monica-bike-center/",
+      "status": 200,
+      "finalUrl": "https://www.santamonica.com/things-to-do/santa-monica-bike-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.properhotel.com/santa-monica/wellness/",
+      "status": 200,
+      "finalUrl": "https://www.properhotel.com/santa-monica/wellness/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.shuttersonthebeach.com/",
+      "status": 200,
+      "finalUrl": "https://www.shuttersonthebeach.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.speirpilates.com/",
+      "status": 200,
+      "finalUrl": "https://speirpilates.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sportsfitphysicaltherapy.com/",
+      "status": 403,
+      "finalUrl": "https://sportsfitpt.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.thegeorgian.com/",
+      "status": 200,
+      "finalUrl": "https://www.thegeorgian.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theravenspa.com/santa-monica/",
+      "status": 200,
+      "finalUrl": "https://theravenspa.com/santa-monica/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parks.lacounty.gov/el-cariso-golf-course/",
+      "status": 200,
+      "finalUrl": "https://parks.lacounty.gov/el-cariso-golf-course/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.lamission.edu/",
+      "status": 403,
+      "finalUrl": "http://www.lamission.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.tiachucha.org/",
+      "status": 200,
+      "finalUrl": "https://www.tiachucha.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.parks.ca.gov/?page_id=629",
+      "status": 200,
+      "finalUrl": "https://www.parks.ca.gov/?page_id=629",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.lavc.edu/",
+      "status": 403,
+      "finalUrl": "http://www.lavc.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.beyondbaroque.org/",
+      "status": 200,
+      "finalUrl": "https://www.beyondbaroque.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaches.lacounty.gov/venice-beach/",
+      "status": 200,
+      "finalUrl": "https://beaches.lacounty.gov/venice-beach/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.optimumseismic.com/",
+      "status": 200,
+      "finalUrl": "https://www.optimumseismic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.1hotels.com/west-hollywood",
+      "status": 200,
+      "finalUrl": "https://www.1hotels.com/west-hollywood",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aarmy.com/home",
+      "status": 200,
+      "finalUrl": "https://www.aarmy.com/home",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barrys.com/studio/west-hollywood/",
+      "status": 200,
+      "finalUrl": "https://www.barrys.com/studio/west-hollywood",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beachesweho.com/",
+      "status": 200,
+      "finalUrl": "https://beachesweho.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.booksoup.com/",
+      "status": 403,
+      "finalUrl": "https://booksoup.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.brandoni-pepperoni.com/",
+      "status": 200,
+      "finalUrl": "https://www.brandoni-pepperoni.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brick.fit/",
+      "status": 200,
+      "finalUrl": "https://www.brick.fit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.weho.org/community/arts-and-culture/literary-arts",
+      "status": 403,
+      "finalUrl": "https://www.weho.org/community/arts-and-culture/literary-arts",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.thedogpound.com/training",
+      "status": 200,
+      "finalUrl": "https://www.thedogpound.com/training/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hamburgermarys.com/weho/",
+      "status": 403,
+      "finalUrl": "https://www.hamburgermarys.com/weho/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://hotpilates.com/",
+      "status": 200,
+      "finalUrl": "https://hotpilates.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://us.johnreed.fitness/clubs/west-hollywood/",
+      "status": 200,
+      "finalUrl": "https://us.johnreed.fitness/clubs/west-hollywood/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jqinternational.org/",
+      "status": 200,
+      "finalUrl": "https://jqinternational.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mazerlesbianarchives.org/",
+      "status": 200,
+      "finalUrl": "https://www.mazerlesbianarchives.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kinrgy.com/westhollywood",
+      "status": 200,
+      "finalUrl": "https://www.kinrgy.com/westhollywood",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://laglcc.org/",
+      "status": 200,
+      "finalUrl": "https://laglcc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mickys.com/",
+      "status": 200,
+      "finalUrl": "https://mickys.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mysterypierbooks.com/",
+      "status": 200,
+      "finalUrl": "https://www.mysterypierbooks.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oneinstitute.org/",
+      "status": 200,
+      "finalUrl": "https://www.oneinstitute.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://opvsfitness.com/opvs-norma-triangle",
+      "status": 200,
+      "finalUrl": "https://opvsfitness.com/opvs-norma-triangle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://opvsfitness.com/opvs-weho-1",
+      "status": 200,
+      "finalUrl": "https://opvsfitness.com/opvs-weho-1",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://studios.pvolve.com/los-angeles-west-hollywood",
+      "status": 200,
+      "finalUrl": "https://studios.pvolve.com/los-angeles-west-hollywood",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.reeboklab.com/",
+      "status": 200,
+      "finalUrl": "https://www.reeboklab.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://revolverweho.com/",
+      "status": 200,
+      "finalUrl": "https://revolverweho.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://speirpilates.com/",
+      "status": 200,
+      "finalUrl": "https://speirpilates.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://aidsmonument.org/",
+      "status": 200,
+      "finalUrl": "https://aidsmonument.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tashmans.com/",
+      "status": 200,
+      "finalUrl": "https://www.tashmans.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theabbeyweho.com/",
+      "status": 200,
+      "finalUrl": "https://theabbeyweho.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.marriott.com/en-us/hotels/laxeb-the-west-hollywood-edition/overview/",
+      "status": 200,
+      "finalUrl": "https://www.marriott.com/en-us/hotels/laxeb-the-west-hollywood-edition/overview/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trainingmate.com/locations/west-hollywood/",
+      "status": 200,
+      "finalUrl": "https://trainingmate.com/studios/west-hollywood/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trunksbar.com/",
+      "status": 200,
+      "finalUrl": "https://trunksbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wehopride.com/",
+      "status": 200,
+      "finalUrl": "https://www.wehopride.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wh2o.org/page/home",
+      "status": 200,
+      "finalUrl": "https://www.wh2o.org/page/home",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacountylibrary.org/west-hollywood-library/",
+      "status": 200,
+      "finalUrl": "https://lacountylibrary.org/location/west-hollywood-library/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fourseasons.com/westlakevillage/",
+      "status": 403,
+      "finalUrl": "https://www.fourseasons.com/westlakevillage/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.shoprunwayboutiquela.com/",
+      "status": 200,
+      "finalUrl": "https://www.shoprunwayboutiquela.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.lahc.edu/",
+      "status": 403,
+      "finalUrl": "http://www.lahc.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.thrivehealthlab.com/",
+      "status": 200,
+      "finalUrl": "https://www.coachlalav.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.piercecollege.edu/",
+      "status": 403,
+      "finalUrl": "http://www.piercecollege.edu/",
+      "outcome": "review_required"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or non-success response is a review gate, not a closure determination. This file cannot publish any record."
+}
