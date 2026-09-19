@@ -30,6 +30,12 @@ export type ContextualResearchDeps = {
   searchLive?: (queries: string[], signal?: AbortSignal) => Promise<ContextualEvidenceItem[]>;
   primaryProvider?: ExternalResearchProvider;
   fallbackProvider?: ExternalResearchProvider;
+  /**
+   * A public source that the member explicitly asked Kinfolk to summarize.
+   * It is searched separately and only an exact URL match is admitted as
+   * article evidence; related reporting can never stand in for this source.
+   */
+  requestedArticleUrl?: string | null;
   timeoutMs?: number;
   signal?: AbortSignal;
   now?: () => string;
@@ -86,6 +92,10 @@ function sourceIdentity(url: string): string {
   const host = hostname(url);
   const parts = host.split(".");
   return parts.length > 2 ? parts.slice(-2).join(".") : host;
+}
+
+function sourceUrlKey(value: string): string | null {
+  return canonicalizeContextualUrl(value)?.replace(/[?#].*$/, "") ?? null;
 }
 
 function isOfficialHost(host: string): boolean {
@@ -227,14 +237,57 @@ async function searchProvider(
   maxResults: number,
   now: string,
   signal: AbortSignal,
+  allowedDomains: string[] = [],
 ): Promise<ContextualEvidenceItem[]> {
   throwIfAborted(signal);
-  const result = await provider.search({ query, allowedDomains: [], maxResults, signal });
+  const result = await provider.search({ query, allowedDomains, maxResults, signal });
   throwIfAborted(signal);
   return dedupe(result.documents.flatMap((document) => {
     const normalized = fromDocument(document, queries, now, plan);
     return normalized ? [normalized] : [];
   }), maxResults);
+}
+
+async function exactArticleEvidence(
+  plan: SemanticTurnPlan,
+  deps: ContextualResearchDeps,
+  now: string,
+  signal: AbortSignal,
+): Promise<ContextualEvidenceItem[]> {
+  const requestedUrl = typeof deps.requestedArticleUrl === "string"
+    ? sourceUrlKey(deps.requestedArticleUrl)
+    : null;
+  if (!requestedUrl || (!deps.primaryProvider && !deps.fallbackProvider)) return [];
+
+  const sourceHost = new URL(requestedUrl).hostname.toLowerCase();
+  const query = [
+    "Retrieve and summarize this exact public article only.",
+    `Required exact source URL: ${requestedUrl}`,
+    "Do not substitute related coverage or another page from the same publisher.",
+  ].join(" ");
+  const providers = [deps.primaryProvider, deps.fallbackProvider].filter(
+    (provider): provider is ExternalResearchProvider => Boolean(provider),
+  );
+
+  for (const provider of providers) {
+    try {
+      const retrieved = await searchProvider(
+        provider,
+        plan,
+        query,
+        [requestedUrl],
+        3,
+        now,
+        signal,
+        [sourceHost],
+      );
+      const exact = retrieved.filter((item) => sourceUrlKey(item.url) === requestedUrl);
+      if (exact.length > 0) return exact.slice(0, 1);
+    } catch (error) {
+      if (signal.aborted) throw error;
+    }
+  }
+  return [];
 }
 
 async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps, now: string, signal: AbortSignal): Promise<ContextualEvidenceItem[]> {
@@ -314,7 +367,27 @@ export async function orchestrateContextualResearch(
 
     if (!controller.signal.aborted && !internalIsSufficient(plan, internal)) {
       try {
-        external = await runWithinDeadline(liveEvidence(plan, deps, now, controller.signal), controller.signal);
+        const exactArticle = await runWithinDeadline(
+          exactArticleEvidence(plan, deps, now, controller.signal),
+          controller.signal,
+        );
+        try {
+          const live = await runWithinDeadline(
+            liveEvidence(plan, deps, now, controller.signal),
+            controller.signal,
+          );
+          external = dedupe([...exactArticle, ...live]);
+        } catch (error) {
+          // A retrieved exact source is sufficient for an article summary.
+          // Preserve it if ordinary topic research later times out or fails;
+          // do not replace that source with a generic unavailable response.
+          if (exactArticle.length > 0 && !controller.signal.aborted) {
+            external = exactArticle;
+            providerUnavailable = true;
+          } else {
+            throw error;
+          }
+        }
       } catch {
         providerUnavailable = true;
       }
