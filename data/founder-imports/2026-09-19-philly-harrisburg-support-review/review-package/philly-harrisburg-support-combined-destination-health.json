@@ -1,0 +1,525 @@
+{
+  "checkedAt": "2026-09-19T23:15:49.480Z",
+  "sourceManifest": "philly-harrisburg-support-combined-review-only-candidates.jsonl",
+  "candidates": 65,
+  "uniqueDestinations": 85,
+  "counts": {
+    "reachable": 81,
+    "network_error": 1,
+    "timeout": 2,
+    "review_required": 1
+  },
+  "results": [
+    {
+      "url": "https://www.anewtomorrow.info/",
+      "status": 200,
+      "finalUrl": "https://www.anewtomorrow.info/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://abckeystone.org/apprenticeship/",
+      "status": 200,
+      "finalUrl": "https://abckeystone.org/apprenticeship/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.artassocofhbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.artassocofhbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bethesdamission.org/our-ministries/mens-mission/",
+      "status": 200,
+      "finalUrl": "https://www.bethesdamission.org/our-ministries/mens-mission/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/bethesdamission",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbethesdamission&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.broadstreetmarket.org/",
+      "status": 200,
+      "finalUrl": "https://www.broadstreetmarket.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.capcitymusichall.com/",
+      "status": 200,
+      "finalUrl": "https://www.capcitymusichall.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ccuhbg.org/",
+      "status": 200,
+      "finalUrl": "https://www.ccuhbg.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ccuhbg",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/ccuhbg",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://harrisburgpa.gov/services/parks_recreation/index.php",
+      "status": 200,
+      "finalUrl": "https://harrisburgpa.gov/services/parks_recreation/index.php",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harrisburgpa.gov/events/index.php",
+      "status": 200,
+      "finalUrl": "https://www.harrisburgpa.gov/events/index.php",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pa.gov/agencies/dhs/contact/cao-information",
+      "status": 200,
+      "finalUrl": "https://www.pa.gov/agencies/dhs/contact/cao-information",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dauphincounty.gov/government/human-services/mental-health-autism-developmental-programs/mental-health-program/how-to-access-mental-health-services",
+      "status": 200,
+      "finalUrl": "https://www.dauphincounty.gov/government/human-services/mental-health-autism-developmental-programs/mental-health-program/how-to-access-mental-health-services",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dauphincounty.gov/government/human-services/drug-alcohol-services/treatment-services",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://dcts.org/workforce-development/",
+      "status": 200,
+      "finalUrl": "https://dcts.org/workforce-development/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dauphincounty.gov/government/support-services/veterans-affairs",
+      "status": 200,
+      "finalUrl": "https://www.dauphincounty.gov/government/support-services/veterans-affairs",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://downtowndailybread.org/",
+      "status": 200,
+      "finalUrl": "https://downtowndailybread.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gamuttheatre.org/",
+      "status": 200,
+      "finalUrl": "https://www.gamuttheatre.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gaudenzia.org/location/gaudenzia-harrisburg-outpatient/",
+      "status": 200,
+      "finalUrl": "https://www.gaudenzia.org/location/gaudenzia-harrisburg-outpatient/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dcls.org/",
+      "status": 200,
+      "finalUrl": "https://www.dcls.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://greystonepa.com/",
+      "status": 200,
+      "finalUrl": "https://greystonepa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hacc.edu/ProgramsandCourses/AdultEducationGED/general-education-diploma-ged-preparation-classes.cfm",
+      "status": 200,
+      "finalUrl": "https://www.hacc.edu/ProgramsandCourses/AdultEducationGED/general-education-diploma-ged-preparation-classes.cfm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://harrisburgsymphony.org/",
+      "status": 200,
+      "finalUrl": "https://harrisburgsymphony.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.midpenn.org/what-we-do/services.html",
+      "status": 200,
+      "finalUrl": "https://www.midpenn.org/what-we-do/services.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.midtowncinema.com/",
+      "status": 200,
+      "finalUrl": "https://www.midtowncinema.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.midtownscholar.com/",
+      "status": 200,
+      "finalUrl": "https://www.midtownscholar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.openstagehbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.openstagehbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://scpaworks.org/contact/",
+      "status": 200,
+      "finalUrl": "https://scpaworks.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.pathfwd.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.pa.gov/agencies/penndot/regional-offices",
+      "status": 200,
+      "finalUrl": "https://www.pa.gov/agencies/penndot/regional-offices",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pa.gov/agencies/farmshow",
+      "status": 200,
+      "finalUrl": "https://www.pa.gov/agencies/farmshow",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pnfm.org/",
+      "status": 200,
+      "finalUrl": "https://pnfm.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pa.gov/services/dli/apply-for-vocational-rehabilitation-services",
+      "status": 200,
+      "finalUrl": "https://www.pa.gov/services/dli/apply-for-vocational-rehabilitation-services",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://susquehannaartmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://susquehannaartmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.teccentrocr.org/about-us",
+      "status": 200,
+      "finalUrl": "https://www.teccentrocr.org/about-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.abcbrew.com/harrisburg/abbey-bar",
+      "status": 200,
+      "finalUrl": "https://www.abcbrew.com/harrisburg/abbey-bar",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.millworksharrisburg.com/",
+      "status": 200,
+      "finalUrl": "https://millworksharrisburg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nationalcivilwarmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.nationalcivilwarmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theatreharrisburg.com/",
+      "status": 200,
+      "finalUrl": "https://theatreharrisburg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cactricounty.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://tricountyoic.org/reentry-services/",
+      "status": 200,
+      "finalUrl": "https://tricountyoic.org/reentry-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/tricounty_oic/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftricounty_oic%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urbanair.com/pennsylvania-harrisburg/",
+      "status": 200,
+      "finalUrl": "https://www.urbanair.com/pennsylvania-harrisburg/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.whitakercenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.whitakercenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.xlhbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.xlhbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ywcahbg.org/programs/housing-and-homelessness/",
+      "status": 200,
+      "finalUrl": "https://www.ywcahbg.org/programs/housing-and-homelessness/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/ywcahbg",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fywcahbg&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pennmedicine.org/specialties/cancer/about-abramson-cancer-center",
+      "status": 200,
+      "finalUrl": "https://www.pennmedicine.org/specialties/cancer/about-abramson-cancer-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/pennmedicine/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fpennmedicine%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://broadstreetlove.org/",
+      "status": 200,
+      "finalUrl": "https://broadstreetlove.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/broadstreetlove/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbroadstreetlove%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cancersupportphiladelphia.org/",
+      "status": 200,
+      "finalUrl": "https://cancersupportphiladelphia.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/cscphilly/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcscphilly%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ccphila.org/",
+      "status": 200,
+      "finalUrl": "https://ccphila.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/ccharitiesphila/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fccharitiesphila%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://congreso.net/",
+      "status": 200,
+      "finalUrl": "https://congreso.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/congreso1977/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fcongreso1977%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/departments/department-of-behavioral-health-and-intellectual-disability-services/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/departments/department-of-behavioral-health-and-intellectual-disability-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/dbhids/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdbhids%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://frnfamilies.org/",
+      "status": 200,
+      "finalUrl": "https://frnfamilies.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.foxchase.org/",
+      "status": 200,
+      "finalUrl": "https://www.foxchase.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/foxchasecancercenter",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ffoxchasecancercenter&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.interfaithphiladelphia.org/",
+      "status": 200,
+      "finalUrl": "https://www.interfaithphiladelphia.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/interfaithpa/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Finterfaithpa%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mannapa.org/",
+      "status": 200,
+      "finalUrl": "https://mannapa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mannanourishes/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmannanourishes%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://namiphilly.org/",
+      "status": 403,
+      "finalUrl": "https://namiphilly.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/namiphiladelphia/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnamiphiladelphia%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.philabundance.org/",
+      "status": 200,
+      "finalUrl": "https://www.philabundance.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/philabundance/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fphilabundance%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pcacares.org/",
+      "status": 200,
+      "finalUrl": "https://pcacares.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/PCACares.org/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/PCACares.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fight.org/",
+      "status": 200,
+      "finalUrl": "https://fight.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/pages/Philadelphia-FIGHT/80411861715",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/FIGHTPHL/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/departments/medical-examiners-office/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/departments/medical-examiners-office/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ppponline.org/",
+      "status": 200,
+      "finalUrl": "https://ppponline.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/preventionpointphiladelphia/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fpreventionpointphiladelphia%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.councilsepa.org/pro-act-recovery-support-services/",
+      "status": 200,
+      "finalUrl": "https://www.councilsepa.org/pro-act-recovery-support-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thecouncilsepa/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthecouncilsepa%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://seniorlawcenter.org/",
+      "status": 200,
+      "finalUrl": "https://seniorlawcenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/seniorlawcenter/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fseniorlawcenter%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sharefoodprogram.org/",
+      "status": 200,
+      "finalUrl": "https://www.sharefoodprogram.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/sharefoodphilly/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsharefoodphilly%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://upliftphilly.org/",
+      "status": 200,
+      "finalUrl": "https://upliftphilly.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/upliftcenter/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fupliftcenter%2F&is_from_rle",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. Any timeout, network failure, not-checked result, or review-required response must remain a review gate before publication."
+}
