@@ -1,0 +1,50 @@
+[
+  {
+    "duplicateKey": "physical|soul bowl|minneapolis|mn|428 s 2nd st",
+    "retained": {
+      "name": "Soul Bowl",
+      "file": "minneapolis-culture-connection-candidates.jsonl",
+      "line": 18,
+      "sourceUrl": "https://www.minneapolis.org/food-drink/restaurants/black-owned/"
+    },
+    "duplicate": {
+      "name": "Soul Bowl",
+      "file": "minneapolis-dining-social-candidates.jsonl",
+      "line": 4,
+      "sourceUrl": "https://www.minneapolis.org/food-drink/restaurants/black-owned/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|tamu grill and catering|minneapolis|mn|1829 riverside ave",
+    "retained": {
+      "name": "TAMU Grill and Catering",
+      "file": "minneapolis-culture-connection-candidates.jsonl",
+      "line": 19,
+      "sourceUrl": "https://www.minneapolis.org/food-drink/restaurants/black-owned/"
+    },
+    "duplicate": {
+      "name": "Tamu Grill and Catering",
+      "file": "minneapolis-dining-social-candidates.jsonl",
+      "line": 5,
+      "sourceUrl": "https://www.minneapolis.org/food-drink/restaurants/black-owned/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  },
+  {
+    "duplicateKey": "physical|the dripping root|minneapolis|mn|4002 minnehaha ave",
+    "retained": {
+      "name": "The Dripping Root",
+      "file": "minneapolis-culture-connection-candidates.jsonl",
+      "line": 17,
+      "sourceUrl": "https://www.minneapolis.org/food-drink/restaurants/black-owned/"
+    },
+    "duplicate": {
+      "name": "The Dripping Root",
+      "file": "minneapolis-dining-social-candidates.jsonl",
+      "line": 7,
+      "sourceUrl": "https://www.minneapolis.org/food-drink/restaurants/black-owned/"
+    },
+    "reason": "normalized_name_city_state_address_or_destination_match"
+  }
+]

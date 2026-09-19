@@ -1,0 +1,40 @@
+{
+  "package": "2026-09-19-minneapolis-profile-combined-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "source_consolidated_candidates": 69,
+  "accepted_review_only_candidates": 69,
+  "held_candidates": 0,
+  "held_reason_counts": {},
+  "accepted_by_target_kind": {
+    "business": 45,
+    "regulated_review": 6,
+    "community_resource": 9,
+    "cultural_place": 7,
+    "online_business": 2
+  },
+  "preliminary_review_status_counts": {
+    "pending_review": 62,
+    "needs_research": 7
+  },
+  "manifest_sha256": "76370ede4d3afb6de08525d1d3b7f4013240dd7c2cbaaac97c3e72a2cee4ec7f",
+  "source_manifest": "/home/ubuntu/melanin-maps-minneapolis-profile-review/data/founder-imports/2026-09-19-minneapolis-profile-review/consolidated/minneapolis-profile-consolidated-candidates.jsonl",
+  "source_manifest_sha256": "6fe163b03e74e4a4a60957f04577cb5d1281b42b0cc6f9f668c2c08db95ae4e8",
+  "destination_health": {
+    "candidates": 69,
+    "unique_destinations": 79,
+    "by_outcome": {
+      "reachable": 72,
+      "review_required": 6,
+      "network_error": 1
+    }
+  },
+  "safeguards": [
+    "This package has no production database connection and cannot publish a business, map pin, resource, or cultural listing.",
+    "Records without a structurally valid customer-facing official destination remain in the held file.",
+    "A timeout, network error, or non-success HTTP response remains a needs-research gate, not a closure determination.",
+    "Community resources and cultural places remain outside the commercial-business map-pin path.",
+    "Regulated-review records require licensing or authority review before any publication.",
+    "Existing-record reconciliation remains required during authorized reviewer staging.",
+    "No user, authentication, password, session, access, or waitlist record is included or modified."
+  ]
+}
