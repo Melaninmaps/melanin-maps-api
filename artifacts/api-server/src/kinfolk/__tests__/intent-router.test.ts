@@ -168,6 +168,16 @@ describe("false positive guard (must NOT be high-consequence)", () => {
   });
 });
 
+describe("business-card eligibility", () => {
+  it("does not turn a remembered city into a business request", () => {
+    expect(classifyIntent("What has Barack Obama done?", true)).toBe("general_knowledge");
+  });
+
+  it("keeps an explicit Philadelphia nightlife request in directory discovery", () => {
+    expect(classifyIntent("Show me Philadelphia nightlife", true)).toBe("business_discovery");
+  });
+});
+
 // ─── Provenance labels ────────────────────────────────────────────────────────
 
 describe("provenance labels", () => {
