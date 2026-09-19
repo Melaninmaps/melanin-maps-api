@@ -340,6 +340,10 @@ export function FullMapView({
   const [searchedLocality, setSearchedLocality] = useState<ReturnType<
     typeof parseMapSearchLocality
   >>(null);
+  // Keep the member's draft separate from the submitted request so typing in
+  // the map toolbar never floods the business API or resets a local map view.
+  const [businessSearchInput, setBusinessSearchInput] = useState("");
+  const [submittedBusinessSearch, setSubmittedBusinessSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [designationIds, setDesignationIds] = useState<string[]>([]);
   const [showDesignationFilters, setShowDesignationFilters] = useState(false);
@@ -429,7 +433,12 @@ export function FullMapView({
   // GPS remains on-device. Confirmed device coordinates are proximity-ranked;
   // a profile home locality is a city/state fallback. No ordinary map request
   // is allowed to omit both locality sources.
-  const { businesses } = useBusinesses({
+  const {
+    businesses,
+    isLoading: isBusinessSearchLoading,
+    error: businessSearchError,
+  } = useBusinesses({
+    search: submittedBusinessSearch,
     latitude: memberLocation?.latitude ?? null,
     longitude: memberLocation?.longitude ?? null,
     city: mapLocality?.city,
@@ -493,6 +502,7 @@ export function FullMapView({
             ? b.category === "Health & Wellness"
             : b.category === activeCategory)),
   );
+  const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
 
   // A focused Kinfolk/travel link is an explicit single-place request. Load only
   // that item instead of widening the default tour layer to a global collection.
@@ -1428,6 +1438,50 @@ export function FullMapView({
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Search stays local to the current city or precise-location scope. */}
+        <View style={s.businessSearchWrap}>
+          <Feather name="search" size={16} color="#F5EBD8" />
+          <TextInput
+            value={businessSearchInput}
+            onChangeText={setBusinessSearchInput}
+            onSubmitEditing={() => {
+              setSubmittedBusinessSearch(businessSearchInput.trim());
+              setSelectedBusiness(null);
+            }}
+            placeholder="Search businesses or services"
+            placeholderTextColor="rgba(255,255,255,0.72)"
+            style={s.businessSearchInput}
+            returnKeyType="search"
+            accessibilityLabel="Search businesses on this map"
+          />
+          {businessSearchInput.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setBusinessSearchInput("");
+                setSubmittedBusinessSearch("");
+                setSelectedBusiness(null);
+              }}
+              accessibilityLabel="Clear business search"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={15} color="#F5EBD8" />
+            </TouchableOpacity>
+          )}
+        </View>
+        {hasSubmittedBusinessSearch && (
+          <View style={s.businessSearchStatus}>
+            <Text style={s.businessSearchStatusText}>
+              {isBusinessSearchLoading
+                ? "Searching local listings…"
+                : businessSearchError
+                  ? "Couldn’t search local listings. Try again."
+                  : mapped.length > 0
+                    ? `${mapped.length} mapped local result${mapped.length === 1 ? "" : "s"}`
+                    : "No mapped local results. Try another name, service, or location."}
+            </Text>
+          </View>
+        )}
 
         {!mapLocality && !exploringAllAreas && (
           <View style={s.localityPrompt}>
@@ -2825,6 +2879,37 @@ const s = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 13,
     paddingVertical: 8,
+  },
+  businessSearchWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: "rgba(31,15,5,0.88)",
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.72)",
+  },
+  businessSearchInput: {
+    flex: 1,
+    color: "#fff",
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    paddingVertical: 9,
+  },
+  businessSearchStatus: {
+    marginHorizontal: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.58)",
+  },
+  businessSearchStatusText: {
+    color: "#F5EBD8",
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
   },
   localityPrompt: {
     marginHorizontal: 12,

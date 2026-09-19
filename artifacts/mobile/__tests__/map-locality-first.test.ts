@@ -104,4 +104,13 @@ describe("FullMapView locality-first contracts", () => {
     expect(businessHookSource).toContain('params.set("city", city.trim())');
     expect(businessHookSource).toContain('params.set("state", state.trim())');
   });
+
+  it("adds a submitted business search without widening the member's local map scope", () => {
+    expect(fullMapSource).toContain('accessibilityLabel="Search businesses on this map"');
+    expect(fullMapSource).toContain('placeholder="Search businesses or services"');
+    expect(fullMapSource).toContain("search: submittedBusinessSearch");
+    expect(fullMapSource).toContain("setSubmittedBusinessSearch(businessSearchInput.trim())");
+    expect(fullMapSource).toContain('enabled: exploringAllAreas || mapLocality !== null');
+    expect(fullMapSource).toContain('accessibilityLabel="Clear business search"');
+  });
 });
