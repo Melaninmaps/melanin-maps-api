@@ -5252,7 +5252,9 @@ export function communityPublicViewDefinitionIsSafe(
     normalizeCatalogSql((value ?? "").replace(/\bb\./g, ""))
       .replace(/\bpublic\./g, "");
   const sql = normalizeViewSql(definition);
-  const whereAt = sql.lastIndexOf(" where ");
+  // The duplicate-resolution guard contains a nested NOT EXISTS ... WHERE.
+  // Compare from the view's outer WHERE, not the subquery's final WHERE.
+  const whereAt = sql.indexOf(" where ");
   if (whereAt < 0) return false;
   const actualFilter = sql
     .slice(whereAt + " where ".length)
