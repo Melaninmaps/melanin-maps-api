@@ -32,4 +32,12 @@ describe("Kinfolk universal assistant and culturally relevant lens contract", ()
     expect(routeSource).toContain("Current interest rates, news, laws, prices, elections, schedules");
     expect(routeSource).toContain("require current authoritative evidence");
   });
+
+  it("uses attached screenshots for safe step-by-step guidance without handling secrets or claiming external actions", () => {
+    expect(routeSource).toContain("SCREENSHOT AND VISUAL GUIDANCE");
+    expect(routeSource).toContain("give one safe, reversible next step at a time");
+    expect(routeSource).toContain("You cannot operate another website");
+    expect(routeSource).toContain("Never ask for, repeat, or encourage a member to paste a password");
+    expect(routeSource).toContain("Do not claim that a deployment, purchase, publication, deletion");
+  });
 });
