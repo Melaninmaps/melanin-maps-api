@@ -230,6 +230,13 @@ const BUSINESS_DISCOVERY_SIGNALS = [
   /\b(restaurant|cafe|barber|salon|spa|beauty|hair|nails|nail|braids|braiding|locs|natural hair|massage|chiropractor|gym|fitness|studio|grocery|market|pharmacy|bakery|food|dinner|lunch|breakfast|brunch|bar|lounge|club|nightlife|hotel|motel|airbnb|shop|store|boutique|boutiques|retail|clothes|clothing|shoes|jewelry|book store|flower|florist|auto|car wash|mechanic|dentist|doctor|clinic|daycare|church|mosque|temple|service|lawyer|accountant|contractor|realtor|photographer|caterer|event|venue|spot|place|spots|places|near me|nearby|in \w+|around \w+)\b/i,
 ];
 
+// A remembered city is context, not permission to attach local-business cards to
+// every answer. Require both a local category and a concrete discovery action,
+// unless the member explicitly supplied a destination with that category.
+const DISCOVERY_ACTION_SIGNALS = [
+  /\b(find|show|recommend|suggest|where|near me|nearby|around me|looking for|need|book|visit|try|go to|buy|order)\b/i,
+];
+
 // Education discovery — colleges, universities, HBCUs, degree programs, schools.
 // Must be checked BEFORE business_discovery so "colleges near me" doesn't route to
 // business_discovery via the "near me" pattern in BUSINESS_DISCOVERY_SIGNALS.
@@ -242,10 +249,14 @@ const EDUCATION_SIGNALS = [
 /**
  * Classify the user message into a KinfolkIntent.
  * Uses a priority ladder: high-consequence intents are checked first.
- * Falls back to business_discovery if a city/destination is detectable, else general_knowledge.
+ * Falls back to general knowledge unless a concrete domain signal is present.
  */
 export function classifyIntent(message: string, hasDestination: boolean): KinfolkIntent {
   const msg = message.toLowerCase();
+  const hasBusinessSignal = BUSINESS_DISCOVERY_SIGNALS.some((re) => re.test(msg));
+  const isExplicitLocalDiscovery =
+    hasBusinessSignal &&
+    (hasDestination || DISCOVERY_ACTION_SIGNALS.some((re) => re.test(msg)));
 
   // Safety emergency — absolute top priority
   if (SAFETY_EMERGENCY_SIGNALS.some((re) => re.test(msg))) return "safety_emergency";
@@ -258,18 +269,18 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   // Current information (time-sensitive)
   if (CURRENT_INFO_SIGNALS.some((re) => re.test(msg))) return "current_information";
 
-  // Culture & entertainment — checked BEFORE business_discovery so that queries
-  // about artists, musicians, or cultural figures in a named city (e.g. "best rapper
-  // from Philadelphia") route to culture_entertainment rather than falling through to
-  // hasDestination → business_discovery.
-  if (CULTURE_ENTERTAINMENT_SIGNALS.some((re) => re.test(msg))) return "culture_entertainment";
-
-  // Education discovery — must precede business_discovery so "colleges near me" or
-  // "what HBCUs are in Pennsylvania" don't route via the "near me" business pattern.
+  // Education discovery must precede business discovery so "colleges near me" and
+  // "what HBCUs are in Pennsylvania" retain their specialized answer flow.
   if (EDUCATION_SIGNALS.some((re) => re.test(msg))) return "education_discovery";
 
-  // Business discovery (strong MWM catalog signal)
-  if (BUSINESS_DISCOVERY_SIGNALS.some((re) => re.test(msg)) || hasDestination) return "business_discovery";
+  // Explicit local discovery takes priority over broad culture language. For example,
+  // "show me Philadelphia nightlife" should receive listings, while a factual question
+  // about a public figure should not inherit a remembered city or old local cards.
+  if (isExplicitLocalDiscovery) return "business_discovery";
+
+  // Culture & entertainment stays conversational unless the member made an explicit
+  // local-discovery request above.
+  if (CULTURE_ENTERTAINMENT_SIGNALS.some((re) => re.test(msg))) return "culture_entertainment";
 
   // Hobbies & lifestyle
   if (HOBBY_SIGNALS.some((re) => re.test(msg))) return "hobby_lifestyle";

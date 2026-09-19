@@ -204,16 +204,22 @@ export function enforceKinfolkResponse(input: {
   intentClass: string;
 }) {
   const promotion = validatePromotionCandidates(input.modelRecommendations, input.catalog);
+  // Business cards are navigation into the local directory, not a generic response
+  // decoration. A model proposal can only surface when the server classified the
+  // turn as an explicit business-discovery request.
+  const visibleBusinesses = input.intentClass === "business_discovery"
+    ? promotion.businesses
+    : [];
   const education = enforceEducationalSources(input.reply, input.sources, input.libraryAction);
   const safety = safetyEnvelope(input.intentClass, input.sources);
   // A recommendation resolved through the server catalog is already backed by a
   // governed local listing. Do not attach a source-limitation footer to a clearly
   // framed suggestion just because it has no external research citation.
   const hasGovernedLocalSupport =
-    input.intentClass === "business_discovery" && promotion.businesses.length > 0;
+    input.intentClass === "business_discovery" && visibleBusinesses.length > 0;
   return {
     reply: safety ? `${education.reply}\n\n${safety}` : education.reply,
-    recommendations: promotion.businesses.length > 0 ? { businesses: promotion.businesses } : null,
+    recommendations: visibleBusinesses.length > 0 ? { businesses: visibleBusinesses } : null,
     rejectedRecommendations: promotion.rejected,
     sources: education.sources,
     educationalStatus: education.educationalStatus,

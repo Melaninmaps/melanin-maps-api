@@ -496,11 +496,21 @@ export async function resolveEntity(
 
   if (scoredCandidates.length === 0 && looksLikeNamedEntityQuery(message)) {
     const isShortName = looksLikeAmbiguousShortName(message);
+    if (!isShortName) {
+      // A full name that is not yet in the curated entity registry is not ambiguous.
+      // Continue to the normal evidence-backed assistant path rather than blocking a
+      // basic factual question such as "Who was Barack Obama?" behind a false prompt.
+      return {
+        state: "unconfirmed",
+        unconfirmedReason: "No active source-backed candidate found for this query.",
+        qualifier: "Use reliable current sources when a factual answer needs verification.",
+        preferencesUsed: [],
+        sources: [],
+      };
+    }
     return {
       state: "needs_clarification",
-      clarificationQuestion: isShortName
-        ? buildNameDisambiguationQuestion(message)
-        : buildUnconfirmedQuestion(message),
+      clarificationQuestion: buildNameDisambiguationQuestion(message),
       candidates: [],
       preferencesUsed: [],
       sources: [],
@@ -558,13 +568,6 @@ function buildNameDisambiguationQuestion(message: string): string {
   return (
     `Could you tell me a bit more about which "${trimmed}" you mean? ` +
     `A field (music, film, sports, business), country, group, show, or song would help me find the right one.`
-  );
-}
-
-function buildUnconfirmedQuestion(message: string): string {
-  return (
-    `I don't have a verified source for that in my knowledge base right now. ` +
-    `Could you add more context — like a year, country, group, or role — so I can give you a confirmed answer?`
   );
 }
 
