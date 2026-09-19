@@ -5357,10 +5357,42 @@ export async function ensureRequiredPublicationSchema(
       published_at TIMESTAMPTZ NOT NULL DEFAULT now(), outcome TEXT NOT NULL DEFAULT 'created'
     );
     CREATE TABLE IF NOT EXISTS business_duplicate_resolutions (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_key TEXT NOT NULL UNIQUE,
-      canonical_business_id VARCHAR NOT NULL, resolved_by TEXT NOT NULL,
-      resolved_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      job_id UUID,
+      canonical_business_id VARCHAR NOT NULL,
+      superseded_business_id VARCHAR,
+      identity_evidence JSONB,
+      policy_version VARCHAR(80),
+      scoring JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE business_duplicate_resolutions ADD COLUMN IF NOT EXISTS job_id UUID;
+    ALTER TABLE business_duplicate_resolutions ADD COLUMN IF NOT EXISTS superseded_business_id VARCHAR;
+    ALTER TABLE business_duplicate_resolutions ADD COLUMN IF NOT EXISTS identity_evidence JSONB;
+    ALTER TABLE business_duplicate_resolutions ADD COLUMN IF NOT EXISTS policy_version VARCHAR(80);
+    ALTER TABLE business_duplicate_resolutions ADD COLUMN IF NOT EXISTS scoring JSONB;
+    ALTER TABLE business_duplicate_resolutions ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'business_duplicate_resolutions'
+          AND column_name = 'source_key'
+      ) THEN
+        ALTER TABLE business_duplicate_resolutions ALTER COLUMN source_key DROP NOT NULL;
+      END IF;
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'business_duplicate_resolutions'
+          AND column_name = 'resolved_by'
+      ) THEN
+        ALTER TABLE business_duplicate_resolutions ALTER COLUMN resolved_by DROP NOT NULL;
+      END IF;
+    END $$;
+    CREATE UNIQUE INDEX IF NOT EXISTS business_duplicate_resolutions_superseded_idx
+      ON business_duplicate_resolutions (superseded_business_id);
   `);
   const listingStatusMigration = MIGRATIONS.find(
     (migration) => migration.name === "businesses_listing_status_col",
