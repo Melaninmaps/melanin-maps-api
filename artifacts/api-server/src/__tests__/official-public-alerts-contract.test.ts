@@ -8,11 +8,16 @@ const source = (relative: string) => readFileSync(`${root}/${relative}`, "utf8")
 describe("optional official recall and health alerts", () => {
   it("defaults to opt-out and exposes only explicit user settings", () => {
     const settings = source("artifacts/api-server/src/routes/user-settings.ts");
+    const liveSettings = source("artifacts/api-server/src/routes/users.ts");
     const schema = source("lib/db/src/schema/user-settings.ts");
 
     expect(settings).toContain("notifProductRecalls: false");
     expect(settings).toContain("notifPublicHealthAlerts: false");
     expect(settings).toContain('"notifProductRecalls", "notifPublicHealthAlerts"');
+    expect(liveSettings).toContain("notifProductRecalls: officialAlertSettings?.notifProductRecalls ?? false");
+    expect(liveSettings).toContain("notifPublicHealthAlerts: officialAlertSettings?.notifPublicHealthAlerts ?? false");
+    expect(liveSettings).toContain(".insert(userSettingsTable)");
+    expect(liveSettings).toContain("target: userSettingsTable.userId");
     expect(schema).toContain('boolean("notif_product_recalls").notNull().default(false)');
     expect(schema).toContain('boolean("notif_public_health_alerts").notNull().default(false)');
   });

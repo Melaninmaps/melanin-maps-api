@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, usersTable, userPreferencesTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable, userBlocksTable } from "@workspace/db";
+import { db, pool, usersTable, userSettingsTable, userPreferencesTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable, userBlocksTable } from "@workspace/db";
 import { SOCIAL_VIDEO_PLATFORMS, sanitizeSocialVideoPreferences } from "@workspace/constants";
 import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
@@ -710,22 +710,32 @@ router.post("/users/avatar", avatarUpload.single("avatar"), async (req: any, res
 router.get("/users/settings", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required." }); return; }
   try {
-    const [user] = await db.select({
-      notifEvents: usersTable.notifEvents,
-      notifBusiness: usersTable.notifBusiness,
-      notifMessages: usersTable.notifMessages,
-      notifReviews: usersTable.notifReviews,
-      notifCommunity: usersTable.notifCommunity,
-      notifPromotions: usersTable.notifPromotions,
-      notifDigest: usersTable.notifDigest,
-      notifTips: usersTable.notifTips,
-      notifPostNudges: usersTable.notifPostNudges,
-      quietHoursEnabled: usersTable.quietHoursEnabled,
-      quietHoursFrom: usersTable.quietHoursFrom,
-      quietHoursUntil: usersTable.quietHoursUntil,
-    }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+    const [[user], [officialAlertSettings]] = await Promise.all([
+      db.select({
+        notifEvents: usersTable.notifEvents,
+        notifBusiness: usersTable.notifBusiness,
+        notifMessages: usersTable.notifMessages,
+        notifReviews: usersTable.notifReviews,
+        notifCommunity: usersTable.notifCommunity,
+        notifPromotions: usersTable.notifPromotions,
+        notifDigest: usersTable.notifDigest,
+        notifTips: usersTable.notifTips,
+        notifPostNudges: usersTable.notifPostNudges,
+        quietHoursEnabled: usersTable.quietHoursEnabled,
+        quietHoursFrom: usersTable.quietHoursFrom,
+        quietHoursUntil: usersTable.quietHoursUntil,
+      }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1),
+      db.select({
+        notifProductRecalls: userSettingsTable.notifProductRecalls,
+        notifPublicHealthAlerts: userSettingsTable.notifPublicHealthAlerts,
+      }).from(userSettingsTable).where(eq(userSettingsTable.userId, req.user.id)).limit(1),
+    ]);
     if (!user) { res.status(404).json({ error: "User not found." }); return; }
-    res.json(user);
+    res.json({
+      ...user,
+      notifProductRecalls: officialAlertSettings?.notifProductRecalls ?? false,
+      notifPublicHealthAlerts: officialAlertSettings?.notifPublicHealthAlerts ?? false,
+    });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/settings error");
     res.status(500).json({ error: "Failed to fetch settings." });
@@ -739,6 +749,7 @@ router.put("/users/settings", async (req: Request, res: Response) => {
     const {
       notifEvents, notifBusiness, notifMessages, notifReviews,
       notifCommunity, notifPromotions, notifDigest, notifTips, notifPostNudges,
+      notifProductRecalls, notifPublicHealthAlerts,
       quietHoursEnabled, quietHoursFrom, quietHoursUntil,
     } = req.body as Record<string, unknown>;
 
@@ -756,8 +767,35 @@ router.put("/users/settings", async (req: Request, res: Response) => {
     if (typeof quietHoursFrom === "string") patch.quietHoursFrom = quietHoursFrom;
     if (typeof quietHoursUntil === "string") patch.quietHoursUntil = quietHoursUntil;
 
-    if (Object.keys(patch).length === 0) { res.json({ ok: true }); return; }
-    await db.update(usersTable).set(patch).where(eq(usersTable.id, req.user.id));
+    const officialAlertPatch: Partial<{
+      notifProductRecalls: boolean;
+      notifPublicHealthAlerts: boolean;
+    }> = {};
+    if (typeof notifProductRecalls === "boolean") {
+      officialAlertPatch.notifProductRecalls = notifProductRecalls;
+    }
+    if (typeof notifPublicHealthAlerts === "boolean") {
+      officialAlertPatch.notifPublicHealthAlerts = notifPublicHealthAlerts;
+    }
+
+    if (Object.keys(patch).length === 0 && Object.keys(officialAlertPatch).length === 0) {
+      res.json({ ok: true });
+      return;
+    }
+    await Promise.all([
+      Object.keys(patch).length > 0
+        ? db.update(usersTable).set(patch).where(eq(usersTable.id, req.user.id))
+        : Promise.resolve(),
+      Object.keys(officialAlertPatch).length > 0
+        ? db
+            .insert(userSettingsTable)
+            .values({ userId: req.user.id, ...officialAlertPatch })
+            .onConflictDoUpdate({
+              target: userSettingsTable.userId,
+              set: { ...officialAlertPatch, updatedAt: new Date() },
+            })
+        : Promise.resolve(),
+    ]);
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "PUT /api/users/settings error");

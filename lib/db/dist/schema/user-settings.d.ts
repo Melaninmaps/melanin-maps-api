@@ -175,6 +175,40 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        notifProductRecalls: import("drizzle-orm/pg-core").PgColumn<{
+            name: "notif_product_recalls";
+            tableName: "user_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        notifPublicHealthAlerts: import("drizzle-orm/pg-core").PgColumn<{
+            name: "notif_public_health_alerts";
+            tableName: "user_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         quietHoursEnabled: import("drizzle-orm/pg-core").PgColumn<{
             name: "quiet_hours_enabled";
             tableName: "user_settings";
@@ -631,6 +665,40 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    notifProductRecalls: import("drizzle-orm/pg-core").PgColumn<{
+        name: "notif_product_recalls";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    notifPublicHealthAlerts: import("drizzle-orm/pg-core").PgColumn<{
+        name: "notif_public_health_alerts";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     quietHoursEnabled: import("drizzle-orm/pg-core").PgColumn<{
         name: "quiet_hours_enabled";
         tableName: "user_settings";
@@ -1070,6 +1138,40 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
     }, {}, {}>;
     notifPostNudges: import("drizzle-orm/pg-core").PgColumn<{
         name: "notif_post_nudges";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    notifProductRecalls: import("drizzle-orm/pg-core").PgColumn<{
+        name: "notif_product_recalls";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    notifPublicHealthAlerts: import("drizzle-orm/pg-core").PgColumn<{
+        name: "notif_public_health_alerts";
         tableName: "user_settings";
         dataType: "boolean";
         columnType: "PgBoolean";
