@@ -10,6 +10,7 @@ const environment = process.env.APP_ENV ?? "production";
 const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
 const apiOrigin = process.env.EXPO_PUBLIC_API_ORIGIN ?? (domain ? `https://${domain}` : "");
 const revenueCatEnabled = process.env.EXPO_PUBLIC_REVENUECAT_ENABLED === "true";
+const buildPlatform = process.env.EAS_BUILD_PLATFORM ?? "";
 
 if (environment === "staging") {
   if (domain !== "mwm-staging.35.196.78.19.nip.io") {
@@ -29,6 +30,16 @@ if (releaseChannel === "testflight-staging" && environment !== "staging") {
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = ({ config }) => ({
   ...config,
+  // Expo/Gradle reads the top-level version for Android. Keep the independently
+  // approved Android versionName without changing the iOS marketing version.
+  version:
+    buildPlatform === "android" && typeof config.android?.version === "string"
+      ? config.android.version
+      : config.version,
+  runtimeVersion:
+    buildPlatform === "android" && typeof config.android?.runtimeVersion === "string"
+      ? config.android.runtimeVersion
+      : config.runtimeVersion,
   updates: environment === "staging"
     ? { ...(config.updates ?? {}), enabled: false, checkAutomatically: "NEVER" }
     : config.updates,
