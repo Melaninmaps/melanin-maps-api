@@ -83,6 +83,35 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
     res.json({ batches: batches.rows, candidates: candidates.rows, outbox: outbox.rows });
   });
 
+  // The release service needs enough information to decide whether a paused
+  // one-worker publication run can safely resume. Keep this aggregate-only:
+  // do not expose candidate data, event keys, addresses, or raw database error
+  // strings through machine credentials.
+  app.get("/api/founder/directory-import/service/publication-diagnostics", async (req, res) => {
+    if (!operator(req, res)) return;
+    const diagnostics = await reviewPool.query(`
+      SELECT
+        status,
+        CASE
+          WHEN last_error LIKE 'geocode_unverified:%' THEN 'geocode_unverified'
+          WHEN last_error LIKE 'Physical publication requires address and non-zero coordinates.%'
+            THEN 'physical_record_incomplete'
+          WHEN last_error LIKE 'Publication payload hash mismatch.%' THEN 'payload_hash_mismatch'
+          WHEN last_error LIKE 'Command ID payload hash mismatch.%' THEN 'idempotency_hash_mismatch'
+          WHEN last_error IS NULL OR last_error = '' THEN 'none_recorded'
+          ELSE 'unclassified'
+        END AS error_category,
+        COUNT(*)::int AS count,
+        MAX(attempts)::int AS max_attempts,
+        MIN(created_at) AS oldest_created_at,
+        MIN(available_at) AS next_available_at
+      FROM directory_review_outbox
+      WHERE status IN ('failed', 'sending')
+      GROUP BY status, error_category
+      ORDER BY status, error_category`);
+    res.json({ diagnostics: diagnostics.rows });
+  });
+
   app.post("/api/founder/directory-import/ingress", async (req, res) => {
     const authorized = operator(req, res);
     if (!authorized) return;
