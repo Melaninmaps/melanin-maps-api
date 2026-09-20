@@ -15,6 +15,7 @@ const webComments = source("../../web/src/components/community/CommentsDialog.ts
 const mobileProfile = source("../app/(tabs)/profile.tsx");
 const mobileComments = source("../components/PostDetailModal.tsx");
 const mobileReviews = source("../hooks/useReviews.ts");
+const preservationContract = source("../../../docs/guardrails/CROSS_CLIENT_CONTENT_PRESERVATION_CONTRACT.md");
 
 describe("cross-client social record contracts", () => {
   it("uses the shared user record for profile photos on web and mobile", () => {
@@ -42,5 +43,12 @@ describe("cross-client social record contracts", () => {
     expect(mobileComments).toContain(sharedPath);
     expect(webComments).toContain('method: "POST"');
     expect(mobileComments).toContain('method: "POST"');
+  });
+
+  it("treats transient feed failures as recoverable and preserves eligible content", () => {
+    expect(preservationContract).toContain("same durable server-side records");
+    expect(preservationContract).toContain("not removed because of a deployment");
+    expect(preservationContract).toContain("report or automated safety/moderation flag");
+    expect(preservationContract).toContain("a visible retry/recovery state");
   });
 });
