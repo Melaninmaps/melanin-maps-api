@@ -1,3 +1,7 @@
+import {
+  findSafeSearchClarification,
+  type SafeSearchClarification,
+} from "@workspace/constants";
 import type { LibraryRepository, LibrarySearchPage } from "./types";
 
 export type LibrarySearchRepository = LibraryRepository;
@@ -10,6 +14,8 @@ export type LibraryIntentChoice = {
 export type LibrarySearchResponse = LibrarySearchPage & {
   query: string;
   nextCursor: string | null;
+  /** A member-confirmed retry only; no query is silently replaced. */
+  searchClarification: SafeSearchClarification | null;
   /** True only when this signed-in member elected to save context in Profile. */
   preferenceContextApplied: boolean;
   clarification: {
@@ -112,6 +118,45 @@ const HBCU_RESEARCH_TERMS = [
   "historically black college",
   "historically black colleges and universities",
 ] as const;
+
+// Ordinary English learning terms governed by the product, not model-generated
+// guesses. A reader must choose a close correction before source-governed
+// research uses it. Proper names, medical conditions, laws, and financial
+// products are deliberately excluded because a material ambiguity needs a
+// clarification instead of a guess.
+const LIBRARY_QUERY_RECOVERY_TERMS = [
+  "admission",
+  "application",
+  "apprenticeship",
+  "career",
+  "certificate",
+  "certification",
+  "college",
+  "education",
+  "employment",
+  "financial aid",
+  "graduation",
+  "internship",
+  "scholarship",
+  "school",
+  "student",
+  "training",
+  "university",
+] as const;
+
+export function findLibrarySearchClarification(
+  query: string,
+): SafeSearchClarification | null {
+  return findSafeSearchClarification({
+    query,
+    catalogTerms: [
+      ...LIBRARY_QUERY_RECOVERY_TERMS.map((value) => ({ value })),
+      ...LIBRARY_TOPIC_VOCABULARY.flatMap((group) =>
+        group.terms.map((value) => ({ value })),
+      ),
+    ],
+  });
+}
 
 const HVAC_INTENT_CHOICES: LibraryIntentChoice[] = [
   { label: "Training and education", query: "HVAC training education" },
@@ -285,10 +330,12 @@ export async function searchLivingLibrary(
     (result) => result.kind === "topic" && result.entryCount > 0,
   );
   const hasApprovedCoverage = hasApprovedEntry || hasPopulatedTopic;
+  const searchClarification = findLibrarySearchClarification(parsed.query);
 
   return {
     ...page,
     query: parsed.query,
+    searchClarification,
     preferenceContextApplied: rankingContextPatterns.length > 0,
     nextCursor:
       page.results.length > 0 && nextOffset < page.total

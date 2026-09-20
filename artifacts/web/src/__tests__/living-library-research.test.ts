@@ -51,6 +51,13 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain('response.webResearch.status !== "not_needed"');
   });
 
+  it("shows a member-confirmed spelling correction before starting source-governed research", () => {
+    expect(pageSource).toContain("Possible spelling correction");
+    expect(pageSource).toContain("The Library will not assume a different topic.");
+    expect(pageSource).toContain("if (response.searchClarification) return;");
+    expect(pageSource).toContain("!response.searchClarification");
+  });
+
   it("renders an honest retryable provider failure rather than a fake zero-result answer", () => {
     expect(pageSource).toContain("Live research is temporarily unavailable");
     expect(pageSource).toContain("Retry research");

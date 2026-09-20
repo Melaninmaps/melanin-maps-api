@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   encodeLibrarySearchCursor,
+  findLibrarySearchClarification,
   parseLibrarySearchQuery,
   resolveLibrarySearchVocabulary,
   searchLivingLibrary,
@@ -70,6 +71,18 @@ describe("Library search query parsing", () => {
 });
 
 describe("Library internal-first vocabulary", () => {
+  it("offers a member-confirmed correction for a close ordinary English typo", () => {
+    expect(findLibrarySearchClarification("how does universty work")).toMatchObject({
+      suggestedQuery: "how does university work",
+      catalogTerm: "university",
+      source: "returned_catalog_term",
+    });
+  });
+
+  it("does not invent a correction for a materially different word", () => {
+    expect(findLibrarySearchClarification("how does violin work")).toBeNull();
+  });
+
   it("maps an HVAC query to durable topic aliases and escaped internal patterns", () => {
     const vocabulary = resolveLibrarySearchVocabulary("hvac");
 
