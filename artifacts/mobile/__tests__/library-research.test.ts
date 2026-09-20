@@ -20,6 +20,14 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("Research vetted sources");
   });
 
+  it("requires a member to choose a close spelling correction before research", () => {
+    expect(researchScreen).toContain('searchClarification?.kind === "possible_spelling"');
+    expect(researchScreen).toContain("Possible spelling correction");
+    expect(researchScreen).toContain("The Library will not assume a different topic.");
+    expect(researchScreen).toContain("void searchLibrary(search.searchClarification!.suggestedQuery)");
+    expect(researchScreen).toContain("!search?.searchClarification");
+  });
+
   it("shows answer sections, source links, scope, and connected topic tags", () => {
     expect(researchScreen).toContain("const heading = part.match");
     expect(researchScreen).toContain("How this was researched");

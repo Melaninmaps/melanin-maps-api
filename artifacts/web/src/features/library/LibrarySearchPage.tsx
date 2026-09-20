@@ -45,6 +45,12 @@ type LibrarySearchResponse = {
   results: SearchResult[];
   total: number;
   nextCursor: string | null;
+  searchClarification: {
+    kind: "possible_spelling";
+    suggestedQuery: string;
+    prompt: string;
+    source: "returned_catalog_term";
+  } | null;
   clarification: {
     prompt: string;
     choices: Array<{ label: string; query: string }>;
@@ -328,6 +334,9 @@ export function LibrarySearchPage() {
 
   useEffect(() => {
     if (!routeQuery || state !== "ready" || !response || research || researchState !== "idle") return;
+    // A close spelling correction is a member choice, not an automatic rewrite.
+    // Do not spend a source-governed research request until that choice is made.
+    if (response.searchClarification) return;
     const hasPublishedEntry = results.some((result) => result.kind === "entry");
     if (hasPublishedEntry || response.webResearch.status === "not_needed") return;
     // A new general Library question does the source-governed work on its first
@@ -378,6 +387,18 @@ export function LibrarySearchPage() {
           </aside>
         ) : null}
 
+        {response?.searchClarification ? (
+          <aside className="library-search-intents" aria-live="polite">
+            <h2>Possible spelling correction</h2>
+            <p>Choose this only if it matches what you meant. The Library will not assume a different topic.</p>
+            <div>
+              <button onClick={() => navigate(`/library/search?q=${encodeURIComponent(response.searchClarification!.suggestedQuery)}`)} type="button">
+                {response.searchClarification.prompt}
+              </button>
+            </div>
+          </aside>
+        ) : null}
+
         {state !== "idle" && response ? (
           <div className="library-search-heading">
             <div><p className="living-library-eyebrow">Approved internal matches</p><h2>Results for “{response.query}”</h2></div>
@@ -388,7 +409,7 @@ export function LibrarySearchPage() {
         {results.length > 0 ? <div className="library-search-results" aria-label="Library search results">{results.map((result) => <ResultCard key={`${result.kind}-${result.id}`} result={result} />)}</div> : null}
         {response?.nextCursor && state !== "error" ? <button className="library-search-more" disabled={state === "loading"} onClick={() => void loadMore()} type="button">{state === "loading" ? "Loading more…" : "Load more approved results"}</button> : null}
 
-        {state === "ready" && response && !research && response.webResearch.status !== "not_needed" ? (
+        {state === "ready" && response && !research && !response.searchClarification && response.webResearch.status !== "not_needed" ? (
           <section className="library-search-empty library-research-offer">
             <h2>{researchState === "loading" ? "Researching this question from vetted sources…" : "No approved entry answers this yet."}</h2>
             <p>{researchState === "loading" ? "The first search takes a little longer because the Library is gathering, checking, and summarizing sources before it offers related next questions." : `${response.webResearch.message} Reputable sources depend on the topic: medical research uses clinical and public-health authorities; financial research uses regulators and economic research; other topics use their appropriate public-interest, academic, or archival sources.`}</p>

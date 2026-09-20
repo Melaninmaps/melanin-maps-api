@@ -45,6 +45,12 @@ type LibraryEntry = {
 type LibrarySearch = {
   total: number;
   results: Array<({ kind: "entry" } & LibraryEntry) | { kind: "topic"; id: string; title: string; summary: string }>;
+  searchClarification?: {
+    kind: "possible_spelling";
+    suggestedQuery: string;
+    prompt: string;
+    source: "returned_catalog_term";
+  } | null;
 };
 type ResearchScope = {
   domain: string;
@@ -179,8 +185,8 @@ export default function LibraryResearchScreen() {
     }
   }, [question, suggestedQuestion]);
 
-  async function searchLibrary() {
-    const cleaned = question.normalize("NFKC").trim().replace(/\s+/g, " ");
+  async function searchLibrary(questionOverride?: string) {
+    const cleaned = (questionOverride ?? question).normalize("NFKC").trim().replace(/\s+/g, " ");
     if (cleaned.length < 3) {
       setMessage("Enter a question with at least three characters.");
       return;
@@ -196,6 +202,10 @@ export default function LibraryResearchScreen() {
       const internal = payload as LibrarySearch;
       setSearch(internal);
       setState("ready");
+      if (internal.searchClarification?.kind === "possible_spelling" && internal.searchClarification.source === "returned_catalog_term") {
+        setMessage("Choose the possible spelling correction below if it matches what you meant. The Library will not assume a different topic.");
+        return;
+      }
       const hasPublishedEntry = internal.results.some((result) => result.kind === "entry");
       if (!hasPublishedEntry) {
         // First-time questions take longer: Library research gathers and checks
@@ -267,14 +277,29 @@ export default function LibraryResearchScreen() {
         </View>
 
         {message ? <View style={[styles.message, { backgroundColor: "#FFF1EF", borderColor: "#D59A9A" }]}><Text style={{ color: "#8A2424" }}>{message}</Text></View> : null}
+        {search?.searchClarification?.kind === "possible_spelling" && search.searchClarification.source === "returned_catalog_term" ? (
+          <View style={[styles.clarificationCard, { backgroundColor: "#FFF8E8", borderColor: "#CA922B" }]}>
+            <Text style={[styles.clarificationTitle, { color: colors.foreground }]}>Possible spelling correction</Text>
+            <Text style={[styles.clarificationCopy, { color: colors.mutedForeground }]}>Use this only if it is the topic you intended to search.</Text>
+            <TouchableOpacity
+              accessibilityLabel={search.searchClarification.prompt}
+              activeOpacity={0.85}
+              onPress={() => { setQuestion(search.searchClarification!.suggestedQuery); void searchLibrary(search.searchClarification!.suggestedQuery); }}
+              style={[styles.clarificationButton, { borderColor: "#CA922B" }]}
+            >
+              <Text style={styles.clarificationButtonText}>{search.searchClarification.prompt}</Text>
+              <Feather name="arrow-right" size={16} color="#70480F" />
+            </TouchableOpacity>
+          </View>
+        ) : null}
         {internalEntry ? <AnswerCard answer={internalEntry} /> : null}
-        {state === "ready" && search && !internalEntry ? (
+        {state === "ready" && search && !internalEntry && !search.searchClarification ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No approved Library entry answers this yet.</Text>
             <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>You can ask for a current brief from vetted sources. It will remain a pending research candidate until Library review; it is not automatically published for other members.</Text>
           </View>
         ) : null}
-        {searchedQuestion && !research ? (
+        {searchedQuestion && !research && !search?.searchClarification ? (
           <TouchableOpacity activeOpacity={0.85} disabled={state === "researching" || state === "searching"} onPress={() => void researchVettedSources()} style={[styles.researchButton, { borderColor: "#CA922B", backgroundColor: "#FFF8E8", opacity: state === "researching" || state === "searching" ? 0.65 : 1 }]}>
             {state === "researching" ? <ActivityIndicator color="#70480F" /> : <Feather name="book-open" size={18} color="#70480F" />}
             <View style={{ flex: 1 }}>
@@ -320,6 +345,11 @@ const styles = StyleSheet.create({
   searchButtonText: { color: "#fff", fontSize: 14, fontWeight: "800" },
   governanceCopy: { fontSize: 11, lineHeight: 16 },
   message: { borderWidth: 1, borderRadius: 12, padding: 13 },
+  clarificationCard: { borderWidth: 1, borderRadius: 16, padding: 15, gap: 8 },
+  clarificationTitle: { fontSize: 15, fontWeight: "800" },
+  clarificationCopy: { fontSize: 12, lineHeight: 18 },
+  clarificationButton: { alignSelf: "flex-start", minHeight: 40, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 7 },
+  clarificationButtonText: { color: "#70480F", fontSize: 13, fontWeight: "800" },
   emptyCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 7 },
   emptyTitle: { fontSize: 16, fontWeight: "800" },
   emptyCopy: { fontSize: 13, lineHeight: 19 },
