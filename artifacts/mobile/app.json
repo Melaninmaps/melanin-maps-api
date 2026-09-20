@@ -21,7 +21,7 @@
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIRequiresFullScreen": true,
+        "UIRequiresFullScreen": false,
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera when you choose to take a profile or community photo or video.",
         "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses only the photos and videos you select for your profile or community posts.",

@@ -1,7 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useId, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { MwmTopicIcon } from "@/components/brand/MwmTopicIcon";
-import { safePublicExternalHref } from "@/lib/publicExternalUrl";
+import { safeLibrarySourceHref } from "./librarySourceUrl";
 import "@/styles/mwm-topic-icons.css";
 import "./living-library.css";
 
@@ -96,11 +96,6 @@ type ResearchFailure = {
   provider?: { name?: string; status?: ProviderStatus };
   researchScope?: LibraryResearchScope;
 };
-
-/** Only visible HTTPS links leave the app; unsafe schemes and credentials are rejected. */
-export function safeLibrarySourceHref(value: string): string | null {
-  return safePublicExternalHref(value);
-}
 
 function formattedFreshness(value: string): string {
   const date = new Date(value);

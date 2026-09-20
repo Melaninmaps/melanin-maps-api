@@ -94,17 +94,18 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain('if (Platform.OS === "web" || !isFocused || hasRequestedInitialLocationRef.current) return;');
   });
 
-  it("scopes cultural, event, safety, and tour collections until explicit all-area exploration", () => {
+  it("keeps cultural, event, safety, and tour collections local by default", () => {
     expect(fullMapSource).toContain("(!exploringAllAreas && !hasLocalCollectionScope)");
     expect(fullMapSource).toContain("/api/cultural-sites${collectionScopeSuffix}");
     expect(fullMapSource).toContain("/api/events${collectionScopeSuffix}");
     expect(fullMapSource).toContain("/api/safety/heatmap${collectionScopeSuffix}");
-    expect(fullMapSource).toContain('accessibilityLabel="Explore all areas"');
+    expect(fullMapSource).toContain("const exploringAllAreas = false");
+    expect(fullMapSource).not.toContain('accessibilityLabel="Explore all areas"');
   });
 
   it("does not fit an ordinary map to a country-wide coordinate spread", () => {
     expect(fullMapSource).toContain("if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;");
-    expect(fullMapSource).toContain("if (!exploringAllAreas && !isSafeLocalFit(coords)) return;");
+    expect(fullMapSource).toContain("const coordinates = focusedMappedBusinesses.map");
   });
 
   it("keeps the business hook backward-compatible while allowing map views to stop unscoped fetches", () => {
@@ -116,7 +117,7 @@ describe("FullMapView locality-first contracts", () => {
 
   it("adds a submitted business search without widening the member's local map scope", () => {
     expect(fullMapSource).toContain('accessibilityLabel="Search businesses on this map"');
-    expect(fullMapSource).toContain('placeholder="Search businesses or services"');
+    expect(fullMapSource).toContain('placeholder="Search businesses, HBCUs, markets, or services"');
     expect(fullMapSource).toContain("search: submittedBusinessSearch");
     expect(fullMapSource).toContain("setSubmittedBusinessSearch(businessSearchInput.trim())");
     expect(fullMapSource).toContain('enabled: exploringAllAreas || mapLocality !== null');

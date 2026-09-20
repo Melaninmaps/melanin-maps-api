@@ -1,6 +1,11 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import {
+  countMapDiscoveryFocuses,
+  matchesMapDiscoveryFocus,
+  type MapDiscoveryFocus,
+} from "@workspace/constants";
 import { Link, useLocation, useSearch } from "wouter";
-import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
+import { Search, MapPin, X, Navigation, Navigation2, Plus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
@@ -296,6 +301,11 @@ export default function MapPage() {
   // existing control, but a newly opened map never starts as a national list.
   const [nearMeRadius, setNearMeRadius] = useState<number | null>(25);
 
+  // Additive map discovery focus. This only groups the real, already-local
+  // records shown on the map; it does not hide data permanently or infer a
+  // member's identity, health, budget, or other sensitive attributes.
+  const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
+
   // Tracks whether the user explicitly denied location permission so we can
   // show a retry prompt instead of silently falling back to homeCity.
   const [geoPermissionDenied, setGeoPermissionDenied] = useState(false);
@@ -425,6 +435,8 @@ export default function MapPage() {
     // browser GPS callback can never recenter over a city or ZIP the member typed.
     if (localIntent.city) searchViewportLockedRef.current = true;
     setBusinessSearchActive(true);
+    // A direct request always takes precedence over an exploratory grouping.
+    setMapDiscoveryFocus("all");
     setUniversalResults(null);
     setUniversalLoading(true);
     setDetectedLocation(null);
@@ -717,6 +729,37 @@ export default function MapPage() {
       return dA - dB;
     });
   })();
+
+  const discoveryCounts = useMemo(
+    () => countMapDiscoveryFocuses(filtered),
+    [filtered],
+  );
+  const isDiscoveryFilterActive = mapDiscoveryFocus !== "all";
+  const mapDiscoveryRecords = useMemo(
+    () => filtered.filter((business) => matchesMapDiscoveryFocus(business, mapDiscoveryFocus)),
+    [filtered, mapDiscoveryFocus],
+  );
+  const displayedBusinessResults = useMemo(() => {
+    const source = universalResults?.results?.businesses ?? mapDiscoveryRecords;
+    return isDiscoveryFilterActive
+      ? source.filter((business: any) => matchesMapDiscoveryFocus(business, mapDiscoveryFocus))
+      : source;
+  }, [isDiscoveryFilterActive, mapDiscoveryFocus, mapDiscoveryRecords, universalResults]);
+  const discoveryScopeLabel = activeLocalScope?.label ?? "this map area";
+  const activeDiscoveryLabel = isDiscoveryFilterActive
+    ? discoveryCounts.find((focus) => focus.id === mapDiscoveryFocus)?.label ?? "Your selection"
+    : "All nearby places";
+  const activateMapDiscoveryFocus = useCallback((focus: MapDiscoveryFocus) => {
+    // A discovery card is an intentional, reversible map filter. It never
+    // changes listings, pins, saves, or the member's stored preferences.
+    setSearch("");
+    setUniversalResults(null);
+    setDetectedLocation(null);
+    setMapDiscoveryFocus(focus);
+    setBusinessSearchActive(true);
+    setLegendFilter("business");
+    setSidebarOpen(true);
+  }, []);
 
   // One canonical `items` array drives every non-business pin and its matching
   // category row. A panel can never truthfully show zero while these records
@@ -1268,15 +1311,13 @@ export default function MapPage() {
     const localSearchOwnsPins = businessSearchActive && (
       detectedLocation !== null || (userCoords !== null && localSearchIntent.usesDeviceLocation === true)
     );
-    const showBiz = businessSearchActive && Boolean(activeLocalScope || exploreAllAreas) && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
+    const showBiz = (businessSearchActive || isDiscoveryFilterActive) && Boolean(activeLocalScope || exploreAllAreas) && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
     // When universal search returned results, only show those businesses as markers
-    const activeIds = universalResults
-      ? new Set((universalResults.results.businesses ?? []).map((b: any) => b.id as string))
-      : new Set(filtered.map((b) => b.id));
+    const activeIds = new Set(displayedBusinessResults.map((business: any) => business.id as string));
     markersRef.current.forEach((marker, id) => {
       marker.setMap(showBiz && activeIds.has(id) ? mapRef.current : null);
     });
-  }, [activeLocalScope, filtered, legendFilter, businessSearchActive, exploreAllAreas, universalResults]);
+  }, [activeLocalScope, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, exploreAllAreas, detectedLocation, userCoords, search]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"
@@ -1375,6 +1416,7 @@ export default function MapPage() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
+                    setMapDiscoveryFocus("all");
                     if (businessSearchActive) setBusinessSearchActive(false);
                     if (universalResults) setUniversalResults(null);
                     if (detectedLocation) setDetectedLocation(null);
@@ -1388,7 +1430,7 @@ export default function MapPage() {
                 {search && (
                   <button
                     onClick={() => {
-                      setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
+                      setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
                       localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
                     }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5"
@@ -1453,8 +1495,66 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Near Me toggle — only shown in business view when GPS is available */}
-        {!showingCultural && userCoords && (
+        {!showingCultural && activeLocalScope && (
+          <section
+            aria-label="Around you map discovery"
+            data-testid="map-discovery-card"
+            className="px-4 py-3 border-b border-[#CA922B]/20 bg-gradient-to-br from-[#FFFDF8] to-[#FDF5E8] shrink-0"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#CA922B]" aria-hidden="true" />
+                  <h2 className="font-serif font-bold text-[#2B1507] text-sm">Around you</h2>
+                </div>
+                <p className="mt-0.5 text-[11px] leading-snug text-[#3A1F0E]/60">
+                  {filtered.length} mapped {filtered.length === 1 ? "place" : "places"} within {nearMeRadius ?? 10} miles of {discoveryScopeLabel}.
+                </p>
+              </div>
+              {isDiscoveryFilterActive && (
+                <button
+                  type="button"
+                  onClick={() => activateMapDiscoveryFocus("all")}
+                  className="shrink-0 text-[10px] font-bold text-[#CA922B] hover:text-[#9F6E16] hover:underline"
+                >
+                  Show all
+                </button>
+              )}
+            </div>
+
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/45">Start with what you need</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {discoveryCounts.filter((focus) => focus.count > 0).map((focus) => (
+                <button
+                  key={focus.id}
+                  type="button"
+                  onClick={() => activateMapDiscoveryFocus(focus.id)}
+                  aria-pressed={mapDiscoveryFocus === focus.id}
+                  className={`rounded-full border px-2.5 py-1 text-[10px] font-bold transition-colors ${
+                    mapDiscoveryFocus === focus.id
+                      ? "border-[#CA922B] bg-[#CA922B] text-white"
+                      : "border-[#CA922B]/25 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/60 hover:text-[#CA922B]"
+                  }`}
+                >
+                  {focus.count} {focus.label}
+                </button>
+              ))}
+            </div>
+            {discoveryCounts.every((focus) => focus.count === 0) && (
+              <p className="mt-2 text-[11px] leading-snug text-[#3A1F0E]/55">
+                Search a business, need, or city to see matching map results.
+              </p>
+            )}
+            {isDiscoveryFilterActive && (
+              <p data-testid="map-discovery-focus-explanation" className="mt-2 text-[10px] leading-snug text-[#3A1F0E]/55">
+                Showing <strong className="text-[#3A1F0E]/75">{activeDiscoveryLabel.toLowerCase()}</strong> because you chose it. This grouping uses existing listing categories and tags; it does not replace a direct search.
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Nearby radius — available for precise location, profile locality, or an explicit place search. */}
+        {!showingCultural && activeLocalScope && (
           <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0 flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">Near Me</span>
             {[5, 10, 25, 50].map((r) => (
@@ -1480,7 +1580,7 @@ export default function MapPage() {
               ? `${activeCulturalSites.length} ${showingDestinations ? (activeCulturalSites.length === 1 ? "destination" : "destinations") : (activeCulturalSites.length === 1 ? "site" : "sites")}`
               : businessSearchActive
                 ? (() => {
-                    const n = universalResults ? universalResults.totalResults : filtered.length;
+                    const n = displayedBusinessResults.length;
                     return `${n} ${n === 1 ? "result" : "results"}`;
                   })()
                 : "Search businesses, heritage, and more"}
@@ -1667,7 +1767,7 @@ export default function MapPage() {
                 )}
 
                 {/* Business results — local-scoped endpoint when coordinates are known */}
-                {businessSearchActive && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
+                {!isDiscoveryFilterActive && businessSearchActive && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
                   <LocalBusinessResults
                     query={search}
                     subject={parseLocalMapSearch(search).subject}
@@ -1682,14 +1782,14 @@ export default function MapPage() {
                     }
                     onPinsChange={(pins, area) => applyLocalMapViewport(makeMapAdapter(), area, pins)}
                   />
-                ) : businessSearchActive ? (
+                ) : !isDiscoveryFilterActive && businessSearchActive ? (
                   <div className="p-8 text-center">
                     <p className="text-sm font-semibold text-[#2B1507] mb-1">Add a city or ZIP code</p>
                     <p className="text-xs text-[#3A1F0E]/50 leading-relaxed">
                       Search nearby needs a location. Try “bookstores in Atlanta” or enable your location.
                     </p>
                   </div>
-                ) : (universalResults?.results?.businesses ?? filtered).length === 0 ? (
+                ) : displayedBusinessResults.length === 0 ? (
                   <div className="p-8 text-center">
                     <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
                     {detectedLocation ? (
@@ -1737,7 +1837,7 @@ export default function MapPage() {
                     </button>
                     <button
                       onClick={() => {
-                        setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
+                        setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
                         localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
                       }}
                       className="text-xs font-bold text-[#CA922B] hover:underline"
@@ -1746,7 +1846,7 @@ export default function MapPage() {
                     </button>
                   </div>
                 ) : (
-                  (universalResults?.results?.businesses ?? filtered).map((biz: any) => {
+                  displayedBusinessResults.map((biz: any) => {
                 const isRouting = routingBizId === biz.id;
                 return (
                   <div
@@ -1857,13 +1957,53 @@ export default function MapPage() {
 
         {/* Floating search pill — shown when sidebar is closed */}
         {!sidebarOpen && (
-          <button
-            onClick={() => { setSidebarOpen(true); setLegendFilter(null); }}
-            className="absolute top-4 left-4 z-10 bg-white shadow-lg rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#3A1F0E]/10 hover:shadow-xl hover:border-[#CA922B]/30 transition-all"
-          >
-            <Search className="w-4 h-4 text-[#3A1F0E]/50" />
-            <span className="text-sm text-[#3A1F0E]/50 font-medium">Search businesses…</span>
-          </button>
+          <div className="absolute top-4 left-4 z-10 w-[min(21rem,calc(100%-7rem))] space-y-2">
+            <button
+              onClick={() => { setSidebarOpen(true); setLegendFilter(null); }}
+              className="w-full bg-white shadow-lg rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#3A1F0E]/10 hover:shadow-xl hover:border-[#CA922B]/30 transition-all text-left"
+            >
+              <Search className="w-4 h-4 text-[#3A1F0E]/50 shrink-0" />
+              <span className="text-sm text-[#3A1F0E]/50 font-medium">Search businesses, services, HBCUs…</span>
+            </button>
+            {activeLocalScope && (
+              <section
+                aria-label="Around you quick discovery"
+                data-testid="map-discovery-quick-card"
+                className="rounded-2xl border border-[#CA922B]/25 bg-white/95 p-3.5 shadow-lg backdrop-blur-sm"
+              >
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 rounded-full bg-[#CA922B]/12 p-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-[#CA922B]" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-sm font-bold text-[#2B1507]">Around you</p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-[#3A1F0E]/60">
+                      {filtered.length} mapped {filtered.length === 1 ? "place" : "places"} within {nearMeRadius ?? 10} miles of {discoveryScopeLabel}.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {discoveryCounts.filter((focus) => focus.count > 0).slice(0, 4).map((focus) => (
+                    <button
+                      key={focus.id}
+                      type="button"
+                      onClick={() => activateMapDiscoveryFocus(focus.id)}
+                      className="rounded-full border border-[#CA922B]/25 bg-[#FFFDF8] px-2 py-1 text-[10px] font-bold text-[#3A1F0E]/75 transition-colors hover:border-[#CA922B]/60 hover:text-[#CA922B]"
+                    >
+                      {focus.count} {focus.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSidebarOpen(true); setLegendFilter("business"); }}
+                  className="mt-2.5 text-[11px] font-bold text-[#CA922B] hover:text-[#9F6E16] hover:underline"
+                >
+                  Choose a focus or see every nearby pin →
+                </button>
+              </section>
+            )}
+          </div>
         )}
 
         <button

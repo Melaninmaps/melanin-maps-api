@@ -138,3 +138,15 @@ export type {
   HeritageCity,
   HeritageCityResolution,
 } from "./heritage-cities";
+
+// ── Local map discovery grouping ───────────────────────────────────────────
+export {
+  MAP_DISCOVERY_FOCUSES,
+  matchesMapDiscoveryFocus,
+  countMapDiscoveryFocuses,
+} from "./map-discovery";
+export type {
+  MapDiscoveryFocus,
+  MapDiscoveryFocusId,
+  MapDiscoveryRecord,
+} from "./map-discovery";
