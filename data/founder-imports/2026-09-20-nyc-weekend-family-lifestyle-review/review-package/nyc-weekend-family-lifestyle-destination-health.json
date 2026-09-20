@@ -1,0 +1,738 @@
+{
+  "checkedAt": "2026-09-20T01:34:04.121Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-nyc-weekend-review-package/data/founder-imports/2026-09-20-nyc-weekend-family-lifestyle-review/review-package/nyc-weekend-family-lifestyle-review-only-candidates.jsonl",
+  "candidates": 91,
+  "uniqueDestinations": 120,
+  "incremental": {
+    "carriedForward": 0,
+    "newlyChecked": 120
+  },
+  "counts": {
+    "review_required": 11,
+    "reachable": 105,
+    "network_error": 4
+  },
+  "results": [
+    {
+      "url": "https://www.amnh.org/",
+      "status": 403,
+      "finalUrl": "https://www.amnh.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.amnh.org/plan-your-visit",
+      "status": 403,
+      "finalUrl": "https://www.amnh.org/plan-your-visit",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.apollotheater.org/",
+      "status": 200,
+      "finalUrl": "https://www.apollotheater.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://area53nyc.com/dumbo/",
+      "status": 200,
+      "finalUrl": "https://area53nyc.com/dumbo/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aviatorsports.com/",
+      "status": 200,
+      "finalUrl": "https://www.aviatorsports.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barclayscenter.com/",
+      "status": 200,
+      "finalUrl": "https://www.barclayscenter.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barclayscenter.com/arena-info/contact-us",
+      "status": 200,
+      "finalUrl": "https://www.barclayscenter.com/arena-info/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bojoul.com/",
+      "status": 200,
+      "finalUrl": "https://bojoul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bronxzoo.com/",
+      "status": 200,
+      "finalUrl": "https://bronxzoo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bronxzoo.com/plan-your-visit",
+      "status": 200,
+      "finalUrl": "https://bronxzoo.com/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bam.org/",
+      "status": 200,
+      "finalUrl": "https://www.bam.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bbg.org/",
+      "status": 200,
+      "finalUrl": "https://www.bbg.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bbg.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.bbg.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bbg.org/visit/accessibility",
+      "status": 200,
+      "finalUrl": "https://www.bbg.org/visit/accessibility",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklynkids.org/",
+      "status": 200,
+      "finalUrl": "https://www.brooklynkids.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklynkids.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.brooklynkids.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://brooklyn.church/",
+      "status": 200,
+      "finalUrl": "https://brooklyn.church/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brooklynmuseum.org/",
+      "status": 429,
+      "finalUrl": "https://www.brooklynmuseum.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.brooklynmuseum.org/visit",
+      "status": 429,
+      "finalUrl": "https://www.brooklynmuseum.org/visit",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://butterbutcream.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://blackrestaurantweeks.com/new-york-black-restaurant-week/",
+      "status": 307,
+      "finalUrl": "https://blackrestaurantweeks.com/new-york-black-restaurant-week/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cmoneverybody.com/",
+      "status": 200,
+      "finalUrl": "https://www.cmoneverybody.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://casaenriquelic.com/",
+      "status": 200,
+      "finalUrl": "https://casaenriquelic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://casaoranyc.com/",
+      "status": 200,
+      "finalUrl": "https://casaoranyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.casaoranyc.com/",
+      "status": 200,
+      "finalUrl": "https://casaoranyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://centralsynagogue.org/",
+      "status": 200,
+      "finalUrl": "https://centralsynagogue.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.charlespanfriedchicken.com/",
+      "status": 200,
+      "finalUrl": "https://www.charlespanfriedchicken.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cmom.org/",
+      "status": 200,
+      "finalUrl": "https://cmom.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cmom.org/visit/",
+      "status": 200,
+      "finalUrl": "https://cmom.org/plan-your-visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.curlandco.studio/",
+      "status": 200,
+      "finalUrl": "https://www.curlandco.studio/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://demolenyc.com/",
+      "status": 200,
+      "finalUrl": "https://demolenyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ejc-styles.square.site/",
+      "status": 200,
+      "finalUrl": "https://ejc-styles.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://elmuseo.org/",
+      "status": 403,
+      "finalUrl": "https://elmuseo.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.empanadamama.com/",
+      "status": 200,
+      "finalUrl": "https://www.empanadamama.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://filenyc.com/",
+      "status": 200,
+      "finalUrl": "https://www.filenyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flushingtownhall.org/",
+      "status": 200,
+      "finalUrl": "https://www.flushingtownhall.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.getglamdollz.com/",
+      "status": 200,
+      "finalUrl": "https://www.getglamdollz.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gracechurchnyc.org/",
+      "status": 200,
+      "finalUrl": "https://gracechurchnyc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://guactimeusa.com/",
+      "status": 200,
+      "finalUrl": "https://guactimeusa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hairandcobklyn.com/",
+      "status": 200,
+      "finalUrl": "https://hairandcobklyn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hairandcobklyn.com/natural-hair-services/",
+      "status": 200,
+      "finalUrl": "https://hairandcobklyn.com/natural-hair-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harlemhops.com/",
+      "status": 200,
+      "finalUrl": "https://www.harlemhops.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hotworx.net/studio/statenisland-charleston",
+      "status": 200,
+      "finalUrl": "https://www.hotworx.net/studio/statenisland-charleston",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://industrycity.com/",
+      "status": 200,
+      "finalUrl": "https://industrycity.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://industrycity.com/visit/",
+      "status": 200,
+      "finalUrl": "https://industrycity.com/explore-ic/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.icp.org/",
+      "status": 200,
+      "finalUrl": "https://www.icp.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.icp.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.icp.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.islandpops.com/",
+      "status": 200,
+      "finalUrl": "https://www.islandpops.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jcal.org/",
+      "status": 200,
+      "finalUrl": "https://jcal.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://japansociety.org/",
+      "status": 200,
+      "finalUrl": "https://japansociety.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kickaxe.com/brooklyn",
+      "status": 200,
+      "finalUrl": "https://www.kickaxe.com/brooklyn",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://us.atgtickets.com/venues/kings-theatre-brooklyn/",
+      "status": 200,
+      "finalUrl": "https://us.atgtickets.com/venues/kings-theatre-brooklyn/whats-on/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kingstheatre.com/contact/",
+      "status": 200,
+      "finalUrl": "https://us.atgtickets.com/venues/kings-theatre-brooklyn/venue-info/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.kokomonyc.com/",
+      "status": 200,
+      "finalUrl": "https://www.kokomonyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lafitness.com/pages/clubhome.aspx?clubid=932",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.lafitness.com/pages/clubhome.aspx?clubid=1160",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://leslielohman.org/",
+      "status": 200,
+      "finalUrl": "https://leslielohman.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://leslielohman.org/visit",
+      "status": 200,
+      "finalUrl": "https://leslielohman.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.louisarmstronghouse.org/",
+      "status": 200,
+      "finalUrl": "https://www.louisarmstronghouse.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.louisarmstronghouse.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.louisarmstronghouse.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lunaparknyc.com/",
+      "status": 200,
+      "finalUrl": "https://lunaparknyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nycmadinamasjid.org/",
+      "status": 200,
+      "finalUrl": "https://nycmadinamasjid.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://masjidmanhattan.com/",
+      "status": 200,
+      "finalUrl": "https://masjidmanhattan.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.metropolitanbarny.com/",
+      "status": 200,
+      "finalUrl": "https://www.metropolitanbarny.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mindbodyhair.com/",
+      "status": 200,
+      "finalUrl": "https://mindbodyhair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.eldridgestreet.org/",
+      "status": 200,
+      "finalUrl": "https://www.eldridgestreet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.eldridgestreet.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.eldridgestreet.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://madmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://madmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mcny.org/",
+      "status": 200,
+      "finalUrl": "https://www.mcny.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mcny.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.mcny.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://movingimage.org/",
+      "status": 200,
+      "finalUrl": "https://movingimage.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://movingimage.org/visit/",
+      "status": 200,
+      "finalUrl": "https://movingimage.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jmih.org/",
+      "status": 200,
+      "finalUrl": "https://jmih.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jmih.org/visit",
+      "status": 200,
+      "finalUrl": "https://jmih.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://momath.org/",
+      "status": 200,
+      "finalUrl": "https://momath.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nativebk.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.nybg.org/",
+      "status": 200,
+      "finalUrl": "https://www.nybg.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nybg.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.nybg.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nysci.org/",
+      "status": 307,
+      "finalUrl": "https://nysci.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nytransitmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.nytransitmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nytransitmuseum.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.nytransitmuseum.org/know-before-you-visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://queensbotanical.org/",
+      "status": 200,
+      "finalUrl": "https://queensbotanical.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://queensbotanical.org/directions/",
+      "status": 200,
+      "finalUrl": "https://queensbotanical.org/directions/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fresha.com/lvp/queens-natural-hair-stylist-merrick-boulevard-ovvw2w",
+      "status": 200,
+      "finalUrl": "https://www.fresha.com/lvp/queens-natural-hair-stylist-merrick-boulevard-ovvw2w",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://queenszoo.com/",
+      "status": 200,
+      "finalUrl": "https://queenszoo.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://queenszoo.com/plan-your-visit",
+      "status": 200,
+      "finalUrl": "https://queenszoo.com/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://renaissancecurls.com/",
+      "status": 200,
+      "finalUrl": "https://renaissancecurls.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://retrofitness.com/location/queensnyregopark/",
+      "status": 200,
+      "finalUrl": "https://retrofitness.com/location/queensnyregopark/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rivasalon.com/",
+      "status": 418,
+      "finalUrl": "https://rivasalon.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://sheandherstudio.com/",
+      "status": 200,
+      "finalUrl": "https://sheandherstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.shipwreckednyc.com/",
+      "status": 200,
+      "finalUrl": "https://www.shipwreckednyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sipnplaynyc.com/",
+      "status": 200,
+      "finalUrl": "https://www.sipnplaynyc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://snug-harbor.org/",
+      "status": 403,
+      "finalUrl": "https://snug-harbor.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://wearespin.com/location/new-york-flatiron/",
+      "status": 200,
+      "finalUrl": "https://wearespin.com/location/new-york-flatiron/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wearespin.com/location/new-york/",
+      "status": 200,
+      "finalUrl": "https://wearespin.com/location/new-york-flatiron/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://stgeorgetheatre.com/",
+      "status": 200,
+      "finalUrl": "https://stgeorgetheatre.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://stgeorgetheatre.com/contact/",
+      "status": 200,
+      "finalUrl": "https://stgeorgetheatre.com/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.statenislandmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.statenislandmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.statenislandmuseum.org/visit/location-directions/",
+      "status": 200,
+      "finalUrl": "https://www.statenislandmuseum.org/visit/location-directions/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.statenislandmuseum.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.statenislandmuseum.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nypl.org/locations/snfl",
+      "status": 200,
+      "finalUrl": "https://www.nypl.org/locations/snfl",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sweetsundayscafe.square.site/",
+      "status": 200,
+      "finalUrl": "https://sweetsundayscafe.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sylviasrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://sylviasrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebronxbeerhall.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebronxbeerhall.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bronxmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://bronxmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bronxmuseum.org/visit/",
+      "status": 200,
+      "finalUrl": "https://bronxmuseum.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebrooklynwellnessclub.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebrooklynwellnessclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hcz.org/our-programs/the-armory/",
+      "status": 200,
+      "finalUrl": "https://hcz.org/our-programs/the-armory/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gaycenter.org/",
+      "status": 200,
+      "finalUrl": "https://gaycenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thelitbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.thelitbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.metmuseum.org/",
+      "status": 429,
+      "finalUrl": "https://www.metmuseum.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.metmuseum.org/visit",
+      "status": 429,
+      "finalUrl": "https://www.metmuseum.org/visit",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://the-nourish-spot.business.site/",
+      "status": 404,
+      "finalUrl": "https://the-nourish-spot.business.site/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.trcnyc.org/",
+      "status": 200,
+      "finalUrl": "https://www.trcnyc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.therapywinebar.nyc/",
+      "status": 200,
+      "finalUrl": "https://www.therapywinebar.nyc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trinitychurchnyc.org/",
+      "status": 403,
+      "finalUrl": "https://trinitychurchnyc.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.wavehill.org/",
+      "status": 200,
+      "finalUrl": "https://www.wavehill.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.wavehill.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.wavehill.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.weeksvillesociety.org/",
+      "status": 200,
+      "finalUrl": "https://www.weeksvillesociety.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.weeksvillesociety.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.weeksvillesociety.org/visit/",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or review-required response must not be treated as a closed business; it must be reviewed before public publication."
+}

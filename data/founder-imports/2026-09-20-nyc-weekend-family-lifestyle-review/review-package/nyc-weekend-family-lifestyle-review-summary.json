@@ -1,0 +1,36 @@
+{
+  "package": "2026-09-20-nyc-weekend-family-lifestyle-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "raw_candidate_rows": 101,
+  "raw_held_rows": 33,
+  "cross_category_duplicate_rows_consolidated": 9,
+  "accepted_review_only_candidates": 91,
+  "held_or_preserved_evidence_rows": 43,
+  "accepted_by_target_kind": {
+    "cultural_place": 37,
+    "business": 43,
+    "community_resource": 11
+  },
+  "preliminary_review_status_counts": {
+    "needs_research": 12,
+    "pending_review": 79
+  },
+  "manifest_sha256": "d53a55d98ed60e59c5ed7808056aeff448e72f4e24683b9e54c81279513f6069",
+  "destination_health": {
+    "checked_at": "2026-09-20T01:34:04.121Z",
+    "unique_destinations": 120,
+    "by_outcome": {
+      "review_required": 11,
+      "reachable": 105,
+      "network_error": 4
+    },
+    "policy": "Any timeout, network error, review-required response, or not-checked destination remains a review gate; it does not establish closure."
+  },
+  "safeguards": [
+    "Research and package records are not published businesses, map pins, search results, or Kinfolk recommendations.",
+    "No production database, user, authentication, session, waitlist, payment, or Community record is read or written by this builder.",
+    "Only a separately configured directory-review database, signed checksum ingress, policy/reconciliation, and exactly-one controlled worker may later process an explicitly approved manifest.",
+    "Physical places retain only source-backed numbered addresses and no coordinates; online-only records remain mapless.",
+    "Cross-category duplicate raw records remain preserved in the duplicate-evidence file and canonical record provenance."
+  ]
+}
