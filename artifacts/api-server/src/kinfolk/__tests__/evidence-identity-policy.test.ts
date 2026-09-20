@@ -59,6 +59,22 @@ describe("deterministic evidence route", () => {
     expect(getQueryClass("Who is the best rapper-turned-actor?")).toBe("culture_opinion");
   });
 
+  it.each([
+    "Who was the best Spider-Man?",
+    "Which Hulk was strongest?",
+    "Who was the best rapper in Wu-Tang Clan?",
+  ])("routes collective cultural opinion without turning it into a false fact: %s", (message) => {
+    const route = routeEvidence(message);
+
+    expect(route).toMatchObject({
+      domain: "culture_entertainment",
+      claimMode: "evaluative",
+      retrievalRequirement: "authoritative",
+      failClosed: true,
+    });
+    expect(getQueryClass(message)).toBe("culture_opinion");
+  });
+
   it("routes factual rapper and actor credits as factual culture", () => {
     const route = routeEvidence("Which rapper became an actor in this film?");
 
@@ -125,6 +141,12 @@ describe("cultural claim mode and inline provenance", () => {
     expect(prompt).not.toContain("From cultural knowledge");
     expect(prompt).not.toContain("this reflects perspective, not a single fact");
     expect(prompt).not.toContain("PROVENANCE LABEL");
+  });
+
+  it("requires evidence labels instead of invented platform consensus", () => {
+    const prompt = buildIntentPolicyPrompt(getEvidencePolicy("culture_entertainment"));
+    expect(prompt).toMatch(/opinion, not an objective fact/i);
+    expect(prompt).toMatch(/never invent platform metrics, a unanimous view, or a source/i);
   });
 });
 
