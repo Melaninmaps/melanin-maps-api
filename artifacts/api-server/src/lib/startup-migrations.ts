@@ -3929,6 +3929,38 @@ ON CONFLICT (city_slug) DO UPDATE SET
       updated_at timestamptz NOT NULL DEFAULT now()
     )`,
   },
+  {
+    name: "optional_official_recall_health_alerts_v1",
+    sql: `ALTER TABLE user_settings
+      ADD COLUMN IF NOT EXISTS notif_product_recalls boolean NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS notif_public_health_alerts boolean NOT NULL DEFAULT false;
+
+    CREATE TABLE IF NOT EXISTS official_public_alerts (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      source varchar(32) NOT NULL CHECK (source IN ('fda', 'cpsc', 'cdc')),
+      external_id varchar(160) NOT NULL,
+      alert_kind varchar(24) NOT NULL CHECK (alert_kind IN ('product_recall', 'public_health_alert')),
+      title varchar(500) NOT NULL,
+      summary varchar(1200) NOT NULL,
+      official_url text NOT NULL,
+      issued_at timestamptz,
+      expires_at timestamptz,
+      source_payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (source, external_id)
+    );
+    CREATE INDEX IF NOT EXISTS official_public_alerts_recent_idx
+      ON official_public_alerts (alert_kind, issued_at DESC, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS official_public_alert_deliveries (
+      alert_id uuid NOT NULL REFERENCES official_public_alerts(id) ON DELETE CASCADE,
+      user_id varchar NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      notification_id varchar REFERENCES notifications(id) ON DELETE SET NULL,
+      delivered_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (alert_id, user_id)
+    );`,
+  },
 
   // ── Compound tag tokens — Aliases addendum ────────────────────────────────
   {

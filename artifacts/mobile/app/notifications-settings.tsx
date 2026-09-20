@@ -37,6 +37,8 @@ interface UserSettings {
   notifDigest: boolean;
   notifTips: boolean;
   notifPostNudges: boolean;
+  notifProductRecalls: boolean;
+  notifPublicHealthAlerts: boolean;
   quietHoursEnabled: boolean;
   quietHoursFrom: string;
   quietHoursUntil: string;
@@ -52,6 +54,8 @@ const DEFAULTS: UserSettings = {
   notifDigest: true,
   notifTips: false,
   notifPostNudges: true,
+  notifProductRecalls: false,
+  notifPublicHealthAlerts: false,
   quietHoursEnabled: true,
   quietHoursFrom: "10:00 PM",
   quietHoursUntil: "8:00 AM",
@@ -175,6 +179,8 @@ export default function NotificationsSettingsScreen() {
     { id: "notifDigest", icon: "mail", label: "Weekly Digest Email", sub: "Top picks and community highlights" },
     { id: "notifTips", icon: "info", label: "Tips & Features", sub: "How to get the most from the app" },
     { id: "notifPostNudges", icon: "zap", label: "KinfolkAI™ Post Nudges", sub: "Smart prompts when your customers are active (business owners)" },
+    { id: "notifProductRecalls", icon: "package", label: "Official Product Recalls", sub: "Optional official notices for affected products and foods" },
+    { id: "notifPublicHealthAlerts", icon: "heart", label: "Official Health Alerts", sub: "Optional public-health notices; not medical advice" },
   ];
 
   if (loading) {
@@ -339,6 +345,7 @@ export default function NotificationsSettingsScreen() {
             notifEvents: false, notifBusiness: false, notifMessages: false,
             notifReviews: false, notifCommunity: false, notifPromotions: false,
             notifDigest: false, notifTips: false, notifPostNudges: false,
+            notifProductRecalls: false, notifPublicHealthAlerts: false,
           })}
           activeOpacity={0.75}
         >

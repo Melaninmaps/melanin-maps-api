@@ -15,6 +15,10 @@ export const userSettingsTable = pgTable("user_settings", {
   notifDigest: boolean("notif_digest").notNull().default(true),
   notifTips: boolean("notif_tips").notNull().default(false),
   notifPostNudges: boolean("notif_post_nudges").notNull().default(true),
+  // These optional official-source alerts default to off. They are unrelated
+  // to community safety alerts and never imply health profiling or consent.
+  notifProductRecalls: boolean("notif_product_recalls").notNull().default(false),
+  notifPublicHealthAlerts: boolean("notif_public_health_alerts").notNull().default(false),
 
   // ── Quiet hours ───────────────────────────────────────────────────────────
   quietHoursEnabled: boolean("quiet_hours_enabled").notNull().default(true),

@@ -23,6 +23,10 @@ const DEFAULT_SETTINGS = {
   notifDigest: true,
   notifTips: false,
   notifPostNudges: true,
+  // Official-source public alerts are explicitly opt-in. Keep them separate
+  // from existing community safety behavior and Kinfolk preference memory.
+  notifProductRecalls: false,
+  notifPublicHealthAlerts: false,
   quietHoursEnabled: true,
   quietHoursFrom: "10:00 PM",
   quietHoursUntil: "8:00 AM",
@@ -68,6 +72,7 @@ type SettingsPatch = Partial<{
   notifEvents: boolean; notifBusiness: boolean; notifMessages: boolean;
   notifReviews: boolean; notifCommunity: boolean; notifPromotions: boolean;
   notifDigest: boolean; notifTips: boolean; notifPostNudges: boolean;
+  notifProductRecalls: boolean; notifPublicHealthAlerts: boolean;
   quietHoursEnabled: boolean; quietHoursFrom: string; quietHoursUntil: string;
   profileVisibility: "public" | "community" | "private";
   showLocation: boolean; locationPrecision: "neighborhood" | "exact";
@@ -82,6 +87,7 @@ function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | 
   const BOOLS = [
     "notifEvents", "notifBusiness", "notifMessages", "notifReviews", "notifCommunity",
     "notifPromotions", "notifDigest", "notifTips", "notifPostNudges", "quietHoursEnabled",
+    "notifProductRecalls", "notifPublicHealthAlerts",
     "showLocation", "activityStatus", "usageAnalytics", "personalisedSuggestions",
     "kinfolkMemoryEnabled", "profileViewTrackingEnabled", "postNudgesEnabled",
     "safetyAlertPolice", "safetyAlertIce",
