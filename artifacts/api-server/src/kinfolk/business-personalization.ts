@@ -131,6 +131,14 @@ function meaningfulTokens(value: string): string[] {
   ];
 }
 
+function requestTerms(value: string): string[] {
+  const tokens = meaningfulTokens(value);
+  const phrases = tokens
+    .slice(0, -1)
+    .map((token, index) => `${token} ${tokens[index + 1]}`);
+  return [...new Set([...phrases, ...tokens])];
+}
+
 function containsWholeTerm(text: string, term: string): boolean {
   const pattern = term
     .split(" ")
@@ -183,10 +191,15 @@ function scoredBusiness(
   );
   const request = cleanTerm(personalization.currentRequest);
   if (request) {
-    const directRequestTokens = meaningfulTokens(request).filter((token) =>
-      containsWholeTerm(text, token),
+    // The current turn is the member's direct instruction. Saved preferences may
+    // refine a tied result but cannot win against a clear, current request.
+    const directRequestTerms = requestTerms(request).filter((term) =>
+      containsWholeTerm(text, term),
     );
-    score += Math.min(8, directRequestTokens.length * 2);
+    if (directRequestTerms.length > 0) {
+      score += Math.min(64, 40 + directRequestTerms.length * 8);
+      reasons.push("Matches what you asked for right now");
+    }
   }
 
   for (const rawTerm of personalization.preferenceTerms ?? []) {

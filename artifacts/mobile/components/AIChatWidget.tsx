@@ -33,6 +33,10 @@ import {
   KinfolkBusinessRecommendationSheet,
   type KinfolkBusinessRecommendation,
 } from "@/components/KinfolkBusinessRecommendationSheet";
+import {
+  KinfolkCompanionMemoryOfferCard,
+  type KinfolkCompanionMemoryOffer,
+} from "@/components/KinfolkCompanionMemoryOffer";
 
 interface Message {
   id: string;
@@ -47,6 +51,7 @@ interface Message {
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   recommendations?: KinfolkBusinessRecommendation[];
   intentClass?: string | null;
+  companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
 }
 
 interface TaskActionPayload {
@@ -137,6 +142,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   recommendations: KinfolkBusinessRecommendation[];
   intentClass?: string | null;
+  companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -171,6 +177,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
     libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
     recommendations?: { businesses?: KinfolkBusinessRecommendation[] } | null;
     intentClass?: string | null;
+    companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -186,6 +193,7 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
     }),
     libraryAction: data.libraryAction ?? null,
     intentClass: data.intentClass ?? null,
+    companionMemoryOffer: data.companionMemoryOffer ?? null,
     recommendations: Array.isArray(data.recommendations?.businesses)
       ? data.recommendations.businesses
         .filter((business) => Boolean(business?.id && business?.name))
@@ -717,6 +725,7 @@ export function AIChatWidget() {
         libraryAction,
         recommendations,
         intentClass,
+        companionMemoryOffer,
       } = await sendToKinfolk(text, token, await nearbyCityHint(text));
 
       let taskCreated: Message["taskCreated"] | undefined;
@@ -741,6 +750,7 @@ export function AIChatWidget() {
         libraryAction,
         recommendations,
         intentClass,
+        companionMemoryOffer,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1075,6 +1085,12 @@ export function AIChatWidget() {
                       </View>
                     ))}
                   </View>
+                ) : null}
+                {!item.fromUser && item.companionMemoryOffer ? (
+                  <KinfolkCompanionMemoryOfferCard
+                    offer={item.companionMemoryOffer}
+                    sessionId={sessionId}
+                  />
                 ) : null}
                 {!item.fromUser && item.sourceNote ? (
                   <Text style={[styles.sourceNote, { color: colors.mutedForeground, borderTopColor: colors.border }]}>

@@ -16,6 +16,10 @@ import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
+import {
+  KinfolkCompanionMemoryOfferCard,
+  type KinfolkCompanionMemoryOffer,
+} from "@/components/kinfolk/KinfolkCompanionMemoryOffer";
 import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
 import { businessClarificationContinuation } from "@/features/kinfolk/businessClarificationContinuation";
 import {
@@ -123,6 +127,7 @@ interface CommunityPerspective {
   itemCount: number;
   note: string;
 }
+interface CompanionMemoryOffer extends KinfolkCompanionMemoryOffer {}
 // Returned only to eligible staff-demo participants. This is display metadata,
 // not a client-side authorization check or security boundary.
 type KinfolkExperience = KinfolkStaffDemoExperience;
@@ -182,6 +187,8 @@ interface Message {
   resultView?: ConversationalBusinessResultView | null;
   /** Client-only, conservative navigation offer. No prompt data is transferred. */
   privateFinancialGoalOffer?: boolean;
+  /** Explicit private-memory offer for a named companion; never a profile mutation. */
+  companionMemoryOffer?: CompanionMemoryOffer | null;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -1640,6 +1647,7 @@ function TravelPage() {
         experience?: KinfolkExperience | null;
         degraded?: boolean;
         degradedReason?: string | null;
+        companionMemoryOffer?: CompanionMemoryOffer | null;
       };
 
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
@@ -1693,6 +1701,7 @@ function TravelPage() {
         originalQuery: data.originalQuery ?? trimmed,
         experience: data.experience ?? null,
         privateFinancialGoalOffer: Boolean(data.reply?.trim()) && isExplicitSavingsGoalPrompt(trimmed),
+        companionMemoryOffer: data.companionMemoryOffer ?? null,
       }]);
       if (shouldAutoSpeakNewReply({
         autoSpeak: prefs.autoSpeak,
@@ -2205,6 +2214,12 @@ function TravelPage() {
                             Create a private financial goal
                           </Link>
                         </aside>
+                      )}
+                      {msg.role === "assistant" && msg.companionMemoryOffer && (
+                        <KinfolkCompanionMemoryOfferCard
+                          offer={msg.companionMemoryOffer}
+                          sessionId={sessionId}
+                        />
                       )}
                       {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">

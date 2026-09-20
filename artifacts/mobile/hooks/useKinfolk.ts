@@ -128,6 +128,11 @@ export type CommunityPerspective = {
   note: string;
 };
 
+export type KinfolkCompanionMemoryOffer = {
+  label: string;
+  prompt: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -164,6 +169,7 @@ export type ChatMessage = {
   clarificationSteps?: KinfolkClarificationStep[];
   needsClarification?: boolean;
   originalQuery?: string;
+  companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
 };
 
 export type SessionSummary = {
@@ -250,6 +256,7 @@ export function useKinfolk() {
           originalQuery?: string;
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
+          companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
         };
 
         if (data.sessionId) setSessionId(data.sessionId);
@@ -288,6 +295,7 @@ export function useKinfolk() {
           originalQuery: data.originalQuery ?? text,
           location: data.location ?? null,
           locationSource: data.locationSource ?? null,
+          companionMemoryOffer: data.companionMemoryOffer ?? null,
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);
@@ -402,7 +410,7 @@ export function useKinfolk() {
       });
       if (res.ok) {
         const data = (await res.json()) as {
-          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; timestamp: string }[] };
+          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; companionMemoryOffer?: KinfolkCompanionMemoryOffer | null; timestamp: string }[] };
         };
         setSessionId(id);
         setMessages(
@@ -413,6 +421,7 @@ export function useKinfolk() {
             recommendations: (m.recommendations as TravelRecommendations | null) ?? null,
             resultView: (m.resultView as ConversationalBusinessResultView | null) ?? null,
             followUpSuggestions: m.followUpSuggestions ?? [],
+            companionMemoryOffer: m.companionMemoryOffer ?? null,
             timestamp: new Date(m.timestamp),
             feedback: {},
           })),

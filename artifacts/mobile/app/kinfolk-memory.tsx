@@ -68,6 +68,12 @@ const COMPANION_LABELS: Record<string, string> = {
   friends: "Friends crew",
 };
 
+function companionLabel(memory: PrivateMemory): string | null {
+  if (memory.purpose !== "companion_context") return null;
+  const label = /^Companion:\s*([^\n]{2,60})/im.exec(memory.content)?.[1]?.trim();
+  return label || null;
+}
+
 export default function KinfolkMemoryScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -230,7 +236,10 @@ export default function KinfolkMemoryScreen() {
             <View style={[styles.emptyMemory, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="lock" size={18} color={colors.primary} /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Nothing saved from chat</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>Use “Remember this privately” before sending a message when you want Kinfolk to keep it.</Text></View></View>
           ) : (
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {privateMemories.map((memory, index) => <React.Fragment key={memory.id}><View style={styles.itemRow}><View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name="lock" size={15} color={colors.primary} /></View><View style={styles.itemContent}><Text style={[styles.itemValue, { color: colors.foreground }]}>{memory.content}</Text><Text style={[styles.itemLabel, { color: colors.mutedForeground }]}>{memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}</Text></View><TouchableOpacity accessibilityLabel="Forget this memory" onPress={() => void forgetMemory(memory.id)}><Feather name="trash-2" size={17} color="#DC2626" /></TouchableOpacity></View>{index < privateMemories.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>)}
+              {privateMemories.map((memory, index) => {
+                const companion = companionLabel(memory);
+                return <React.Fragment key={memory.id}><View style={styles.itemRow}><View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name={companion ? "users" : "lock"} size={15} color={colors.primary} /></View><View style={styles.itemContent}><Text style={[styles.itemValue, { color: colors.foreground }]}>{companion ? `Private note for ${companion}` : memory.content}</Text>{companion ? <Text style={[styles.itemLabel, { color: colors.mutedForeground }]} numberOfLines={2}>{memory.content.replace(/^Companion:\s*[^\n]+\s*\nNotes:\s*/im, "")}</Text> : <Text style={[styles.itemLabel, { color: colors.mutedForeground }]}>{memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}</Text>}</View><TouchableOpacity accessibilityLabel={companion ? `Forget companion ${companion}` : "Forget this memory"} onPress={() => void forgetMemory(memory.id)}><Feather name="trash-2" size={17} color="#DC2626" /></TouchableOpacity></View>{index < privateMemories.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>;
+              })}
             </View>
           )}
           {!!memoryError && <Text style={{ color: "#DC2626", fontFamily: "Inter_500Medium", fontSize: 12, marginBottom: 12 }}>{memoryError}</Text>}

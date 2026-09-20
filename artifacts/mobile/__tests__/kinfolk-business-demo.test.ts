@@ -37,6 +37,13 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain('accessibilityLabel={`More options for ${recommendation.name}`}');
   });
 
+  it("carries an optional companion note offer through both mobile Kinfolk surfaces", () => {
+    expect(hookSource).toContain("companionMemoryOffer?: KinfolkCompanionMemoryOffer | null");
+    expect(hookSource).toContain("companionMemoryOffer: data.companionMemoryOffer ?? null");
+    expect(widgetSource).toContain("KinfolkCompanionMemoryOfferCard");
+    expect(travelSource).toContain("KinfolkCompanionMemoryOfferCard");
+  });
+
   it("invalidates deferred widget voice responses after background or close", async () => {
     let active = true;
     let open = true;

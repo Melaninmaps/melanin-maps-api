@@ -228,6 +228,13 @@ import {
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
+import {
+  buildCompanionMemoryOffer,
+  formatCompanionMemory,
+  isCompanionMemoryRelevant,
+  normalizeCompanionLabel,
+  normalizeCompanionNotes,
+} from "../kinfolk/companion-context";
 import { isAdmin } from "../lib/adminAuth";
 import {
   KINFOLK_CONTEXT_TRUTH_BLOCK,
@@ -5274,23 +5281,35 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       });
       return;
     }
-    const content = String(body.content ?? "").trim();
+    const allowedPurposes = [
+      "personalization",
+      "preference",
+      "goal",
+      "ongoing_context",
+      "companion_context",
+    ];
+    const requestedPurpose = String(body.purpose ?? "personalization");
+    const purpose = allowedPurposes.includes(requestedPurpose)
+      ? requestedPurpose
+      : "personalization";
+    let content = String(body.content ?? "").trim();
+    if (purpose === "companion_context") {
+      const label = normalizeCompanionLabel(body.companionLabel);
+      const notes = normalizeCompanionNotes(body.companionNotes);
+      if (!label || !notes) {
+        res.status(400).json({
+          error: "A companion name and a private note are required.",
+        });
+        return;
+      }
+      content = formatCompanionMemory(label, notes);
+    }
     if (!content || content.length > 1000) {
       res
         .status(400)
         .json({ error: "Memory must be between 1 and 1,000 characters." });
       return;
     }
-    const allowedPurposes = [
-      "personalization",
-      "preference",
-      "goal",
-      "ongoing_context",
-    ];
-    const requestedPurpose = String(body.purpose ?? "personalization");
-    const purpose = allowedPurposes.includes(requestedPurpose)
-      ? requestedPurpose
-      : "personalization";
     const requestedDays = Number(body.expiresInDays);
     const expiresInDays = Number.isFinite(requestedDays)
       ? Math.min(3650, Math.max(1, Math.floor(requestedDays)))
@@ -7893,8 +7912,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
     const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
-    const activePrivateMemories =
-      memoryEnabled && req.user?.id
+    const activePrivateMemories = memoryEnabled && req.user?.id
         ? await db
             .select({
               content: kinfolkPrivateMemoriesTable.content,
@@ -7918,8 +7936,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : [];
     const relevantPrivateMemories = activePrivateMemories.filter(
       (memory) =>
-        !memory.isSensitive ||
-        isSensitiveMemoryRelevant(memory.content, message),
+        (!memory.isSensitive ||
+          isSensitiveMemoryRelevant(memory.content, message)) &&
+        (memory.purpose !== "companion_context" ||
+          isCompanionMemoryRelevant(memory.content, message)),
     );
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
       memoryEnabled && !contextualEvidence,
@@ -8365,6 +8385,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       proposedModelDestination = null;
     }
 
+    // An offer is visible only after repeated activity-oriented questions about
+    // the same companion. It writes nothing and cannot change primary profile data.
+    const companionMemoryOffer = protectedReply.blocked
+      ? null
+      : buildCompanionMemoryOffer({
+          currentMessage: message,
+          priorUserMessages: existingMessages
+            .filter((sessionMessage) => sessionMessage.role === "user")
+            .map((sessionMessage) => sessionMessage.content),
+          memoryEnabled,
+        });
+
     // For recognized life-planning requests, the next questions are a stable
     // server contract rather than optional model prose. This makes it easier to
     // continue from “I want to…” to a useful, practical follow-up.
@@ -8450,6 +8482,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       content: reply,
       recommendations: recommendations ?? undefined,
       followUpSuggestions,
+      companionMemoryOffer,
       timestamp: new Date().toISOString(),
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
@@ -8648,6 +8681,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       website: business.website ?? undefined,
       phone: business.phone ?? undefined,
       verified: business.verified,
+      matchReasons: business.matchReasons,
     }));
     const localCoverageNote =
       webResearchSourceNote ??
@@ -8722,6 +8756,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       recommendations,
       itinerary,
       followUpSuggestions,
+      companionMemoryOffer,
       smartPromotion,
       taskAction,
       libraryAction,

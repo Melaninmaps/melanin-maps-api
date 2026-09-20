@@ -68,6 +68,12 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).not.toContain("Searching Black");
   });
 
+  it("renders an opt-in companion note without changing primary profile data", () => {
+    expect(travelPageSource).toContain("KinfolkCompanionMemoryOfferCard");
+    expect(travelPageSource).toContain("companionMemoryOffer: data.companionMemoryOffer ?? null");
+    expect(travelPageSource).toContain("sessionId={sessionId}");
+  });
+
   it("renders deterministic business recommendations with active detail and website links", () => {
     expect(travelPageSource).toContain("biz.detailUrl");
     expect(travelPageSource).toContain("View details");
