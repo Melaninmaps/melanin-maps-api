@@ -354,6 +354,58 @@ function ChipSet({ options, selected = [], onChange, label }: { options: string[
   );
 }
 
+function CommunityLanguageSuggestion() {
+  const [term, setTerm] = useState("");
+  const [meaning, setMeaning] = useState("");
+  const [city, setCity] = useState("");
+  const [usageExample, setUsageExample] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    setStatus("saving");
+    setError("");
+    try {
+      const response = await fetch(`${BASE}api/community-language/proposals`, {
+        method: "POST",
+        credentials: "include",
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ term, meaning, city: city || undefined, usageExample: usageExample || undefined }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Kinfolk could not send that suggestion.");
+      setTerm("");
+      setMeaning("");
+      setCity("");
+      setUsageExample("");
+      setStatus("saved");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Kinfolk could not send that suggestion.");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40">Community language</div>
+      <p className="mt-1 text-[10px] leading-relaxed text-[#3A1F0E]/60">Suggest a local word or phrase. It is reviewed before it can help Kinfolk understand anyone else; it will not be used to imitate a dialect or infer identity.</p>
+      <div className="mt-3 grid gap-2">
+        <input value={term} maxLength={60} onChange={(event) => setTerm(event.target.value)} placeholder="Word or phrase" className="h-9 rounded-lg border border-[#3A1F0E]/10 bg-white px-3 text-xs text-[#3A1F0E] placeholder-[#3A1F0E]/35" />
+        <textarea value={meaning} maxLength={280} onChange={(event) => setMeaning(event.target.value)} placeholder="What does it mean?" className="min-h-16 rounded-lg border border-[#3A1F0E]/10 bg-white p-3 text-xs text-[#3A1F0E] placeholder-[#3A1F0E]/35" />
+        <div className="grid grid-cols-2 gap-2">
+          <input value={city} maxLength={100} onChange={(event) => setCity(event.target.value)} placeholder="City or region (optional)" className="h-9 rounded-lg border border-[#3A1F0E]/10 bg-white px-3 text-xs text-[#3A1F0E] placeholder-[#3A1F0E]/35" />
+          <input value={usageExample} maxLength={240} onChange={(event) => setUsageExample(event.target.value)} placeholder="Example (optional)" className="h-9 rounded-lg border border-[#3A1F0E]/10 bg-white px-3 text-xs text-[#3A1F0E] placeholder-[#3A1F0E]/35" />
+        </div>
+        {status === "saved" && <p role="status" className="text-[10px] font-medium text-emerald-700">Sent for review. Thank you for helping Kinfolk understand local context.</p>}
+        {status === "error" && <p role="alert" className="text-[10px] font-medium text-red-700">{error}</p>}
+        <button type="button" disabled={status === "saving" || !term.trim() || !meaning.trim()} onClick={() => { void submit(); }} className="h-9 rounded-full bg-[#CA922B] px-3 text-xs font-bold text-white disabled:opacity-50">
+          {status === "saving" ? "Sending…" : "Send for review"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Preferences panel ────────────────────────────────────────────────────────
 function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
   open: boolean; onClose: () => void; prefs: Prefs; onSave: (p: Prefs) => Promise<void>;
@@ -646,6 +698,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
                 </select>
                 <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">With your opt-in, Kinfolk may use one occasional local word such as Philadelphia “jawn” or Memphis “mane.” Voice timbre stays the same everywhere.</p>
               </div>
+              <CommunityLanguageSuggestion />
             </div>
           </div>
 

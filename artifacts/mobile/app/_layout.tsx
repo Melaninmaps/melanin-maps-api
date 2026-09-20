@@ -907,6 +907,10 @@ function RootLayoutNav() {
         options={{ headerShown: false, presentation: "card" }}
       />
       <Stack.Screen
+        name="community-language"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
         name="kinfolk-tasks"
         options={{ headerShown: false, presentation: "card" }}
       />
