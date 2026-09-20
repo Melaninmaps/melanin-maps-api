@@ -295,6 +295,12 @@ import {
   resolveKinfolkResponseDepth,
 } from "../kinfolk/adaptive-response-depth";
 import {
+  buildApprovedCommunityLanguagePrompt,
+  buildCityLanguageRecognitionPrompt,
+  COMMUNITY_ADDRESS_RECOGNITION_PROMPT,
+  type ApprovedCommunityLanguageTerm,
+} from "../kinfolk/community-language";
+import {
   canonicalVoiceFormat,
   inspectVoiceAudio,
   VoiceAudioInspectionError,
@@ -3758,6 +3764,33 @@ async function getCachedCulturalPhrases() {
   }
 }
 
+/** Only explicit administrator-approved member proposals may affect Kinfolk. */
+async function getApprovedCommunityLanguageTerms(
+  destination: string | null | undefined,
+): Promise<ApprovedCommunityLanguageTerm[]> {
+  try {
+    const { rows } = await pool.query<ApprovedCommunityLanguageTerm>(
+      `SELECT term, meaning, city, usage_example AS "usageExample"
+       FROM community_language_proposals
+       WHERE status = 'approved'
+         AND (
+           city IS NULL
+           OR $1::text IS NULL
+           OR REGEXP_REPLACE(LOWER($1), '[^a-z0-9]', '', 'g')
+             LIKE '%' || REGEXP_REPLACE(LOWER(city), '[^a-z0-9]', '', 'g') || '%'
+         )
+       ORDER BY CASE WHEN city IS NULL THEN 1 ELSE 0 END, term
+       LIMIT 8`,
+      [destination ?? null],
+    );
+    return rows;
+  } catch {
+    // Community language is additive enrichment. An unavailable optional table
+    // must never block Kinfolk's existing chat, source, or safety paths.
+    return [];
+  }
+}
+
 function buildSystemPrompt(opts: {
   prefs: typeof userPreferencesTable.$inferSelect | null;
   likedSpots: string[];
@@ -3797,6 +3830,7 @@ function buildSystemPrompt(opts: {
     phrase: string;
     english_gloss: string;
   }> | null;
+  communityLanguageTerms?: ApprovedCommunityLanguageTerm[];
   knowledgeGraphContext?: KnowledgeGraphContext | null;
   libraryInterests?: string[];
   circleContext?: {
@@ -3838,6 +3872,10 @@ function buildSystemPrompt(opts: {
   });
 
   const localTerms = destination ? getCityLocalTerms(destination) : null;
+  const cityLanguageRecognitionSection = buildCityLanguageRecognitionPrompt(destination);
+  const approvedCommunityLanguageSection = buildApprovedCommunityLanguagePrompt(
+    opts.communityLanguageTerms ?? [],
+  );
   const kbyg = prefs?.knowBeforeYouGo !== false;
 
   // ── Kinfolk Voices™ — selected conversation mode ───────────────────────────
@@ -4205,7 +4243,7 @@ CONNECTIONS:
 When intent suggests a helpful local next step, offer it as an option, never a requirement. Examples include local attorneys, medical professionals, hair-loss-aware stylists, barbers, contractors, or community resources. Retrieve local options only after the member asks to see them or accepts the offer.
 
 ${privacyIntelligenceBlock}
-${destinationSection}${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${circleSection}${lifestyleSection}${tierSection}${smartPromoSection}${toneLadder}
+${destinationSection}${cityLanguageRecognitionSection ? `\n${cityLanguageRecognitionSection}\n` : ""}${approvedCommunityLanguageSection ? `\n${approvedCommunityLanguageSection}\n` : ""}\n${COMMUNITY_ADDRESS_RECOGNITION_PROMPT}\n${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${circleSection}${lifestyleSection}${tierSection}${smartPromoSection}${toneLadder}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
 
@@ -7587,6 +7625,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }>,
       () => getCachedCulturalPhrases(),
     );
+    const communityLanguageTerms = await optionalKinfolk(
+      "community_language",
+      [] as ApprovedCommunityLanguageTerm[],
+      () => getApprovedCommunityLanguageTerms(destination),
+    );
 
     // Layer 3 — Knowledge Graph Context retrieval.
     // Resolves the user's message + active geography into structured, provenance-aware
@@ -7908,6 +7951,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         topUserVibes,
         cityContext,
         culturalPhrases,
+        communityLanguageTerms,
         knowledgeGraphContext: kgContext,
         libraryInterests,
         circleContext,

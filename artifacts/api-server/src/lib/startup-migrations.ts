@@ -86,6 +86,27 @@ const PUBLIC_BUSINESSES_VIEW_FILTER =
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "community_language_proposals_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_language_proposals (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      term VARCHAR(60) NOT NULL,
+      meaning VARCHAR(280) NOT NULL,
+      city VARCHAR(100),
+      usage_example VARCHAR(240),
+      status VARCHAR(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+      review_note VARCHAR(500),
+      reviewed_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+      reviewed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS community_language_proposals_status_created_idx
+      ON community_language_proposals (status, created_at);
+    CREATE INDEX IF NOT EXISTS community_language_proposals_city_status_idx
+      ON community_language_proposals (city, status);`,
+  },
+  {
     name: "kinfolk_response_feedback_v1",
     sql: `CREATE TABLE IF NOT EXISTS kinfolk_response_feedback (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
