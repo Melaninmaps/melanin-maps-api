@@ -1,0 +1,160 @@
+{
+  "status": "review_only",
+  "sourceResearchRoot": "/home/ubuntu/directory-research-wave-2026-09-20/multi-city-everyday-living-sweep",
+  "sourceContractSha256": "b591b7d16b6ac305e8f41e52a280697f0898d2ad49491a6e4da1052afc380673",
+  "cities": [
+    "allentown",
+    "atlanta",
+    "baltimore",
+    "baton-rouge",
+    "charlotte",
+    "columbia-sc",
+    "harrisburg",
+    "houston",
+    "los-angeles",
+    "minneapolis",
+    "mobile",
+    "montgomery",
+    "new-orleans",
+    "new-york-city",
+    "philadelphia-bucks",
+    "richmond",
+    "washington-dc"
+  ],
+  "cityCounts": [
+    {
+      "cityFolder": "allentown",
+      "candidateRows": 40,
+      "heldRows": 5
+    },
+    {
+      "cityFolder": "atlanta",
+      "candidateRows": 44,
+      "heldRows": 7
+    },
+    {
+      "cityFolder": "baltimore",
+      "candidateRows": 49,
+      "heldRows": 2
+    },
+    {
+      "cityFolder": "baton-rouge",
+      "candidateRows": 37,
+      "heldRows": 2
+    },
+    {
+      "cityFolder": "charlotte",
+      "candidateRows": 39,
+      "heldRows": 6
+    },
+    {
+      "cityFolder": "columbia-sc",
+      "candidateRows": 40,
+      "heldRows": 7
+    },
+    {
+      "cityFolder": "harrisburg",
+      "candidateRows": 48,
+      "heldRows": 6
+    },
+    {
+      "cityFolder": "houston",
+      "candidateRows": 39,
+      "heldRows": 6
+    },
+    {
+      "cityFolder": "los-angeles",
+      "candidateRows": 40,
+      "heldRows": 4
+    },
+    {
+      "cityFolder": "minneapolis",
+      "candidateRows": 47,
+      "heldRows": 6
+    },
+    {
+      "cityFolder": "mobile",
+      "candidateRows": 46,
+      "heldRows": 1
+    },
+    {
+      "cityFolder": "montgomery",
+      "candidateRows": 49,
+      "heldRows": 6
+    },
+    {
+      "cityFolder": "new-orleans",
+      "candidateRows": 40,
+      "heldRows": 4
+    },
+    {
+      "cityFolder": "new-york-city",
+      "candidateRows": 38,
+      "heldRows": 3
+    },
+    {
+      "cityFolder": "philadelphia-bucks",
+      "candidateRows": 38,
+      "heldRows": 5
+    },
+    {
+      "cityFolder": "richmond",
+      "candidateRows": 45,
+      "heldRows": 1
+    },
+    {
+      "cityFolder": "washington-dc",
+      "candidateRows": 37,
+      "heldRows": 4
+    }
+  ],
+  "rawCandidateRows": 716,
+  "rawHeldRows": 75,
+  "existingReviewManifestCount": 31,
+  "exactExistingReviewOverlapRows": 15,
+  "internalExactDuplicateRows": 0,
+  "ingressIdentityHoldRows": 7,
+  "consolidatedCandidateRows": 694,
+  "heldAndOverlapEvidenceRows": 97,
+  "candidateManifest": {
+    "path": "data/founder-imports/2026-09-20-multi-city-everyday-living-review/review-package/multi-city-everyday-living-review-only-candidates.jsonl",
+    "sha256": "4f7160968007ab8667ab928c5e87a962b867ed8b593ae7b5837041f7e6a0381a",
+    "rowCount": 694
+  },
+  "heldEvidence": {
+    "path": "data/founder-imports/2026-09-20-multi-city-everyday-living-review/review-package/multi-city-everyday-living-held-and-overlap-evidence.jsonl",
+    "sha256": "7a4f4a8a29f92876555660d128fd671a8a0e76c34b2c890a50f1a1d836958f67",
+    "rowCount": 97
+  },
+  "targetKinds": {
+    "community_resource": 111,
+    "regulated_review": 106,
+    "business": 352,
+    "cultural_place": 114,
+    "online_business": 11
+  },
+  "invariantResults": {
+    "noCoordinates": true,
+    "noStringNull": true,
+    "rawSchemaAndOrderPreserved": true,
+    "rawInternalExactNameAddressDuplicates": 0,
+    "existingReviewExactNameAddressOverlapsRemovedFromCandidateManifest": 15,
+    "publicationNotPerformed": true,
+    "destinationHealthRecorded": true
+  },
+  "destinationHealth": {
+    "path": "data/founder-imports/2026-09-20-multi-city-everyday-living-review/review-package/multi-city-everyday-living-destination-health.json",
+    "sha256": "965283a2aae5eee271c6962212a45b3974d5e1fab1527893ab2a179214fd4d34",
+    "checkedAt": "2026-09-20T03:28:45.012Z",
+    "candidateRows": 694,
+    "uniqueDestinations": 721,
+    "counts": {
+      "reachable": 625,
+      "review_required": 85,
+      "network_error": 4,
+      "timeout": 7
+    },
+    "allDestinationsChecked": true,
+    "publicationGate": "Any review_required, network_error, or timeout result remains a review gate and is not evidence of closure or permission to publish."
+  }
+}

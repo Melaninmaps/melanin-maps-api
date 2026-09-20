@@ -1,0 +1,4345 @@
+{
+  "checkedAt": "2026-09-20T03:28:45.012Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-multi-city-everyday-review-package/data/founder-imports/2026-09-20-multi-city-everyday-living-review/review-package/multi-city-everyday-living-review-only-candidates.jsonl",
+  "candidates": 694,
+  "uniqueDestinations": 721,
+  "incremental": {
+    "carriedForward": 0,
+    "newlyChecked": 721
+  },
+  "counts": {
+    "reachable": 625,
+    "review_required": 85,
+    "network_error": 4,
+    "timeout": 7
+  },
+  "results": [
+    {
+      "url": "https://www.cancersupportglv.org/",
+      "status": 200,
+      "finalUrl": "https://www.cancersupportglv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lvhn.org/locations/lehigh-valley-hospital-17th-street",
+      "status": 403,
+      "finalUrl": "https://www.lvhn.org/locations/lehigh-valley-hospital-17th-street",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.slhn.org/locations/stlukes-hospital-allentown-campus",
+      "status": 403,
+      "finalUrl": "https://www.slhn.org/locations/stlukes-hospital-allentown-campus",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.slhn.org/locations/star-community-health-dental-sigal",
+      "status": 403,
+      "finalUrl": "https://www.slhn.org/locations/star-community-health-dental-sigal",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lvhn.org/locations/dental-clinic-lehigh-valley-hospital-17th-street",
+      "status": 403,
+      "finalUrl": "https://www.lvhn.org/locations/dental-clinic-lehigh-valley-hospital-17th-street",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://haven-house.com/",
+      "status": 403,
+      "finalUrl": "https://haven-house.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.ymcarivercrossing.org/locations/allentown-ymca",
+      "status": 200,
+      "finalUrl": "https://www.ymcarivercrossing.org/locations/allentown-ymca",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mikeyscaribbeanrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://mikeyscaribbeanrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urban-skillet.com/",
+      "status": 200,
+      "finalUrl": "https://www.urban-skillet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.casadecampopa.com/",
+      "status": 200,
+      "finalUrl": "https://www.casadecampopa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://unotaqueriapa.com/",
+      "status": 200,
+      "finalUrl": "https://unotaqueriapa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://plazaazteca.com/location-pennsylvania-plaza-azteca-allentown/",
+      "status": 200,
+      "finalUrl": "https://plazaazteca.com/location-pennsylvania-plaza-azteca-allentown/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urbanobethlehem.com/",
+      "status": 200,
+      "finalUrl": "https://www.urbanobethlehem.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mesamexican.com/",
+      "status": 200,
+      "finalUrl": "https://www.mesamexican.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://donjuanmexgrill.com/lafayette-college-hill",
+      "status": 403,
+      "finalUrl": "https://donjuanmexgrill.com/lafayette-college-hill",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.tacosytequilaeaston.com/",
+      "status": 200,
+      "finalUrl": "https://www.tacosytequilaeaston.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nplspa.org/",
+      "status": 200,
+      "finalUrl": "https://www.nplspa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nplspa.org/who-we-are/contact.html",
+      "status": 200,
+      "finalUrl": "https://www.nplspa.org/who-we-are/contact.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://careerlinklehighvalley.org/job-seekers/",
+      "status": 200,
+      "finalUrl": "https://careerlinklehighvalley.org/job-seekers/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theliteracycenter-lv.org/",
+      "status": 403,
+      "finalUrl": "https://theliteracycenter-lv.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.northampton.edu/",
+      "status": 200,
+      "finalUrl": "https://www.northampton.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.communityactionlv.org/",
+      "status": 200,
+      "finalUrl": "https://www.communityactionlv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://allentownfoodbank.org/",
+      "status": 200,
+      "finalUrl": "https://allentownfoodbank.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownrescuemission.org/",
+      "status": 200,
+      "finalUrl": "https://www.allentownrescuemission.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownrescuemission.org/contact-us-revised/",
+      "status": 200,
+      "finalUrl": "https://www.allentownrescuemission.org/contact-us-revised/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://newbethany.org/",
+      "status": 200,
+      "finalUrl": "https://newbethany.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://newbethany.org/i-need-assistance/",
+      "status": 200,
+      "finalUrl": "https://newbethany.org/i-need-assistance/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpl.org/",
+      "status": 200,
+      "finalUrl": "https://www.allentownpl.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpl.org/hours-and-location/",
+      "status": 200,
+      "finalUrl": "https://www.allentownpl.org/hours-and-location/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownpa.gov/en-us/Government/Departments/Parks-Recreation",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://parkettes.com/",
+      "status": 200,
+      "finalUrl": "https://parkettes.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.forcegymnastics.com/",
+      "status": 200,
+      "finalUrl": "https://www.forcegymnastics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bglv.org/",
+      "status": 200,
+      "finalUrl": "https://www.bglv.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.allentownartmuseum.org/",
+      "status": 403,
+      "finalUrl": "https://www.allentownartmuseum.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.allentownartmuseum.org/youth-programs/",
+      "status": 403,
+      "finalUrl": "https://www.allentownartmuseum.org/youth-programs/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.artsquest.org/musikfest/",
+      "status": 200,
+      "finalUrl": "https://www.artsquest.org/musikfest/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://godfreydaniels.org/",
+      "status": 200,
+      "finalUrl": "https://godfreydaniels.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.crayolaexperience.com/easton",
+      "status": 200,
+      "finalUrl": "https://www.crayolaexperience.com/easton",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sigalmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://sigalmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://studio924salon.com/",
+      "status": 200,
+      "finalUrl": "https://studio924salon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salonrooted.com/",
+      "status": 200,
+      "finalUrl": "https://www.salonrooted.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://lvdrycleaning.com/",
+      "status": 200,
+      "finalUrl": "http://lvdrycleaning.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://martinizing.com/allentown",
+      "status": 200,
+      "finalUrl": "https://martinizing.com/allentown",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://alliedautomotiveservice.com/",
+      "status": 200,
+      "finalUrl": "https://alliedautomotiveservice.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flyabe.com/",
+      "status": 200,
+      "finalUrl": "https://www.flyabe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flyabe.com/contact-us/",
+      "status": 200,
+      "finalUrl": "https://www.flyabe.com/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebusybeecafe.com/",
+      "status": 403,
+      "finalUrl": "https://www.thebusybeecafe.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.paschalsatlanta.com/",
+      "status": 403,
+      "finalUrl": "https://www.paschalsatlanta.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://lafiestaatl.com/",
+      "status": 200,
+      "finalUrl": "https://lafiestaatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.patriamezcaleria.com/",
+      "status": 200,
+      "finalUrl": "https://www.patriamezcaleria.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://altatoro.com/",
+      "status": 200,
+      "finalUrl": "https://altatoro.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://healatlanta.org/",
+      "status": 200,
+      "finalUrl": "https://healatlanta.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mercyatlanta.org/",
+      "status": 200,
+      "finalUrl": "https://mercyatlanta.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fultoncountyboh.com/",
+      "status": 200,
+      "finalUrl": "https://fultoncountyboh.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fultoncountyga.gov/inside-fulton-county/fulton-county-departments/behavioral-health-and-developmental-disabilities/adult-behavioral-health-services",
+      "status": 200,
+      "finalUrl": "https://www.fultoncountyga.gov/inside-fulton-county/fulton-county-departments/behavioral-health-and-developmental-disabilities/adult-behavioral-health-services",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hotworx.net/studio/atlanta-grantpark",
+      "status": 200,
+      "finalUrl": "https://www.hotworx.net/studio/atlanta-grantpark",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wellnesscenter.atlantaga.gov/fitness-center",
+      "status": 200,
+      "finalUrl": "https://wellnesscenter.atlantaga.gov/fitness-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://luvyourhairstudio.com/",
+      "status": 200,
+      "finalUrl": "https://luvyourhairstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hammerandnailsgrooming.com/location/midtown-atlanta-ga-hammer-nails/",
+      "status": 200,
+      "finalUrl": "https://hammerandnailsgrooming.com/location/midtown-atlanta-ga-hammer-nails/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://morningsidenailbaratl.com/",
+      "status": 200,
+      "finalUrl": "https://morningsidenailbaratl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://centre.atlantaballet.com/",
+      "status": 200,
+      "finalUrl": "https://centre.atlantaballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ymcaatlanta.org/sports/youth-sports/dance-gymnastics",
+      "status": 200,
+      "finalUrl": "https://www.ymcaatlanta.org/sports/youth-sports/dance-gymnastics",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://intowntumbling.com/",
+      "status": 200,
+      "finalUrl": "http://intowntumbling.com/index.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://childrensmuseumatlanta.org/",
+      "status": 200,
+      "finalUrl": "https://childrensmuseumatlanta.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://childrensmuseumatlanta.org/plan-your-visit/",
+      "status": 200,
+      "finalUrl": "https://childrensmuseumatlanta.org/plan-your-visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://trapmusicmuseum.com/",
+      "status": 200,
+      "finalUrl": "https://trapmusicmuseum.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://high.org/",
+      "status": 200,
+      "finalUrl": "https://high.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://eddiesattic.com/",
+      "status": 200,
+      "finalUrl": "https://eddiesattic.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.centerstage-atlanta.com/",
+      "status": 200,
+      "finalUrl": "https://www.centerstage-atlanta.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.foxtheatre.org/",
+      "status": 200,
+      "finalUrl": "https://www.foxtheatre.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.alliancetheatre.org/",
+      "status": 200,
+      "finalUrl": "https://www.alliancetheatre.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://discoveratlanta.com/explore/visitor-centers/",
+      "status": 403,
+      "finalUrl": "https://discoveratlanta.com/explore/visitor-centers/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://martinizing.com/atlanta",
+      "status": 200,
+      "finalUrl": "https://martinizing.com/atlanta",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://atomiclaundry.net/",
+      "status": 200,
+      "finalUrl": "https://atomiclaundry.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://municipalmarketatl.com/",
+      "status": 200,
+      "finalUrl": "https://municipalmarketatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://azaleamarket.com/",
+      "status": 200,
+      "finalUrl": "https://azaleamarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.atlantahabitat.org/restore/restore",
+      "status": 200,
+      "finalUrl": "https://www.atlantahabitat.org/restore/restore",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.atlantahabitat.org/programs/critical-home-repair",
+      "status": 200,
+      "finalUrl": "https://www.atlantahabitat.org/programs/critical-home-repair",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.atlantacarcareonline.com/",
+      "status": 200,
+      "finalUrl": "https://www.atlantacarcareonline.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://atowinc.com/",
+      "status": 200,
+      "finalUrl": "https://atowinc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jimellis.com/",
+      "status": 403,
+      "finalUrl": "https://www.jimellis.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://atlantalegalaid.org/home/",
+      "status": 200,
+      "finalUrl": "https://atlantalegalaid.org/home/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moneymanagement.org/locations/georgia/atlanta",
+      "status": 200,
+      "finalUrl": "https://www.moneymanagement.org/locations/georgia/atlanta",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://worksourceatlanta.org/",
+      "status": 200,
+      "finalUrl": "https://worksourceatlanta.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.acfb.org/",
+      "status": 200,
+      "finalUrl": "https://www.acfb.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thegroceryspot.org/",
+      "status": 200,
+      "finalUrl": "https://thegroceryspot.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.katesclub.org/",
+      "status": 200,
+      "finalUrl": "https://www.katesclub.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.atlantaga.gov/government/departments/department-parks-recreation/office-of-recreation/athletics-youth-adult/youth-5-17",
+      "status": 403,
+      "finalUrl": "https://www.atlantaga.gov/government/departments/department-parks-recreation/office-of-recreation/athletics-youth-adult/youth-5-17",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://landofkush.com/",
+      "status": 403,
+      "finalUrl": "https://landofkush.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.eatatblkswan.com/",
+      "status": 200,
+      "finalUrl": "https://www.eatatblkswan.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tastethisbaltimore.com/",
+      "status": 200,
+      "finalUrl": "https://www.tastethisbaltimore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.yeibohkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.yeibohkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.judysislandgrill.com/",
+      "status": 403,
+      "finalUrl": "https://www.judysislandgrill.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://almacocinalatina.com/",
+      "status": 403,
+      "finalUrl": "https://almacocinalatina.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://barclavel.com/",
+      "status": 200,
+      "finalUrl": "https://barclavel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://picantetacos.com/",
+      "status": 403,
+      "finalUrl": "https://picantetacos.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.elsalvadorrestaurantmd.com/",
+      "status": 200,
+      "finalUrl": "https://www.elsalvadorrestaurantmd.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mamatanabaltimore.com/",
+      "status": 200,
+      "finalUrl": "https://mamatanabaltimore.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://maximonrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://maximonrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://artbma.org/",
+      "status": 200,
+      "finalUrl": "https://artbma.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thewalters.org/",
+      "status": 200,
+      "finalUrl": "https://thewalters.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.avam.org/",
+      "status": 200,
+      "finalUrl": "https://www.avam.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lewismuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.lewismuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://creativealliance.org/",
+      "status": 200,
+      "finalUrl": "https://creativealliance.org/home/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theottobar.com/",
+      "status": 200,
+      "finalUrl": "https://theottobar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://aqua.org/",
+      "status": 200,
+      "finalUrl": "https://aqua.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nps.gov/fomc/",
+      "status": 200,
+      "finalUrl": "https://www.nps.gov/fomc/index.htm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://baltimore.org/visitor-center/",
+      "status": 200,
+      "finalUrl": "https://baltimore.org/plan/baltimore-visitor-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lordbaltimorehotel.com/",
+      "status": 200,
+      "finalUrl": "https://www.lordbaltimorehotel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lordbaltimorehotel.com/contact",
+      "status": 200,
+      "finalUrl": "https://www.lordbaltimorehotel.com/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mycityballet.com/",
+      "status": 200,
+      "finalUrl": "https://mycityballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sokolbaltimore.org/",
+      "status": 200,
+      "finalUrl": "https://www.sokolbaltimore.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.baltimorecity.gov/moed/youth-opportunity-centers",
+      "status": 200,
+      "finalUrl": "https://www.baltimorecity.gov/moed/youth-opportunity-centers",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bmsi.org/",
+      "status": 200,
+      "finalUrl": "https://bmsi.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dental.umaryland.edu/patients/",
+      "status": 200,
+      "finalUrl": "https://www.dental.umaryland.edu/patients/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.freebaltimore.org/",
+      "status": 200,
+      "finalUrl": "https://www.freebaltimore.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.plannedparenthood.org/health-center/maryland/baltimore/21201/baltimore-city-health-center-3292-90860",
+      "status": 403,
+      "finalUrl": "https://www.plannedparenthood.org/health-center/maryland/baltimore/21201/baltimore-city-health-center-3292-90860",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.umms.org/midtown/locations/community-health-education-center",
+      "status": 403,
+      "finalUrl": "https://www.umms.org/midtown/locations/community-health-education-center",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.baltimorecity.gov/health/our-work/health-clinics-services/dental-and-oral-health-services",
+      "status": 200,
+      "finalUrl": "https://www.baltimorecity.gov/health/our-work/health-clinics-services/dental-and-oral-health-services",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.baltimorecity.gov/health",
+      "status": 200,
+      "finalUrl": "https://www.baltimorecity.gov/health",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://twostrandsalon.com/",
+      "status": 200,
+      "finalUrl": "https://twostrandsalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.diasporasalon.com/",
+      "status": 200,
+      "finalUrl": "https://www.diasporasalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.baltimorebarberlounge.com/",
+      "status": 200,
+      "finalUrl": "https://www.baltimorebarberlounge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.clippercitybarbercompany.com/",
+      "status": 200,
+      "finalUrl": "https://www.clippercitybarbercompany.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theqg.com/",
+      "status": 200,
+      "finalUrl": "https://www.theqg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brickbodies.com/locations/rotunda/",
+      "status": 200,
+      "finalUrl": "https://www.brickbodies.com/locations/rotunda/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://321zips.com/locations/maryland/baltimore/",
+      "status": 200,
+      "finalUrl": "https://321zips.com/locations/maryland/baltimore/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.a1autothreebroscarrepair.com/",
+      "status": 200,
+      "finalUrl": "https://www.a1autothreebroscarrepair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theautobarninc.com/",
+      "status": 200,
+      "finalUrl": "https://www.theautobarninc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://baltimoretowingcompanyinc.wordpress.com/",
+      "status": 200,
+      "finalUrl": "https://baltimoretowingcompanyinc.wordpress.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mdlab.org/",
+      "status": 200,
+      "finalUrl": "https://www.mdlab.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://labor.maryland.gov/county/bacity/bacitytrainprog.shtml",
+      "status": 200,
+      "finalUrl": "https://labor.maryland.gov/county/bacity/bacitytrainprog.shtml",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bccc.edu/workforce-development",
+      "status": 200,
+      "finalUrl": "https://www.bccc.edu/workforce-development",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familytreemd.org/bcccrc-familyservices/",
+      "status": 200,
+      "finalUrl": "https://www.familytreemd.org/bcccrc-familyservices/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mdfoodbank.org/",
+      "status": 200,
+      "finalUrl": "https://mdfoodbank.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://211md.org/",
+      "status": 200,
+      "finalUrl": "https://211md.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.baltimorecity.gov/publicworks/water-bill/water-bill-assistance",
+      "status": 200,
+      "finalUrl": "https://www.baltimorecity.gov/publicworks/water-bill/water-bill-assistance",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.baltimorecity.gov/dhcd/housing-rehabilitation-and-repairs",
+      "status": 200,
+      "finalUrl": "https://www.baltimorecity.gov/dhcd/housing-rehabilitation-and-repairs",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://chickenshack.org/",
+      "status": 200,
+      "finalUrl": "https://chickenshack.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.zeelandstreet.com/",
+      "status": 200,
+      "finalUrl": "https://www.zeelandstreet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebullfishbar.com/",
+      "status": 403,
+      "finalUrl": "https://thebullfishbar.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://royaltasteofjamaica.com/",
+      "status": 200,
+      "finalUrl": "https://royaltasteofjamaica.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tresstreetkitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.tresstreetkitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacarretamidcity.com/",
+      "status": 200,
+      "finalUrl": "https://lacarretamidcity.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.losreyesbr.com/",
+      "status": 200,
+      "finalUrl": "https://www.losreyesbr.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tacosdelcartel.com/baton-rouge",
+      "status": 403,
+      "finalUrl": "https://tacosdelcartel.com/baton-rouge",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://veracruzbatonrouge.com/",
+      "status": 200,
+      "finalUrl": "https://veracruzbatonrouge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caresouth.org/locations/baton-rouge",
+      "status": 200,
+      "finalUrl": "https://www.caresouth.org/locations/baton-rouge",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ldh.la.gov/directory/detail/3995",
+      "status": 403,
+      "finalUrl": "https://ldh.la.gov/directory/detail/3995",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.va.gov/southeast-louisiana-health-care/locations/baton-rouge-va-clinic/",
+      "status": 200,
+      "finalUrl": "https://www.va.gov/southeast-louisiana-health-care/locations/baton-rouge-va-clinic/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fsgbr.org/",
+      "status": 200,
+      "finalUrl": "https://www.fsgbr.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brba.org/BRBA/BRBA/Public_Resources/Referral.aspx",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://pelicancu.com/locations/baton-rouge-at-oneal",
+      "status": 200,
+      "finalUrl": "https://pelicancu.com/locations/baton-rouge-at-oneal",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thetruebeautysalon.com/",
+      "status": 200,
+      "finalUrl": "https://thetruebeautysalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://parkerbarber.com/baton-rouge/",
+      "status": 200,
+      "finalUrl": "http://parkerbarber.com/baton-rouge/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sweetheartnailsbatonrouge.com/",
+      "status": 200,
+      "finalUrl": "https://sweetheartnailsbatonrouge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moveyourbodyyoga.com/",
+      "status": 200,
+      "finalUrl": "https://www.moveyourbodyyoga.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cgsgym.com/",
+      "status": 200,
+      "finalUrl": "https://www.cgsgym.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lasm.org/",
+      "status": 200,
+      "finalUrl": "https://www.lasm.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lsumoa.org/",
+      "status": 200,
+      "finalUrl": "https://www.lsumoa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.batonrougeballet.org/",
+      "status": 200,
+      "finalUrl": "https://www.batonrougeballet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.batonrougeballet.org/contact",
+      "status": 200,
+      "finalUrl": "https://www.batonrougeballet.org/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ultimatelouisianapar.wixsite.com/henryslisteningroom",
+      "status": 200,
+      "finalUrl": "https://ultimatelouisianapar.wixsite.com/henryslisteningroom",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thetexasclub.com/",
+      "status": 200,
+      "finalUrl": "https://www.thetexasclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://knockknockmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://knockknockmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://brzoo.org/",
+      "status": 200,
+      "finalUrl": "https://brzoo.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.westbatonrougemuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.westbatonrougemuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houmashouse.com/",
+      "status": 200,
+      "finalUrl": "https://houmashouse.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houmashouse.com/contact/",
+      "status": 200,
+      "finalUrl": "https://houmashouse.com/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://employbr.com/",
+      "status": 200,
+      "finalUrl": "https://employbr.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mybrcc.edu/",
+      "status": 403,
+      "finalUrl": "https://mybrcc.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.voascla.org/services/one-stop-homeless-services-center/",
+      "status": 200,
+      "finalUrl": "https://www.voascla.org/services/one-stop-homeless-services-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://calandros.com/store-locations/mid-city/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://keans.com/",
+      "status": 200,
+      "finalUrl": "https://keans.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.velasquezauto.com/services-auto-repair-baton-rouge/",
+      "status": 200,
+      "finalUrl": "https://www.velasquezauto.com/services-auto-repair-baton-rouge/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.teamhonda.com/",
+      "status": 200,
+      "finalUrl": "https://www.teamhonda.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brla.gov/418/Mosquito-Abatement-Rodent-Control",
+      "status": 200,
+      "finalUrl": "https://www.brla.gov/418/Mosquito-Abatement-Rodent-Control",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mertscharlotte.com/",
+      "status": 200,
+      "finalUrl": "https://mertscharlotte.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soldelish.com/",
+      "status": 200,
+      "finalUrl": "https://www.soldelish.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://donscharlotte.com/",
+      "status": 200,
+      "finalUrl": "https://donscharlotte.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cuzzoscuisine.com/",
+      "status": 200,
+      "finalUrl": "https://www.cuzzoscuisine.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://abugidacafe.com/",
+      "status": 200,
+      "finalUrl": "https://abugidacafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://enatethiopianrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://enatethiopianrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.saborlatingrill.com/",
+      "status": 200,
+      "finalUrl": "https://www.saborlatingrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sonrisaclt.com/",
+      "status": 200,
+      "finalUrl": "https://www.sonrisaclt.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.raicesclt.com/",
+      "status": 200,
+      "finalUrl": "https://www.raicesclt.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lacapitalmxclt.com/",
+      "status": 200,
+      "finalUrl": "https://www.lacapitalmxclt.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://callesolcafe.com/",
+      "status": 200,
+      "finalUrl": "https://callesolcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://piopiocharlotte.com/",
+      "status": 403,
+      "finalUrl": "https://piopiocharlotte.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://charlottecommunityhealth.org/en/",
+      "status": 200,
+      "finalUrl": "https://charlottecommunityhealth.org/en/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://charlottecommunityhealth.org/en/for-patients/hours-and-locations/",
+      "status": 200,
+      "finalUrl": "https://charlottecommunityhealth.org/en/for-patients/hours-and-locations/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://health.mecknc.gov/",
+      "status": 403,
+      "finalUrl": "https://health.mecknc.gov/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://atriumhealth.org/locations/detail/atrium-health-behavioral-health",
+      "status": 200,
+      "finalUrl": "https://atriumhealth.org/locations/detail/atrium-health-behavioral-health",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legalaidnc.org/",
+      "status": 200,
+      "finalUrl": "https://legalaidnc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://charlottelegaladvocacy.org/",
+      "status": 200,
+      "finalUrl": "https://charlottelegaladvocacy.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.commonwealthcharlotte.org/",
+      "status": 200,
+      "finalUrl": "https://www.commonwealthcharlotte.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.charlotte.edu/",
+      "status": 200,
+      "finalUrl": "https://www.charlotte.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dcr.mecknc.gov/crc",
+      "status": 403,
+      "finalUrl": "https://dcr.mecknc.gov/crc",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.anewyouhair.com/",
+      "status": 200,
+      "finalUrl": "https://www.anewyouhair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.naturalstylesbylisa.com/",
+      "status": 200,
+      "finalUrl": "https://www.naturalstylesbylisa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hawkfade.com/",
+      "status": 200,
+      "finalUrl": "https://hawkfade.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://avanailsspacharlotte.com/",
+      "status": 200,
+      "finalUrl": "https://www.avanailsspacharlotte.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fitnessfactorycharlotte.com/",
+      "status": 200,
+      "finalUrl": "https://www.fitnessfactorycharlotte.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thehealthclubclt.com/",
+      "status": 200,
+      "finalUrl": "https://thehealthclubclt.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://charlotteballet.org/",
+      "status": 403,
+      "finalUrl": "https://charlotteballet.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mintmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.mintmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bechtler.org/",
+      "status": 200,
+      "finalUrl": "https://www.bechtler.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://discoveryplace.org/",
+      "status": 200,
+      "finalUrl": "https://discoveryplace.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.charlottemuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.charlottemuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.triocharlotte.com/",
+      "status": 200,
+      "finalUrl": "https://www.triocharlotte.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://whitewater.org/",
+      "status": 200,
+      "finalUrl": "https://whitewater.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://whitewater.org/contact/",
+      "status": 200,
+      "finalUrl": "https://whitewater.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.omnihotels.com/hotels/charlotte",
+      "status": 403,
+      "finalUrl": "https://www.omnihotels.com/hotels/charlotte",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.americandrycleaners.net/",
+      "status": 200,
+      "finalUrl": "https://www.americandrycleaners.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://morrisjenkins.com/",
+      "status": 200,
+      "finalUrl": "https://morrisjenkins.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.woodiesautoservice.com/",
+      "status": 200,
+      "finalUrl": "https://www.woodiesautoservice.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sanjosemex.com/",
+      "status": 200,
+      "finalUrl": "https://sanjosemex.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://losbellosportaleslatinrestaurantsc.com/",
+      "status": 200,
+      "finalUrl": "https://losbellosportaleslatinrestaurantsc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://publicokitchenandtap.com/",
+      "status": 200,
+      "finalUrl": "https://publicokitchenandtap.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.realmexicorestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.realmexicorestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tacosnayaritmenu.com/",
+      "status": 200,
+      "finalUrl": "https://www.tacosnayaritmenu.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bigbullsbangnbbq.com/",
+      "status": 403,
+      "finalUrl": "https://bigbullsbangnbbq.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.cancommunityhealth.org/south-carolina/",
+      "status": 200,
+      "finalUrl": "https://www.cancommunityhealth.org/south-carolina/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://threeriversbehavioral.org/",
+      "status": 403,
+      "finalUrl": "https://threeriversbehavioral.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://euc.muschealth.org/locations/garners-ferry/",
+      "status": 200,
+      "finalUrl": "https://euc.muschealth.org/locations/garners-ferry/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.va.gov/columbia-south-carolina-health-care/",
+      "status": 200,
+      "finalUrl": "https://www.va.gov/columbia-south-carolina-health-care/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://prismahealth.org/locations/hospitals/baptist-parkridge-hospital",
+      "status": 403,
+      "finalUrl": "https://prismahealth.org/locations/hospitals/baptist-parkridge-hospital",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.naturalsbraidsandweaves.com/",
+      "status": 200,
+      "finalUrl": "https://www.naturalsbraidsandweaves.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://jolienailsandspa.net/",
+      "status": 200,
+      "finalUrl": "https://jolienailsandspa.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://emnailsandspa.com/",
+      "status": 200,
+      "finalUrl": "https://emnailsandspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://shvaasspa.com/",
+      "status": 200,
+      "finalUrl": "https://shvaasspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soakdayspa.com/",
+      "status": 200,
+      "finalUrl": "https://www.soakdayspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cavemanhaircuts.com/",
+      "status": 200,
+      "finalUrl": "https://www.cavemanhaircuts.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hotworx.net/studio/columbia-devine",
+      "status": 200,
+      "finalUrl": "https://www.hotworx.net/studio/columbia-devine",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.onelifefitness.com/gyms/sandhills",
+      "status": 200,
+      "finalUrl": "https://www.onelifefitness.com/gyms/sandhills",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.jamiescottfitness.com/",
+      "status": 200,
+      "finalUrl": "https://www.jamiescottfitness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.columbiamuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.columbiamuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://scmuseum.org/home",
+      "status": 200,
+      "finalUrl": "https://scmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://parksandrec.columbiasc.gov/art-center/",
+      "status": 200,
+      "finalUrl": "https://parksandrec.columbiasc.gov/art-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://columbiaconservatoryofdance.com/",
+      "status": 200,
+      "finalUrl": "https://columbiaconservatoryofdance.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sodacitygymnastics.com/",
+      "status": 200,
+      "finalUrl": "https://www.sodacitygymnastics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://carolinagymnastics.com/",
+      "status": 200,
+      "finalUrl": "https://carolinagymnastics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://edventure.org/",
+      "status": 200,
+      "finalUrl": "https://edventure.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.riverbanks.org/",
+      "status": 200,
+      "finalUrl": "https://www.riverbanks.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nps.gov/cong/",
+      "status": 200,
+      "finalUrl": "https://www.nps.gov/cong/index.htm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://southcarolinaparks.com/sesqui",
+      "status": 200,
+      "finalUrl": "https://southcarolinaparks.com/sesqui",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harvesthope.org/",
+      "status": 200,
+      "finalUrl": "https://www.harvesthope.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.coopmin.org/",
+      "status": 200,
+      "finalUrl": "https://www.coopmin.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://scthrive.org/",
+      "status": 200,
+      "finalUrl": "https://scthrive.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.goodwillsc.org/career-services/all-locations/",
+      "status": 200,
+      "finalUrl": "https://www.goodwillsc.org/career-services/all-locations/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sclegal.org/locations/",
+      "status": 200,
+      "finalUrl": "https://sclegal.org/locations/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.scsbdc.com/",
+      "status": 200,
+      "finalUrl": "https://www.scsbdc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.entityautorepairllc.com/",
+      "status": 200,
+      "finalUrl": "https://www.entityautorepairllc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://schroederstowing.net/",
+      "status": 200,
+      "finalUrl": "https://schroederstowing.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.godwinmotors.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://catchthecometsc.gov/",
+      "status": 200,
+      "finalUrl": "https://catchthecometsc.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sweettandgreens.com/",
+      "status": 200,
+      "finalUrl": "https://www.sweettandgreens.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.meninthekitchenhbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.meninthekitchenhbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.daslapbox.com/",
+      "status": 200,
+      "finalUrl": "https://www.daslapbox.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gotjerkislandgrilljuicebar.com/",
+      "status": 404,
+      "finalUrl": "https://www.gotjerkislandgrilljuicebar.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.marieskitchenhbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.marieskitchenhbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.portershousecuisine.com/",
+      "status": 200,
+      "finalUrl": "https://www.portershousecuisine.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://elsolmexicanrestaurant.com/",
+      "status": 403,
+      "finalUrl": "https://elsolmexicanrestaurant.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.treshermanosharrisburg.com/",
+      "status": 200,
+      "finalUrl": "https://www.treshermanosharrisburg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://herbyselmexicanopa.com/",
+      "status": 200,
+      "finalUrl": "https://herbyselmexicanopa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.anastaciasrestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.anastaciasrestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://latinmamborestaurantpa.com/",
+      "status": 200,
+      "finalUrl": "https://latinmamborestaurantpa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hamiltonhealthcenter.com/",
+      "status": 200,
+      "finalUrl": "https://www.hamiltonhealthcenter.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://beaconclinicpa.org/",
+      "status": 200,
+      "finalUrl": "https://beaconclinicpa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://connectionshs.com/harrisburg",
+      "status": 200,
+      "finalUrl": "https://connectionshs.com/harrisburg",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ppimhs.org/",
+      "status": 200,
+      "finalUrl": "https://ppimhs.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.alderhealth.org/",
+      "status": 200,
+      "finalUrl": "https://www.alderhealth.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harrisburgrx.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://tricountyoic.org/project-soar/",
+      "status": 200,
+      "finalUrl": "https://tricountyoic.org/project-soar/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://scpaworks.org/job-seekers/",
+      "status": 200,
+      "finalUrl": "https://scpaworks.org/job-seekers/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://scpaworks.org/contact/",
+      "status": 200,
+      "finalUrl": "https://scpaworks.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barberandbeautyacademyofpa.com/",
+      "status": 200,
+      "finalUrl": "https://www.barberandbeautyacademyofpa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/barberandbeautyacademyofpa/?hl=en",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbarberandbeautyacademyofpa%2F%3Fhl%3Den&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.midpenn.org/",
+      "status": 200,
+      "finalUrl": "https://www.midpenn.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cccsnepa.org/",
+      "status": 200,
+      "finalUrl": "https://www.cccsnepa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.harrisburghousing.org/",
+      "status": 200,
+      "finalUrl": "https://harrisburghousing.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://harrisburgpa.gov/services/building_housing/home_repairs_assistance.php",
+      "status": 200,
+      "finalUrl": "https://harrisburgpa.gov/services/building_housing/home_repairs_assistance.php",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.centralpafoodbank.org/",
+      "status": 403,
+      "finalUrl": "https://www.centralpafoodbank.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.hfoodpantry.org/",
+      "status": 403,
+      "finalUrl": "https://www.hfoodpantry.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.dauphincounty.gov/government/support-services/veterans-affairs",
+      "status": 200,
+      "finalUrl": "https://www.dauphincounty.gov/government/support-services/veterans-affairs",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.va.gov/harrisburg-vet-center/",
+      "status": 200,
+      "finalUrl": "https://www.va.gov/harrisburg-vet-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.naturalhairitagesalon.com/",
+      "status": 200,
+      "finalUrl": "https://www.naturalhairitagesalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://colonialparkbarbers.com/",
+      "status": 200,
+      "finalUrl": "https://colonialparkbarbers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urgefitness.com/harrisburg-pa/",
+      "status": 200,
+      "finalUrl": "https://www.urgefitness.com/harrisburg-pa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.urgefitness.com/affordable-gym-in-harrisburg-dauphin-county-pennsylvania/",
+      "status": 200,
+      "finalUrl": "https://www.urgefitness.com/affordable-gym-in-harrisburg-dauphin-county-pennsylvania/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ymcaharrisburg.org/locations/camp-curtin/",
+      "status": 200,
+      "finalUrl": "https://ymcaharrisburg.org/locations/camp-curtin/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.classicdrycleaner.com/company/locations/harrisburg/",
+      "status": 200,
+      "finalUrl": "https://www.classicdrycleaner.com/company/locations/harrisburg/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.autorepairharrisburgpa.com/",
+      "status": 200,
+      "finalUrl": "https://www.autorepairharrisburgpa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://riverdriveservice.com/",
+      "status": 200,
+      "finalUrl": "https://riverdriveservice.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.whitakercenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.whitakercenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nationalcivilwarmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.nationalcivilwarmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.capcitymusichall.com/",
+      "status": 200,
+      "finalUrl": "https://www.capcitymusichall.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.xlhbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.xlhbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.openstagehbg.com/",
+      "status": 200,
+      "finalUrl": "https://www.openstagehbg.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gamuttheatre.org/",
+      "status": 200,
+      "finalUrl": "https://www.gamuttheatre.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://artisticsportsacademyplus.com/",
+      "status": 200,
+      "finalUrl": "https://artisticsportsacademyplus.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://prballet.org/",
+      "status": 200,
+      "finalUrl": "https://prballet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://richiedance.com/",
+      "status": 200,
+      "finalUrl": "https://richiedance.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rabbittransit.org/",
+      "status": 200,
+      "finalUrl": "https://www.rabbittransit.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.flyhia.com/",
+      "status": 200,
+      "finalUrl": "https://www.flyhia.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lucilleshouston.net/",
+      "status": 200,
+      "finalUrl": "https://www.lucilleshouston.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lucilleshouston.com/",
+      "status": 200,
+      "finalUrl": "https://www.lucilleshouston.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebreakfastklub.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://burnsoriginalbbq.com/",
+      "status": 500,
+      "finalUrl": "https://burnsoriginalbbq.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.gatlinsfinsandfeathers.com/",
+      "status": 200,
+      "finalUrl": "https://gatlinsfinsandfeathers.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.xochihouston.com/",
+      "status": 403,
+      "finalUrl": "https://www.xochihouston.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ninfas.com/",
+      "status": 200,
+      "finalUrl": "https://ninfas.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.caracol.net/",
+      "status": 403,
+      "finalUrl": "https://www.caracol.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://cuchararestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://cuchararestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pupusarestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://pupusarestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lamichoacanameatmarket.com/",
+      "status": 200,
+      "finalUrl": "https://www.lamichoacanameatmarket.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.surlatable.com/",
+      "status": 200,
+      "finalUrl": "https://www.surlatable.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://culinaryinstitute.edu/",
+      "status": 200,
+      "finalUrl": "https://culinaryinstitute.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salonmeyerland.com/",
+      "status": 307,
+      "finalUrl": "https://www.salonmeyerland.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.camelliaalise.com/",
+      "status": 200,
+      "finalUrl": "https://www.camelliaalise.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://glossnail.bar/",
+      "status": 403,
+      "finalUrl": "https://glossnail.bar/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/houstonbarberandco/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/houstonbarberandco/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.eosfitness.com/",
+      "status": 200,
+      "finalUrl": "https://www.eosfitness.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cmhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.cmhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonzoo.org/",
+      "status": 200,
+      "finalUrl": "https://www.houstonzoo.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonzoo.org/plan-your-visit/",
+      "status": 200,
+      "finalUrl": "https://www.houstonzoo.org/plan-your-visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://houstongymnastics.com/",
+      "status": 200,
+      "finalUrl": "https://houstongymnastics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.uh.edu/clc/",
+      "status": 200,
+      "finalUrl": "https://www.uh.edu/clc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hmaac.org/",
+      "status": 200,
+      "finalUrl": "https://hmaac.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mfah.org/",
+      "status": 403,
+      "finalUrl": "https://www.mfah.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.discoverygreen.com/",
+      "status": 200,
+      "finalUrl": "https://www.discoverygreen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.discoverygreen.com/visit/",
+      "status": 200,
+      "finalUrl": "https://www.discoverygreen.com/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.orangeshow.org/",
+      "status": 200,
+      "finalUrl": "https://www.orangeshow.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://spacecenter.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://spacecenter.org/contact/",
+      "status": 200,
+      "finalUrl": "https://spacecenter.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moodygardens.com/",
+      "status": 200,
+      "finalUrl": "https://www.moodygardens.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.moodygardens.com/visitor-info/contact-us",
+      "status": 200,
+      "finalUrl": "https://www.moodygardens.com/visitor-info/contact-us",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hopechc.org/",
+      "status": 200,
+      "finalUrl": "https://www.hopechc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hopechc.org/hope-alief-clinic",
+      "status": 200,
+      "finalUrl": "https://www.hopechc.org/hope-alief-clinic",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://avenue360.org/",
+      "status": 200,
+      "finalUrl": "https://avenue360.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonhealth.org/",
+      "status": 200,
+      "finalUrl": "https://www.houstonhealth.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theharriscenter.org/",
+      "status": 200,
+      "finalUrl": "https://www.theharriscenter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theharriscenter.org/locations",
+      "status": 200,
+      "finalUrl": "https://www.theharriscenter.org/locations",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lonestarlegal.org/",
+      "status": 200,
+      "finalUrl": "https://www.lonestarlegal.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lonestarlegal.org/office/houston-office/",
+      "status": 200,
+      "finalUrl": "https://www.lonestarlegal.org/office/houston-office/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.familyhouston.org/financial-stability-coaching",
+      "status": 200,
+      "finalUrl": "https://www.familyhouston.org/financial-stability-coaching",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mamhouston.org/",
+      "status": 200,
+      "finalUrl": "https://www.mamhouston.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mamhouston.org/financialed",
+      "status": 200,
+      "finalUrl": "https://www.mamhouston.org/financialed",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.houstonfoodbank.org/",
+      "status": 403,
+      "finalUrl": "https://www.houstonfoodbank.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.houstonfoodbank.org/our-work/",
+      "status": 403,
+      "finalUrl": "https://www.houstonfoodbank.org/our-work/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://hawc.org/",
+      "status": 200,
+      "finalUrl": "https://hawc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.scottsautorepair.com/",
+      "status": 200,
+      "finalUrl": "https://www.scottsautorepair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oaksfinecleaners.com/",
+      "status": 200,
+      "finalUrl": "https://oaksfinecleaners.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dulans-sfk.com/",
+      "status": 200,
+      "finalUrl": "https://www.dulans-sfk.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://theservingspoon.net/",
+      "status": 200,
+      "finalUrl": "https://www.theservingspoon.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://haroldandbelles.com/",
+      "status": 200,
+      "finalUrl": "https://haroldandbelles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.altaadams.com/",
+      "status": 200,
+      "finalUrl": "https://www.altaadams.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.altaadams.com/reservations",
+      "status": 200,
+      "finalUrl": "https://www.altaadams.com/reservations",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ilovemole.com/",
+      "status": 200,
+      "finalUrl": "https://www.ilovemole.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ilovemole.com/pages/restaurant",
+      "status": 200,
+      "finalUrl": "https://www.ilovemole.com/pages/restaurant",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sonoratown.com/",
+      "status": 200,
+      "finalUrl": "https://www.sonoratown.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.holboxla.com/",
+      "status": 200,
+      "finalUrl": "https://www.holboxla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://chichenitzarestaurant.com/",
+      "status": 403,
+      "finalUrl": "https://chichenitzarestaurant.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.damiandtla.com/",
+      "status": 200,
+      "finalUrl": "https://damiandtla.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.casavega.com/",
+      "status": 200,
+      "finalUrl": "https://www.casavega.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.angelescommunity.org/",
+      "status": 200,
+      "finalUrl": "https://www.angelescommunity.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dhs.lacounty.gov/lageneral/",
+      "status": 200,
+      "finalUrl": "https://dhs.lacounty.gov/lageneral/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dmh.lacounty.gov/",
+      "status": 200,
+      "finalUrl": "https://dmh.lacounty.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lafoodbank.org/",
+      "status": 200,
+      "finalUrl": "https://www.lafoodbank.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://emergency.lacity.gov/",
+      "status": 403,
+      "finalUrl": "https://emergency.lacity.gov/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://lafla.org/",
+      "status": 200,
+      "finalUrl": "https://lafla.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lafla.org/get-help/",
+      "status": 200,
+      "finalUrl": "https://lafla.org/get-help/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.self-help.org/",
+      "status": 403,
+      "finalUrl": "https://www.self-help.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://homeboyindustries.org/",
+      "status": 200,
+      "finalUrl": "https://homeboyindustries.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ajcc.lacounty.gov/",
+      "status": 403,
+      "finalUrl": "https://www.ajcc.lacounty.gov/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lapl.org/",
+      "status": 200,
+      "finalUrl": "https://www.lapl.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lapl.org/branches/central-library",
+      "status": 200,
+      "finalUrl": "https://www.lapl.org/branches/central-library",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salondabala.com/",
+      "status": 200,
+      "finalUrl": "https://www.salondabala.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.planetfitness.com/",
+      "status": 403,
+      "finalUrl": "https://www.planetfitness.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://f45training.com/",
+      "status": 200,
+      "finalUrl": "https://f45training.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://f45training.com/studio/downtownlosangeles/",
+      "status": 200,
+      "finalUrl": "https://f45training.com/studio/downtownlosangeles/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lacma.org/",
+      "status": 200,
+      "finalUrl": "https://www.lacma.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lacma.org/visit",
+      "status": 200,
+      "finalUrl": "https://www.lacma.org/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caamuseum.org/",
+      "status": 200,
+      "finalUrl": "https://caamuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://caamuseum.org/visit",
+      "status": 200,
+      "finalUrl": "https://caamuseum.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://molaa.org/",
+      "status": 200,
+      "finalUrl": "https://molaa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://molaa.org/visit",
+      "status": 200,
+      "finalUrl": "https://molaa.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hollywoodforever.com/",
+      "status": 200,
+      "finalUrl": "https://hollywoodforever.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.debbieallendanceacademy.com/",
+      "status": 200,
+      "finalUrl": "https://www.debbieallendanceacademy.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mrdrycleaner.com/",
+      "status": 200,
+      "finalUrl": "https://mrdrycleaner.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.laautocenter.biz/",
+      "status": 200,
+      "finalUrl": "https://www.laautocenter.biz/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fordofdtla.com/",
+      "status": 403,
+      "finalUrl": "https://www.fordofdtla.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.lacdjr.com/",
+      "status": 403,
+      "finalUrl": "https://www.lacdjr.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://hollywoodtow.com/",
+      "status": 200,
+      "finalUrl": "https://hollywoodtow.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ladotparking.org/",
+      "status": 200,
+      "finalUrl": "https://ladotparking.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soulbowlmn.com/",
+      "status": 200,
+      "finalUrl": "https://soulbowlmn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pimento.com/",
+      "status": 200,
+      "finalUrl": "https://pimento.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.afrodeli.com/",
+      "status": 200,
+      "finalUrl": "https://www.afrodeli.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.westindiessoulfoods.com/",
+      "status": 200,
+      "finalUrl": "https://www.westindiessoulfoods.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://goldenthymeco.com/",
+      "status": 200,
+      "finalUrl": "https://goldenthymeco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lamadremn.com/",
+      "status": 200,
+      "finalUrl": "https://lamadremn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.losandesmn.com/",
+      "status": 200,
+      "finalUrl": "https://www.losandesmn.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sonorampls.com/",
+      "status": 403,
+      "finalUrl": "https://sonorampls.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://sonorampls.com/menu",
+      "status": 403,
+      "finalUrl": "https://sonorampls.com/menu",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.laestanciasteakhouse.com/",
+      "status": 403,
+      "finalUrl": "https://laestanciasteakhouse.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.southsidechs.org/",
+      "status": 200,
+      "finalUrl": "https://www.southsidechs.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cuhcc.umn.edu/",
+      "status": 403,
+      "finalUrl": "https://cuhcc.umn.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://neighborhoodhealthsource.org/",
+      "status": 200,
+      "finalUrl": "https://neighborhoodhealthsource.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://riverlandcommunityhealth.org/",
+      "status": 200,
+      "finalUrl": "https://riverlandcommunityhealth.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mylegalaid.org/",
+      "status": 200,
+      "finalUrl": "https://mylegalaid.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mylegalaid.org/locations/minneapolis/",
+      "status": 200,
+      "finalUrl": "https://mylegalaid.org/locations/minneapolis/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://careerforce.mn.gov/careerforce-location/careerforce-minneapolis-north",
+      "status": 405,
+      "finalUrl": "https://careerforce.mn.gov/careerforce-location/careerforce-minneapolis-north",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://careerforce.mn.gov/careerforce-location/careerforce-st-paul",
+      "status": 405,
+      "finalUrl": "https://careerforce.mn.gov/careerforce-location/careerforce-st-paul",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://ce.mpschools.org/adults/adult-ed/ged-adult-diploma",
+      "status": 200,
+      "finalUrl": "https://ce.mpschools.org/adults/adult-ed/ged-adult-diploma",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lssmn.org/services/financial-and-employment",
+      "status": 200,
+      "finalUrl": "https://www.lssmn.org/services/financial-and-employment",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clues.org/",
+      "status": 200,
+      "finalUrl": "https://clues.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.hennepinattorney.org/get-help/crime/domestic-abuse-service-center",
+      "status": 200,
+      "finalUrl": "https://www.hennepinattorney.org/get-help/crime/domestic-abuse-service-center",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bridgestosafety.org/",
+      "status": 200,
+      "finalUrl": "https://bridgestosafety.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.esns.org/foodprograms",
+      "status": 200,
+      "finalUrl": "https://www.esns.org/foodprograms",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://juut.com/locations/saint-paul-salon-spa/",
+      "status": 200,
+      "finalUrl": "https://juut.com/locations/saint-paul-salon-spa/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://esteticastpaul.com/",
+      "status": 200,
+      "finalUrl": "https://esteticastpaul.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://esteticastpaul.com/about-us/contact-us/",
+      "status": 200,
+      "finalUrl": "https://esteticastpaul.com/about-us/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.anytimefitness.com/locations/minneapolis-minnesota-4289",
+      "status": 200,
+      "finalUrl": "https://www.anytimefitness.com/locations/minneapolis-minnesota-4289",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mplsgymnastics.com/",
+      "status": 200,
+      "finalUrl": "https://mplsgymnastics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://spballet.org/",
+      "status": 200,
+      "finalUrl": "https://spballet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://zenondance.org/",
+      "status": 200,
+      "finalUrl": "https://zenondance.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.artsmia.org/",
+      "status": 429,
+      "finalUrl": "https://www.artsmia.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.walkerart.org/",
+      "status": 200,
+      "finalUrl": "https://www.walkerart.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://wam.umn.edu/",
+      "status": 403,
+      "finalUrl": "https://wam.umn.edu/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://mcm.org/",
+      "status": 200,
+      "finalUrl": "https://mcm.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://smm.org/visit/",
+      "status": 200,
+      "finalUrl": "https://smm.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://comozooconservatory.org/",
+      "status": 200,
+      "finalUrl": "https://comozooconservatory.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thehookmpls.com/",
+      "status": 200,
+      "finalUrl": "https://thehookmpls.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thecedar.org/",
+      "status": 200,
+      "finalUrl": "https://www.thecedar.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.minneapolis.org/visitor-information/",
+      "status": 200,
+      "finalUrl": "https://www.minneapolis.org/visitor-information/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pilgrimdrycleaners.com/locations/minneapolis-uptown",
+      "status": 200,
+      "finalUrl": "https://www.pilgrimdrycleaners.com/locations/minneapolis-uptown",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bobbyandstevesautoworld.com/Find-Us/Mode/1/5801-Nicollet-Avenue-S-Minneapolis-MN-55419/details",
+      "status": 403,
+      "finalUrl": "https://www.bobbyandstevesautoworld.com/Find-Us/Mode/1/5801-Nicollet-Avenue-S-Minneapolis-MN-55419/details",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://maryssoutherncookingmobile.com/",
+      "status": 200,
+      "finalUrl": "https://maryssoutherncookingmobile.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cozybrownandson.com/",
+      "status": 200,
+      "finalUrl": "https://cozybrownandson.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.roostersdowntown.com/",
+      "status": 403,
+      "finalUrl": "https://www.roostersdowntown.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://villadelreymobile.com/",
+      "status": 200,
+      "finalUrl": "https://villadelreymobile.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sanjosetaqueriacarniceriaal.com/",
+      "status": 200,
+      "finalUrl": "https://www.sanjosetaqueriacarniceriaal.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://taqueriamexicomobile.com/",
+      "status": 200,
+      "finalUrl": "https://taqueriamexicomobile.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lemoynes.com/",
+      "status": 200,
+      "finalUrl": "https://www.lemoynes.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.greatdaylatte.com/",
+      "status": 200,
+      "finalUrl": "https://www.greatdaylatte.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebreakfastspotmobile.com/",
+      "status": 200,
+      "finalUrl": "https://thebreakfastspotmobile.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.boxowt.com/",
+      "status": 200,
+      "finalUrl": "https://www.boxowt.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dropoutbakeryandcompany.com/",
+      "status": 200,
+      "finalUrl": "https://www.dropoutbakeryandcompany.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/ElMilagroMOB/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/ElMilagroMOB/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.usahealthsystem.com/locations/cottage-hill-primary-care",
+      "status": 403,
+      "finalUrl": "https://www.usahealthsystem.com/locations/cottage-hill-primary-care",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.infirmaryhealth.org/locations/mobile-infirmary/",
+      "status": 403,
+      "finalUrl": "https://www.infirmaryhealth.org/locations/mobile-infirmary/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mobilefamilydentistry.com/our-locations",
+      "status": 403,
+      "finalUrl": "https://www.mobilefamilydentistry.com/our-locations",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://altapointe.org/about/locations/",
+      "status": 200,
+      "finalUrl": "https://altapointe.org/about/locations/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://namimobile.org/",
+      "status": 403,
+      "finalUrl": "https://namimobile.org/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.gracebykim.com/",
+      "status": 200,
+      "finalUrl": "https://www.gracebykim.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mercinailspa.com/",
+      "status": 200,
+      "finalUrl": "https://mercinailspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.missionfitness.rocks/",
+      "status": 200,
+      "finalUrl": "https://www.missionfitness.rocks/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mobtowngrind.com/",
+      "status": 200,
+      "finalUrl": "https://www.mobtowngrind.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mobilemuseumofart.com/",
+      "status": 200,
+      "finalUrl": "https://www.mobilemuseumofart.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.historymuseumofmobile.com/visit-us/",
+      "status": 200,
+      "finalUrl": "https://www.historymuseumofmobile.com/visit-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://clotilda.com/",
+      "status": 200,
+      "finalUrl": "https://clotilda.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.exploreum.com/",
+      "status": 200,
+      "finalUrl": "https://www.exploreum.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mobileballet.org/",
+      "status": 200,
+      "finalUrl": "https://mobileballet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soulkitchenmobile.com/",
+      "status": 200,
+      "finalUrl": "https://www.soulkitchenmobile.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cityofmobile.gov/parks-rec/gymnastics/",
+      "status": 200,
+      "finalUrl": "https://www.cityofmobile.gov/parks-rec/gymnastics/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://planetgym.org/",
+      "status": 200,
+      "finalUrl": "https://planetgym.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bishop.edu/contact",
+      "status": 200,
+      "finalUrl": "https://www.bishop.edu/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legalservicesalabama.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://legalservicesalabama.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.goodwillgulfcoast.org/locations/opportunity-centers/",
+      "status": 200,
+      "finalUrl": "https://www.goodwillgulfcoast.org/locations/opportunity-centers/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.waitescleaners.com/",
+      "status": 200,
+      "finalUrl": "https://www.waitescleaners.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.master-cleaners.com/",
+      "status": 200,
+      "finalUrl": "https://www.master-cleaners.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.downtowncarcare.com/Mobile-auto-repair-shop.php",
+      "status": 200,
+      "finalUrl": "https://www.downtowncarcare.com/Mobile-auto-repair-shop.php",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gibbystowservices.com/",
+      "status": 200,
+      "finalUrl": "https://gibbystowservices.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://carboxx.com/",
+      "status": 200,
+      "finalUrl": "https://carboxx.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://catholicsocialservices.org/home-repairs",
+      "status": 403,
+      "finalUrl": "https://catholicsocialservices.org/home-repairs",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.dumaswesley.org/",
+      "status": 200,
+      "finalUrl": "https://www.dumaswesley.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.feedingthegulfcoast.org/",
+      "status": 200,
+      "finalUrl": "https://www.feedingthegulfcoast.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salvationarmyusa.org/usa-southern-territory/alabama-louisiana-and-mississippi/coastal-alabama-area-command/",
+      "status": 200,
+      "finalUrl": "https://www.salvationarmyusa.org/usa-southern-territory/alabama-louisiana-and-mississippi/coastal-alabama-area-command/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theadmiralhotel.com/",
+      "status": 200,
+      "finalUrl": "https://www.theadmiralhotel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.disl.edu/aquarium/",
+      "status": 200,
+      "finalUrl": "https://www.disl.edu/aquarium/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.panniegeorgeskitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.panniegeorgeskitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.marthasplacebuffet.com/",
+      "status": 403,
+      "finalUrl": "https://www.marthasplacebuffet.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://doubledownbistro.com/",
+      "status": 200,
+      "finalUrl": "https://doubledownbistro.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bandbcoffeebar.com/",
+      "status": 200,
+      "finalUrl": "https://bandbcoffeebar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brinswings.com/",
+      "status": 200,
+      "finalUrl": "https://www.brinswings.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.brinswings.com/brins-wings-downtown-montgomery",
+      "status": 200,
+      "finalUrl": "https://www.brinswings.com/brins-wings-downtown-montgomery",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.zonarosa.net/",
+      "status": 403,
+      "finalUrl": "https://www.zonarosa.net/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://salsaritas.com/locations/alabama/festival-plaza/",
+      "status": 200,
+      "finalUrl": "https://salsaritas.com/locations/alabama/festival-plaza/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.solrestaurante.com/",
+      "status": 200,
+      "finalUrl": "https://www.solrestaurante.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.solrestaurante.com/location/location/",
+      "status": 200,
+      "finalUrl": "https://www.solrestaurante.com/location/location/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://taqueriaelcampesino.toast.site/",
+      "status": 403,
+      "finalUrl": "https://taqueriaelcampesino.toast.site/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://burritolounge.com/",
+      "status": 200,
+      "finalUrl": "https://burritolounge.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.healthservicesinc.org/",
+      "status": 200,
+      "finalUrl": "https://www.healthservicesinc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.va.gov/central-alabama-health-care/locations/central-alabama-montgomery-va-clinic/",
+      "status": 200,
+      "finalUrl": "https://www.va.gov/central-alabama-health-care/locations/central-alabama-montgomery-va-clinic/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.momclinic.org/",
+      "status": 200,
+      "finalUrl": "https://www.momclinic.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.carastar.org/",
+      "status": 200,
+      "finalUrl": "https://www.carastar.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://montgomeryfamilydentalcare.com/",
+      "status": 200,
+      "finalUrl": "https://montgomeryfamilydentalcare.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://montgomerywomenshealth.com/",
+      "status": 200,
+      "finalUrl": "https://montgomerywomenshealth.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legalservicesalabama.org/",
+      "status": 200,
+      "finalUrl": "https://legalservicesalabama.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.alabamalegalhelp.org/organization/montgomery-office-legal-services-alabama",
+      "status": 200,
+      "finalUrl": "https://www.alabamalegalhelp.org/organization/montgomery-office-legal-services-alabama",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mymax.com/montgomery-eastdale-branch",
+      "status": 200,
+      "finalUrl": "https://www.mymax.com/montgomery-eastdale-branch",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://envy-hair-designs.square.site/",
+      "status": 200,
+      "finalUrl": "https://envy-hair-designs.square.site/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ameliasalon.com/",
+      "status": 200,
+      "finalUrl": "https://ameliasalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bakerlegacies.com/",
+      "status": 200,
+      "finalUrl": "https://bakerlegacies.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://luxurynailspamontgomery.com/",
+      "status": 503,
+      "finalUrl": "https://luxurynailspamontgomery.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://rtjspatrail.com/spa/the-spa-at-montgomery/",
+      "status": 200,
+      "finalUrl": "https://rtjspatrail.com/spa/the-spa-at-montgomery/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ampedfitness.com/location/montgomery-al/",
+      "status": 403,
+      "finalUrl": "https://ampedfitness.com/location/montgomery-al/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://legacysites.eji.org/about/museum/",
+      "status": 200,
+      "finalUrl": "https://legacysites.eji.org/about/museum/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legacysites.eji.org/about/memorial/",
+      "status": 200,
+      "finalUrl": "https://legacysites.eji.org/about/memorial/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.splcenter.org/civil-rights-memorial/",
+      "status": 200,
+      "finalUrl": "https://www.splcenter.org/civil-rights-memorial/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.troy.edu/student-life-resources/arts-culture/rosa-parks-museum/visit.html",
+      "status": 200,
+      "finalUrl": "https://www.troy.edu/student-life-resources/arts-culture/rosa-parks-museum/visit.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://ahc.alabama.gov/properties/freedomrides/freedomrides.aspx",
+      "status": 200,
+      "finalUrl": "https://ahc.alabama.gov/properties/freedomrides/freedomrides.aspx",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mmfa.org/",
+      "status": 200,
+      "finalUrl": "https://mmfa.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mpaconline.org/",
+      "status": 200,
+      "finalUrl": "https://mpaconline.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://montgomerywhitewater.com/",
+      "status": 200,
+      "finalUrl": "https://montgomerywhitewater.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.montgomeryzoo.com/plan-your-visit/hours-admission",
+      "status": 403,
+      "finalUrl": "https://www.montgomeryzoo.com/plan-your-visit/hours-admission",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://armoryathletics.com/index/",
+      "status": 200,
+      "finalUrl": "https://armoryathletics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://montgomeryballet.org/",
+      "status": 200,
+      "finalUrl": "https://montgomeryballet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.alabamariverregionballet.com/",
+      "status": 200,
+      "finalUrl": "https://www.alabamariverregionballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hafb.org/",
+      "status": 200,
+      "finalUrl": "https://hafb.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hafb.org/contact-us/",
+      "status": 200,
+      "finalUrl": "https://hafb.org/contact-us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.montgomeryal.gov/government/city-government/city-departments/grants/office-of-workforce-and-opportunity",
+      "status": 403,
+      "finalUrl": "https://www.montgomeryal.gov/government/city-government/city-departments/grants/office-of-workforce-and-opportunity",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.trenholmstate.edu/",
+      "status": 200,
+      "finalUrl": "https://www.trenholmstate.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.alasu.edu/",
+      "status": 200,
+      "finalUrl": "https://www.alasu.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chicosautopros.com/",
+      "status": 403,
+      "finalUrl": "https://www.chicosautopros.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.stiversfordofmontgomery.com/",
+      "status": 403,
+      "finalUrl": "https://www.stiversfordofmontgomery.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.facebook.com/WorthCleanersMontgomery/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/WorthCleanersMontgomery/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.clarkcomfort.com/",
+      "status": 200,
+      "finalUrl": "https://www.clarkcomfort.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://experiencemontgomeryal.org/",
+      "status": 200,
+      "finalUrl": "https://experiencemontgomeryal.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.elevationhotel.com/",
+      "status": 200,
+      "finalUrl": "https://www.elevationhotel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.airnowhvac.com/",
+      "status": 403,
+      "finalUrl": "https://www.airnowhvac.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.addisnola.com/",
+      "status": 200,
+      "finalUrl": "https://www.addisnola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dakarnola.com/",
+      "status": 200,
+      "finalUrl": "https://www.dakarnola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.dakarnola.com/reservations/",
+      "status": 200,
+      "finalUrl": "https://www.dakarnola.com/reservations/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "http://www.neworleans.neyows.com/",
+      "status": 200,
+      "finalUrl": "https://www.neworleans.neyows.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.morrowsnola.com/",
+      "status": 200,
+      "finalUrl": "https://www.morrowsnola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://order.toasttab.com/online/morrows-2438-st-claude-ave",
+      "status": 403,
+      "finalUrl": "https://order.toasttab.com/online/morrows-2438-st-claude-ave",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.acamayanola.com/",
+      "status": 200,
+      "finalUrl": "https://www.acamayanola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://felipestaqueria.com/locations/louisiana/french-quarter-new-orleans/",
+      "status": 200,
+      "finalUrl": "https://felipestaqueria.com/locations/louisiana/french-quarter-new-orleans/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.eatbarracuda.com/",
+      "status": 200,
+      "finalUrl": "https://www.eatbarracuda.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.barutapasnola.com/",
+      "status": 200,
+      "finalUrl": "https://www.barutapasnola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://santafenola.com/",
+      "status": 200,
+      "finalUrl": "https://santafenola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.crescentcare.org/",
+      "status": 200,
+      "finalUrl": "https://www.crescentcare.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://hope-chc.org/",
+      "status": 200,
+      "finalUrl": "https://hope-chc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ladentalcenterstclaude.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://www.slls.org/",
+      "status": 200,
+      "finalUrl": "https://slls.org/en/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nofjc.org/",
+      "status": 200,
+      "finalUrl": "https://www.nofjc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.first72plus.org/",
+      "status": 200,
+      "finalUrl": "https://www.first72plus.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.first72plus.org/contact",
+      "status": 200,
+      "finalUrl": "https://www.first72plus.org/contact",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nolacc.org/",
+      "status": 200,
+      "finalUrl": "https://www.nolacc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://neworleansathleticclub.com/",
+      "status": 200,
+      "finalUrl": "https://neworleansathleticclub.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nordc.org/programs-activities/fitness",
+      "status": 200,
+      "finalUrl": "https://nordc.org/programs-activities/fitness/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tbythairstudio.com/",
+      "status": 200,
+      "finalUrl": "https://tbythairstudio.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://southernswingsnailbar.com/",
+      "status": 200,
+      "finalUrl": "https://southernswingsnailbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nailbarnola.com/",
+      "status": 200,
+      "finalUrl": "https://nailbarnola.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lcm.org/",
+      "status": 200,
+      "finalUrl": "https://lcm.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nolajazzmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://nolajazzmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nolajazzmuseum.org/visit",
+      "status": 200,
+      "finalUrl": "https://nolajazzmuseum.org/visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.noaam.org/",
+      "status": 200,
+      "finalUrl": "https://www.noaam.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.noaam.org/visit-noaam",
+      "status": 200,
+      "finalUrl": "https://www.noaam.org/visit-noaam",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.preservationhall.com/",
+      "status": 200,
+      "finalUrl": "https://www.preservationhall.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tipitinas.com/",
+      "status": 200,
+      "finalUrl": "https://tipitinas.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://musicboxvillage.com/",
+      "status": 200,
+      "finalUrl": "https://musicboxvillage.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.neworleansschoolofballet.com/",
+      "status": 200,
+      "finalUrl": "https://www.neworleansschoolofballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.iflipuptown.com/",
+      "status": 200,
+      "finalUrl": "https://www.iflipuptown.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mlb.com/mlb-youth-academy/new-orleans",
+      "status": 200,
+      "finalUrl": "https://www.mlb.com/mlb-youth-academy/new-orleans",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.fourseasons.com/neworleans/",
+      "status": 403,
+      "finalUrl": "https://www.fourseasons.com/neworleans/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://myuptownauto.com/",
+      "status": 200,
+      "finalUrl": "https://myuptownauto.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://neworleansautorepair.net/",
+      "status": 200,
+      "finalUrl": "https://neworleansautorepair.net/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nola.gov/find-my-towed-vehicle/",
+      "status": 200,
+      "finalUrl": "https://nola.gov/find-my-towed-vehicle/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.youngsdrycleaning.com/",
+      "status": 200,
+      "finalUrl": "https://www.youngsdrycleaning.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nps.gov/jela/planyourvisit/barataria-preserve.htm",
+      "status": 200,
+      "finalUrl": "https://www.nps.gov/jela/planyourvisit/barataria-preserve.htm",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://amyruths.com/",
+      "status": 200,
+      "finalUrl": "https://amyruths.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://redroosterharlem.com/",
+      "status": 200,
+      "finalUrl": "https://www.redroosterharlem.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://negrilvillage.com/",
+      "status": 200,
+      "finalUrl": "https://negrilvillage.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lostacos1.com/",
+      "status": 200,
+      "finalUrl": "https://www.lostacos1.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rosamexicano.com/location/union-square/",
+      "status": 200,
+      "finalUrl": "https://rosamexicano.com/location/union-square/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://publicmarkets.nyc/la-marqueta",
+      "status": 403,
+      "finalUrl": "https://publicmarkets.nyc/la-marqueta",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.nypl.org/locations/schomburg",
+      "status": 200,
+      "finalUrl": "https://www.nypl.org/locations/schomburg",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.studiomuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.studiomuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.apollotheater.org/visit/",
+      "status": 200,
+      "finalUrl": "https://www.apollotheater.org/visit-the-apollo",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://pregonesprtt.org/",
+      "status": 200,
+      "finalUrl": "https://pregonesprtt.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.joffreyballetschool.com/",
+      "status": 200,
+      "finalUrl": "https://www.joffreyballetschool.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nycgovparks.org/facilities/recreationcenters/r129",
+      "status": 202,
+      "finalUrl": "https://www.nycgovparks.org/facilities/recreationcenters/r129",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.chnnyc.org/",
+      "status": 200,
+      "finalUrl": "https://www.chnnyc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nyccare.nyc/",
+      "status": 200,
+      "finalUrl": "https://www.nyccare.nyc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nyc988.cityofnewyork.us/en/",
+      "status": 200,
+      "finalUrl": "https://nyc988.cityofnewyork.us/en/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nyc.gov/site/doh/health/neighborhood-health/neighborhood-health-action-centers.page",
+      "status": 200,
+      "finalUrl": "https://www.nyc.gov/site/doh/health/neighborhood-health/neighborhood-health-action-centers.page",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nycommonpantry.org/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.nyc.gov/site/sbs/careers/wf1-career-centers.page",
+      "status": 200,
+      "finalUrl": "https://www.nyc.gov/site/sbs/careers/wf1-career-centers.page",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nyc.gov/site/dca/talk-money/get-free-financial-counseling.page",
+      "status": 200,
+      "finalUrl": "https://www.nyc.gov/site/dca/talk-money/get-free-financial-counseling.page",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legalaidnyc.org/",
+      "status": 200,
+      "finalUrl": "https://legalaidnyc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nyc.gov/site/dycd/services/food_pantries.page",
+      "status": 200,
+      "finalUrl": "https://www.nyc.gov/site/dycd/services/food_pantries.page",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sabineshallway.com/",
+      "status": 200,
+      "finalUrl": "https://sabineshallway.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.feliciamichellehair.com/",
+      "status": 200,
+      "finalUrl": "https://www.feliciamichellehair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.newyorknailspa.com/",
+      "status": 200,
+      "finalUrl": "https://www.newyorknailspa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pallmallbarbers.nyc/",
+      "status": 200,
+      "finalUrl": "https://www.pallmallbarbers.nyc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.abyssinian.org/",
+      "status": 200,
+      "finalUrl": "https://www.abyssinian.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://happycleaners.com/",
+      "status": 200,
+      "finalUrl": "https://happycleaners.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bronxautorepair.com/",
+      "status": 200,
+      "finalUrl": "https://bronxautorepair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://majorworld.com/",
+      "status": 200,
+      "finalUrl": "https://majorworld.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.govisland.com/plan-your-visit",
+      "status": 200,
+      "finalUrl": "https://www.govisland.com/plan-your-visit",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ferry.nyc/",
+      "status": 200,
+      "finalUrl": "https://www.ferry.nyc/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aminaphilly.com/",
+      "status": 200,
+      "finalUrl": "https://www.aminaphilly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.honeysucklephl.com/",
+      "status": 200,
+      "finalUrl": "https://www.honeysucklephl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bookersrestaurantandbar.com/",
+      "status": 200,
+      "finalUrl": "https://bookersrestaurantandbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://48thstreetgrille.com/",
+      "status": 200,
+      "finalUrl": "https://48thstreetgrille.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lacanastamexicanfoodpa.com/",
+      "status": 200,
+      "finalUrl": "https://lacanastamexicanfoodpa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mixtorestaurante.com/",
+      "status": 200,
+      "finalUrl": "https://mixtorestaurante.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lalloronaphilly.com/",
+      "status": 200,
+      "finalUrl": "https://lalloronaphilly.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lasfridasmexicankitchen.com/doylestown-pa.html",
+      "status": 200,
+      "finalUrl": "https://www.lasfridasmexicankitchen.com/doylestown-pa.html",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.elguajillomexican.com/",
+      "status": 200,
+      "finalUrl": "https://www.elguajillomexican.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sofreshjuiceco.com/",
+      "status": 200,
+      "finalUrl": "https://www.sofreshjuiceco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fight.org/programs/john-bell-health-center/",
+      "status": 200,
+      "finalUrl": "https://fight.org/programs/john-bell-health-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fight.org/programs/dental-services/",
+      "status": 200,
+      "finalUrl": "https://fight.org/programs/dental-services/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://phmc.org/program/phmc-health-center-on-cedar/",
+      "status": 200,
+      "finalUrl": "https://phmc.org/program/phmc-health-center-on-cedar/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://penndentalmedicine.org/",
+      "status": 200,
+      "finalUrl": "https://penndentalmedicine.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cbhphilly.org/",
+      "status": 200,
+      "finalUrl": "https://cbhphilly.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://buckscounty.gov/315/Behavioral-Health",
+      "status": 200,
+      "finalUrl": "https://buckscounty.gov/315/Behavioral-Health",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fsabc.org/get-help/counseling-therapy/",
+      "status": 200,
+      "finalUrl": "https://fsabc.org/get-help/counseling-therapy/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://philalegal.org/get-legal-help",
+      "status": 200,
+      "finalUrl": "https://philalegal.org/get-legal-help",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lasp.org/locations",
+      "status": 200,
+      "finalUrl": "https://www.lasp.org/locations",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.clarifi.org/contact/",
+      "status": 200,
+      "finalUrl": "https://www.clarifi.org/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.phila.gov/services/payments-assistance-taxes/financial-services-for-residents/get-free-financial-counseling/",
+      "status": 200,
+      "finalUrl": "https://www.phila.gov/services/payments-assistance-taxes/financial-services-for-residents/get-free-financial-counseling/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sharefoodprogram.org/",
+      "status": 200,
+      "finalUrl": "https://www.sharefoodprogram.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://fsabc.org/program/food-pantry/",
+      "status": 200,
+      "finalUrl": "https://fsabc.org/program/food-pantry/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.iamnaturalhairstudiollc.com/",
+      "status": 200,
+      "finalUrl": "https://www.iamnaturalhairstudiollc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thephiladelphiabarberco.com/",
+      "status": 200,
+      "finalUrl": "https://www.thephiladelphiabarberco.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://philanailspa.com/contact",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "timeout"
+    },
+    {
+      "url": "https://cityfitness.com/east-market/",
+      "status": 200,
+      "finalUrl": "https://cityfitness.com/east-market",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.aampmuseum.org/",
+      "status": 200,
+      "finalUrl": "https://www.aampmuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://philadelphiadanceacademy.com/class-schedule-old-city/",
+      "status": 200,
+      "finalUrl": "https://philadelphiadanceacademy.com/class-schedule-old-city/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.philadelphiaboysgymnastics.org/",
+      "status": 200,
+      "finalUrl": "https://www.philadelphiaboysgymnastics.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.amtrak.com/stations/phl",
+      "status": 200,
+      "finalUrl": "https://www.amtrak.com/stations/phl",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://readingterminalmarket.org/",
+      "status": 200,
+      "finalUrl": "https://readingterminalmarket.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.habitatphiladelphia.org/restore/",
+      "status": 200,
+      "finalUrl": "https://www.habitatphiladelphia.org/restore/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mrkittsinc.com/",
+      "status": 200,
+      "finalUrl": "https://mrkittsinc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://buckskids.org/plan-your-visit/",
+      "status": 200,
+      "finalUrl": "https://buckskids.org/plan-your-visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mercermuseum.org/about/mercer-museum/",
+      "status": 200,
+      "finalUrl": "https://www.mercermuseum.org/about/mercer-museum/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cbgym.com/",
+      "status": 200,
+      "finalUrl": "https://cbgym.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.newhoperailroad.com/",
+      "status": 403,
+      "finalUrl": "https://www.newhoperailroad.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.mamajskitchen.com/",
+      "status": 200,
+      "finalUrl": "https://www.mamajskitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lilliepearlrva.com/",
+      "status": 200,
+      "finalUrl": "https://www.lilliepearlrva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rubyscoops.com/",
+      "status": 200,
+      "finalUrl": "https://www.rubyscoops.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.buttermilkandhoneyrva.com/",
+      "status": 200,
+      "finalUrl": "https://www.buttermilkandhoneyrva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.soulnvinegar.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://msgirleeskitchen.com/",
+      "status": 200,
+      "finalUrl": "https://msgirleeskitchen.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lamilparestaurant.com/",
+      "status": 200,
+      "finalUrl": "https://www.lamilparestaurant.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://mexicanrva.com/",
+      "status": 200,
+      "finalUrl": "https://mexicanrva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://elcaporalrva.com/",
+      "status": 200,
+      "finalUrl": "https://elcaporalrva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://laplayarva.com/",
+      "status": 200,
+      "finalUrl": "https://laplayarva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mamajskitchen.com/market",
+      "status": 200,
+      "finalUrl": "https://www.mamajskitchen.com/market",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vmfa.museum/",
+      "status": 202,
+      "finalUrl": "https://www.vmfa.museum/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.blackhistorymuseum.org/",
+      "status": 200,
+      "finalUrl": "https://blackhistorymuseum.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thevalentine.org/",
+      "status": 200,
+      "finalUrl": "https://thevalentine.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://virginiahistory.org/",
+      "status": 200,
+      "finalUrl": "https://virginiahistory.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.childrensmuseumofrichmond.org/",
+      "status": 200,
+      "finalUrl": "https://www.childrensmuseumofrichmond.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://maymont.org/",
+      "status": 200,
+      "finalUrl": "https://maymont.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lewisginter.org/",
+      "status": 200,
+      "finalUrl": "https://www.lewisginter.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://gallery5arts.org/",
+      "status": 200,
+      "finalUrl": "https://gallery5arts.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://thebroadberry.com/",
+      "status": 200,
+      "finalUrl": "https://thebroadberry.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://richmondballet.com/",
+      "status": 200,
+      "finalUrl": "https://richmondballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.raballet.com/",
+      "status": 200,
+      "finalUrl": "https://www.raballet.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vigsgymnastics.com/",
+      "status": 200,
+      "finalUrl": "https://www.vigsgymnastics.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://rvakarate.com/",
+      "status": 200,
+      "finalUrl": "https://rvakarate.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ymcarichmond.org/locations/downtown-ymca/",
+      "status": 403,
+      "finalUrl": "https://www.ymcarichmond.org/locations/downtown-ymca/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.planetfitness.com/gyms/richmond-west-end-va/",
+      "status": 403,
+      "finalUrl": "https://www.planetfitness.com/gyms/richmond-west-end-va/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://loveleyshair.com/",
+      "status": 200,
+      "finalUrl": "https://loveleyshair.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.highpointbarbershop.com/",
+      "status": 200,
+      "finalUrl": "https://www.highpointbarbershop.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://bijounailbarrichmond.com/",
+      "status": 200,
+      "finalUrl": "https://bijounailbarrichmond.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.awakenmassagerva.com/",
+      "status": 200,
+      "finalUrl": "https://www.awakenmassagerva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.va.gov/richmond-health-care/locations/richmond-va-medical-center/",
+      "status": 200,
+      "finalUrl": "https://www.va.gov/richmond-health-care/locations/richmond-va-medical-center/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dailyplanetva.org/",
+      "status": 200,
+      "finalUrl": "https://dailyplanetva.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rbha.org/",
+      "status": 200,
+      "finalUrl": "https://www.rbha.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://feedmore.org/",
+      "status": 200,
+      "finalUrl": "https://feedmore.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.cccofva.org/locations/richmond/",
+      "status": 200,
+      "finalUrl": "https://www.cccofva.org/locations/richmond",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://vcwcapital.com/",
+      "status": 200,
+      "finalUrl": "https://vcwcapital.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.rva.gov/treasurer/empowerment",
+      "status": 200,
+      "finalUrl": "https://www.rva.gov/treasurer/empowerment",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://cvlas.org/",
+      "status": 200,
+      "finalUrl": "https://cvlas.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.justice4all.org/",
+      "status": 200,
+      "finalUrl": "https://www.justice4all.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vacu.org/",
+      "status": 200,
+      "finalUrl": "https://www.vacu.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.vacu.org/contact-us/general",
+      "status": 200,
+      "finalUrl": "https://www.vacu.org/contact-us/general",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.puritancleaners.com/the-fan/",
+      "status": 403,
+      "finalUrl": "https://www.puritancleaners.com/the-fan/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://5thavecleanersrva.com/",
+      "status": 200,
+      "finalUrl": "https://5thavecleanersrva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://richmondautoandtowing.com/",
+      "status": 403,
+      "finalUrl": "https://richmondautoandtowing.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://flyrichmond.com/",
+      "status": 200,
+      "finalUrl": "https://flyrichmond.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.visitrichmondva.com/",
+      "status": 200,
+      "finalUrl": "https://www.visitrichmondva.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.benschilibowl.com/",
+      "status": 200,
+      "finalUrl": "https://www.benschilibowl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://oohhsnaahhs.com/",
+      "status": 200,
+      "finalUrl": "https://oohhsnaahhs.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.laplazawashington.com/",
+      "status": 404,
+      "finalUrl": "https://www.laplazawashington.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.dlenadc.com/",
+      "status": 200,
+      "finalUrl": "https://www.dlenadc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.oyamel.com/",
+      "status": 200,
+      "finalUrl": "https://www.oyamel.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://unionmarketdc.com/la-cosecha/",
+      "status": 200,
+      "finalUrl": "https://unionmarketdc.com/la-cosecha/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://stjames-dc.com/",
+      "status": 200,
+      "finalUrl": "https://stjames-dc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gogomuseumcafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.gogomuseumcafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thehowardtheatre.com/",
+      "status": 200,
+      "finalUrl": "https://www.unionstagepresents.com/the-howard/shows",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.danceplace.org/",
+      "status": 200,
+      "finalUrl": "https://www.danceplace.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.washingtonballet.org/",
+      "status": 200,
+      "finalUrl": "https://www.washingtonballet.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.physicalitydc.com/",
+      "status": 200,
+      "finalUrl": "https://www.physicalitydc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thrivehairbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.thrivehairbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.edendcsalon.com/",
+      "status": 200,
+      "finalUrl": "https://www.edendcsalon.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://glossbardc.com/",
+      "status": 200,
+      "finalUrl": "https://glossbardc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.unityhealthcare.org/",
+      "status": 200,
+      "finalUrl": "https://www.unityhealthcare.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.communityofhopedc.org/",
+      "status": 200,
+      "finalUrl": "https://www.communityofhopedc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dbh.dc.gov/",
+      "status": 200,
+      "finalUrl": "https://dbh.dc.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.legalaiddc.org/",
+      "status": 200,
+      "finalUrl": "https://www.legalaiddc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nlsp.org/",
+      "status": 200,
+      "finalUrl": "https://www.nlsp.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://housingetc.org/",
+      "status": 200,
+      "finalUrl": "https://housingetc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://carecendc.org/",
+      "status": 200,
+      "finalUrl": "https://carecendc.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://communityaffairs.dc.gov/mola",
+      "status": 200,
+      "finalUrl": "https://communityaffairs.dc.gov/mola",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://breadforthecity.org/",
+      "status": 200,
+      "finalUrl": "https://breadforthecity.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://some.org/",
+      "status": 200,
+      "finalUrl": "https://some.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dccentralkitchen.org/",
+      "status": 200,
+      "finalUrl": "https://dccentralkitchen.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://marthastable.org/",
+      "status": 200,
+      "finalUrl": "https://marthastable.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.capitalareafoodbank.org/",
+      "status": 200,
+      "finalUrl": "https://www.capitalareafoodbank.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://does.dc.gov/",
+      "status": 200,
+      "finalUrl": "https://does.dc.gov/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.udc.edu/",
+      "status": 200,
+      "finalUrl": "https://www.udc.edu/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sterlingcleaner.com/",
+      "status": 200,
+      "finalUrl": "https://sterlingcleaner.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.autotechservicedc.com/",
+      "status": 200,
+      "finalUrl": "https://www.autotechservicedc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.metromotor.com/",
+      "status": 403,
+      "finalUrl": "https://www.metromotor.com/",
+      "outcome": "review_required"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or review-required response must not be treated as a closed business; it must be reviewed before public publication."
+}

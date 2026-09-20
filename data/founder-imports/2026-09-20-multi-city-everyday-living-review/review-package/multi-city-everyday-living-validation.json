@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "candidateRows": 694,
+  "heldEvidenceRows": 97,
+  "targetKinds": {
+    "community_resource": 111,
+    "regulated_review": 106,
+    "business": 352,
+    "cultural_place": 114,
+    "online_business": 11
+  },
+  "candidateManifestSha256": "4f7160968007ab8667ab928c5e87a962b867ed8b593ae7b5837041f7e6a0381a",
+  "heldEvidenceSha256": "7a4f4a8a29f92876555660d128fd671a8a0e76c34b2c890a50f1a1d836958f67",
+  "errors": []
+}
