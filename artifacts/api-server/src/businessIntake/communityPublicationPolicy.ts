@@ -8,6 +8,7 @@ import type {
 
 export type AutomaticPublicationOutcome =
   | "eligible"
+  | "community_context_review"
   | "needs_location"
   | "needs_evidence"
   | "regulated_review"
@@ -49,6 +50,7 @@ interface CommunityPublicationCandidate {
   longitude?: string | number | null;
   providerPlaceId?: string | null;
   locationSource?: SubmissionLocationSource | string | null;
+  sourceChannel?: string | null;
 }
 
 const RESOURCE_TERMS = [
@@ -151,6 +153,20 @@ export function isValidPinCoordinates(
 export function assessCommunityPublication(
   submission: CommunityPublicationCandidate,
 ): PublicationAssessment {
+  // A member may recommend a place where they thrive or invite an owner to
+  // claim it. Those are valuable community signals, but they are not proof of
+  // an ownership, safety, accessibility, employment, medical, or school claim.
+  // Keep this newer contribution path in the contributor/founder queue until
+  // the established review workflow can add a truthful public listing.
+  if (["expo_community_thrive_recommendation", "expo_community_owner_invitation"].includes(submission.sourceChannel ?? "")) {
+    return {
+      outcome: "community_context_review",
+      submissionStatus: "pending_review",
+      publicMessage: "Saved for Community Place review. It is not a public map pin or verified ownership claim yet.",
+      auditNote: "Community context or owner-invitation submission held for reviewed publication.",
+    };
+  }
+
   if (isProvenDemoBusiness(submission)) {
     return {
       outcome: "prohibited",
@@ -559,6 +575,7 @@ export function publicationCandidateFromSubmission(
     longitude: submission.longitude,
     providerPlaceId: submission.provider_place_id,
     locationSource: submission.location_source,
+    sourceChannel: submission.source_channel,
   };
 }
 

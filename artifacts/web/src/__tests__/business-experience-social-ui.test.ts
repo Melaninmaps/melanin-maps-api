@@ -79,4 +79,12 @@ describe("website social video choices", () => {
     expect(detail).toContain('target="_blank"');
     expect(detail).toContain('rel="noopener noreferrer"');
   });
+
+  it("submits member public videos to the shared moderation queue", () => {
+    const detail = source("../pages/business-detail.tsx");
+    expect(detail).toContain("/contributions");
+    expect(detail).toContain("Community Vibes");
+    expect(detail).toContain("+ Add your content");
+    expect(detail).toContain("setContribSuccess(true)");
+  });
 });

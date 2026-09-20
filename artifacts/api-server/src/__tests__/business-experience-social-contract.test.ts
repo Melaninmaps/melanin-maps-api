@@ -8,6 +8,7 @@ import {
   OWNERSHIP_DESIGNATIONS,
   OWNERSHIP_FILTER_OPTIONS,
   ownershipDesignationFilterId,
+  ownershipDesignationStorageValues,
   resolveExperienceChoiceLabel,
   sanitizeSocialVideoPreferences,
 } from "@workspace/constants";
@@ -58,11 +59,13 @@ describe("category-aware business experience contract", () => {
     expect(businessesSource).toContain("const allInRecord = tokens.map");
     expect(businessesSource).toContain("COALESCE(${businessesTable.city}, '')");
     expect(businessesSource).toContain("tokens may span name + city + specialty");
-    expect(businessesSource).toContain("ownershipFilterStorageValues");
-    expect(businessesSource).toContain('woman: ["woman-owned", "women-owned"');
+    expect(businessesSource).toContain("ownershipDesignationStorageValues");
+    expect(ownershipDesignationStorageValues("woman").values).toEqual(
+      expect.arrayContaining(["woman-owned", "women-owned"]),
+    );
     expect(businessesSource).toContain('filter.id === "black-african-american"');
     expect(businessesSource).toContain("fuzzyWouldEscapeRestrictiveFilter");
-    expect(businessesSource).toContain("&& !fuzzyWouldEscapeRestrictiveFilter");
+    expect(businessesSource).toContain("!fuzzyWouldEscapeRestrictiveFilter");
     expect(businessesSource).toContain("Tester privileges never expose pending/review rows");
     expect(businessesSource).toContain("LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) =");
     expect(businessesSource).toContain("UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) =");
@@ -139,6 +142,9 @@ describe("immediate positive-feedback governance", () => {
     const publication = source("../businessIntake/registerSubmissionRoutes.ts");
     expect(publication).toContain("'community','community_listed','unclaimed',NULL");
     expect(publication).toContain("added_by_member_id");
+    expect(publication).toContain("'[]'::jsonb,'[]'::jsonb,'unclaimed_community_submission',false,false");
+    expect(publication).not.toContain("ownershipClaimValue(submission)");
+    expect(publication).not.toContain("hasBlackOwnedDesignation(submission.ownership_designations");
   });
 
   it("lets claimed owners set only category-aware tags and a valid price point", () => {
@@ -290,7 +296,8 @@ describe("founder inventory remains review-only", () => {
     const publication = source("../directoryImport/registerDirectoryImportRoutes.ts");
     expect(publication).toContain("hostname: address");
     expect(publication).toContain("servername: secure ? url.hostname : undefined");
-    expect(publication).toContain("areDirectoryEvidenceAddressesPublic(addresses.map((item) => item.address))");
+    expect(publication).toContain("areDirectoryEvidenceAddressesPublic(");
+    expect(publication).toContain("addresses.map((item) => item.address)");
     expect(publication).toContain("published_record_type = $6::text");
     expect(publication).toContain("published_record_id = $7::text");
     expect(publication).toContain("THEN $7::varchar ELSE matched_business_id END");

@@ -1,0 +1,30 @@
+{
+  "package": "2026-09-20-named-priority-listings-source-backed-review",
+  "publication_status": "NOT PUBLISHED — review-only package",
+  "accepted_review_only_candidates": 20,
+  "held_candidates": 5,
+  "accepted_by_target_kind": {
+    "business": 18,
+    "cultural_place": 2
+  },
+  "manifest_sha256": "0c65f8b5ec176f52031ea0a73df3933b7e63e052d6ba0584c53249f05f09d265",
+  "source_manifest_sha256": "0c65f8b5ec176f52031ea0a73df3933b7e63e052d6ba0584c53249f05f09d265",
+  "safeguards": [
+    "This package has no production database connection and cannot publish a listing or map pin.",
+    "Every candidate must undergo protected current-live reconciliation before a create or link decision.",
+    "Controlled geocoding may run only for address-confirmed physical business candidates; online-only records remain mapless.",
+    "Held and non-match records must not be substituted with similarly named businesses.",
+    "No ownership attribution in the package is MWM verification."
+  ],
+  "destination_health_sha256": "c1fb1762c3b1aa61e30f907b33e8edd93358527086a6fa905378dfdcf4fb9d55",
+  "destination_health": {
+    "candidates": 20,
+    "unique_destinations": 64,
+    "by_outcome": {
+      "reachable": 60,
+      "review_required": 2,
+      "network_error": 2,
+      "timeout": 0
+    }
+  }
+}

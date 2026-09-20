@@ -30,6 +30,7 @@ export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
     { label: "Take Somebody From Out of Town", helperText: "A place you would proudly show visitors" },
     { label: "Locals Know", helperText: "Community favorite without needing the hype" },
     { label: "Passport Energy", helperText: "Feels culturally transporting" },
+    { label: "Pop Out Pics", helperText: "Photo-ready food, setting, or presentation" },
   ],
   "Beauty & Personal Care": [
     { label: "Soft Life", helperText: "Pampering, ease, recharge" },

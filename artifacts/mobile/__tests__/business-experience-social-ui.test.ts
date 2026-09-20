@@ -68,4 +68,15 @@ describe("Expo social video choices", () => {
     expect(featured).toContain("Twitch");
     expect(featured).toContain("Snapchat");
   });
+
+  it("shows approved place videos and lets members submit a public video for moderation", () => {
+    const detail = source("../app/business/[id].tsx");
+    expect(detail).toContain("/contributions");
+    expect(detail).toContain("Community creator videos");
+    expect(detail).toContain("Add a public video");
+    expect(detail).toContain("Submit for review");
+    expect(detail).toContain("detectSocialVideoPlatform(sourceUrl)");
+    expect(detail).toContain("after moderation confirms the public link and context");
+    expect(detail).toContain("openApprovedContribution(item)");
+  });
 });

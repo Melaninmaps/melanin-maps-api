@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import type { Pool } from "pg";
+import { isAdmin } from "../lib/adminAuth";
 import { authorizeDirectoryOperator } from "./directoryServiceAuth";
 import {
   verifyDirectoryIngress, verifyDirectoryManifest, validateDirectorySourceRows, canonicalDirectoryPayload,
@@ -16,9 +17,17 @@ function operator(req: Request, res: Response) {
   return authorization;
 }
 
+function admin(req: Request, res: Response): { id: string } | null {
+  if (req.user && isAdmin(req)) return { id: req.user.id };
+  res.status(req.user ? 403 : 401).json({
+    error: req.user ? "Admin access required." : "Authentication required.",
+  });
+  return null;
+}
+
 export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool): void {
   app.get("/api/founder/directory-import/batches", async (req, res) => {
-    if (!operator(req, res)) return;
+    if (!admin(req, res)) return;
     const result = await reviewPool.query(
       `SELECT b.*, COUNT(c.id)::int AS candidate_count
          FROM directory_import_batches b LEFT JOIN directory_import_candidates c ON c.batch_id=b.id
@@ -26,7 +35,7 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
     res.json({ batches: result.rows });
   });
   app.get("/api/founder/directory-import/summary", async (req, res) => {
-    if (!operator(req, res)) return;
+    if (!admin(req, res)) return;
     const result = await reviewPool.query(
       `SELECT
         COUNT(*) FILTER (WHERE status='deduplicated')::int AS deduplicated,
@@ -39,29 +48,41 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
     res.json({ summary: result.rows });
   });
   app.get("/api/founder/directory-import/exceptions", async (req, res) => {
-    if (!operator(req, res)) return;
+    if (!admin(req, res)) return;
     const result = await reviewPool.query(
       `SELECT * FROM directory_import_candidates
         WHERE status IN ('needs_research','manual_review') ORDER BY updated_at DESC LIMIT 500`);
     res.json({ exceptions: result.rows });
   });
   app.post("/api/founder/directory-import/batches/:batchId/pause", async (req, res) => {
-    if (!operator(req, res)) return;
+    if (!admin(req, res)) return;
     await reviewPool.query(`UPDATE directory_import_batches SET status='paused',updated_at=now() WHERE id=$1`, [req.params.batchId]);
     res.json({ status: "paused" });
   });
   app.post("/api/founder/directory-import/batches/:batchId/resume", async (req, res) => {
-    if (!operator(req, res)) return;
+    if (!admin(req, res)) return;
     await reviewPool.query(`UPDATE directory_import_batches SET status='in_review',updated_at=now() WHERE id=$1`, [req.params.batchId]);
     res.json({ status: "in_review" });
   });
   app.get("/api/founder/directory-import/audit-report", async (req, res) => {
-    if (!operator(req, res)) return;
+    if (!admin(req, res)) return;
     const result = await reviewPool.query(`SELECT * FROM directory_import_decision_events ORDER BY created_at DESC LIMIT 1000`);
     const counts = await reviewPool.query(`SELECT action,COUNT(*)::int AS count
       FROM directory_import_decision_events GROUP BY action`);
     res.json({ events: result.rows, counts: counts.rows });
   });
+
+  app.get("/api/founder/directory-import/service/summary", async (req, res) => {
+    if (!operator(req, res)) return;
+    const [batches, candidates, outbox] = await Promise.all([
+      reviewPool.query(`SELECT id,source_name,source_sha256,source_row_count,manifest_count,status,created_at,updated_at
+        FROM directory_import_batches ORDER BY created_at DESC`),
+      reviewPool.query(`SELECT status,COUNT(*)::int AS count FROM directory_import_candidates GROUP BY status ORDER BY status`),
+      reviewPool.query(`SELECT status,COUNT(*)::int AS count FROM directory_review_outbox GROUP BY status ORDER BY status`),
+    ]);
+    res.json({ batches: batches.rows, candidates: candidates.rows, outbox: outbox.rows });
+  });
+
   app.post("/api/founder/directory-import/ingress", async (req, res) => {
     const authorized = operator(req, res);
     if (!authorized) return;
