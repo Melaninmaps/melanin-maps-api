@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-09-20T01:15:44.543Z",
+  "areas": {
+    "beauty-wellness": {
+      "candidates": 17,
+      "held": 6,
+      "sourceReportBytes": 9468,
+      "categories": [
+        "Beauty",
+        "Beauty & wellness",
+        "Community wellness & fitness",
+        "Fitness & wellness",
+        "Wellness & fitness"
+      ]
+    },
+    "dining-nightlife": {
+      "candidates": 18,
+      "held": 9,
+      "sourceReportBytes": 11779,
+      "categories": [
+        "Hispanic-food",
+        "bars_lounges",
+        "dessert",
+        "dining",
+        "nightlife"
+      ]
+    },
+    "entertainment-arts": {
+      "candidates": 28,
+      "held": 6,
+      "sourceReportBytes": 10042,
+      "categories": [
+        "Cultural heritage",
+        "Cultural venues",
+        "Live performance",
+        "Museums",
+        "Public art",
+        "Sports and entertainment"
+      ]
+    },
+    "family-youth": {
+      "candidates": 20,
+      "held": 8,
+      "sourceReportBytes": 9059,
+      "categories": [
+        "Age-14-friendly weekend activities, gaming/anime-compatible outings, recreation, family entertainment, and daytime experiences"
+      ]
+    },
+    "faith-community": {
+      "candidates": 18,
+      "held": 4,
+      "sourceReportBytes": 11076,
+      "categories": [
+        "Calm, accessible social and cultural activity",
+        "Dining",
+        "Faith and worship",
+        "LGBTQ+ community"
+      ]
+    }
+  },
+  "errors": [],
+  "totals": {
+    "candidates": 101,
+    "held": 33,
+    "crossAreaDuplicates": 7,
+    "errorCount": 0
+  }
+}
