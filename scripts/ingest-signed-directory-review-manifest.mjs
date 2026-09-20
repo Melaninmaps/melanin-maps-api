@@ -100,7 +100,7 @@ async function main() {
   const sourceName = requiredOption("--source-name");
   const api = requiredOption("--api").replace(/\/+$/, "");
   const signingSecret = requiredEnvironment("DIRECTORY_REVIEW_SIGNING_SECRET", 32);
-  const serviceToken = requiredEnvironment("DIRECTORY_RECONCILIATION_SERVICE_TOKEN", 32);
+  const serviceToken = requiredEnvironment("DIRECTORY_SERVICE_TOKEN", 32);
 
   const manifestBytes = readFileSync(manifestPath);
   const records = jsonlRecords(manifestBytes);
@@ -108,10 +108,11 @@ async function main() {
   const healthReport = JSON.parse(readFileSync(healthPath, "utf8"));
   const sourceManifestSha256 = sha256(manifestBytes);
 
-  if (summary.manifest_sha256 !== sourceManifestSha256) {
+  const summaryManifestSha256 = summary.manifest_sha256 ?? summary.candidateManifest?.sha256;
+  if (summaryManifestSha256 !== sourceManifestSha256) {
     throw new Error("Review summary checksum does not match the source manifest.");
   }
-  const expectedCount = summary.accepted_review_only_candidates ?? summary.candidates;
+  const expectedCount = summary.accepted_review_only_candidates ?? summary.candidates ?? summary.candidateManifest?.rowCount;
   if (!Number.isInteger(expectedCount) || expectedCount !== records.length) {
     throw new Error("Review summary row count does not match the source manifest.");
   }
@@ -127,27 +128,43 @@ async function main() {
   const signature = createHmac("sha256", signingSecret)
     .update(`${timestamp}.${nonce}.${checksum}.${jsonl}`)
     .digest("hex");
+  const requestPath = "/api/founder/directory-import/ingress";
+  const requestBody = JSON.stringify({
+    jsonl,
+    manifest: {
+      sha256: checksum,
+      rowCount: prepared.length,
+      sourceName,
+      sourceManifestSha256,
+      destinationHealthSha256: sha256(readFileSync(healthPath)),
+    },
+  });
+  const serviceTimestamp = new Date().toISOString();
+  const serviceNonce = randomUUID();
+  const serviceSignature = createHmac("sha256", signingSecret)
+    .update([
+      serviceTimestamp,
+      serviceNonce,
+      "POST",
+      requestPath,
+      sha256(requestBody),
+    ].join("\n"))
+    .digest("hex");
 
-  const response = await fetch(`${api}/api/founder/directory-import/ingress`, {
+  const response = await fetch(`${api}${requestPath}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-directory-reconciliation-token": serviceToken,
+      "authorization": `Bearer ${serviceToken}`,
+      "x-directory-service-timestamp": serviceTimestamp,
+      "x-directory-service-nonce": serviceNonce,
+      "x-directory-service-signature": serviceSignature,
       "x-directory-timestamp": timestamp,
       "x-directory-nonce": nonce,
       "x-directory-checksum": checksum,
       "x-directory-signature": signature,
     },
-    body: JSON.stringify({
-      jsonl,
-      manifest: {
-        sha256: checksum,
-        rowCount: prepared.length,
-        sourceName,
-        sourceManifestSha256,
-        destinationHealthSha256: sha256(readFileSync(healthPath)),
-      },
-    }),
+    body: requestBody,
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`Ingress failed (${response.status}): ${payload.error ?? "unknown error"}`);
