@@ -13,6 +13,7 @@ const draft = {
   summary: "A time standard.",
   body: "Coordinated Universal Time is an international time standard.",
   citedSourceIndexes: [0],
+  sourceNotes: [{ sourceIndex: 0, whyItMatters: "It explains how the time standard is maintained." }],
   relatedQuestions: ["How is UTC maintained?"],
 };
 
@@ -74,5 +75,6 @@ describe("OpenAI Library writer request compatibility", () => {
     expect(system).toMatch(/only about the group explicitly named/i);
     expect(system).toMatch(/does not work for a demographic group unless supplied high-quality evidence/i);
     expect(system).toMatch(/Do not claim a source author has an identity/i);
+    expect(system).toMatch(/whyItMatters explanation/i);
   });
 });

@@ -1,0 +1,170 @@
+{
+  "status": "review_only",
+  "sourceResearchRoot": "/home/ubuntu/hbcu-neighborhood-directory-research-2026-09-20",
+  "sourceContractSha256": "8b2de365c9b6fc2d14231b8ef9d0bd9900acc4e2bd769063417224c3ec386460",
+  "areas": [
+    "alabama-state-university",
+    "bethune-cookman-university",
+    "bowie-state-university",
+    "cheyney-university-pennsylvania",
+    "clark-atlanta-university",
+    "coppin-state-university",
+    "delaware-state-university",
+    "florida-am-university",
+    "hampton-university",
+    "howard-university",
+    "lincoln-university-pennsylvania",
+    "morehouse-college",
+    "morgan-state-university",
+    "prairie-view-am-university",
+    "spelman-college",
+    "texas-southern-university",
+    "tuskegee-university",
+    "university-of-the-district-of-columbia",
+    "virginia-state-university",
+    "virginia-union-university"
+  ],
+  "areaCounts": [
+    {
+      "area": "alabama-state-university",
+      "candidateRows": 1,
+      "heldRows": 2
+    },
+    {
+      "area": "bethune-cookman-university",
+      "candidateRows": 2,
+      "heldRows": 1
+    },
+    {
+      "area": "bowie-state-university",
+      "candidateRows": 1,
+      "heldRows": 2
+    },
+    {
+      "area": "cheyney-university-pennsylvania",
+      "candidateRows": 2,
+      "heldRows": 0
+    },
+    {
+      "area": "clark-atlanta-university",
+      "candidateRows": 2,
+      "heldRows": 0
+    },
+    {
+      "area": "coppin-state-university",
+      "candidateRows": 2,
+      "heldRows": 0
+    },
+    {
+      "area": "delaware-state-university",
+      "candidateRows": 1,
+      "heldRows": 0
+    },
+    {
+      "area": "florida-am-university",
+      "candidateRows": 3,
+      "heldRows": 2
+    },
+    {
+      "area": "hampton-university",
+      "candidateRows": 3,
+      "heldRows": 0
+    },
+    {
+      "area": "howard-university",
+      "candidateRows": 1,
+      "heldRows": 2
+    },
+    {
+      "area": "lincoln-university-pennsylvania",
+      "candidateRows": 1,
+      "heldRows": 2
+    },
+    {
+      "area": "morehouse-college",
+      "candidateRows": 2,
+      "heldRows": 1
+    },
+    {
+      "area": "morgan-state-university",
+      "candidateRows": 1,
+      "heldRows": 2
+    },
+    {
+      "area": "prairie-view-am-university",
+      "candidateRows": 0,
+      "heldRows": 2
+    },
+    {
+      "area": "spelman-college",
+      "candidateRows": 2,
+      "heldRows": 0
+    },
+    {
+      "area": "texas-southern-university",
+      "candidateRows": 2,
+      "heldRows": 1
+    },
+    {
+      "area": "tuskegee-university",
+      "candidateRows": 1,
+      "heldRows": 3
+    },
+    {
+      "area": "university-of-the-district-of-columbia",
+      "candidateRows": 1,
+      "heldRows": 2
+    },
+    {
+      "area": "virginia-state-university",
+      "candidateRows": 1,
+      "heldRows": 3
+    },
+    {
+      "area": "virginia-union-university",
+      "candidateRows": 2,
+      "heldRows": 2
+    }
+  ],
+  "rawCandidateRows": 31,
+  "rawHeldRows": 27,
+  "existingReviewManifestCount": 32,
+  "exactExistingReviewOverlapRows": 6,
+  "internalExactDuplicateRows": 1,
+  "ingressIdentityHoldRows": 0,
+  "consolidatedCandidateRows": 24,
+  "heldAndOverlapEvidenceRows": 34,
+  "candidateManifest": {
+    "path": "data/founder-imports/2026-09-20-hbcu-neighborhood-directory-review/review-package/hbcu-neighborhood-directory-review-only-candidates.jsonl",
+    "sha256": "b63120df8c3a91a03215a657dbbde84a422e22fea82950dfcf2697d9e6f6fba5",
+    "rowCount": 24
+  },
+  "heldEvidence": {
+    "path": "data/founder-imports/2026-09-20-hbcu-neighborhood-directory-review/review-package/hbcu-neighborhood-directory-held-and-overlap-evidence.jsonl",
+    "sha256": "617a26a8ffe4a97f0f4516c8bfd0c77a08e956ea3533aeef7ff52f51025ce9d6",
+    "rowCount": 34
+  },
+  "targetKinds": {
+    "business": 24
+  },
+  "invariantResults": {
+    "noCoordinates": true,
+    "noStringNull": true,
+    "rawSchemaAndOrderPreserved": true,
+    "publicationNotPerformed": true,
+    "destinationHealthRecorded": true
+  },
+  "destinationHealth": {
+    "path": "data/founder-imports/2026-09-20-hbcu-neighborhood-directory-review/review-package/hbcu-neighborhood-directory-destination-health.json",
+    "sha256": "cb67b025e79d0678aa60bd135ecf4e92ab4439593bcf82cac735f0bdb1a7154f",
+    "checkedAt": "2026-09-20T06:10:24.848Z",
+    "candidateRows": 24,
+    "uniqueDestinations": 35,
+    "counts": {
+      "reachable": 34,
+      "review_required": 1
+    },
+    "allDestinationsChecked": true,
+    "publicationGate": "Any review_required, network_error, or timeout result remains a review gate and is not evidence of closure or permission to publish."
+  }
+}

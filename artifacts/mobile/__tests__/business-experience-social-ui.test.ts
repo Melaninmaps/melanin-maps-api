@@ -79,4 +79,12 @@ describe("Expo social video choices", () => {
     expect(detail).toContain("after moderation confirms the public link and context");
     expect(detail).toContain("openApprovedContribution(item)");
   });
+
+  it("keeps the official website and approved community media near the listing identity", () => {
+    const detail = source("../app/business/[id].tsx");
+    expect(detail).toContain("safeOfficialWebsite");
+    expect(detail).toContain("Official website");
+    expect(detail).toContain("Community experiences (");
+    expect(detail).toContain("communityMediaYRef.current");
+  });
 });

@@ -11,6 +11,7 @@ export type LibrarySourceLink = {
   url: string;
   title: string;
   publisher: string | null;
+  whyItMatters?: string | null;
 };
 
 type TopicResult = {
@@ -117,6 +118,7 @@ function SourceList({ sources }: { sources: LibrarySourceLink[] }) {
               {source.title}
             </a>
             {source.publisher ? <span>{source.publisher}</span> : null}
+            {source.whyItMatters ? <p className="library-research-source-reason">Why it matters: {source.whyItMatters}</p> : null}
           </li>
         ))}
       </ul>

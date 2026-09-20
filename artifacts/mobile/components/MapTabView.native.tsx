@@ -16,12 +16,10 @@ import {
 } from "react-native";
 import MapView, { Callout, Circle, Marker, Polyline, PROVIDER_DEFAULT, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CategoryPill } from "@/components/CategoryPill";
 import { IntentModal, type PinLocation } from "@/components/IntentModal";
 import { RatingStars } from "@/components/RatingStars";
 import { SearchBar } from "@/components/SearchBar";
 import { VerificationBadge } from "@/components/VerificationBadge";
-import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -314,7 +312,9 @@ export function MapTabView() {
 
   const [locationGrantedLocal, setLocationGrantedLocal] = useState(false);
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+  // Map shortcut chips were removed for a calmer surface. Typed search keeps
+  // every category discoverable, including markets and HBCUs.
+  const activeCategory = "All";
   const [selected, setSelected] = useState<Business | null>(null);
   const [currentRegion, setCurrentRegion] = useState<Region>(INITIAL_REGION);
   const [showIntentModal, setShowIntentModal] = useState(false);
@@ -725,21 +725,6 @@ export function MapTabView() {
         <View style={styles.searchWrap}>
           <SearchBar value={search} onChangeText={setSearch} />
         </View>
-        <ScrollView
-        keyboardDismissMode="on-drag"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScroll}
-        >
-          {CATEGORIES.map((cat) => (
-            <CategoryPill
-              key={cat}
-              label={cat}
-              selected={activeCategory === cat}
-              onPress={() => setActiveCategory(cat)}
-            />
-          ))}
-        </ScrollView>
       </View>
 
       {/* ── KinfolkAI Navigation Voice Step Banner ── */}

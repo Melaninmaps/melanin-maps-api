@@ -83,8 +83,24 @@ describe("website social video choices", () => {
   it("submits member public videos to the shared moderation queue", () => {
     const detail = source("../pages/business-detail.tsx");
     expect(detail).toContain("/contributions");
-    expect(detail).toContain("Community Vibes");
-    expect(detail).toContain("+ Add your content");
+    expect(detail).toContain("Community experiences");
+    expect(detail).toContain("Share a public video");
     expect(detail).toContain("setContribSuccess(true)");
+  });
+
+  it("makes approved community posts prominent and keeps submission escapable", () => {
+    const detail = source("../pages/business-detail.tsx");
+    expect(detail).toContain("Approved public posts shared by members");
+    expect(detail).toContain("closeContributionModal");
+    expect(detail).toContain('event.key === "Escape"');
+  });
+
+  it("gives administrators an explicit review and publication queue", () => {
+    const admin = source("../pages/admin.tsx");
+    const queue = source("../components/AdminBusinessVideoContributions.tsx");
+    expect(admin).toContain("Community Videos");
+    expect(admin).toContain("AdminBusinessVideoContributions");
+    expect(queue).toContain("Approve & publish link");
+    expect(queue).toContain("Keep private");
   });
 });

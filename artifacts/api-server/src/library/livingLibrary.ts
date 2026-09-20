@@ -181,6 +181,12 @@ export async function answerAndArchiveResearchQuestion(input: {
     .filter((index) => Number.isInteger(index) && index >= 0 && index < documents.length)
     .slice(0, documents.length);
   const citedDocuments = citedIndexes.map((index) => documents[index]);
+  const sourceNotes = new Map(
+    draft.sourceNotes
+      .filter((note) => citedIndexes.includes(note.sourceIndex))
+      .map((note) => [note.sourceIndex, note.whyItMatters.trim().slice(0, 420)] as const)
+      .filter(([, note]) => Boolean(note)),
+  );
   if (citedDocuments.length < MINIMUM_SOURCE_COUNT) {
     await recordSignal("insufficient", true);
     throw new LibraryEvidenceInsufficientError();
@@ -200,7 +206,10 @@ export async function answerAndArchiveResearchQuestion(input: {
     locationLabel: libraryLocationLabel,
     disclaimer: policy.disclaimer,
     sourceCount: citedDocuments.length,
-    sources: citedDocuments.map(toKnowledgeSource),
+    sources: citedIndexes.map((index) => ({
+      ...toKnowledgeSource(documents[index]),
+      whyItMatters: sourceNotes.get(index) ?? null,
+    })),
     relatedQuestions: [...new Set(draft.relatedQuestions.map((value) => value.trim()).filter(Boolean))].slice(0, 5),
     provider: providerResult.provider,
   });

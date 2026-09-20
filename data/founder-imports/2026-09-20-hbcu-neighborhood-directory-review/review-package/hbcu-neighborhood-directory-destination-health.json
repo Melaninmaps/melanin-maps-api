@@ -1,0 +1,227 @@
+{
+  "checkedAt": "2026-09-20T06:10:24.848Z",
+  "sourceManifest": "/home/ubuntu/melanin-maps-listing-experience-release/data/founder-imports/2026-09-20-hbcu-neighborhood-directory-review/review-package/hbcu-neighborhood-directory-review-only-candidates.jsonl",
+  "candidates": 24,
+  "uniqueDestinations": 35,
+  "incremental": {
+    "carriedForward": 0,
+    "newlyChecked": 35
+  },
+  "counts": {
+    "reachable": 34,
+    "review_required": 1
+  },
+  "results": [
+    {
+      "url": "https://www.instagram.com/thecoffeehouseof334/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/thecoffeehouseof334/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bethunegrill.com/",
+      "status": 200,
+      "finalUrl": "https://www.bethunegrill.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/BethuneGrill/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/BethuneGrill/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.salon230.com/",
+      "status": 200,
+      "finalUrl": "https://www.salon230.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.themilkandhoney.com/bowie",
+      "status": 200,
+      "finalUrl": "https://www.themilkandhoney.com/bowie",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mabels-bbq.com/",
+      "status": 200,
+      "finalUrl": "https://www.mabels-bbq.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/mabelsbarbeque/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/mabelsbarbeque/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.anotherlevelbarbershop.us/",
+      "status": 200,
+      "finalUrl": "https://www.anotherlevelbarbershop.us/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/Anotherlevel312/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/Anotherlevel312/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thebusybeecafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.thebusybeecafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thebusybeeatl/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthebusybeeatl%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://sluttyveganatl.com/",
+      "status": 200,
+      "finalUrl": "https://sluttyveganatl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/sluttyveganATL/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FsluttyveganATL%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.theavenuebakery.com/",
+      "status": 200,
+      "finalUrl": "https://www.theavenuebakery.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/the_avenue_bakery/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthe_avenue_bakery%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://villagecafe302.toast.site/",
+      "status": 403,
+      "finalUrl": "https://villagecafe302.toast.site/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://visittallahassee.com/partners/oleans-cafe/",
+      "status": 200,
+      "finalUrl": "https://visittallahassee.com/partners/oleans-cafe/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/pages/Olean's%20Cafe/113369358697208/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/pages/Olean's%20Cafe/113369358697208/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sneauxball.com/",
+      "status": 200,
+      "finalUrl": "https://www.sneauxball.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/sneauxballs",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsneauxballs&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pineappetit.com/",
+      "status": 200,
+      "finalUrl": "https://www.pineappetit.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://instagram.com/pineappetittally/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fpineappetittally%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.pourgirlsbar.com/",
+      "status": 200,
+      "finalUrl": "https://www.pourgirlsbar.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.lasreinascocina.com/",
+      "status": 200,
+      "finalUrl": "https://www.lasreinascocina.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://itsmadefromscratch.com/",
+      "status": 200,
+      "finalUrl": "https://itsmadefromscratch.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.sankofa.com/",
+      "status": 200,
+      "finalUrl": "https://www.sankofa.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/sankofadc/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsankofadc%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://whollygroundscoffeehouse.com/",
+      "status": 200,
+      "finalUrl": "https://whollygroundscoffeehouse.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/whollygroundscoffeehouse",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fwhollygroundscoffeehouse",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.shopbeautyplus.com/",
+      "status": 200,
+      "finalUrl": "https://www.shopbeautyplus.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/morganstateu/posts/get-to-know-the-inspiring-couple-behind-beauty-plus-a-black-owned-beauty-supply-/10159155783106811/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/morganstateu/posts/get-to-know-the-inspiring-couple-behind-beauty-plus-a-black-owned-beauty-supply-/10159155783106811/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://nationalbusinessleague.org/",
+      "status": 200,
+      "finalUrl": "https://nationalbusinessleague.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.solidstatebooksdc.com/",
+      "status": 200,
+      "finalUrl": "https://www.solidstatebooksdc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.nuvegancafe.com/",
+      "status": 200,
+      "finalUrl": "https://www.nuvegancafe.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/lecachedulcet/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flecachedulcet%2F&is_from_rle",
+      "outcome": "reachable"
+    }
+  ],
+  "publication": "Review-only evidence. A timeout, network failure, or review-required response must not be treated as a closed business; it must be reviewed before public publication."
+}

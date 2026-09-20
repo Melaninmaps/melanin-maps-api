@@ -2,6 +2,11 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
 import { requireAuth } from "../middlewares/requireAuth";
+import {
+  defaultHeritageContentCategory,
+  isPermittedHeritageContentCategory,
+} from "../heritage/heritageContentCategories";
+import { findHbcuProfileContext } from "../heritage/hbcuProfileContext";
 
 const router: IRouter = Router();
 router.use(requireAuth);
@@ -235,19 +240,55 @@ router.get("/cultural-sites/:id", async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /cultural-sites/:id/hbcu-context ─────────────────────────────────────
+// Source-backed campus context is intentionally separate from user submissions.
+// This keeps academic searches, campus traditions, and approved community media
+// distinguishable on the same profile.
+router.get("/cultural-sites/:id/hbcu-context", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query<{ name: string; heritageCategory: string | null }>(
+      `SELECT name, heritage_category AS "heritageCategory"
+       FROM cultural_sites
+       WHERE id = $1`,
+      [req.params.id],
+    );
+    const site = result.rows[0];
+    if (!site) {
+      res.status(404).json({ error: "Site not found" });
+      return;
+    }
+    if (site.heritageCategory !== "HBCU") {
+      res.status(404).json({ error: "Source-backed HBCU context is not available for this site" });
+      return;
+    }
+    const context = findHbcuProfileContext(site.name);
+    if (!context) {
+      res.status(404).json({ error: "Source-backed campus context is not available yet" });
+      return;
+    }
+    res.json({ context });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch HBCU profile context");
+    res.status(500).json({ error: "Failed to fetch HBCU profile context" });
+  }
+});
+
 // ── GET /cultural-sites/:id/stories ──────────────────────────────────────────
 
 router.get("/cultural-sites/:id/stories", async (req: Request, res: Response) => {
   try {
+    const contentCategory = typeof req.query.contentCategory === "string" ? req.query.contentCategory : null;
+    const categoryClause = contentCategory ? " AND content_category = $2" : "";
     const result = await pool.query(
       `SELECT id, site_id AS "siteId", author_name AS "authorName",
-              relationship_type AS "relationshipType", content, video_url AS "videoUrl",
+              relationship_type AS "relationshipType", content_category AS "contentCategory",
+              content, video_url AS "videoUrl",
               tags, status, is_ambassador AS "isAmbassador", created_at AS "createdAt"
        FROM heritage_stories
-       WHERE site_id = $1 AND status = 'approved'
+       WHERE site_id = $1 AND status = 'approved'${categoryClause}
        ORDER BY is_ambassador DESC, created_at DESC
        LIMIT 50`,
-      [req.params.id],
+      contentCategory ? [req.params.id, contentCategory] : [req.params.id],
     );
     res.json({ stories: result.rows, total: result.rowCount ?? 0 });
   } catch (err) {
@@ -260,8 +301,9 @@ router.get("/cultural-sites/:id/stories", async (req: Request, res: Response) =>
 
 router.post("/cultural-sites/:id/stories", async (req: Request, res: Response) => {
   try {
-    const { relationshipType, content, authorName, videoUrl, tags } = req.body as {
+    const { relationshipType, contentCategory, content, authorName, videoUrl, tags } = req.body as {
       relationshipType?: string;
+      contentCategory?: string;
       content?: string;
       authorName?: string;
       videoUrl?: string;
@@ -282,20 +324,31 @@ router.post("/cultural-sites/:id/stories", async (req: Request, res: Response) =
     }
 
     // Verify site exists
-    const siteCheck = await pool.query("SELECT id FROM cultural_sites WHERE id = $1", [req.params.id]);
+    const siteCheck = await pool.query(
+      "SELECT id, heritage_category AS \"heritageCategory\" FROM cultural_sites WHERE id = $1",
+      [req.params.id],
+    );
     if (!siteCheck.rows[0]) { res.status(404).json({ error: "Site not found" }); return; }
+
+    const heritageCategory = siteCheck.rows[0].heritageCategory as string | null | undefined;
+    const resolvedContentCategory = contentCategory ?? defaultHeritageContentCategory(heritageCategory);
+    if (!isPermittedHeritageContentCategory(resolvedContentCategory, heritageCategory)) {
+      res.status(400).json({ error: "Choose a content category that fits this place." });
+      return;
+    }
 
     const userId = (req as Request & { user?: { id: string } }).user?.id ?? null;
 
     const result = await pool.query(
-      `INSERT INTO heritage_stories (site_id, user_id, author_name, relationship_type, content, video_url, tags, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+      `INSERT INTO heritage_stories (site_id, user_id, author_name, relationship_type, content_category, content, video_url, tags, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
        RETURNING id`,
       [
         req.params.id,
         userId,
         authorName?.trim() || null,
         relationshipType,
+        resolvedContentCategory,
         content.trim(),
         videoUrl?.trim() || null,
         JSON.stringify(tags ?? []),
@@ -369,6 +422,7 @@ router.get("/cultural-sites/stories/pending", async (req: Request, res: Response
     const result = await pool.query(
       `SELECT hs.id, hs.site_id AS "siteId", cs.name AS "siteName",
               hs.author_name AS "authorName", hs.relationship_type AS "relationshipType",
+              hs.content_category AS "contentCategory", hs.video_url AS "videoUrl",
               hs.content, hs.tags, hs.status, hs.is_ambassador AS "isAmbassador",
               hs.created_at AS "createdAt"
        FROM heritage_stories hs

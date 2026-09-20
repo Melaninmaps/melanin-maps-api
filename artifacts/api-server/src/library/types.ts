@@ -10,6 +10,8 @@ export type KnowledgeSource = {
   title: string;
   publisher: string | null;
   excerpt: string;
+  /** Plain-language explanation tied only to the cited source, never a recommendation. */
+  whyItMatters?: string | null;
   sourceTier: SourceTier;
   publishedAt: Date | null;
   retrievedAt: Date;
@@ -67,7 +69,7 @@ export type LibraryEntrySearchResult = {
   topicSlug: string;
   topicTitle: string;
   sourceCount: number;
-  sources: Array<Pick<KnowledgeSource, "url" | "title" | "publisher">>;
+  sources: Array<Pick<KnowledgeSource, "url" | "title" | "publisher" | "whyItMatters">>;
   refreshedAt: Date;
 };
 
@@ -179,6 +181,7 @@ export interface LibrarySynthesisWriter {
     summary: string;
     body: string;
     citedSourceIndexes: number[];
+    sourceNotes: Array<{ sourceIndex: number; whyItMatters: string }>;
     relatedQuestions: string[];
   }>;
 }

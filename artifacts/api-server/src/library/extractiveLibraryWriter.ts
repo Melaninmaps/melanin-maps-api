@@ -33,6 +33,10 @@ export function createExtractiveLibraryWriter(): LibrarySynthesisWriter {
           `## What to consider next\n\nCompare the cited primary or research sources, identify which facts apply to the specific question, and bring personal medical, legal, or financial decisions to an appropriately qualified professional.${disclaimer ? `\n\n${disclaimer}` : ""}`,
         ].filter(Boolean).join("\n\n"),
         citedSourceIndexes: sources.map((_, index) => index),
+        sourceNotes: sources.map((source, index) => ({
+          sourceIndex: index,
+          whyItMatters: `This source provides the cited ${source.publisher ?? "research"} context used in this overview.`,
+        })),
         relatedQuestions: [
           `What evidence shapes different perspectives on ${question}?`,
           "Which population or life-stage question would make this research more specific?",

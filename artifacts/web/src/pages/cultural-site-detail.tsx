@@ -175,6 +175,28 @@ const RELATIONSHIP_TYPES = [
   { value: "other", label: "Other Connection" },
 ];
 
+type HeritageContentCategory = "academics_research" | "student_life" | "traditions_events" | "alumni_mentorship" | "community_connection" | "history_legacy" | "visit_experience" | "preservation_learning";
+
+type HeritageContentCategoryOption = { value: HeritageContentCategory; label: string; helper: string };
+
+function contentCategoryOptions(heritageCategory: string | null | undefined): HeritageContentCategoryOption[] {
+  if (heritageCategory?.toUpperCase() === "HBCU") {
+    return [
+      { value: "academics_research", label: "Academics & Research", helper: "Classes, labs, programs, and study resources." },
+      { value: "student_life", label: "Student Life", helper: "Housing, routines, organizations, and practical student tips." },
+      { value: "traditions_events", label: "Traditions & Events", helper: "Homecoming, band, reunions, and celebratory moments." },
+      { value: "alumni_mentorship", label: "Alumni & Mentorship", helper: "Career paths, mentoring, and professional lessons." },
+      { value: "community_connection", label: "Community Connection", helper: "A respectful personal connection to this institution." },
+    ];
+  }
+  return [
+    { value: "history_legacy", label: "History & Legacy", helper: "Source-grounded historical context and memory." },
+    { value: "visit_experience", label: "Visit Experience", helper: "Public-safe practical context for a visit." },
+    { value: "preservation_learning", label: "Preservation & Learning", helper: "Learning and stewardship related to this place." },
+    { value: "community_connection", label: "Community Connection", helper: "A respectful personal connection to this place." },
+  ];
+}
+
 interface CulturalSite {
   id: string;
   name: string;
@@ -211,7 +233,9 @@ interface Story {
   id: string;
   authorName?: string | null;
   relationshipType: string;
+  contentCategory?: HeritageContentCategory;
   content: string;
+  videoUrl?: string | null;
   isAmbassador?: boolean;
   createdAt: string;
 }
@@ -222,6 +246,17 @@ interface SupportLink {
   description?: string | null;
   url: string;
   category?: string | null;
+}
+
+interface HbcuProfileContext {
+  identity: string;
+  knownFor: string[];
+  traditions: string[];
+  rivalryOrConnection: string | null;
+  notablePeople: string[];
+  nearbyContext: { name: string; type: string; whyItMatters: string; sourceUrl: string }[];
+  sources: { title: string; url: string; supports: string }[];
+  verificationNotes: string;
 }
 
 export default function CulturalSiteDetail() {
@@ -239,24 +274,29 @@ export default function CulturalSiteDetail() {
   const [site, setSite] = useState<CulturalSite | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [links, setLinks] = useState<SupportLink[]>([]);
+  const [hbcuContext, setHbcuContext] = useState<HbcuProfileContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyRelType, setStoryRelType] = useState("visitor");
+  const [storyContentCategory, setStoryContentCategory] = useState<HeritageContentCategory>("community_connection");
   const [storyContent, setStoryContent] = useState("");
   const [storyAuthor, setStoryAuthor] = useState("");
+  const [storyVideoUrl, setStoryVideoUrl] = useState("");
   const [storySubmitting, setStorySubmitting] = useState(false);
+  const [activeStoryCategory, setActiveStoryCategory] = useState<HeritageContentCategory | null>(null);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     Promise.all([
       fetch(`${BASE}/api/cultural-sites/${id}`).then((r) => r.json()),
-      fetch(`${BASE}/api/cultural-sites/${id}/stories`).then((r) => r.json()),
+      fetch(`${BASE}/api/cultural-sites/${id}/stories${activeStoryCategory ? `?contentCategory=${encodeURIComponent(activeStoryCategory)}` : ""}`).then((r) => r.json()),
       fetch(`${BASE}/api/cultural-sites/${id}/support-links`).then((r) => r.json()),
+      fetch(`${BASE}/api/cultural-sites/${id}/hbcu-context`).then((r) => r.json()),
     ])
-      .then(([siteData, storyData, linkData]) => {
+      .then(([siteData, storyData, linkData, hbcuData]) => {
         const rawSite = siteData?.site ?? (siteData?.id ? siteData : null);
         if (siteData?.error || !rawSite) { setNotFound(true); return; }
         setNotFound(false);
@@ -267,10 +307,11 @@ export default function CulturalSiteDetail() {
         });
         setStories(storyData.stories ?? []);
         setLinks(linkData.links ?? []);
+        setHbcuContext(hbcuData?.context ?? null);
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, activeStoryCategory]);
 
   async function submitStory() {
     if (!storyContent.trim() || storyContent.trim().length < 20) {
@@ -285,8 +326,10 @@ export default function CulturalSiteDetail() {
         credentials: "include",
         body: JSON.stringify({
           relationshipType: storyRelType,
+          contentCategory: storyContentCategory,
           content: storyContent.trim(),
           authorName: storyAuthor.trim() || undefined,
+          videoUrl: storyVideoUrl.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -295,6 +338,7 @@ export default function CulturalSiteDetail() {
       setStoryOpen(false);
       setStoryContent("");
       setStoryAuthor("");
+      setStoryVideoUrl("");
     } catch {
       toast({ title: "Network error", description: "Please check your connection and try again." });
     } finally {
@@ -445,6 +489,81 @@ export default function CulturalSiteDetail() {
           </div>
         )}
 
+        {heritage.toUpperCase() === "HBCU" && hbcuContext && (
+          <section className="space-y-4" aria-label="Source-backed HBCU profile">
+            <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+              <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: accentColor }}>Campus profile</p>
+              <p className="text-sm text-[#3A1F0E]/80 leading-relaxed">{hbcuContext.identity}</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-3">What this campus is known for</h2>
+                <ul className="space-y-2 text-sm text-[#3A1F0E]/80 leading-relaxed list-disc pl-5">
+                  {hbcuContext.knownFor.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-3">Traditions & culture</h2>
+                <ul className="space-y-2 text-sm text-[#3A1F0E]/80 leading-relaxed list-disc pl-5">
+                  {hbcuContext.traditions.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            {(hbcuContext.rivalryOrConnection || hbcuContext.notablePeople.length > 0) && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {hbcuContext.rivalryOrConnection && (
+                  <div className="rounded-2xl p-6 border" style={{ background: `${accentColor}08`, borderColor: `${accentColor}25` }}>
+                    <h2 className="font-serif font-bold text-lg mb-2" style={{ color: accentColor }}>Connections & rivalries</h2>
+                    <p className="text-sm text-[#3A1F0E]/80 leading-relaxed">{hbcuContext.rivalryOrConnection}</p>
+                  </div>
+                )}
+                {hbcuContext.notablePeople.length > 0 && (
+                  <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                    <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-3">People & legacy</h2>
+                    <ul className="space-y-2 text-sm text-[#3A1F0E]/80 leading-relaxed list-disc pl-5">
+                      {hbcuContext.notablePeople.map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hbcuContext.nearbyContext.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-1">Campus & community context</h2>
+                <p className="text-xs text-[#3A1F0E]/60 mb-4">Source-backed context only; this is not a ranking or endorsement.</p>
+                <div className="space-y-3">
+                  {hbcuContext.nearbyContext.map((item) => {
+                    const url = normalizeExternalHttpUrl(item.sourceUrl);
+                    return (
+                      <div key={`${item.name}-${item.sourceUrl}`} className="rounded-xl bg-[#FAF6EF] border border-[#2B1507]/8 p-4">
+                        <div className="text-sm font-semibold text-[#2B1507]">{item.name}</div>
+                        <p className="text-sm text-[#3A1F0E]/75 mt-1 leading-relaxed">{item.whyItMatters}</p>
+                        {url && <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs font-semibold hover:underline" style={{ color: accentColor }}><ExternalLink className="w-3.5 h-3.5" /> Source</a>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-2xl p-6 border" style={{ background: `${accentColor}08`, borderColor: `${accentColor}25` }}>
+              <h2 className="font-serif font-bold text-lg mb-2" style={{ color: accentColor }}>Sources behind this profile</h2>
+              <p className="text-xs text-[#3A1F0E]/65 mb-3">Each link supports a specific campus detail. Community stories and media are separate and remain categorized below.</p>
+              <div className="space-y-2">
+                {hbcuContext.sources.map((source) => {
+                  const url = normalizeExternalHttpUrl(source.url);
+                  if (!url) return null;
+                  return <a key={source.url} href={url} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-white/60 px-3 py-2 hover:bg-white transition-colors"><span className="text-sm font-semibold text-[#2B1507]">{source.title}</span><span className="block text-xs text-[#3A1F0E]/65 mt-0.5">{source.supports}</span></a>;
+                })}
+              </div>
+              {hbcuContext.verificationNotes && <p className="text-xs text-[#3A1F0E]/60 mt-3">Review note: {hbcuContext.verificationNotes}</p>}
+            </div>
+          </section>
+        )}
+
         {/* Visit tip */}
         {site.visitTip && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
@@ -491,6 +610,20 @@ export default function CulturalSiteDetail() {
           </div>
         )}
 
+        {heritage.toUpperCase() === "HBCU" && (
+          <div className="rounded-2xl p-6 border" style={{ background: `${accentColor}08`, borderColor: `${accentColor}25` }}>
+            <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-2">HBCU learning & community</h2>
+            <p className="text-sm text-[#3A1F0E]/80 leading-relaxed">
+              Explore this institution through separate academic, student-life, tradition, and mentorship lenses. Community media is reviewed and remains in the category selected by its contributor.
+            </p>
+            <Link href={`/library?q=${encodeURIComponent(`${site.name} academics, student life, alumni mentorship, and college planning`)}`}>
+              <span className="inline-flex mt-3 text-sm font-semibold cursor-pointer hover:underline" style={{ color: accentColor }}>
+                Explore this HBCU in the Library →
+              </span>
+            </Link>
+          </div>
+        )}
+
         {/* Stories from the community */}
         <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
           <div className="flex items-center justify-between mb-4">
@@ -500,7 +633,10 @@ export default function CulturalSiteDetail() {
             </h2>
             {auth?.user && !storyOpen && (
               <button
-                onClick={() => setStoryOpen(true)}
+                onClick={() => {
+                  setStoryContentCategory(contentCategoryOptions(heritage)[0].value);
+                  setStoryOpen(true);
+                }}
                 className="text-sm font-semibold px-4 py-1.5 rounded-full border border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white transition-colors"
               >
                 Share Your Story
@@ -532,6 +668,19 @@ export default function CulturalSiteDetail() {
                 </select>
               </div>
               <div>
+                <label className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider block mb-1">Content Category</label>
+                <select
+                  value={storyContentCategory}
+                  onChange={(e) => setStoryContentCategory(e.target.value as HeritageContentCategory)}
+                  className="w-full text-sm border border-[#2B1507]/15 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#CA922B] text-[#3A1F0E]"
+                >
+                  {contentCategoryOptions(heritage).map((category) => (
+                    <option key={category.value} value={category.value}>{category.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-[#3A1F0E]/55 mt-1">{contentCategoryOptions(heritage).find((category) => category.value === storyContentCategory)?.helper}</p>
+              </div>
+              <div>
                 <label className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider block mb-1">Your Name (optional)</label>
                 <input
                   type="text"
@@ -553,6 +702,17 @@ export default function CulturalSiteDetail() {
                 />
                 <div className="text-right text-xs text-[#3A1F0E]/40 mt-1">{storyContent.length}/2000</div>
               </div>
+              <div>
+                <label className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider block mb-1">Public video or post link (optional)</label>
+                <input
+                  type="url"
+                  value={storyVideoUrl}
+                  onChange={(e) => setStoryVideoUrl(e.target.value)}
+                  placeholder="https://www.tiktok.com/..."
+                  className="w-full text-sm border border-[#2B1507]/15 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#CA922B] text-[#3A1F0E]"
+                />
+                <p className="text-xs text-[#3A1F0E]/55 mt-1">Public-safe links are reviewed before appearing. Your original post stays on its source platform.</p>
+              </div>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" size="sm" onClick={() => setStoryOpen(false)}>Cancel</Button>
                 <Button
@@ -567,6 +727,23 @@ export default function CulturalSiteDetail() {
               </div>
             </div>
           )}
+
+          <div className="flex flex-wrap gap-2 mb-4" aria-label="Filter community contributions by category">
+            <button
+              type="button"
+              onClick={() => setActiveStoryCategory(null)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${activeStoryCategory === null ? "bg-[#2B1507] text-white border-[#2B1507]" : "border-[#2B1507]/15 text-[#3A1F0E]/70 hover:border-[#CA922B]"}`}
+            >All contributions</button>
+            {contentCategoryOptions(heritage).map((category) => (
+              <button
+                key={category.value}
+                type="button"
+                onClick={() => setActiveStoryCategory(category.value)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${activeStoryCategory === category.value ? "text-white border-transparent" : "border-[#2B1507]/15 text-[#3A1F0E]/70 hover:border-[#CA922B]"}`}
+                style={activeStoryCategory === category.value ? { background: accentColor } : undefined}
+              >{category.label}</button>
+            ))}
+          </div>
 
           {stories.length === 0 ? (
             <div className="text-center py-8">
@@ -597,6 +774,17 @@ export default function CulturalSiteDetail() {
                     </span>
                   </div>
                   <p className="text-sm text-[#3A1F0E]/80 leading-relaxed">{story.content}</p>
+                  {story.videoUrl && normalizeExternalHttpUrl(story.videoUrl) && (
+                    <a
+                      href={normalizeExternalHttpUrl(story.videoUrl)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-3 text-xs font-semibold hover:underline"
+                      style={{ color: accentColor }}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Open shared media
+                    </a>
+                  )}
                   <p className="text-[10px] text-[#3A1F0E]/40 mt-2">
                     {new Date(story.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                   </p>

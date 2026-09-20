@@ -630,6 +630,36 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS content_note TEXT,
       ADD COLUMN IF NOT EXISTS practical_tips TEXT`,
   },
+  // One shared place record can support both HBCU and non-HBCU heritage profiles.
+  // Content is explicitly scoped at write time so academic discovery never has to
+  // rank through homecoming or other experience media to answer an academic query.
+  {
+    name: "create_heritage_stories_table",
+    sql: `CREATE TABLE IF NOT EXISTS heritage_stories (
+      id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+      site_id VARCHAR(255) NOT NULL,
+      user_id VARCHAR(255),
+      author_name VARCHAR(100),
+      relationship_type VARCHAR(100) NOT NULL,
+      content_category VARCHAR(64) NOT NULL DEFAULT 'community_connection',
+      content TEXT NOT NULL,
+      video_url VARCHAR(500),
+      tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      is_ambassador BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "heritage_stories_content_category",
+    sql: `ALTER TABLE heritage_stories
+      ADD COLUMN IF NOT EXISTS content_category VARCHAR(64) NOT NULL DEFAULT 'community_connection'`,
+  },
+  {
+    name: "heritage_stories_public_category_index",
+    sql: `CREATE INDEX IF NOT EXISTS heritage_stories_site_status_category_idx
+      ON heritage_stories (site_id, status, content_category, created_at DESC)`,
+  },
   {
     // Wrapped in DO $$ guard: DROP NOT NULL fails if columns are already nullable.
     name: "cultural_sites_lat_lng_nullable",
@@ -4980,6 +5010,14 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
   {
     name: "library_entry_topic_links_topic_idx_v1",
     sql: `CREATE INDEX IF NOT EXISTS library_entry_topic_links_topic_idx ON library_entry_topic_links (topic_id)`,
+  },
+  // A brief explanation shows why a cited source belongs in a Library entry.
+  // It is source-scoped editorial context, never individual medical, legal, or
+  // financial advice and never a substitute for opening the original source.
+  {
+    name: "library_entry_source_relevance_notes_v1",
+    sql: `ALTER TABLE library_entry_sources
+          ADD COLUMN IF NOT EXISTS why_it_matters text`,
   },
   // ── Entry facets ──────────────────────────────────────────────────────────
   {

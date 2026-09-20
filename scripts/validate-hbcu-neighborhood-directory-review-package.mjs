@@ -1,0 +1,44 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
+const root = resolve("data/founder-imports/2026-09-20-hbcu-neighborhood-directory-review/review-package");
+const summaryPath = `${root}/hbcu-neighborhood-directory-review-summary.json`;
+const candidatePath = `${root}/hbcu-neighborhood-directory-review-only-candidates.jsonl`;
+const heldPath = `${root}/hbcu-neighborhood-directory-held-and-overlap-evidence.jsonl`;
+const healthPath = `${root}/hbcu-neighborhood-directory-destination-health.json`;
+const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+const rows = (text) => text.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+const [summaryText, candidateText, heldText, healthText] = await Promise.all([readFile(summaryPath, "utf8"), readFile(candidatePath, "utf8"), readFile(heldPath, "utf8"), readFile(healthPath, "utf8")]);
+const summary = JSON.parse(summaryText);
+const candidates = rows(candidateText);
+const held = rows(heldText);
+const health = JSON.parse(healthText);
+const errors = [];
+const identities = new Set();
+const sourceRows = new Set();
+for (const [index, row] of candidates.entries()) {
+  if (row.targetKind !== "business") errors.push(`candidate ${index + 1} targetKind must be business`);
+  if (!row.source_row_id || sourceRows.has(row.source_row_id)) errors.push(`candidate ${index + 1} must have a unique source_row_id`);
+  sourceRows.add(row.source_row_id);
+  if (!/^\d+(?:-[0-9A-Za-z]+)?\s+/.test(String(row.address ?? ""))) errors.push(`candidate ${index + 1} lacks a numbered address`);
+  for (const field of ["name", "city", "state", "country", "category", "website", "sourceUrl", "sourceName"]) if (!row[field]) errors.push(`candidate ${index + 1} lacks ${field}`);
+  if (!/^https:\/\//.test(String(row.website))) errors.push(`candidate ${index + 1} official destination must be https`);
+  if (!/^https:\/\//.test(String(row.sourceUrl))) errors.push(`candidate ${index + 1} evidence source must be https`);
+  const serialized = JSON.stringify(row);
+  if (serialized.includes('"null"') || /"(?:undefined|n\/a|none)"/i.test(serialized)) errors.push(`candidate ${index + 1} contains a string null-like value`);
+  if (/\b(lat|lng|latitude|longitude|coordinates)\b/i.test(serialized)) errors.push(`candidate ${index + 1} includes coordinate data`);
+  const identity = String(row.dedupeKey ?? "");
+  if (!identity || identities.has(identity)) errors.push(`candidate ${index + 1} duplicates a manifest identity`);
+  identities.add(identity);
+}
+if (summary.status !== "review_only") errors.push("summary status must remain review_only");
+if (summary.candidateManifest?.rowCount !== candidates.length) errors.push("candidate count mismatch in summary");
+if (summary.heldEvidence?.rowCount !== held.length) errors.push("held count mismatch in summary");
+if (summary.candidateManifest?.sha256 !== sha256(candidateText)) errors.push("candidate manifest checksum mismatch");
+if (summary.heldEvidence?.sha256 !== sha256(heldText)) errors.push("held evidence checksum mismatch");
+if (!summary.destinationHealth?.allDestinationsChecked) errors.push("destination health ledger is not finalized");
+if (summary.destinationHealth?.candidateRows !== candidates.length || health.candidates !== candidates.length) errors.push("health ledger candidate count mismatch");
+if (summary.destinationHealth?.sha256 !== sha256(healthText)) errors.push("destination health checksum mismatch");
+if (errors.length) throw new Error(errors.join("\n"));
+console.log(JSON.stringify({ status: summary.status, candidates: candidates.length, held: held.length, destinationHealth: summary.destinationHealth.counts, checksum: summary.candidateManifest.sha256, valid: true }, null, 2));

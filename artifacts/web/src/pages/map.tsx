@@ -1,5 +1,5 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
-import { Link, useSearch } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
@@ -144,52 +144,6 @@ function getConfidenceLabel(level: string): string {
 
 type RouteInfo = { distance: string; duration: string; bizName: string };
 
-const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional", "Healthcare", "Trades & Education", "International"];
-
-// ── "What are you in the mood for?" discovery intent chips ─────────────────
-type MoodChip = { id: string; label: string };
-const MOOD_CHIPS: MoodChip[] = [
-  { id: "romantic",    label: "Romantic"    },
-  { id: "chill",       label: "Chill"       },
-  { id: "turn-up",     label: "Turn Up"     },
-  { id: "grown-folks", label: "Grown Folks" },
-  { id: "family",      label: "Family Time" },
-  { id: "culture",     label: "Culture"     },
-  { id: "live-music",  label: "Live Music"  },
-  { id: "eat-good",    label: "Eat Good"    },
-];
-
-function matchesMood(biz: BizWithCoords, moodId: string): boolean {
-  const cat  = (biz.category    ?? "").toLowerCase();
-  const name = (biz.name        ?? "").toLowerCase();
-  const desc = (biz.description ?? "").toLowerCase();
-  const text = `${name} ${desc}`;
-  switch (moodId) {
-    case "romantic":
-      return cat.includes("food") || cat.includes("wellness") ||
-        ["wine", "fine dining", "upscale", "steakhouse", "intimate", "rooftop", "date night"].some((k) => text.includes(k));
-    case "chill":
-      return ["coffee", "cafe", "café", "tea", "lounge", "bookstore", "bakery", "brunch", "smoothie", "chill", "relaxed"].some((k) => text.includes(k)) ||
-        cat.includes("wellness");
-    case "turn-up":
-      return ["bar", "club", "nightlife", "nightclub", "party", "rooftop", "hookah", "dance", "dj", "brunch", "day party"].some((k) => text.includes(k));
-    case "grown-folks":
-      return ["lounge", "wine bar", "jazz", "speakeasy", "cocktail", "steakhouse", "fine dining", "cigar", "whiskey", "bourbon", "spirits", "grown"].some((k) => text.includes(k));
-    case "family":
-      return (cat.includes("food") || cat.includes("retail") || cat.includes("cultural")) ||
-        ["family", "kids", "children", "ice cream", "pizza", "diner", "friendly"].some((k) => text.includes(k));
-    case "culture":
-      return cat.includes("cultural") ||
-        ["museum", "gallery", "heritage", "history", "art", "historic", "hbcu", "monument", "landmark"].some((k) => text.includes(k));
-    case "live-music":
-      return ["live music", "jazz", "blues", "open mic", "music venue", "concert", "band", "soul", "gospel", "hip-hop", "hip hop"].some((k) => text.includes(k));
-    case "eat-good":
-      return cat.includes("food");
-    default:
-      return true;
-  }
-}
-
 const BRAND_STYLE: object[] = [
   { elementType: "geometry", stylers: [{ color: "#f5ede0" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#3a1f0e" }] },
@@ -231,6 +185,7 @@ const LEGEND_TILES = [
 ] as const;
 
 export default function MapPage() {
+  const [, navigate] = useLocation();
   // Load ALL geolocated businesses — uses dedicated map-pins endpoint (no 200-row cap)
   const [mapPins, setMapPins] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -259,7 +214,6 @@ export default function MapPage() {
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
   const [apiKeyError, setApiKeyError] = useState(false);
   const [isPaidMember, setIsPaidMember] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
@@ -272,7 +226,7 @@ export default function MapPage() {
   // Cleared whenever a new local search begins or the search is reset.
   const localSearchMarkersRef = useRef<GMarker[]>([]);
 
-  // Sundown towns — ALWAYS ON per Gate 5 Map UX Spec non-negotiable rule #2
+  // Sundown towns — available through the compact historical-context selector.
   const [sundownTowns, setSundownTowns] = useState<SundownTown[]>([]);
   const sundownMarkersRef = useRef<GMarker[]>([]);
 
@@ -296,16 +250,16 @@ export default function MapPage() {
   // Sidebar + legend filter state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
-  const [mood, setMood] = useState<string | null>(null);
   const [showAddPlace, setShowAddPlace] = useState(false);
   // Business search must be explicitly triggered — map does not auto-populate businesses
   const [businessSearchActive, setBusinessSearchActive] = useState(false);
   // A broad collection is useful for intentional travel planning, but it is not
   // the default map experience. Normal map use remains close to the member's
   // confirmed location or a place they explicitly searched for.
-  const [exploreAllAreas, setExploreAllAreas] = useState(false);
-  // Sundown layer has its own independent toggle (not subject to legendFilter single-select)
-  const [showSundownLayer, setShowSundownLayer] = useState(true);
+  const exploreAllAreas = false;
+  // Historical sundown-town records are intentionally opt-in. They remain
+  // searchable and never represent a current safety rating.
+  const [showSundownLayer, setShowSundownLayer] = useState(false);
 
   // ── Directory-to-map handoff — reads ?q= from the URL ───────────────────────
   // When the directory links to /map?q=restaurant%20in%20Phuket, the map must
@@ -692,6 +646,10 @@ export default function MapPage() {
       });
 
       marker.addListener("click", () => {
+        if (pin.detailPath.startsWith("/") && !pin.detailPath.startsWith("//")) {
+          navigate(pin.detailPath);
+          return;
+        }
         const snippet = (pin.description ?? "").slice(0, 120);
         infoWindowRef.current?.setContent(
           `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
@@ -710,7 +668,7 @@ export default function MapPage() {
       discoverabilityMarkersRef.current.push(marker);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [discoverabilityPins]);
+  }, [discoverabilityPins, navigate]);
 
   // Discoverability marker visibility — responds to legendFilter
   useEffect(() => {
@@ -740,19 +698,6 @@ export default function MapPage() {
       const tokens = search.toLowerCase().split(",").map((t) => t.trim()).filter(Boolean);
       const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
       const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
-      const bAny = b as any;
-      const matchCat = category === "All"
-        || (category === "International"
-            ? bAny.country && bAny.country !== "USA" && bAny.country !== "United States"
-            : category === "Healthcare"
-            ? b.category?.toLowerCase().includes("health")
-            : category === "Trades & Education"
-            ? b.category?.toLowerCase().includes("education") ||
-              (b as any).subcategory?.toLowerCase().includes("trade") ||
-              (b as any).subcategory?.toLowerCase().includes("workforce") ||
-              (b as any).subcategory?.toLowerCase().includes("apprenticeship")
-            : b.category?.toLowerCase().includes(category.toLowerCase()));
-      const matchMood = mood === null || matchesMood(b, mood);
       // Nearby is the standard map rule. Precise device location wins; a
       // geocoded profile home keeps the view useful after a member declines it.
       // Only an explicit all-area exploration can bypass this local filter.
@@ -761,7 +706,7 @@ export default function MapPage() {
         const distKm = haversineKm(nearbyOrigin.lat, nearbyOrigin.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
         return distKm <= nearMeRadius * 1.60934; // convert miles → km
       })();
-      return matchSearch && matchCat && matchMood && matchNear;
+      return matchSearch && matchNear;
     });
     // Sort the local scope by distance, not by a national ordering.
     const nearbyOrigin = userCoords ?? profileCoords;
@@ -839,6 +784,12 @@ export default function MapPage() {
       });
 
       marker.addListener("click", () => {
+        // A first-party detail path is the canonical MWM profile for this pin.
+        // Keep informational windows only for entities without such a profile.
+        if (site.detail_url.startsWith("/") && !site.detail_url.startsWith("//")) {
+          navigate(site.detail_url);
+          return;
+        }
         const snippet = (site.summary ?? "").slice(0, 120);
         const actionLabel = site.entity_kind === "travel_destination" ? "View planning reference" : "Learn more on MWM";
         infoWindowRef.current?.setContent(
@@ -858,7 +809,7 @@ export default function MapPage() {
       culturalMarkersRef.current.push(marker);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibleCulturalSites]);
+  }, [visibleCulturalSites, navigate]);
 
   // Cultural marker visibility — responds to legendFilter changes
   useEffect(() => {
@@ -899,7 +850,7 @@ export default function MapPage() {
     // Clear previous markers before re-rendering
     sundownMarkersRef.current.forEach((m) => m.setMap(null));
     sundownMarkersRef.current = [];
-    if (visibleSundownTowns.length === 0) return;
+    if (!showSundownLayer || visibleSundownTowns.length === 0) return;
 
     visibleSundownTowns.forEach((town) => {
       if (isNaN(town.latitude) || isNaN(town.longitude)) return;
@@ -952,7 +903,7 @@ export default function MapPage() {
       sundownMarkersRef.current.push(marker);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibleSundownTowns]);
+  }, [showSundownLayer, visibleSundownTowns]);
 
   // Render event markers from the events table
   useEffect(() => {
@@ -1181,7 +1132,11 @@ export default function MapPage() {
           },
         });
 
-        marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
+        // A public business pin is a doorway to its MWM profile, whether the
+        // place is claimed, unclaimed, minority-owned, or community-listed.
+        // The detail page is where members can safely add experiences and help
+        // prevent a duplicate listing; it is never replaced by an external URL.
+        marker.addListener("click", () => navigate(`/businesses/${biz.id}`));
         markersRef.current.set(biz.id, marker);
       });
     } catch {
@@ -1190,7 +1145,7 @@ export default function MapPage() {
 
     return () => window.removeEventListener("error", onGmError, true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, isLoading, handoffQuery]);
+  }, [ready, isLoading, handoffQuery, navigate]);
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);
@@ -1330,28 +1285,6 @@ export default function MapPage() {
 
   const legendTileLabel = LEGEND_TILES.find((t) => t.key === legendFilter)?.label ?? "";
 
-  function selectLegendLayer(next: string | null) {
-    setLegendFilter(next);
-    setSidebarOpen(next !== null);
-    if (!next || next === "business") return;
-
-    const matching = visibleCulturalSites.filter((site) => siteMatchesFilter(site, next));
-    const g = (window as any).google?.maps;
-    const map = mapRef.current;
-    if (!g || !map || matching.length === 0) return;
-    if (matching.length === 1) {
-      map.panTo({ lat: matching[0].latitude, lng: matching[0].longitude });
-      map.setZoom(14);
-      return;
-    }
-    const bounds = new g.LatLngBounds();
-    matching.forEach((site) => bounds.extend({ lat: site.latitude, lng: site.longitude }));
-    map.fitBounds(bounds, { top: 84, right: 32, bottom: 120, left: 352 });
-    g.event.addListenerOnce(map, "idle", () => {
-      if ((map.getZoom() ?? 0) > 13) map.setZoom(13);
-    });
-  }
-
   // ── MapViewportAdapter backed by the live Google Maps instance ──────────────
   // Passed to applyLocalMapViewport(makeMapAdapter(), area, pins) inside the
   // LocalBusinessResults onPinsChange callback. Keeps local search pins on their
@@ -1464,52 +1397,22 @@ export default function MapPage() {
                   </button>
                 )}
               </div>
-              {/* Mood / discovery intent */}
-              <div className="mb-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-2">
-                  What are you in the mood for?
-                </p>
-                <div className="flex gap-1.5 flex-wrap">
-                  {MOOD_CHIPS.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setMood(mood === m.id ? null : m.id)}
-                      className={`text-[10px] font-semibold px-2.5 py-1 rounded-full transition-colors border ${
-                        mood === m.id
-                          ? "bg-[#CA922B] text-white border-[#CA922B]"
-                          : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/12 hover:border-[#CA922B]/50 hover:text-[#CA922B]"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                  {mood !== null && (
-                    <button
-                      onClick={() => setMood(null)}
-                      className="text-[10px] font-semibold px-2 py-1 rounded-full text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 transition-colors flex items-center gap-0.5"
-                    >
-                      <X className="w-3 h-3" /> Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Category filter */}
-              <div className="flex gap-1.5 flex-wrap">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategory(cat)}
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors ${
-                      category === cat
-                        ? "bg-[#2B1507] text-[#F5EBD8]"
-                        : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#3A1F0E]/8"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              {/* Shortcut chips are deliberately omitted here. Typed search keeps
+                  the same category, HBCU, market, and need-based discovery
+                  coverage without turning the map into a wall of controls. */}
+              <button
+                type="button"
+                onClick={() => setShowSundownLayer((visible) => !visible)}
+                className={`mt-2 w-full text-left rounded-lg border px-3 py-2 text-[11px] leading-snug transition-colors ${
+                  showSundownLayer
+                    ? "border-[#7C6F64] bg-[#F5F1EC] text-[#3A1F0E]"
+                    : "border-[#3A1F0E]/12 bg-white text-[#3A1F0E]/70 hover:border-[#7C6F64]/60"
+                }`}
+                aria-pressed={showSundownLayer}
+              >
+                <span className="font-bold">{showSundownLayer ? "Hide" : "Show"} nearby sundown-town history</span>
+                <span className="block mt-0.5 text-[#3A1F0E]/55">Documented historical context only — not a current safety rating.</span>
+              </button>
             </>
           )}
         </div>
@@ -1834,7 +1737,7 @@ export default function MapPage() {
                     </button>
                     <button
                       onClick={() => {
-                        setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
+                        setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
                         localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
                       }}
                       className="text-xs font-bold text-[#CA922B] hover:underline"
@@ -1990,74 +1893,10 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Interactive legend — two rows so Sundown toggle is always visible */}
-        <div className="absolute bottom-6 left-4 flex flex-col gap-1.5">
-          {/* Row 1: Cultural / heritage layer filters */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-1 gap-y-1">
-            {LEGEND_TILES.filter(t => t.key !== "sundown").map(({ key, color, shape, label }) => {
-              const isActive = legendFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => {
-                    const next = isActive ? null : key;
-                    selectLegendLayer(next);
-                  }}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all text-left ${
-                    isActive
-                      ? "bg-[#3A1F0E]/10 ring-1 ring-[#3A1F0E]/20"
-                      : "hover:bg-[#3A1F0E]/5"
-                  }`}
-                >
-                  {shape === "circle" ? (
-                    <div className="w-3 h-3 rounded-full border border-[#2B1507]/40 shrink-0" style={{ background: color }} />
-                  ) : (
-                    <div className="w-3 h-3 rotate-45 shrink-0" style={{ background: color }} />
-                  )}
-                  <span className={`text-[10px] font-semibold ${isActive ? "text-[#3A1F0E]" : "text-[#3A1F0E]/70"}`}>
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
-            {isPaidMember && (
-              <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-3 ml-1">
-                <Navigation className="w-3 h-3 text-[#CA922B]" />
-                <span className="text-xs font-semibold text-[#CA922B]">Routing active</span>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setExploreAllAreas((current) => !current)}
-              aria-pressed={exploreAllAreas}
-              className={`ml-1 border-l border-[#3A1F0E]/10 pl-3 text-[10px] font-semibold transition-colors ${
-                exploreAllAreas ? "text-[#8D5C17]" : "text-[#3A1F0E]/55 hover:text-[#8D5C17]"
-              }`}
-            >
-              {exploreAllAreas ? "Show nearby" : "Explore all areas"}
-            </button>
-          </div>
-
-          {/* Row 2: Sundown Town History — always its own row, never overflows */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg border border-[#3A1F0E]/8 w-fit">
-            <button
-              onClick={() => setShowSundownLayer(v => !v)}
-              title={showSundownLayer ? "Hide Sundown Town History layer" : "Show Sundown Town History layer"}
-              className={`flex items-center gap-2 px-1 py-0.5 rounded-lg transition-all ${
-                showSundownLayer
-                  ? "opacity-100"
-                  : "opacity-45 hover:opacity-70"
-              }`}
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" className="shrink-0">
-                <polygon points="6,1 11,11 1,11" fill="#7F1D1D" opacity={showSundownLayer ? "0.85" : "0.35"} />
-              </svg>
-              <span className={`text-[10px] font-semibold ${showSundownLayer ? "text-[#7F1D1D]" : "text-[#3A1F0E]/45"}`}>
-                {showSundownLayer ? "Sundown Town History — ON" : "Sundown Town History — OFF"}
-              </span>
-            </button>
-          </div>
-        </div>
+        {/* The former map shortcut strip was intentionally removed for a calmer
+            map. Its data, typed search, and underlying filters remain intact:
+            members can still search markets, HBCUs, cultural places, events,
+            and every other supported category by name or need. */}
       </div>
     </div>
     </>

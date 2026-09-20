@@ -708,6 +708,27 @@ export default function LibraryScreen() {
           /* ── MY LIBRARY TAB ── */
           <ScrollView
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={styles.scroll}>
+            <View style={[styles.section, { marginTop: 18 }]}>
+              <View style={[styles.livingLibraryResearchCard, { backgroundColor: "#2A0F05", borderColor: "#CA922B50" }]}>
+                <View style={styles.livingLibraryResearchHeading}>
+                  <Feather name="book-open" size={18} color="#F4D58D" />
+                  <Text style={styles.livingLibraryResearchEyebrow}>THE LIVING LIBRARY</Text>
+                </View>
+                <Text style={styles.livingLibraryResearchTitle}>Research a life question with reputable sources.</Text>
+                <Text style={styles.livingLibraryResearchCopy}>
+                  Get a concise answer, a full research brief when you want it, cited sources, and evidence-led next questions. Health, legal, and financial research is informational—not personal advice.
+                </Text>
+                <TouchableOpacity
+                  accessibilityLabel="Research vetted Library sources"
+                  activeOpacity={0.82}
+                  onPress={() => router.push("/library-research" as never)}
+                  style={styles.livingLibraryResearchButton}
+                >
+                  <Text style={styles.livingLibraryResearchButtonText}>Research vetted sources</Text>
+                  <Feather name="arrow-up-right" size={16} color="#2A0F05" />
+                </TouchableOpacity>
+              </View>
+            </View>
             {!isAuthenticated ? (
               <View style={styles.signInPrompt}>
                 <Text style={{ fontSize: 32, marginBottom: 12 }}>📚</Text>
@@ -1679,6 +1700,13 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   scroll: { flex: 1 },
   section: { paddingHorizontal: 14, paddingTop: 18, gap: 10 },
+  livingLibraryResearchCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 9 },
+  livingLibraryResearchHeading: { flexDirection: "row", alignItems: "center", gap: 7 },
+  livingLibraryResearchEyebrow: { color: "#F4D58D", fontSize: 11, fontWeight: "900", letterSpacing: 0.8 },
+  livingLibraryResearchTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "800", lineHeight: 24 },
+  livingLibraryResearchCopy: { color: "#F6EDE5", fontSize: 13, lineHeight: 19 },
+  livingLibraryResearchButton: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 10, backgroundColor: "#F4D58D", paddingHorizontal: 12, paddingVertical: 10, marginTop: 2 },
+  livingLibraryResearchButtonText: { color: "#2A0F05", fontSize: 13, fontWeight: "800" },
   sectionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionTitle: { fontSize: 16, fontWeight: "800" },
   sectionLoading: { paddingVertical: 24, alignItems: "center" },

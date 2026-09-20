@@ -366,6 +366,23 @@ export default function BusinessDetail() {
   const [contribError, setContribError] = useState<string | null>(null);
   const [communityVibes, setCommunityVibes] = useState<any[]>([]);
 
+  function closeContributionModal() {
+    setShowContribModal(false);
+    setContribSuccess(false);
+    setContribUrl("");
+    setContribCaption("");
+    setContribError(null);
+  }
+
+  useEffect(() => {
+    if (!showContribModal) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeContributionModal();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showContribModal]);
+
   // Auto-open the contribution modal when arriving from "Add a Place" flow
   useEffect(() => {
     if (new URLSearchParams(search).get("addContent") === "true") {
@@ -648,9 +665,13 @@ export default function BusinessDetail() {
     <div className="min-h-screen bg-[#1A1209] flex flex-col w-full pb-24">
       {/* ── Community Media Contribution Modal ── */}
       {showContribModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1E1510] rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#CA922B]/20 relative">
-            <button onClick={() => { setShowContribModal(false); setContribSuccess(false); setContribUrl(""); setContribCaption(""); setContribError(null); }} className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          role="presentation"
+          onMouseDown={(event) => { if (event.currentTarget === event.target) closeContributionModal(); }}
+        >
+          <div role="dialog" aria-modal="true" aria-labelledby="public-video-dialog-title" className="bg-[#1E1510] rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#CA922B]/20 relative" onMouseDown={(event) => event.stopPropagation()}>
+            <button aria-label="Close public-video submission" onClick={closeContributionModal} className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
 
@@ -661,9 +682,9 @@ export default function BusinessDetail() {
                 </div>
                 <h3 className="text-xl font-serif font-bold text-white mb-2">Contribution Received</h3>
                 <p className="text-white/70 text-sm leading-relaxed mb-6">
-                  Your content has been submitted and will appear on this page after review — usually within 24 hours. Thank you for showing the community the vibe.
+                  Your public link is pending review. It will appear in Community experiences only after approval, so pending content never becomes public by accident.
                 </p>
-                <button onClick={() => { setShowContribModal(false); setContribSuccess(false); setContribUrl(""); setContribCaption(""); }} className="py-3 px-8 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm transition-colors">
+                <button onClick={closeContributionModal} className="py-3 px-8 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm transition-colors">
                   Done
                 </button>
               </div>
@@ -674,8 +695,8 @@ export default function BusinessDetail() {
                     <Camera className="w-5 h-5 text-[#CA922B]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-serif font-bold text-white">Show the Vibe</h3>
-                    <p className="text-xs text-white/60">Paste a link from Instagram, TikTok, YouTube, or Vimeo</p>
+                    <h3 id="public-video-dialog-title" className="text-lg font-serif font-bold text-white">Share a public video</h3>
+                    <p className="text-xs text-white/60">Paste an approved public link from TikTok, Instagram, YouTube, Facebook, Vimeo, Twitch, or Snapchat</p>
                   </div>
                 </div>
 
@@ -1137,6 +1158,42 @@ export default function BusinessDetail() {
                   );
                 })()}
 
+                {/* Approved community links belong in the Overview, independent
+                    of whether an owner supplied social handles. Pending and
+                    rejected contributions never reach communityVibes. */}
+                <section className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3" aria-labelledby="community-experiences-heading">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Community experiences</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-white/55">Approved public posts shared by members. Each opens on the original creator platform.</p>
+                    </div>
+                    <button onClick={() => setShowContribModal(true)} className="inline-flex items-center gap-1.5 rounded-full border border-[#CA922B]/35 px-3 py-1.5 text-xs font-bold text-[#CA922B] hover:border-[#CA922B] hover:bg-[#CA922B]/10 transition-colors">
+                      <Camera className="h-3.5 w-3.5" /> Share a public video
+                    </button>
+                  </div>
+                  {communityVibes.length > 0 ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {communityVibes.slice(0, 3).map((contribution: any) => {
+                        const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
+                        const href = platform ? safeExternalProfileUrl(contribution.source_url, platform) : null;
+                        if (!platform || !href) return null;
+                        return (
+                          <a key={contribution.id} href={href} target="_blank" rel="noopener noreferrer" className="group rounded-xl border border-white/10 bg-[#241810] p-3 hover:border-[#CA922B]/45 transition-colors">
+                            <div className="flex items-start gap-2">
+                              <span className="rounded-full bg-[#CA922B]/10 px-2 py-0.5 text-[10px] font-bold text-[#CA922B]">{platform}</span>
+                              <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-white/35 group-hover:text-[#CA922B]" />
+                            </div>
+                            <p className="mt-2 text-sm leading-relaxed text-white/80 line-clamp-2">{contribution.caption || `View this community-shared ${platform} post`}</p>
+                            {(contribution.attribution || contribution.contributor_name) ? <p className="mt-1 text-[10px] text-white/45">Shared by {contribution.attribution || contribution.contributor_name}</p> : null}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">No approved community videos yet. You can share an original public post for review.</p>
+                  )}
+                </section>
+
                 <div className="prose prose-lg text-white/80 font-light leading-relaxed prose-invert">
                   <p>{(business.description?.replace(/^\[DEMO\]\s*/i, "") || "Discover this exceptional business. They provide quality service and a welcoming environment for the community.")}</p>
                 </div>
@@ -1578,7 +1635,7 @@ export default function BusinessDetail() {
                       {communityVibes.length > 0 && (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Community Vibes</span>
+                            <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Community experiences</span>
                           </div>
                           {communityVibes.slice(0, 5).map((c: any) => {
                             const detected = detectSocialVideoPlatform(c.source_url ?? "");
@@ -1616,7 +1673,7 @@ export default function BusinessDetail() {
                           className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#CA922B]/30 text-xs text-[#CA922B] font-semibold hover:border-[#CA922B]/60 hover:bg-[#CA922B]/5 transition-colors bg-[#241810]"
                         >
                           <Camera className="w-3.5 h-3.5" />
-                          Be the first to Show the Vibe
+                          Share a public video
                         </button>
                       )}
 

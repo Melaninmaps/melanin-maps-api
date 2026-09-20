@@ -11,9 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
-import { CategoryPill } from "@/components/CategoryPill";
 import { SearchBar } from "@/components/SearchBar";
-import { CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
@@ -24,12 +22,13 @@ export default function MapScreen() {
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const { businesses } = useBusinesses({ search, category: activeCategory });
+  // Keep category records available through typed search without a crowded
+  // row of shortcut tabs on the map surface.
+  const { businesses } = useBusinesses({ search, category: "All" });
   const filtered = businesses.filter((_b) => {
     return true;
   });
@@ -46,21 +45,6 @@ export default function MapScreen() {
       <View style={styles.searchRow}>
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
-      <FlatList
-        horizontal
-        data={CATEGORIES}
-        keyExtractor={(c) => c}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.catList}
-        renderItem={({ item }) => (
-          <CategoryPill
-            label={item}
-            selected={activeCategory === item}
-            onPress={() => setActiveCategory(item)}
-          />
-        )}
-        style={styles.catRow}
-      />
       <FlatList
         data={filtered}
         keyExtractor={(b) => b.id}

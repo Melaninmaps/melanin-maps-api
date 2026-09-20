@@ -46,6 +46,7 @@ import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
+import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
 import AdminBusinessReview from "@/pages/admin-business-review";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import {
@@ -243,6 +244,7 @@ type Tab =
   | "knowledge-contrib"
   | "library-growth"
   | "biz-review"
+  | "business-videos"
   | "directory-imports";
 
 type ChecklistSection = {
@@ -1627,6 +1629,11 @@ export default function Admin() {
       id: "biz-review",
       label: "Business Review Queue",
       icon: <Store className="w-4 h-4" />,
+    },
+    {
+      id: "business-videos",
+      label: "Community Videos",
+      icon: <MessageSquarePlus className="w-4 h-4" />,
     },
   ];
   if (import.meta.env.VITE_DIRECTORY_IMPORT_REVIEW_ENABLED === "true") {
@@ -5728,6 +5735,12 @@ export default function Admin() {
       {tab === "biz-review" && (
         <div className="p-6">
           <AdminBusinessReview embedded />
+        </div>
+      )}
+
+      {tab === "business-videos" && (
+        <div className="p-6">
+          <AdminBusinessVideoContributions base={BASE} />
         </div>
       )}
 
