@@ -84,7 +84,7 @@ export function validateDirectorySourceRows(records: unknown[]): void {
   const seen = new Set<string>();
   records.forEach((record, index) => {
     const value = record as Record<string, unknown>;
-    const row = value.source_row_id ?? value.sourceRowId ?? value.source_row;
+    const row = value.source_row_id ?? value.sourceRowId ?? value.source_row ?? value.sourceRow;
     if (typeof row !== "string" && typeof row !== "number")
       throw new Error(`Source row ${index + 1} must include source_row_id.`);
     const id = String(row).trim();
