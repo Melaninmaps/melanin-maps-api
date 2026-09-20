@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -52,6 +53,7 @@ import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
 import BusinessExperienceCard from "@/components/BusinessExperienceCard";
+import { detectSocialVideoPlatform } from "@workspace/constants";
 
 const SOCIAL_PROFILE_HOSTS: Record<string, readonly string[]> = {
   tiktok: ["tiktok.com"],
@@ -204,6 +206,11 @@ export default function BusinessDetailScreen() {
     contributor_name: string | null;
   }
   const [approvedContributions, setApprovedContributions] = useState<ApprovedContribution[]>([]);
+  const [contributionModalOpen, setContributionModalOpen] = useState(false);
+  const [contributionUrl, setContributionUrl] = useState("");
+  const [contributionCaption, setContributionCaption] = useState("");
+  const [contributionSubmitting, setContributionSubmitting] = useState(false);
+  const [contributionError, setContributionError] = useState<string | null>(null);
 
   const { business, isLoading } = useBusinessById(id ?? "");
 
@@ -481,6 +488,66 @@ export default function BusinessDetailScreen() {
     }
     if (clickType) trackClick(clickType);
     WebBrowser.openBrowserAsync(url);
+  };
+
+  const openApprovedContribution = async (contribution: ApprovedContribution) => {
+    const url = approvedContributionUrl(contribution.source_url, contribution.source_type);
+    if (!url) {
+      Alert.alert("Unavailable video", "This link is no longer available from its public provider.");
+      return;
+    }
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Alert.alert("Could not open video", "Please try again later.");
+    }
+  };
+
+  const closeContributionModal = (force = false) => {
+    if (contributionSubmitting && !force) return;
+    setContributionModalOpen(false);
+    setContributionError(null);
+    setContributionUrl("");
+    setContributionCaption("");
+  };
+
+  const submitContribution = async () => {
+    if (!id) return;
+    const sourceUrl = contributionUrl.trim();
+    if (!detectSocialVideoPlatform(sourceUrl)) {
+      setContributionError("Paste a public Instagram, TikTok, YouTube, Facebook, Twitch, or Snapchat video link.");
+      return;
+    }
+    setContributionSubmitting(true);
+    setContributionError(null);
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      if (!token) {
+        setContributionError("Sign in to share a public video.");
+        return;
+      }
+      const response = await fetch(`${getApiBase()}/api/businesses/${id}/contributions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          mediaType: "social_url",
+          sourceUrl,
+          caption: contributionCaption.trim() || null,
+        }),
+      });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        setContributionError(data.error ?? "Your video could not be submitted. Please try again.");
+        return;
+      }
+      closeContributionModal(true);
+      Alert.alert("Video submitted", "Thanks. It will appear on this place page after moderation confirms the public link and context.");
+    } catch {
+      setContributionError("Could not reach the server. Please try again.");
+    } finally {
+      setContributionSubmitting(false);
+    }
   };
 
   const handleShare = () => {
@@ -1154,14 +1221,13 @@ export default function BusinessDetailScreen() {
             })()}
           </View>
 
-          {approvedContributions.some((item) => approvedContributionUrl(item.source_url, item.source_type)) && (
-            <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.communityMediaHeader}>
                 <Feather name="play-circle" size={17} color={colors.primary} />
                 <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community creator videos</Text>
               </View>
               <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved public links shared by community members. They open on the original creator platform.</Text>
-              {approvedContributions.map((item) => {
+              {approvedContributions.some((item) => approvedContributionUrl(item.source_url, item.source_type)) ? approvedContributions.map((item) => {
                 const href = approvedContributionUrl(item.source_url, item.source_type);
                 if (!href) return null;
                 const platform = item.source_type.charAt(0).toUpperCase() + item.source_type.slice(1);
@@ -1172,7 +1238,7 @@ export default function BusinessDetailScreen() {
                     accessibilityRole="link"
                     accessibilityLabel={`Open ${platform} creator link about ${business.name}`}
                     style={[styles.communityMediaLink, { borderColor: colors.border }]}
-                    onPress={() => void WebBrowser.openBrowserAsync(href)}
+                    onPress={() => void openApprovedContribution(item)}
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.communityMediaPlatform, { color: colors.primary }]}>{platform}</Text>
@@ -1188,9 +1254,18 @@ export default function BusinessDetailScreen() {
                     <Feather name="external-link" size={16} color={colors.primary} />
                   </TouchableOpacity>
                 );
-              })}
+              }) : <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>No approved community videos yet. Be the first to share a public video about this place.</Text>}
+              <TouchableOpacity
+                onPress={() => setContributionModalOpen(true)}
+                style={[styles.communityMediaAddButton, { borderColor: colors.primary + "55" }]}
+                accessibilityRole="button"
+                accessibilityLabel="Add a public video to this place"
+                activeOpacity={0.82}
+              >
+                <Feather name="plus" size={15} color={colors.primary} />
+                <Text style={[styles.communityMediaAddText, { color: colors.primary }]}>Add a public video</Text>
+              </TouchableOpacity>
             </View>
-          )}
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About</Text>
           <Text style={[styles.description, { color: colors.foreground }]}>{business.description}</Text>
@@ -1926,6 +2001,58 @@ export default function BusinessDetailScreen() {
         onSubmit={handleReviewSubmit}
       />
 
+      <Modal visible={contributionModalOpen} transparent animationType="slide" onRequestClose={() => closeContributionModal()}>
+        <View style={styles.contributionOverlay}>
+          <TouchableOpacity style={styles.contributionBackdrop} activeOpacity={1} onPress={() => closeContributionModal()} />
+          <View style={[styles.contributionSheet, { backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, 20) }]}>
+            <View style={[styles.contributionHandle, { backgroundColor: colors.border }]} />
+            <View style={styles.contributionSheetHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.contributionSheetTitle, { color: colors.foreground }]}>Add a public video</Text>
+                <Text style={[styles.contributionSheetSub, { color: colors.mutedForeground }]}>Share a public post about {business.name}. It will be reviewed before anyone else sees it here.</Text>
+              </View>
+              <TouchableOpacity onPress={() => closeContributionModal()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close video submission">
+                <Feather name="x" size={22} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.contributionLabel, { color: colors.foreground }]}>Public video link</Text>
+            <TextInput
+              value={contributionUrl}
+              onChangeText={setContributionUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder="https://www.tiktok.com/..."
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.contributionInput, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]}
+              accessibilityLabel="Public social video link"
+            />
+            <Text style={[styles.contributionLabel, { color: colors.foreground }]}>Why should people see it? <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+            <TextInput
+              value={contributionCaption}
+              onChangeText={setContributionCaption}
+              multiline
+              maxLength={500}
+              placeholder="Add helpful context without stating unverified facts."
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.contributionInput, styles.contributionCaptionInput, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]}
+              accessibilityLabel="Video context"
+            />
+            {contributionError ? <Text style={styles.contributionError}>{contributionError}</Text> : null}
+            <Text style={[styles.contributionReviewNote, { color: colors.mutedForeground }]}>Only public videos from supported providers are accepted. Approval checks the link and whether it belongs with this place; it does not verify ownership, safety, or other claims in the video.</Text>
+            <TouchableOpacity
+              onPress={() => void submitContribution()}
+              disabled={contributionSubmitting}
+              style={[styles.contributionSubmit, { backgroundColor: colors.primary, opacity: contributionSubmitting ? 0.65 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Submit public video for review"
+            >
+              {contributionSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.contributionSubmitText}>Submit for review</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <SafetyExperienceSurvey
         visible={showSafetySurvey}
         businessName={business.name}
@@ -2319,6 +2446,22 @@ const styles = StyleSheet.create({
   communityMediaPlatform: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "capitalize", marginBottom: 2 },
   communityMediaCaption: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
   communityMediaAttribution: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 },
+  communityMediaAddButton: { minHeight: 42, borderWidth: 1, borderRadius: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingHorizontal: 12 },
+  communityMediaAddText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  contributionOverlay: { flex: 1, justifyContent: "flex-end" },
+  contributionBackdrop: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)" },
+  contributionSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 20, paddingTop: 10, gap: 10 },
+  contributionHandle: { width: 38, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 6 },
+  contributionSheetHeader: { flexDirection: "row", alignItems: "flex-start", gap: 14, marginBottom: 4 },
+  contributionSheetTitle: { fontFamily: "Inter_700Bold", fontSize: 19 },
+  contributionSheetSub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginTop: 4 },
+  contributionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 4 },
+  contributionInput: { borderWidth: 1, borderRadius: 12, minHeight: 48, paddingHorizontal: 13, fontFamily: "Inter_400Regular", fontSize: 14 },
+  contributionCaptionInput: { minHeight: 92, paddingTop: 12, textAlignVertical: "top" },
+  contributionError: { fontFamily: "Inter_500Medium", fontSize: 12, color: "#B42318", lineHeight: 17 },
+  contributionReviewNote: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  contributionSubmit: { minHeight: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  contributionSubmitText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#fff" },
   taglineLine: { fontFamily: "Inter_500Medium", fontSize: 13, fontStyle: "italic", marginTop: 2, marginBottom: 2 },
   ownerCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginTop: 16, marginBottom: 4, gap: 10 },
   ownerCardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },

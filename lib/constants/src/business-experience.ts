@@ -229,7 +229,7 @@ export function getBusinessExperiencePolicy(
   const categoryName = resolveCanonicalCategory(category);
   const subcategoryKey = normalizeSubcategory(subcategory);
   const vibeChoices = isVibeEligible(categoryName)
-    ? (VIBES_BY_CATEGORY[categoryName] ?? []).map(vibeChoice).slice(0, 16)
+    ? (VIBES_BY_CATEGORY[categoryName] ?? []).map(vibeChoice).slice(0, 20)
     : [];
 
   return {

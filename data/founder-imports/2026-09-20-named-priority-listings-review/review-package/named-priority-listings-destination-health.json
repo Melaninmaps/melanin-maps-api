@@ -1,0 +1,398 @@
+{
+  "checkedAt": "2026-09-20T00:28:09.849Z",
+  "sourceManifest": "named-priority-listings-review-only-candidates.jsonl",
+  "candidates": 20,
+  "uniqueDestinations": 64,
+  "counts": {
+    "reachable": 60,
+    "review_required": 2,
+    "network_error": 2,
+    "timeout": 0
+  },
+  "results": [
+    {
+      "url": "https://booksy.com/en-us/90656_q-spruill-s-blue-bird-barber-shop-3219-georgia-ave-n-w_barber-shop_15534_washington",
+      "status": 200,
+      "finalUrl": "https://booksy.com/en-us/90656_q-spruill-s-blue-bird-barber-shop-3219-georgia-ave-n-w_barber-shop_15534_washington",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://britebubbles.com/",
+      "status": 200,
+      "finalUrl": "https://britebubbles.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://dayandnightalmeda.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://getupandadam.com/",
+      "status": 200,
+      "finalUrl": "https://getupandadam.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://heatdaspotdc.com/",
+      "status": 200,
+      "finalUrl": "https://heatdaspotdc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legacysites.eji.org/",
+      "status": 200,
+      "finalUrl": "https://legacysites.eji.org/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://legacysites.eji.org/visit/",
+      "status": 200,
+      "finalUrl": "https://legacysites.eji.org/visit/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://linktr.ee/krushbar",
+      "status": 200,
+      "finalUrl": "https://linktr.ee/krushbar",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://lottiesclt.com/",
+      "status": 403,
+      "finalUrl": "https://lottiesclt.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://realafricanart.com/",
+      "status": 200,
+      "finalUrl": "https://realafricanart.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://tktplaytimeinflata.com/",
+      "status": 200,
+      "finalUrl": "https://tktplaytimeinflata.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.3montessoulfood.com/",
+      "status": 200,
+      "finalUrl": "https://www.3montessoulfood.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.artbarsc.com/",
+      "status": 200,
+      "finalUrl": "https://www.artbarsc.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.artbarsc.com/contact/",
+      "status": 200,
+      "finalUrl": "https://www.artbarsc.com/contact/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.bar5015.com/",
+      "status": 200,
+      "finalUrl": "https://www.bar5015.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/GEsBreakfastKitchen/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/GEsBreakfastKitchen/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/Kevin%20Bailey",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FKevin%2520Bailey",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/UBarATL/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/UBarATL/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/UpandAdamEatz/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/UpandAdamEatz/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/artbarvista",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fartbarvista",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/britebubbles/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/britebubbles/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/bruce.richardson.7739/posts/3-montes-soul-food-restaurant-4809-parker-street-richmond-va-off-of-government-r/37030990163213562/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/bruce.richardson.7739/posts/3-montes-soul-food-restaurant-4809-parker-street-richmond-va-off-of-government-r/37030990163213562/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/heatdaspotcafe/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/heatdaspotcafe/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/kazoolamobile/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/kazoolamobile/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/mikesvegangrill/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/mikesvegangrill/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/p/Krush-Bar-and-Lounge-61584043418697/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/p/Krush-Bar-and-Lounge-61584043418697/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/realafricanart",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/realafricanart",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/tahirwoods/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/tahirwoods/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/thebar5015",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/thebar5015",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/thelegacysites/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/thelegacysites/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/tktplaytimeinflatapark",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/tktplaytimeinflatapark",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.facebook.com/zeelandstreetbr/",
+      "status": 200,
+      "finalUrl": "https://www.facebook.com/zeelandstreetbr/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.gritsandeggsbreakfastkitchen.com/",
+      "status": 403,
+      "finalUrl": "https://www.gritsandeggsbreakfastkitchen.com/",
+      "outcome": "review_required"
+    },
+    {
+      "url": "https://www.instagram.com/KKooliano/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2FKKooliano%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/artbarsc/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fartbarsc%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/britebubbles/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fbritebubbles%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/dayandnight3rdwardhtx/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdayandnight3rdwardhtx%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/dayandnightalmeda/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fdayandnightalmeda%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/gesbreakfastkitchen/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fgesbreakfastkitchen%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/get.upandadam/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fget.upandadam%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/heatdaspot_cafe/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fheatdaspot_cafe%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/kazoolamobileal/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkazoolamobileal%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/krushbarandlounge/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fkrushbarandlounge%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/legacysites/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flegacysites%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/lottiesclt/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Flottiesclt%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/marcusbarandgrille/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmarcusbarandgrille%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/mikesvegangrill/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fmikesvegangrill%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/real_african_art/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freal_african_art%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thebar5015/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthebar5015%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/thegroomingquartersatl/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fthegroomingquartersatl%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/tktplaytimeinflatapark/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ftktplaytimeinflatapark%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/ubaratl/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fubaratl%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.instagram.com/zeelandstreet/",
+      "status": 200,
+      "finalUrl": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fzeelandstreet%2F&is_from_rle",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.marcusbarandgrille.com/",
+      "status": 200,
+      "finalUrl": "https://www.marcusbarandgrille.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.mikesvegan.com/",
+      "status": 200,
+      "finalUrl": "https://www.mikesvegan.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.thegroomingquarters.com/",
+      "status": null,
+      "finalUrl": null,
+      "outcome": "network_error"
+    },
+    {
+      "url": "https://www.tiktok.com/@Kazoola",
+      "status": 200,
+      "finalUrl": "https://www.tiktok.com/@Kazoola",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tiktok.com/@daynightalmeda",
+      "status": 200,
+      "finalUrl": "https://www.tiktok.com/@daynightalmeda",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tiktok.com/@krush.bar.lounge",
+      "status": 200,
+      "finalUrl": "https://www.tiktok.com/@krush.bar.lounge",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tiktok.com/@mikesvegangrill",
+      "status": 200,
+      "finalUrl": "https://www.tiktok.com/@mikesvegangrill",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tiktok.com/@tahirwoods",
+      "status": 200,
+      "finalUrl": "https://www.tiktok.com/@tahirwoods",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.tiktok.com/@ubaratl",
+      "status": 200,
+      "finalUrl": "https://www.tiktok.com/@ubaratl",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.ubaratl.com/",
+      "status": 200,
+      "finalUrl": "https://www.ubaratl.com/",
+      "outcome": "reachable"
+    },
+    {
+      "url": "https://www.zeelandstreet.com/",
+      "status": 200,
+      "finalUrl": "https://www.zeelandstreet.com/",
+      "outcome": "reachable"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import {
   type RequestHandler,
   type Response,
 } from "express";
-import { isBlackOwned as hasBlackOwnedDesignation, pool } from "@workspace/db";
+import { pool } from "@workspace/db";
 import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 import { requireApprovedMember } from "../middlewares/requireAuth";
@@ -21,7 +21,6 @@ import {
   automaticPublicationReviewNote,
   isValidPinCoordinates,
   locationNeedsInformationAssessment,
-  ownershipClaimValue,
   publicationCandidateFromInput,
   publicationCandidateFromSubmission,
   resolvePreciseBusinessLocation,
@@ -259,11 +258,11 @@ async function publishFromSubmission(
         $10,$11,$12,$13,$14,$15,$16,
         $17,$18::jsonb,NULL,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
         $19,$20,$21,$22,$23::jsonb,$24::jsonb,
-        $25::jsonb,'[]'::jsonb,$26,$27,false,
+        '[]'::jsonb,'[]'::jsonb,'unclaimed_community_submission',false,false,
         false,false,false,'active','live_unclaimed',
         'community','community_listed','unclaimed',NULL,
-        $28,'community_submission','community_submission',$29,
-        $30,$31,'community_submission',$32,NOW(),
+        $25,'community_submission','community_submission',$26,
+        $27,$28,'community_submission',$29,NOW(),
         NOW(),NOW())
      RETURNING id`,
     [
@@ -291,9 +290,6 @@ async function publishFromSubmission(
       submission.social_profiles?.youtube ?? null,
       JSON.stringify(socialProfiles),
       JSON.stringify(sourceEvidence),
-      JSON.stringify(submission.ownership_designations ?? []),
-      ownershipClaimValue(submission),
-      hasBlackOwnedDesignation(submission.ownership_designations ?? []),
       submission.submitted_by_id ?? actorId,
       null,
       normalizeText(submission.name),

@@ -42,6 +42,29 @@ async function getToken(): Promise<string | null> {
 }
 
 type CommunityReportedOwnership = "minority_owned" | "non_minority_owned" | "not_sure";
+type ContributionIntent = "business_nomination" | "thrive_recommendation" | "owner_invitation";
+
+const CONTRIBUTION_CHOICES: Array<{
+  id: ContributionIntent;
+  title: string;
+  detail: string;
+}> = [
+  {
+    id: "business_nomination",
+    title: "Add a business or place",
+    detail: "Submit a missing business, school, hotel, store, employer, or other place for directory review.",
+  },
+  {
+    id: "thrive_recommendation",
+    title: "Recommend a place where we thrive",
+    detail: "Share a positive community experience. This does not verify ownership, safety, accessibility, or employment claims.",
+  },
+  {
+    id: "owner_invitation",
+    title: "Invite an owner to claim a listing",
+    detail: "Create a private claim-ready nomination for a friend’s business. The owner can claim only after the listing is reviewed and public.",
+  },
+];
 
 type ResultState =
   | { isDuplicate: false; submissionId: string; status: string; message: string; businessId?: string; mapPin: boolean }
@@ -59,6 +82,7 @@ export default function NominateBusinessScreen() {
   const [why, setWhy] = useState("");
   const [ownershipDesignations, setOwnershipDesignations] = useState<string[]>([]);
   const [communityReportedOwnership, setCommunityReportedOwnership] = useState<CommunityReportedOwnership>("not_sure");
+  const [contributionIntent, setContributionIntent] = useState<ContributionIntent>("business_nomination");
   const [stage, setStage] = useState<Stage>("main");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
@@ -97,8 +121,8 @@ export default function NominateBusinessScreen() {
           ownershipDesignations: ownershipDesignations.length ? ownershipDesignations : undefined,
           submitterNote: why.trim() || undefined,
           providerPlaceId: selectedPlace.id,
-          locationSource: "mwm_directory",
-          sourceChannel: "expo_nominate_business",
+          locationSource: "google_places",
+          sourceChannel: `expo_community_${contributionIntent}`,
           clientRequestId,
         }),
       });
@@ -236,7 +260,9 @@ export default function NominateBusinessScreen() {
             <View style={styles.confirmBanner}>
               <Feather name="info" size={18} color={colors.primary} />
               <Text style={[styles.confirmBannerText, { color: colors.primary }]}>
-                Add optional context before adding {selectedPlace?.name}. Complete ordinary businesses can publish immediately as unclaimed and not verified.
+                {contributionIntent === "business_nomination"
+                  ? `Add optional context before adding ${selectedPlace?.name}. Complete ordinary businesses can publish immediately as unclaimed and not verified.`
+                  : "This community contribution stays in review until it can be presented accurately. It is not a public map pin, verified ownership claim, or safety finding yet."}
               </Text>
             </View>
 
@@ -291,7 +317,9 @@ export default function NominateBusinessScreen() {
               >
                 {submitting
                   ? <ActivityIndicator color={colors.primaryForeground} size="small" />
-                  : <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>Add Community Business</Text>}
+                  : <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>
+                      {contributionIntent === "business_nomination" ? "Add Community Business" : "Save for Community Review"}
+                    </Text>}
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setStage("main")}
@@ -325,8 +353,29 @@ export default function NominateBusinessScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.bodyText, { color: colors.mutedForeground }]}>
-            Search our current directory first. If the business is missing, use the complete form so we can confirm its public link and precise map pin.
+            Search our current directory first. Choose how you want to contribute, then select the place. A community report never verifies a business, school, hospital, employer, or person on its own.
           </Text>
+
+          <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>How would you like to contribute?</Text>
+          <View style={styles.contributionChoices}>
+            {CONTRIBUTION_CHOICES.map((choice) => {
+              const selected = contributionIntent === choice.id;
+              return (
+                <TouchableOpacity
+                  key={choice.id}
+                  onPress={() => setContributionIntent(choice.id)}
+                  style={[styles.contributionChoice, { backgroundColor: selected ? colors.secondary : colors.card, borderColor: selected ? colors.primary : colors.border }]}
+                  activeOpacity={0.85}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.contributionTitle, { color: colors.foreground }]}>{choice.title}</Text>
+                    <Text style={[styles.contributionDetail, { color: colors.mutedForeground }]}>{choice.detail}</Text>
+                  </View>
+                  {selected ? <Feather name="check-circle" size={20} color={colors.primary} /> : null}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
           <PlacesAutocompleteInput
             placeholder="What business should we add?"
@@ -360,7 +409,7 @@ export default function NominateBusinessScreen() {
             {submitting
               ? <ActivityIndicator color={colors.primaryForeground} size="small" />
               : <Text style={[styles.primaryBtnLabel, { color: selectedPlace ? colors.primaryForeground : colors.mutedForeground }]}>
-                  Nominate
+                  {contributionIntent === "business_nomination" ? "Nominate" : "Save for Review"}
                 </Text>}
           </TouchableOpacity>
 
@@ -389,6 +438,10 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
   scroll: { paddingHorizontal: 20, paddingTop: 20, gap: 0 },
   bodyText: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
+  contributionChoices: { gap: 10, marginTop: 2 },
+  contributionChoice: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 12, borderWidth: 1.5 },
+  contributionTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  contributionDetail: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 3 },
   sectionLabel: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",

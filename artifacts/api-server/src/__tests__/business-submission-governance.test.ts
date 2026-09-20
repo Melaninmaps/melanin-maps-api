@@ -232,6 +232,16 @@ describe("objective publication policy", () => {
       socialProfiles: {},
     } as any).outcome).toBe("needs_location");
     expect(assessCommunityPublication({
+      ...completeBody(),
+      sourceChannel: "expo_community_thrive_recommendation",
+      socialProfiles: {},
+    } as any).outcome).toBe("community_context_review");
+    expect(assessCommunityPublication({
+      ...completeBody(),
+      sourceChannel: "expo_community_owner_invitation",
+      socialProfiles: {},
+    } as any).outcome).toBe("community_context_review");
+    expect(assessCommunityPublication({
       ...completeBody({ category: "Government & Public Resources" }),
       socialProfiles: {},
     } as any).outcome).toBe("resource_review");
@@ -599,17 +609,17 @@ describe("POST /api/community/business-submissions", () => {
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
     expect(String(businessInsert?.[0])).toContain("ownership_claim");
     expect(String(businessInsert?.[0])).toContain("'community','community_listed','unclaimed',NULL");
-    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
+    expect(businessInsert?.[1]).toEqual(expect.arrayContaining(["approved-member"]));
+    expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([
       "community_reported_minority_owned",
       true,
-      "approved-member",
     ]));
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(true);
     expect(tx.query.mock.calls.map(([sql]) => sql)).toEqual(expect.arrayContaining(["BEGIN", "COMMIT"]));
     expect(tx.release).toHaveBeenCalledOnce();
   });
 
-  it("publishes an explicit non-minority report with black_owned false and no notification side effect", async () => {
+  it("publishes an explicit non-minority report without making a public ownership assertion", async () => {
     const repository = repositoryMock({
       create: vi.fn().mockResolvedValue({
         submission: submission({
@@ -633,7 +643,7 @@ describe("POST /api/community/business-submissions", () => {
 
     expect(response.status).toBe(201);
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
-    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
+    expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([
       "community_reported_non_minority_owned",
       false,
     ]));
@@ -974,7 +984,8 @@ describe("source contracts", () => {
         OR REGEXP_REPLACE(COALESCE(p_phone, ''), '[^0-9]', '', 'g') IN ('15555550100', '5555550100')
       );`;
     const safeView = `SELECT b.* FROM public.businesses b
-      WHERE public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)`;
+      WHERE public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)
+      AND NOT EXISTS (SELECT 1 FROM public.business_duplicate_resolutions d WHERE d.superseded_business_id = b.id)`;
     expect(communityBusinessIsPublicFunctionIsSafe(safeFunction)).toBe(true);
     for (const unsafeFunction of [
       safeFunction.replace("= false", "= true"),
@@ -990,7 +1001,7 @@ describe("source contracts", () => {
       "SELECT b.* FROM public.businesses b",
       safeView.replace("WHERE public.business_record_is_public", "WHERE NOT public.business_record_is_public"),
       `${safeView} OR true`,
-      safeView.replace("b.phone)", "b.phone) AND true"),
+      safeView.replace("b.id)", "b.id) AND true"),
     ]) expect(communityPublicViewDefinitionIsSafe(unsafeView)).toBe(false);
   });
 
@@ -1004,7 +1015,8 @@ describe("source contracts", () => {
     expect(route).toContain("business_publication_identities");
     expect(route).toContain("canonical_record_locations");
     expect(route).toContain("'community','community_listed','unclaimed',NULL");
-    expect(route).toContain("ownershipClaimValue(submission)");
+    expect(route).toContain("'unclaimed_community_submission',false,false");
+    expect(route).not.toContain("ownershipClaimValue(submission)");
     expect(route).not.toContain('return { lat: "0", lng: "0" }');
     expect(route).not.toMatch(/send[A-Za-z]+Notif/);
     expect(repository).toContain("request_payload_hash");
@@ -1031,7 +1043,7 @@ describe("source contracts", () => {
   it("keeps legacy adapters out of direct canonical business inserts", () => {
     const businesses = source("../routes/businesses.ts");
     const legacyPost = businesses.slice(
-      businesses.indexOf('router.post("/businesses", requireApprovedMember'),
+      businesses.indexOf('router.post(\n  "/businesses",'),
       businesses.indexOf('router.patch("/businesses/:id/status"'),
     );
     const nominations = source("../routes/business-nominations.ts");
