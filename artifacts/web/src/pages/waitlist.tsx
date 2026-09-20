@@ -330,6 +330,19 @@ export default function WaitlistPage() {
                   </div>
                 )}
 
+                <div className="rounded-2xl border border-[#CA922B]/25 bg-[#FAF6EF] p-4 mb-4 text-left">
+                  <p className="text-sm font-semibold text-[#3A1F0E] mb-1">See what you&apos;re joining</p>
+                  <p className="text-xs leading-relaxed text-[#3A1F0E]/60 mb-3">
+                    Take a guided look at the Mapping with Melanin website and app experience while your early-access request is being processed.
+                  </p>
+                  <Link
+                    href="/preview"
+                    className="block w-full py-2.5 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-[#1C0E06] font-semibold text-sm transition-colors text-center"
+                  >
+                    Explore the Preview
+                  </Link>
+                </div>
+
                 <a
                   href="/login"
                   className="block w-full py-3 rounded-xl border border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white font-semibold text-sm transition-colors text-center"
