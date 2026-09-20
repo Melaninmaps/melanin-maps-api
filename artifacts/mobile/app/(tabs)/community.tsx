@@ -1309,7 +1309,7 @@ export default function CommunityScreen() {
             data={filteredPosts}
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
-            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
+            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
