@@ -262,6 +262,7 @@ export function AIChatWidget() {
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [listenUri, setListenUri] = useState<string | undefined>(undefined);
   const [voiceUsage, setVoiceUsage] = useState<{ used: number; limit: number; percent: number; tierName: string } | null>(null);
@@ -374,21 +375,33 @@ export function AIChatWidget() {
     if (Platform.OS === "web") return;
     try {
       const { granted } = await requestRecordingPermissionsAsync();
-      if (!granted) return;
+      if (!granted) {
+        setVoiceInputStatus(null);
+        Alert.alert(
+          "Microphone access is off",
+          "Allow microphone access for Mapping With Melanin in your phone Settings, then try Kinfolk Voice again.",
+        );
+        return;
+      }
       await recorder.prepareToRecordAsync();
       recorder.record();
       recordingStartedAtRef.current = Date.now();
       setIsRecording(true);
+      setVoiceInputStatus("Listening… tap the microphone again when you’re finished.");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch {
+    } catch (error) {
       recordingStartedAtRef.current = null;
       setIsRecording(false);
+      setVoiceInputStatus(null);
+      const detail = error instanceof Error ? error.message : "Unable to start recording.";
+      Alert.alert("Kinfolk Voice could not start", `${detail} Please try again or type your question.`);
     }
   };
 
   const stopVoice = async () => {
     if (!recorder.isRecording) return;
     setIsRecording(false);
+    setVoiceInputStatus("Turning your words into text…");
     try {
       const durationMs = recordingStartedAtRef.current === null
         ? 0
@@ -396,7 +409,11 @@ export function AIChatWidget() {
       recordingStartedAtRef.current = null;
       await recorder.stop();
       const uri = recorder.uri;
-      if (!uri) return;
+      if (!uri) {
+        setVoiceInputStatus(null);
+        Alert.alert("Voice Input", "No recording was captured. Please try again or type your question.");
+        return;
+      }
 
       const base = getApiBase();
       const token = await getToken();
@@ -429,7 +446,9 @@ export function AIChatWidget() {
         const { text } = await r.json() as { text?: string };
         if (text) {
           setInput(text);
+          setVoiceInputStatus("Your words are ready to review. Tap Send when you’re ready.");
         } else {
+          setVoiceInputStatus(null);
           Alert.alert("Voice Input", "I couldn't hear that clearly — please try again or type your question.");
         }
       } else {
@@ -439,10 +458,12 @@ export function AIChatWidget() {
           const errBody = await r.json() as { message?: string; error?: string };
           if (errBody.message) serverMessage = errBody.message;
         } catch { /* ignore parse error */ }
+        setVoiceInputStatus(null);
         Alert.alert("Voice Input", serverMessage);
       }
     } catch (err) {
       recordingStartedAtRef.current = null;
+      setVoiceInputStatus(null);
       const msg = err instanceof Error ? err.message : String(err);
       Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
     }
@@ -709,6 +730,7 @@ export function AIChatWidget() {
     const userMsg: Message = { id: String(Date.now()), text, fromUser: true, ts: Date.now() };
     setMessages((m) => [...m, userMsg]);
     setInput("");
+    setVoiceInputStatus(null);
     setSuggestions([]);
     setTyping(true);
 
@@ -896,10 +918,25 @@ export function AIChatWidget() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setVoiceSheet(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Choose Kinfolk spoken voice"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
               >
                 <Feather name="volume-2" size={15} color={colors.mutedForeground} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setWidgetOpen(false);
+                  router.push("/kinfolk-settings" as never);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Tune Kinfolk voice and personality"
+                accessibilityHint="Choose Big Cousin, Professor, and other Kinfolk preferences"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+              >
+                <Feather name="sliders" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => { setWidgetOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
@@ -1201,6 +1238,13 @@ export function AIChatWidget() {
             </View>
           )}
 
+          {voiceInputStatus ? (
+            <View style={[styles.voiceInputStatus, { backgroundColor: isRecording ? "#FEF2F2" : colors.muted }]}>
+              <Feather name={isRecording ? "mic" : "message-circle"} size={14} color={isRecording ? "#B91C1C" : colors.mutedForeground} />
+              <Text style={[styles.voiceInputStatusText, { color: isRecording ? "#B91C1C" : colors.mutedForeground }]}>{voiceInputStatus}</Text>
+            </View>
+          ) : null}
+
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
             <TouchableOpacity
               style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted }]}
@@ -1449,6 +1493,8 @@ const styles = StyleSheet.create({
   libraryActionText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },
   trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
+  voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
+  voiceInputStatusText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 17 },
   chipsScroll: { borderTopWidth: 1, maxHeight: 56 },
   chipsRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "center" },
   chip: {

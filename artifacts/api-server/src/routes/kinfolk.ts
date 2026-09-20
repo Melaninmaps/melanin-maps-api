@@ -291,6 +291,8 @@ import {
   buildKinfolkConversationModePrompt,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import { buildKendrickDrakeCulturalConsensusAnswer } from "../kinfolk/cultural-consensus-answer";
+import { buildCulturalConflictClarification } from "../kinfolk/cultural-conflict-clarification";
 import {
   buildLeanGeneralChatPrompt,
   buildLeanGeneralHistory,
@@ -5815,6 +5817,113 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       needsClarification: false,
       originalQuery: message,
       answerMode: "direct_answer",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  const kendrickDrakeConsensus = buildKendrickDrakeCulturalConsensusAnswer(message);
+  if (kendrickDrakeConsensus !== null) {
+    const culturalConsensusSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: kendrickDrakeConsensus.reply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [...kendrickDrakeConsensus.followUpSuggestions],
+      sources: [...kendrickDrakeConsensus.sources],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: culturalConsensusSessionId,
+      reply: kendrickDrakeConsensus.reply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: kendrickDrakeConsensus.followUpSuggestions,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "culture_entertainment",
+      sources: kendrickDrakeConsensus.sources,
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "cultural_consensus",
+      structuredContent: {
+        kind: "cultural_consensus",
+        subject: "Kendrick Lamar and Drake 2024 rap battle",
+        conclusion: "Broad public and cultural consensus favors Kendrick Lamar, while the conclusion remains evaluative rather than an objective fact.",
+        criteria: ["chart impact", "Recording Academy recognition", "public and cultural reception"],
+        evidenceFor: ["Not Like Us debuted at No. 1 on the Billboard Hot 100.", "Not Like Us won five GRAMMY Awards in 2025."],
+        otherDefensibleViews: ["Listeners can weigh individual bars, strategy, or broader catalog impact differently."],
+        asOf: new Date().toISOString(),
+      },
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  const culturalConflictClarification = buildCulturalConflictClarification(
+    message,
+    requestedVoiceMode,
+  );
+  if (culturalConflictClarification !== null) {
+    const culturalConflictSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: culturalConflictClarification,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [],
+      sources: [],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: culturalConflictSessionId,
+      reply: culturalConflictClarification,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: true,
+      originalQuery: message,
+      answerMode: "clarification",
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],

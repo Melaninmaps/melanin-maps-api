@@ -36,6 +36,9 @@ No product rewrite is required. The merged source provides the exact implementat
 5. **Narrow use.** A companion note is supplied to Kinfolk only when the same named companion is mentioned in the current request. The prompt explicitly states that the current request is authoritative and private notes are context—not instructions.
 6. **Forget companion.** Both web and mobile memory managers label companion notes clearly and expose an explicit `Forget companion <name>` control. Existing reset and forget controls remain unchanged.
 7. **Cross-client parity.** The offer and save card appear in the web Kinfolk page, the compact mobile Kinfolk widget, and the mobile Kinfolk travel screen. Existing direct business-detail navigation, source links, citations, voice, feedback, and all prior Kinfolk capabilities remain present.
+8. **Visible mobile tone controls.** The compact mobile Kinfolk header now has a Tune control that opens the existing Kinfolk settings screen. Members can choose Big Cousin, Professor, Business Manager, or Best Friend and retain their existing communication, humor, and emoji settings. This is a visible entry point to existing preferences, not a replacement of any profile or voice setting.
+9. **Cultural-reference clarification and consensus.** A generic question such as “Who won the beef?” is treated as a culturally legible music/public-figure conflict question. Kinfolk asks which conflict the member means—using examples such as Kendrick vs. Drake or Nicki vs. Cardi—rather than giving a generic dictionary-style response or inventing a winner. For the specifically named 2024 Kendrick Lamar/Drake battle, Kinfolk returns a direct cultural-consensus answer: it marks “Kendrick won” as a broad public and cultural consensus rather than an objective fact; distinguishes the supporting factual measures (Billboard No. 1 debut, 70.9 million first-week U.S. streams, and five 2025 GRAMMY awards for “Not Like Us,” alongside the cited “Family Matters” comparison); states that Drake's overall commercial standing is a separate question; and treats diss-track allegations as allegations rather than verified facts. The answer includes the Recording Academy and Billboard source links, plus optional “What is Kendrick/Drake working on right now?” follow-ups that deliberately route to current research.
+10. **Visible voice-input failure states.** The microphone now clearly shows Listening and transcription status. If system microphone permission is off or recording cannot start, the member receives a specific action message instead of a silent non-response. The member can review the transcript before tapping Send; microphone input does not silently submit a message.
 
 The production runtime must retain the existing private-memory configuration. Confirm the established server-side `KINFOLK_PRIVATE_MEMORY_ENABLED=true` setting is present only if private Kinfolk memory is already approved for production. Do not add a client key, expose a token, or weaken the fail-closed memory guard. If the existing memory feature is intentionally off, the companion card correctly returns a private-memory-disabled error rather than storing anything.
 
@@ -52,6 +55,8 @@ pnpm --dir artifacts/mobile run typecheck
 
 pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/companion-context.test.ts \
+  src/kinfolk/__tests__/cultural-conflict-clarification.test.ts \
+  src/kinfolk/__tests__/cultural-consensus-answer.test.ts \
   src/kinfolk/__tests__/business-personalization.test.ts \
   src/kinfolk/__tests__/private-memory-runtime.test.ts \
   src/__tests__/kinfolk-recommendation-sheet-contract.test.ts
@@ -91,6 +96,9 @@ curl -fsS https://api.melaninmaps.com/api/kinfolk/health
 Confirm the API’s source identity matches the merged SHA and the website serves the matching synchronized asset version. Test, without changing any member data:
 
 - A direct factual Kinfolk question still returns an answer and source links where applicable.
+- “Who won the beef?” receives a Big Cousin/Professor-appropriate clarification naming music/public-figure conflict examples, not a generic dictionary reply. “Between Drake and Kendrick” receives the direct, source-linked cultural-consensus answer—without a false people/work disambiguation—and distinguishes fact from evaluative consensus.
+- The compact mobile header's Tune control opens Kinfolk Settings, where Big Cousin and Professor are visible and selectable.
+- Test microphone permission denial, recording start failure, recording start/stop, and transcription response. Every path must show a visible state or an actionable message; do not silently fail.
 - A local business request shows a direct MWM detail card and its “Why it surfaced” reason.
 - A repeated “with my mom” activity scenario offers, but does not automatically create, a private companion note.
 - Save one test note only in an approved non-production/test account; confirm it is used only when Mom is mentioned, then use `Forget companion Mom`.
