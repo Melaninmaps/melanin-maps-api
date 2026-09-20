@@ -12,10 +12,13 @@ const authorizationSource = readFileSync(
 );
 
 describe("directory service authorization contract", () => {
-  it("scopes machine authorization to directory ingress and receipt summary only", () => {
+  it("scopes machine authorization to directory ingress and aggregate release diagnostics", () => {
     expect(routeSource).toContain("authorizeDirectoryOperator(req)");
     expect(routeSource).toContain('app.get("/api/founder/directory-import/service/summary"');
+    expect(routeSource).toContain('app.get("/api/founder/directory-import/service/publication-diagnostics"');
     expect(routeSource).toContain('app.post("/api/founder/directory-import/ingress"');
+    expect(routeSource).toContain("error_category");
+    expect(routeSource).not.toContain("SELECT event_key,candidate_id,payload,last_error");
     expect(authorizationSource).toContain("process.env.DIRECTORY_SERVICE_TOKEN");
     expect(authorizationSource).toContain("timingSafeEqual");
     expect(authorizationSource).toContain("x-directory-service-signature");
