@@ -4,7 +4,7 @@ import { buildCommunityResearchQuery, getResearchPolicy, isSafeSourceUrl } from 
 import type { ExternalResearchProvider, LibraryRepository, LibrarySynthesisWriter } from "../types";
 
 function repository(): LibraryRepository {
-  return { findReusableEntry: vi.fn().mockResolvedValue(null), saveEntry: vi.fn(async (input) => ({ ...input, id: "candidate", topicId: "topic", publicationStatus: "pending", createdAt: new Date(), refreshedAt: new Date() })), recordCoverageSignal: vi.fn(), listTopics: vi.fn(), searchPublishedContent: vi.fn(), findTopicBySlug: vi.fn(), listTopicEntries: vi.fn(), setTopicFollow: vi.fn() };
+  return { findReusableEntry: vi.fn().mockResolvedValue(null), saveEntry: vi.fn(async (input) => ({ ...input, id: "candidate", topicId: "topic", publicationStatus: input.publicationStatus ?? "pending", createdAt: new Date(), refreshedAt: new Date() })), recordCoverageSignal: vi.fn(), listTopics: vi.fn(), searchPublishedContent: vi.fn(), findTopicBySlug: vi.fn(), listTopicEntries: vi.fn(), setTopicFollow: vi.fn() };
 }
 
 const spiritualDocuments = [
@@ -27,19 +27,34 @@ describe("Living Library evidence and identity policy", () => {
     expect(buildCommunityResearchQuery("life after death", "history")).toBe("life after death");
   });
 
-  it("requires multi-perspective spiritual framing and stores only a pending candidate", async () => {
+  it("requires multi-perspective spiritual framing and publishes a general, fully cited brief", async () => {
     const repo = repository();
     const researchProvider: ExternalResearchProvider = { name: "openai", search: vi.fn().mockResolvedValue({ documents: spiritualDocuments, provider: "openai", status: "available" }) };
     const writer: LibrarySynthesisWriter = { writeStructured: vi.fn().mockResolvedValue({ title: "Perspectives on life after death", summary: "Traditions differ, and no unknowable answer is established as fact.", body: "Christian, Islamic, African and diasporic, philosophical, and secular perspectives differ.", citedSourceIndexes: [0, 1], sourceNotes: [{ sourceIndex: 0, whyItMatters: "It documents variation in beliefs." }, { sourceIndex: 1, whyItMatters: "It explains multiple religious traditions." }], relatedQuestions: ["How do ancestor traditions vary?", "What does secular scholarship study?"] }) };
     const result = await answerAndArchiveResearchQuestion({ question: "life after death", locationLabel: null, repository: repo, researchProvider, writer, internalResultCount: 0 });
     expect(writer.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ communityLens: expect.stringMatching(/editorial perspective; no member identity inferred/i) }));
-    expect(result.entry).toMatchObject({ publicationStatus: "pending", relatedQuestions: expect.arrayContaining(["How do ancestor traditions vary?"]) });
+    expect(result.entry).toMatchObject({ publicationStatus: "published", relatedQuestions: expect.arrayContaining(["How do ancestor traditions vary?"]) });
     expect(repo.saveEntry).toHaveBeenCalledWith(expect.objectContaining({
       topicSlug: "faith-spirituality-community-institutions",
-      question: "Governed live-research candidate",
-      normalizedQuestion: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      question: "life after death",
+      normalizedQuestion: "life after death",
+      publicationStatus: "published",
       locationLabel: null,
       sources: expect.arrayContaining([expect.objectContaining({ whyItMatters: "It documents variation in beliefs." })]),
+    }));
+  });
+
+  it("keeps member-specific research private even when the evidence is otherwise reusable", async () => {
+    const repo = repository();
+    const researchProvider: ExternalResearchProvider = { name: "openai", search: vi.fn().mockResolvedValue({ documents: spiritualDocuments, provider: "openai", status: "available" }) };
+    const writer: LibrarySynthesisWriter = { writeStructured: vi.fn().mockResolvedValue({ title: "A private question", summary: "A scoped answer.", body: "A source-cited explanation.", citedSourceIndexes: [0, 1], sourceNotes: [{ sourceIndex: 0, whyItMatters: "Documents variation." }, { sourceIndex: 1, whyItMatters: "Explains traditions." }], relatedQuestions: ["A related question"] }) };
+
+    await answerAndArchiveResearchQuestion({ question: "What should I ask about life after death?", locationLabel: null, repository: repo, researchProvider, writer });
+
+    expect(repo.saveEntry).toHaveBeenCalledWith(expect.objectContaining({
+      question: "Governed live-research candidate",
+      normalizedQuestion: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      publicationStatus: "pending",
     }));
   });
 

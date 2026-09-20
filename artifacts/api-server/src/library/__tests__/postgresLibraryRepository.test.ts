@@ -52,6 +52,7 @@ describe("Postgres Living Library publication boundaries", () => {
       ["hvac", "heating", "air conditioning"],
       6,
       0,
+      [],
     ]);
   });
 
@@ -101,7 +102,7 @@ describe("Postgres Living Library publication boundaries", () => {
     expect(calls[0].sql).not.toMatch(/member_id|raw_question|profile/i);
   });
 
-  it("writes all newly synthesized entries as pending", async () => {
+  it("defaults new entries to pending unless the research service explicitly approves publication", async () => {
     const calls: RecordedQuery[] = [];
     const database = {
       query: async <T>(sql: string, parameters?: unknown[]) => {
@@ -151,6 +152,6 @@ describe("Postgres Living Library publication boundaries", () => {
 
     const insert = calls.find((call) => call.sql.includes("INSERT INTO library_entries"));
     expect(insert?.sql).toContain("publication_status");
-    expect(insert?.sql).toContain("'pending'");
+    expect(insert?.parameters).toContain("pending");
   });
 });

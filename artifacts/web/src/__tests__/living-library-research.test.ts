@@ -41,10 +41,13 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("People also explore these evidence-led next questions.");
   });
 
-  it("offers current research for sparse internal coverage without claiming it is approved", () => {
+  it("automatically researches sparse coverage and explains the reusable-publication gate", () => {
     expect(pageSource).toContain("No approved entry answers this yet.");
     expect(pageSource).toContain("Research vetted sources");
-    expect(pageSource).toContain("governed pending candidate—not approved Library content");
+    expect(pageSource).toContain("researchCurrentQuestion();");
+    expect(pageSource).toContain("The first search takes a little longer");
+    expect(pageSource).toContain("source, citation, and provider-health gate");
+    expect(pageSource).toContain("Source-governed Library entry");
     expect(pageSource).toContain('response.webResearch.status !== "not_needed"');
   });
 

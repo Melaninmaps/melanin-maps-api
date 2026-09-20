@@ -7,6 +7,7 @@ import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
+  ensureCommunityFeedReadSchema,
   ensureRequiredPublicationSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
@@ -22,6 +23,7 @@ setDbLogger(logger);
 import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTracker";
 import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogger } from "./lib/library-growth-worker";
 import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
+import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -131,6 +133,7 @@ try {
     logger,
   );
   logger.info("Required publication schema ready before traffic acceptance");
+  await ensureCommunityFeedReadSchema(logger);
 } catch (error) {
   for (const detail of publicationSchemaFailureLogLines(error)) {
     logger.error(detail);
@@ -186,8 +189,10 @@ const onListening = (err?: Error) => {
       try {
         const insertedLibraryTopics = await seedLibraryStarterTopics(pool);
         logger.info({ insertedLibraryTopics }, "Living Library starter topics ready");
+        const insertedLibraryEntries = await seedLibraryStarterEntries(pool);
+        logger.info({ insertedLibraryEntries }, "Living Library starter guides ready");
       } catch (error) {
-        logger.error({ error }, "Living Library starter topics failed to seed");
+        logger.error({ error }, "Living Library starter content failed to seed");
       }
       // startCityHealthAlertScheduler is async: it probes information_schema to
       // confirm the three lease columns actually exist before registering the cron

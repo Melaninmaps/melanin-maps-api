@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
+import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, setAudioModeAsync, RecordingPresets } from "expo-audio";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { NativeScrollEvent, NativeSyntheticEvent ,
   Alert,
@@ -262,6 +262,7 @@ export function AIChatWidget() {
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isStartingVoice, setIsStartingVoice] = useState(false);
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [listenUri, setListenUri] = useState<string | undefined>(undefined);
@@ -372,17 +373,22 @@ export function AIChatWidget() {
   );
 
   const startVoice = async () => {
-    if (Platform.OS === "web") return;
+    if (Platform.OS === "web" || isStartingVoice || recorder.isRecording) return;
+    setIsStartingVoice(true);
     try {
-      const { granted } = await requestRecordingPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
+      const { granted } = permission;
       if (!granted) {
         setVoiceInputStatus(null);
         Alert.alert(
           "Microphone access is off",
-          "Allow microphone access for Mapping With Melanin in your phone Settings, then try Kinfolk Voice again.",
+          permission.canAskAgain
+            ? "Please allow microphone access, then try Kinfolk Voice again. You can also type your question."
+            : "Allow microphone access for Mapping With Melanin in your phone Settings, then try Kinfolk Voice again.",
         );
         return;
       }
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
       recordingStartedAtRef.current = Date.now();
@@ -394,7 +400,11 @@ export function AIChatWidget() {
       setIsRecording(false);
       setVoiceInputStatus(null);
       const detail = error instanceof Error ? error.message : "Unable to start recording.";
-      Alert.alert("Kinfolk Voice could not start", `${detail} Please try again or type your question.`);
+      console.warn("[Kinfolk Voice] recording start failed", detail);
+      Alert.alert("Kinfolk Voice could not start", "Check microphone permission and try again, or type your question.");
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    } finally {
+      setIsStartingVoice(false);
     }
   };
 
@@ -466,6 +476,8 @@ export function AIChatWidget() {
       setVoiceInputStatus(null);
       const msg = err instanceof Error ? err.message : String(err);
       Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
+    } finally {
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
   };
 
@@ -1247,8 +1259,10 @@ export function AIChatWidget() {
 
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
             <TouchableOpacity
-              style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted }]}
+              style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted, opacity: isStartingVoice ? 0.6 : 1 }]}
               onPress={() => isRecording ? void stopVoice() : void startVoice()}
+              disabled={isStartingVoice}
+              accessibilityLabel={isRecording ? "Stop Kinfolk Voice recording" : isStartingVoice ? "Starting Kinfolk Voice recording" : "Start Kinfolk Voice recording"}
               activeOpacity={0.8}
             >
               <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : colors.mutedForeground} />

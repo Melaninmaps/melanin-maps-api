@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_API_ORIGIN) return process.env.EXPO_PUBLIC_API_ORIGIN;
   return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 }
 
@@ -192,16 +193,24 @@ export default function LibraryResearchScreen() {
       const request = await fetch(`${getApiBase()}/api/library/search?q=${encodeURIComponent(cleaned)}`, { headers: { Accept: "application/json" } });
       const payload = await request.json() as LibrarySearch | { error?: string };
       if (!request.ok) throw new Error("error" in payload ? payload.error : "The Library search is temporarily unavailable.");
-      setSearch(payload as LibrarySearch);
+      const internal = payload as LibrarySearch;
+      setSearch(internal);
       setState("ready");
+      const hasPublishedEntry = internal.results.some((result) => result.kind === "entry");
+      if (!hasPublishedEntry) {
+        // First-time questions take longer: Library research gathers and checks
+        // authorized sources before it returns a brief and next-question path.
+        await researchVettedSources(cleaned, internal.total);
+      }
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "The Library search is temporarily unavailable.");
     }
   }
 
-  async function researchVettedSources() {
-    if (!searchedQuestion || state === "researching") return;
+  async function researchVettedSources(questionOverride?: string, internalResultCount?: number) {
+    const targetQuestion = questionOverride ?? searchedQuestion;
+    if (!targetQuestion || state === "researching") return;
     setState("researching");
     setMessage("");
     try {
@@ -210,7 +219,7 @@ export default function LibraryResearchScreen() {
         method: "POST",
         credentials: "include",
         headers: { ...headers, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ question: searchedQuestion, internalResultCount: search?.total ?? 0 }),
+        body: JSON.stringify({ question: targetQuestion, internalResultCount: internalResultCount ?? search?.total ?? 0 }),
       });
       const payload = await request.json() as ResearchResponse | { error?: string; code?: string };
       if (request.status === 401) throw new Error("Sign in to request a new source-governed Library brief. Existing Library search remains available.");

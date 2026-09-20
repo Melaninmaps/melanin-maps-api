@@ -53,6 +53,17 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain("Turning your words into text…");
   });
 
+  it("enables the Expo Audio iOS recording session before starting Kinfolk Voice", () => {
+    expect(widgetSource).toContain("setAudioModeAsync");
+    expect(widgetSource).toContain("allowsRecording: true");
+    expect(widgetSource).toContain("playsInSilentMode: true");
+    expect(widgetSource.indexOf("allowsRecording: true")).toBeLessThan(
+      widgetSource.indexOf("recorder.prepareToRecordAsync()"),
+    );
+    expect(widgetSource).toContain("allowsRecording: false");
+    expect(widgetSource).toContain("isStartingVoice");
+  });
+
   it("invalidates deferred widget voice responses after background or close", async () => {
     let active = true;
     let open = true;

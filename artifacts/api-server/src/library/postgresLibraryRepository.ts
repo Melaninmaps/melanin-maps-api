@@ -145,7 +145,7 @@ export function createPostgresLibraryRepository(
           topic_id, question, normalized_question, title, summary, body, domain,
           community_lens, location_label, disclaimer, source_count, publication_status,
           related_questions, provider_name
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12::jsonb, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14)
         RETURNING *`,
         [
           topicRows[0].id,
@@ -159,6 +159,7 @@ export function createPostgresLibraryRepository(
           input.locationLabel,
           input.disclaimer,
           input.sourceCount,
+          input.publicationStatus ?? "pending",
           JSON.stringify(input.relatedQuestions),
           input.provider,
         ],
