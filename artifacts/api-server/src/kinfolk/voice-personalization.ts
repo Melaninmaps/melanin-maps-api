@@ -209,10 +209,17 @@ const ENUM_FIELDS: Record<string, readonly string[]> = {
     "conversational",
   ],
   personalityMode: [
+    // Current member-facing Kinfolk Voices. These values are shared by the
+    // web chat, mobile chat, and saved preference controls.
+    "community",
+    "professor",
+    "business_manager",
+    "best_friend",
+    // Legacy rows and older clients remain accepted so a preference update
+    // never erases an existing member's chosen setting.
     "neighborhood_guide",
     "cultural_curator",
     "travel_companion",
-    "community",
   ],
   emojiLevel: ["none", "some", "lots"],
   humorLevel: ["none", "light", "playful"],

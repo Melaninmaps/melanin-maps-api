@@ -52,4 +52,12 @@ describe("Kinfolk practical relevance and member reset contract", () => {
     expect(mobileSettingsSource).toContain("Start Kinfolk fresh?");
     expect(mobileSettingsSource).toContain("api/kinfolk/reset");
   });
+
+  it("honors the member's saved Kinfolk Voice when a chat entry point has no turn override", () => {
+    expect(routeSource).toContain("voiceMode: requestedVoiceMode");
+    expect(routeSource).toContain("savedConversationMode = prefs?.personalityMode");
+    expect(routeSource).toContain("requestedVoiceMode ?? savedConversationMode");
+    expect(routeSource).toContain("voiceMode: conversationVoiceMode");
+    expect(routeSource).toContain("buildLeanGeneralChatPrompt(conversationVoiceMode)");
+  });
 });

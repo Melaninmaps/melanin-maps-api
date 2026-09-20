@@ -281,6 +281,10 @@ import {
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
 import {
+  buildKinfolkConversationModePrompt,
+  normalizeKinfolkConversationMode,
+} from "../kinfolk/conversation-mode";
+import {
   buildLeanGeneralChatPrompt,
   buildLeanGeneralHistory,
   canUseLeanGeneralChat,
@@ -3831,22 +3835,14 @@ function buildSystemPrompt(opts: {
   const localTerms = destination ? getCityLocalTerms(destination) : null;
   const kbyg = prefs?.knowBeforeYouGo !== false;
 
-  // ── Kinfolk Voices™ — 4 emotional voice modes ─────────────────────────────
-  let voiceInstructions = "";
+  // ── Kinfolk Voices™ — selected conversation mode ───────────────────────────
+  // Four member-facing modes are normalized at the route boundary. The two
+  // legacy branches below remain supported for old clients, but the mobile and
+  // web mode selectors now share the same four values.
+  const normalizedConversationMode = normalizeKinfolkConversationMode(voiceMode);
+  let voiceInstructions = buildKinfolkConversationModePrompt(normalizedConversationMode);
 
-  if (voiceMode === "professor") {
-    voiceInstructions = `KINFOLK VOICES™ — PROFESSOR MODE:
-Teach with clarity and curiosity. Start with the direct answer, explain the why in plain language, define unfamiliar terms, and use examples or analogies when useful. Ask one thoughtful follow-up only when it would materially improve the answer. Sound like a brilliant college professor who wants the member to win — never condescending or stiff.`;
-  } else if (voiceMode === "business_manager") {
-    voiceInstructions = `KINFOLK VOICES™ — BUSINESS MANAGER MODE:
-Be practical, organized, and candid. Translate the answer into priorities, decisions, risks, owners, and next actions. Use concise tables or bullets when they improve execution. Protect the member from avoidable cost or exposure, but do not smother them in disclaimers.`;
-  } else if (voiceMode === "best_friend") {
-    voiceInstructions = `KINFOLK VOICES™ — BEST FRIEND MODE:
-Lead with human warmth and emotional awareness, then give an honest useful answer. Write naturally, with contractions and supportive phrasing. Do not manufacture intimacy, use stereotypes, or agree with something false just to sound affirming.`;
-  } else if (voiceMode === "professional") {
-    voiceInstructions = `KINFOLK VOICES™ — PROFESSIONAL MODE:
-Respond in a clear, structured, business-appropriate tone. Lead with facts. Use bullet points when listing options. No slang, no casual phrasing. Warm professionalism — helpful, never cold or robotic. Efficient and organized.`;
-  } else if (voiceMode === "local") {
+  if (voiceMode === "local") {
     const localLang = localTerms
       ? `
 
@@ -3898,12 +3894,6 @@ EMOJI: ${emojiText[emojiLvl] ?? emojiText.some}
 HUMOR: ${humorText[humorLvl] ?? humorText.light}${culturalText}
 
 This is the user's "take me home" experience — the communication style they chose because it brings them comfort. Make every response feel like talking to someone who truly knows them.`;
-  } else {
-    // community (default — always available)
-    voiceInstructions = `KINFOLK VOICES™ — BIG COUSIN MODE:
-Warm, grounded, and conversational. Speak like the capable big cousin who listens, gives the direct answer, explains what matters, and helps the member take the next step. Acknowledge emotional context when it genuinely surfaces, but do not force it into ordinary factual questions. Celebrate wins. Support through challenges. Never robotic, transactional, preachy, or stereotyped.
-
-When someone is struggling or facing something hard, acknowledge it first: "I hear you — let's work through this together." The emotional connection is as important as the information.`;
   }
 
   // ── Know Before You Go ───────────────────────────────────────────────────
@@ -5699,7 +5689,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     sessionId,
     message,
     vibes = [],
-    voiceMode = "community",
+    voiceMode: requestedVoiceMode,
     imageUrls = [],
     cityHint,
     includeCommunityPerspective,
@@ -5960,6 +5950,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let dislikedSpots: string[] = [];
     let savedPlaces: string[] = [];
     let responseFeedbackPrompt = "";
+    let savedConversationMode: unknown = undefined;
 
     if (req.user?.id) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
@@ -5967,6 +5958,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // never throws — falls back to null which Kinfolk handles gracefully.
       try {
         prefs = await getCachedPrefs(req.user.id);
+        savedConversationMode = prefs?.personalityMode;
       } catch {
         /* non-critical — proceed without personalization prefs */
       }
@@ -6057,6 +6049,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         /* non-critical */
       }
     }
+
+    // A mode supplied with this turn wins. Otherwise, use the member's saved
+    // Kinfolk Voice for floating-widget, web, and mobile chat entry points.
+    // Personalized recommendation opt-out must not silently erase a member's
+    // communication-style choice, so it is captured before taste data is gated.
+    const conversationVoiceMode = normalizeKinfolkConversationMode(
+      requestedVoiceMode ?? savedConversationMode,
+    );
 
     // Load or create session
     chatStage = "session_read";
@@ -7892,7 +7892,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         dislikedSpots,
         savedPlaces,
         destination,
-        voiceMode,
+        voiceMode: conversationVoiceMode,
         aaveLevel: prefs?.aaveLevel ?? 0,
         businessCatalog,
         activeJourney,
@@ -8051,7 +8051,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasRequestedVibes: vibes.length > 0,
     });
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(voiceMode)}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
