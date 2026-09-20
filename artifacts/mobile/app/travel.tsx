@@ -1905,7 +1905,7 @@ export default function TravelScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const { messages, sessionId, isLoading, sessions, queriesUsed, queriesLimit, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
-  const { preferences } = useUserPreferences();
+  const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
   const { subscription } = useMembership();
@@ -1935,6 +1935,16 @@ export default function TravelScreen() {
   const [showFlights, setShowFlights] = useState(false);
   const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
+
+  // Keep this screen aligned with the saved Kinfolk Voice used by the floating
+  // assistant and the website. A member can still switch modes for the current
+  // conversation; that choice becomes their saved default for the next entry.
+  useEffect(() => {
+    const savedVoiceMode = preferences?.personalityMode;
+    if (KINFOLK_VOICES.some((voice) => voice.id === savedVoiceMode)) {
+      setVoiceMode(savedVoiceMode as typeof voiceMode);
+    }
+  }, [preferences?.personalityMode]);
 
   useEffect(() => {
     void loadSessions();
@@ -2379,6 +2389,7 @@ export default function TravelScreen() {
                   onPress={() => {
                     if (locked) { setShowUpgrade(true); return; }
                     setVoiceMode(v.id);
+                    void updatePreferences({ personalityMode: v.id });
                   }}
                   activeOpacity={0.75}
                 >

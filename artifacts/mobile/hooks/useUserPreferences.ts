@@ -47,7 +47,7 @@ const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
   travelCompanion: "solo",
   dietaryNotes: null,
   communicationStyle: "friendly",
-  personalityMode: "neighborhood_guide",
+  personalityMode: "community",
   emojiLevel: "some",
   humorLevel: "light",
   culturalInterests: [],

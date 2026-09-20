@@ -30,7 +30,12 @@ describe("Kinfolk voice preference defaults and validation", () => {
       regionalFlavor: "follow_destination",
       communicationStyle: "friendly",
       recommendationLifeStage: "40_64",
+      personalityMode: "business_manager",
     })).toEqual({ ok: true });
+
+    // Existing saved preference labels remain valid to avoid silently
+    // overwriting a member's profile during the four-mode migration.
+    expect(validateKinfolkPreferenceUpdate({ personalityMode: "neighborhood_guide" })).toEqual({ ok: true });
 
     const invalid = validateKinfolkPreferenceUpdate({
       kinfolkVoice: "celebrity-clone",

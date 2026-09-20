@@ -57,31 +57,58 @@ const CAPABILITIES = [
   { icon: "users" as const, label: "Community Connections", desc: "Surfaces people, circles, and events aligned with your interests and lifestyle" },
 ];
 
-const VOICE_MODES: { value: string; label: string; desc: string; icon: "zap" | "briefcase" | "map" | "home" }[] = [
-  { value: "community", label: "Community", desc: "Warm, direct, like a trusted local friend texting you", icon: "zap" },
-  { value: "professional", label: "Professional", desc: "Clear, concise, focused on business and opportunities", icon: "briefcase" },
-  { value: "local", label: "Local Guide", desc: "Neighborhood-deep, uses local slang and insider knowledge", icon: "map" },
-  { value: "home", label: "Home", desc: "Gentle, nurturing, rooted in cultural comfort and care", icon: "home" },
+const VOICE_MODES: { value: string; label: string; desc: string; icon: "zap" | "briefcase" | "book-open" | "heart" }[] = [
+  { value: "community", label: "Big Cousin", desc: "Warm, grounded, conversational, and direct", icon: "zap" },
+  { value: "professor", label: "Professor", desc: "Clear teaching, context, and the why behind it", icon: "book-open" },
+  { value: "business_manager", label: "Business Manager", desc: "Priorities, risks, decisions, and next actions", icon: "briefcase" },
+  { value: "best_friend", label: "Best Friend", desc: "Supportive, candid, natural, and honest", icon: "heart" },
 ];
 
 const COMM_STYLES: { value: string; label: string }[] = [
   { value: "friendly", label: "Friendly" },
-  { value: "casual", label: "Casual" },
-  { value: "direct", label: "Direct" },
-  { value: "formal", label: "Formal" },
+  { value: "conversational", label: "Casual" },
+  { value: "concise", label: "Direct" },
+  { value: "professional", label: "Formal" },
 ];
 
 const EMOJI_LEVELS: { value: string; label: string }[] = [
   { value: "none", label: "None" },
   { value: "some", label: "Some" },
-  { value: "many", label: "Many" },
+  { value: "lots", label: "Many" },
 ];
 
 const HUMOR_LEVELS: { value: string; label: string }[] = [
   { value: "none", label: "None" },
   { value: "light", label: "Light" },
-  { value: "witty", label: "Witty" },
+  { value: "playful", label: "Witty" },
 ];
+
+function normalizeVoicePrefs(raw: Partial<VoicePrefs>): VoicePrefs {
+  const personalityMode = VOICE_MODES.some((mode) => mode.value === raw.personalityMode)
+    ? raw.personalityMode!
+    : VOICE_DEFAULTS.personalityMode;
+  const communicationStyle = raw.communicationStyle === "casual"
+    ? "conversational"
+    : raw.communicationStyle === "direct"
+      ? "concise"
+      : raw.communicationStyle === "formal"
+        ? "professional"
+        : COMM_STYLES.some((style) => style.value === raw.communicationStyle)
+          ? raw.communicationStyle!
+          : VOICE_DEFAULTS.communicationStyle;
+  const emojiLevel = raw.emojiLevel === "many"
+    ? "lots"
+    : EMOJI_LEVELS.some((level) => level.value === raw.emojiLevel)
+      ? raw.emojiLevel!
+      : VOICE_DEFAULTS.emojiLevel;
+  const humorLevel = raw.humorLevel === "witty"
+    ? "playful"
+    : HUMOR_LEVELS.some((level) => level.value === raw.humorLevel)
+      ? raw.humorLevel!
+      : VOICE_DEFAULTS.humorLevel;
+
+  return { personalityMode, communicationStyle, emojiLevel, humorLevel };
+}
 
 export default function KinfolkSettingsScreen() {
   const colors = useColors();
@@ -115,12 +142,7 @@ export default function KinfolkSettingsScreen() {
       if (prefsRes.ok) {
         const data = await prefsRes.json() as { preferences?: Partial<VoicePrefs> };
         if (data.preferences) {
-          setVoice({
-            personalityMode: data.preferences.personalityMode ?? VOICE_DEFAULTS.personalityMode,
-            communicationStyle: data.preferences.communicationStyle ?? VOICE_DEFAULTS.communicationStyle,
-            emojiLevel: data.preferences.emojiLevel ?? VOICE_DEFAULTS.emojiLevel,
-            humorLevel: data.preferences.humorLevel ?? VOICE_DEFAULTS.humorLevel,
-          });
+          setVoice(normalizeVoicePrefs(data.preferences));
         }
       }
     } catch {}

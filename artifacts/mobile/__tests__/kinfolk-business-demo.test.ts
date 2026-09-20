@@ -115,7 +115,8 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(detailSource).toContain("/api/businesses/${id}/contributions");
     expect(detailSource).toContain("Community creator videos");
     expect(detailSource).toContain("approvedContributionUrl");
-    expect(detailSource).toContain("WebBrowser.openBrowserAsync(href)");
+    expect(detailSource).toContain("const openApprovedContribution");
+    expect(detailSource).toContain("WebBrowser.openBrowserAsync(url)");
   });
 
   it("continues the original search for both an answer and Skip", () => {
