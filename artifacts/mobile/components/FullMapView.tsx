@@ -1,7 +1,12 @@
 import { Feather } from "@expo/vector-icons";
+import {
+  countMapDiscoveryFocuses,
+  matchesMapDiscoveryFocus,
+  type MapDiscoveryFocus,
+} from "@workspace/constants";
 import * as Location from "expo-location";
 import { useRouter, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -342,6 +347,10 @@ export function FullMapView({
   // the map toolbar never floods the business API or resets a local map view.
   const [businessSearchInput, setBusinessSearchInput] = useState("");
   const [submittedBusinessSearch, setSubmittedBusinessSearch] = useState("");
+  // Reversible local grouping for the map's actual loaded records. It never
+  // persists assumptions about a member or suppresses records from search.
+  const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
+  const [mapDiscoveryRadius, setMapDiscoveryRadius] = useState<5 | 10 | 25>(10);
   // The map remains a clean locality-first canvas. Categories and support
   // designations stay searchable, rather than occupying map chrome.
   const designationIds: string[] = [];
@@ -405,7 +414,12 @@ export function FullMapView({
   const isFetchingTravelDestinations = useRef(false);
 
   const [mapReady, setMapReady] = useState(false);
-  const [, setContainerSize] = useState({ w: 0, h: 0 });
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  // iPad, Android tablet, and Chromebook map surfaces should keep controls
+  // comfortably reachable without stretching every field across a desktop-wide
+  // map. Phone layouts retain the existing full-width presentation.
+  const isWideMapSurface = containerSize.w >= 720;
+  const wideMapOverlayStyle = isWideMapSurface ? s.wideMapOverlay : undefined;
 
   const [isFocused, setIsFocused] = useState(false);
   useFocusEffect(
@@ -444,7 +458,7 @@ export function FullMapView({
     longitude: memberLocation?.longitude ?? null,
     city: mapLocality?.city,
     state: mapLocality?.state,
-    radiusMiles: 25,
+    radiusMiles: mapDiscoveryRadius,
     designations: designationIds,
     enabled: exploringAllAreas || mapLocality !== null,
   });
@@ -497,6 +511,22 @@ export function FullMapView({
       // Exclude "Null Island" (0,0) — means coordinates were never geocoded
       (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001),
   );
+  const mapDiscoveryCounts = useMemo(
+    () => countMapDiscoveryFocuses(mapped),
+    [mapped],
+  );
+  const focusedMappedBusinesses = useMemo(
+    () => mapped.filter((business) => matchesMapDiscoveryFocus(business, mapDiscoveryFocus)),
+    [mapped, mapDiscoveryFocus],
+  );
+  const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
+    ? "All nearby places"
+    : mapDiscoveryCounts.find((focus) => focus.id === mapDiscoveryFocus)?.label ?? "Your selection";
+  const localScopeDescription = memberLocation
+    ? `within ${mapDiscoveryRadius} miles of your location`
+    : mapLocality?.city
+      ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
+      : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
 
   // A focused Kinfolk/travel link is an explicit single-place request. Load only
@@ -589,12 +619,12 @@ export function FullMapView({
   // fit a country- or world-sized result set; only explicit exploration may.
   useEffect(() => {
     hasFitToBusinessesRef.current = false;
-  }, [localityScopeKey]);
+  }, [localityScopeKey, mapDiscoveryFocus]);
 
   useEffect(() => {
-    if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current)
+    if (!mapReady || focusedMappedBusinesses.length === 0 || hasFitToBusinessesRef.current)
       return;
-    const coordinates = mapped.map((b) => ({
+    const coordinates = focusedMappedBusinesses.map((b) => ({
       latitude: b.latitude,
       longitude: b.longitude,
     }));
@@ -606,7 +636,7 @@ export function FullMapView({
         animated: true,
       });
     }, 600);
-  }, [mapReady, mapped, exploringAllAreas, localityScopeKey]);
+  }, [mapReady, focusedMappedBusinesses, exploringAllAreas, localityScopeKey]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1076,7 +1106,7 @@ export function FullMapView({
         }}
       >
         {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
-        {mapped.map((biz) => (
+        {focusedMappedBusinesses.map((biz) => (
           <Marker
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
@@ -1423,7 +1453,7 @@ export function FullMapView({
         )}
 
         {/* An explicit city search narrows every default pin layer. */}
-        <View style={s.localitySearchWrap}>
+        <View style={[s.localitySearchWrap, wideMapOverlayStyle]}>
           <TextInput
             value={mapSearchInput}
             onChangeText={setMapSearchInput}
@@ -1452,7 +1482,7 @@ export function FullMapView({
         </View>
 
         {/* Search stays local to the current city or precise-location scope. */}
-        <View style={s.businessSearchWrap}>
+        <View style={[s.businessSearchWrap, wideMapOverlayStyle]}>
           <Feather name="search" size={16} color="#F5EBD8" />
           <TextInput
             value={businessSearchInput}
@@ -1482,7 +1512,7 @@ export function FullMapView({
           )}
         </View>
         {hasSubmittedBusinessSearch && (
-          <View style={s.businessSearchStatus}>
+          <View style={[s.businessSearchStatus, wideMapOverlayStyle]}>
             <Text style={s.businessSearchStatusText}>
               {isBusinessSearchLoading
                 ? "Searching local listings…"
@@ -1495,13 +1525,97 @@ export function FullMapView({
           </View>
         )}
 
+        {mapLocality && (
+          <View
+            accessibilityLabel="Around you map discovery"
+            style={[s.mapDiscoveryCard, wideMapOverlayStyle]}
+          >
+            <View style={s.mapDiscoveryHeader}>
+              <View style={s.mapDiscoveryIcon}>
+                <Feather name="compass" size={14} color={GOLD} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.mapDiscoveryTitle}>Around you</Text>
+                <Text style={s.mapDiscoverySubtitle}>
+                  {mapped.length} mapped {mapped.length === 1 ? "place" : "places"} {localScopeDescription}.
+                </Text>
+              </View>
+              {mapDiscoveryFocus !== "all" && (
+                <TouchableOpacity
+                  onPress={() => setMapDiscoveryFocus("all")}
+                  accessibilityLabel="Show every nearby map pin"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={s.mapDiscoveryReset}>Show all</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {memberLocation && (
+              <View style={s.mapDiscoveryRadiusRow}>
+                {[5, 10, 25].map((radius) => (
+                  <TouchableOpacity
+                    key={radius}
+                    onPress={() => setMapDiscoveryRadius(radius as 5 | 10 | 25)}
+                    accessibilityLabel={`Show places within ${radius} miles`}
+                    accessibilityState={{ selected: mapDiscoveryRadius === radius }}
+                    style={[
+                      s.mapDiscoveryRadius,
+                      mapDiscoveryRadius === radius && s.mapDiscoveryRadiusActive,
+                    ]}
+                  >
+                    <Text style={[
+                      s.mapDiscoveryRadiusText,
+                      mapDiscoveryRadius === radius && s.mapDiscoveryRadiusTextActive,
+                    ]}>{radius} mi</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.mapDiscoveryFocusRow}
+            >
+              {mapDiscoveryCounts.filter((focus) => focus.count > 0).map((focus) => (
+                <TouchableOpacity
+                  key={focus.id}
+                  onPress={() => {
+                    setMapDiscoveryFocus(focus.id);
+                    setSelectedBusiness(null);
+                  }}
+                  accessibilityLabel={`Show ${focus.label} nearby`}
+                  accessibilityState={{ selected: mapDiscoveryFocus === focus.id }}
+                  style={[
+                    s.mapDiscoveryFocus,
+                    mapDiscoveryFocus === focus.id && s.mapDiscoveryFocusActive,
+                  ]}
+                >
+                  <Text style={[
+                    s.mapDiscoveryFocusText,
+                    mapDiscoveryFocus === focus.id && s.mapDiscoveryFocusTextActive,
+                  ]}>
+                    {focus.count} {focus.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {mapDiscoveryFocus !== "all" && (
+              <Text style={s.mapDiscoveryExplanation}>
+                Showing {activeMapDiscoveryLabel.toLowerCase()} because you chose it. This uses existing listing categories and tags; direct search stays in charge.
+              </Text>
+            )}
+          </View>
+        )}
+
         <TouchableOpacity
           accessibilityLabel="Toggle nearby historical sundown-town context"
           accessibilityRole="button"
           accessibilityState={{ selected: showSundownHistory }}
           activeOpacity={0.8}
           onPress={() => setShowSundownHistory((visible) => !visible)}
-          style={[s.historyToggle, showSundownHistory && s.historyToggleActive]}
+          style={[s.historyToggle, wideMapOverlayStyle, showSundownHistory && s.historyToggleActive]}
         >
           <Feather name="book-open" size={13} color="#F5EBD8" />
           <View style={{ flex: 1 }}>
@@ -1511,7 +1625,7 @@ export function FullMapView({
         </TouchableOpacity>
 
         {!mapLocality && !exploringAllAreas && (
-          <View style={s.localityPrompt}>
+          <View style={[s.localityPrompt, wideMapOverlayStyle]}>
             <Text style={s.localityPromptText}>
               Choose a city or use your location to see nearby businesses, culture, events, and safety context.
             </Text>
@@ -2405,6 +2519,14 @@ const s = StyleSheet.create({
 
   topOverlay: { position: "absolute", top: 0, left: 0, right: 0, gap: 6 },
 
+  wideMapOverlay: {
+    alignSelf: "flex-start",
+    width: 440,
+    maxWidth: "100%",
+    marginLeft: 16,
+    marginRight: 0,
+  },
+
   banner: {
     flexDirection: "row",
     alignItems: "center",
@@ -2542,6 +2664,100 @@ const s = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 11,
     lineHeight: 16,
+  },
+
+  mapDiscoveryCard: {
+    marginHorizontal: 12,
+    marginTop: 7,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.42)",
+    backgroundColor: "rgba(255,253,248,0.96)",
+  },
+  mapDiscoveryHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  mapDiscoveryIcon: {
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(202,146,43,0.12)",
+  },
+  mapDiscoveryTitle: {
+    color: "#2B1507",
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+  },
+  mapDiscoverySubtitle: {
+    color: "rgba(58,31,14,0.64)",
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 1,
+  },
+  mapDiscoveryReset: {
+    color: GOLD,
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    paddingTop: 3,
+  },
+  mapDiscoveryRadiusRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 8,
+  },
+  mapDiscoveryRadius: {
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.28)",
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  mapDiscoveryRadiusActive: {
+    backgroundColor: GOLD,
+    borderColor: GOLD,
+  },
+  mapDiscoveryRadiusText: {
+    color: "rgba(58,31,14,0.68)",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+  },
+  mapDiscoveryRadiusTextActive: { color: "#FFFFFF" },
+  mapDiscoveryFocusRow: {
+    gap: 6,
+    paddingTop: 8,
+    paddingRight: 8,
+  },
+  mapDiscoveryFocus: {
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.28)",
+    borderRadius: 15,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  mapDiscoveryFocusActive: {
+    backgroundColor: GOLD,
+    borderColor: GOLD,
+  },
+  mapDiscoveryFocusText: {
+    color: "rgba(58,31,14,0.72)",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+  },
+  mapDiscoveryFocusTextActive: { color: "#FFFFFF" },
+  mapDiscoveryExplanation: {
+    color: "rgba(58,31,14,0.58)",
+    fontFamily: "Inter_400Regular",
+    fontSize: 9,
+    lineHeight: 13,
+    marginTop: 7,
   },
 
   catRow: { paddingHorizontal: 12, paddingVertical: 4, gap: 8 },
