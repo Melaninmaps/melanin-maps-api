@@ -38,7 +38,7 @@ export type Consequence = "low" | "medium" | "high";
 export type CulturalClaimMode = "factual" | "evaluative";
 
 export const EVALUATIVE_CULTURE_RULE =
-  "For an evaluative cultural request, state the criteria behind the judgment or present multiple defensible views. Ground factual premises in reliable evidence. Do not add a stock perspective or provenance sentence.";
+  "For an evaluative cultural request, state the criteria behind the judgment or present multiple defensible views. Make clear that a best/favorite/winner conclusion is an opinion, not an objective fact. Ground measurable premises—credits, awards, dates, chart or box-office performance—in reliable evidence. When calling something a published critical or public cultural consensus, distinguish the evidence supporting that consensus from individual takes and never invent platform metrics, a unanimous view, or a source. Do not add a stock perspective or provenance sentence.";
 
 export interface EvidencePolicy {
   intent: KinfolkIntent;
@@ -212,11 +212,11 @@ const CURRENT_INFO_SIGNALS = [
 ];
 
 const CULTURE_ENTERTAINMENT_SIGNALS = [
-  /\b(rapper|rapper|hip.hop|r&b|soul|gospel|jazz|blues|reggae|afrobeats|dancehall|music|artist|album|song|concert|tour|movie|film|show|series|actor|actress|director|book|author|poet|poet|writer|athlete|player|team|league|sport|basketball|football|baseball|soccer|tennis|boxing|mma|fashion|designer|model|style|art|artist|gallery|museum|exhibit|culture|cultural|tradition|heritage|history|historical|ancestry|genealogy|diaspora|community|neighborhood|cuisine|food culture|restaurant culture|chef|cookbook|cocktail culture|nightlife|club|dj|radio)\b/i,
+  /\b(rapper|rapper|hip.hop|r&b|soul|gospel|jazz|blues|reggae|afrobeats|dancehall|music|artist|album|song|concert|tour|movie|film|show|series|actor|actress|director|book|author|poet|poet|writer|athlete|player|team|league|sport|basketball|football|baseball|soccer|tennis|boxing|mma|fashion|designer|model|style|art|artist|gallery|museum|exhibit|culture|cultural|tradition|heritage|history|historical|ancestry|genealogy|diaspora|community|neighborhood|cuisine|food culture|restaurant culture|chef|cookbook|cocktail culture|nightlife|club|dj|radio|superheroes?|spider[ -]?man|hulk|marvel|dc comics?|comic books?)\b/i,
 ];
 
 const EVALUATIVE_CULTURE_SIGNALS = [
-  /\b(best|greatest|favorites?|favourites?|most influential|most important|top|better|worse)\b/i,
+  /\b(best|greatest|favorites?|favourites?|most influential|most important|top|better|worse|strongest|weakest)\b/i,
   /\b(who|which|what)\s+(?:is|was|are|were)\s+(?:the\s+)?(?:best|greatest|better|most influential)\b/i,
   /\b(compare|comparison|versus|vs\.?|rank|ranking|who(?:'s| is) better|your take|your opinion|what do you think|who won)\b/i,
   /\bmore\s+(?:influential|important|successful|talented|impactful)\s+than\b/i,
