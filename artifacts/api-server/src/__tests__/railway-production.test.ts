@@ -41,6 +41,7 @@ describe("stripeClient — Railway env-var fallback", () => {
   it("returns webhook secret from STRIPE_WEBHOOK_SECRET env var when Replit connectors absent", async () => {
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_env_key_abc123");
     vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_env_test_secret");
+    vi.stubEnv("DATABASE_URL", "postgresql://test:test@localhost:5432/mwm_test");
     vi.stubEnv("REPLIT_CONNECTORS_HOSTNAME", "");
     vi.stubEnv("REPL_IDENTITY", "");
     vi.stubEnv("WEB_REPL_RENEWAL", "");
