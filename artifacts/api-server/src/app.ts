@@ -322,6 +322,13 @@ app.use(
   }),
 );
 app.use(cookieParser());
+// Directory review manifests can exceed Express's 100 KB default. Raise the
+// limit only for the protected ingress route; its service and manifest HMAC
+// checks still run in the route handler.
+app.use(
+  "/api/founder/directory-import/ingress",
+  express.json({ limit: "10mb" }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Structured request correlation — attaches x-request-id header to every
