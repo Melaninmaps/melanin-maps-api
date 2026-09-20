@@ -169,6 +169,7 @@ import directoryRouter from "./directory";
 import knowledgeGraphRouter from "./knowledge-graph";
 import testerReportRouter from "./tester-report";
 import communityLanguageRouter from "./community-language";
+import officialPublicAlertsRouter from "./official-public-alerts";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -271,6 +272,7 @@ router.use(kinfolkTasksRouter);
 router.use(wishlistRouter);
 router.use(claimsRouter);
 router.use(notificationsRouter);
+router.use(officialPublicAlertsRouter);
 router.use(adminUsersRouter);
 router.use(adminTestersRouter);
 router.use(adminAuditRouter);

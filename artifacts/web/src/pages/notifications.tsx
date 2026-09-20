@@ -13,7 +13,13 @@ interface Notification {
   body: string;
   read: boolean;
   createdAt: string;
+  data?: { officialUrl?: string; disclaimer?: string };
 }
+
+type OptionalOfficialAlertPreferences = {
+  notifProductRecalls: boolean;
+  notifPublicHealthAlerts: boolean;
+};
 
 const TYPE_CONFIG = {
   system: { icon: Bell, color: "text-blue-600", bg: "bg-blue-50" },
@@ -38,16 +44,49 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [officialAlerts, setOfficialAlerts] = useState<OptionalOfficialAlertPreferences>({
+    notifProductRecalls: false,
+    notifPublicHealthAlerts: false,
+  });
+  const [savingOfficialAlerts, setSavingOfficialAlerts] = useState(false);
 
   useEffect(() => {
     if (!auth?.user) return;
     setLoading(true);
-    fetch(`${BASE}api/notifications`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((d) => setNotifications(d.notifications ?? []))
+    Promise.all([
+      fetch(`${BASE}api/notifications`, { credentials: "include" }).then((r) => r.json()),
+      fetch(`${BASE}api/users/settings`, { credentials: "include" }).then((r) => r.json()),
+    ])
+      .then(([notificationData, settings]) => {
+        setNotifications(notificationData.notifications ?? []);
+        setOfficialAlerts({
+          notifProductRecalls: settings.notifProductRecalls === true,
+          notifPublicHealthAlerts: settings.notifPublicHealthAlerts === true,
+        });
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [auth]);
+
+  async function updateOfficialAlertPreference(key: keyof OptionalOfficialAlertPreferences) {
+    if (savingOfficialAlerts) return;
+    const next = { ...officialAlerts, [key]: !officialAlerts[key] };
+    setOfficialAlerts(next);
+    setSavingOfficialAlerts(true);
+    try {
+      const response = await fetch(`${BASE}api/users/settings`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      if (!response.ok) throw new Error("Unable to update optional alert preferences");
+    } catch {
+      setOfficialAlerts((current) => ({ ...current, [key]: !next[key] }));
+    } finally {
+      setSavingOfficialAlerts(false);
+    }
+  }
 
   async function markAllRead() {
     setMarkingAll(true);
@@ -118,6 +157,41 @@ export default function Notifications() {
           )}
         </div>
 
+        <section className="bg-white rounded-2xl p-4 border border-[#3A1F0E]/10 mb-5" aria-labelledby="official-alerts-heading">
+          <div className="flex gap-3 items-start">
+            <div className="w-10 h-10 rounded-xl bg-[#CA922B]/10 flex items-center justify-center shrink-0">
+              <Shield className="w-5 h-5 text-[#CA922B]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 id="official-alerts-heading" className="text-sm font-bold text-[#2B1507]">Optional official alerts</h2>
+              <p className="text-xs text-[#3A1F0E]/60 mt-1 leading-relaxed">
+                Choose whether to receive official product recalls or public-health notices. These notices are not medical advice, and you can turn either one off at any time.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-2 mt-3">
+                {([
+                  ["notifProductRecalls", "Product recalls"],
+                  ["notifPublicHealthAlerts", "Public-health alerts"],
+                ] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={savingOfficialAlerts}
+                    onClick={() => void updateOfficialAlertPreference(key)}
+                    aria-pressed={officialAlerts[key]}
+                    className={`rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                      officialAlerts[key]
+                        ? "border-[#CA922B] bg-[#CA922B]/10 text-[#2B1507]"
+                        : "border-[#3A1F0E]/15 text-[#3A1F0E]/60 hover:border-[#CA922B]/50"
+                    }`}
+                  >
+                    {officialAlerts[key] ? "On · " : "Off · "}{label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -154,9 +228,17 @@ export default function Notifications() {
               const cfg = TYPE_CONFIG[n.type] ?? TYPE_CONFIG.system;
               const Icon = cfg.icon;
               return (
-                <button
+                <div
                   key={n.id}
                   onClick={() => !n.read && markRead(n.id)}
+                  onKeyDown={(event) => {
+                    if (!n.read && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      void markRead(n.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   className={`w-full text-left bg-white rounded-2xl p-4 border transition-all hover:shadow-sm ${
                     n.read
                       ? "border-[#3A1F0E]/10 opacity-70"
@@ -177,10 +259,24 @@ export default function Notifications() {
                         )}
                       </div>
                       <p className="text-xs text-[#3A1F0E]/60 mt-0.5 leading-relaxed">{n.body}</p>
+                      {n.data?.officialUrl && (
+                        <a
+                          href={n.data.officialUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-block text-xs font-semibold text-[#A86D12] hover:underline mt-2"
+                        >
+                          Open official source
+                        </a>
+                      )}
+                      {n.data?.disclaimer && (
+                        <p className="text-[10px] text-[#3A1F0E]/45 mt-1">{n.data.disclaimer}</p>
+                      )}
                       <p className="text-[10px] text-[#3A1F0E]/40 mt-1.5">{timeAgo(n.createdAt)}</p>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

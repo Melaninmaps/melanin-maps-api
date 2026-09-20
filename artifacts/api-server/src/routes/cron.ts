@@ -39,6 +39,7 @@ import {
 } from "../lib/email";
 import { logger } from "../lib/logger";
 import { sendPushToUser } from "../lib/pushNotifications";
+import { refreshOfficialPublicAlerts } from "../alerts/refreshOfficialPublicAlerts";
 import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
 
 const router: IRouter = Router();
@@ -375,6 +376,23 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
 router.post("/cron/referral-stats", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
   res.json({ ok: true, message: "No-op — referral counts are updated in real time" });
+});
+
+/**
+ * Refreshes optional notices from the verified CPSC and CDC sources. This is
+ * CRON_SECRET-protected and performs no work until OFFICIAL_PUBLIC_ALERTS_ENABLED=1.
+ * FDA remains disabled unless its authoritative iRES integration is separately
+ * configured; openFDA is intentionally not a public-alert trigger.
+ */
+router.post("/cron/official-public-alerts", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  try {
+    const result = await refreshOfficialPublicAlerts();
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    logger.error({ error }, "Official public alert cron failed");
+    res.status(500).json({ error: "Official public alert refresh failed" });
+  }
 });
 
 router.post("/cron/weekly-digest", async (req, res): Promise<void> => {
