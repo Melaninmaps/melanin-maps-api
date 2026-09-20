@@ -108,6 +108,8 @@ node scripts/verify-release-artifacts.mjs
 # assets intentionally remain for review/commit in --prepare-static mode.
 git restore artifacts/api-server/dist artifacts/api-server/src/generated/buildIdentity.ts
 git clean -fd artifacts/api-server/dist
+git restore artifacts/web/dist
+git clean -fd artifacts/web/dist
 
 if [ "$MODE" = "--verify-final" ]; then
   pnpm --dir artifacts/mobile run prebuild:ios
