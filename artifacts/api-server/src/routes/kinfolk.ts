@@ -228,6 +228,13 @@ import {
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
+import {
+  buildCompanionMemoryOffer,
+  formatCompanionMemory,
+  isCompanionMemoryRelevant,
+  normalizeCompanionLabel,
+  normalizeCompanionNotes,
+} from "../kinfolk/companion-context";
 import { isAdmin } from "../lib/adminAuth";
 import {
   KINFOLK_CONTEXT_TRUTH_BLOCK,
@@ -284,6 +291,8 @@ import {
   buildKinfolkConversationModePrompt,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import { buildKendrickDrakeCulturalConsensusAnswer } from "../kinfolk/cultural-consensus-answer";
+import { buildCulturalConflictClarification } from "../kinfolk/cultural-conflict-clarification";
 import {
   buildLeanGeneralChatPrompt,
   buildLeanGeneralHistory,
@@ -5274,23 +5283,35 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       });
       return;
     }
-    const content = String(body.content ?? "").trim();
+    const allowedPurposes = [
+      "personalization",
+      "preference",
+      "goal",
+      "ongoing_context",
+      "companion_context",
+    ];
+    const requestedPurpose = String(body.purpose ?? "personalization");
+    const purpose = allowedPurposes.includes(requestedPurpose)
+      ? requestedPurpose
+      : "personalization";
+    let content = String(body.content ?? "").trim();
+    if (purpose === "companion_context") {
+      const label = normalizeCompanionLabel(body.companionLabel);
+      const notes = normalizeCompanionNotes(body.companionNotes);
+      if (!label || !notes) {
+        res.status(400).json({
+          error: "A companion name and a private note are required.",
+        });
+        return;
+      }
+      content = formatCompanionMemory(label, notes);
+    }
     if (!content || content.length > 1000) {
       res
         .status(400)
         .json({ error: "Memory must be between 1 and 1,000 characters." });
       return;
     }
-    const allowedPurposes = [
-      "personalization",
-      "preference",
-      "goal",
-      "ongoing_context",
-    ];
-    const requestedPurpose = String(body.purpose ?? "personalization");
-    const purpose = allowedPurposes.includes(requestedPurpose)
-      ? requestedPurpose
-      : "personalization";
     const requestedDays = Number(body.expiresInDays);
     const expiresInDays = Number.isFinite(requestedDays)
       ? Math.min(3650, Math.max(1, Math.floor(requestedDays)))
@@ -5796,6 +5817,113 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       needsClarification: false,
       originalQuery: message,
       answerMode: "direct_answer",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  const kendrickDrakeConsensus = buildKendrickDrakeCulturalConsensusAnswer(message);
+  if (kendrickDrakeConsensus !== null) {
+    const culturalConsensusSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: kendrickDrakeConsensus.reply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [...kendrickDrakeConsensus.followUpSuggestions],
+      sources: [...kendrickDrakeConsensus.sources],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: culturalConsensusSessionId,
+      reply: kendrickDrakeConsensus.reply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: kendrickDrakeConsensus.followUpSuggestions,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "culture_entertainment",
+      sources: kendrickDrakeConsensus.sources,
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "cultural_consensus",
+      structuredContent: {
+        kind: "cultural_consensus",
+        subject: "Kendrick Lamar and Drake 2024 rap battle",
+        conclusion: "Broad public and cultural consensus favors Kendrick Lamar, while the conclusion remains evaluative rather than an objective fact.",
+        criteria: ["chart impact", "Recording Academy recognition", "public and cultural reception"],
+        evidenceFor: ["Not Like Us debuted at No. 1 on the Billboard Hot 100.", "Not Like Us won five GRAMMY Awards in 2025."],
+        otherDefensibleViews: ["Listeners can weigh individual bars, strategy, or broader catalog impact differently."],
+        asOf: new Date().toISOString(),
+      },
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  const culturalConflictClarification = buildCulturalConflictClarification(
+    message,
+    requestedVoiceMode,
+  );
+  if (culturalConflictClarification !== null) {
+    const culturalConflictSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: culturalConflictClarification,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [],
+      sources: [],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: culturalConflictSessionId,
+      reply: culturalConflictClarification,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: true,
+      originalQuery: message,
+      answerMode: "clarification",
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],
@@ -7893,8 +8021,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
     const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
-    const activePrivateMemories =
-      memoryEnabled && req.user?.id
+    const activePrivateMemories = memoryEnabled && req.user?.id
         ? await db
             .select({
               content: kinfolkPrivateMemoriesTable.content,
@@ -7918,8 +8045,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : [];
     const relevantPrivateMemories = activePrivateMemories.filter(
       (memory) =>
-        !memory.isSensitive ||
-        isSensitiveMemoryRelevant(memory.content, message),
+        (!memory.isSensitive ||
+          isSensitiveMemoryRelevant(memory.content, message)) &&
+        (memory.purpose !== "companion_context" ||
+          isCompanionMemoryRelevant(memory.content, message)),
     );
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
       memoryEnabled && !contextualEvidence,
@@ -8365,6 +8494,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       proposedModelDestination = null;
     }
 
+    // An offer is visible only after repeated activity-oriented questions about
+    // the same companion. It writes nothing and cannot change primary profile data.
+    const companionMemoryOffer = protectedReply.blocked
+      ? null
+      : buildCompanionMemoryOffer({
+          currentMessage: message,
+          priorUserMessages: existingMessages
+            .filter((sessionMessage) => sessionMessage.role === "user")
+            .map((sessionMessage) => sessionMessage.content),
+          memoryEnabled,
+        });
+
     // For recognized life-planning requests, the next questions are a stable
     // server contract rather than optional model prose. This makes it easier to
     // continue from “I want to…” to a useful, practical follow-up.
@@ -8450,6 +8591,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       content: reply,
       recommendations: recommendations ?? undefined,
       followUpSuggestions,
+      companionMemoryOffer,
       timestamp: new Date().toISOString(),
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
@@ -8648,6 +8790,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       website: business.website ?? undefined,
       phone: business.phone ?? undefined,
       verified: business.verified,
+      matchReasons: business.matchReasons,
     }));
     const localCoverageNote =
       webResearchSourceNote ??
@@ -8722,6 +8865,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       recommendations,
       itinerary,
       followUpSuggestions,
+      companionMemoryOffer,
       smartPromotion,
       taskAction,
       libraryAction,

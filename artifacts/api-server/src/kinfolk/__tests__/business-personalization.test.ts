@@ -114,6 +114,22 @@ describe("Kinfolk business personalization", () => {
     expect(ranked[0]?.matchReasons).toContain("Matches your saved preference: candle-making experiences");
   });
 
+  it("lets an explicit current request override a saved companion preference", () => {
+    const brunch = business("brunch", "Quiet Brunch House", "Food & Drink", "Brunch", [
+      "quiet brunch", "step-free access",
+    ]);
+    const steakhouse = business("steak", "Oak Steakhouse", "Food & Drink", "Steakhouse", [
+      "steakhouse", "dinner",
+    ]);
+    const ranked = rankGovernedBusinessesForMember([brunch, steakhouse], {
+      ageBand: "18_plus",
+      priorityPreferenceTerms: ["quiet brunch", "step-free access"],
+      currentRequest: "Find a steakhouse for me tonight",
+    });
+    expect(ranked[0]?.name).toBe("Oak Steakhouse");
+    expect(ranked[0]?.matchReasons[0]).toBe("Matches what you asked for right now");
+  });
+
   it("blocks adult-only nightlife for a real persisted 13_15 member but retains a venue with published teen evidence", () => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
       ageBand: "13_15",

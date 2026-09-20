@@ -37,6 +37,22 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain('accessibilityLabel={`More options for ${recommendation.name}`}');
   });
 
+  it("carries an optional companion note offer through both mobile Kinfolk surfaces", () => {
+    expect(hookSource).toContain("companionMemoryOffer?: KinfolkCompanionMemoryOffer | null");
+    expect(hookSource).toContain("companionMemoryOffer: data.companionMemoryOffer ?? null");
+    expect(widgetSource).toContain("KinfolkCompanionMemoryOfferCard");
+    expect(travelSource).toContain("KinfolkCompanionMemoryOfferCard");
+  });
+
+  it("keeps Kinfolk voice modes discoverable and makes microphone failures visible", () => {
+    expect(widgetSource).toContain('router.push("/kinfolk-settings" as never)');
+    expect(widgetSource).toContain("Choose Big Cousin, Professor, and other Kinfolk preferences");
+    expect(widgetSource).toContain("Microphone access is off");
+    expect(widgetSource).toContain("Kinfolk Voice could not start");
+    expect(widgetSource).toContain("Listening… tap the microphone again when you’re finished.");
+    expect(widgetSource).toContain("Turning your words into text…");
+  });
+
   it("invalidates deferred widget voice responses after background or close", async () => {
     let active = true;
     let open = true;

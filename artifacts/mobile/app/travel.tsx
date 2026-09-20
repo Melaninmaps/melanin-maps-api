@@ -38,7 +38,7 @@ import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
-
+import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 
@@ -701,6 +701,10 @@ function AiMessageBubble({
         )}
 
         {msg.resultView && <ConversationalResultCards view={msg.resultView} colors={colors} />}
+
+        {msg.companionMemoryOffer && (
+          <KinfolkCompanionMemoryOfferCard offer={msg.companionMemoryOffer} offset={false} />
+        )}
 
         {/* Recommendations */}
         {recs && !msg.resultView && (

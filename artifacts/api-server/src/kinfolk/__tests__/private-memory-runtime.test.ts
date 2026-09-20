@@ -144,7 +144,7 @@ describe("Kinfolk private-memory production control", () => {
     expect(sharedRoute).toContain("resolvePublicSharedKinfolkSession({");
     expect(sharedRoute).toContain("runtimeEnabled: isKinfolkPrivateMemoryEnabled()");
     expect(sharedRoute).toContain(".innerJoin(usersTable, eq(usersTable.id, kinfolkSessionsTable.userId))");
-    expect(sharedRoute).toContain(".leftJoin(userSettingsTable, eq(userSettingsTable.userId, usersTable.id))");
+    expect(sharedRoute).toMatch(/\.leftJoin\(\s*userSettingsTable,\s*eq\(userSettingsTable\.userId, usersTable\.id\),?\s*\)/);
     expect(sharedRoute).toContain("eq(kinfolkSessionsTable.shareId, shareId)");
     expect(sharedRoute).toContain("isNull(userSettingsTable.userId)");
     expect(sharedRoute).toContain("eq(userSettingsTable.kinfolkMemoryEnabled, true)");
@@ -159,7 +159,8 @@ describe("Kinfolk private-memory production control", () => {
       "../../routes/kinfolk.ts",
     );
     const source = readFileSync(routeFile, "utf8");
-    const start = source.indexOf('router.post("/kinfolk/sessions/:id/share"');
+    const sharePath = source.indexOf('"/kinfolk/sessions/:id/share"');
+    const start = source.lastIndexOf("router.post(", sharePath);
     const end = source.indexOf("// ─── View a shared trip (public)", start);
     const shareRoute = source.slice(start, end);
 

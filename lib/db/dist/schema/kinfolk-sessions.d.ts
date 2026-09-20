@@ -4,6 +4,11 @@ export type SessionMessage = {
     content: string;
     recommendations?: Record<string, unknown> | null;
     followUpSuggestions?: string[];
+    /** A private, optional companion-note offer; never a persisted memory by itself. */
+    companionMemoryOffer?: {
+        label: string;
+        prompt: string;
+    } | null;
     sources?: Array<{
         title: string;
         url: string;
