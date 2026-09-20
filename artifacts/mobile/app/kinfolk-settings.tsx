@@ -407,6 +407,25 @@ export default function KinfolkSettingsScreen() {
           </View>
         </View>
 
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>COMMUNITY LANGUAGE</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            accessibilityLabel="Suggest a local word or phrase"
+            activeOpacity={0.8}
+            style={styles.optionRow}
+            onPress={() => router.push("/community-language" as never)}
+          >
+            <View style={[styles.rowIcon, { backgroundColor: colors.secondary }]}>
+              <Feather name="message-circle" size={16} color={colors.primary} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Suggest a local word or phrase</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Help Kinfolk understand local context. Suggestions are reviewed before they help anyone else.</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+
         {/* Data & Privacy */}
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>DATA & PRIVACY</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
