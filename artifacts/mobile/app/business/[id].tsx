@@ -97,6 +97,19 @@ function approvedContributionUrl(raw: unknown, provider: unknown): string | null
   }
 }
 
+function safeOfficialWebsite(raw: unknown): string | null {
+  try {
+    if (typeof raw !== "string" || !raw.trim()) return null;
+    const url = new URL(/^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`);
+    const host = url.hostname.toLowerCase().replace(/\.$/, "");
+    const isPrivateIpv4 = /^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host);
+    if (!/^https?:$/.test(url.protocol) || url.username || url.password || host === "localhost" || isPrivateIpv4) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
 function businessHeroIcon(category: string): React.ComponentProps<typeof Feather>["name"] {
   const value = category.toLowerCase();
   if (/barber|hair|salon|beauty/.test(value)) return "scissors";
@@ -141,6 +154,7 @@ export default function BusinessDetailScreen() {
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const mainScrollRef = useRef<ScrollView>(null);
   const experienceYRef = useRef(0);
+  const communityMediaYRef = useRef(0);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
@@ -449,9 +463,10 @@ export default function BusinessDetailScreen() {
 
   const handleWebsite = async () => {
     const externalUrl = business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null);
-    if (externalUrl) {
+    const safeUrl = safeOfficialWebsite(externalUrl);
+    if (safeUrl) {
       trackClick(business.website ? "website_visit" : "source_visit");
-      const raw = /^https?:\/\//i.test(externalUrl) ? externalUrl : `https://${externalUrl}`;
+      const raw = safeUrl;
 
       // For Community References: append UTM params and fire attribution tracking
       if ((business as any).isReferenceOnly) {
@@ -826,6 +841,35 @@ export default function BusinessDetailScreen() {
           </View>
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
+          {(safeOfficialWebsite(business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)) || approvedContributions.length > 0) && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              {safeOfficialWebsite(business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)) && (
+                <TouchableOpacity
+                  onPress={handleWebsite}
+                  activeOpacity={0.82}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Open the official website for ${business.name}`}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.primary + "55", backgroundColor: colors.primary + "0D", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
+                >
+                  <Feather name="globe" size={15} color={colors.primary} />
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>Official website</Text>
+                  <Feather name="external-link" size={13} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+              {approvedContributions.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => mainScrollRef.current?.scrollTo({ y: Math.max(0, communityMediaYRef.current - 16), animated: true })}
+                  activeOpacity={0.82}
+                  accessibilityRole="button"
+                  accessibilityLabel={`View ${approvedContributions.length} approved community experiences`}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
+                >
+                  <Feather name="play-circle" size={15} color={colors.foreground} />
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.foreground }}>Community experiences ({approvedContributions.length})</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4, backgroundColor: "#16A34A0D", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: "#16A34A25" }}>
               <Text style={{ fontSize: 10, color: "#16A34A", fontFamily: "Inter_600SemiBold" }}>{"\u2714"} {weightedRating.toFixed(1)} trust-weighted avg</Text>
@@ -1221,7 +1265,7 @@ export default function BusinessDetailScreen() {
             })()}
           </View>
 
-          <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View onLayout={(event) => { communityMediaYRef.current = event.nativeEvent.layout.y; }} style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.communityMediaHeader}>
                 <Feather name="play-circle" size={17} color={colors.primary} />
                 <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community creator videos</Text>

@@ -454,7 +454,9 @@ type LivingStory = {
   id: string;
   authorName: string | null;
   relationshipType: string;
+  contentCategory?: HeritageContentCategory;
   content: string;
+  videoUrl?: string | null;
   tags: string[];
   isAmbassador: boolean;
   createdAt: string;
@@ -466,6 +468,17 @@ type SupportLink = {
   description: string | null;
   url: string;
   category: string;
+};
+
+type HbcuProfileContext = {
+  identity: string;
+  knownFor: string[];
+  traditions: string[];
+  rivalryOrConnection: string | null;
+  notablePeople: string[];
+  nearbyContext: { name: string; type: string; whyItMatters: string; sourceUrl: string }[];
+  sources: { title: string; url: string; supports: string }[];
+  verificationNotes: string;
 };
 
 function getRelationshipTypes(heritageCategory: string | null): string[] {
@@ -488,6 +501,27 @@ function getRelationshipTypes(heritageCategory: string | null): string[] {
 }
 
 type TagGroup = { group: string; tags: string[] };
+
+type HeritageContentCategory = "academics_research" | "student_life" | "traditions_events" | "alumni_mentorship" | "community_connection" | "history_legacy" | "visit_experience" | "preservation_learning";
+type HeritageContentCategoryOption = { value: HeritageContentCategory; label: string; helper: string };
+
+function getContentCategories(heritageCategory: string | null): HeritageContentCategoryOption[] {
+  if (heritageCategory === "HBCU") {
+    return [
+      { value: "academics_research", label: "Academics & Research", helper: "Classes, labs, programs, and study resources." },
+      { value: "student_life", label: "Student Life", helper: "Housing, routines, organizations, and practical student tips." },
+      { value: "traditions_events", label: "Traditions & Events", helper: "Homecoming, band, reunions, and celebratory moments." },
+      { value: "alumni_mentorship", label: "Alumni & Mentorship", helper: "Career paths, mentoring, and professional lessons." },
+      { value: "community_connection", label: "Community Connection", helper: "A respectful personal connection to this institution." },
+    ];
+  }
+  return [
+    { value: "history_legacy", label: "History & Legacy", helper: "Source-grounded historical context and memory." },
+    { value: "visit_experience", label: "Visit Experience", helper: "Public-safe practical context for a visit." },
+    { value: "preservation_learning", label: "Preservation & Learning", helper: "Learning and stewardship related to this place." },
+    { value: "community_connection", label: "Community Connection", helper: "A respectful personal connection to this place." },
+  ];
+}
 
 function getStoryTags(heritageCategory: string | null): TagGroup[] {
   if (heritageCategory === "HBCU") {
@@ -622,21 +656,25 @@ function DetailModal({
   colors: Colors;
 }) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [selectedRelationship, setSelectedRelationship] = useState("");
   const [stories, setStories] = useState<LivingStory[]>([]);
   const [supportLinks, setSupportLinks] = useState<SupportLink[]>([]);
+  const [hbcuContext, setHbcuContext] = useState<HbcuProfileContext | null>(null);
   const [loadingStories, setLoadingStories] = useState(false);
   const [loadingLinks, setLoadingLinks] = useState(false);
   const [showSubmitStory, setShowSubmitStory] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [activeStoryCategory, setActiveStoryCategory] = useState<HeritageContentCategory | null>(null);
 
   useEffect(() => {
     if (!site) return;
     queueMicrotask(() => { setLoadingStories(true); });
     queueMicrotask(() => { setLoadingLinks(true); });
     queueMicrotask(() => { setSubmitSuccess(false); });
+    queueMicrotask(() => { setHbcuContext(null); });
 
-    fetch(`${getApiBase()}/api/cultural-sites/${site.id}/stories`)
+    fetch(`${getApiBase()}/api/cultural-sites/${site.id}/stories${activeStoryCategory ? `?contentCategory=${encodeURIComponent(activeStoryCategory)}` : ""}`)
       .then((r) => r.json())
       .then((d: { stories?: LivingStory[] }) => setStories(d.stories ?? []))
       .catch(() => setStories([]))
@@ -647,12 +685,20 @@ function DetailModal({
       .then((d: { links?: SupportLink[] }) => setSupportLinks(d.links ?? []))
       .catch(() => setSupportLinks([]))
       .finally(() => setLoadingLinks(false));
-  }, [site]);
+
+    if (site.heritageCategory === "HBCU") {
+      fetch(`${getApiBase()}/api/cultural-sites/${site.id}/hbcu-context`)
+        .then((r) => r.ok ? (r.json() as Promise<{ context?: HbcuProfileContext }>) : null)
+        .then((d) => setHbcuContext(d?.context ?? null))
+        .catch(() => setHbcuContext(null));
+    }
+  }, [site, activeStoryCategory]);
 
   if (!site) return null;
   const meta = getHeritageMeta(site.heritageCategory);
   const relationshipTypes = getRelationshipTypes(site.heritageCategory);
   const storyTagGroups = getStoryTags(site.heritageCategory);
+  const contentCategories = getContentCategories(site.heritageCategory);
   const respectGuidance = getRespectGuidance(site.heritageCategory);
 
   return (
@@ -736,6 +782,69 @@ function DetailModal({
           </View>
         ) : null}
 
+        {site.heritageCategory === "HBCU" ? (
+          <View style={[dStyles.sigBox, { backgroundColor: meta.color + "0D", borderColor: meta.color + "30" }]}>
+            <Text style={[dStyles.sigLabel, { color: meta.color }]}>HBCU Learning & Community</Text>
+            <Text style={[dStyles.sigText, { color: colors.foreground }]}>Academic, student-life, tradition, and mentorship contributions are separate so a study search does not surface homecoming media.</Text>
+            <TouchableOpacity onPress={() => router.push({ pathname: "/library-research", params: { question: `${site.name}: academics, student life, alumni mentorship, and college-planning resources` } } as never)} activeOpacity={0.75} style={{ marginTop: 10 }}>
+              <Text style={{ color: meta.color, fontWeight: "700", fontSize: 13 }}>Explore this HBCU in the Library →</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {site.heritageCategory === "HBCU" && hbcuContext ? (
+          <View style={[dStyles.section, { borderTopColor: colors.border }]}>
+            <Text style={[dStyles.sectionLabel, { color: meta.color }]}>Source-backed campus profile</Text>
+            <Text style={[dStyles.bodyText, { color: colors.foreground }]}>{hbcuContext.identity}</Text>
+
+            <View style={[dStyles.sigBox, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 14 }]}>
+              <Text style={[dStyles.sigLabel, { color: meta.color }]}>Known for</Text>
+              {hbcuContext.knownFor.map((item) => (
+                <Text key={item} style={[dStyles.sigText, { color: colors.foreground, marginTop: 7 }]}>• {item}</Text>
+              ))}
+            </View>
+
+            <View style={[dStyles.sigBox, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 10 }]}>
+              <Text style={[dStyles.sigLabel, { color: meta.color }]}>Traditions & culture</Text>
+              {hbcuContext.traditions.map((item) => (
+                <Text key={item} style={[dStyles.sigText, { color: colors.foreground, marginTop: 7 }]}>• {item}</Text>
+              ))}
+            </View>
+
+            {hbcuContext.rivalryOrConnection ? (
+              <View style={[dStyles.sigBox, { backgroundColor: meta.color + "0D", borderColor: meta.color + "30", marginTop: 10 }]}>
+                <Text style={[dStyles.sigLabel, { color: meta.color }]}>Connections & rivalries</Text>
+                <Text style={[dStyles.sigText, { color: colors.foreground }]}>{hbcuContext.rivalryOrConnection}</Text>
+              </View>
+            ) : null}
+
+            {hbcuContext.nearbyContext.length > 0 ? (
+              <View style={[dStyles.sigBox, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 10 }]}>
+                <Text style={[dStyles.sigLabel, { color: meta.color }]}>Campus & community context</Text>
+                <Text style={[dStyles.sectionSub, { color: colors.mutedForeground, marginTop: 3 }]}>Source-backed context only, not a ranking or endorsement.</Text>
+                {hbcuContext.nearbyContext.map((item) => (
+                  <TouchableOpacity key={`${item.name}-${item.sourceUrl}`} onPress={() => void openExternalUrl(item.sourceUrl)} activeOpacity={0.75} style={{ marginTop: 10 }}>
+                    <Text style={{ color: colors.foreground, fontWeight: "700", fontSize: 13 }}>{item.name}</Text>
+                    <Text style={[dStyles.sigText, { color: colors.foreground }]}>{item.whyItMatters}</Text>
+                    <Text style={{ color: meta.color, fontWeight: "700", fontSize: 12, marginTop: 3 }}>Open source ↗</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
+
+            <View style={[dStyles.sigBox, { backgroundColor: meta.color + "0D", borderColor: meta.color + "30", marginTop: 10 }]}>
+              <Text style={[dStyles.sigLabel, { color: meta.color }]}>Sources behind this profile</Text>
+              {hbcuContext.sources.map((source) => (
+                <TouchableOpacity key={source.url} onPress={() => void openExternalUrl(source.url)} activeOpacity={0.75} style={{ marginTop: 9 }}>
+                  <Text style={{ color: colors.foreground, fontWeight: "700", fontSize: 13 }}>{source.title}</Text>
+                  <Text style={[dStyles.sectionSub, { color: colors.mutedForeground, marginTop: 2 }]}>{source.supports}</Text>
+                </TouchableOpacity>
+              ))}
+              {hbcuContext.verificationNotes ? <Text style={[dStyles.sectionSub, { color: colors.mutedForeground, marginTop: 12 }]}>Review note: {hbcuContext.verificationNotes}</Text> : null}
+            </View>
+          </View>
+        ) : null}
+
         {/* ── Connected to this place? ── */}
         <View style={[dStyles.section, { borderTopColor: colors.border }]}>
           <Text style={[dStyles.sectionLabel, { color: colors.mutedForeground }]}>Connected to this place?</Text>
@@ -777,6 +886,26 @@ function DetailModal({
             </Text>
           </View>
 
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
+            <TouchableOpacity
+              onPress={() => setActiveStoryCategory(null)}
+              style={[dStyles.relChip, { backgroundColor: activeStoryCategory === null ? meta.color : colors.card, borderColor: activeStoryCategory === null ? meta.color : colors.border }]}
+              activeOpacity={0.7}
+            >
+              <Text style={[dStyles.relChipText, { color: activeStoryCategory === null ? "#fff" : colors.foreground }]}>All</Text>
+            </TouchableOpacity>
+            {contentCategories.map((category) => (
+              <TouchableOpacity
+                key={category.value}
+                onPress={() => setActiveStoryCategory(category.value)}
+                style={[dStyles.relChip, { backgroundColor: activeStoryCategory === category.value ? meta.color : colors.card, borderColor: activeStoryCategory === category.value ? meta.color : colors.border }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[dStyles.relChipText, { color: activeStoryCategory === category.value ? "#fff" : colors.foreground }]}>{category.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
           {loadingStories ? (
             <ActivityIndicator color={meta.color} size="small" style={{ marginTop: 8 }} />
           ) : stories.length === 0 ? (
@@ -795,7 +924,7 @@ function DetailModal({
                 >
                   <View style={dStyles.storyCardHeader}>
                     <View style={[dStyles.relPill, { backgroundColor: meta.color + "18", borderColor: meta.color + "33" }]}>
-                      <Text style={[dStyles.relPillText, { color: meta.color }]}>{story.relationshipType}</Text>
+                      <Text style={[dStyles.relPillText, { color: meta.color }]}>{contentCategories.find((category) => category.value === story.contentCategory)?.label ?? story.relationshipType}</Text>
                     </View>
                     {story.isAmbassador && (
                       <View style={[dStyles.ambassadorBadge, { backgroundColor: "#CA922B18", borderColor: "#CA922B44" }]}>
@@ -807,6 +936,11 @@ function DetailModal({
                   <Text style={[dStyles.storyContent, { color: colors.foreground }]} numberOfLines={5}>
                     {story.content}
                   </Text>
+                  {story.videoUrl ? (
+                    <TouchableOpacity onPress={() => void openExternalUrl(story.videoUrl!)} activeOpacity={0.75} style={{ marginTop: 8 }}>
+                      <Text style={{ color: meta.color, fontSize: 12, fontWeight: "700" }}>Open shared media ↗</Text>
+                    </TouchableOpacity>
+                  ) : null}
                   {story.tags && story.tags.length > 0 && (
                     <View style={dStyles.storyTagRow}>
                       {story.tags.slice(0, 3).map((tag) => (
@@ -1013,9 +1147,12 @@ function SubmitStoryModal({
 }) {
   const insets = useSafeAreaInsets();
   const relationshipTypes = getRelationshipTypes(heritageCategory);
+  const contentCategories = getContentCategories(heritageCategory);
   const [relationship, setRelationship] = useState(initialRelationship || "");
+  const [contentCategory, setContentCategory] = useState<HeritageContentCategory>(contentCategories[0].value);
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -1038,8 +1175,10 @@ function SubmitStoryModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           relationshipType: relationship,
+          contentCategory,
           content: content.trim(),
           authorName: authorName.trim() || undefined,
+          videoUrl: videoUrl.trim() || undefined,
           tags: selectedTags,
         }),
       });
@@ -1102,6 +1241,28 @@ function SubmitStoryModal({
           </View>
         </View>
 
+        {/* Scope is required before moderation so academic discovery cannot mix with event media. */}
+        <View style={{ gap: 10 }}>
+          <Text style={[dStyles.sectionLabel, { color: colors.mutedForeground }]}>Content category *</Text>
+          <Text style={[dStyles.sectionSub, { color: colors.mutedForeground }]}>Choose where this contribution belongs. Categories are used when people browse this place.</Text>
+          <View style={dStyles.relationshipRow}>
+            {contentCategories.map((category) => {
+              const active = contentCategory === category.value;
+              return (
+                <TouchableOpacity
+                  key={category.value}
+                  onPress={() => setContentCategory(category.value)}
+                  style={[dStyles.relChip, { backgroundColor: active ? accentColor : colors.card, borderColor: active ? accentColor : colors.border }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[dStyles.relChipText, { color: active ? "#fff" : colors.foreground }]}>{category.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={[sStyles.charCount, { color: colors.mutedForeground }]}>{contentCategories.find((category) => category.value === contentCategory)?.helper}</Text>
+        </View>
+
         {/* Story text */}
         <View style={{ gap: 8 }}>
           <Text style={[dStyles.sectionLabel, { color: colors.mutedForeground }]}>Your story *</Text>
@@ -1121,6 +1282,25 @@ function SubmitStoryModal({
           <Text style={[sStyles.charCount, { color: content.length > 1800 ? "#DC2626" : colors.mutedForeground }]}>
             {content.length} / 2000 {content.length < 20 && content.length > 0 ? "· At least 20 characters required" : ""}
           </Text>
+        </View>
+
+        {/* Optional public-safe social link; source platform retains the original media. */}
+        <View style={{ gap: 8 }}>
+          <Text style={[dStyles.sectionLabel, { color: colors.mutedForeground }]}>Public video or post link (optional)</Text>
+          <View style={[sStyles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <TextInput
+              style={[sStyles.input, { color: colors.foreground }]}
+              placeholder="https://www.tiktok.com/..."
+              placeholderTextColor={colors.mutedForeground}
+              value={videoUrl}
+              onChangeText={setVideoUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              maxLength={500}
+            />
+          </View>
+          <Text style={[sStyles.charCount, { color: colors.mutedForeground }]}>Links are reviewed before appearing. The original post stays on its source platform.</Text>
         </View>
 
         {/* Tags */}

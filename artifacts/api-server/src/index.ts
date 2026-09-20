@@ -21,6 +21,7 @@ import { startDirectoryPublicationWorker } from "./directoryImport/publicationWo
 setDbLogger(logger);
 import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTracker";
 import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogger } from "./lib/library-growth-worker";
+import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -181,7 +182,13 @@ const onListening = (err?: Error) => {
   // alert_claim_token and alert_lease_expires_at columns are guaranteed present
   // before the first cron tick fires.
   runStartupMigrations(logger)
-    .then(() => {
+    .then(async () => {
+      try {
+        const insertedLibraryTopics = await seedLibraryStarterTopics(pool);
+        logger.info({ insertedLibraryTopics }, "Living Library starter topics ready");
+      } catch (error) {
+        logger.error({ error }, "Living Library starter topics failed to seed");
+      }
       // startCityHealthAlertScheduler is async: it probes information_schema to
       // confirm the three lease columns actually exist before registering the cron
       // job. This guards against runStartupMigrations resolving despite an

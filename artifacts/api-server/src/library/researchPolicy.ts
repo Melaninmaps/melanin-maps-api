@@ -43,7 +43,7 @@ const DOMAIN_PATTERNS: Array<{ domain: ResearchDomain; pattern: RegExp }> = [
   {
     domain: "medical",
     pattern:
-      /\b(health|medical|doctor|nurse|clinic|hospital|symptom|diagnos\w*|treatment|medicine|mental health|pregnan\w*|wellness|disease|cancer|diabetes|blood pressure|vaccine|nutrition|therapy|immuniz\w*|mammogram|screenings?|menopause|fibroid|sickle cell|hiv|aids|chronic)\b/i,
+      /\b(health|medical|doctor|nurse|clinic|hospital|symptom|diagnos\w*|treatment|medicine|mental health|pregnan\w*|fertilit\w*|infertilit\w*|ivf|in vitro|reproductive|ovulation|egg freezing|wellness|disease|cancer|diabetes|blood pressure|vaccine|nutrition|therapy|immuniz\w*|mammogram|screenings?|menopause|fibroid|sickle cell|hiv|aids|chronic)\b/i,
   },
   {
     domain: "legal",

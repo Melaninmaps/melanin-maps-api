@@ -52,7 +52,7 @@ function provider(documents = [
 }
 
 function writer(): LibrarySynthesisWriter {
-  return { writeStructured: vi.fn().mockResolvedValue({ title: "Current HVAC paths", summary: "A concise cited overview.", body: "A longer source-grounded explanation.", citedSourceIndexes: [0, 1], relatedQuestions: ["Which certifications matter?"] }) };
+  return { writeStructured: vi.fn().mockResolvedValue({ title: "Current HVAC paths", summary: "A concise cited overview.", body: "A longer source-grounded explanation.", citedSourceIndexes: [0, 1], sourceNotes: [{ sourceIndex: 0, whyItMatters: "It explains federal apprenticeship resources." }, { sourceIndex: 1, whyItMatters: "It explains education requirements." }], relatedQuestions: ["Which certifications matter?"] }) };
 }
 
 function createApp(repository: LibraryRepository, options: { userId?: string; researchProvider?: ExternalResearchProvider | null; synthesisWriter?: LibrarySynthesisWriter } = {}): Express {

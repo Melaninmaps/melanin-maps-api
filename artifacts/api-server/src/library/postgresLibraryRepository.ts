@@ -37,6 +37,7 @@ type SourceRow = {
   title: string;
   publisher: string | null;
   excerpt: string;
+  why_it_matters: string | null;
   source_tier: KnowledgeSource["sourceTier"];
   published_at: Date | null;
   retrieved_at: Date;
@@ -55,6 +56,7 @@ function mapSource(row: SourceRow): KnowledgeSource {
     title: row.title,
     publisher: row.publisher,
     excerpt: row.excerpt,
+    whyItMatters: row.why_it_matters,
     sourceTier: row.source_tier,
     publishedAt: row.published_at,
     retrievedAt: row.retrieved_at,
@@ -68,7 +70,7 @@ async function attachSources(
   if (!entries.length) return [];
   const entryIds = entries.map((e) => e.id);
   const { rows: sourceRows } = await db.query<SourceRow & { entry_id: string }>(
-    `SELECT id, entry_id, url, title, publisher, excerpt, source_tier, published_at, retrieved_at
+    `SELECT id, entry_id, url, title, publisher, excerpt, why_it_matters, source_tier, published_at, retrieved_at
      FROM library_entry_sources
      WHERE entry_id = ANY($1::uuid[])
      ORDER BY retrieved_at DESC`,
@@ -167,8 +169,8 @@ export function createPostgresLibraryRepository(
       for (const source of input.sources) {
         await db.query(
           `INSERT INTO library_entry_sources
-             (entry_id, url, title, publisher, excerpt, source_tier, published_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+             (entry_id, url, title, publisher, excerpt, why_it_matters, source_tier, published_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (entry_id, url) DO NOTHING`,
           [
             entry.id,
@@ -176,6 +178,7 @@ export function createPostgresLibraryRepository(
             source.title,
             source.publisher,
             source.excerpt,
+            source.whyItMatters ?? null,
             source.sourceTier,
             source.publishedAt,
           ],
@@ -289,6 +292,7 @@ export function createPostgresLibraryRepository(
           url: string;
           title: string;
           publisher: string | null;
+          whyItMatters: string | null;
         }>;
         refreshed_at: Date;
         total_count: number;
@@ -360,7 +364,12 @@ export function createPostgresLibraryRepository(
              entry.source_count,
              COALESCE((
                SELECT jsonb_agg(
-                 jsonb_build_object('url', source.url, 'title', source.title, 'publisher', source.publisher)
+                 jsonb_build_object(
+                   'url', source.url,
+                   'title', source.title,
+                   'publisher', source.publisher,
+                   'whyItMatters', source.why_it_matters
+                 )
                  ORDER BY source.retrieved_at DESC
                )
                FROM library_entry_sources source

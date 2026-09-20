@@ -19,8 +19,6 @@ import MapView, {
   type Region,
 } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CategoryPill } from "@/components/CategoryPill";
-import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import {
   useActivityAlerts,
@@ -43,7 +41,6 @@ import {
   resolveMapLocality,
 } from "@/lib/mapLocality";
 import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
-import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
 
 import { getApiBase } from "@/lib/api";
 
@@ -336,7 +333,7 @@ export function FullMapView({
   } | null>(null);
   // Global collections are never a default. This is an explicit exploration
   // mode; individual travel and deep-link focus actions remain available.
-  const [exploringAllAreas, setExploringAllAreas] = useState(false);
+  const exploringAllAreas = false;
   const [mapSearchInput, setMapSearchInput] = useState("");
   const [searchedLocality, setSearchedLocality] = useState<ReturnType<
     typeof parseMapSearchLocality
@@ -345,17 +342,20 @@ export function FullMapView({
   // the map toolbar never floods the business API or resets a local map view.
   const [businessSearchInput, setBusinessSearchInput] = useState("");
   const [submittedBusinessSearch, setSubmittedBusinessSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [designationIds, setDesignationIds] = useState<string[]>([]);
-  const [showDesignationFilters, setShowDesignationFilters] = useState(false);
+  // The map remains a clean locality-first canvas. Categories and support
+  // designations stay searchable, rather than occupying map chrome.
+  const designationIds: string[] = [];
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
     null,
   );
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
   const [warningIdx, setWarningIdx] = useState(0);
 
-  const [showHeatmap, setShowHeatmap] = useState(false);
-  const [showCulturalSites, setShowCulturalSites] = useState(true);
+  const showHeatmap = false;
+  const showCulturalSites = true;
+  // Historical sundown-town records are available on demand and are never a
+  // present-day safety rating. Keeping this separate avoids a crowded map UI.
+  const [showSundownHistory, setShowSundownHistory] = useState(false);
   const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [culturalSitesLoading, setCulturalSitesLoading] = useState(false);
@@ -363,9 +363,9 @@ export function FullMapView({
   const isFetchingCulturalSites = useRef(false);
   const [selectedCulturalSite, setSelectedCulturalSite] =
     useState<CulturalSite | null>(null);
-  const [activeCulturalCategory, setActiveCulturalCategory] = useState("");
+  const activeCulturalCategory = "";
 
-  const [showMapEvents, setShowMapEvents] = useState(true);
+  const showMapEvents = true;
   const [mapEvents, setMapEvents] = useState<MapEventItem[]>([]);
   const [selectedMapEvent, setSelectedMapEvent] = useState<MapEventItem | null>(
     null,
@@ -373,12 +373,12 @@ export function FullMapView({
   const isFetchingMapEvents = useRef(false);
 
   // ── Tour community layers ────────────────────────────────────────────────
-  const [showCommunityOrgs, setShowCommunityOrgs] = useState(false);
+  const showCommunityOrgs = false;
   const [communityOrgs, setCommunityOrgs] = useState<TourCommunityOrg[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<TourCommunityOrg | null>(null);
   const isFetchingOrgs = useRef(false);
 
-  const [showTourEvents, setShowTourEvents] = useState(false);
+  const showTourEvents = false;
   const [tourEvents, setTourEvents] = useState<TourRecurringEvent[]>([]);
   const [selectedTourEvent, setSelectedTourEvent] =
     useState<TourRecurringEvent | null>(null);
@@ -393,7 +393,7 @@ export function FullMapView({
 
   // Global destination coordinates are an opt-in travel planning layer. They
   // are never mixed with business pins and do not represent verified venues.
-  const [showTravelDestinations, setShowTravelDestinations] = useState(false);
+  const showTravelDestinations = false;
   const [travelDestinations, setTravelDestinations] = useState<
     TravelDestination[]
   >([]);
@@ -495,13 +495,7 @@ export function FullMapView({
       b.longitude >= -180 &&
       b.longitude <= 180 &&
       // Exclude "Null Island" (0,0) — means coordinates were never geocoded
-      (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001) &&
-      (activeCategory === "All" ||
-        (activeCategory === "International"
-          ? b.country && b.country !== "USA" && b.country !== "United States"
-          : activeCategory === "Healthcare"
-            ? b.category === "Health & Wellness"
-            : b.category === activeCategory)),
+      (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001),
   );
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
 
@@ -614,9 +608,16 @@ export function FullMapView({
     }, 600);
   }, [mapReady, mapped, exploringAllAreas, localityScopeKey]);
 
-  const filteredCulturalSites = activeCulturalCategory
-    ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
-    : culturalSites;
+  const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
+  const filteredCulturalSites = culturalSites.filter((site) => {
+    if (site.heritageCategory === "Historical Sundown Town" && !showSundownHistory) return false;
+    if (activeCulturalCategory && site.heritageCategory !== activeCulturalCategory) return false;
+    if (!normalizedMapSearch) return true;
+    return [site.name, site.heritageCategory, site.city, site.state, site.description, site.significance]
+      .filter((value): value is string => typeof value === "string")
+      .some((value) => value.toLowerCase().includes(normalizedMapSearch));
+  });
+  const culturalSearchMatchCount = normalizedMapSearch ? filteredCulturalSites.length : 0;
 
   const currentWarning =
     warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
@@ -1460,7 +1461,7 @@ export function FullMapView({
               setSubmittedBusinessSearch(businessSearchInput.trim());
               setSelectedBusiness(null);
             }}
-            placeholder="Search businesses or services"
+            placeholder="Search businesses, HBCUs, markets, or services"
             placeholderTextColor="rgba(255,255,255,0.72)"
             style={s.businessSearchInput}
             returnKeyType="search"
@@ -1487,12 +1488,27 @@ export function FullMapView({
                 ? "Searching local listings…"
                 : businessSearchError
                   ? "Couldn’t search local listings. Try again."
-                  : mapped.length > 0
-                    ? `${mapped.length} mapped local result${mapped.length === 1 ? "" : "s"}`
+                  : mapped.length + culturalSearchMatchCount > 0
+                    ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
                     : "No mapped local results. Try another name, service, or location."}
             </Text>
           </View>
         )}
+
+        <TouchableOpacity
+          accessibilityLabel="Toggle nearby historical sundown-town context"
+          accessibilityRole="button"
+          accessibilityState={{ selected: showSundownHistory }}
+          activeOpacity={0.8}
+          onPress={() => setShowSundownHistory((visible) => !visible)}
+          style={[s.historyToggle, showSundownHistory && s.historyToggleActive]}
+        >
+          <Feather name="book-open" size={13} color="#F5EBD8" />
+          <View style={{ flex: 1 }}>
+            <Text style={s.historyToggleTitle}>{showSundownHistory ? "Hide" : "Show"} nearby sundown-town history</Text>
+            <Text style={s.historyToggleDetail}>Documented history only — not a current safety rating.</Text>
+          </View>
+        </TouchableOpacity>
 
         {!mapLocality && !exploringAllAreas && (
           <View style={s.localityPrompt}>
@@ -1502,446 +1518,9 @@ export function FullMapView({
           </View>
         )}
 
-        {/* Category filter pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.catRow}
-          keyboardDismissMode="on-drag"
-        >
-          {CATEGORIES.map((cat) => (
-            <CategoryPill
-              key={cat}
-              label={cat}
-              selected={activeCategory === cat}
-              onPress={() => setActiveCategory(cat)}
-            />
-          ))}
-        </ScrollView>
+        {/* Search is the map’s sole discovery control. Category, support, and layer
+            shortcuts remain searchable without crowding the locality-first map. */}
 
-        <View style={s.designationWrap}>
-          <TouchableOpacity
-            style={s.designationToggle}
-            onPress={() => setShowDesignationFilters((value) => !value)}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showDesignationFilters }}
-            accessibilityLabel="Choose owner-provided support designations"
-          >
-            <Feather name="sliders" size={13} color={GOLD} />
-            <Text style={s.designationToggleText}>
-              Support filters
-              {designationIds.length ? ` (${designationIds.length})` : ""}
-            </Text>
-            <Feather
-              name={showDesignationFilters ? "chevron-up" : "chevron-down"}
-              size={14}
-              color={GOLD}
-            />
-          </TouchableOpacity>
-          {showDesignationFilters && (
-            <View
-              style={[
-                s.designationPanel,
-                { backgroundColor: colors.card, borderColor: `${GOLD}66` },
-              ]}
-            >
-              <Text
-                style={[s.designationHint, { color: colors.mutedForeground }]}
-              >
-                Every selected owner-provided label must match.
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.designationScroll}
-                keyboardDismissMode="on-drag"
-              >
-                {INTERSECTIONAL_SUPPORT_FILTER_OPTIONS.map((option) => {
-                  const selected = designationIds.includes(option.id);
-                  return (
-                    <TouchableOpacity
-                      key={option.id}
-                      style={[
-                        s.designationChip,
-                        {
-                          borderColor: selected ? GOLD : colors.border,
-                          backgroundColor: selected ? GOLD : colors.background,
-                        },
-                      ]}
-                      onPress={() =>
-                        setDesignationIds((current) =>
-                          selected
-                            ? current.filter((id) => id !== option.id)
-                            : [...current, option.id],
-                        )
-                      }
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: selected }}
-                    >
-                      <Text
-                        style={[
-                          s.designationChipText,
-                          { color: selected ? "#fff" : colors.foreground },
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-
-        {/* Map layer toggles */}
-        <View style={s.layerRow}>
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              exploringAllAreas && {
-                backgroundColor: "#2563A8",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => setExploringAllAreas((value) => !value)}
-            activeOpacity={0.85}
-            accessibilityLabel="Explore all areas"
-            accessibilityState={{ selected: exploringAllAreas }}
-          >
-            <Feather
-              name="compass"
-              size={12}
-              color={exploringAllAreas ? "#fff" : GOLD}
-            />
-            <Text style={[s.layerBtnTxt, { color: exploringAllAreas ? "#fff" : GOLD }]}>
-              Explore all
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              showHeatmap && {
-                backgroundColor: "#059669",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => setShowHeatmap((v) => !v)}
-            activeOpacity={0.85}
-          >
-            <Feather
-              name="thermometer"
-              size={12}
-              color={showHeatmap ? "#fff" : GOLD}
-            />
-            <Text
-              style={[s.layerBtnTxt, { color: showHeatmap ? "#fff" : GOLD }]}
-            >
-              Safety Heat
-            </Text>
-          </TouchableOpacity>
-          {HERITAGE_SITES_ENABLED && (
-            <TouchableOpacity
-              style={[
-                s.layerBtn,
-                showCulturalSites && {
-                  backgroundColor: "#44403C",
-                  borderColor: "transparent",
-                },
-              ]}
-              onPress={() => {
-                setShowCulturalSites((v) => !v);
-                setSelectedCulturalSite(null);
-              }}
-              activeOpacity={0.85}
-            >
-              <Feather
-                name="book-open"
-                size={12}
-                color={showCulturalSites ? "#fff" : GOLD}
-              />
-              <Text
-                style={[
-                  s.layerBtnTxt,
-                  { color: showCulturalSites ? "#fff" : GOLD },
-                ]}
-              >
-                Heritage
-              </Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              showMapEvents && {
-                backgroundColor: "#EA580C",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => {
-              setShowMapEvents((v) => !v);
-              setSelectedMapEvent(null);
-            }}
-            activeOpacity={0.85}
-          >
-            <Feather
-              name="calendar"
-              size={12}
-              color={showMapEvents ? "#fff" : GOLD}
-            />
-            <Text
-              style={[s.layerBtnTxt, { color: showMapEvents ? "#fff" : GOLD }]}
-            >
-              Events{mapEvents.length > 0 ? ` (${mapEvents.length})` : ""}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              showCommunityOrgs && {
-                backgroundColor: "#7C3AED",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => {
-              setShowCommunityOrgs((v) => !v);
-              setSelectedOrg(null);
-            }}
-            activeOpacity={0.85}
-          >
-            <Feather
-              name="users"
-              size={12}
-              color={showCommunityOrgs ? "#fff" : GOLD}
-            />
-            <Text
-              style={[
-                s.layerBtnTxt,
-                { color: showCommunityOrgs ? "#fff" : GOLD },
-              ]}
-            >
-              Orgs
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              showTourEvents && {
-                backgroundColor: "#0D9488",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => {
-              setShowTourEvents((v) => !v);
-              setSelectedTourEvent(null);
-            }}
-            activeOpacity={0.85}
-          >
-            <Feather
-              name="repeat"
-              size={12}
-              color={showTourEvents ? "#fff" : GOLD}
-            />
-            <Text
-              style={[s.layerBtnTxt, { color: showTourEvents ? "#fff" : GOLD }]}
-            >
-              Gatherings
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              showTourSites && {
-                backgroundColor: "#D97706",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => {
-              setShowTourSites((v) => !v);
-              setSelectedTourSite(null);
-            }}
-            activeOpacity={0.85}
-          >
-            <Feather
-              name="flag"
-              size={12}
-              color={showTourSites ? "#fff" : GOLD}
-            />
-            <Text
-              style={[s.layerBtnTxt, { color: showTourSites ? "#fff" : GOLD }]}
-            >
-              Heritage
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              s.layerBtn,
-              showTravelDestinations && {
-                backgroundColor: "#2563A8",
-                borderColor: "transparent",
-              },
-            ]}
-            onPress={() => {
-              const next = !showTravelDestinations;
-              setShowTravelDestinations(next);
-              setSelectedTravelDestination(null);
-              if (next) {
-                mapRef.current?.animateToRegion(
-                  {
-                    latitude: 10,
-                    longitude: 0,
-                    latitudeDelta: 150,
-                    longitudeDelta: 330,
-                  },
-                  700,
-                );
-              }
-            }}
-            activeOpacity={0.85}
-          >
-            {travelDestinationsLoading ? (
-              <ActivityIndicator
-                size="small"
-                color={showTravelDestinations ? "#fff" : GOLD}
-              />
-            ) : (
-              <Feather
-                name="globe"
-                size={12}
-                color={showTravelDestinations ? "#fff" : GOLD}
-              />
-            )}
-            <Text
-              style={[
-                s.layerBtnTxt,
-                { color: showTravelDestinations ? "#fff" : GOLD },
-              ]}
-            >
-              Travel
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {showTravelDestinations && (
-          <View
-            style={[
-              s.sitesStatusRow,
-              { backgroundColor: "rgba(37,99,168,0.94)" },
-            ]}
-          >
-            <Feather
-              name={travelDestinationsError ? "wifi-off" : "info"}
-              size={12}
-              color="#fff"
-            />
-            <Text style={[s.sitesStatusTxt, { color: "#fff" }]}>
-              {travelDestinationsError
-                ? "Travel destinations couldn't load. Turn the layer off and on to retry."
-                : "Travel destinations are planning references; related places may share one supplied node. Check current official guidance."}
-            </Text>
-          </View>
-        )}
-
-        {/* Heritage category filter chips — hidden until HERITAGE_SITES_ENABLED */}
-        {HERITAGE_SITES_ENABLED && showCulturalSites && (
-          <>
-            {/* Loading state — initial fetch only */}
-            {culturalSitesLoading && culturalSites.length === 0 && (
-              <View style={s.sitesStatusRow}>
-                <ActivityIndicator size="small" color={GOLD} />
-                <Text style={s.sitesStatusTxt}>Loading heritage sites…</Text>
-              </View>
-            )}
-
-            {/* Error state — shown only when fetch failed and we have no data to display */}
-            {culturalSitesError && culturalSites.length === 0 && (
-              <TouchableOpacity
-                style={s.sitesErrorBanner}
-                onPress={() => void fetchCulturalSites(false)}
-                activeOpacity={0.8}
-              >
-                <Feather
-                  name="wifi-off"
-                  size={12}
-                  color="rgba(255,255,255,0.85)"
-                />
-                <Text style={s.sitesErrorTxt}>
-                  {culturalSitesLoading
-                    ? "Retrying…"
-                    : "Cultural sites couldn't load. Tap to retry."}
-                </Text>
-                {culturalSitesLoading && (
-                  <ActivityIndicator
-                    size="small"
-                    color="rgba(255,255,255,0.7)"
-                  />
-                )}
-              </TouchableOpacity>
-            )}
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.legendRow}
-            >
-              {Object.entries(CATEGORY_STYLES).map(([key, cs]) => {
-                const isActive = activeCulturalCategory === key;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    activeOpacity={0.75}
-                    style={[
-                      s.legendItem,
-                      isActive && {
-                        backgroundColor: cs.color,
-                        borderColor: cs.color,
-                      },
-                    ]}
-                    onPress={() => {
-                      const next = isActive ? "" : key;
-                      setActiveCulturalCategory(next);
-                      setSelectedCulturalSite(null);
-                      if (next) {
-                        const coords = culturalSites
-                          .filter((site) => site.heritageCategory === next)
-                          .map((site) => ({
-                            latitude: parseFloat(site.latitude),
-                            longitude: parseFloat(site.longitude),
-                          }))
-                          .filter(
-                            (c) => !isNaN(c.latitude) && !isNaN(c.longitude),
-                          );
-                        if (coords.length > 0) {
-                          if (!exploringAllAreas && !isSafeLocalFit(coords)) return;
-                          mapRef.current?.fitToCoordinates(coords, {
-                            edgePadding: {
-                              top: 140,
-                              right: 50,
-                              bottom: 260,
-                              left: 50,
-                            },
-                            animated: true,
-                          });
-                        }
-                      }
-                    }}
-                  >
-                    <View
-                      style={[
-                        s.legendDot,
-                        { backgroundColor: isActive ? "#fff" : cs.color },
-                      ]}
-                    />
-                    <Text style={[s.legendTxt, isActive && { color: "#fff" }]}>
-                      {cs.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </>
-        )}
       </View>
 
       {/* Locating spinner */}
@@ -2921,6 +2500,35 @@ const s = StyleSheet.create({
     color: "#F5EBD8",
     fontFamily: "Inter_500Medium",
     fontSize: 11,
+  },
+  historyToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 12,
+    marginTop: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(245,235,216,0.26)",
+    backgroundColor: "rgba(33,24,18,0.82)",
+  },
+  historyToggleActive: {
+    borderColor: "rgba(245,235,216,0.65)",
+    backgroundColor: "rgba(68,64,60,0.92)",
+  },
+  historyToggleTitle: {
+    color: "#F5EBD8",
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+  },
+  historyToggleDetail: {
+    color: "rgba(245,235,216,0.72)",
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 1,
   },
   localityPrompt: {
     marginHorizontal: 12,

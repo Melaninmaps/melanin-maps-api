@@ -29,17 +29,6 @@ type Topic = {
   entryCount: number;
 };
 
-const START_HERE = [
-  "housing-home",
-  "education-learning",
-  "trades-skills-certifications",
-  "health-wellness",
-  "money-economic-mobility",
-  "careers-professional-life",
-  "business-entrepreneurship",
-  "community-resources-help",
-];
-
 export function LivingLibraryHome() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [query, setQuery] = useState("");
@@ -69,9 +58,9 @@ export function LivingLibraryHome() {
     if (term) navigate(`/library/search?q=${encodeURIComponent(term)}`);
   }
 
-  const featured = START_HERE.map((slug) =>
-    topics.find((t) => t.slug === slug),
-  ).filter(Boolean) as Topic[];
+  // The API owns the ordered, source-governed starter set so stale client-side
+  // slugs cannot turn a populated Library into an empty foundation grid.
+  const featured = topics.slice(0, 12);
 
   return (
     <main className="living-library-page mwm-surface-dark">

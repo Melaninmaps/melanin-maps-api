@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -29,7 +29,7 @@ async function authHeaders(): Promise<Record<string, string>> {
   }
 }
 
-type Source = { url: string; title: string; publisher: string | null };
+type Source = { url: string; title: string; publisher: string | null; whyItMatters?: string | null };
 type LibraryEntry = {
   id: string;
   title: string;
@@ -147,6 +147,7 @@ function AnswerCard({ answer, scope, onConnectedTopic }: { answer: LibraryEntry;
               <View style={{ flex: 1 }}>
                 <Text style={[styles.sourceTitle, { color: colors.primary }]} numberOfLines={2}>{source.title}</Text>
                 {source.publisher ? <Text style={[styles.sourcePublisher, { color: colors.mutedForeground }]} numberOfLines={1}>{source.publisher}</Text> : null}
+                {source.whyItMatters ? <Text style={[styles.sourceReason, { color: colors.mutedForeground }]}>{source.whyItMatters}</Text> : null}
               </View>
             </TouchableOpacity>
           ))}
@@ -161,6 +162,7 @@ export default function LibraryResearchScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { question: suggestedQuestion } = useLocalSearchParams<{ question?: string }>();
   const [question, setQuestion] = useState("");
   const [searchedQuestion, setSearchedQuestion] = useState("");
   const [search, setSearch] = useState<LibrarySearch | null>(null);
@@ -169,6 +171,12 @@ export default function LibraryResearchScreen() {
   const [message, setMessage] = useState("");
 
   const internalEntry = search?.results.find((result): result is { kind: "entry" } & LibraryEntry => result.kind === "entry") ?? null;
+
+  useEffect(() => {
+    if (!question && typeof suggestedQuestion === "string" && suggestedQuestion.trim()) {
+      setQuestion(suggestedQuestion.trim().slice(0, 500));
+    }
+  }, [question, suggestedQuestion]);
 
   async function searchLibrary() {
     const cleaned = question.normalize("NFKC").trim().replace(/\s+/g, " ");
@@ -330,6 +338,7 @@ const styles = StyleSheet.create({
   sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, borderTopWidth: 1, paddingTop: 9 },
   sourceTitle: { fontSize: 13, fontWeight: "700", lineHeight: 18 },
   sourcePublisher: { marginTop: 2, fontSize: 11 },
+  sourceReason: { marginTop: 3, fontSize: 11, lineHeight: 16 },
   freshness: { fontSize: 11, marginTop: 2 },
   relatedCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 9 },
   relatedCopy: { fontSize: 12, lineHeight: 18 },

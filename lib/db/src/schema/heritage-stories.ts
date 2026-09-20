@@ -8,6 +8,8 @@ export const heritageStoriesTable = pgTable("heritage_stories", {
   userId: varchar("user_id", { length: 255 }),
   authorName: varchar("author_name", { length: 100 }),
   relationshipType: varchar("relationship_type", { length: 100 }).notNull(),
+  /** Scope is required before moderation; it keeps academic and cultural discovery separate. */
+  contentCategory: varchar("content_category", { length: 64 }).notNull().default("community_connection"),
   content: text("content").notNull(),
   videoUrl: varchar("video_url", { length: 500 }),
   tags: jsonb("tags").$type<string[]>().default([]),

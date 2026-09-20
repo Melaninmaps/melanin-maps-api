@@ -30,7 +30,7 @@ describe("Living Library evidence and identity policy", () => {
   it("requires multi-perspective spiritual framing and stores only a pending candidate", async () => {
     const repo = repository();
     const researchProvider: ExternalResearchProvider = { name: "openai", search: vi.fn().mockResolvedValue({ documents: spiritualDocuments, provider: "openai", status: "available" }) };
-    const writer: LibrarySynthesisWriter = { writeStructured: vi.fn().mockResolvedValue({ title: "Perspectives on life after death", summary: "Traditions differ, and no unknowable answer is established as fact.", body: "Christian, Islamic, African and diasporic, philosophical, and secular perspectives differ.", citedSourceIndexes: [0, 1], relatedQuestions: ["How do ancestor traditions vary?", "What does secular scholarship study?"] }) };
+    const writer: LibrarySynthesisWriter = { writeStructured: vi.fn().mockResolvedValue({ title: "Perspectives on life after death", summary: "Traditions differ, and no unknowable answer is established as fact.", body: "Christian, Islamic, African and diasporic, philosophical, and secular perspectives differ.", citedSourceIndexes: [0, 1], sourceNotes: [{ sourceIndex: 0, whyItMatters: "It documents variation in beliefs." }, { sourceIndex: 1, whyItMatters: "It explains multiple religious traditions." }], relatedQuestions: ["How do ancestor traditions vary?", "What does secular scholarship study?"] }) };
     const result = await answerAndArchiveResearchQuestion({ question: "life after death", locationLabel: null, repository: repo, researchProvider, writer, internalResultCount: 0 });
     expect(writer.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ communityLens: expect.stringMatching(/editorial perspective; no member identity inferred/i) }));
     expect(result.entry).toMatchObject({ publicationStatus: "pending", relatedQuestions: expect.arrayContaining(["How do ancestor traditions vary?"]) });
@@ -39,6 +39,7 @@ describe("Living Library evidence and identity policy", () => {
       question: "Governed live-research candidate",
       normalizedQuestion: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       locationLabel: null,
+      sources: expect.arrayContaining([expect.objectContaining({ whyItMatters: "It documents variation in beliefs." })]),
     }));
   });
 
@@ -82,5 +83,12 @@ describe("Living Library evidence and identity policy", () => {
     await expect(answerAndArchiveResearchQuestion({ question: "life after death", locationLabel: null, repository: repo, researchProvider, writer })).rejects.toBeInstanceOf(LibraryEvidenceInsufficientError);
     expect(repo.saveEntry).not.toHaveBeenCalled();
     expect(repo.recordCoverageSignal).toHaveBeenCalledWith(expect.objectContaining({ outcome: "insufficient" }));
+  });
+
+  it("treats fertility and IVF questions as high-stakes health research", () => {
+    const policy = getResearchPolicy("What should I understand about infertility and IVF?");
+    expect(policy.domain).toBe("medical");
+    expect(policy.disclaimer).toMatch(/not a medical diagnosis/i);
+    expect(policy.allowDomains).toEqual(expect.arrayContaining(["nih.gov", "womenshealth.gov"]));
   });
 });
