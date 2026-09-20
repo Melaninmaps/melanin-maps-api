@@ -290,6 +290,11 @@ import {
   canUseLeanGeneralChat,
 } from "../kinfolk/lean-general-chat";
 import {
+  buildAdaptiveAnswerDepthPrompt,
+  resolveKinfolkOutputTokenBudget,
+  resolveKinfolkResponseDepth,
+} from "../kinfolk/adaptive-response-depth";
+import {
   canonicalVoiceFormat,
   inspectVoiceAudio,
   VoiceAudioInspectionError,
@@ -8050,11 +8055,25 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasLibraryGrounding: Boolean(libraryTopic),
       hasRequestedVibes: vibes.length > 0,
     });
+    const responseDepth = resolveKinfolkResponseDepth({
+      message,
+      intentClass,
+      requiresCurrentEvidence: requiresCurrentResearch(message),
+      isTravelPlanning: travelPlanning,
+      hasLocation: Boolean(destination),
+      hasContextualResearch: Boolean(contextualEvidence) || Boolean(communityHashtagContext.promptBlock),
+    });
+    const responseDepthPrompt = buildAdaptiveAnswerDepthPrompt(responseDepth);
+    const responseModelPolicy = {
+      ...modelPolicy,
+      maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
+    };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
+        `\n\n${responseDepthPrompt}` +
         (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
@@ -8088,7 +8107,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const estimatedTotal = Math.min(
       estimatedPromptTokens +
         verifiedImageUrls.length * 1000 +
-        modelPolicy.maxOutputTokens,
+        responseModelPolicy.maxOutputTokens,
       MAX_REQUEST_TOKEN_RESERVATION,
     );
     req.log.info(
@@ -8119,7 +8138,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               contextualRequestAbort.signal,
               AbortSignal.timeout(25000),
             ]),
-            modelPolicy,
+            responseModelPolicy,
             _kinfolkReqId,
             resolverTemperature,
           );
