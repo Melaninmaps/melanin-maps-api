@@ -168,9 +168,11 @@ export function registerLivingLibraryRoutes(
             message:
               result.origin === "internal"
                 ? "Approved Library knowledge was reused; no live provider was called."
-                : result.providerStatus === "degraded"
+                : result.entry.publicationStatus === "published"
+                  ? "Current source-governed research completed and is now available for the next reader."
+                  : result.providerStatus === "degraded"
                   ? "Primary web research was unavailable; a configured fallback supplied the cited research."
-                  : "Current web research completed. This answer is live and remains pending Library review.",
+                  : "Current research completed for this response. It remains private until it clears the reusable Library gate.",
           },
           researchScope,
         });

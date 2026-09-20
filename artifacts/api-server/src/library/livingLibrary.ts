@@ -21,6 +21,36 @@ const MAX_RESEARCH_RESULTS = 6;
 const MAX_SOURCE_CHARACTERS = 8_000;
 const MINIMUM_SOURCE_COUNT = 2;
 
+/**
+ * A reusable Library brief must be a general, non-identifying question. Private
+ * member circumstances may receive a one-time research answer, but they are
+ * never promoted into shared Library knowledge merely because research succeeded.
+ */
+function isGeneralReusableQuestion(question: string): boolean {
+  const normalized = question.normalize("NFKC").trim();
+  if (normalized.length < 3 || normalized.length > 180) return false;
+  if (/\b(i|me|my|mine|we|our|ours|myself|ourselves)\b/i.test(normalized)) return false;
+  if (/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b|@|\b(?:apt|apartment|unit)\s*#?\d+/i.test(normalized)) return false;
+  return true;
+}
+
+function qualifiesForReusablePublication(input: {
+  providerStatus: ResearchProviderStatus;
+  citedDocuments: ResearchDocument[];
+  sourceNotes: Map<number, string>;
+  citedIndexes: number[];
+  generalQuestion: boolean;
+}): boolean {
+  // Publication is deliberately narrower than returning a private answer: it
+  // requires a healthy provider, two independently cited trusted documents,
+  // a source-specific explanation for each citation, and no member-specific
+  // wording in the searchable key.
+  return input.generalQuestion
+    && input.providerStatus === "available"
+    && input.citedDocuments.length >= MINIMUM_SOURCE_COUNT
+    && input.citedIndexes.every((index) => Boolean(input.sourceNotes.get(index)));
+}
+
 export class LibraryEvidenceInsufficientError extends Error {
   override readonly name = "LibraryEvidenceInsufficientError";
   constructor() {
@@ -105,8 +135,9 @@ export type LivingLibraryAnswer = {
 
 /**
  * Reuses approved Library knowledge first and otherwise performs live,
- * source-cited research. Pending candidates are never reused or exposed across
- * members. No profile or inferred identity context is accepted by this boundary.
+ * source-cited research. A general question that clears the strict publication
+ * gate becomes a reusable Library brief; member-specific questions stay private
+ * and pending. No profile or inferred identity context crosses this boundary.
  */
 export async function answerAndArchiveResearchQuestion(input: {
   question: string;
@@ -124,6 +155,7 @@ export async function answerAndArchiveResearchQuestion(input: {
   const policy = getResearchPolicy(question);
   const communityLens = DEFAULT_COMMUNITY_LENS;
   const normalizedQuestion = normalizeResearchQuestion(question);
+  const generalReusableQuestion = isGeneralReusableQuestion(question);
   const currentAfter = new Date(Date.now() - policy.archiveTtlHours * 60 * 60 * 1_000);
   const topicSlug = researchTopicSlug(question, policy.domain);
   const queryFingerprint = createHash("sha256").update(normalizedQuestion).digest("hex");
@@ -192,12 +224,20 @@ export async function answerAndArchiveResearchQuestion(input: {
     throw new LibraryEvidenceInsufficientError();
   }
 
+  const publicationStatus = qualifiesForReusablePublication({
+    providerStatus: providerResult.status,
+    citedDocuments,
+    sourceNotes,
+    citedIndexes,
+    generalQuestion: generalReusableQuestion,
+  }) ? "published" : "pending";
+
   const entry = await repository.saveEntry({
     topicSlug,
-    // Pending candidates are review artifacts, not query logs. Store a one-way
-    // fingerprint instead of the raw member question and do not attach location.
-    question: "Governed live-research candidate",
-    normalizedQuestion: `sha256:${queryFingerprint}`,
+    // A public-safe question may be reused by the next member. Anything with
+    // member-specific wording is stored as a one-way pending candidate instead.
+    question: publicationStatus === "published" ? question.trim() : "Governed live-research candidate",
+    normalizedQuestion: publicationStatus === "published" ? normalizedQuestion : `sha256:${queryFingerprint}`,
     title: draft.title.trim(),
     summary: draft.summary.trim().slice(0, 800),
     body: draft.body.trim(),
@@ -212,6 +252,7 @@ export async function answerAndArchiveResearchQuestion(input: {
     })),
     relatedQuestions: [...new Set(draft.relatedQuestions.map((value) => value.trim()).filter(Boolean))].slice(0, 5),
     provider: providerResult.provider,
+    publicationStatus,
   });
   await recordSignal("researched", true);
   return {

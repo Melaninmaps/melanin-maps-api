@@ -110,6 +110,12 @@
     }
   },
   "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6783773366",
+        "appleTeamId": "Y46Y4A5MMZ"
+      }
+    },
     "testflight-staging": {
       "ios": {
         "ascAppId": "6783773366",

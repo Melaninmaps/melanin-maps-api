@@ -22,6 +22,7 @@ import { PrivacyPinModal, isSensitiveCategory } from "@/components/PrivacyPinMod
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 
 function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_API_ORIGIN) return process.env.EXPO_PUBLIC_API_ORIGIN;
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
   return "";
 }

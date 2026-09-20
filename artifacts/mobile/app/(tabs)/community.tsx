@@ -215,6 +215,11 @@ export default function CommunityScreen() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [feedError, setFeedError] = useState<{
+    kind: "auth" | "temporary" | "configuration" | "unknown";
+    message: string;
+    requestId?: string;
+  } | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostCategory, setNewPostCategory] = useState("general");
@@ -332,6 +337,7 @@ export default function CommunityScreen() {
 
   const loadPosts = useCallback(async () => {
     setLoadError(false);
+    setFeedError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const res = await fetch(`${getApiBase()}/api/community/posts?feed=${feedMode}`, {
@@ -342,9 +348,36 @@ export default function CommunityScreen() {
         setPosts((data.posts ?? []).map(toPostCard));
       } else {
         setLoadError(true);
+        const requestId = res.headers.get("x-request-id") ?? undefined;
+        if (res.status === 401 || res.status === 403) {
+          setFeedError({
+            kind: "auth",
+            message: "Your Community session needs to reconnect. Sign in again to see your posts, comments, and media.",
+            requestId,
+          });
+        } else if (res.status === 429 || res.status === 503) {
+          setFeedError({
+            kind: "temporary",
+            message: "Community is temporarily busy. Your existing posts and media are safe—please try again shortly.",
+            requestId,
+          });
+        } else {
+          setFeedError({
+            kind: "unknown",
+            message: "Community could not refresh right now. Your existing posts and media were not removed.",
+            requestId,
+          });
+        }
       }
-    } catch {
+    } catch (error) {
       setLoadError(true);
+      const message = error instanceof Error && /API origin|https/i.test(error.message)
+        ? "This app build needs a valid secure Community connection. Please update the app, then try again."
+        : "Community could not connect right now. Your existing posts and media were not removed.";
+      setFeedError({
+        kind: error instanceof Error && /API origin|https/i.test(error.message) ? "configuration" : "temporary",
+        message,
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -1408,16 +1441,31 @@ export default function CommunityScreen() {
                   color={colors.muted}
                 />
                 <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-                  {loading ? "Loading…" : loadError ? "Couldn't load posts" : "Start the conversation"}
+                  {loading ? "Loading…" : loadError ? feedError?.kind === "auth" ? "Reconnect to Community" : "Couldn't load posts" : "Start the conversation"}
                 </Text>
                 {!loading && loadError && (
-                  <TouchableOpacity activeOpacity={0.85}
-                    onPress={() => { setLoading(true); void loadPosts(); }}
+                  <View style={{ alignItems: "center", gap: 10 }}>
+                    <Text style={[styles.emptyText, { color: colors.mutedForeground, textAlign: "center" }]}>
+                      {feedError?.message ?? "Community could not refresh right now. Your existing posts and media were not removed."}
+                    </Text>
+                    {feedError?.requestId ? (
+                      <Text style={[styles.emptyText, { color: colors.mutedForeground, fontSize: 11 }]}>Request ID: {feedError.requestId}</Text>
+                    ) : null}
+                    <TouchableOpacity activeOpacity={0.85}
+                    onPress={() => {
+                      if (feedError?.kind === "auth") {
+                        router.push("/login" as any);
+                        return;
+                      }
+                      setLoading(true);
+                      void loadPosts();
+                    }}
                     style={[styles.retryBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
                   >
-                    <Feather name="refresh-cw" size={14} color={colors.primary} />
-                    <Text style={[styles.retryTxt, { color: colors.primary }]}>Tap to retry</Text>
-                  </TouchableOpacity>
+                      <Feather name={feedError?.kind === "auth" ? "log-in" : "refresh-cw"} size={14} color={colors.primary} />
+                      <Text style={[styles.retryTxt, { color: colors.primary }]}>{feedError?.kind === "auth" ? "Sign in again" : "Tap to retry"}</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
                 {!loading && !loadError && (
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>

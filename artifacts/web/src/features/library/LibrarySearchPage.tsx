@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useId, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useId, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { MwmTopicIcon } from "@/components/brand/MwmTopicIcon";
 import { safePublicExternalHref } from "@/lib/publicExternalUrl";
@@ -296,7 +296,7 @@ export function LibrarySearchPage() {
     if (query) navigate(`/library/search?q=${encodeURIComponent(query)}`);
   }
 
-  async function researchCurrentQuestion() {
+  const researchCurrentQuestion = useCallback(async () => {
     if (!routeQuery || researchState === "loading") return;
     setResearchState("loading");
     setResearchFailure(null);
@@ -324,7 +324,16 @@ export function LibrarySearchPage() {
       });
       setResearchState("error");
     }
-  }
+  }, [researchState, response?.total, routeQuery]);
+
+  useEffect(() => {
+    if (!routeQuery || state !== "ready" || !response || research || researchState !== "idle") return;
+    const hasPublishedEntry = results.some((result) => result.kind === "entry");
+    if (hasPublishedEntry || response.webResearch.status === "not_needed") return;
+    // A new general Library question does the source-governed work on its first
+    // search. The server, not the client, decides whether it is reusable.
+    void researchCurrentQuestion();
+  }, [research, researchCurrentQuestion, researchState, response, results, routeQuery, state]);
 
   async function loadMore() {
     if (!response?.nextCursor) return;
@@ -381,12 +390,12 @@ export function LibrarySearchPage() {
 
         {state === "ready" && response && !research && response.webResearch.status !== "not_needed" ? (
           <section className="library-search-empty library-research-offer">
-            <h2>No approved entry answers this yet.</h2>
-            <p>{response.webResearch.message} Reputable sources depend on the topic: medical research uses clinical and public-health authorities; financial research uses regulators and economic research; other topics use their appropriate public-interest, academic, or archival sources.</p>
+            <h2>{researchState === "loading" ? "Researching this question from vetted sources…" : "No approved entry answers this yet."}</h2>
+            <p>{researchState === "loading" ? "The first search takes a little longer because the Library is gathering, checking, and summarizing sources before it offers related next questions." : `${response.webResearch.message} Reputable sources depend on the topic: medical research uses clinical and public-health authorities; financial research uses regulators and economic research; other topics use their appropriate public-interest, academic, or archival sources.`}</p>
             <button disabled={researchState === "loading"} onClick={() => void researchCurrentQuestion()} type="button">
-              {researchState === "loading" ? "Researching vetted sources…" : "Research vetted sources"}
+              {researchState === "loading" ? "Building your research brief…" : "Research vetted sources"}
             </button>
-            <p className="library-research-governance">Live research is private to this response and saved only as a governed pending candidate—not approved Library content.</p>
+            <p className="library-research-governance">A general question that clears the source, citation, and provider-health gate becomes a reusable Library brief. Member-specific questions remain private.</p>
           </section>
         ) : null}
 
@@ -396,7 +405,7 @@ export function LibrarySearchPage() {
             <ExpandableAnswer
               body={research.answer.body}
               disclaimer={research.answer.disclaimer}
-              eyebrow={research.origin === "internal" ? "Approved Library entry" : "Current research · Pending review"}
+              eyebrow={research.origin === "internal" || research.published ? "Source-governed Library entry" : "Current research · Private response"}
               onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(question)}`)}
               refreshedAt={research.answer.refreshedAt}
               relatedQuestions={research.answer.relatedQuestions}

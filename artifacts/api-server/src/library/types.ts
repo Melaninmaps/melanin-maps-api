@@ -102,7 +102,11 @@ export type ResearchProviderResult = {
 export type SaveLibraryEntryInput = Omit<
   LibraryEntry,
   "id" | "topicId" | "createdAt" | "refreshedAt" | "publicationStatus"
-> & { topicSlug: string };
+> & {
+  topicSlug: string;
+  /** Defaults to pending unless the research service passes its strict public-release gate. */
+  publicationStatus?: LibraryPublicationStatus;
+};
 
 export interface LibraryRepository {
   findReusableEntry(input: {

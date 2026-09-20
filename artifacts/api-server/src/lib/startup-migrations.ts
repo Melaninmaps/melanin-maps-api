@@ -5418,6 +5418,97 @@ export function publicationSchemaFailureLogLines(error: unknown): string[] {
   });
 }
 
+/**
+ * Community is a protected, shared record surface. Unlike cosmetic migration
+ * additions, these relations are used directly by every feed query to enforce
+ * member visibility and block boundaries. Establish their additive base shape
+ * before the HTTP listener opens so an incomplete deployment never presents an
+ * empty/erroring feed or, worse, weakens a block predicate.
+ */
+export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<void> {
+  const log = (message: string) =>
+    logger ? logger.info(message) : console.log(`[community-feed-schema] ${message}`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS community_posts (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      author_id VARCHAR,
+      author_name VARCHAR(100) NOT NULL DEFAULT 'Community member',
+      author_initials VARCHAR(4) NOT NULL DEFAULT 'MWM',
+      author_color VARCHAR(20) NOT NULL DEFAULT '#3B1F0E',
+      content TEXT NOT NULL DEFAULT '',
+      category VARCHAR(50) NOT NULL DEFAULT 'general',
+      upvotes INTEGER NOT NULL DEFAULT 0,
+      downvotes INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS community_post_comments (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      post_id VARCHAR NOT NULL,
+      author_id VARCHAR,
+      author_name VARCHAR(100) NOT NULL DEFAULT 'Community member',
+      author_initials VARCHAR(4) NOT NULL DEFAULT 'MWM',
+      author_color VARCHAR(20) NOT NULL DEFAULT '#3B1F0E',
+      content TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS user_blocks (
+      id SERIAL PRIMARY KEY,
+      blocker_id VARCHAR NOT NULL,
+      blocked_id VARCHAR NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS user_follows (
+      id SERIAL PRIMARY KEY,
+      follower_id VARCHAR NOT NULL,
+      following_id VARCHAR NOT NULL,
+      status VARCHAR NOT NULL DEFAULT 'accepted',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      accepted_at TIMESTAMPTZ
+    );
+    CREATE TABLE IF NOT EXISTS member_connections (
+      id SERIAL PRIMARY KEY,
+      requester_id TEXT NOT NULL,
+      recipient_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      responded_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS community_posts_created_at_idx
+      ON community_posts (created_at DESC);
+    CREATE INDEX IF NOT EXISTS community_post_comments_post_created_idx
+      ON community_post_comments (post_id, created_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS user_blocks_unique_idx
+      ON user_blocks (blocker_id, blocked_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS user_follows_unique_idx
+      ON user_follows (follower_id, following_id);
+    CREATE INDEX IF NOT EXISTS member_connections_members_idx
+      ON member_connections (requester_id, recipient_id, status);
+  `);
+
+  const required = [
+    ["community_posts", ["id", "author_id", "author_name", "author_initials", "author_color", "content", "category", "upvotes", "downvotes", "created_at"]],
+    ["community_post_comments", ["post_id", "created_at"]],
+    ["user_blocks", ["blocker_id", "blocked_id"]],
+    ["user_follows", ["follower_id", "following_id", "status"]],
+    ["member_connections", ["requester_id", "recipient_id", "status"]],
+  ] as const;
+  const { rows } = await pool.query<{ table_name: string; column_name: string }>(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+    [required.map(([table]) => table)],
+  );
+  const present = new Set(rows.map((row) => `${row.table_name}.${row.column_name}`));
+  const missing = required.flatMap(([table, columns]) =>
+    columns.filter((column) => !present.has(`${table}.${column}`)).map((column) => `${table}.${column}`),
+  );
+  if (missing.length > 0) {
+    throw new Error(`Community feed schema verification failed: missing columns [${missing.join(", ")}]`);
+  }
+  log("Community feed read schema ready before traffic acceptance");
+}
+
 export async function ensureRequiredPublicationSchema(
   directoryImportEnabled: boolean,
   logger?: Logger,

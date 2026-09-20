@@ -18,12 +18,16 @@ const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "app.json"), "
 const buildRecord = JSON.parse(
   fs.readFileSync(path.join(projectRoot, ".build-record.json"), "utf8"),
 ) as { lastIosSubmitted: number };
+const eas = JSON.parse(fs.readFileSync(path.join(projectRoot, "eas.json"), "utf8")) as {
+  build: { production: { env: { EXPO_PUBLIC_API_ORIGIN: string } } };
+  submit: { production: { ios: { ascAppId: string } } };
+};
 
 describe("iOS App Review background-audio configuration", () => {
   it("uses the next build after the last submitted TestFlight binary", () => {
     expect(Number(appJson.expo.ios.buildNumber)).toBe(buildRecord.lastIosSubmitted + 1);
-    expect(appJson.expo.ios.buildNumber).toBe("111");
-    expect(appJson.expo.android.versionCode).toBe(81);
+    expect(appJson.expo.ios.buildNumber).toBe("113");
+    expect(appJson.expo.android.versionCode).toBe(83);
     expect(appJson.expo.version).toBe("1.1.9");
     expect(appJson.expo.android.version).toBe("1.1.7");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");
@@ -41,5 +45,10 @@ describe("iOS App Review background-audio configuration", () => {
     expect(audioPlugin?.[1].enableBackgroundPlayback).toBe(false);
     expect(audioPlugin?.[1].enableBackgroundRecording).toBe(false);
     expect(appJson.expo.ios.infoPlist?.UIBackgroundModes ?? []).not.toContain("audio");
+  });
+
+  it("uses the production API and App Store Connect profile for TestFlight", () => {
+    expect(eas.build.production.env.EXPO_PUBLIC_API_ORIGIN).toBe("https://api.melaninmaps.com");
+    expect(eas.submit.production.ios.ascAppId).toBe("6783773366");
   });
 });
