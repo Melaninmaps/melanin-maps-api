@@ -1,21 +1,24 @@
 import type { Express, Request, Response } from "express";
 import type { Pool } from "pg";
-import { isAdmin } from "../lib/adminAuth";
+import { authorizeDirectoryOperator } from "./directoryServiceAuth";
 import {
   verifyDirectoryIngress, verifyDirectoryManifest, validateDirectorySourceRows, canonicalDirectoryPayload,
 } from "./reviewPipeline";
 import { classifyAutomatedReviewBatch } from "./automatedReviewPolicy";
 import { createHash } from "node:crypto";
 
-function admin(req: Request, res: Response): boolean {
-  if (!req.user) { res.status(401).json({ error: "Authentication required." }); return false; }
-  if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required." }); return false; }
-  return true;
+function operator(req: Request, res: Response) {
+  const authorization = authorizeDirectoryOperator(req);
+  if (!authorization.ok) {
+    res.status(authorization.status).json({ error: authorization.error });
+    return null;
+  }
+  return authorization;
 }
 
 export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool): void {
   app.get("/api/founder/directory-import/batches", async (req, res) => {
-    if (!admin(req, res)) return;
+    if (!operator(req, res)) return;
     const result = await reviewPool.query(
       `SELECT b.*, COUNT(c.id)::int AS candidate_count
          FROM directory_import_batches b LEFT JOIN directory_import_candidates c ON c.batch_id=b.id
@@ -23,7 +26,7 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
     res.json({ batches: result.rows });
   });
   app.get("/api/founder/directory-import/summary", async (req, res) => {
-    if (!admin(req, res)) return;
+    if (!operator(req, res)) return;
     const result = await reviewPool.query(
       `SELECT
         COUNT(*) FILTER (WHERE status='deduplicated')::int AS deduplicated,
@@ -36,31 +39,32 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
     res.json({ summary: result.rows });
   });
   app.get("/api/founder/directory-import/exceptions", async (req, res) => {
-    if (!admin(req, res)) return;
+    if (!operator(req, res)) return;
     const result = await reviewPool.query(
       `SELECT * FROM directory_import_candidates
         WHERE status IN ('needs_research','manual_review') ORDER BY updated_at DESC LIMIT 500`);
     res.json({ exceptions: result.rows });
   });
   app.post("/api/founder/directory-import/batches/:batchId/pause", async (req, res) => {
-    if (!admin(req, res)) return;
+    if (!operator(req, res)) return;
     await reviewPool.query(`UPDATE directory_import_batches SET status='paused',updated_at=now() WHERE id=$1`, [req.params.batchId]);
     res.json({ status: "paused" });
   });
   app.post("/api/founder/directory-import/batches/:batchId/resume", async (req, res) => {
-    if (!admin(req, res)) return;
+    if (!operator(req, res)) return;
     await reviewPool.query(`UPDATE directory_import_batches SET status='in_review',updated_at=now() WHERE id=$1`, [req.params.batchId]);
     res.json({ status: "in_review" });
   });
   app.get("/api/founder/directory-import/audit-report", async (req, res) => {
-    if (!admin(req, res)) return;
+    if (!operator(req, res)) return;
     const result = await reviewPool.query(`SELECT * FROM directory_import_decision_events ORDER BY created_at DESC LIMIT 1000`);
     const counts = await reviewPool.query(`SELECT action,COUNT(*)::int AS count
       FROM directory_import_decision_events GROUP BY action`);
     res.json({ events: result.rows, counts: counts.rows });
   });
   app.post("/api/founder/directory-import/ingress", async (req, res) => {
-    if (!admin(req, res)) return;
+    const authorized = operator(req, res);
+    if (!authorized) return;
     const body = typeof req.body?.jsonl === "string" ? req.body.jsonl : "";
     const manifest = req.body?.manifest;
     const headers = req.headers;
@@ -90,7 +94,7 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
         const inserted = await client.query(`INSERT INTO directory_import_batches
           (source_name,source_sha256,source_row_count,manifest_count,status,created_by)
           VALUES($1,$2,$3,$4,'in_review',$5) RETURNING id`,
-          [manifest.sourceName, sourceHash, records.length, manifest.rowCount, req.user!.id]);
+          [manifest.sourceName, sourceHash, records.length, manifest.rowCount, authorized.actorId]);
         batchId = inserted.rows[0].id;
       }
       const candidates = records.map((raw, index) => {
@@ -133,7 +137,7 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
         const payloadHash = createHash("sha256").update(canonicalDirectoryPayload(payload)).digest("hex");
         await client.query(`INSERT INTO directory_import_decision_events
           (candidate_id,batch_id,action,actor_id,idempotency_key,payload_hash)
-          VALUES($1,$2,$3,$4,$5,$6)`, [candidateId,batchId,decision.outcome,req.user!.id,
+          VALUES($1,$2,$3,$4,$5,$6)`, [candidateId,batchId,decision.outcome,authorized.actorId,
           `${sourceHash}:${candidate.sourceRowId}:${decision.outcome}`,payloadHash]);
         if (decision.outcome === "auto_ready") await client.query(`INSERT INTO directory_review_outbox
           (event_key,candidate_id,payload,payload_hash) VALUES($1,$2,$3,$4)

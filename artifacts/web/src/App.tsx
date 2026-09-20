@@ -375,6 +375,7 @@ function Router() {
       <Route path="/events/submit">
         <Layout><ProtectedRoute><SubmitEvent /></ProtectedRoute></Layout>
       </Route>
+      <Route path="/kinfolk"><Redirect to="/travel" /></Route>
       <Route path="/travel">
         <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
       </Route>
