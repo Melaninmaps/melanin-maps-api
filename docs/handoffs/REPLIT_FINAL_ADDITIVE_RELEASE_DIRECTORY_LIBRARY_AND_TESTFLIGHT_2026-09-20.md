@@ -131,30 +131,17 @@ The latest HBCU-neighborhood package is included in that set: 31 raw candidate r
 
 ### Stage every committed review package
 
-With `DIRECTORY_REVIEW_ENABLED=true`, worker still disabled, and operator environment variables present, stage each manifest through the signed ingress utility. This loop stages only; it does not publish businesses.
+With `DIRECTORY_REVIEW_ENABLED=true`, worker still disabled, and operator environment variables present, stage each manifest through the signed ingress utility. The staging command preflights every package before its first network request, requires exactly one checksum-bearing review summary and one destination-health ledger per manifest, then writes each receipt atomically. It stages only; it does not publish businesses.
 
 ```bash
-set -euo pipefail
 : "${DIRECTORY_REVIEW_API_URL:?set the private/public protected API base URL}"
 : "${DIRECTORY_REVIEW_SIGNING_SECRET:?configure only in the operator environment}"
 : "${DIRECTORY_SERVICE_TOKEN:?configure only in the operator environment}"
 
-mkdir -p /tmp/mwm-directory-ingress-receipts
-find data/founder-imports -path '*/review-package/*review-only-candidates.jsonl' -type f | sort | \
-while IFS= read -r manifest; do
-  package_dir="$(dirname "$manifest")"
-  summary="$(find "$package_dir" -maxdepth 1 -type f -name '*summary.json' -print -quit)"
-  health="$(find "$package_dir" -maxdepth 1 -type f -name '*destination-health.json' -print -quit)"
-  source_name="$(basename "$manifest" .jsonl)"
-  test -n "$summary" && test -n "$health"
-  node scripts/ingest-signed-directory-review-manifest.mjs \
-    --manifest "$manifest" \
-    --summary "$summary" \
-    --health "$health" \
-    --source-name "$source_name" \
-    --api "$DIRECTORY_REVIEW_API_URL" \
-    | tee "/tmp/mwm-directory-ingress-receipts/${source_name}.json"
-done
+node scripts/stage-signed-directory-review-manifests.mjs \
+  --root data/founder-imports \
+  --api "$DIRECTORY_REVIEW_API_URL" \
+  --receipts-dir /tmp/mwm-directory-ingress-receipts
 ```
 
 For every receipt, verify the returned row count and checksum. Then run the built-in automatic policy and reconciliation process. It should hold invalid or ambiguous rows; map physical businesses only after a valid numbered address and controlled geocode; retain online-only services as mapless; preserve pre-existing businesses, users, records, and history; and record canonical/superseded mappings rather than deleting duplicates.
