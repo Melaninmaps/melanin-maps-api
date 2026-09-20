@@ -107,8 +107,9 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
       let batchId: string;
       if (existing.rows[0]) {
         const row = existing.rows[0];
-        if (row.source_row_count !== records.length || row.manifest_count !== manifest.rowCount ||
-            row.source_name !== manifest.sourceName)
+        // The signed payload checksum selected this row. Preserve its original
+        // source name while allowing a later descriptive alias to reuse it.
+        if (row.source_row_count !== records.length || row.manifest_count !== manifest.rowCount)
           throw new Error("Checksum metadata conflict for existing import batch.");
         batchId = row.id;
       } else {
