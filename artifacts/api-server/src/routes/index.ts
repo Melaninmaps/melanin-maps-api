@@ -168,6 +168,7 @@ import universalSearchRouter from "./universal-search";
 import directoryRouter from "./directory";
 import knowledgeGraphRouter from "./knowledge-graph";
 import testerReportRouter from "./tester-report";
+import communityLanguageRouter from "./community-language";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -388,6 +389,7 @@ router.use(recurringEventsRouter);
 router.use(editSuggestionsRouter);
 router.use(tourCulturalSitesRouter);
 router.use(culturalPhrasesRouter);
+router.use(communityLanguageRouter);
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);
 // Canonical GET routes must come before the legacy culturalSitesRouter so map
