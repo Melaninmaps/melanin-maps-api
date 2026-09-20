@@ -82,8 +82,8 @@ export const SPA_HTML = `<!DOCTYPE html>
         _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-DD3WzsLu.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Bzo7UCGA.css">
+    <script type="module" crossorigin src="/assets/index-9XBA9xT9.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-y49rA4vB.css">
   </head>
   <body>
     <div id="root"></div>
