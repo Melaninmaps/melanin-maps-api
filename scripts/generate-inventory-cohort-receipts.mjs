@@ -271,6 +271,30 @@ function missionDecision(record, directory) {
   };
 }
 
+/**
+ * The protected ingress marks only a fully admitted immutable cohort row as
+ * `sourceBackedMwmCore` before it invokes the automated review policy. That
+ * removes the ordinary ownership-claim hold without changing any other
+ * directory safety, address, destination, duplicate, or invalid-row rule.
+ *
+ * The offline receipt first performs the stricter unauthenticated check above
+ * so that it can determine whether the row is eligible at all. Once it is
+ * eligible, project the exact ingress outcome here. This keeps the receipt
+ * count aligned with the stageable batch and prevents an operator from being
+ * told that source-backed rows require individual ownership re-review.
+ */
+function protectedIngressDirectoryDecision(directory, mission) {
+  if (!mission.eligibleForReleasePreview) return directory;
+  const exceptionCodes = directory.exceptionCodes.filter(
+    (code) => code !== "ownership_evidence_review",
+  );
+  return {
+    ...directory,
+    outcome: exceptionCodes.length === 0 ? "auto_ready" : directory.outcome,
+    exceptionCodes,
+  };
+}
+
 async function main() {
   const root = resolve(argValue("--root", DEFAULT_ROOT));
   const out = resolve(argValue("--out", DEFAULT_OUT));
@@ -296,6 +320,7 @@ async function main() {
       const sourceRowId = String(record.sourceRowId ?? record.source_row_id ?? sourceRow);
       const directory = directoryDecision(record, sourceRow, localIdentities);
       const mission = missionDecision(record, directory);
+      const publicationDirectory = protectedIngressDirectoryDecision(directory, mission);
       const recordFingerprint = sha256(canonicalJson(record));
       const firstManifestFingerprint = globalFingerprints.get(recordFingerprint);
       if (firstManifestFingerprint && mission.eligibleForReleasePreview) {
@@ -314,9 +339,14 @@ async function main() {
         sourceRowId,
         recordFingerprint,
         directoryPolicyVersion: DIRECTORY_POLICY_VERSION,
-        directoryOutcome: directory.outcome,
-        directoryExceptionCodes: directory.exceptionCodes,
-        directoryCanonicalSourceRow: directory.canonicalSourceRow,
+        // `directoryOutcome` predicts protected ingress after its immutable
+        // source-receipt admission. Keep the unauthenticated pre-admission
+        // result as evidence rather than leaving an artificial manual queue.
+        directoryOutcome: publicationDirectory.outcome,
+        directoryExceptionCodes: publicationDirectory.exceptionCodes,
+        directoryCanonicalSourceRow: publicationDirectory.canonicalSourceRow,
+        preAdmissionDirectoryOutcome: directory.outcome,
+        preAdmissionDirectoryExceptionCodes: directory.exceptionCodes,
         cohort: mission.cohort,
         evidenceLane: mission.evidenceLane ?? null,
         publicationClassification: mission.publicationClassification ?? null,
