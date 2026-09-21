@@ -62,18 +62,27 @@ export function startDirectoryPublicationWorker(
   reviewPool: Pool, productionPool: Pool, environment: NodeJS.ProcessEnv = process.env,
 ): (() => void) | null {
   if (environment.DIRECTORY_PUBLICATION_WORKER_ENABLED !== "1") return null;
+  const batchChecksum = environment.DIRECTORY_PUBLICATION_BATCH_SHA256?.trim().toLowerCase() ?? "";
+  if (!/^[a-f0-9]{64}$/.test(batchChecksum)) {
+    throw new Error(
+      "DIRECTORY_PUBLICATION_BATCH_SHA256 must be the exact 64-character manifest checksum for the one approved directory batch.",
+    );
+  }
   let stopped = false;
   const concurrency = directoryWorkerConcurrency(environment);
   const run = async () => {
     while (!stopped) {
       const result = await reviewPool.query(`WITH claim AS (
-        SELECT id FROM directory_review_outbox
-        WHERE status IN ('pending','failed') AND available_at <= now()
+        SELECT o.id FROM directory_review_outbox o
+        JOIN directory_import_candidates c ON c.id=o.candidate_id
+        JOIN directory_import_batches b ON b.id=c.batch_id
+        WHERE o.status IN ('pending','failed') AND o.available_at <= now()
         AND (lease_until IS NULL OR lease_until < now())
-        ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1)
+        AND b.source_sha256=$1
+        ORDER BY o.created_at FOR UPDATE OF o SKIP LOCKED LIMIT 1)
         UPDATE directory_review_outbox o SET status='sending', lease_token=gen_random_uuid()::text,
         lease_until=now()+interval '2 minutes', attempts=attempts+1 FROM claim
-        WHERE o.id=claim.id RETURNING o.*`);
+        WHERE o.id=claim.id RETURNING o.*`, [batchChecksum]);
       const row = result.rows[0];
       if (!row) { await new Promise((resolve) => setTimeout(resolve, 1000)); continue; }
       try {
