@@ -45,6 +45,15 @@ if [ -n "${RELEASE_SHA:-}" ] && [ "$SHA" != "$RELEASE_SHA" ]; then
   fail "HEAD $SHA does not equal RELEASE_SHA $RELEASE_SHA"
 fi
 
+for generated_runtime_artifact in \
+  artifacts/api-server/dist/index.mjs \
+  artifacts/api-server/dist/BUILD_IDENTITY
+do
+  if git ls-files --error-unmatch "$generated_runtime_artifact" >/dev/null 2>&1; then
+    fail "$generated_runtime_artifact must not be tracked; Railway's final COPY would overwrite the fresh build"
+  fi
+done
+
 if [ "$MODE" = "--verify-final" ]; then
   [ -z "$(git status --porcelain)" ] || fail "final verification requires a clean checkout"
 fi
