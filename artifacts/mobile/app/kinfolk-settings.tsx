@@ -59,7 +59,7 @@ const CAPABILITIES = [
 ];
 
 const VOICE_MODES: { value: string; label: string; desc: string; icon: "zap" | "briefcase" | "book-open" | "heart" }[] = [
-  { value: "community", label: "Big Cousin", desc: "Warm, grounded, conversational, and direct", icon: "zap" },
+  { value: "community", label: "Just Big Cousin", desc: "Warm, grounded, conversational, and direct", icon: "zap" },
   { value: "professor", label: "Professor", desc: "Clear teaching, context, and the why behind it", icon: "book-open" },
   { value: "business_manager", label: "Business Manager", desc: "Priorities, risks, decisions, and next actions", icon: "briefcase" },
   { value: "best_friend", label: "Best Friend", desc: "Supportive, candid, natural, and honest", icon: "heart" },

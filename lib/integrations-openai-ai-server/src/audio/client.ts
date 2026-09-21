@@ -118,6 +118,39 @@ export async function textToSpeech(
   return Buffer.from((response.choices[0]?.message as any)?.audio?.data ?? "", "base64");
 }
 
+/**
+ * Server-side TTS control for a named product voice. The delivery instruction
+ * is never supplied by an end-user client; callers own the selected base voice
+ * and the instruction. The script remains after the colon so the provider has
+ * a clear boundary between direction and spoken text.
+ */
+export async function textToSpeechWithStyle(input: {
+  text: string;
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+  format?: "wav" | "mp3" | "flac" | "opus" | "pcm16";
+  model?: "gpt-audio";
+  styleInstruction: string;
+}): Promise<Buffer> {
+  const format = input.format ?? "wav";
+  const response = await getOpenAI().chat.completions.create({
+    model: input.model ?? "gpt-audio",
+    modalities: ["text", "audio"],
+    audio: { voice: input.voice, format },
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a text-to-speech renderer. Follow the delivery direction, but speak only the script after the final colon. Do not read instructions, labels, markup, or punctuation descriptions aloud.",
+      },
+      {
+        role: "user",
+        content: `${input.styleInstruction}: ${input.text}`,
+      },
+    ],
+  });
+  return Buffer.from((response.choices[0]?.message as any)?.audio?.data ?? "", "base64");
+}
+
 export async function textToSpeechStream(
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy"

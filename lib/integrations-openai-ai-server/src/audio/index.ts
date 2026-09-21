@@ -7,6 +7,7 @@ export {
   voiceChat,
   voiceChatStream,
   textToSpeech,
+  textToSpeechWithStyle,
   textToSpeechStream,
   speechToText,
   speechToTextStream,

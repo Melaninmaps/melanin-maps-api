@@ -3,7 +3,7 @@ import {
   openai,
   resolveOpenAIConfiguration,
 } from "@workspace/integrations-openai-ai-server";
-import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
+import { textToSpeechWithStyle } from "@workspace/integrations-openai-ai-server/audio";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import {
   OWNERSHIP_FILTER_OPTIONS,
@@ -291,7 +291,6 @@ import {
 import {
   buildLanguagePersonalizationPrompt,
   defaultVoicePreferences,
-  isKinfolkVoice,
   normalizeKinfolkVoice,
   normalizeRegionalFlavor,
   validateKinfolkPreferenceUpdate,
@@ -300,6 +299,12 @@ import {
   buildKinfolkConversationModePrompt,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import {
+  KINFOLK_VOICE_PREVIEW_TEXT,
+  normalizeKinfolkSpeechRequest,
+  resolveKinfolkSpeechConfiguration,
+  resolveKinfolkVoiceDelivery,
+} from "../kinfolk/voice-delivery";
 import { buildKendrickDrakeCulturalConsensusAnswer } from "../kinfolk/cultural-consensus-answer";
 import { buildCulturalConflictClarification } from "../kinfolk/cultural-conflict-clarification";
 import {
@@ -10667,28 +10672,28 @@ router.get(
   },
 );
 
-// ─── POST /api/kinfolk/speak — TTS, gated by monthly char allowance ───────────
+// ─── POST /api/kinfolk/speak — server-owned TTS, gated by allowance ───────────
 router.post("/kinfolk/speak", async (req: Request, res: Response) => {
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res.status(503).json({ error: "AI service unavailable" });
-  }
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-
-  const { text, voice: requestedVoice } = req.body as {
-    text?: string;
-    voice?: string;
-  };
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({
+      error: "TTS_UNAVAILABLE",
+      message: "Kinfolk audio is unavailable right now. You can still read the response.",
+    });
+  }
+  const { text } = req.body as { text?: string };
   if (!text || typeof text !== "string")
     return void res.status(400).json({ error: "text is required" });
-  if (requestedVoice !== undefined && !isKinfolkVoice(requestedVoice)) {
-    return void res.status(400).json({ error: "INVALID_VOICE" });
+  const speechConfig = resolveKinfolkSpeechConfiguration();
+  if (!speechConfig) {
+    return void res.status(503).json({
+      error: "TTS_UNAVAILABLE",
+      message: "Kinfolk audio is not configured right now. You can still read the response.",
+    });
   }
-  const savedPrefs = await getCachedPrefs(req.user.id);
-  const voice = normalizeKinfolkVoice(
-    savedPrefs?.kinfolkVoice ?? requestedVoice,
-  );
-
+  const speechRequest = normalizeKinfolkSpeechRequest(req.body);
+  const delivery = resolveKinfolkVoiceDelivery(speechRequest.mode);
   const chars = Math.min(text.length, 600);
   const speakText = chars < text.length ? text.slice(0, 597) + "…" : text;
 
@@ -10700,7 +10705,6 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       .limit(1);
     const tier = getTierFromMemberType(userRow?.memberType);
     const usage = await checkVoiceUsage(req.user.id, tier);
-
     if (!usage.allowed) {
       return void res.status(429).json({
         error: "Voice allowance reached for this month",
@@ -10711,11 +10715,15 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       });
     }
 
-    // Synthesis remains foreground-only. The integration does not currently
-    // accept an AbortSignal, so bound the member-facing request explicitly.
     let ttsTimer: ReturnType<typeof setTimeout> | undefined;
     const audioBuffer = await Promise.race([
-      textToSpeech(speakText, voice, "wav"),
+      textToSpeechWithStyle({
+        text: speakText,
+        voice: speechConfig.baseVoice,
+        format: "wav",
+        model: speechConfig.model,
+        styleInstruction: delivery.styleInstruction,
+      }),
       new Promise<never>((_resolve, reject) => {
         ttsTimer = setTimeout(() => reject(new Error("TTS_TIMEOUT")), 15_000);
       }),
@@ -10725,25 +10733,20 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {
       return void res.status(503).json({
         error: "TTS_UNAVAILABLE",
-        message:
-          "Kinfolk could not create audio for that response. Please try again or read the text instead.",
+        message: "Kinfolk could not create audio for that response. Please try again or read the text instead.",
       });
     }
     await incrementVoiceChars(req.user.id, chars);
-
     const newUsed = usage.used + chars;
-    const percentRemaining =
-      usage.limit === -1
-        ? 100
-        : Math.max(
-            0,
-            Math.round(((usage.limit - newUsed) / usage.limit) * 100),
-          );
+    const percentRemaining = usage.limit === -1
+      ? 100
+      : Math.max(0, Math.round(((usage.limit - newUsed) / usage.limit) * 100));
 
     res.json({
       audio: audioBuffer.toString("base64"),
       format: "wav",
-      voice, // returned so the UI can confirm which voice was used
+      deliveryMode: delivery.mode,
+      deliveryLabel: delivery.label,
       charsUsed: newUsed,
       charsLimit: usage.limit,
       percentRemaining,
@@ -10758,6 +10761,41 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
         ? "Kinfolk audio is taking too long. Please try again or read the text instead."
         : "Kinfolk could not create audio right now. Please try again or read the text instead.",
     });
+  }
+});
+
+// ─── POST /api/kinfolk/voice-preview — fixed script, one Kinfolk base voice ──
+router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk audio is unavailable right now." });
+  }
+  const speechConfig = resolveKinfolkSpeechConfiguration();
+  if (!speechConfig) {
+    return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk audio is not configured right now." });
+  }
+  const delivery = resolveKinfolkVoiceDelivery(normalizeKinfolkSpeechRequest(req.body).mode);
+  try {
+    const audioBuffer = await textToSpeechWithStyle({
+      text: KINFOLK_VOICE_PREVIEW_TEXT,
+      voice: speechConfig.baseVoice,
+      format: "wav",
+      model: speechConfig.model,
+      styleInstruction: delivery.styleInstruction,
+    });
+    if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {
+      return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk could not create a voice preview right now." });
+    }
+    res.json({
+      audio: audioBuffer.toString("base64"),
+      format: "wav",
+      deliveryMode: delivery.mode,
+      deliveryLabel: delivery.label,
+    });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Kinfolk voice preview failed");
+    res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk could not create a voice preview right now." });
   }
 });
 

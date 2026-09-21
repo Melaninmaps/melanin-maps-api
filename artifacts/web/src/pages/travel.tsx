@@ -43,7 +43,6 @@ import {
 import {
   AAVE_LEVEL_OPTIONS,
   composerValueFromTranscript,
-  KINFOLK_VOICE_OPTIONS,
   normalizeWebRegionalFlavor,
   normalizeWebVoice,
   REGIONAL_LANGUAGE_OPTIONS,
@@ -712,18 +711,8 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
 
           {/* ── Kinfolk's Voice ── */}
           <div className="pt-2 border-t border-[#3A1F0E]/8">
-            <div className="text-[11px] font-bold text-[#3A1F0E] mb-0.5">Kinfolk's Voice</div>
-            <div className="text-[10px] text-[#3A1F0E]/40 mb-3">Choose a stable synthetic voice for every location. No human voice or identity is cloned.</div>
-            <div className="grid gap-1.5">
-              {KINFOLK_VOICE_OPTIONS.map(o => (
-                <button key={o.id} type="button" onClick={() => setLocal(p => ({ ...p, kinfolkVoice: o.id }))}
-                  aria-pressed={local.kinfolkVoice === o.id}
-                  className={`rounded-xl px-3 py-2 text-left transition-colors ${local.kinfolkVoice === o.id ? "bg-[#CA922B] text-white" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
-                  <span className="block text-xs font-semibold">{o.label}{o.feminine ? " · Feminine" : ""}</span>
-                  <span className="block text-[9px] opacity-75">{o.description}</span>
-                </button>
-              ))}
-            </div>
+            <div className="text-[11px] font-bold text-[#3A1F0E] mb-0.5">Kinfolk&apos;s Voice</div>
+            <div className="text-[10px] text-[#3A1F0E]/40 mb-3">One protected Kinfolk base voice is used everywhere. Your selected Kinfolk mode changes delivery, never the voice identity, facts, sources, or safety standards.</div>
             <label className="mt-3 flex items-start gap-2 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3">
               <input type="checkbox" checked={local.autoSpeak} onChange={e => setLocal(p => ({ ...p, autoSpeak: e.target.checked }))} className="mt-0.5" />
               <span>
@@ -1442,7 +1431,7 @@ function TravelPage() {
       const r = await fetch(`${BASE}api/kinfolk/speak`, {
         method: "POST", credentials: "include",
         headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ text: content.slice(0, 600), voice: prefs.kinfolkVoice || "onyx" }),
+        body: JSON.stringify({ text: content.slice(0, 600), mode: kinfolkMode, requestId: msgId }),
         signal: request.signal,
       });
       if (!voiceGuardRef.current.canPlay(request)) return;
@@ -1489,7 +1478,7 @@ function TravelPage() {
       setPlayingId(null);
       setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
     }
-  }, [playingId, prefs.kinfolkVoice, releaseAudio]);
+  }, [playingId, kinfolkMode, releaseAudio]);
 
   // Load session list
   const loadSessions = useCallback(async () => {
@@ -2413,7 +2402,7 @@ function TravelPage() {
 
                 <div className="mb-2 flex max-w-3xl flex-wrap items-center gap-2 mx-auto">
                   {([[
-                    "community", "Big Cousin"
+                    "community", "Just Big Cousin"
                   ], ["professor", "Professor"], ["business_manager", "Business Manager"], ["best_friend", "Best Friend"]] as const).map(([value, label]) => (
                     <button key={value} onClick={() => setKinfolkMode(value)} className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${kinfolkMode === value ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/50"}`}>{label}</button>
                   ))}
