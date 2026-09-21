@@ -3,6 +3,12 @@ import {
   type SafeSearchClarification,
 } from "@workspace/constants";
 import type { LibraryRepository, LibrarySearchPage } from "./types";
+import {
+  researchLensFacetKeys,
+  resolveCommunityResearchLenses,
+  stripCommunityResearchLensTags,
+  type CommunityResearchLens,
+} from "./communityResearchLens";
 
 export type LibrarySearchRepository = LibraryRepository;
 
@@ -13,6 +19,8 @@ export type LibraryIntentChoice = {
 
 export type LibrarySearchResponse = LibrarySearchPage & {
   query: string;
+  /** Research scopes are explicit or product-default; never inferred member identity. */
+  researchLenses: CommunityResearchLens[];
   nextCursor: string | null;
   /** A member-confirmed retry only; no query is silently replaced. */
   searchClarification: SafeSearchClarification | null;
@@ -31,6 +39,7 @@ export type LibrarySearchResponse = LibrarySearchPage & {
 export type ParsedLibrarySearch = {
   query: string;
   normalizedQuery: string;
+  researchLenses?: CommunityResearchLens[];
   limit: number;
   offset: number;
 };
@@ -252,11 +261,20 @@ export function parseLibrarySearchQuery(
     offset = decoded;
   }
 
+  const searchableQuery = stripCommunityResearchLensTags(displayQuery);
+  if (!searchableQuery) {
+    return {
+      ok: false,
+      error: "Add a topic after the research lens tag, such as #BlackWomen breast cancer.",
+    };
+  }
+
   return {
     ok: true,
     value: {
       query: displayQuery,
-      normalizedQuery: normalizeLibrarySearchQuery(displayQuery),
+      normalizedQuery: normalizeLibrarySearchQuery(searchableQuery),
+      researchLenses: resolveCommunityResearchLenses(displayQuery),
       limit,
       offset,
     },
@@ -302,6 +320,8 @@ export async function searchLivingLibrary(
   parsed: ParsedLibrarySearch,
   rankingContext: readonly string[] = [],
 ): Promise<LibrarySearchResponse> {
+  const researchLenses = parsed.researchLenses
+    ?? resolveCommunityResearchLenses(parsed.query);
   const { searchTerms, patterns, preferredTopicSlugs } =
     resolveLibrarySearchVocabulary(parsed.normalizedQuery);
   const rankingContextPatterns = [
@@ -318,6 +338,7 @@ export async function searchLivingLibrary(
     searchTerms,
     patterns,
     preferredTopicSlugs,
+    requiredResearchLensFacetKeys: researchLensFacetKeys(researchLenses),
     rankingContextPatterns,
     limit: parsed.limit,
     offset: parsed.offset,
@@ -335,6 +356,7 @@ export async function searchLivingLibrary(
   return {
     ...page,
     query: parsed.query,
+    researchLenses,
     searchClarification,
     preferenceContextApplied: rankingContextPatterns.length > 0,
     nextCursor:

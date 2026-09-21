@@ -158,6 +158,12 @@ export async function seedLibraryStarterEntries(pool: Pool): Promise<number> {
       );
       const entryId = activeEntryRows[0]?.id;
       if (!entryId) continue;
+      await pool.query(
+        `INSERT INTO library_entry_facets (entry_id, facet_key)
+         VALUES ($1, 'research-lens:diaspora')
+         ON CONFLICT (entry_id, facet_key) DO NOTHING`,
+        [entryId],
+      );
 
       for (const source of entry.sources) {
         await pool.query(

@@ -1,12 +1,17 @@
 import { createHash } from "node:crypto";
 import {
   buildCommunityResearchQuery,
-  DEFAULT_COMMUNITY_LENS,
   getResearchPolicy,
   isTrustedResearchUrl,
   type ResearchDomain,
   type SourceTier,
 } from "./researchPolicy";
+import {
+  hasDirectEvidenceForExplicitResearchLenses,
+  researchLensCommunityLabel,
+  researchLensFacetKeys,
+  resolveCommunityResearchLenses,
+} from "./communityResearchLens";
 import type {
   ExternalResearchProvider,
   KnowledgeSource,
@@ -61,6 +66,11 @@ export class LibraryEvidenceInsufficientError extends Error {
 export function normalizeResearchQuestion(question: string): string {
   return question
     .normalize("NFKC")
+    .replace(/#blackwomen\b/gi, "black women")
+    .replace(/#blackmen\b/gi, "black men")
+    .replace(/#blackstudents\b/gi, "black students")
+    .replace(/#hbcustudents\b/gi, "hbcu students")
+    .replace(/#diaspora\b/gi, "")
     .toLocaleLowerCase("en-US")
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
@@ -153,7 +163,9 @@ export async function answerAndArchiveResearchQuestion(input: {
   // reusable-key or pending-candidate attribute at this boundary.
   const libraryLocationLabel = null;
   const policy = getResearchPolicy(question);
-  const communityLens = DEFAULT_COMMUNITY_LENS;
+  const researchLenses = resolveCommunityResearchLenses(question);
+  const communityLens = researchLensCommunityLabel(researchLenses);
+  const lensFacetKeys = researchLensFacetKeys(researchLenses);
   const normalizedQuestion = normalizeResearchQuestion(question);
   const generalReusableQuestion = isGeneralReusableQuestion(question);
   const currentAfter = new Date(Date.now() - policy.archiveTtlHours * 60 * 60 * 1_000);
@@ -173,6 +185,7 @@ export async function answerAndArchiveResearchQuestion(input: {
     normalizedQuestion,
     domain: policy.domain,
     communityLens,
+    researchLensFacetKeys: lensFacetKeys,
     locationLabel: libraryLocationLabel,
     currentAfter,
   });
@@ -197,6 +210,10 @@ export async function answerAndArchiveResearchQuestion(input: {
   }
   const documents = validResearchDocuments(providerResult.documents, policy.allowDomains);
   if (documents.length < MINIMUM_SOURCE_COUNT) {
+    await recordSignal("insufficient", true);
+    throw new LibraryEvidenceInsufficientError();
+  }
+  if (!hasDirectEvidenceForExplicitResearchLenses(documents, researchLenses)) {
     await recordSignal("insufficient", true);
     throw new LibraryEvidenceInsufficientError();
   }
@@ -243,6 +260,7 @@ export async function answerAndArchiveResearchQuestion(input: {
     body: draft.body.trim(),
     domain: policy.domain,
     communityLens,
+    researchLenses: researchLenses.map((lens) => lens.tag),
     locationLabel: libraryLocationLabel,
     disclaimer: policy.disclaimer,
     sourceCount: citedDocuments.length,

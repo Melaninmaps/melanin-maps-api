@@ -37,6 +37,7 @@ describe("Postgres Living Library publication boundaries", () => {
     expect(calls[0].sql).toContain("direct_entry.publication_status = 'published'");
     expect(calls[0].sql).toContain("LEFT JOIN library_entry_facets");
     expect(calls[0].sql).toContain("facet.facet_key");
+    expect(calls[0].sql).toContain("required_facet.facet_key");
     expect(calls[0].sql).toContain("topic.is_foundational = true");
     expect(calls[0].sql).toContain("owner_topic.slug AS topic_slug");
     expect(calls[0].sql).toContain("owner_topic.title AS topic_title");
@@ -52,6 +53,7 @@ describe("Postgres Living Library publication boundaries", () => {
       ["hvac", "heating", "air conditioning"],
       6,
       0,
+      [],
       [],
     ]);
   });

@@ -33,6 +33,7 @@ export interface PermittedIdentityContext {
 }
 
 const GROUP_WORDING = [
+  "African diaspora",
   "African American women",
   "African American men",
   "African Americans",
@@ -42,6 +43,10 @@ const GROUP_WORDING = [
   "Black man",
   "Black people",
   "Black community",
+  "Black students",
+  "Black student",
+  "HBCU students",
+  "HBCU student",
   "Latina women",
   "Latino men",
   "Latinx people",
@@ -107,6 +112,20 @@ function normalizeWording(value: string): string {
   return known ?? value.trim().replace(/\s+/g, " ");
 }
 
+/**
+ * A supported hashtag is an explicit request to scope this one answer's
+ * evidence. It is expanded only in the current turn and never saved as a
+ * member identity, preference, or diagnostic attribute.
+ */
+function expandExplicitResearchLensTags(value: string): string {
+  return value
+    .replace(/#diaspora\b/gi, "African diaspora")
+    .replace(/#blackwomen\b/gi, "Black women")
+    .replace(/#blackmen\b/gi, "Black men")
+    .replace(/#blackstudents\b/gi, "Black students")
+    .replace(/#hbcustudents\b/gi, "HBCU students");
+}
+
 function classifyKind(value: string): ExplicitIdentityKind {
   const lower = value.toLowerCase();
   if (SEX_WORDING.some((candidate) => candidate.toLowerCase() === lower)) return "sex";
@@ -131,6 +150,7 @@ function labelFor(value: string): string {
 }
 
 function explicitSelfDescription(turn: string): string | null {
+  const normalizedTurn = expandExplicitResearchLensTags(turn);
   const declarationPatterns = [
     new RegExp(`\\b(?:i\\s+am|i['’]?m|i\\s+identify\\s+as)\\s+(?:a|an)?\\s*(${ANY_EXPLICIT_WORDING})\\b(?![-\\s]+owned)`, "i"),
     new RegExp(`\\bas\\s+(?:a|an)\\s+(${ANY_EXPLICIT_WORDING})\\b(?![-\\s]+owned)`, "i"),
@@ -138,7 +158,7 @@ function explicitSelfDescription(turn: string): string | null {
   ];
 
   for (const pattern of declarationPatterns) {
-    const match = turn.match(pattern);
+    const match = normalizedTurn.match(pattern);
     if (match?.[1]) return normalizeWording(match[1]);
   }
   return null;
@@ -146,10 +166,11 @@ function explicitSelfDescription(turn: string): string | null {
 
 /** Return explicit group wording without converting it into a member identity claim. */
 export function extractExplicitPopulationWording(currentUserTurn: string): string | null {
-  const selfDescription = explicitSelfDescription(currentUserTurn);
+  const normalizedTurn = expandExplicitResearchLensTags(currentUserTurn);
+  const selfDescription = explicitSelfDescription(normalizedTurn);
   if (selfDescription) return selfDescription;
 
-  const groupMatch = currentUserTurn.match(new RegExp(`\\b(${GROUP_ALTERNATION})\\b(?![-\\s]+owned)`, "i"));
+  const groupMatch = normalizedTurn.match(new RegExp(`\\b(${GROUP_ALTERNATION})\\b(?![-\\s]+owned)`, "i"));
   return groupMatch?.[1] ? normalizeWording(groupMatch[1]) : null;
 }
 

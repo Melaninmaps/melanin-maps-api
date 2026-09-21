@@ -126,14 +126,14 @@ describe("POST /api/library/research", () => {
     const response = await supertest(createApp(repository, { userId: "member-1", researchProvider, synthesisWriter })).post("/api/library/research").send({ question: "What treatment helps high blood pressure?", profile: { race: "invented", religion: "invented" } });
     expect(response.status).toBe(200);
     expect(researchProvider.search).toHaveBeenCalledWith(expect.objectContaining({ allowedDomains: expect.arrayContaining(["cdc.gov", "medlineplus.gov"]) }));
-    expect(synthesisWriter.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ disclaimer: expect.stringMatching(/not a medical diagnosis/i), communityLens: expect.stringMatching(/no member identity inferred/i) }));
+    expect(synthesisWriter.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ disclaimer: expect.stringMatching(/not a medical diagnosis/i), communityLens: expect.stringMatching(/requested evidence scope, not a claim about the reader/i) }));
     expect(JSON.stringify(vi.mocked(researchProvider.search).mock.calls)).not.toContain("invented");
   });
 
   it("returns an explicit group-level research scope without claiming it is the member's identity", async () => {
     const repository = createRepository();
     const researchProvider = provider([
-      { url: "https://www.cdc.gov/a", title: "CDC", content: "A".repeat(220), publisher: "cdc.gov", publishedAt: null },
+      { url: "https://www.cdc.gov/a", title: "CDC", content: "Black women pregnancy evidence. ".repeat(12), publisher: "cdc.gov", publishedAt: null },
       { url: "https://pubmed.ncbi.nlm.nih.gov/123456/", title: "PubMed", content: "B".repeat(220), publisher: "pubmed.ncbi.nlm.nih.gov", publishedAt: null },
     ]);
     const response = await supertest(createApp(repository, { userId: "member-1", researchProvider }))
@@ -143,7 +143,7 @@ describe("POST /api/library/research", () => {
     expect(response.body.researchScope).toMatchObject({
       domain: "medical",
       requestedGroup: "Black women ages 45–50",
-      groupGuidance: expect.stringMatching(/does not assume that this group describes the reader/i),
+      groupGuidance: expect.stringMatching(/not the reader/i),
     });
     expect(response.body.researchScope.connectedTopics).toEqual(expect.arrayContaining([
       expect.objectContaining({ label: "Health & Wellness" }),

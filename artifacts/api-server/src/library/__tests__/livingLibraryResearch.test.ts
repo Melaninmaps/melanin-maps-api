@@ -22,9 +22,13 @@ describe("Living Library evidence and identity policy", () => {
     expect(validResearchDocuments([{ ...spiritualDocuments[0], url: "http://pewresearch.org/a" }], ["pewresearch.org"])).toEqual([]);
   });
 
-  it("does not infer identity or prepend demographics to a broad question", () => {
-    expect(buildCommunityResearchQuery("oldest bookstore in the US", "history")).toBe("oldest bookstore in the US");
-    expect(buildCommunityResearchQuery("life after death", "history")).toBe("life after death");
+  it("uses the diaspora-first product lens without inferring reader identity", () => {
+    const historyQuery = buildCommunityResearchQuery("oldest bookstore in the US", "history");
+    const faithQuery = buildCommunityResearchQuery("life after death", "history");
+    expect(historyQuery).toContain("oldest bookstore in the US");
+    expect(faithQuery).toContain("life after death");
+    expect(historyQuery).toContain("Research lens: African diaspora and Black communities.");
+    expect(faithQuery).toContain("Research lens: African diaspora and Black communities.");
   });
 
   it("requires multi-perspective spiritual framing and publishes a general, fully cited brief", async () => {
@@ -32,7 +36,7 @@ describe("Living Library evidence and identity policy", () => {
     const researchProvider: ExternalResearchProvider = { name: "openai", search: vi.fn().mockResolvedValue({ documents: spiritualDocuments, provider: "openai", status: "available" }) };
     const writer: LibrarySynthesisWriter = { writeStructured: vi.fn().mockResolvedValue({ title: "Perspectives on life after death", summary: "Traditions differ, and no unknowable answer is established as fact.", body: "Christian, Islamic, African and diasporic, philosophical, and secular perspectives differ.", citedSourceIndexes: [0, 1], sourceNotes: [{ sourceIndex: 0, whyItMatters: "It documents variation in beliefs." }, { sourceIndex: 1, whyItMatters: "It explains multiple religious traditions." }], relatedQuestions: ["How do ancestor traditions vary?", "What does secular scholarship study?"] }) };
     const result = await answerAndArchiveResearchQuestion({ question: "life after death", locationLabel: null, repository: repo, researchProvider, writer, internalResultCount: 0 });
-    expect(writer.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ communityLens: expect.stringMatching(/editorial perspective; no member identity inferred/i) }));
+    expect(writer.writeStructured).toHaveBeenCalledWith(expect.objectContaining({ communityLens: expect.stringMatching(/requested evidence scope, not a claim about the reader/i) }));
     expect(result.entry).toMatchObject({ publicationStatus: "published", relatedQuestions: expect.arrayContaining(["How do ancestor traditions vary?"]) });
     expect(repo.saveEntry).toHaveBeenCalledWith(expect.objectContaining({
       topicSlug: "faith-spirituality-community-institutions",

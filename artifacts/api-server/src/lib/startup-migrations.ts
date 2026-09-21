@@ -5048,6 +5048,20 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       PRIMARY KEY (entry_id, facet_key)
     )`,
   },
+  // Explicit research lenses govern which evidence packet a Library search may
+  // reuse. They are source scopes, never member identity or profile attributes.
+  {
+    name: "library_community_research_lenses_v1",
+    sql: `INSERT INTO library_facet_definitions (facet_key, label, dimension)
+      VALUES
+        ('research-lens:diaspora', 'Diaspora', 'research_lens'),
+        ('research-lens:black-women', 'Black women', 'research_lens'),
+        ('research-lens:black-men', 'Black men and boys', 'research_lens'),
+        ('research-lens:black-students', 'Black students', 'research_lens'),
+        ('research-lens:hbcu-students', 'HBCU students and alumni', 'research_lens')
+      ON CONFLICT (facet_key) DO UPDATE
+        SET label = EXCLUDED.label, dimension = EXCLUDED.dimension, active = true`,
+  },
   // ── Topic relationships (siblings/children) ───────────────────────────────
   {
     name: "library_topic_relationships_v1",

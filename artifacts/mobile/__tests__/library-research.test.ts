@@ -31,6 +31,8 @@ describe("mobile Library research experience", () => {
   it("shows answer sections, source links, scope, and connected topic tags", () => {
     expect(researchScreen).toContain("const heading = part.match");
     expect(researchScreen).toContain("How this was researched");
+    expect(researchScreen).toContain("Research lens:");
+    expect(researchScreen).toContain("#BlackWomen");
     expect(researchScreen).toContain("Connected Library topics");
     expect(researchScreen).toContain("safeUrl(source.url)");
     expect(researchScreen).toContain('Linking.openURL(source.href)');

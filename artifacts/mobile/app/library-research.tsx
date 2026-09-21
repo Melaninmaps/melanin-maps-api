@@ -39,11 +39,13 @@ type LibraryEntry = {
   sourceCount: number;
   sources: Source[];
   refreshedAt: string;
+  researchLenses?: string[];
   relatedQuestions?: string[];
   disclaimer?: string | null;
 };
 type LibrarySearch = {
   total: number;
+  researchLenses: Array<{ tag: string; label: string }>;
   results: Array<({ kind: "entry" } & LibraryEntry) | { kind: "topic"; id: string; title: string; summary: string }>;
   searchClarification?: {
     kind: "possible_spelling";
@@ -57,6 +59,7 @@ type ResearchScope = {
   sourceStandard: string;
   requestedGroup: string | null;
   groupGuidance: string;
+  researchLenses: Array<{ tag: string; label: string }>;
   connectedTopics: Array<{ label: string; href: string }>;
 };
 type ResearchResponse = {
@@ -100,6 +103,7 @@ function AnswerCard({ answer, scope, onConnectedTopic }: { answer: LibraryEntry;
   return (
     <View style={[styles.answerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.eyebrow, { color: "#936719" }]}>SOURCE-GOVERNED LIBRARY BRIEF</Text>
+      {answer.researchLenses?.length ? <Text style={[styles.researchLens, { color: "#70480F" }]}>{answer.researchLenses.join(" ")}</Text> : null}
       <Text style={[styles.answerTitle, { color: colors.foreground }]}>{answer.title}</Text>
       <Text style={[styles.summary, { color: colors.mutedForeground }]}>{answer.summary}</Text>
       <TouchableOpacity
@@ -130,6 +134,7 @@ function AnswerCard({ answer, scope, onConnectedTopic }: { answer: LibraryEntry;
       {scope ? (
         <View style={[styles.scopeCard, { backgroundColor: "#CA922B10", borderColor: "#CA922B45" }]}>
           <Text style={[styles.scopeTitle, { color: colors.foreground }]}>How this was researched</Text>
+          <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}><Text style={{ fontWeight: "800" }}>Research lens: </Text>{scope.researchLenses.map((lens) => lens.tag).join(" ")}</Text>
           <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}><Text style={{ fontWeight: "800" }}>Source standard: </Text>{scope.sourceStandard}</Text>
           <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>{scope.groupGuidance}</Text>
           {scope.connectedTopics.length > 0 ? (
@@ -257,7 +262,7 @@ export default function LibraryResearchScreen() {
         <View style={[styles.hero, { backgroundColor: "#2A0F05" }]}>
           <Text style={styles.heroEyebrow}>THE LIVING LIBRARY</Text>
           <Text style={styles.heroTitle}>Research that starts with reputable sources.</Text>
-          <Text style={styles.heroCopy}>Ask about a topic or a group in the diaspora. Kinfolk uses a person&apos;s saved preferences for personal recommendations; Library group research uses only the group you name in this question and never assumes it describes you.</Text>
+          <Text style={styles.heroCopy}>Library research starts with the diaspora lens. Add a tag such as #BlackWomen or #BlackStudents when that scope should lead the evidence. A tag is a research instruction, not an assumption about you.</Text>
         </View>
         <View style={[styles.searchCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.label, { color: colors.foreground }]}>What would you like to understand?</Text>
@@ -277,6 +282,14 @@ export default function LibraryResearchScreen() {
         </View>
 
         {message ? <View style={[styles.message, { backgroundColor: "#FFF1EF", borderColor: "#D59A9A" }]}><Text style={{ color: "#8A2424" }}>{message}</Text></View> : null}
+        {search?.researchLenses?.length ? (
+          <View style={[styles.lensCard, { borderColor: "#CA922B45", backgroundColor: "#CA922B10" }]}>
+            <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>
+              <Text style={{ fontWeight: "800" }}>Research lens: </Text>
+              {search.researchLenses.map((lens) => lens.tag).join(" ")}. This scope guides evidence; it does not describe the reader.
+            </Text>
+          </View>
+        ) : null}
         {search?.searchClarification?.kind === "possible_spelling" && search.searchClarification.source === "returned_catalog_term" ? (
           <View style={[styles.clarificationCard, { backgroundColor: "#FFF8E8", borderColor: "#CA922B" }]}>
             <Text style={[styles.clarificationTitle, { color: colors.foreground }]}>Possible spelling correction</Text>
@@ -315,7 +328,7 @@ export default function LibraryResearchScreen() {
             <Text style={[styles.sectionHeading, { color: colors.foreground }]}>Related next questions</Text>
             <Text style={[styles.relatedCopy, { color: colors.mutedForeground }]}>These are evidence-led branches from this brief, not claims about the reader or a report of other members&apos; private searches.</Text>
             {research.answer.relatedQuestions.map((related) => (
-              <TouchableOpacity key={related} activeOpacity={0.8} onPress={() => { setQuestion(related); setSearchedQuestion(""); setSearch(null); setResearch(null); setState("idle"); }} style={[styles.relatedButton, { borderColor: colors.border }]}>
+              <TouchableOpacity key={related} activeOpacity={0.8} onPress={() => { setQuestion(`${research.researchScope.researchLenses.map((lens) => lens.tag).join(" ")} ${related}`.trim()); setSearchedQuestion(""); setSearch(null); setResearch(null); setState("idle"); }} style={[styles.relatedButton, { borderColor: colors.border }]}>
                 <Text style={[styles.relatedText, { color: colors.primary }]}>{related}</Text>
                 <Feather name="arrow-up-right" size={14} color={colors.primary} />
               </TouchableOpacity>
@@ -345,6 +358,7 @@ const styles = StyleSheet.create({
   searchButtonText: { color: "#fff", fontSize: 14, fontWeight: "800" },
   governanceCopy: { fontSize: 11, lineHeight: 16 },
   message: { borderWidth: 1, borderRadius: 12, padding: 13 },
+  lensCard: { borderWidth: 1, borderRadius: 12, padding: 12 },
   clarificationCard: { borderWidth: 1, borderRadius: 16, padding: 15, gap: 8 },
   clarificationTitle: { fontSize: 15, fontWeight: "800" },
   clarificationCopy: { fontSize: 12, lineHeight: 18 },
@@ -358,6 +372,7 @@ const styles = StyleSheet.create({
   researchButtonCopy: { color: "#765D41", fontSize: 11, lineHeight: 16, marginTop: 2 },
   answerCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 9 },
   eyebrow: { fontSize: 10, letterSpacing: 1.1, fontWeight: "800" },
+  researchLens: { fontSize: 11, letterSpacing: 0.4, fontWeight: "800" },
   answerTitle: { fontSize: 21, lineHeight: 27, fontWeight: "800" },
   summary: { fontSize: 15, lineHeight: 22 },
   expandButton: { alignSelf: "flex-start", borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, minHeight: 37, flexDirection: "row", alignItems: "center", gap: 5 },
