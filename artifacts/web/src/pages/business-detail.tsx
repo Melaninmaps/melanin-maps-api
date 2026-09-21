@@ -912,6 +912,12 @@ export default function BusinessDetail() {
               {(business as any).ownershipClaim === "community_reported_minority_owned" && (
                 <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported minority-owned · Not verified</p>
               )}
+              {(business as any).ownershipClaim === "source_reported_ownership_unverified" && (
+                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Source-reported ownership · Not owner-verified</p>
+              )}
+              {(business as any).ownershipClaim === "source_reputable_listing_unverified" && (
+                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Published from a reputable source · Ownership not yet verified</p>
+              )}
               {(business as any).ownershipClaim === "community_reported_non_minority_owned" && (
                 <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported non-minority-owned · Not verified</p>
               )}

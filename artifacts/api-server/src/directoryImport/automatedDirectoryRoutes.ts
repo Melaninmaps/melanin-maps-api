@@ -175,14 +175,16 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
           name: String(r.name ?? ""), city: String(r.city ?? ""),
           state: r.state == null ? null : String(r.state), country: r.country == null ? null : String(r.country),
           address: r.address == null ? null : String(r.address), website: r.website == null ? null : String(r.website),
-          socialSourceUrl: r.social_source_url == null ? null : String(r.social_source_url),
-          ownershipDesignations: Array.isArray(r.ownership_designations) ? r.ownership_designations.map(String) : [],
+          socialSourceUrl: r.social_source_url == null && r.socialSourceUrl == null ? null : String(r.social_source_url ?? r.socialSourceUrl),
+          ownershipDesignations: Array.isArray(r.ownership_designations)
+            ? r.ownership_designations.map(String)
+            : Array.isArray(r.ownershipDesignations) ? r.ownershipDesignations.map(String) : [],
           // This value is derived from protected server configuration after the
-          // complete batch passed immutable MWM receipt admission above. Raw
+          // complete batch passed immutable source-receipt admission above. Raw
           // manifest input cannot opt itself into automatic publication.
           sourceBackedMwmCore: isMwmCorePublicationEnabled(),
-          regulatedProfession: r.regulated_profession === true,
-          destinationReachable: r.destination_reachable !== false,
+          regulatedProfession: r.regulated_profession === true || r.regulatedProfession === true,
+          destinationReachable: r.destination_reachable !== false && r.destinationReachable !== false,
           raw,
         };
       });

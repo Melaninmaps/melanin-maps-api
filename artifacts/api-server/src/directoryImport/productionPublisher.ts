@@ -29,6 +29,16 @@ export async function publishDirectoryCommand(
     const name = String(payload.name ?? "").trim();
     const city = String(payload.city ?? "").trim();
     const website = payload.website ? String(payload.website) : null;
+    const sourceReportedDesignations = Array.isArray(payload.ownership_designations)
+      ? payload.ownership_designations.map(String).filter(Boolean)
+      : Array.isArray(payload.ownershipDesignations)
+        ? payload.ownershipDesignations.map(String).filter(Boolean)
+        : [];
+    const sourceReportedDesignation =
+      payload.mwm_publication_classification === "source_reported_mwm_designation";
+    const ownershipClaim = sourceReportedDesignation && sourceReportedDesignations.length > 0
+      ? "source_reported_ownership_unverified"
+      : "source_reputable_listing_unverified";
     const identity = `${online ? "online" : "physical"}|${name.toLowerCase()}|${city.toLowerCase()}|${website ?? payload.address ?? ""}`;
     const existing = await client.query<{ id: string }>(
       `SELECT id FROM businesses WHERE lower(name)=lower($1) AND lower(city)=lower($2)
@@ -44,11 +54,14 @@ export async function publishDirectoryCommand(
         latitude === 0 && longitude === 0)) throw new Error("Physical publication requires address and non-zero coordinates.");
       const inserted = await client.query<{ id: string }>(`INSERT INTO businesses
         (id,name,category,subcategory,address,city,state,country,is_online_only,listing_status,
-         owner_claim_status,verified,description,latitude,longitude,website,source_url,status)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'live_unclaimed','unclaimed',false,$10,$11,$12,$13,$14,'active')
+         owner_claim_status,verified,ownership_designations,verified_designations,ownership_claim,
+         description,latitude,longitude,website,source_url,status)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'live_unclaimed','unclaimed',false,$10::jsonb,'[]'::jsonb,$11,
+               $12,$13,$14,$15,$16,'active')
         RETURNING id`, [id,name,String(payload.category ?? "Other"),String(payload.subcategory ?? "General"),
-        address,city,payload.state ?? null,payload.country ?? null,online,String(payload.description ?? ""),
-        latitude,longitude,website,payload.source_url ?? null]);
+        address,city,payload.state ?? null,payload.country ?? null,online,
+        JSON.stringify(sourceReportedDesignations),ownershipClaim,String(payload.description ?? ""),
+        latitude,longitude,website,payload.source_url ?? payload.sourceUrl ?? null]);
       recordId = inserted.rows[0]!.id; outcome = "created";
     }
     await client.query(`INSERT INTO directory_publication_provenance

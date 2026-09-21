@@ -3,6 +3,7 @@ import {
   MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH_ENV,
   MWM_CORE_CHAMBER_COHORT,
   MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT,
+  SOURCE_REPUTABLE_LISTING_COHORT,
   MWM_CORE_PUBLICATION_MODE_ENV,
   MWM_CORE_PUBLICATION_POLICY_VERSION,
   validateMwmCorePublicationBatch,
@@ -26,6 +27,7 @@ function sourceBackedRow(overrides: Record<string, unknown> = {}) {
     mwm_core_policy_version: MWM_CORE_PUBLICATION_POLICY_VERSION,
     mwm_core_cohort: MWM_CORE_CHAMBER_COHORT,
     mwm_core_evidence_lane: "chamber",
+    mwm_publication_classification: "source_reported_mwm_designation",
     mwm_core_receipt_root_hash: ROOT_HASH,
     mwm_core_receipt_hash: RECEIPT_HASH,
     mwm_core_source_manifest: "data/founder-imports/example-review-only-candidates.jsonl",
@@ -41,11 +43,17 @@ describe("MWM Core publication admission", () => {
     expect(validateMwmCorePublicationRecord({ name: "Legacy Listing" }, {})).toEqual({ ok: true });
   });
 
-  it("admits only complete Chamber or institutional-directory receipts when the mode is enabled", () => {
+  it("admits complete source-receipted Chamber, institutional, and reputable-source listings when the mode is enabled", () => {
     expect(validateMwmCorePublicationRecord(sourceBackedRow(), enabledEnvironment)).toEqual({ ok: true });
     expect(validateMwmCorePublicationRecord(sourceBackedRow({
       mwm_core_cohort: MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT,
       mwm_core_evidence_lane: "institutional_directory",
+    }), enabledEnvironment)).toEqual({ ok: true });
+    expect(validateMwmCorePublicationRecord(sourceBackedRow({
+      ownership_designations: [],
+      mwm_core_cohort: SOURCE_REPUTABLE_LISTING_COHORT,
+      mwm_core_evidence_lane: "reputable_source",
+      mwm_publication_classification: "unverified_source_listing",
     }), enabledEnvironment)).toEqual({ ok: true });
   });
 
@@ -74,6 +82,15 @@ describe("MWM Core publication admission", () => {
     expect(validateMwmCorePublicationRecord(sourceBackedRow({
       mwm_core_source_row: 0,
     }), enabledEnvironment)).toMatchObject({ ok: false, code: "MWM_CORE_RECEIPT_METADATA_INVALID" });
+  });
+
+  it("does not allow a source-reported designation to pose as owner verification", () => {
+    expect(validateMwmCorePublicationRecord(sourceBackedRow({
+      mwm_publication_classification: "owner_verified",
+    }), enabledEnvironment)).toMatchObject({
+      ok: false,
+      code: "MWM_SOURCE_REPORTED_CLASSIFICATION_REQUIRED",
+    });
   });
 
   it("rejects an entire batch when one row lacks approved receipt evidence", () => {

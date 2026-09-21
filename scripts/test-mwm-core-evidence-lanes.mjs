@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Deterministic fixture test for the combined MWM Core evidence lanes.
+ * Deterministic fixture test for source-receipted directory publication lanes.
  * It uses an isolated temporary signed-manifest-shaped input and has no network,
  * database, staging, or publication side effect.
  */
@@ -89,13 +89,13 @@ async function main() {
     if (institutional?.cohort !== "mwm_institutional_directory_candidate" || institutional?.evidenceLane !== "institutional_directory" || !institutional?.eligibleForReleasePreview) {
       throw new Error("Expected official institutional directory source to enter the institutional automatic lane.");
     }
-    if (editorial?.cohort !== "hold_editorial_corroboration_required" || editorial?.evidenceLane !== "editorial_or_promotional" || editorial?.eligibleForReleasePreview) {
-      throw new Error("Expected editorial source to remain held for corroboration.");
+    if (editorial?.cohort !== "source_reputable_listing_candidate" || editorial?.evidenceLane !== "reputable_source" || !editorial?.eligibleForReleasePreview || editorial?.publicationClassification !== "source_reported_mwm_designation") {
+      throw new Error("Expected an explicit source-reported designation to remain unverified while becoming publishable through the reputable-source lane.");
     }
-    if (proxyOnly?.cohort !== "hold_mission_evidence_required" || proxyOnly?.eligibleForReleasePreview) {
-      throw new Error("Expected proxy-only designation to remain held without identity inference.");
+    if (proxyOnly?.cohort !== "source_reputable_listing_candidate" || proxyOnly?.publicationClassification !== "unverified_source_listing" || !proxyOnly?.eligibleForReleasePreview) {
+      throw new Error("Expected proxy-only designation to publish only as an unverified source listing, without identity inference.");
     }
-    process.stdout.write("Combined MWM evidence-lane fixture test passed.\n");
+    process.stdout.write("Source-receipted directory publication fixture test passed.\n");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

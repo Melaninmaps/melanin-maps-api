@@ -816,6 +816,12 @@ export default function BusinessDetailScreen() {
               {business.ownershipClaim === "community_reported_minority_owned" && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
               )}
+              {(business as any).ownershipClaim === "source_reported_ownership_unverified" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Source-reported ownership · Not owner-verified</Text>
+              )}
+              {(business as any).ownershipClaim === "source_reputable_listing_unverified" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Published from a reputable source · Ownership not yet verified</Text>
+              )}
               {business.ownershipClaim === "community_reported_non_minority_owned" && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported non-minority-owned · Not verified</Text>
               )}

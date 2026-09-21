@@ -2,16 +2,22 @@ export const MWM_CORE_PUBLICATION_MODE_ENV = "MWM_CORE_PUBLICATION_MODE" as cons
 export const MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH_ENV =
   "MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH" as const;
 export const MWM_CORE_PUBLICATION_POLICY_VERSION =
-  "mwm-core-black-latino-source-evidence-v3" as const;
+  "source-receipted-directory-publication-v1" as const;
 export const MWM_CORE_CHAMBER_COHORT =
   "mwm_chamber_backed_candidate" as const;
 export const MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT =
   "mwm_institutional_directory_candidate" as const;
+export const SOURCE_REPUTABLE_LISTING_COHORT =
+  "source_reputable_listing_candidate" as const;
 export const MWM_CORE_AUTOMATIC_COHORTS = new Set<string>([
   MWM_CORE_CHAMBER_COHORT,
   MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT,
+  SOURCE_REPUTABLE_LISTING_COHORT,
 ]);
-export type MwmCoreEvidenceLane = "chamber" | "institutional_directory";
+export type MwmCoreEvidenceLane =
+  | "chamber"
+  | "institutional_directory"
+  | "reputable_source";
 
 export type MwmCorePublicationAdmission =
   | { ok: true }
@@ -26,9 +32,11 @@ function isPositiveInteger(value: unknown): boolean {
 }
 
 /**
- * Publication remains unchanged unless the dedicated MWM Core mode is enabled.
- * When enabled, this is an allow-list: every incoming row must carry immutable,
- * source-row receipt metadata created by the offline evidence classifier.
+ * Publication remains unchanged unless the dedicated source-receipted mode is
+ * enabled. When enabled, this is an allow-list: every incoming row must carry
+ * immutable source-row receipt metadata created by the offline classifier.
+ * This gate distinguishes a source-reported designation from owner verification;
+ * it never turns a directory reference into an owner-verified claim.
  */
 export function isMwmCorePublicationEnabled(
   configuredValue: string | undefined = process.env[MWM_CORE_PUBLICATION_MODE_ENV],
@@ -77,12 +85,24 @@ export function validateMwmCorePublicationRecord(
     ? MWM_CORE_CHAMBER_COHORT
     : evidenceLane === "institutional_directory"
       ? MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT
+      : evidenceLane === "reputable_source"
+        ? SOURCE_REPUTABLE_LISTING_COHORT
       : null;
   if (!expectedCohort || cohort !== expectedCohort || !MWM_CORE_AUTOMATIC_COHORTS.has(cohort)) {
     return {
       ok: false,
       code: "MWM_CORE_APPROVED_EVIDENCE_LANE_REQUIRED",
-      message: "MWM Core publication accepts only the approved Chamber or institutional-directory evidence lanes.",
+      message: "Source-receipted publication accepts only Chamber, institutional-directory, or reputable-source receipt lanes.",
+    };
+  }
+  if (
+    row.mwm_publication_classification !== "source_reported_mwm_designation" &&
+    row.mwm_publication_classification !== "unverified_source_listing"
+  ) {
+    return {
+      ok: false,
+      code: "MWM_SOURCE_REPORTED_CLASSIFICATION_REQUIRED",
+      message: "Source-receipted publication requires an explicit source-reported or unverified-listing classification.",
     };
   }
   if (row.mwm_core_receipt_root_hash !== expectedRootHash) {
@@ -121,4 +141,4 @@ export function validateMwmCorePublicationBatch(
 }
 
 export const MWM_CORE_PUBLICATION_ACTIVATION_CONTRACT =
-  "Enable MWM_CORE_PUBLICATION_MODE=source_backed only with a derived, signed Chamber or institutional-directory cohort whose receipt root hash matches MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH. Editorial/promotional source rows require corroboration. This gate never infers identity and does not publish rows by itself.";
+  "Enable MWM_CORE_PUBLICATION_MODE=source_backed only with a derived, signed source-receipted cohort whose receipt root hash matches MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH. A source-reported designation is shown as unverified until an owner or approved verifier confirms it; an unverified source listing does not claim any ownership designation. This gate never infers identity and does not publish rows by itself.";
