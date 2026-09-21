@@ -87,6 +87,34 @@ describe("publishDirectoryCommand", () => {
     expect(replay.client.query.mock.calls.filter(([sql]) => String(sql).includes("INSERT INTO businesses"))).toHaveLength(0);
   });
 
+  it("uses the physical address—not a same-name city match—to link a storefront", async () => {
+    const fake = productionPool({ existing: { id: "same-location" } });
+    const result = await publishDirectoryCommand(fake.pool, command({
+      name: "Common Name", city: "Atlanta", state: "GA", country: "United States",
+      address: "100 Main Street", latitude: 33.75, longitude: -84.39,
+    }));
+
+    expect(result).toEqual({ recordId: "same-location", status: "linked_existing" });
+    const lookup = fake.client.query.mock.calls.find(([sql]) => String(sql).includes("SELECT id FROM businesses"));
+    const lookupCall = lookup as unknown as [string, unknown[]] | undefined;
+    expect(String(lookupCall?.[0])).toContain("regexp_replace(COALESCE(address,'')");
+    expect(lookupCall?.[1]).toEqual(expect.arrayContaining(["physical|common name|atlanta|ga|united states|100 main street"]));
+  });
+
+  it("uses an online destination host only for online listings", async () => {
+    const fake = productionPool({ existing: { id: "same-online" } });
+    const result = await publishDirectoryCommand(fake.pool, command({
+      target_kind: "online_business", online_only: true, address: undefined,
+      latitude: undefined, longitude: undefined, website: "https://www.example.com/shop",
+    }));
+
+    expect(result).toEqual({ recordId: "same-online", status: "linked_existing" });
+    const lookup = fake.client.query.mock.calls.find(([sql]) => String(sql).includes("SELECT id FROM businesses"));
+    const lookupCall = lookup as unknown as [string, unknown[]] | undefined;
+    expect(String(lookupCall?.[0])).toContain("is_online_only=true");
+    expect(lookupCall?.[1]).toEqual(expect.arrayContaining(["online|sunrise studio|atlanta||united states|example.com"]));
+  });
+
   it("holds physical records with zero coordinates", async () => {
     const fake = productionPool();
     await expect(publishDirectoryCommand(fake.pool, command({
