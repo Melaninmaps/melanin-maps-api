@@ -1,4 +1,4 @@
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 export type ResolvedArea = {
   id: string;
@@ -198,7 +198,7 @@ export async function resolveLocationText(
          (l.record_type = 'business' AND EXISTS (
            SELECT 1 FROM public.public_businesses b
            WHERE b.id::text = l.record_id::text
-             AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+             AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
          ))
          OR (l.record_type = 'cultural_site' AND EXISTS (
            SELECT 1 FROM tour_cultural_sites tc

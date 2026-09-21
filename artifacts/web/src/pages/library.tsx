@@ -58,6 +58,112 @@ const RELATED_FOUNDATIONS = [
   { slug: "community-resources-help", title: "Community Resources & Help" },
 ];
 
+const COLLECTION_SUBTOPICS: Record<string, readonly { title: string; query: string }[]> = {
+  "culture-history-identity": [
+    { title: "History of the Diaspora", query: "Black diaspora history" },
+    { title: "Foundational Black American History", query: "African American history" },
+    { title: "African, Caribbean & Afro-Latino Cultures", query: "African Caribbean Afro-Latino cultures" },
+    { title: "Local Black History by City", query: "local Black history" },
+    { title: "HBCUs & Alumni Traditions", query: "HBCU traditions" },
+    { title: "Historic Neighborhoods & Heritage Sites", query: "historic neighborhoods heritage sites" },
+    { title: "Genealogy & Family History", query: "genealogy family history" },
+    { title: "Black Inventors, Leaders & Movements", query: "Black inventors leaders movements" },
+  ],
+  "food-music-culture": [
+    { title: "Regional Black Food Traditions", query: "regional Black food traditions" },
+    { title: "African, Caribbean & Afro-Latino Cuisines", query: "African Caribbean Afro-Latino cuisines" },
+    { title: "Recipes & the Stories Behind Them", query: "food history recipes" },
+    { title: "Black Music History", query: "Black music history" },
+    { title: "Hip-Hop, Jazz, Gospel & R&B", query: "hip hop jazz gospel R&B history" },
+    { title: "Books, Films, Podcasts & Documentaries", query: "Black books films documentaries" },
+    { title: "Fashion, Beauty & Design", query: "Black fashion beauty design history" },
+    { title: "Festivals & Cultural Celebrations", query: "cultural festivals celebrations" },
+  ],
+  "travel-the-diaspora": [
+    { title: "Diaspora Travel Destinations", query: "diaspora travel destinations" },
+    { title: "City Guides Built Around Real Life", query: "city orientation moving travel" },
+    { title: "Traveling While Black or Brown", query: "travel rights safety preparation" },
+    { title: "Accessible & Multigenerational Travel", query: "accessible multigenerational travel" },
+    { title: "Solo Travel", query: "solo travel preparation" },
+    { title: "Black-Owned Hotels & Travel Services", query: "Black owned travel services" },
+    { title: "International Customs & Cultural Connections", query: "international customs cultural connections" },
+  ],
+  "money-business-ownership": [
+    { title: "Starting & Growing a Business", query: "starting growing business" },
+    { title: "Grants, Funding & Capital", query: "business grants funding capital" },
+    { title: "Business Credit", query: "building business credit" },
+    { title: "Homeownership", query: "buying a home mortgages" },
+    { title: "Saving & Investing", query: "saving investing basics" },
+    { title: "Estate Planning & Generational Wealth", query: "estate planning generational wealth" },
+    { title: "Intellectual Property", query: "intellectual property copyright trademark" },
+    { title: "Contracting & Government Opportunities", query: "government contracting small business" },
+  ],
+  "health-wellness-care": [
+    { title: "Culturally Responsive Doctors", query: "culturally responsive health care" },
+    { title: "Maternal & Reproductive Health", query: "Black maternal reproductive health" },
+    { title: "Mental Health & Therapy", query: "mental health therapy" },
+    { title: "Men’s Health", query: "men health" },
+    { title: "Children’s & Family Health", query: "children family health" },
+    { title: "Disability & Access", query: "disability health access" },
+    { title: "Nutrition & Movement", query: "nutrition movement" },
+    { title: "Hair & Skin Health", query: "hair skin health" },
+  ],
+  "education-careers": [
+    { title: "Scholarships & Financial Aid", query: "scholarships financial aid FAFSA" },
+    { title: "HBCUs, Colleges & Trade Schools", query: "HBCU college trade school" },
+    { title: "Career Pathways & Certifications", query: "career pathways certifications" },
+    { title: "Technology & AI Skills", query: "technology AI skills careers" },
+    { title: "Mentorship & Professional Networks", query: "mentorship professional networks" },
+    { title: "Internships & Youth Opportunities", query: "internships youth opportunities" },
+    { title: "Career Changes & Returning to School", query: "career change returning school" },
+  ],
+  "family-love-community": [
+    { title: "Parenting Across Generations", query: "parenting family" },
+    { title: "Dating, Relationships & Communication", query: "healthy relationships communication" },
+    { title: "Caring for Aging Family Members", query: "family caregiving aging" },
+    { title: "Faith & Spiritual Communities", query: "faith spiritual communities" },
+    { title: "LGBTQ+ Community Resources", query: "LGBTQ community resources" },
+    { title: "Building Community After Moving", query: "building community after moving" },
+    { title: "Conflict, Boundaries & Emotional Wellness", query: "boundaries emotional wellness" },
+  ],
+  "entertainment-whats-happening": [
+    { title: "Festivals & Homecomings", query: "festivals homecomings" },
+    { title: "Concerts, Exhibits & Cultural Programs", query: "concerts exhibits cultural programs" },
+    { title: "Family Activities", query: "family activities" },
+    { title: "Nightlife & Entertainment", query: "nightlife entertainment" },
+    { title: "Artists, Creators & Cultural Icons", query: "artists creators cultural icons" },
+  ],
+  "life-in-your-city": [
+    { title: "What’s Happening in Your City", query: "city current events culture" },
+    { title: "Local History & Cultural Neighborhoods", query: "local history cultural neighborhoods" },
+    { title: "Community Organizations", query: "community organizations" },
+    { title: "Volunteer & Public Participation", query: "volunteer public participation" },
+    { title: "Professional & Social Groups", query: "professional social groups" },
+    { title: "Family Life in a New City", query: "moving new city family" },
+  ],
+  "technology-future": [
+    { title: "AI Skills & Responsible Use", query: "AI responsible use" },
+    { title: "Digital Privacy & Online Safety", query: "digital privacy online safety" },
+    { title: "Technology Careers & Training", query: "technology careers training" },
+    { title: "Black Innovators in Technology", query: "Black innovators technology" },
+    { title: "Digital Tools for Business", query: "digital tools small business" },
+  ],
+  "know-your-rights": [
+    { title: "Recognizing & Reporting Discrimination", query: "report discrimination civil rights" },
+    { title: "Workplace Rights", query: "workplace rights" },
+    { title: "Health-Care Advocacy", query: "health care advocacy rights" },
+    { title: "School & Education Rights", query: "school education rights" },
+    { title: "Consumer Protection", query: "consumer protection" },
+    { title: "Digital Privacy & Online Safety", query: "digital privacy online safety" },
+  ],
+  "resources-support": [
+    { title: "Housing & Utility Support", query: "housing utility support" },
+    { title: "Food & Family Resources", query: "food family resources" },
+    { title: "Disaster Recovery", query: "disaster recovery assistance" },
+    { title: "Emergency & Crisis Resources", query: "emergency crisis resources" },
+  ],
+};
+
 function topicSummary(topic: LibraryTopic): string {
   return `${topic.title} is a Living Library topic book for source-cited research, practical resources, and community-relevant context that stays available for the next person.`;
 }
@@ -77,6 +183,44 @@ const TIER_LABELS: Record<KnowledgeSource["sourceTier"], string> = {
   "public-service": "Public-service source",
   "community-expert": "Community expert",
 };
+
+function renderLibraryInline(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={index}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
+  );
+}
+
+function RichLibraryBody({ body }: { body: string }) {
+  return (
+    <div className="prose prose-sm mt-4 max-w-none text-[#3A1F0E]">
+      {body.split("\n\n").map((block, index) => {
+        const text = stripMwmEmoji(block.trim());
+        if (!text) return null;
+        if (text.startsWith("## ")) {
+          return (
+            <h4 className="mt-6 font-serif text-lg font-bold text-[#2B1507]" key={index}>
+              {renderLibraryInline(text.slice(3))}
+            </h4>
+          );
+        }
+        if (text.startsWith("- ")) {
+          return (
+            <ul className="mt-3 list-disc space-y-2 pl-5 leading-7" key={index}>
+              {text.split("\n").filter((line) => line.startsWith("- ")).map((line) => (
+                <li key={line}>{renderLibraryInline(line.slice(2))}</li>
+              ))}
+            </ul>
+          );
+        }
+        return <p className="mt-3 leading-7" key={index}>{renderLibraryInline(text)}</p>;
+      })}
+    </div>
+  );
+}
 
 // ── Entry card (expandable) ───────────────────────────────────────────────────
 
@@ -101,13 +245,7 @@ function EntryCard({ entry }: { entry: LibraryEntry }) {
 
       {expanded ? (
         <>
-          <div className="prose prose-sm mt-4 max-w-none text-[#3A1F0E]">
-            {entry.body.split("\n\n").map((para, i) => (
-              <p className="mt-3 leading-7" key={i}>
-                {stripMwmEmoji(para)}
-              </p>
-            ))}
-          </div>
+          <RichLibraryBody body={entry.body} />
           {entry.disclaimer ? (
             <aside className="mt-4 rounded-xl border border-[#CA922B]/30 bg-[#CA922B]/[0.06] p-4 text-sm leading-6 text-[#3A1F0E]/75">
               <strong className="font-semibold text-[#2B1507]">Please note: </strong>
@@ -314,6 +452,7 @@ export function LibraryTopicPage() {
     return <main className="p-10 text-center text-[#3A1F0E]/50">Loading this living book…</main>;
   }
   if (!topic) return null;
+  const collectionSubtopics = COLLECTION_SUBTOPICS[topic.slug] ?? [];
   const relatedTopics = RELATED_FOUNDATIONS
     .filter((item) => item.slug !== topic.slug)
     .slice(0, 3);
@@ -343,6 +482,29 @@ export function LibraryTopicPage() {
           {topic.isFollowed ? "Following" : "Follow this topic"}
         </button>
       </header>
+
+      {collectionSubtopics.length > 0 ? (
+        <section className="mt-8 rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 shadow-sm" aria-labelledby="library-subtopics">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8D5C17]">Explore within this collection</p>
+          <h2 className="mt-2 font-serif text-2xl font-bold text-[#2B1507]" id="library-subtopics">
+            Choose a subject to explore
+          </h2>
+          <p className="mt-2 max-w-3xl leading-7 text-[#3A1F0E]/75">
+            Each subject opens a source-governed Library search. Kinfolk can then expand the research when the existing guide does not answer the full question.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {collectionSubtopics.map((subtopic) => (
+              <Link
+                className="rounded-xl border border-[#CA922B]/35 bg-[#CA922B]/[0.06] px-4 py-3 text-sm font-semibold text-[#6E4511] transition hover:bg-[#CA922B]/[0.12]"
+                href={`/library/search?q=${encodeURIComponent(subtopic.query)}`}
+                key={subtopic.title}
+              >
+                {subtopic.title} →
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section
         aria-labelledby="library-topic-content"

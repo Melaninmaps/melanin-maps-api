@@ -49,7 +49,7 @@ import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
 import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -259,10 +259,27 @@ function publicBusinessVisibilityCondition() {
  * contribution, and account paths remain available and are never filtered by
  * MWM Core evidence policy.
  */
-function mwmCorePublicDiscoveryCondition() {
+function mwmDiasporaPromotionCondition() {
   return sql<boolean>`${sql.raw(
-    mwmCoreDiscoverySqlPredicate('"businesses"."id"'),
+    mwmDiasporaPromotionSqlPredicate('"businesses"."id"'),
   )}`;
+}
+
+/**
+ * A narrow direct-lookup escape hatch. It is intentionally limited to a
+ * member-entered, plausible business name after promotion search returned no
+ * match; category/browse searches never reach this path.
+ */
+function isDeliberateNamedBusinessLookup(value: string): boolean {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (normalized.length < 3 || normalized.length > 100) return false;
+  const generic = new Set([
+    "business", "businesses", "restaurant", "restaurants", "bar", "bars",
+    "club", "clubs", "hospital", "hospitals", "doctor", "doctors", "near me",
+    "philly", "philadelphia", "houston", "atlanta", "minneapolis",
+  ]);
+  const words = normalized.toLocaleLowerCase("en-US").split(" ");
+  return words.length <= 7 && words.some((word) => !generic.has(word));
 }
 
 router.use((req: Request, res: Response, next: NextFunction) => {
@@ -370,7 +387,7 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
       FROM public.public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
+        AND ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}
         AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
@@ -429,11 +446,18 @@ router.get("/businesses", async (req: Request, res: Response) => {
           !isNaN(geoLng);
 
         const conditions = [];
+        const designationConditions: any[] = [];
+        const promotionCondition = mwmDiasporaPromotionCondition();
+        // The default is the documented Diaspora Promotion Catalog. A signed-in
+        // member may explicitly choose the all-places mode; direct-name lookup
+        // below is a separate, narrower consent path.
+        const hasExplicitAllPlacesConsent =
+          req.user?.id != null && supportScope === "all_businesses";
 
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
         conditions.push(publicBusinessVisibilityCondition());
-        conditions.push(mwmCorePublicDiscoveryCondition());
+        if (!hasExplicitAllPlacesConsent) conditions.push(promotionCondition);
 
         if (category && typeof category === "string" && category !== "All") {
           const categoryValues = categoryFilterStorageValues(category);
@@ -493,7 +517,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             (value) =>
               sql<boolean>`${businessesTable.ownershipDesignations} @> ${JSON.stringify([value])}::jsonb`,
           );
-          conditions.push(
+          designationConditions.push(
             legacyDesignationColumn(filter.id) === "black_owned"
               ? or(eq(businessesTable.blackOwned, true), ...designationMatches)!
               : legacyDesignationColumn(filter.id) === "minority_claim"
@@ -507,6 +531,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 : or(...designationMatches)!,
           );
         }
+        conditions.push(...designationConditions);
 
         if (search && typeof search === "string") {
           const q = search.trim();
@@ -646,12 +671,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
         }
 
         // True total count for pagination UI
-        const [{ total: totalCount }] = await db
+        let [{ total: totalCount }] = await db
           .select({ total: count() })
           .from(businessesTable)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
 
-        const businesses = await db
+        let businesses = await db
           .select()
           .from(businessesTable)
           .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -664,6 +689,46 @@ router.get("/businesses", async (req: Request, res: Response) => {
           )
           .limit(pageLimit)
           .offset(offset);
+
+        // A named public-listing lookup is not an MWM recommendation. It only
+        // runs after the Promotion Catalog returns nothing, never broadens a
+        // category search, and removes Support Lens filters only for the exact
+        // public record the member deliberately asked to find.
+        let usedExplicitPublicLookup = false;
+        const directSearchText = typeof search === "string" ? search.trim() : "";
+        if (
+          totalCount === 0 &&
+          !hasExplicitAllPlacesConsent &&
+          isDeliberateNamedBusinessLookup(directSearchText)
+        ) {
+          const directConditions = conditions.filter(
+            (condition) =>
+              condition !== promotionCondition &&
+              !designationConditions.includes(condition),
+          );
+          directConditions.push(
+            or(
+              ilike(businessesTable.name, directSearchText),
+              ilike(businessesTable.name, `${directSearchText}%`),
+            )!,
+          );
+          const directTotal = await db
+            .select({ total: count() })
+            .from(businessesTable)
+            .where(and(...directConditions));
+          const directBusinesses = await db
+            .select()
+            .from(businessesTable)
+            .where(and(...directConditions))
+            .orderBy(asc(businessesTable.name), asc(businessesTable.id))
+            .limit(pageLimit)
+            .offset(offset);
+          if (directBusinesses.length > 0) {
+            businesses = directBusinesses;
+            totalCount = directTotal[0]?.total ?? directBusinesses.length;
+            usedExplicitPublicLookup = true;
+          }
+        }
 
         // Annotate businesses that have active growth-tool promotions as featured.
         // Only businesses that already matched the search criteria are promoted —
@@ -886,7 +951,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
             const fuzzyConditions = [
               publicBusinessVisibilityCondition(),
-              mwmCorePublicDiscoveryCondition(),
+              hasExplicitAllPlacesConsent
+                ? sql<boolean>`TRUE`
+                : mwmDiasporaPromotionCondition(),
             ];
             if (city && typeof city === "string" && city.trim()) {
               fuzzyConditions.push(
@@ -1002,6 +1069,11 @@ router.get("/businesses", async (req: Request, res: Response) => {
           page: { offset, limit: pageLimit },
           featuredCount: withDistance.filter((b: any) => b.featured).length,
           usedFuzzyFallback,
+          searchScope: usedExplicitPublicLookup
+            ? "explicit_public_listing"
+            : hasExplicitAllPlacesConsent
+              ? "all_public_places"
+              : "diaspora_promotion_catalog",
           // Metadata only: it never changes the member's query, filters, or
           // results. Clients choose whether to retry the suggestion.
           searchClarification,

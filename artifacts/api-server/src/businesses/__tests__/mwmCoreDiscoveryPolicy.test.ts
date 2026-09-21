@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  isMwmDiasporaPromotionEligible,
+  isMwmDiasporaPromotionEnabled,
   MWM_CORE_SOURCE_BACKED_COHORT,
   isMwmCoreDiscoveryEligible,
   isMwmCoreDiscoveryEnabled,
   mwmCoreDiscoverySqlPredicate,
+  mwmDiasporaPromotionSqlPredicate,
 } from "../mwmCoreDiscoveryPolicy";
 
 describe("MWM Core discovery evidence policy", () => {
@@ -38,5 +41,30 @@ describe("MWM Core discovery evidence policy", () => {
       city: "Philadelphia",
       ownershipDesignation: "minority-owned",
     } as unknown as { mwmCoreCohort?: string }, "source_backed")).toBe(false);
+  });
+
+  it("uses explicit Diaspora ownership designations for default promotion", () => {
+    expect(isMwmDiasporaPromotionEnabled(undefined)).toBe(true);
+    expect(isMwmDiasporaPromotionEnabled("all_public")).toBe(false);
+    const predicate = mwmDiasporaPromotionSqlPredicate("b.id");
+    expect(predicate).toContain("b.ownership_designations");
+    expect(predicate).toContain("jsonb_array_elements_text");
+    expect(predicate).toContain("Black / African American-Owned");
+    expect(predicate).toContain("Asian American-Owned");
+    expect(predicate).not.toContain("Woman-Owned");
+    expect(predicate).not.toContain("LGBTQIA+-Owned");
+  });
+
+  it("does not infer Diaspora promotion from a role-only label, name, cuisine, or location", () => {
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Woman-Owned"] })).toBe(false);
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["LGBTQIA+-Owned"] })).toBe(false);
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Black / African American-Owned"] })).toBe(true);
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Vietnamese-Owned"] })).toBe(true);
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Guatemalan-Owned"] })).toBe(true);
+  });
+
+  it("keeps all public records available only after explicit all-places expansion", () => {
+    expect(mwmDiasporaPromotionSqlPredicate("b.id", "all_public")).toBe("TRUE");
+    expect(isMwmDiasporaPromotionEligible({}, "all_public")).toBe(true);
   });
 });

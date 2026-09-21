@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const responsesCreate = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
@@ -20,6 +20,12 @@ import { classifyKinfolkRequest } from "../request-classifier";
 import { searchAllQueriesWithState, searchLocalBusinessQueriesWithState } from "../web-search";
 
 const originalFetch = globalThis.fetch;
+
+beforeEach(() => {
+  // Legacy behavioral fixtures exercise general discovery. Production defaults
+  // to the documented Diaspora Promotion Catalog and is covered separately.
+  vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "all_public");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -425,6 +431,49 @@ describe("deterministic local business discovery", () => {
     expect(result.sources).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ url: "https://example.com/guide" })]),
     );
+  });
+
+  it("does not recommend externally found businesses while the Diaspora Promotion Catalog is active", async () => {
+    vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "documented_diaspora");
+    const webSearch = vi.fn().mockResolvedValue({
+      state: "completed",
+      attempted: true,
+      provider: "openai",
+      results: [{
+        title: "Undocumented business",
+        url: "https://example.com/undocumented",
+        content: "A public web result with no documented ownership designation.",
+        providerScore: 0.9,
+        sourceQuery: { text: "bookstores Atlanta, GA", role: "general", reason: "neutral" },
+      }],
+    });
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository(),
+      webSearch,
+    });
+    expect(webSearch).not.toHaveBeenCalled();
+    expect(result.discovery.webFindings).toEqual([]);
+    expect(result.recommendations).toBeNull();
+  });
+
+  it("permits an all-places query only after explicit consent", async () => {
+    vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "documented_diaspora");
+    const webSearch = vi.fn().mockResolvedValue({
+      state: "completed",
+      attempted: true,
+      provider: "openai",
+      results: [],
+    });
+    await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [governedBusiness] }),
+      webSearch,
+      allowAllPublicPlaces: true,
+    });
+    expect(webSearch).toHaveBeenCalled();
   });
 
   it("passes the strict all-of designation scope into preference expansion", async () => {

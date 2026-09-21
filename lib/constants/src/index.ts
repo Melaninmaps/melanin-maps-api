@@ -43,6 +43,7 @@ export type {
 // ── Ownership designations ─────────────────────────────────────────────────
 export {
   OWNERSHIP_DESIGNATIONS,
+  DIASPORA_OWNERSHIP_DESIGNATIONS,
   OWNERSHIP_FILTER_OPTIONS,
   INTERSECTIONAL_SUPPORT_FILTER_IDS,
   INTERSECTIONAL_SUPPORT_FILTER_OPTIONS,

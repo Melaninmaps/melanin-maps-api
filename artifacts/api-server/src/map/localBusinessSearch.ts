@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
   businessSubjectSearchPatterns,
   deriveBusinessSubject,
@@ -146,7 +146,7 @@ export class LocalBusinessSearch {
         FROM public.public_businesses AS b
         LEFT JOIN specialty_evidence ON specialty_evidence.business_id = b.id::text
         WHERE NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+          AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
           AND (
             LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])
             OR LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])
