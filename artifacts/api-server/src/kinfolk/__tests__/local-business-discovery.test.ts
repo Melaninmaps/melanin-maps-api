@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const responsesCreate = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
   openai: { responses: { create: responsesCreate } },
+  resolveOpenAIConfiguration: vi.fn((environment = process.env) =>
+    environment.AI_INTEGRATIONS_OPENAI_API_KEY || environment.OPENAI_API_KEY
+      ? { apiKey: "test-key", baseURL: "https://api.openai.test/v1" }
+      : null),
 }));
 
 import { resolveNamedBusinessTurn } from "../business-reference";
@@ -381,6 +385,43 @@ describe("deterministic local business discovery", () => {
       expect.objectContaining({ title: "For Keeps Books and Auburn Avenue Bookstores", url: forKeepsPlace.detailUrl }),
       expect.objectContaining({ title: "Official Atlanta bookstore guide", url: "https://discoveratlanta.com/bookstores" }),
     ]));
+  });
+
+  it("never broadens a strict designation request to unverified web or map records", async () => {
+    const db = repository({ businesses: [governedBusiness], places: [forKeepsPlace] });
+    const webSearch = vi.fn().mockResolvedValue({
+      state: "completed",
+      attempted: true,
+      provider: "openai",
+      results: [{
+        title: "Black-owned bookstore guide",
+        url: "https://example.com/guide",
+        content: "A guide with no documentary ownership record.",
+        providerScore: 0.9,
+        sourceQuery: { text: "bookstores Atlanta, GA", role: "general", reason: "neutral" },
+      }],
+    });
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: db,
+      webSearch,
+      requiredDesignationIds: ["black-african-american", "woman"],
+    });
+
+    expect(db.findBySubject).toHaveBeenCalledWith(
+      { city: "Atlanta", stateCode: "GA" },
+      bookstore,
+      12,
+      ["black-african-american", "woman"],
+    );
+    expect(webSearch).not.toHaveBeenCalled();
+    expect(result.discovery.webFindings).toEqual([]);
+    expect(result.discovery.mapPlaces).toEqual([]);
+    expect(result.sources).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ url: "https://example.com/guide" })]),
+    );
   });
 
   it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(

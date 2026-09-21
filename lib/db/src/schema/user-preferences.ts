@@ -42,6 +42,9 @@ export const userPreferencesTable = pgTable("user_preferences", {
   preferredOwnershipTypes: jsonb("preferred_ownership_types")
     .$type<string[]>()
     .default([]),
+  supportLensMode: varchar("support_lens_mode", { length: 40 })
+    .notNull()
+    .default("all_businesses"),
   socialVideoPlatforms: jsonb("social_video_platforms")
     .$type<string[]>()
     .default([

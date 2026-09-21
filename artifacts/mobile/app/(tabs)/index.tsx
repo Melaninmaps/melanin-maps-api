@@ -57,7 +57,7 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { isSaved, toggleSave } = useFavorites();
-  const { preferences } = useUserPreferences();
+  const { preferences, update: updatePreferences } = useUserPreferences();
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -72,6 +72,7 @@ export default function DiscoverScreen() {
     ownershipTypes: [],
   });
   const [prefsBannerDismissed, setPrefsBannerDismissed] = useState(false);
+  const [supportScopeOverride, setSupportScopeOverride] = useState<"all_businesses" | null>(null);
 
   // Algorithmic twin recommendations
   const [twinRecs, setTwinRecs] = useState<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }[]>([]);
@@ -158,6 +159,14 @@ export default function DiscoverScreen() {
   const { businesses, isLoading: businessesLoading, refetch: refetchBusinesses } = useBusinesses({
     search,
     category: activeCategory,
+    // Explicit in-session selections always go to the server and override
+    // the saved lens mode for this request.
+    designations: filters.ownershipTypes,
+    supportScope: supportScopeOverride ?? (
+      preferences?.supportLensMode === "strict_documented_designations"
+        ? "strict_documented_designations"
+        : undefined
+    ),
   });
 
   const { spaces: searchSpaces } = useSpaces(search.trim().length > 2 ? { q: search.trim() } : undefined);
@@ -204,7 +213,7 @@ export default function DiscoverScreen() {
     const matchesVerified = !filters.verifiedOnly || b.verified;
     const matchesOwnership =
       filters.ownershipTypes.length === 0 ||
-      filters.ownershipTypes.some(
+      filters.ownershipTypes.every(
         (t) =>
           (t === "black-african-american" && b.blackOwned) ||
           b.ownershipFilterIds?.includes(t)
@@ -226,7 +235,7 @@ export default function DiscoverScreen() {
   const savedOwnershipPrefs = preferences?.preferredOwnershipTypes ?? [];
   const matchesPref = (b: (typeof filtered)[0]) =>
     savedOwnershipPrefs.length === 0 ||
-    savedOwnershipPrefs.some(
+    savedOwnershipPrefs.every(
       (t) =>
         (t === "black-african-american" && b.blackOwned) ||
         b.ownershipFilterIds?.includes(t)
@@ -495,10 +504,10 @@ export default function DiscoverScreen() {
                   We couldn&apos;t find businesses matching your saved preferences in this view. Would you like to explore other community businesses?
                 </Text>
                 <View style={styles.noPrefsMatchBtns}>
-                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setSupportScopeOverride("all_businesses"); setFilters((f) => ({ ...f, ownershipTypes: [] })); void updatePreferences({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
                     <Text style={styles.noPrefsBtnTxt}>Show All Businesses</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                  <TouchableOpacity style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]} onPress={() => { setSupportScopeOverride("all_businesses"); setFilters((f) => ({ ...f, ownershipTypes: [] })); void updatePreferences({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
                     <Text style={[styles.noPrefsGhostTxt, { color: colors.mutedForeground }]}>Show Everything</Text>
                   </TouchableOpacity>
                 </View>

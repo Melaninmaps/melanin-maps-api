@@ -9,7 +9,7 @@ import { authenticatedFetch } from "@/lib/authenticatedFetch";
 const BASE = import.meta.env.BASE_URL;
 
 type PreferencesResponse = {
-  preferences?: { ownershipTypes?: string[] | null };
+  preferences?: { ownershipTypes?: string[] | null; supportLensMode?: string };
   error?: string;
 };
 
@@ -19,6 +19,7 @@ export function BusinessSupportPreferences() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [mode, setMode] = useState<"all_businesses" | "strict_documented_designations">("all_businesses");
 
   useEffect(() => {
     let active = true;
@@ -28,6 +29,9 @@ export function BusinessSupportPreferences() {
         if (!response.ok) throw new Error(body.error ?? "Could not load business support choices.");
         if (active) {
           setSelected((body.preferences?.ownershipTypes ?? []).map(ownershipDesignationFilterId));
+          setMode(body.preferences?.supportLensMode === "strict_documented_designations"
+            ? "strict_documented_designations"
+            : "all_businesses");
         }
       })
       .catch((error: unknown) => {
@@ -57,15 +61,43 @@ export function BusinessSupportPreferences() {
       const response = await authenticatedFetch(`${BASE}api/kinfolk/preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferredOwnershipTypes: selected }),
+       body: JSON.stringify({
+         preferredOwnershipTypes: selected,
+         supportLensMode: selected.length > 0 ? "strict_documented_designations" : "all_businesses",
+       }),
       });
       const body = await response.json() as PreferencesResponse;
       if (!response.ok) throw new Error(body.error ?? "Could not save business support choices.");
-      setMessage(selected.length === 0
-        ? "Cleared. All businesses will be ranked equally."
-        : "Saved across the website and app. Matching businesses will be prioritized, not exclusively shown.");
+       setMode(selected.length === 0 ? "all_businesses" : "strict_documented_designations");
+       setMessage(selected.length === 0
+         ? "Cleared. All documented businesses are available."
+         : "Saved across the website and app. Strict results match every selected designation.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save business support choices.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function clearAndSave() {
+    setSelected([]);
+    setMode("all_businesses");
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/kinfolk/preferences`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferredOwnershipTypes: [],
+          supportLensMode: "all_businesses",
+        }),
+      });
+      const body = await response.json() as PreferencesResponse;
+      if (!response.ok) throw new Error(body.error ?? "Could not clear Support Lens.");
+      setMessage("Cleared. All documented businesses are available.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not clear Support Lens.");
     } finally {
       setSaving(false);
     }
@@ -78,9 +110,9 @@ export function BusinessSupportPreferences() {
           <Store className="h-5 w-5 text-[#CA922B]" />
         </div>
         <div>
-          <h2 className="font-serif text-xl font-bold text-[#2B1507]">Businesses you want to support</h2>
+          <h2 className="font-serif text-xl font-bold text-[#2B1507]">Your Support Lens</h2>
           <p className="mt-1 text-sm leading-5 text-[#3A1F0E]/65">
-            Choose optional owner-provided identities to prioritize. The full directory remains available, and documented verification stays separate.
+            Your Support Lens is optional and private. It helps MWM show documented businesses you intentionally want to support. It does not say who you are, and it never removes anyone from MWM. You can change, clear, or broaden it any time.
           </p>
         </div>
       </div>
@@ -122,10 +154,14 @@ export function BusinessSupportPreferences() {
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-[#3A1F0E]/55">{selected.length} selected</p>
+       <p className="mt-3 text-xs font-semibold text-[#3A1F0E]/60">
+         {selected.length > 1 ? "Show businesses that match every selection." : mode === "strict_documented_designations" ? "Strict documented-designation results are active." : "All documented businesses are available."}
+       </p>
+       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+         <p className="text-xs font-semibold text-[#3A1F0E]/55">{selected.length} selected</p>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={() => setSelected([])} className="min-h-10 rounded-full border border-[#3A1F0E]/20 bg-white px-4 text-sm font-bold text-[#2B1507]">Clear</button>
+           <button type="button" onClick={() => void clearAndSave()} disabled={saving} className="min-h-10 rounded-full border border-[#3A1F0E]/20 bg-white px-4 text-sm font-bold text-[#2B1507]">Show all businesses equally</button>
+           <button type="button" onClick={() => void clearAndSave()} disabled={saving} className="min-h-10 rounded-full border border-[#3A1F0E]/20 bg-white px-4 text-sm font-bold text-[#2B1507]">Skip for now</button>
           <button type="button" onClick={() => void save()} disabled={loading || saving} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#2B1507] px-5 text-sm font-bold text-white disabled:opacity-50">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {saving ? "Saving…" : "Save support choices"}

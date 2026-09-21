@@ -19,6 +19,8 @@ import {
 } from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
 import { normalizeHomeState } from "../lib/happening-personalization";
+import { normalizeOwnershipDesignationFilterIds } from "@workspace/constants";
+import { invalidatePrefsCache } from "../kinfolk/preference-cache";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -1745,6 +1747,9 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
 
     // Upsert user_preferences with onboarding data (interests + heritage)
     // Only write fields that were actually provided — don't overwrite existing prefs with empty arrays
+    const normalizedOwnershipTypes = Array.isArray(preferredOwnershipTypes)
+      ? normalizeOwnershipDesignationFilterIds(preferredOwnershipTypes)
+      : [];
     const hasPrefsData =
       (Array.isArray(culturalInterests) && culturalInterests.length > 0) ||
       (Array.isArray(diasporaCountries) && diasporaCountries.length > 0) ||
@@ -1760,8 +1765,10 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
             culturalInterests.length > 0 && { culturalInterests }),
           ...(Array.isArray(diasporaCountries) &&
             diasporaCountries.length > 0 && { diasporaCountries }),
-          ...(Array.isArray(preferredOwnershipTypes) &&
-            preferredOwnershipTypes.length > 0 && { preferredOwnershipTypes }),
+          ...(normalizedOwnershipTypes.length > 0 && {
+            preferredOwnershipTypes: normalizedOwnershipTypes,
+            supportLensMode: "strict_documented_designations",
+          }),
         })
         .onConflictDoUpdate({
           target: userPreferencesTable.userId,
@@ -1770,13 +1777,14 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
               culturalInterests.length > 0 && { culturalInterests }),
             ...(Array.isArray(diasporaCountries) &&
               diasporaCountries.length > 0 && { diasporaCountries }),
-            ...(Array.isArray(preferredOwnershipTypes) &&
-              preferredOwnershipTypes.length > 0 && {
-                preferredOwnershipTypes,
-              }),
+            ...(normalizedOwnershipTypes.length > 0 && {
+              preferredOwnershipTypes: normalizedOwnershipTypes,
+              supportLensMode: "strict_documented_designations",
+            }),
             updatedAt: new Date(),
           },
         });
+      invalidatePrefsCache(userId);
     }
 
     res.json({ success: true });

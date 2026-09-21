@@ -1,5 +1,6 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
   type NormalizedBusinessSubject,
@@ -534,18 +535,12 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       const patterns = businessSubjectSearchPatterns(subject);
       const vibeKeys = subject.vibeKeys ?? [];
       if (!patterns.length) return [];
-      const designationValueGroups = normalizeOwnershipDesignationFilterIds(
-        requiredDesignationIds,
-      ).map((id) => ownershipDesignationStorageValues(id).values);
+      const designationIds = normalizeOwnershipDesignationFilterIds(requiredDesignationIds);
+      const designationValueGroups = designationIds.map((id) => ownershipDesignationStorageValues(id).values);
       const designationClauses = designationValueGroups
         .map((_, index) => {
           const parameter = 7 + index;
-          return `
-          AND EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements_text(COALESCE(b.ownership_designations, '[]'::jsonb)) AS designation(value)
-            WHERE designation.value = ANY($${parameter}::text[])
-          )`;
+          return `AND ${buildDesignationPredicateSql(designationIds[index], "b.ownership_designations", parameter)}`;
         })
         .join("");
       const { rows } = await pool.query<BusinessRow>(

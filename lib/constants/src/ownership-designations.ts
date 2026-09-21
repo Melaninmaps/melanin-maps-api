@@ -115,6 +115,22 @@ export const OWNERSHIP_DESIGNATIONS = [
 
 export type OwnershipDesignation = (typeof OWNERSHIP_DESIGNATIONS)[number];
 
+export const SUPPORT_LENS_MODES = [
+  "all_businesses",
+  "strict_documented_designations",
+] as const;
+
+export type SupportLensMode = (typeof SUPPORT_LENS_MODES)[number];
+
+export function normalizeSupportLensMode(
+  value: unknown,
+  designationIds: readonly string[] = [],
+): SupportLensMode {
+  return value === "strict_documented_designations" && designationIds.length > 0
+    ? "strict_documented_designations"
+    : "all_businesses";
+}
+
 const OWNERSHIP_FILTER_ALIASES: Record<string, string> = {
   black: "black-african-american",
   "black-owned": "black-african-american",
@@ -222,17 +238,27 @@ export function normalizeOwnershipDesignationFilterIds(values: readonly unknown[
 export function extractExplicitOwnershipDesignationFilterIds(message: string): string[] {
   const text = message.normalize("NFKC").toLocaleLowerCase("en-US");
   const matched: string[] = [];
-  const hasFoundationalBlack = /\b(?:fba|foundational(?:ly)?\s+black(?:\s+american)?)\b/.test(text);
+  const businessNoun = "(?:business(?:es)?|compan(?:y|ies)|shops?|stores?)";
+  const support = (designation: string) =>
+    new RegExp(`\\bsupport\\s+(?:${designation})\\s+(?:owned\\s+)?${businessNoun}\\b`).test(text);
+  const ownedBy = (designation: string) =>
+    new RegExp(`\\b${businessNoun}\\s+owned\\s+by\\s+(?:${designation})(?:\\s+(?:people|person|owners?))?\\b`).test(text);
+  const ownedLabel = (designation: string) =>
+    new RegExp(`\\b${designation}[-\\s](?:owned|led)\\b`).test(text);
+  const explicit = (designation: string) => support(designation) || ownedBy(designation) || ownedLabel(designation);
+
+  const hasFoundationalBlack = /\b(?:fba|foundational(?:ly)?\s+black(?:\s+american)?)\b/.test(text)
+    && (support("foundational(?:ly)?\\s+black(?:\\s+american)?") || ownedBy("foundational(?:ly)?\\s+black(?:\\s+american)?") || ownedLabel("foundational(?:ly)?\\s+black(?:\\s+american)?"));
   if (hasFoundationalBlack) matched.push("foundational-black-american");
-  if (!hasFoundationalBlack && /\b(?:black|african[-\s]?americans?)\b/.test(text)) matched.push("black-african-american");
-  if (/\b(?:woman|women|female)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("woman");
-  if (/\b(?:divine\s*nine|d9)\b/.test(text)) matched.push("divine-nine-affiliated");
-  if (/\b(?:veteran|veterans|military[-\s]?(?:owned|led)?)\b/.test(text)) matched.push("veteran");
-  if (/\b(?:lgbtq(?:ia)?|queer)[+\s-]?(?:owned|led)?\b/.test(text)) matched.push("lgbtqia");
-  if (/\b(?:disability|disabled)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("disability");
-  if (/\b(?:hispanic|hispanics|latino|latinos|latina|latinas|latinx)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("latino-hispanic");
-  if (/\b(?:asian|asian american|asians)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("asian-american");
-  if (/\bguatemalans?[-\s]?(?:owned|led)?\b/.test(text)) matched.push("guatemalan");
+  if (!hasFoundationalBlack && explicit("(?:black|african[-\\s]?american)s?")) matched.push("black-african-american");
+  if (explicit("(?:woman|women|female)")) matched.push("woman");
+  if (explicit("(?:divine\\s*nine|d9)")) matched.push("divine-nine-affiliated");
+  if (explicit("(?:veteran|veterans|military)")) matched.push("veteran");
+  if (explicit("(?:lgbtq(?:ia)?|queer)")) matched.push("lgbtqia");
+  if (explicit("(?:disability|disabled)")) matched.push("disability");
+  if (explicit("(?:hispanic|hispanics|latino|latinos|latina|latinas|latinx)")) matched.push("latino-hispanic");
+  if (explicit("(?:asian|asian american|asians)")) matched.push("asian-american");
+  if (explicit("guatemalans?")) matched.push("guatemalan");
   return normalizeOwnershipDesignationFilterIds(matched);
 }
 

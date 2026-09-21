@@ -49,7 +49,7 @@ export default function Explore() {
     const categoryMatches = activeCategory === "All" || business.category === activeCategory;
     const ownership = documentedOwnershipTags(business);
     const ownershipMatches = selectedOwnership.length === 0 ||
-      selectedOwnership.some((tag) => ownership.includes(tag));
+      selectedOwnership.every((tag) => ownership.includes(tag));
     return categoryMatches && ownershipMatches;
   }), [liveBusinesses, activeCategory, selectedOwnership]);
 

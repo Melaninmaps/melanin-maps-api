@@ -60,6 +60,7 @@ import {
   findVibeKeysForSearch,
   findSafeSearchClarification,
 } from "@workspace/constants";
+import { buildDesignationPredicateSql, legacyDesignationColumn, resolveDesignationScope } from "../kinfolk/designation-predicate-policy";
 
 const communitySubmissionRepository = new SubmissionRepository();
 
@@ -306,8 +307,50 @@ router.get("/businesses/categories", (_req: Request, res: Response) => {
 // Returns ALL active businesses that have valid coordinates, with only the
 // minimal fields a map marker needs. No 200-row cap — this is intentional.
 // The small payload (id/name/lat/lng/category/city/country) keeps it fast.
-router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
+router.get("/businesses/map-pins", async (req: Request, res: Response) => {
   try {
+    const allBusinessesOverride = req.query.supportScope === "all_businesses";
+    let requestedIds = normalizeOwnershipDesignationFilterIds([
+      ...(typeof req.query.ownership === "string" ? [req.query.ownership] : []),
+      ...(typeof req.query.designations === "string"
+        ? req.query.designations.split(",")
+        : []),
+    ]);
+    if (requestedIds.length === 0 && !allBusinessesOverride && req.user?.id) {
+      const [prefs] = await db
+        .select({
+          supportLensMode: userPreferencesTable.supportLensMode,
+          preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes,
+        })
+        .from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, req.user.id))
+        .limit(1);
+      if (prefs?.supportLensMode === "strict_documented_designations") {
+        requestedIds = normalizeOwnershipDesignationFilterIds(
+          (prefs.preferredOwnershipTypes as string[] | null) ?? [],
+        );
+      }
+    }
+    const designationClauses: string[] = [];
+    const designationParams: unknown[] = [];
+    resolveDesignationScope({
+      explicit: requestedIds,
+      supportScope: allBusinessesOverride ? "all_businesses" : undefined,
+      saved: [],
+    }).forEach((id) => {
+      const filter = ownershipDesignationStorageValues(id);
+      const firstParameter = designationParams.length + 1;
+      designationParams.push(filter.values);
+      // Keep parameter allocation explicit; the shared policy defines the
+      // documented JSON and narrowly allow-listed legacy-column alternatives.
+      designationClauses.push(
+        buildDesignationPredicateSql(id, "b.ownership_designations", firstParameter)
+          .replaceAll("b.", ""),
+      );
+    });
+    const designationWhere = designationClauses.length
+      ? `AND ${designationClauses.join(" AND ")}`
+      : "";
     // Uses public.public_businesses view so duplicates and hidden records are
     // never included — the view enforces is_duplicate=false + live listing_status.
     const { rows } = await pool.query<{
@@ -331,8 +374,9 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
         AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+        ${designationWhere}
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
-    `);
+    `, designationParams);
     sendDynamicJson(res, { pins: rows });
   } catch (err) {
     res.status(500).json({ error: "Failed to load map pins" });
@@ -361,6 +405,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           lat: latParam,
           lng: lngParam,
           radius: radiusParam,
+            supportScope,
         } = req.query;
         const offset = Math.max(
           0,
@@ -408,9 +453,40 @@ router.get("/businesses", async (req: Request, res: Response) => {
           ...(typeof ownership === "string" ? [ownership] : []),
           ...(typeof designations === "string" ? designations.split(",") : []),
         ];
-        const designationFilterIds = normalizeOwnershipDesignationFilterIds(
+        const explicitDesignationFilterIds = normalizeOwnershipDesignationFilterIds(
           requestedDesignationValues,
         );
+        let savedDesignationFilterIds: string[] = [];
+        if (req.user?.id) {
+          try {
+            const [prefs] = await db
+              .select({
+                supportLensMode: userPreferencesTable.supportLensMode,
+                preferredOwnershipTypes:
+                  userPreferencesTable.preferredOwnershipTypes,
+              })
+              .from(userPreferencesTable)
+              .where(eq(userPreferencesTable.userId, req.user.id))
+              .limit(1);
+            if (
+              supportScope !== "all_businesses" &&
+              prefs?.supportLensMode === "strict_documented_designations"
+            ) {
+              savedDesignationFilterIds =
+                normalizeOwnershipDesignationFilterIds(
+                  (prefs.preferredOwnershipTypes as string[] | null) ?? [],
+                );
+            }
+          } catch {
+            // Discovery remains available if optional preference storage is unavailable.
+          }
+        }
+        const designationFilterIds = resolveDesignationScope({
+          explicit: explicitDesignationFilterIds,
+          supportScope: supportScope as string | undefined,
+          saved: savedDesignationFilterIds,
+          savedMode: supportScope === "all_businesses" ? null : "strict_documented_designations",
+        });
         for (const designationId of designationFilterIds) {
           const filter = ownershipDesignationStorageValues(designationId);
           const designationMatches = filter.values.map(
@@ -418,9 +494,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
               sql<boolean>`${businessesTable.ownershipDesignations} @> ${JSON.stringify([value])}::jsonb`,
           );
           conditions.push(
-            filter.id === "black-african-american"
+            legacyDesignationColumn(filter.id) === "black_owned"
               ? or(eq(businessesTable.blackOwned, true), ...designationMatches)!
-              : filter.id === "minority-general-legacy"
+              : legacyDesignationColumn(filter.id) === "minority_claim"
                 ? or(
                     eq(
                       businessesTable.ownershipClaim,

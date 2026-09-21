@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useAgeAssurance } from "@/hooks/useAgeAssurance";
+import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -102,16 +103,7 @@ const ATMOSPHERE_OPTIONS = [
   { value: "upscale", label: "Elevated & refined" },
 ];
 
-const OWNERSHIP_OPTIONS = [
-  "Black-owned",
-  "Women-owned",
-  "Latinx-owned",
-  "Indigenous-owned",
-  "LGBTQ+-owned",
-  "Veteran-owned",
-  "Community co-op",
-  "Any minority-owned",
-];
+const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS;
 
 const LIFESTYLE_OPTIONS = [
   "Childcare & Early Education",
@@ -304,6 +296,10 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
             communities: savedCommunities,
             cultures: savedCultures,
             preferredLanguages: savedLanguages,
+            preferredOwnershipTypes: ownershipPrefs,
+            supportLensMode: ownershipPrefs.length > 0
+              ? "strict_documented_designations"
+              : "all_businesses",
           }),
         },
       );
@@ -358,6 +354,16 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
   const skipAll = useCallback(async () => {
     setSaving(true);
     try {
+      await fetch(`${BASE}api/kinfolk/preferences`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferredOwnershipTypes: [],
+          ownershipTypes: [],
+          supportLensMode: "all_businesses",
+        }),
+      });
       await fetch(`${BASE}api/auth/user/setup`, {
         method: "PATCH",
         credentials: "include",
@@ -727,17 +733,18 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
             <div className="flex flex-wrap gap-2">
               {OWNERSHIP_OPTIONS.map((o) => (
                 <Chip
-                  key={o}
-                  label={o}
-                  selected={ownershipPrefs.includes(o)}
-                  onClick={() => toggle(ownershipPrefs, o, setOwnershipPrefs)}
+                  key={o.id}
+                  label={o.label}
+                  selected={ownershipPrefs.includes(o.id)}
+                  onClick={() => toggle(ownershipPrefs, o.id, setOwnershipPrefs)}
                 />
               ))}
             </div>
           </div>
           <p className="text-xs leading-relaxed text-[#3A1F0E]/45">
-            These preferences rank relevant results. They never silently hide
-            other care, safety, resource, or business options.
+            Your Support Lens is optional and private. It never says who you
+            are or removes anyone from MWM. Multiple selections match every
+            documented designation; you can change, clear, or broaden it any time.
           </p>
         </div>
       ),
@@ -859,6 +866,7 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
   ];
 
   const currentStep = steps[step];
+  const isSupportStep = step === 10;
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#2B1507]/85 backdrop-blur-sm p-4">
@@ -922,7 +930,7 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
             </button>
           )}
           <div className="flex-1" />
-          {!isLast && (
+          {!isLast && !isSupportStep && (
             <button
               onClick={() => setStep((s) => s + 1)}
               disabled={saving}
@@ -931,7 +939,31 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
               Skip
             </button>
           )}
-          <button
+          {isSupportStep ? (
+            <div className="grid grid-cols-3 gap-2 w-full">
+              <button
+                onClick={next}
+                disabled={saving}
+                className="px-3 py-3 rounded-full bg-[#CA922B] text-white font-bold text-xs"
+              >
+                Save Support Lens
+              </button>
+              <button
+                onClick={() => { setOwnershipPrefs([]); void next(); }}
+                disabled={saving}
+                className="px-3 py-3 rounded-full border border-[#CA922B] text-[#2B1507] font-bold text-xs"
+              >
+                Show all businesses equally
+              </button>
+              <button
+                onClick={() => { setOwnershipPrefs([]); setStep((s) => s + 1); }}
+                disabled={saving}
+                className="px-3 py-3 rounded-full border border-[#E8DDD0] text-[#2B1507] font-bold text-xs"
+              >
+                Skip for now
+              </button>
+            </div>
+          ) : <button
             onClick={next}
             disabled={saving}
             className="flex items-center gap-2 px-6 py-3 bg-[#CA922B] text-white rounded-full font-bold text-sm hover:bg-[#B38024] transition-colors disabled:opacity-50"
@@ -950,7 +982,7 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
                 Next <ChevronRight className="w-4 h-4" />
               </>
             )}
-          </button>
+          </button>}
         </div>
       </div>
     </div>

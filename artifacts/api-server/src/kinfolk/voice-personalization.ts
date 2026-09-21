@@ -309,6 +309,15 @@ export function validateKinfolkPreferenceUpdate(
   ) {
     issues.push("dietaryNotes must be a string or null");
   }
+  if (
+    body.supportLensMode !== undefined &&
+    body.supportLensMode !== "all_businesses" &&
+    body.supportLensMode !== "strict_documented_designations"
+  ) {
+    issues.push(
+      "supportLensMode must be all_businesses or strict_documented_designations",
+    );
+  }
   return issues.length ? { ok: false, issues } : { ok: true };
 }
 
