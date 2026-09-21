@@ -2409,11 +2409,11 @@ export default function TravelScreen() {
 
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }} accessibilityLabel="Save this to my private Kinfolk memory">
               <Ionicons name={rememberThis ? "checkbox" : "square-outline"} size={18} color={rememberThis ? colors.primary : colors.mutedForeground} />
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Remember this privately</Text>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Save this to my private Kinfolk memory</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
+            <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>
           <TouchableOpacity
             activeOpacity={0.8}
@@ -2421,12 +2421,12 @@ export default function TravelScreen() {
             style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: includeCommunityPerspective }}
-            accessibilityLabel="Include public Community perspective"
+            accessibilityLabel="Use approved public Community posts"
           >
             <Ionicons name={includeCommunityPerspective ? "checkbox" : "square-outline"} size={18} color={includeCommunityPerspective ? colors.primary : colors.mutedForeground} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Include public Community perspective</Text>
-              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>Matching public hashtags only; never used as evidence or a recommendation.</Text>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Use approved public Community posts</Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>This does not share your chat. Community content is perspective, never evidence or a recommendation.</Text>
             </View>
           </TouchableOpacity>
           {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((url) => <View key={url} style={{ marginRight: 8 }}><Image source={{ uri: url }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => setKinfolkImages((items) => items.filter((item) => item !== url))} style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
