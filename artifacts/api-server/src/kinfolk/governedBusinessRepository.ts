@@ -635,11 +635,27 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       scope: ValidatedKinfolkCityScope,
       preferenceTerms: readonly string[],
       limit = 50,
+      requiredDesignationIds: readonly string[] = [],
     ): Promise<GovernedKinfolkBusiness[]> {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
       const tokens = preferenceSearchTokens(preferenceTerms);
       if (tokens.length === 0) return [];
+      const designationIds = normalizeOwnershipDesignationFilterIds(
+        requiredDesignationIds,
+      );
+      const designationValueGroups = designationIds.map(
+        (id) => ownershipDesignationStorageValues(id).values,
+      );
+      const designationClauses = designationValueGroups
+        .map((_, index) =>
+          `AND ${buildDesignationPredicateSql(
+            designationIds[index],
+            "b.ownership_designations",
+            5 + index,
+          )}`,
+        )
+        .join("");
       const { rows } = await pool.query<BusinessRow>(
         `
         SELECT ${CANONICAL_SELECT}, NULL::double precision AS distance_miles
@@ -666,11 +682,18 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
           AND preference_match.hit_count > 0
+          ${designationClauses}
         ORDER BY preference_match.hit_count DESC,
           b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT $4
       `,
-        [location.city, location.stateCode, tokens, resultLimit],
+        [
+          location.city,
+          location.stateCode,
+          tokens,
+          resultLimit,
+          ...designationValueGroups,
+        ],
       );
       return suppressProbableDuplicateBusinesses(rows.map(mapBusiness))
         .businesses;

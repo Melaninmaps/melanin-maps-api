@@ -93,6 +93,7 @@ import {
   type GovernedKinfolkBusiness,
   type ValidatedKinfolkCityScope,
 } from "../kinfolk/governedBusinessRepository";
+import { matchesDocumentedDesignationScope } from "../kinfolk/designation-predicate-policy";
 import {
   namedBusinessPromptBlock,
   resolveNamedBusinessTurn,
@@ -6140,6 +6141,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedPlaces: string[] = [];
     let responseFeedbackPrompt = "";
     let savedConversationMode: unknown = undefined;
+    let savedSupportLensMode: string | null = null;
+    let savedSupportLensDesignationIds: string[] = [];
 
     if (req.user?.id) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
@@ -6148,6 +6151,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       try {
         prefs = await getCachedPrefs(req.user.id);
         savedConversationMode = prefs?.personalityMode;
+        savedSupportLensMode = prefs?.supportLensMode ?? null;
+        savedSupportLensDesignationIds = normalizeOwnershipDesignationFilterIds(
+          Array.isArray(prefs?.preferredOwnershipTypes)
+            ? prefs.preferredOwnershipTypes
+            : [],
+        );
       } catch {
         /* non-critical — proceed without personalization prefs */
       }
@@ -6238,6 +6247,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         /* non-critical */
       }
     }
+
+    // Support Lens is a separately chosen visibility boundary, not behavioral
+    // personalization. A direct request wins for this turn; otherwise preserve
+    // the member's saved strict selection even if taste-based ranking is off.
+    const requestedSupportLensDesignationIds =
+      extractExplicitOwnershipDesignationFilterIds(message);
+    const requiredSupportLensDesignationIds =
+      requestedSupportLensDesignationIds.length > 0
+        ? requestedSupportLensDesignationIds
+        : savedSupportLensMode === "strict_documented_designations"
+          ? savedSupportLensDesignationIds
+          : [];
 
     // A mode supplied with this turn wins. Otherwise, use the member's saved
     // Kinfolk Voice for floating-widget, web, and mobile chat entry points.
@@ -7610,6 +7631,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: message,
     });
+    // The Support Lens is an all-of documentary boundary, not a ranking hint.
+    // Apply it to every catalog source (named, city, radius, and home) before a
+    // business can become Kinfolk context or a recommendation.
+    businessCatalog = businessCatalog.filter((business) =>
+      matchesDocumentedDesignationScope(
+        business,
+        requiredSupportLensDesignationIds,
+      ),
+    );
     if (
       !audienceAllowsBusinessText({
         ageBand: effectiveAudienceBand,
@@ -7930,7 +7960,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               business,
             ]),
           ).values(),
-        ];
+        ].filter((business) =>
+          matchesDocumentedDesignationScope(
+            business,
+            requiredSupportLensDesignationIds,
+          ),
+        );
       } catch {
         /* non-critical — retain the governed city catalog */
       }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildDesignationPredicateSql, legacyDesignationColumn, resolveDesignationScope } from "../designation-predicate-policy";
+import {
+  buildDesignationPredicateSql,
+  legacyDesignationColumn,
+  matchesDocumentedDesignationScope,
+  resolveDesignationScope,
+} from "../designation-predicate-policy";
 
 describe("shared Support Lens designation predicate policy", () => {
   it("keeps legacy columns narrowly allow-listed", () => {
@@ -25,5 +30,19 @@ describe("shared Support Lens designation predicate policy", () => {
     expect(resolveDesignationScope({ explicit: ["woman"], supportScope: "all_businesses", saved, savedMode: "strict_documented_designations" })).toEqual(["woman"]);
     expect(resolveDesignationScope({ explicit: [], supportScope: "all_businesses", saved, savedMode: "strict_documented_designations" })).toEqual([]);
     expect(resolveDesignationScope({ explicit: [], saved, savedMode: "strict_documented_designations" })).toEqual(saved);
+  });
+
+  it("requires every selected designation for catalog rows", () => {
+    expect(matchesDocumentedDesignationScope({
+      ownershipDesignations: ["Black / African American-Owned", "Woman-Owned"],
+    }, ["black-african-american", "woman"])).toBe(true);
+    expect(matchesDocumentedDesignationScope({
+      ownershipDesignations: ["Black / African American-Owned"],
+    }, ["black-african-american", "woman"])).toBe(false);
+  });
+
+  it("permits only the existing narrow Black legacy boolean", () => {
+    expect(matchesDocumentedDesignationScope({ blackOwned: true }, ["black-african-american"])).toBe(true);
+    expect(matchesDocumentedDesignationScope({ blackOwned: true }, ["woman"])).toBe(false);
   });
 });

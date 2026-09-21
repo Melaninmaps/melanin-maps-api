@@ -434,6 +434,9 @@ export async function discoverLocalBusinesses(input: {
             input.scope,
             preferenceTerms,
             50,
+            ...(input.requiredDesignationIds?.length
+              ? [input.requiredDesignationIds]
+              : []),
           ),
         ]).then(([subjectMatches, preferenceMatches]) => {
           const unique = new Map<string, GovernedKinfolkBusiness>();

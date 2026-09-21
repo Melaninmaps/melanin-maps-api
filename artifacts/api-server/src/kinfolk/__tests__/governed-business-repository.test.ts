@@ -201,6 +201,27 @@ describe("governed Kinfolk business repository", () => {
     ]);
   });
 
+  it("requires every documented Support Lens designation for preference expansion", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    await repository.findByPreferenceTerms(
+      { city: "Philadelphia", stateCode: "PA" },
+      ["bookstores"],
+      50,
+      ["black-african-american", "woman"],
+    );
+
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("b.black_owned = TRUE");
+    expect(sql).toContain("$5::text[]");
+    expect(sql).toContain("$6::text[]");
+    expect(params.slice(4)).toEqual([
+      expect.arrayContaining(["Black / African American-Owned"]),
+      expect.arrayContaining(["Woman-Owned"]),
+    ]);
+  });
+
   it("does not query when explicit preferences normalize to no safe search tokens", async () => {
     const pool = { query: vi.fn() };
     const repository = createGovernedKinfolkBusinessRepository(pool);

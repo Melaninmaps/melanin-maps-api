@@ -24,6 +24,9 @@ const originalFetch = globalThis.fetch;
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
+  // clearAllMocks retains a prior mock implementation, which allowed one
+  // provider-state case to leak its OpenAI result into the next case.
+  responsesCreate.mockReset();
   globalThis.fetch = originalFetch;
 });
 
@@ -424,6 +427,26 @@ describe("deterministic local business discovery", () => {
     );
   });
 
+  it("passes the strict all-of designation scope into preference expansion", async () => {
+    const activity = deriveBusinessSubject("Find things to do in Atlanta GA")!;
+    const db = repository({ businesses: [governedBusiness], preferenceBusinesses: [governedBusiness] });
+    await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: activity,
+      repository: db,
+      personalization: { preferenceTerms: ["bookstores"] },
+      requiredDesignationIds: ["black-african-american", "woman"],
+      webSearch: vi.fn(),
+    });
+
+    expect(db.findByPreferenceTerms).toHaveBeenCalledWith(
+      { city: "Atlanta", stateCode: "GA" },
+      ["bookstores"],
+      50,
+      ["black-african-american", "woman"],
+    );
+  });
+
   it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "removes adult content from every emitted discovery channel for %s",
     async (ageBand) => {
@@ -538,6 +561,7 @@ describe("local web provider-state contract", () => {
   it("returns unavailable without making a request when neither provider is configured", async () => {
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("TAVILY_API_KEY", "");
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock;
@@ -673,6 +697,7 @@ describe("local web provider-state contract", () => {
   it("falls back to Tavily and distinguishes zero results from provider failure", async () => {
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("TAVILY_API_KEY", "test-key");
     globalThis.fetch = vi.fn().mockImplementation(async () =>
       new Response(JSON.stringify({ results: [] }), { status: 200 }),
@@ -694,6 +719,7 @@ describe("local web provider-state contract", () => {
   it("treats malformed Tavily JSON as degraded and skips malformed result rows", async () => {
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("TAVILY_API_KEY", "test-key");
     globalThis.fetch = vi.fn().mockImplementation(async () =>
       new Response("not-json", { status: 200 }),
