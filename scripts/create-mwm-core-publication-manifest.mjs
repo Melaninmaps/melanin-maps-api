@@ -8,8 +8,13 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve, relative } from "node:path";
 
-const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v2";
-const SOURCE_BACKED_COHORT = "mwm_source_backed_candidate";
+const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v3";
+const CHAMBER_COHORT = "mwm_chamber_backed_candidate";
+const INSTITUTIONAL_COHORT = "mwm_institutional_directory_candidate";
+const AUTOMATIC_PUBLICATION_COHORTS = new Set([
+  CHAMBER_COHORT,
+  INSTITUTIONAL_COHORT,
+]);
 
 function argValue(name, fallback = undefined) {
   const index = process.argv.indexOf(name);
@@ -59,10 +64,19 @@ async function main() {
   const summaryOut = resolve(argValue("--summary", `${out}.summary.json`));
   const expectedRootHash = requiredArg("--expected-receipt-root-hash").toLowerCase();
   const expectedCandidateCount = Number(requiredArg("--expected-candidate-count"));
+  const expectedChamberCount = Number(requiredArg("--expected-chamber-count"));
+  const expectedInstitutionalCount = Number(requiredArg("--expected-institutional-directory-count"));
 
   if (!isSha256(expectedRootHash)) throw new Error("--expected-receipt-root-hash must be a SHA-256 hash.");
-  if (!Number.isInteger(expectedCandidateCount) || expectedCandidateCount < 1) {
-    throw new Error("--expected-candidate-count must be a positive integer.");
+  for (const [name, value] of [
+    ["--expected-candidate-count", expectedCandidateCount],
+    ["--expected-chamber-count", expectedChamberCount],
+    ["--expected-institutional-directory-count", expectedInstitutionalCount],
+  ]) {
+    if (!Number.isInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer.`);
+  }
+  if (expectedCandidateCount < 1 || expectedCandidateCount !== expectedChamberCount + expectedInstitutionalCount) {
+    throw new Error("Expected total must equal the Chamber and institutional-directory lane counts.");
   }
 
   const receipts = parseJsonl(await readFile(receiptsPath, "utf8"), receiptsPath);
@@ -73,7 +87,7 @@ async function main() {
 
   const candidates = receipts.filter((receipt) =>
     receipt.receiptVersion === POLICY_VERSION
-    && receipt.cohort === SOURCE_BACKED_COHORT
+    && AUTOMATIC_PUBLICATION_COHORTS.has(receipt.cohort)
     && receipt.eligibleForReleasePreview === true,
   );
   if (candidates.length !== expectedCandidateCount) {
@@ -108,6 +122,7 @@ async function main() {
   const output = [];
   let physicalCount = 0;
   let onlineOnlyCount = 0;
+  const evidenceLaneCounts = { chamber: 0, institutional_directory: 0 };
   for (const receipt of candidates) {
     if (!isSha256(receipt.receiptHash) || !isSha256(receipt.sourceManifestSha256) ||
         !isSha256(receipt.recordFingerprint) || !Number.isInteger(receipt.sourceRow) ||
@@ -115,8 +130,17 @@ async function main() {
       throw new Error(`Incomplete source receipt metadata for ${receipt.sourceManifest}:${receipt.sourceRow}.`);
     }
     const targetKind = receipt.evidence?.targetKind;
+    const evidenceLane = receipt.evidenceLane;
     if (targetKind !== "business" && targetKind !== "online_business") {
       throw new Error(`Unexpected target kind in publication candidate: ${String(targetKind)}.`);
+    }
+    const expectedCohort = evidenceLane === "chamber"
+      ? CHAMBER_COHORT
+      : evidenceLane === "institutional_directory"
+        ? INSTITUTIONAL_COHORT
+        : null;
+    if (!expectedCohort || receipt.cohort !== expectedCohort) {
+      throw new Error(`Invalid evidence-lane/cohort pairing for ${receipt.sourceManifest}:${receipt.sourceRow}.`);
     }
     const rows = await sourceRows(receipt.sourceManifest, receipt.sourceManifestSha256);
     const sourceRecord = rows.get(receipt.recordFingerprint);
@@ -126,7 +150,8 @@ async function main() {
     const derived = {
       ...sourceRecord,
       mwm_core_policy_version: POLICY_VERSION,
-      mwm_core_cohort: SOURCE_BACKED_COHORT,
+      mwm_core_cohort: receipt.cohort,
+      mwm_core_evidence_lane: evidenceLane,
       mwm_core_receipt_root_hash: expectedRootHash,
       mwm_core_receipt_hash: receipt.receiptHash,
       mwm_core_source_manifest: receipt.sourceManifest,
@@ -135,15 +160,21 @@ async function main() {
       mwm_core_source_row_id: String(receipt.sourceRowId),
     };
     output.push(canonicalJson(derived));
+    evidenceLaneCounts[evidenceLane] += 1;
     if (targetKind === "business") physicalCount += 1;
     else onlineOnlyCount += 1;
   }
 
   const body = `${output.join("\n")}\n`;
+  if (evidenceLaneCounts.chamber !== expectedChamberCount ||
+      evidenceLaneCounts.institutional_directory !== expectedInstitutionalCount) {
+    throw new Error(`Evidence lane count mismatch: expected Chamber ${expectedChamberCount} / institutional ${expectedInstitutionalCount}, received Chamber ${evidenceLaneCounts.chamber} / institutional ${evidenceLaneCounts.institutional_directory}.`);
+  }
   const manifestSha256 = sha256(body);
   const summary = {
     policyVersion: POLICY_VERSION,
-    cohort: SOURCE_BACKED_COHORT,
+    cohorts: [CHAMBER_COHORT, INSTITUTIONAL_COHORT],
+    evidenceLaneCounts,
     sourceReceiptRootHash: expectedRootHash,
     sourceReceiptFile: relative(process.cwd(), receiptsPath),
     sourceRoot: relative(process.cwd(), sourceRoot),

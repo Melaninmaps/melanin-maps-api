@@ -13,11 +13,13 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 
-const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v2";
+const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v3";
 const DIRECTORY_POLICY_VERSION = "directory-auto-review-v1";
 const DEFAULT_ROOT = "data/founder-imports";
 const DEFAULT_OUT = "artifacts/reports/inventory-cohort-preflight.jsonl";
 const DEFAULT_SUMMARY = "artifacts/reports/inventory-cohort-preflight-summary.json";
+const CHAMBER_COHORT = "mwm_chamber_backed_candidate";
+const INSTITUTIONAL_COHORT = "mwm_institutional_directory_candidate";
 
 function argValue(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -144,6 +146,47 @@ const QUALIFYING_OWNERSHIP_PATTERNS = [
   /\bhispanic\b/,
 ];
 
+/**
+ * The combined launch policy has two automatic lanes. Chamber-backed records
+ * are the strongest lane. Other governed/community/official directories are a
+ * separate, visible automatic lane. Editorial/promotional sources remain
+ * retained but require a future corroborating source; they are never deleted
+ * or silently treated as Chamber evidence.
+ */
+const CHAMBER_SOURCE_PATTERNS = [
+  /\b(?:black|african american|african-american|hispanic|latino|latina|latinx)\b.*\bchamber\b/,
+  /\bchamber\b.*\b(?:black|african american|african-american|hispanic|latino|latina|latinx)\b/,
+];
+const INSTITUTIONAL_DIRECTORY_SOURCE_PATTERNS = [
+  /\bnaacp\b/,
+  /\b(?:city|county|municipal|mayor|government|geo ?hub)\b/,
+  /\b(?:tourism|tourist|visitor)\b/,
+  /^(?:visit|destination)\b/,
+  /\b(?:black|african american|african-american|hispanic|latino|latina|latinx)\b.*\b(?:business )?directory\b/,
+  /\b(?:black pages|blackbook|black restaurant week|national business league|business network)\b/,
+  /\b(?:alliance|association|council|community development|economic development)\b/,
+  /\b(?:delta sigma theta|jack and jill|ame church)\b/,
+];
+
+function sourceEvidenceLane(record) {
+  const sourceName = String(record.sourceName ?? record.source_name ?? "");
+  const sourceUrl = String(record.sourceUrl ?? record.source_url ?? "");
+  // A source URL path such as `/directory` is not evidence of the source's
+  // governance. Classify from the source's declared name, with `.gov` as the
+  // sole URL-based institutional signal.
+  const sourceText = normalize(sourceName);
+  if (CHAMBER_SOURCE_PATTERNS.some((pattern) => pattern.test(sourceText))) {
+    return "chamber";
+  }
+  if (
+    INSTITUTIONAL_DIRECTORY_SOURCE_PATTERNS.some((pattern) => pattern.test(sourceText))
+    || /(?:^|\.)gov(?:\/|$)/.test(sourceUrl.toLowerCase())
+  ) {
+    return "institutional_directory";
+  }
+  return "editorial_or_promotional";
+}
+
 function missionDecision(record, directory) {
   const designations = Array.isArray(record.ownershipDesignations)
     ? record.ownershipDesignations.map(String)
@@ -173,21 +216,41 @@ function missionDecision(record, directory) {
     && publicHost(sourceUrl)
     && remainingDirectoryExceptions.length === 0
   ) {
+    const evidenceLane = sourceEvidenceLane(record);
+    if (evidenceLane === "chamber") {
+      return {
+        cohort: CHAMBER_COHORT,
+        evidenceLane,
+        eligibleForReleasePreview: true,
+        reasons: ["explicit_approved_mwm_core_designation", "traceable_chamber_source", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+      };
+    }
+    if (evidenceLane === "institutional_directory") {
+      return {
+        cohort: INSTITUTIONAL_COHORT,
+        evidenceLane,
+        eligibleForReleasePreview: true,
+        reasons: ["explicit_approved_mwm_core_designation", "traceable_institutional_or_community_directory", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+      };
+    }
     return {
-      cohort: "mwm_source_backed_candidate",
-      eligibleForReleasePreview: true,
-        reasons: ["explicit_approved_mwm_core_designation", "source_directory_traceable", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+      cohort: "hold_editorial_corroboration_required",
+      evidenceLane,
+      eligibleForReleasePreview: false,
+      reasons: ["explicit_approved_mwm_core_designation", "editorial_or_promotional_source_requires_second_approved_source", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
     };
   }
   if (remainingDirectoryExceptions.length > 0) {
     return {
       cohort: "hold_directory_evidence_required",
+      evidenceLane: null,
       eligibleForReleasePreview: false,
       reasons: [...remainingDirectoryExceptions, "explicit_mwm_designation_present_but_directory_evidence_incomplete"],
     };
   }
   return {
     cohort: "hold_source_provenance_required",
+    evidenceLane: null,
     eligibleForReleasePreview: false,
     reasons: ["traceable_source_directory_required"],
   };
@@ -220,8 +283,9 @@ async function main() {
       const mission = missionDecision(record, directory);
       const recordFingerprint = sha256(canonicalJson(record));
       const firstManifestFingerprint = globalFingerprints.get(recordFingerprint);
-      if (firstManifestFingerprint && mission.cohort === "mwm_source_backed_candidate") {
+      if (firstManifestFingerprint && mission.eligibleForReleasePreview) {
         mission.cohort = "hold_cross_package_duplicate";
+        mission.evidenceLane = null;
         mission.eligibleForReleasePreview = false;
         mission.reasons = ["duplicate_across_signed_packages", `first_seen:${firstManifestFingerprint}`];
       } else if (!firstManifestFingerprint) {
@@ -239,6 +303,7 @@ async function main() {
         directoryExceptionCodes: directory.exceptionCodes,
         directoryCanonicalSourceRow: directory.canonicalSourceRow,
         cohort: mission.cohort,
+        evidenceLane: mission.evidenceLane ?? null,
         eligibleForReleasePreview: mission.eligibleForReleasePreview,
         reasonCodes: mission.reasons,
         recordIdentity: {
@@ -251,6 +316,7 @@ async function main() {
         evidence: {
           sourceName: String(record.sourceName ?? record.source_name ?? ""),
           sourceUrl: String(record.sourceUrl ?? record.source_url ?? ""),
+          sourceHost: publicHost(record.sourceUrl ?? record.source_url ?? ""),
           ownershipDesignations: Array.isArray(record.ownershipDesignations) ? record.ownershipDesignations : Array.isArray(record.ownership_designations) ? record.ownership_designations : [],
           targetKind: String(record.targetKind ?? record.target_kind ?? "manual_review"),
         },
@@ -264,9 +330,11 @@ async function main() {
 
   const cohorts = {};
   const directoryOutcomes = {};
+  const evidenceLaneCounts = {};
   for (const receipt of receipts) {
     cohorts[receipt.cohort] = (cohorts[receipt.cohort] ?? 0) + 1;
     directoryOutcomes[receipt.directoryOutcome] = (directoryOutcomes[receipt.directoryOutcome] ?? 0) + 1;
+    if (receipt.evidenceLane) evidenceLaneCounts[receipt.evidenceLane] = (evidenceLaneCounts[receipt.evidenceLane] ?? 0) + 1;
   }
   const rootHash = sha256(receipts.map((receipt) => receipt.receiptHash).join("\n"));
   const summary = {
@@ -280,9 +348,10 @@ async function main() {
     manifestCount: files.length,
     sourceRowCount: receipts.length,
     cohortCounts: cohorts,
+    evidenceLaneCounts,
     directoryOutcomeCounts: directoryOutcomes,
     rootReceiptHash: rootHash,
-    releaseRule: "No record is authorized for staging, publication, or public visibility by this file. It is a preview that requires an explicit launch-cohort confirmation.",
+    releaseRule: "No record is authorized for staging, publication, or public visibility by this file. The Chamber and institutional-directory lanes require an explicit signed launch-cohort confirmation; editorial/promotional rows require corroboration and remain held.",
   };
   await mkdir(dirname(out), { recursive: true });
   await mkdir(dirname(summaryOut), { recursive: true });
