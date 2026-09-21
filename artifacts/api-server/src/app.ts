@@ -62,7 +62,10 @@ import { registerDirectoryImportRoutes } from "./directoryImport/registerDirecto
 import { registerReconciliationRoutes } from "./directoryReconciliation/registerReconciliationRoutes";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { createDirectoryReviewPool } from "./directoryImport/reviewDatabase";
-import { registerAutomatedDirectoryRoutes } from "./directoryImport/automatedDirectoryRoutes";
+import {
+  DIRECTORY_REVIEW_INGRESS_JSON_LIMIT,
+  registerAutomatedDirectoryRoutes,
+} from "./directoryImport/automatedDirectoryRoutes";
 
 // Defined by esbuild in build.mjs. These values are substituted into the
 // current dist/index.mjs and therefore cannot retain an older generated file.
@@ -325,12 +328,13 @@ app.use(
   }),
 );
 app.use(cookieParser());
-// Directory review manifests can exceed Express's 100 KB default. Raise the
-// limit only for the protected ingress route; its service and manifest HMAC
-// checks still run in the route handler.
+// Directory review manifests can exceed Express's 100 KB default. The signed
+// full source-receipted cohort envelopes at 14.673 MiB; the 20 MiB ceiling is
+// deliberately scoped to this protected ingress. Service authorization, HMAC,
+// checksum, immutable-row, and review-database checks still run in the route.
 app.use(
   "/api/founder/directory-import/ingress",
-  express.json({ limit: "10mb" }),
+  express.json({ limit: DIRECTORY_REVIEW_INGRESS_JSON_LIMIT }),
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

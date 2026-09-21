@@ -12,6 +12,11 @@ import {
 } from "./mwmCorePublicationPolicy";
 import { createHash } from "node:crypto";
 
+// The signed, immutable 4,183-record source-receipted cohort is a 14.673 MiB
+// JSON envelope. Keep this ceiling scoped to its protected service ingress;
+// ordinary API JSON requests retain Express's default limit.
+export const DIRECTORY_REVIEW_INGRESS_JSON_LIMIT = "20mb" as const;
+
 function operator(req: Request, res: Response) {
   const authorization = authorizeDirectoryOperator(req);
   if (!authorization.ok) {
