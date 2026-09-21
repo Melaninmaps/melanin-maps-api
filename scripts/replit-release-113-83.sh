@@ -52,6 +52,22 @@ require_exact_clean_source() {
   [ "$(jq -r '.expo.ios.infoPlist.UIRequiresFullScreen' artifacts/mobile/app.json)" = "false" ] || fail "iPad multitasking must remain enabled"
 }
 
+require_live_production_api() {
+  local version railway_sha built_from_sha
+  version="$(curl --connect-timeout 10 --max-time 30 -fsS "https://api.melaninmaps.com/api/version?release_identity_probe=$(date +%s)")" \
+    || fail "production API version endpoint is unavailable"
+  railway_sha="$(printf '%s' "$version" | jq -r '.railway_sha // empty')"
+  built_from_sha="$(printf '%s' "$version" | jq -r '.built_from_sha // empty')"
+  [ "$railway_sha" = "$RELEASE_SHA" ] || fail "production Railway SHA $railway_sha does not match release SHA $RELEASE_SHA"
+  [ "$built_from_sha" = "$RELEASE_SHA" ] || fail "production compiled source SHA $built_from_sha does not match release SHA $RELEASE_SHA"
+  curl --connect-timeout 10 --max-time 30 -fsS https://api.melaninmaps.com/api/healthz >/dev/null \
+    || fail "production health check failed"
+  curl --connect-timeout 10 --max-time 30 -fsS https://api.melaninmaps.com/api/readyz >/dev/null \
+    || fail "production readiness check failed"
+  curl --connect-timeout 10 --max-time 30 -fsS https://api.melaninmaps.com/api/kinfolk/health >/dev/null \
+    || fail "production Kinfolk health check failed"
+}
+
 case "$MODE" in
   prepare)
     require_exact_clean_source
@@ -71,6 +87,7 @@ case "$MODE" in
     require_exact_clean_source
     RELEASE_SHA="$RELEASE_SHA" bash scripts/run-build-113-83-requirements-gate.sh --verify-final
     node scripts/verify-release-artifacts.mjs
+    require_live_production_api
 
     cd artifacts/mobile
     pnpm exec eas whoami >/dev/null || fail "EAS is not authenticated; authenticate in the existing owner account without exposing credentials"
