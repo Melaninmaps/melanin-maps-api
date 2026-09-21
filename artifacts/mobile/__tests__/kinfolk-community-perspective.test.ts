@@ -7,9 +7,16 @@ const hookSource = readFileSync(new URL("../hooks/useKinfolk.ts", import.meta.ur
 describe("mobile Kinfolk Community perspective", () => {
   it("requires an explicit, per-message opt-in before sending a Community perspective request", () => {
     expect(travelSource).toContain("includeCommunityPerspective");
-    expect(travelSource).toContain("Include public Community perspective");
-    expect(travelSource).toContain("Matching public hashtags only; never used as evidence or a recommendation.");
+    expect(travelSource).toContain("Use approved public Community posts");
+    expect(travelSource).toContain("This does not share your chat. Community content is perspective, never evidence or a recommendation.");
+    expect(travelSource).toContain('accessibilityLabel="Use approved public Community posts"');
     expect(hookSource).toContain("includeCommunityPerspective: opts?.includeCommunityPerspective === true");
+  });
+
+  it("uses explicit private-memory consent language and keeps the toggle opt-in", () => {
+    expect(travelSource).toContain("Save this to my private Kinfolk memory");
+    expect(travelSource).toContain('accessibilityLabel="Save this to my private Kinfolk memory"');
+    expect(travelSource).toContain("const [rememberThis, setRememberThis] = useState(false)");
   });
 
   it("renders only a generic unverified-perspective disclosure, never raw Community post content", () => {

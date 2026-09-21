@@ -2418,15 +2418,15 @@ function TravelPage() {
                     <button key={value} onClick={() => setKinfolkMode(value)} className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${kinfolkMode === value ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/50"}`}>{label}</button>
                   ))}
                   <div className="ml-auto flex items-center gap-3">
-                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Only this account can use this memory. You can forget it any time.">
+                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Save only this message to your private Kinfolk memory. This is off by default; you can view, edit, or forget saved memory at any time.">
                       <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} />
-                      Remember this privately
+                      Save this to my private Kinfolk memory
                     </label>
-                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Use only recent public Community posts with matching hashtags. Never used as evidence for current, medical, legal, financial, safety, or political answers.">
+                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
                       <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} />
-                      Include public Community perspective
+                      Use approved public Community posts
                     </label>
-                    <button onClick={() => setShowMemoryManager(true)} className="text-[11px] font-bold text-[#CA922B] hover:underline">Manage</button>
+                    <button aria-label="Manage private Kinfolk memory" onClick={() => setShowMemoryManager(true)} className="text-[11px] font-bold text-[#CA922B] hover:underline">Manage memory</button>
                   </div>
                 </div>
 

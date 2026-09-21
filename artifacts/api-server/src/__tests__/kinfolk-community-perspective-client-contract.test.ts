@@ -11,7 +11,9 @@ describe("Kinfolk Community perspective client contract", () => {
   it("sends an explicit opt-in and renders only generic, separately labeled metadata", () => {
     expect(webSource).toContain("includeCommunityPerspective");
     expect(webSource).toContain("kinfolk-community-perspective-opt-in");
-    expect(webSource).toContain("Include public Community perspective");
+    expect(webSource).toContain("Use approved public Community posts");
+    expect(webSource).toContain("This does not share your chat. Community content is perspective, never evidence or a recommendation.");
+    expect(webSource).toContain("Save this to my private Kinfolk memory");
     expect(webSource).toContain("includeCommunityPerspective }),");
     expect(webSource).toContain("kinfolk-community-perspective");
     expect(webSource).toContain("Community perspective");
