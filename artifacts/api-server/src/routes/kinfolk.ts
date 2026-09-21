@@ -101,6 +101,7 @@ import {
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
 } from "../kinfolk/current-research";
+import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
 import {
   evidenceFailureReply,
@@ -8110,6 +8111,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           ...contextualEvidence.media,
         ])
       : "";
+    const imageCreationSafetyGuidance = buildImageCreationSafetyGuidance(message);
     const cityBriefingPromptBlock =
       contextualPlan?.taskMode === "city_briefing" && destination
         ? buildCityBriefingPromptBlock({
@@ -8248,6 +8250,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ? `\n\n${healthEvidenceBlock}`
         : "") +
       (!contextualHighConsequence && entityBlock ? `\n\n${entityBlock}` : "") +
+      (imageCreationSafetyGuidance ? `\n\n${imageCreationSafetyGuidance}` : "") +
       (educationBlock ? `\n\n${educationBlock}` : "") +
       (tourSiteBlock ? `\n\n${tourSiteBlock}` : "") +
       (!contextualHighConsequence && webSearchBlock
@@ -8286,6 +8289,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       hasResolvedEntity: contextResolution.responseMode !== "no_entity",
       hasLibraryGrounding: Boolean(libraryTopic),
       hasRequestedVibes: vibes.length > 0,
+      hasImageCreationSafetyGuidance: Boolean(imageCreationSafetyGuidance),
     });
     const responseDepth = resolveKinfolkResponseDepth({
       message,
