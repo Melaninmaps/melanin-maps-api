@@ -72,6 +72,8 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/community-feed-schema-guard.test.ts \
   src/__tests__/directory-import-publication.test.ts \
   src/__tests__/directory-publication.test.ts \
+  src/map/__tests__/essentialServices.test.ts \
+  src/map/__tests__/registerLocalBusinessSearchRoute.test.ts \
   src/library/__tests__/librarySearch.test.ts \
   src/library/__tests__/registerLivingLibraryRoutes.test.ts \
   src/kinfolk/__tests__/collective-opinion-policy.test.ts \
@@ -82,13 +84,16 @@ pnpm exec vitest run \
   artifacts/web/src/__tests__/business-experience-social-ui.test.ts \
   artifacts/web/src/__tests__/living-library-research.test.ts \
   artifacts/web/src/__tests__/map-discovery-card.test.ts \
+  artifacts/web/src/__tests__/map-locality-first.test.ts \
+  artifacts/web/src/__tests__/essential-services-map.test.ts \
   artifacts/web/src/__tests__/map-profile-navigation.test.ts \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
   artifacts/mobile/__tests__/library-research.test.ts \
   artifacts/mobile/__tests__/map-clean-surface.test.ts \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \
-  artifacts/mobile/__tests__/map-locality-first.test.ts
+  artifacts/mobile/__tests__/map-locality-first.test.ts \
+  artifacts/mobile/__tests__/essential-services-map.test.ts
 
 pnpm --dir artifacts/web run build
 pnpm --dir artifacts/api-server run build

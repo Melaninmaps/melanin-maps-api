@@ -1,9 +1,12 @@
 import { Feather } from "@expo/vector-icons";
 import {
   countMapDiscoveryFocuses,
+  MAP_ESSENTIAL_SERVICE_CATEGORIES,
   matchesMapDiscoveryFocus,
+  type MapEssentialServiceCategory,
   type MapDiscoveryFocus,
 } from "@workspace/constants";
+import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
 import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -184,6 +187,24 @@ interface TravelDestination {
   detail_url: string;
 }
 
+interface EssentialServicePlace {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  primaryType: string | null;
+  directionsUrl: string;
+}
+
+interface EssentialServicesResponse {
+  category: MapEssentialServiceCategory;
+  radiusMiles: number;
+  places: EssentialServicePlace[];
+  source: "Google Maps";
+  disclaimer: string;
+}
+
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
 interface CategoryStyle {
@@ -351,6 +372,13 @@ export function FullMapView({
   // persists assumptions about a member or suppresses records from search.
   const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
   const [mapDiscoveryRadius, setMapDiscoveryRadius] = useState<5 | 10 | 25>(10);
+  // The public-facility layer is opt-in and remains distinct from MWM
+  // businesses, reviews, ownership designations, and safety information.
+  const [essentialServiceCategory, setEssentialServiceCategory] = useState<MapEssentialServiceCategory | null>(null);
+  const [essentialServicePlaces, setEssentialServicePlaces] = useState<EssentialServicePlace[]>([]);
+  const [selectedEssentialService, setSelectedEssentialService] = useState<EssentialServicePlace | null>(null);
+  const [essentialServicesLoading, setEssentialServicesLoading] = useState(false);
+  const [essentialServicesError, setEssentialServicesError] = useState<string | null>(null);
   // The map remains a clean locality-first canvas. Categories and support
   // designations stay searchable, rather than occupying map chrome.
   const designationIds: string[] = [];
@@ -481,7 +509,8 @@ export function FullMapView({
       selectedMapEvent ||
       selectedOrg ||
       selectedTourEvent ||
-      selectedTourSite
+      selectedTourSite ||
+      selectedEssentialService
     ) {
       // Keep travel destinations mutually exclusive with all other map cards.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -494,6 +523,7 @@ export function FullMapView({
     selectedOrg,
     selectedTourEvent,
     selectedTourSite,
+    selectedEssentialService,
   ]);
 
   const mapped = businesses.filter(
@@ -528,6 +558,57 @@ export function FullMapView({
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
+
+  const clearEssentialServices = useCallback(() => {
+    setEssentialServiceCategory(null);
+    setEssentialServicePlaces([]);
+    setSelectedEssentialService(null);
+    setEssentialServicesError(null);
+  }, []);
+
+  const loadEssentialServices = useCallback(async (category: MapEssentialServiceCategory) => {
+    if (!memberLocation) {
+      setEssentialServicesError("Use your precise location before looking for public services nearby.");
+      return;
+    }
+    setEssentialServiceCategory(category);
+    setEssentialServicePlaces([]);
+    setSelectedEssentialService(null);
+    setEssentialServicesError(null);
+    setEssentialServicesLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      const params = new URLSearchParams({
+        category,
+        lat: String(memberLocation.latitude),
+        lng: String(memberLocation.longitude),
+        radius: String(mapDiscoveryRadius),
+      });
+      const response = await fetch(`${base}/api/map/essential-services?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || "Public services are unavailable right now.");
+      }
+      const payload = await response.json() as EssentialServicesResponse;
+      if (payload.category !== category || !Array.isArray(payload.places)) {
+        throw new Error("Public services returned an unexpected response.");
+      }
+      setEssentialServicePlaces(payload.places);
+    } catch (error) {
+      setEssentialServicesError(error instanceof Error ? error.message : "Public services are unavailable right now.");
+    } finally {
+      setEssentialServicesLoading(false);
+    }
+  }, [mapDiscoveryRadius, memberLocation]);
+
+  // A changed device coordinate invalidates old availability data. We never
+  // re-use a previous location's facilities as though they were still nearby.
+  useEffect(() => {
+    clearEssentialServices();
+  }, [memberLocation?.latitude, memberLocation?.longitude, clearEssentialServices]);
 
   // A focused Kinfolk/travel link is an explicit single-place request. Load only
   // that item instead of widening the default tour layer to a global collection.
@@ -1049,7 +1130,8 @@ export function FullMapView({
     selectedOrg !== null ||
     selectedTourEvent !== null ||
     selectedTourSite !== null ||
-    selectedTravelDestination !== null;
+    selectedTravelDestination !== null ||
+    selectedEssentialService !== null;
 
   return (
     <View
@@ -1103,6 +1185,7 @@ export function FullMapView({
           setSelectedTourEvent(null);
           setSelectedTourSite(null);
           setSelectedTravelDestination(null);
+          setSelectedEssentialService(null);
         }}
       >
         {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
@@ -1116,6 +1199,28 @@ export function FullMapView({
             }}
             tracksViewChanges={false}
             pinColor={GOLD}
+          />
+        ))}
+
+        {/* Explicit public-facility availability pins. They are intentionally
+            teal, visually distinct from MWM business gold, and never carry
+            ownership, review, safety, or recommendation meaning. */}
+        {essentialServicePlaces.map((place) => (
+          <Marker
+            key={`essential-${place.id}`}
+            coordinate={{ latitude: place.latitude, longitude: place.longitude }}
+            onPress={() => {
+              setSelectedEssentialService(place);
+              setSelectedBusiness(null);
+              setSelectedCulturalSite(null);
+              setSelectedMapEvent(null);
+              setSelectedOrg(null);
+              setSelectedTourEvent(null);
+              setSelectedTourSite(null);
+              setSelectedTravelDestination(null);
+            }}
+            tracksViewChanges={false}
+            pinColor="#0F766E"
           />
         ))}
 
@@ -1459,7 +1564,10 @@ export function FullMapView({
             onChangeText={setMapSearchInput}
             onSubmitEditing={() => {
               const locality = parseMapSearchLocality(mapSearchInput);
-              if (locality) setSearchedLocality(locality);
+              if (locality) {
+                clearEssentialServices();
+                setSearchedLocality(locality);
+              }
             }}
             placeholder="Search a city (e.g., Atlanta, GA)"
             placeholderTextColor="rgba(255,255,255,0.72)"
@@ -1488,6 +1596,7 @@ export function FullMapView({
             value={businessSearchInput}
             onChangeText={setBusinessSearchInput}
             onSubmitEditing={() => {
+              clearEssentialServices();
               setSubmittedBusinessSearch(businessSearchInput.trim());
               setSelectedBusiness(null);
             }}
@@ -1606,6 +1715,61 @@ export function FullMapView({
                 Showing {activeMapDiscoveryLabel.toLowerCase()} because you chose it. This uses existing listing categories and tags; direct search stays in charge.
               </Text>
             )}
+
+            <View style={s.essentialServicesSection} testID="essential-services-card">
+              <View style={s.essentialServicesHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.essentialServicesTitle}>Everyday essentials</Text>
+                  <Text style={s.essentialServicesSubtitle}>
+                    Public facilities within {mapDiscoveryRadius} miles. This is availability, not an MWM recommendation.
+                  </Text>
+                </View>
+                {essentialServiceCategory && (
+                  <TouchableOpacity
+                    onPress={clearEssentialServices}
+                    accessibilityLabel="Clear public service map pins"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={s.essentialServicesClear}>Clear</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.essentialServicesChipRow}
+              >
+                {MAP_ESSENTIAL_SERVICE_CATEGORIES.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    disabled={essentialServicesLoading}
+                    onPress={() => void loadEssentialServices(category.id)}
+                    accessibilityLabel={`Show nearby ${category.label}`}
+                    accessibilityState={{ selected: essentialServiceCategory === category.id, disabled: essentialServicesLoading }}
+                    style={[
+                      s.essentialServicesChip,
+                      essentialServiceCategory === category.id && s.essentialServicesChipActive,
+                    ]}
+                  >
+                    <Text style={[
+                      s.essentialServicesChipText,
+                      essentialServiceCategory === category.id && s.essentialServicesChipTextActive,
+                    ]}>
+                      {essentialServicesLoading && essentialServiceCategory === category.id ? "Loading…" : category.shortLabel}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {essentialServicesError ? (
+                <Text accessibilityRole="alert" style={s.essentialServicesError}>{essentialServicesError}</Text>
+              ) : essentialServiceCategory && !essentialServicesLoading ? (
+                <Text accessibilityLiveRegion="polite" style={s.essentialServicesStatus}>
+                  {essentialServicePlaces.length === 0
+                    ? "No matching public facilities were returned. Try another category or radius."
+                    : `${essentialServicePlaces.length} public ${essentialServicePlaces.length === 1 ? "facility is" : "facilities are"} shown as teal pins. Tap a pin for directions.`} Source: Google Maps. No ownership, safety, or recommendation claim is implied.
+                </Text>
+              ) : null}
+            </View>
           </View>
         )}
 
@@ -1664,6 +1828,72 @@ export function FullMapView({
         >
           <Feather name="navigation" size={20} color={GOLD} />
       </TouchableOpacity>
+
+      {/* ── Essential service availability card ── */}
+      {selectedEssentialService &&
+        !selectedBusiness &&
+        !selectedCulturalSite &&
+        !selectedMapEvent &&
+        !selectedOrg &&
+        !selectedTourEvent &&
+        !selectedTourSite &&
+        !selectedTravelDestination && (
+          <View
+            style={[
+              s.card,
+              {
+                backgroundColor: colors.card,
+                borderColor: "#0F766E40",
+                paddingBottom: insets.bottom + 12,
+                bottom: KINFOLK_CLEAR,
+              },
+            ]}
+          >
+            <View style={s.cardHandle} />
+            <TouchableOpacity
+              style={s.cardClose}
+              onPress={() => setSelectedEssentialService(null)}
+              accessibilityLabel="Close public service details"
+            >
+              <Feather name="x" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+            <View style={[s.catPill, { backgroundColor: "#CCFBF1", alignSelf: "flex-start", marginBottom: 8 }]}>
+              <Feather name="map-pin" size={11} color="#115E59" />
+              <Text style={[s.catPillTxt, { color: "#115E59" }]}>Public service · Google Maps</Text>
+            </View>
+            <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>
+              {selectedEssentialService.name}
+            </Text>
+            <Text style={[s.cardSub, { color: colors.mutedForeground, marginTop: 2 }]} numberOfLines={3}>
+              {selectedEssentialService.address}
+            </Text>
+            <Text style={[s.essentialServiceDisclaimer, { color: colors.mutedForeground }]}>
+              This is not an MWM listing, ownership designation, safety rating, or recommendation. Confirm hours, accessibility, and current eligibility directly with the provider.
+            </Text>
+            <View style={[s.cardBtnRow, { marginTop: 10 }]}>
+              <TouchableOpacity
+                style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#0F766E" }]}
+                activeOpacity={0.85}
+                onPress={() => void openMapDirections(
+                  selectedEssentialService.latitude,
+                  selectedEssentialService.longitude,
+                  selectedEssentialService.name,
+                )}
+              >
+                <Feather name="navigation" size={14} color="#0F766E" />
+                <Text style={[s.cardBtnTxt, { color: "#0F766E" }]}>Directions</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.cardBtnHalf, { backgroundColor: "#0F766E" }]}
+                activeOpacity={0.85}
+                onPress={() => void openExternalUrl(selectedEssentialService.directionsUrl)}
+              >
+                <Feather name="external-link" size={14} color="#fff" />
+                <Text style={s.cardBtnTxt}>Google Maps</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
       {/* ── Cultural site bottom card ── */}
       {HERITAGE_SITES_ENABLED &&
@@ -2758,6 +2988,80 @@ const s = StyleSheet.create({
     fontSize: 9,
     lineHeight: 13,
     marginTop: 7,
+  },
+  essentialServicesSection: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(15,118,110,0.16)",
+    marginTop: 9,
+    paddingTop: 8,
+  },
+  essentialServicesHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  essentialServicesTitle: {
+    color: "#115E59",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    letterSpacing: 0.35,
+    textTransform: "uppercase",
+  },
+  essentialServicesSubtitle: {
+    color: "rgba(58,31,14,0.6)",
+    fontFamily: "Inter_400Regular",
+    fontSize: 9,
+    lineHeight: 13,
+    marginTop: 1,
+  },
+  essentialServicesClear: {
+    color: "#0F766E",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    paddingTop: 2,
+  },
+  essentialServicesChipRow: {
+    gap: 6,
+    paddingTop: 7,
+    paddingRight: 8,
+  },
+  essentialServicesChip: {
+    borderWidth: 1,
+    borderColor: "rgba(15,118,110,0.28)",
+    borderRadius: 15,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  essentialServicesChipActive: {
+    backgroundColor: "#0F766E",
+    borderColor: "#0F766E",
+  },
+  essentialServicesChipText: {
+    color: "#115E59",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+  },
+  essentialServicesChipTextActive: { color: "#FFFFFF" },
+  essentialServicesStatus: {
+    color: "rgba(58,31,14,0.62)",
+    fontFamily: "Inter_400Regular",
+    fontSize: 9,
+    lineHeight: 13,
+    marginTop: 7,
+  },
+  essentialServicesError: {
+    color: "#9F1239",
+    fontFamily: "Inter_500Medium",
+    fontSize: 9,
+    lineHeight: 13,
+    marginTop: 7,
+  },
+  essentialServiceDisclaimer: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 10,
   },
 
   catRow: { paddingHorizontal: 12, paddingVertical: 4, gap: 8 },

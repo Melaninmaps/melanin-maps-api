@@ -91,6 +91,21 @@ export const mapsLimiter = rateLimit({
   message: { error: "Too many map requests. Please try again later." },
 });
 
+// Google Places is paid and location-sensitive. A separate member-keyed budget
+// makes the optional Essential Services availability layer useful without
+// turning a map load or a shared IP address into uncontrolled upstream usage.
+export const essentialServicesLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 24,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: generalApiKey,
+  message: {
+    error: "You have made several essential-services searches. Please try again in a little while.",
+    code: "ESSENTIAL_SERVICES_RATE_LIMITED",
+  },
+});
+
 export const businessSubmissionLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 20,

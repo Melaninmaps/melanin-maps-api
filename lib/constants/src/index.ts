@@ -150,3 +150,17 @@ export type {
   MapDiscoveryFocusId,
   MapDiscoveryRecord,
 } from "./map-discovery";
+
+// ── On-demand essential-services map layer ─────────────────────────────────
+export {
+  MAP_ESSENTIAL_SERVICE_CATEGORIES,
+  MAP_ESSENTIAL_SERVICE_PLACE_TYPES,
+  MAP_ESSENTIAL_SERVICE_RESULT_CAP,
+  MAP_ESSENTIAL_SERVICE_MAX_RADIUS_MILES,
+  MAP_ESSENTIAL_SERVICE_DEFAULT_RADIUS_MILES,
+  findMapEssentialServiceCategory,
+} from "./map-essential-services";
+export type {
+  MapEssentialServiceCategory,
+  MapEssentialServiceCategoryDefinition,
+} from "./map-essential-services";
