@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -116,6 +117,7 @@ export default function KinfolkSettingsScreen() {
   const router = useRouter();
   const [behavior, setBehavior] = useState<BehaviorSettings>(BEHAVIOR_DEFAULTS);
   const [voice, setVoice] = useState<VoicePrefs>(VOICE_DEFAULTS);
+  const [supportLens, setSupportLens] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
   const behaviorSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -140,9 +142,12 @@ export default function KinfolkSettingsScreen() {
         setBehavior({ ...BEHAVIOR_DEFAULTS, ...data });
       }
       if (prefsRes.ok) {
-        const data = await prefsRes.json() as { preferences?: Partial<VoicePrefs> };
+        const data = await prefsRes.json() as {
+          preferences?: Partial<VoicePrefs> & { ownershipTypes?: string[] };
+        };
         if (data.preferences) {
           setVoice(normalizeVoicePrefs(data.preferences));
+          setSupportLens(Array.isArray(data.preferences.ownershipTypes) ? data.preferences.ownershipTypes : []);
         }
       }
     } catch {}
@@ -199,6 +204,23 @@ export default function KinfolkSettingsScreen() {
       saveVoice(next);
       return next;
     });
+  };
+
+  const saveSupportLens = async (next: string[]) => {
+    setSupportLens(next);
+    try {
+      const token = await getAuthToken();
+      const base = getApiBase();
+      if (!token || !base) return;
+      await fetch(`${base}/api/kinfolk/preferences`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          preferredOwnershipTypes: next,
+          supportLensMode: next.length > 0 ? "strict_documented_designations" : "all_businesses",
+        }),
+      });
+    } catch {}
   };
 
   const resetKinfolk = () => {
@@ -427,6 +449,41 @@ export default function KinfolkSettingsScreen() {
         </View>
 
         {/* Data & Privacy */}
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>YOUR SUPPORT LENS</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.capRow}>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Optional and private</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+                Shows documented businesses you intentionally want to support. It never says who you are.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.supportGrid}>
+            {OWNERSHIP_FILTER_OPTIONS.map((option) => {
+              const active = supportLens.includes(option.id);
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  onPress={() => void saveSupportLens(active
+                    ? supportLens.filter((id) => id !== option.id)
+                    : [...supportLens, option.id])}
+                  style={[styles.supportChip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.card }]}
+                >
+                  <Text style={{ color: active ? "#fff" : colors.foreground, fontSize: 12 }}>{option.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+            {supportLens.length > 1 ? "Results match every selection." : supportLens.length > 0 ? "Strict documented-designation results are active." : "All documented businesses are available."}
+          </Text>
+          <TouchableOpacity onPress={() => void saveSupportLens([])} style={styles.clearLens}>
+            <Text style={{ color: colors.primary, fontWeight: "700" }}>Show all businesses equally</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Data & Privacy */}
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>DATA & PRIVACY</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.toggleRow}>
@@ -531,6 +588,9 @@ const styles = StyleSheet.create({
   chipRowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 14 },
   chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
   chipText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  supportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 14 },
+  supportChip: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 18, borderWidth: 1 },
+  clearLens: { paddingHorizontal: 16, paddingBottom: 14, paddingTop: 4 },
   detailRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
   segmentRow: { flexDirection: "row", gap: 4 },
   segBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },

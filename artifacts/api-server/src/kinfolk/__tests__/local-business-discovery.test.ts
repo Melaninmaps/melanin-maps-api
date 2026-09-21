@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const responsesCreate = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
   openai: { responses: { create: responsesCreate } },
+  resolveOpenAIConfiguration: vi.fn((environment = process.env) =>
+    environment.AI_INTEGRATIONS_OPENAI_API_KEY || environment.OPENAI_API_KEY
+      ? { apiKey: "test-key", baseURL: "https://api.openai.test/v1" }
+      : null),
 }));
 
 import { resolveNamedBusinessTurn } from "../business-reference";
@@ -20,6 +24,9 @@ const originalFetch = globalThis.fetch;
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
+  // clearAllMocks retains a prior mock implementation, which allowed one
+  // provider-state case to leak its OpenAI result into the next case.
+  responsesCreate.mockReset();
   globalThis.fetch = originalFetch;
 });
 
@@ -383,6 +390,63 @@ describe("deterministic local business discovery", () => {
     ]));
   });
 
+  it("never broadens a strict designation request to unverified web or map records", async () => {
+    const db = repository({ businesses: [governedBusiness], places: [forKeepsPlace] });
+    const webSearch = vi.fn().mockResolvedValue({
+      state: "completed",
+      attempted: true,
+      provider: "openai",
+      results: [{
+        title: "Black-owned bookstore guide",
+        url: "https://example.com/guide",
+        content: "A guide with no documentary ownership record.",
+        providerScore: 0.9,
+        sourceQuery: { text: "bookstores Atlanta, GA", role: "general", reason: "neutral" },
+      }],
+    });
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: db,
+      webSearch,
+      requiredDesignationIds: ["black-african-american", "woman"],
+    });
+
+    expect(db.findBySubject).toHaveBeenCalledWith(
+      { city: "Atlanta", stateCode: "GA" },
+      bookstore,
+      12,
+      ["black-african-american", "woman"],
+    );
+    expect(webSearch).not.toHaveBeenCalled();
+    expect(result.discovery.webFindings).toEqual([]);
+    expect(result.discovery.mapPlaces).toEqual([]);
+    expect(result.sources).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ url: "https://example.com/guide" })]),
+    );
+  });
+
+  it("passes the strict all-of designation scope into preference expansion", async () => {
+    const activity = deriveBusinessSubject("Find things to do in Atlanta GA")!;
+    const db = repository({ businesses: [governedBusiness], preferenceBusinesses: [governedBusiness] });
+    await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: activity,
+      repository: db,
+      personalization: { preferenceTerms: ["bookstores"] },
+      requiredDesignationIds: ["black-african-american", "woman"],
+      webSearch: vi.fn(),
+    });
+
+    expect(db.findByPreferenceTerms).toHaveBeenCalledWith(
+      { city: "Atlanta", stateCode: "GA" },
+      ["bookstores"],
+      50,
+      ["black-african-american", "woman"],
+    );
+  });
+
   it.each(["under_13", "13_15", "16_17", "unknown", "mixed_all_ages"] as const)(
     "removes adult content from every emitted discovery channel for %s",
     async (ageBand) => {
@@ -497,6 +561,7 @@ describe("local web provider-state contract", () => {
   it("returns unavailable without making a request when neither provider is configured", async () => {
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("TAVILY_API_KEY", "");
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock;
@@ -632,6 +697,7 @@ describe("local web provider-state contract", () => {
   it("falls back to Tavily and distinguishes zero results from provider failure", async () => {
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("TAVILY_API_KEY", "test-key");
     globalThis.fetch = vi.fn().mockImplementation(async () =>
       new Response(JSON.stringify({ results: [] }), { status: 200 }),
@@ -653,6 +719,7 @@ describe("local web provider-state contract", () => {
   it("treats malformed Tavily JSON as degraded and skips malformed result rows", async () => {
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
     vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("TAVILY_API_KEY", "test-key");
     globalThis.fetch = vi.fn().mockImplementation(async () =>
       new Response("not-json", { status: 200 }),

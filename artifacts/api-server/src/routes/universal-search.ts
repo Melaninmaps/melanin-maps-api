@@ -10,7 +10,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import {
+  extractExplicitOwnershipDesignationFilterIds,
   findSafeSearchClarification,
+  normalizeOwnershipDesignationFilterIds,
   type CatalogSearchTerm,
 } from "@workspace/constants";
 import { FEATURE_FLAGS } from "../constants/featureFlags";
@@ -21,6 +23,10 @@ import {
 } from "../lib/library-growth-engine";
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
 import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import {
+  matchesDocumentedDesignationScope,
+  resolveDesignationScope,
+} from "../kinfolk/designation-predicate-policy";
 
 // Maps universal-search IntentType → Library growth category
 const INTENT_TO_GROWTH_CATEGORY: Partial<Record<string, string>> = {
@@ -527,6 +533,52 @@ function safeParseArray(val: unknown): string[] | undefined {
   return undefined;
 }
 
+async function resolveUniversalSupportLens(input: {
+  userId?: string;
+  message: string;
+  designations?: string;
+  supportScope?: string;
+}): Promise<string[]> {
+  // An explicit current request is intentional and takes precedence over a
+  // saved/client-provided Support Lens for this one search. Do not intersect
+  // them: that could turn “show Asian-owned businesses” into an impossible
+  // request because the member previously saved a different community.
+  const explicit = extractExplicitOwnershipDesignationFilterIds(input.message);
+  if (explicit.length > 0) return explicit;
+  const requested = normalizeOwnershipDesignationFilterIds(
+    input.designations?.split(",") ?? [],
+  );
+  if (requested.length > 0) return requested;
+  if (input.supportScope === "all_businesses" || !input.userId) return [];
+
+  try {
+    const { rows } = await pool.query<{
+      preferred_ownership_types: unknown;
+      support_lens_mode: string | null;
+    }>(
+      `SELECT preferred_ownership_types, support_lens_mode
+         FROM user_preferences
+        WHERE user_id = $1
+        LIMIT 1`,
+      [input.userId],
+    );
+    const prefs = rows[0];
+    return resolveDesignationScope({
+      explicit: [],
+      supportScope: input.supportScope,
+      saved: normalizeOwnershipDesignationFilterIds(
+        safeParseArray(prefs?.preferred_ownership_types) ?? [],
+      ),
+      savedMode: prefs?.support_lens_mode,
+    });
+  } catch {
+    // An explicit current-turn filter has already returned above. Preserve
+    // ordinary search availability if optional preference storage is absent;
+    // clients that know a saved strict scope pass it explicitly on the request.
+    return [];
+  }
+}
+
 /**
  * Suggestions can only use text already read from governed public catalog rows.
  * The correction utility is intentionally display-only: it never injects a row
@@ -670,10 +722,11 @@ async function searchBusinesses(opts: {
   lng?: number;
   radius: number;
   limit: number;
+  requiredDesignationIds?: readonly string[];
 }): Promise<BusinessResult[]> {
   const {
     q, searchTokens, mappedCategories, intentType,
-    city, state, lat, lng, radius, limit,
+    city, state, lat, lng, radius, limit, requiredDesignationIds = [],
   } = opts;
 
   const results = new Map<string, BusinessResult>();
@@ -1324,11 +1377,14 @@ async function searchBusinesses(opts: {
   }
 
   // Sort: best tier first, then by confidence/rating
-  return [...results.values()].sort((a, b) => {
+  return [...results.values()]
+    .filter((business) => matchesDocumentedDesignationScope(business, requiredDesignationIds))
+    .sort((a, b) => {
     const tierDiff = TIER_RANK[b.matchTier] - TIER_RANK[a.matchTier];
     if (tierDiff !== 0) return tierDiff;
     return (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0);
-  }).slice(0, limit);
+    })
+    .slice(0, limit);
 }
 
 // ── Event search ──────────────────────────────────────────────────────────────
@@ -1801,6 +1857,8 @@ router.get("/search/universal", async (req: Request, res: Response) => {
   const radiusStr = singleQueryValue(req.query.radius);
   const limitStr = singleQueryValue(req.query.limit);
   const resultTypesStr = singleQueryValue(req.query.resultTypes);
+  const designations = singleQueryValue(req.query.designations);
+  const supportScope = singleQueryValue(req.query.supportScope);
   const surface = singleQueryValue(req.query.surface) ?? "general";
   const privacyMode = singleQueryValue(req.query.privacy_mode);
   const privacySafeMode = surface === "smart_search" && privacyMode === "discovery_v1";
@@ -1844,12 +1902,19 @@ router.get("/search/universal", async (req: Request, res: Response) => {
   try {
     const cityStr = typeof city === "string" ? city : undefined;
     const stateStr = typeof state === "string" ? state : undefined;
+    const requiredDesignationIds = await resolveUniversalSupportLens({
+      userId: user?.id,
+      message: trimmedQ,
+      designations,
+      supportScope,
+    });
 
     // ── Parallel: businesses + events + library ───────────────────────────────
     const businessesPromise = requestedTypes.includes("businesses")
       ? searchBusinesses({
           q: trimmedQ, searchTokens, mappedCategories, intentType,
           city: cityStr, state: stateStr, lat, lng, radius, limit,
+          requiredDesignationIds,
         }).catch(() => {
           if (!privacySafeMode) req.log?.error("Universal search — business search failed");
           return [] as BusinessResult[];
@@ -2073,9 +2138,15 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     );
     const matchTiers = [...new Set(businesses.map((b) => b.matchTier))];
 
-    const fallbackMessage = buildFallbackMessage(
-      trimmedQ, intentType, crossEntityTotal, mappedCategories.length > 0,
-    );
+    const fallbackMessage =
+      requiredDesignationIds.length > 0 && businesses.length === 0
+        ? "No documented business matches every Support Lens designation. Keep this exact focus, remove a selection, choose another documented community, or show all businesses."
+        : buildFallbackMessage(
+            trimmedQ,
+            intentType,
+            crossEntityTotal,
+            mappedCategories.length > 0,
+          );
 
     if (!privacySafeMode) {
       void logSearchEvent({
@@ -2094,6 +2165,12 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       matchTiers,
       fallbackUsed,
       fallbackMessage,
+      supportLens: {
+        mode: requiredDesignationIds.length > 0
+          ? "strict_documented_designations"
+          : "all_businesses",
+        designationIds: requiredDesignationIds,
+      },
       // A possible spelling correction is additive metadata only. It is grounded
       // in a governed catalog term read for this request and never certifies a
       // business match or changes the relevance/location ordering above.

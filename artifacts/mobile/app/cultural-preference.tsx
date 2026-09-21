@@ -63,7 +63,8 @@ export default function CulturalPreferenceScreen() {
       if (res.ok) {
         const data = (await res.json()) as {
           preferences?: {
-            ownershipTypes?: string[];
+            preferredOwnershipTypes?: string[];
+            supportLensMode?: "all_businesses" | "strict_documented_designations";
             communities?: string[];
             cultures?: string[];
             preferredLanguages?: string[];
@@ -71,7 +72,7 @@ export default function CulturalPreferenceScreen() {
         };
         setSelected(
           (
-            (data.preferences?.ownershipTypes as string[] | undefined) ?? []
+            data.preferences?.preferredOwnershipTypes ?? []
           ).map(ownershipDesignationFilterId),
         );
         setCommunities((data.preferences?.communities ?? []).join(", "));
@@ -121,6 +122,9 @@ export default function CulturalPreferenceScreen() {
         },
         body: JSON.stringify({
           preferredOwnershipTypes: selected,
+          supportLensMode: selected.length > 0
+            ? "strict_documented_designations"
+            : "all_businesses",
           communities: splitPreferenceList(communities),
           cultures: splitPreferenceList(cultures),
           preferredLanguages: splitPreferenceList(preferredLanguages),

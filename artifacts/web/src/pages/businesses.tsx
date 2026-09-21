@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
+import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 
 const BASE = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -249,7 +251,13 @@ function CommunityOrgCard({ org }: { org: CommunityOrg }) {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState({ query, onClear }: { query: string; onClear: () => void }) {
+function EmptyState({ query, onClear, onShowAll, savedDesignations, onRemoveDesignation }: {
+  query: string;
+  onClear: () => void;
+  onShowAll: () => void;
+  savedDesignations: string[];
+  onRemoveDesignation: (designation: string) => void;
+}) {
   return (
     <div className="col-span-full py-20 flex flex-col items-center text-center">
       <div className="w-16 h-16 rounded-full bg-[#CA922B]/10 flex items-center justify-center mb-6">
@@ -261,9 +269,37 @@ function EmptyState({ query, onClear }: { query: string; onClear: () => void }) 
       <p className="text-sm text-[#3A1F0E]/50 max-w-md mb-8 font-light leading-relaxed">
         {query
           ? "Our directory grows every week. You can help by suggesting a place, or ask KinfolkAI to recommend alternatives."
-          : "Try clearing your filters to see the full directory."}
+          : "No exact documented matches yet. Choose what you want to do next — we will not broaden this search automatically."}
       </p>
       <div className="flex flex-wrap gap-3 justify-center">
+        {!query && (
+          <>
+            <Button className="rounded-full bg-[#2B1507] text-white px-6 h-10 text-sm" onClick={() => {}}>
+              Keep exact focus
+            </Button>
+            {savedDesignations.length === 1 ? (
+              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-6 h-10 text-sm" onClick={() => onRemoveDesignation(savedDesignations[0])}>
+                Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === savedDesignations[0])?.label ?? "selection"}
+              </Button>
+            ) : savedDesignations.length > 1 ? (
+              <div className="flex flex-wrap gap-2 justify-center">
+                {savedDesignations.map((designation) => (
+                  <Button key={designation} variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-4 h-9 text-xs" onClick={() => onRemoveDesignation(designation)}>
+                    Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === designation)?.label ?? designation}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+            <Link href="/map">
+              <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] px-6 h-10 text-sm">
+                Choose another community
+              </Button>
+            </Link>
+            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] px-6 h-10 text-sm" onClick={onShowAll}>
+              Show all businesses
+            </Button>
+          </>
+        )}
         {query && (
           <>
             <Link href={`/map?q=${encodeURIComponent(query)}`}>
@@ -302,6 +338,10 @@ export default function Businesses() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeOwnership, setActiveOwnership] = useState<string | null>(null);
+  const [directorySupportScope, setDirectorySupportScope] = useState<"all_businesses" | null>(null);
+  const [directoryRefreshGeneration, setDirectoryRefreshGeneration] = useState(0);
+  const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
+  const [supportLensError, setSupportLensError] = useState<string | null>(null);
 
   // Universal Search state — populated on Enter/submit, null = browse mode
   const [universalResult, setUniversalResult] = useState<UniversalResult | null>(null);
@@ -316,7 +356,8 @@ export default function Businesses() {
 
   // Load directory on mount
   useEffect(() => {
-    fetch(`${BASE}api/businesses?limit=200`, { credentials: "include" })
+    const scope = directorySupportScope ? `&supportScope=${directorySupportScope}` : "";
+    fetch(`${BASE}api/businesses?limit=200${scope}`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         const list: Business[] = Array.isArray(d) ? d : (d?.businesses ?? d?.data ?? []);
@@ -324,6 +365,52 @@ export default function Businesses() {
       })
       .catch(() => {})
       .finally(() => setDirectoryLoading(false));
+  }, [directorySupportScope, directoryRefreshGeneration]);
+
+  const showAllBusinesses = useCallback(() => {
+    void (async () => {
+      setSupportLensError(null);
+      try {
+        const response = await fetch(`${BASE}api/kinfolk/preferences`, {
+      method: "PUT", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
+        });
+        if (!response.ok) throw new Error("preference update failed");
+        setDirectorySupportScope("all_businesses");
+        setActiveCategory("All");
+        setActiveOwnership(null);
+      } catch {
+        setSupportLensError("Could not update Support Lens. Please try again.");
+      }
+    })();
+  }, []);
+  const removeSavedDesignation = useCallback(async (designation: string) => {
+    setSupportLensError(null);
+    const result = await persistReducedSupportLensRemoval({
+      baseUrl: BASE, savedDesignations, removeDesignation: designation,
+    });
+    if (result.error) {
+      setSupportLensError(result.error);
+    } else {
+      const update = result.update;
+      setSavedDesignations(update.preferredOwnershipTypes);
+      setDirectorySupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
+      setDirectoryRefreshGeneration((generation) => generation + 1);
+    }
+  }, [savedDesignations]);
+
+  useEffect(() => {
+    fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        const prefs = payload?.preferences;
+        const values = Array.isArray(prefs?.preferredOwnershipTypes)
+          ? prefs.preferredOwnershipTypes
+          : Array.isArray(prefs?.ownershipTypes) ? prefs.ownershipTypes : [];
+        if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
+      })
+      .catch(() => {});
   }, []);
 
   // Universal Search — fires on Enter or button click.
@@ -630,7 +717,7 @@ export default function Businesses() {
                 {/* No results empty state */}
                 {!hasUniversalResults && (
                   <div className="grid grid-cols-1">
-                    <EmptyState query={searchedQuery} onClear={clearSearch} />
+                    <EmptyState query={searchedQuery} onClear={clearSearch} onShowAll={showAllBusinesses} savedDesignations={savedDesignations} onRemoveDesignation={removeSavedDesignation} />
                   </div>
                 )}
 
@@ -663,6 +750,7 @@ export default function Businesses() {
         {/* ── BROWSE MODE ──────────────────────────────────────────────────── */}
         {!isSearchMode && (
           <>
+            {supportLensError && <p role="alert" className="mb-4 text-sm font-semibold text-red-700">{supportLensError}</p>}
             {/* Result count row */}
             {!loading && (
               <div className="mb-6 flex items-center justify-between">
@@ -695,7 +783,7 @@ export default function Businesses() {
                   </div>
                 ))
               ) : browseFiltered.length === 0 ? (
-                <EmptyState query="" onClear={() => { setActiveCategory("All"); setActiveOwnership(null); }} />
+                <EmptyState query="" onClear={() => { setActiveCategory("All"); setActiveOwnership(null); }} onShowAll={showAllBusinesses} savedDesignations={savedDesignations} onRemoveDesignation={removeSavedDesignation} />
               ) : (
                 browseFiltered.map(biz => <BusinessCard key={biz.id} biz={biz} />)
               )}

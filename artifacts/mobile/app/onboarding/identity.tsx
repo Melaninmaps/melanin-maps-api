@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DiasporaFlagPicker from "@/components/DiasporaFlagPicker";
 import { getFlag, DIASPORA_COUNTRIES } from "@/constants/diaspora-countries";
+import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -35,18 +36,11 @@ const CURRENT = 3;
 const markComplete = () =>
   AsyncStorage.setItem("@mapping_with_melanin_onboarding_complete", "true").catch(() => {});
 
-const DESIGNATIONS = [
-  { id: "black-owned", emoji: "✊🏾", label: "Black-Owned", sub: "Black-owned businesses — first & always" },
-  { id: "minority-owned", emoji: "🏅", label: "Minority-Owned", sub: "Minority-owned businesses" },
-  { id: "women-owned", emoji: "👩🏾‍💼", label: "Women-Owned", sub: "Woman-led businesses" },
-  { id: "veteran-owned", emoji: "🎖️", label: "Veteran-Owned", sub: "Military veteran founders" },
-  { id: "lgbtq-owned", emoji: "🏳️‍🌈", label: "LGBTQ+-Owned", sub: "LGBTQ+ led businesses" },
-  { id: "hispanic-owned", emoji: "👩🏻‍💼", label: "Hispanic-Owned", sub: "Latinx & Hispanic founders" },
-  { id: "indigenous-owned", emoji: "🪶", label: "Indigenous-Owned", sub: "Native-led businesses" },
-  { id: "immigrant-owned", emoji: "🌍", label: "Melanated Diaspora-Owned", sub: "Melanated Diaspora entrepreneurs" },
-  { id: "d9-affiliated", emoji: "🐾", label: "D9 Affiliated", sub: "Divine Nine affiliated" },
-  { id: "disability-owned", emoji: "♿", label: "Disability-Owned", sub: "Disability community led" },
-];
+const DESIGNATIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({
+  ...option,
+  emoji: "🤎",
+  sub: "Documented designation only",
+}));
 
 export default function OnboardingIdentity() {
   const insets = useSafeAreaInsets();
@@ -87,6 +81,18 @@ export default function OnboardingIdentity() {
     goTo(CURRENT + 1);
   };
 
+  const handleShowAll = async () => {
+    setSaving(true);
+    try {
+      await AsyncStorage.setItem(
+        PENDING_OWNERSHIP_PREFS_KEY,
+        JSON.stringify({ designations: [], diasporaCountries: [], supportLensMode: "all_businesses" }),
+      );
+    } catch {}
+    setSaving(false);
+    goTo(CURRENT + 1);
+  };
+
   return (
     <View style={styles.root}>
       <LinearGradient
@@ -119,7 +125,10 @@ export default function OnboardingIdentity() {
         <Text style={styles.title}>{"Who Do You\nWant to"}</Text>
         <Text style={styles.titleGold}>Support?</Text>
         <Text style={styles.subtitle}>
-          Select the business designations you care about most. We&apos;ll surface these businesses first — everywhere you explore.
+          Your Support Lens is optional and private. It shows documented businesses you intentionally want to support and never says who you are.
+        </Text>
+        <Text style={styles.privacyNote}>
+          We only use designations a business has documented. We never infer identity from names, photos, location, cuisine, language, or appearance. Your choice is private and additive.
         </Text>
 
         <View style={styles.grid}>
@@ -180,9 +189,9 @@ export default function OnboardingIdentity() {
             <Feather name="heart" size={14} color="#CA922B" />
             <Text style={styles.selectedNoteText}>
               {selected.size === 1
-                ? "1 preference selected"
-                : `${selected.size} preferences selected`}
-              {" — "}we&apos;ll prioritize these everywhere
+                ? "1 designation selected"
+                : `${selected.size} designations selected`}
+              {" — "}show businesses that match every selection
             </Text>
           </View>
         )}
@@ -200,8 +209,16 @@ export default function OnboardingIdentity() {
           </Text>
           <Feather name="arrow-right" size={18} color="#1C0E06" />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.showAllBtn}
+          onPress={handleShowAll}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.showAllTxt}>Show all businesses equally</Text>
+        </TouchableOpacity>
         {selected.size === 0 && (
-          <Text style={styles.skipNote}>You can always update this from your profile</Text>
+          <Text style={styles.skipNote}>Skip for now — you can update this from your profile</Text>
         )}
       </View>
     </View>
@@ -233,6 +250,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: "Inter_400Regular", fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 22,
     marginBottom: 20,
+  },
+  privacyNote: {
+    fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.55)",
+    lineHeight: 18, marginBottom: 16,
   },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 16 },
   chip: {
@@ -318,6 +339,12 @@ const styles = StyleSheet.create({
     gap: 8, paddingVertical: 18, borderRadius: 16, backgroundColor: "#CA922B",
   },
   nextTxt: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: "#1C0E06" },
+  showAllBtn: {
+    alignItems: "center", justifyContent: "center", paddingVertical: 14,
+    borderRadius: 16, borderWidth: 1, borderColor: "#CA922B",
+    backgroundColor: "transparent",
+  },
+  showAllTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#CA922B" },
   skipNote: {
     textAlign: "center", fontSize: 12, fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.4)",

@@ -33,6 +33,7 @@ export interface UserPreferences {
   knowBeforeYouGo: boolean;
   regionalFlavor: string;
   preferredOwnershipTypes: string[];
+  supportLensMode: "all_businesses" | "strict_documented_designations";
   diasporaCountries: string[];
   lifestyleServices: string[];
 }
@@ -54,6 +55,7 @@ const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
   knowBeforeYouGo: true,
   regionalFlavor: "standard",
   preferredOwnershipTypes: [],
+  supportLensMode: "all_businesses",
   diasporaCountries: [],
   lifestyleServices: [],
 };
@@ -82,6 +84,7 @@ async function flushPendingOwnershipPrefs(token: string, apiBase: string): Promi
       body: JSON.stringify({
         preferredOwnershipTypes: pending.designations,
         diasporaCountries: pending.diasporaCountries,
+        supportLensMode: "strict_documented_designations",
       }),
     });
     if (res.ok) await AsyncStorage.removeItem(PENDING_OWNERSHIP_PREFS_KEY);
@@ -110,6 +113,9 @@ export function useUserPreferences() {
         let prefs: UserPreferences = {
           ...DEFAULT_PREFS,
           ...raw,
+          supportLensMode: raw.supportLensMode === "strict_documented_designations"
+            ? "strict_documented_designations"
+            : "all_businesses",
           recommendationLifeStage: ["unspecified", "18_39", "40_64", "65_plus"].includes(raw.recommendationLifeStage)
             ? raw.recommendationLifeStage
             : "unspecified",

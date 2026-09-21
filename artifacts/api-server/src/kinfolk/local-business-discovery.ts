@@ -434,6 +434,9 @@ export async function discoverLocalBusinesses(input: {
             input.scope,
             preferenceTerms,
             50,
+            ...(input.requiredDesignationIds?.length
+              ? [input.requiredDesignationIds]
+              : []),
           ),
         ]).then(([subjectMatches, preferenceMatches]) => {
           const unique = new Map<string, GovernedKinfolkBusiness>();
@@ -456,9 +459,19 @@ export async function discoverLocalBusinesses(input: {
     mapRows = platformResults[1].value;
   else platformStatus = "degraded";
 
-  // Web second, always, including when governed platform matches were found.
+  // A strict Support Lens is documentary-only: never broaden it with a
+  // general web lookup whose results cannot carry equivalent ownership proof.
   let webOutcome: WebSearchOutcome;
-  try {
+  if (input.requiredDesignationIds?.length) {
+    webOutcome = {
+      state: "unavailable",
+      attempted: false,
+      provider: null,
+      fallbackUsed: false,
+      partial: false,
+      results: [],
+    };
+  } else try {
     webOutcome = await (input.webSearch ?? searchLocalBusinessQueriesWithState)(
       webQueries(input.subject, input.scope),
       false,
@@ -479,7 +492,9 @@ export async function discoverLocalBusinesses(input: {
     };
   }
 
-  const rankedWeb = rankLocalBusinessResults(webOutcome.results)
+  const rankedWeb = (input.requiredDesignationIds?.length
+    ? []
+    : rankLocalBusinessResults(webOutcome.results))
     .filter((result) =>
       audienceAllowsBusinessText({
         ageBand: input.personalization?.ageBand,
@@ -495,7 +510,7 @@ export async function discoverLocalBusinesses(input: {
   )
     .slice(0, 12)
     .map(platformBusiness);
-  const mapPlaces = mapRows
+  const mapPlaces = (input.requiredDesignationIds?.length ? [] : mapRows)
     .filter((place) =>
       audienceAllowsBusinessText({
         ageBand: input.personalization?.ageBand,

@@ -10,6 +10,7 @@ import {
   ownershipDesignationFilterId,
   extractExplicitOwnershipDesignationFilterIds,
   normalizeOwnershipDesignationFilterIds,
+  normalizeSupportLensMode,
 } from "@workspace/constants";
 import {
   checkAiPool,
@@ -21,6 +22,7 @@ import {
   TIER_LIMITS,
   hasActiveTesterEntitlement,
 } from "../constants/membershipTiers";
+import { getCachedPrefs, invalidatePrefsCache } from "../kinfolk/preference-cache";
 import crypto from "crypto";
 import {
   db,
@@ -91,6 +93,7 @@ import {
   type GovernedKinfolkBusiness,
   type ValidatedKinfolkCityScope,
 } from "../kinfolk/governedBusinessRepository";
+import { matchesDocumentedDesignationScope } from "../kinfolk/designation-predicate-policy";
 import {
   namedBusinessPromptBlock,
   resolveNamedBusinessTurn,
@@ -379,49 +382,6 @@ async function optionalKinfolk<T>(
     }
     throw err;
   }
-}
-
-// ── Per-user preferences cache (30-second TTL) ────────────────────────────────
-// user_preferences is read on every chat turn. At 30 concurrent users this is
-// 30 parallel Drizzle queries against the same table. A 30s TTL means a user's
-// preferences feel instant after the first turn while staying fresh enough that
-// a preferences update (tap-to-save) is reflected within the next turn.
-// Invalidated on any POST/PATCH that writes preferences (see invalidatePrefsCache export).
-interface PrefsCacheEntry {
-  promise: Promise<
-    typeof import("@workspace/db").userPreferencesTable.$inferSelect | null
-  >;
-  expiresAt: number;
-}
-const prefsCache = new Map<string, PrefsCacheEntry>();
-const PREFS_CACHE_TTL_MS = 30_000;
-
-export function invalidatePrefsCache(userId: string): void {
-  prefsCache.delete(userId);
-}
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of prefsCache) if (v.expiresAt <= now) prefsCache.delete(k);
-}, 60_000).unref();
-
-async function getCachedPrefs(
-  userId: string,
-): Promise<
-  typeof import("@workspace/db").userPreferencesTable.$inferSelect | null
-> {
-  const now = Date.now();
-  const cached = prefsCache.get(userId);
-  if (cached && cached.expiresAt > now) return cached.promise;
-  const promise = db
-    .select()
-    .from(userPreferencesTable)
-    .where(eq(userPreferencesTable.userId, userId))
-    .limit(1)
-    .then((rows) => rows[0] ?? null)
-    .catch(() => null);
-  prefsCache.set(userId, { promise, expiresAt: now + PREFS_CACHE_TTL_MS });
-  return promise;
 }
 
 // ── Per-user sessions list cache (15-second TTL) ──────────────────────────────
@@ -4462,15 +4422,10 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
   const t0 = Date.now();
   const userId = req.user.id;
   try {
-    // Determine cache state BEFORE calling getCachedPrefs (which sets the entry on miss)
-    const now = Date.now();
-    const existingEntry = prefsCache.get(userId);
-    const cacheState: "hit" | "miss" | "coalesced" =
-      existingEntry && existingEntry.expiresAt > now ? "hit" : "miss";
-
     // On miss: getCachedPrefs issues a new Drizzle query and caches the promise.
     // On hit: returns the cached promise (may still be in-flight → single-flight coalescing).
     const prefs = await getCachedPrefs(userId);
+    const cacheState: "hit" | "miss" | "coalesced" = "miss";
     const memberAgeBand = await getMemberAgeBand(userId);
 
     const normalizeArr = (v: unknown): string[] =>
@@ -4521,7 +4476,16 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
             prefs.personalizationContextCompletedAt,
           ),
           // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
-          ownershipTypes: normalizeArr(prefs.preferredOwnershipTypes),
+          preferredOwnershipTypes: normalizeOwnershipDesignationFilterIds(
+            normalizeArr(prefs.preferredOwnershipTypes),
+          ),
+          ownershipTypes: normalizeOwnershipDesignationFilterIds(
+            normalizeArr(prefs.preferredOwnershipTypes),
+          ),
+          supportLensMode: normalizeSupportLensMode(
+            prefs.supportLensMode,
+            normalizeArr(prefs.preferredOwnershipTypes),
+          ),
           kinfolkVoice: normalizeKinfolkVoice(prefs.kinfolkVoice),
           autoSpeak: prefs.autoSpeak === true,
           aaveLevel:
@@ -4543,6 +4507,8 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           travelCompanion: "solo",
           dietaryNotes: null,
           ownershipTypes: [],
+          preferredOwnershipTypes: [],
+          supportLensMode: "all_businesses",
           lifestyleServices: [],
           communities: [],
           cultures: [],
@@ -4620,6 +4586,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     autoSpeak,
     aaveLevel,
     recommendationLifeStage,
+    supportLensMode,
   } = body;
   // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
   const rawOwnershipTypes = Array.isArray(preferredOwnershipTypes)
@@ -4627,19 +4594,26 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     : Array.isArray(ownershipTypes)
       ? ownershipTypes
       : undefined;
-  const allowedOwnershipIds = new Set(
-    OWNERSHIP_FILTER_OPTIONS.map((option) => option.id),
-  );
-  const resolvedOwnershipTypes = rawOwnershipTypes
-    ? [
-        ...new Set(
-          rawOwnershipTypes
-            .filter((value): value is string => typeof value === "string")
-            .map(ownershipDesignationFilterId)
-            .filter((value) => allowedOwnershipIds.has(value)),
-        ),
-      ].slice(0, 100)
+  let resolvedOwnershipTypes = rawOwnershipTypes
+    ? normalizeOwnershipDesignationFilterIds(rawOwnershipTypes)
     : undefined;
+  if (resolvedOwnershipTypes === undefined && supportLensMode !== undefined) {
+    const [existingPreferences] = await db
+      .select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    resolvedOwnershipTypes = normalizeOwnershipDesignationFilterIds(
+      existingPreferences?.preferredOwnershipTypes ?? [],
+    );
+  }
+  const resolvedSupportLensMode =
+    rawOwnershipTypes !== undefined || supportLensMode !== undefined
+      ? normalizeSupportLensMode(
+          supportLensMode,
+          resolvedOwnershipTypes ?? [],
+        )
+      : undefined;
   const memberAgeBand =
     recommendationLifeStage !== undefined
       ? await getMemberAgeBand(req.user.id)
@@ -4708,6 +4682,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         autoSpeak: typeof autoSpeak === "boolean" ? autoSpeak : undefined,
         aaveLevel: typeof aaveLevel === "number" ? aaveLevel : undefined,
         preferredOwnershipTypes: resolvedOwnershipTypes,
+        supportLensMode: resolvedSupportLensMode,
         diasporaCountries: Array.isArray(diasporaCountries)
           ? (diasporaCountries as string[])
           : undefined,
@@ -4733,6 +4708,9 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         set: {
           ...(resolvedRecommendationLifeStage !== undefined && {
             recommendationLifeStage: resolvedRecommendationLifeStage,
+          }),
+          ...(resolvedSupportLensMode !== undefined && {
+            supportLensMode: resolvedSupportLensMode,
           }),
           ...(Array.isArray(favoriteCategories) && {
             favoriteCategories: favoriteCategories as string[],
@@ -4822,7 +4800,20 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
       }
     }
     invalidatePrefsCache(req.user.id);
-    res.json({ preferences: prefs });
+    const canonicalOwnershipTypes = normalizeOwnershipDesignationFilterIds(
+      (prefs?.preferredOwnershipTypes ?? resolvedOwnershipTypes ?? []) as unknown[],
+    );
+    res.json({
+      preferences: {
+        ...prefs,
+        preferredOwnershipTypes: canonicalOwnershipTypes,
+        ownershipTypes: canonicalOwnershipTypes,
+        supportLensMode: normalizeSupportLensMode(
+          prefs?.supportLensMode ?? resolvedSupportLensMode,
+          canonicalOwnershipTypes,
+        ),
+      },
+    });
   } catch (err) {
     req.log.error(
       safeKinfolkErrorMetadata(err),
@@ -5560,17 +5551,23 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     assuredAgeBand,
     temporaryBusinessAudienceBand(input.message),
   );
-  // Only a designation the member explicitly names becomes a strict filter.
-  // Saved support preferences still rank matching businesses higher below, so
-  // they never silently make Kinfolk's search narrower than the member asked.
-  const requiredDesignationIds = extractExplicitOwnershipDesignationFilterIds(
+  const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(
     input.message,
   );
-  const preferredDesignationLabels = normalizeOwnershipDesignationFilterIds(
+  const savedDesignationIds = normalizeOwnershipDesignationFilterIds(
     Array.isArray(prefs?.preferredOwnershipTypes)
       ? prefs.preferredOwnershipTypes
       : [],
-  ).flatMap((id) =>
+  );
+  // A current explicit request wins for this turn; otherwise a saved strict
+  // Support Lens scopes governed MWM recommendations without changing itself.
+  const requiredDesignationIds =
+    explicitDesignationIds.length > 0
+      ? explicitDesignationIds
+      : prefs?.supportLensMode === "strict_documented_designations"
+        ? savedDesignationIds
+        : [];
+  const preferredDesignationLabels = savedDesignationIds.flatMap((id) =>
     OWNERSHIP_FILTER_OPTIONS.filter((option) => option.id === id).map(
       (option) => option.label,
     ),
@@ -5684,7 +5681,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       ? " that match every owner-provided support designation you named"
       : "";
   const conciseReply =
-    platformCount > 0
+    requiredDesignationIds.length > 0 && platformCount === 0
+      ? `I couldn't find a documented MWM match for every selected support designation in ${scope.city}. Would you like to keep the exact focus, remove one selection, choose another documented community, or show all businesses?`
+      : platformCount > 0
       ? `I found ${platformCount} matching MWM ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
@@ -6142,6 +6141,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedPlaces: string[] = [];
     let responseFeedbackPrompt = "";
     let savedConversationMode: unknown = undefined;
+    let savedSupportLensMode: string | null = null;
+    let savedSupportLensDesignationIds: string[] = [];
 
     if (req.user?.id) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
@@ -6150,6 +6151,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       try {
         prefs = await getCachedPrefs(req.user.id);
         savedConversationMode = prefs?.personalityMode;
+        savedSupportLensMode = prefs?.supportLensMode ?? null;
+        savedSupportLensDesignationIds = normalizeOwnershipDesignationFilterIds(
+          Array.isArray(prefs?.preferredOwnershipTypes)
+            ? prefs.preferredOwnershipTypes
+            : [],
+        );
       } catch {
         /* non-critical — proceed without personalization prefs */
       }
@@ -6240,6 +6247,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         /* non-critical */
       }
     }
+
+    // Support Lens is a separately chosen visibility boundary, not behavioral
+    // personalization. A direct request wins for this turn; otherwise preserve
+    // the member's saved strict selection even if taste-based ranking is off.
+    const requestedSupportLensDesignationIds =
+      extractExplicitOwnershipDesignationFilterIds(message);
+    const requiredSupportLensDesignationIds =
+      requestedSupportLensDesignationIds.length > 0
+        ? requestedSupportLensDesignationIds
+        : savedSupportLensMode === "strict_documented_designations"
+          ? savedSupportLensDesignationIds
+          : [];
 
     // A mode supplied with this turn wins. Otherwise, use the member's saved
     // Kinfolk Voice for floating-widget, web, and mobile chat entry points.
@@ -7612,6 +7631,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: message,
     });
+    // The Support Lens is an all-of documentary boundary, not a ranking hint.
+    // Apply it to every catalog source (named, city, radius, and home) before a
+    // business can become Kinfolk context or a recommendation.
+    businessCatalog = businessCatalog.filter((business) =>
+      matchesDocumentedDesignationScope(
+        business,
+        requiredSupportLensDesignationIds,
+      ),
+    );
     if (
       !audienceAllowsBusinessText({
         ageBand: effectiveAudienceBand,
@@ -7932,7 +7960,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               business,
             ]),
           ).values(),
-        ];
+        ].filter((business) =>
+          matchesDocumentedDesignationScope(
+            business,
+            requiredSupportLensDesignationIds,
+          ),
+        );
       } catch {
         /* non-critical — retain the governed city catalog */
       }

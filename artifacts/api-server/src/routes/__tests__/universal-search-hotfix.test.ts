@@ -116,6 +116,38 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     expect(captureLibraryGrowthSignal).not.toHaveBeenCalled();
   });
 
+  it("lets an explicit current Support Lens request override a supplied saved scope", async () => {
+    const asianBusiness = {
+      ...publicBusiness(),
+      id: "documented-asian-business",
+      ownership_designations: ["Asian American-Owned"],
+      black_owned: false,
+    };
+    poolQuery.mockImplementation(async (query: string) => {
+      if (query.includes("FROM public.public_businesses b")) return { rows: [asianBusiness] };
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({
+        q: "support Asian-owned businesses",
+        designations: "black-african-american",
+        resultTypes: "businesses",
+        surface: "smart_search",
+        privacy_mode: "discovery_v1",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.supportLens).toEqual({
+      mode: "strict_documented_designations",
+      designationIds: ["asian-american"],
+    });
+    expect(response.body.results.businesses).toEqual([
+      expect.objectContaining({ id: "documented-asian-business" }),
+    ]);
+  });
+
   it.each([
     ["missing privacy_mode", {}],
     ["invalid privacy_mode", { privacy_mode: "not_discovery_v1" }],

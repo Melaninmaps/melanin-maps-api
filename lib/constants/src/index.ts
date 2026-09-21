@@ -50,10 +50,13 @@ export {
   ownershipDesignationFilterId,
   ownershipDesignationStorageValues,
   normalizeOwnershipDesignationFilterIds,
+  SUPPORT_LENS_MODES,
+  normalizeSupportLensMode,
   extractExplicitOwnershipDesignationFilterIds,
   isBlackOwned,
 } from "./ownership-designations";
 export type { OwnershipDesignation } from "./ownership-designations";
+export type { SupportLensMode } from "./ownership-designations";
 
 // ── Vibe labels ────────────────────────────────────────────────────────────
 export {

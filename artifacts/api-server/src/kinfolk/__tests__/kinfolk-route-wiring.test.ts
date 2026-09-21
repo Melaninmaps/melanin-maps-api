@@ -14,6 +14,13 @@ const chatRoute = routeSource.slice(
 );
 
 describe("Kinfolk chat static wiring", () => {
+  it("keeps Support Lens response aliases canonical and mode-only updates persisted", () => {
+    expect(routeSource).toContain("preferredOwnershipTypes: canonicalOwnershipTypes");
+    expect(routeSource).toContain("ownershipTypes: canonicalOwnershipTypes");
+    expect(routeSource).toContain("existingPreferences?.preferredOwnershipTypes");
+    expect(routeSource).toContain("invalidatePrefsCache(req.user.id)");
+  });
+
   it("uses the governed public repository for every chat catalog and fallback read", () => {
     expect(chatRoute).toContain("resolveNamedBusinessTurn({");
     expect(chatRoute).toContain("repository: governedBusinessRepository");

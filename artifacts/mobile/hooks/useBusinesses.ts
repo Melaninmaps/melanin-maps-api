@@ -5,6 +5,8 @@ import {
   normalizeOwnershipDesignationFilterIds,
   ownershipDesignationFilterId,
 } from "@workspace/constants";
+import { buildBusinessesRequestUrl } from "./support-lens-request";
+export { buildBusinessesRequestUrl } from "./support-lens-request";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 const BUSINESS_LOAD_ERROR =
@@ -19,6 +21,7 @@ interface UseBusinessesOptions {
   longitude?: number | null;
   radiusMiles?: number;
   designations?: readonly string[];
+  supportScope?: "all_businesses" | "strict_documented_designations";
   /** Prevent an unscoped request while a map surface awaits a locality. */
   enabled?: boolean;
 }
@@ -29,6 +32,7 @@ interface UseBusinessesResult {
   error: string | null;
   refetch: () => void;
 }
+
 
 interface UseBusinessByIdResult {
   business: Business | undefined;
@@ -133,6 +137,7 @@ export function useBusinesses(
     longitude = null,
     radiusMiles = 25,
     designations = [],
+    supportScope,
     enabled = true,
   } = options;
   const designationKey =
@@ -157,24 +162,17 @@ export function useBusinesses(
 
     try {
       const apiBase = getApiBaseUrl();
-      const params = new URLSearchParams();
-      if (search.length > 0) params.set("search", search);
-      if (category && category !== "All") params.set("category", category);
-      if (city.trim()) params.set("city", city.trim());
-      if (state.trim()) params.set("state", state.trim());
-      if (designationKey) params.set("designations", designationKey);
-      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-        params.set("lat", String(latitude));
-        params.set("lng", String(longitude));
-        params.set("radius", String(Math.min(100, Math.max(1, radiusMiles))));
-      }
-      const qs = params.toString();
-      const url = `${apiBase}/api/businesses${qs ? `?${qs}` : ""}`;
+      const url = buildBusinessesRequestUrl(apiBase, {
+        search, category, city, state, designations, supportScope,
+      });
+      const urlWithGeo = Number.isFinite(latitude) && Number.isFinite(longitude)
+        ? `${url}${url.includes("?") ? "&" : "?"}lat=${latitude}&lng=${longitude}&radius=${Math.min(100, Math.max(1, radiusMiles))}`
+        : url;
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 6000);
       try {
-        const res = await fetch(url, {
+        const res = await fetch(urlWithGeo, {
           signal: controller.signal,
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -201,7 +199,7 @@ export function useBusinesses(
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey]);
+  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);

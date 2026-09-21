@@ -1,4 +1,6 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 import {
   countMapDiscoveryFocuses,
   MAP_ESSENTIAL_SERVICE_CATEGORIES,
@@ -214,14 +216,46 @@ export default function MapPage() {
   // Load ALL geolocated businesses — uses dedicated map-pins endpoint (no 200-row cap)
   const [mapPins, setMapPins] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [mapSupportScope, setMapSupportScope] = useState<"all_businesses" | null>(null);
+  const [mapRefreshGeneration, setMapRefreshGeneration] = useState(0);
+  const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
+  const [supportLensError, setSupportLensError] = useState<string | null>(null);
   useEffect(() => {
     const base = BASE.replace(/\/$/, "");
-    fetch(`${base}/api/businesses/map-pins`, { credentials: "include" })
+    const query = mapSupportScope ? `?supportScope=${mapSupportScope}` : "";
+    fetch(`${base}/api/businesses/map-pins${query}`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : { pins: [] })
       .then((d: { pins?: any[] }) => { setMapPins(d.pins ?? []); })
       .catch(() => {})
       .finally(() => setIsLoading(false));
+  }, [mapSupportScope, mapRefreshGeneration]);
+  useEffect(() => {
+    fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, { credentials: "include" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        const prefs = payload?.preferences;
+        const values = Array.isArray(prefs?.preferredOwnershipTypes)
+          ? prefs.preferredOwnershipTypes
+          : Array.isArray(prefs?.ownershipTypes) ? prefs.ownershipTypes : [];
+        if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
+      })
+      .catch(() => {});
   }, []);
+  const removeMapDesignation = async (designation: string) => {
+    setSupportLensError(null);
+    const result = await persistReducedSupportLensRemoval({
+      baseUrl: `${BASE.replace(/\/$/, "")}/`, savedDesignations, removeDesignation: designation,
+    });
+    if (result.error) {
+      setSupportLensError(result.error);
+    } else {
+      const update = result.update;
+      setSavedDesignations(update.preferredOwnershipTypes);
+      setMapSupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
+      setMapRefreshGeneration((generation) => generation + 1);
+      setUniversalResults(null);
+    }
+  };
   const { data: authData } = useGetCurrentAuthUser();
 
   const mapDivRef = useRef<HTMLDivElement>(null);
@@ -608,6 +642,7 @@ export default function MapPage() {
               if (parsed.city) bp.set("city", parsed.city);
               if (parsed.ownership) bp.set("ownership", parsed.ownership);
               if (parsed.category) bp.set("category", parsed.category);
+              if (mapSupportScope) bp.set("supportScope", mapSupportScope);
               const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
               if (bizRes.ok) {
                 const bizPayload = await bizRes.json();
@@ -651,7 +686,7 @@ export default function MapPage() {
       }
     } catch { /* fall through to client-side filtered list */ }
     finally { setUniversalLoading(false); }
-  }, [search, userCoords, fitMapToBusinessResults, clearEssentialServices]);
+  }, [search, userCoords, mapSupportScope, fitMapToBusinessResults, clearEssentialServices]);
 
   // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
   // Effect runs when handoffQuery or map object readiness changes.
@@ -2001,6 +2036,50 @@ export default function MapPage() {
                         </p>
                       </>
                     )}
+                    <div className="flex flex-wrap gap-2 justify-center mb-3">
+                      {supportLensError && <p role="alert" className="w-full text-sm font-semibold text-red-700">{supportLensError}</p>}
+                      <button className="px-4 py-2 rounded-full bg-[#2B1507] text-white text-xs font-bold">
+                        Keep exact focus
+                      </button>
+                      <button
+                        onClick={() => { setSearch(""); setMapDiscoveryFocus("all"); setUniversalResults(null); }}
+                        className="px-4 py-2 rounded-full border border-[#3A1F0E]/20 text-[#3A1F0E] text-xs font-bold"
+                      >
+                        Choose another community
+                      </button>
+                      {savedDesignations.length === 1 ? <button
+                        onClick={() => void removeMapDesignation(savedDesignations[0])}
+                        className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
+                      >
+                        Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === savedDesignations[0])?.label ?? "selection"}
+                      </button> : savedDesignations.length > 1 ? savedDesignations.map((designation) => <button
+                        key={designation}
+                        onClick={() => void removeMapDesignation(designation)}
+                        className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
+                      >
+                        Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === designation)?.label ?? designation}
+                      </button>) : null}
+                      <button
+                        onClick={() => { void (async () => {
+                          setSupportLensError(null);
+                          try {
+                            const response = await fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
+                            method: "PUT", credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
+                            });
+                            if (!response.ok) throw new Error("preference update failed");
+                            setMapSupportScope("all_businesses");
+                            setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
+                          } catch {
+                            setSupportLensError("Could not update Support Lens. Please try again.");
+                          }
+                        })(); }}
+                        className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
+                      >
+                        Show all businesses
+                      </button>
+                    </div>
                     {search.trim() && (
                       <Link href={`/travel?q=${encodeURIComponent(search.trim())}`}>
                         <button className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-full border-2 border-[#CA922B] text-[#CA922B] text-xs font-bold hover:bg-[#CA922B] hover:text-white transition-colors mb-3">

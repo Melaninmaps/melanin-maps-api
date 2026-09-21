@@ -358,6 +358,25 @@ export declare const userPreferencesTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             $type: string[];
         }>;
+        supportLensMode: import("drizzle-orm/pg-core").PgColumn<{
+            name: "support_lens_mode";
+            tableName: "user_preferences";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 40;
+        }>;
         socialVideoPlatforms: import("drizzle-orm/pg-core").PgColumn<{
             name: "social_video_platforms";
             tableName: "user_preferences";
@@ -911,6 +930,25 @@ export declare const insertUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         $type: string[];
     }>;
+    supportLensMode: import("drizzle-orm/pg-core").PgColumn<{
+        name: "support_lens_mode";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 40;
+    }>;
     socialVideoPlatforms: import("drizzle-orm/pg-core").PgColumn<{
         name: "social_video_platforms";
         tableName: "user_preferences";
@@ -1461,6 +1499,25 @@ export declare const selectUserPreferencesSchema: import("drizzle-zod").BuildSch
         generated: undefined;
     }, {}, {
         $type: string[];
+    }>;
+    supportLensMode: import("drizzle-orm/pg-core").PgColumn<{
+        name: "support_lens_mode";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 40;
     }>;
     socialVideoPlatforms: import("drizzle-orm/pg-core").PgColumn<{
         name: "social_video_platforms";

@@ -111,8 +111,8 @@ describe("FullMapView locality-first contracts", () => {
   it("keeps the business hook backward-compatible while allowing map views to stop unscoped fetches", () => {
     expect(businessHookSource).toContain("enabled?: boolean;");
     expect(businessHookSource).toContain("if (!enabled)");
-    expect(businessHookSource).toContain('params.set("city", city.trim())');
-    expect(businessHookSource).toContain('params.set("state", state.trim())');
+    expect(businessHookSource).toContain("buildBusinessesRequestUrl");
+    expect(businessHookSource).toContain("city, state, designations, supportScope");
   });
 
   it("adds a submitted business search without widening the member's local map scope", () => {
@@ -122,5 +122,12 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("setSubmittedBusinessSearch(businessSearchInput.trim())");
     expect(fullMapSource).toContain('enabled: exploringAllAreas || mapLocality !== null');
     expect(fullMapSource).toContain('accessibilityLabel="Clear business search"');
+  });
+
+  it("uses the saved strict Support Lens for map business requests", () => {
+    expect(fullMapSource).toContain('import { useUserPreferences } from "@/hooks/useUserPreferences"');
+    expect(fullMapSource).toContain('memberPreferences?.supportLensMode === "strict_documented_designations"');
+    expect(fullMapSource).toContain("designations: designationIds");
+    expect(fullMapSource).toContain("supportScope: memberPreferences?.supportLensMode");
   });
 });

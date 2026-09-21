@@ -157,6 +157,25 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS personalization_context_completed_at TIMESTAMPTZ`,
   },
   {
+    name: "user_preferences_support_lens_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS support_lens_mode VARCHAR(40) NOT NULL DEFAULT 'all_businesses';
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'user_preferences_support_lens_mode_check'
+            AND conrelid = 'user_preferences'::regclass
+        ) THEN
+          ALTER TABLE user_preferences
+            ADD CONSTRAINT user_preferences_support_lens_mode_check
+            CHECK (support_lens_mode IN ('all_businesses','strict_documented_designations'))
+            NOT VALID;
+        END IF;
+      END $$;
+      ALTER TABLE user_preferences
+        VALIDATE CONSTRAINT user_preferences_support_lens_mode_check;`,
+  },
+  {
     name: "create_governed_directory_import_staging_v1",
     sql: `
       CREATE TABLE IF NOT EXISTS directory_import_batches (

@@ -49,6 +49,18 @@ describe("Kinfolk voice preference defaults and validation", () => {
     expect(invalid.ok).toBe(false);
     if (!invalid.ok) expect(invalid.issues).toHaveLength(7);
   });
+
+  it("validates the Support Lens mode contract", () => {
+    expect(
+      validateKinfolkPreferenceUpdate({
+        supportLensMode: "strict_documented_designations",
+      }),
+    ).toEqual({ ok: true });
+    const invalid = validateKinfolkPreferenceUpdate({
+      supportLensMode: "rank_matching_first",
+    });
+    expect(invalid.ok).toBe(false);
+  });
 });
 
 describe("Kinfolk regional and AAVE prompt wiring", () => {
