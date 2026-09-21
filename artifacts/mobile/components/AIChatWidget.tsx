@@ -71,9 +71,9 @@ async function getToken(): Promise<string | null> {
 const GREETING = "Kinfolk's here. Let's map it out.";
 
 const SIGNATURE_PHRASE = "Kinfolk's here.";
-const VOICE_PREF_KEY = "@kinfolk_voice_pref";
 const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
+const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
 
 const AAVE_OPTIONS = [
   { level: 0, label: "Off",       desc: "Standard Kinfolk voice" },
@@ -82,13 +82,11 @@ const AAVE_OPTIONS = [
   { level: 3, label: "Full",      desc: "Complete AAVE including profanity", locked: true },
 ] as const;
 
-const VOICE_OPTIONS = [
-  { id: "onyx",    label: "Onyx",    desc: "Deep, warm, grounded — Kinfolk default" },
-  { id: "echo",    label: "Echo",    desc: "Medium tone, conversational, clear" },
-  { id: "fable",   label: "Fable",   desc: "Rich, warm, storyteller quality" },
-  { id: "alloy",   label: "Alloy",   desc: "Neutral, balanced, versatile" },
-  { id: "nova",    label: "Nova",    desc: "Warm, expressive, energetic" },
-  { id: "shimmer", label: "Shimmer", desc: "Clear, gentle, approachable" },
+const VOICE_MODE_OPTIONS = [
+  { id: "community", label: "Just Big Cousin", desc: "Warm, grounded, conversational, and direct" },
+  { id: "professor", label: "Professor", desc: "Clear teaching, context, and the why behind it" },
+  { id: "business_manager", label: "Business Manager", desc: "Priorities, risks, decisions, and next actions" },
+  { id: "best_friend", label: "Best Friend", desc: "Supportive, candid, natural, and honest" },
 ] as const;
 
 let sessionId: string | undefined;
@@ -267,7 +265,6 @@ export function AIChatWidget() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [listenUri, setListenUri] = useState<string | undefined>(undefined);
   const [voiceUsage, setVoiceUsage] = useState<{ used: number; limit: number; percent: number; tierName: string } | null>(null);
-  const [voicePref, setVoicePref] = useState<string>("onyx");
   const [voiceSheet, setVoiceSheet] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<KinfolkBusinessRecommendation | null>(null);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
@@ -481,9 +478,26 @@ export function AIChatWidget() {
     }
   };
 
-  // ── Load saved voice + AAVE preferences on mount ─────────────────────────
+  const discardVoiceRecording = async () => {
+    if (!recorder.isRecording) return;
+    setIsRecording(false);
+    setVoiceInputStatus(null);
+    try {
+      await recorder.stop();
+      const uri = recorder.uri;
+      if (uri) {
+        const file = new FileSystem.File(uri);
+        try { file.delete(); } catch { /* cache cleanup best effort */ }
+      }
+    } catch { /* discard is intentionally quiet */ }
+    finally {
+      recordingStartedAtRef.current = null;
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+  };
+
+  // ── Load saved AAVE preference on mount ──────────────────────────────────
   useEffect(() => {
-    AsyncStorage.getItem(VOICE_PREF_KEY).then((v) => { if (v) setVoicePref(v); }).catch(() => {});
     AsyncStorage.getItem(AAVE_LEVEL_KEY).then((v) => { if (v) setAaveLevel(Number(v)); }).catch(() => {});
   }, []);
 
@@ -584,11 +598,6 @@ export function AIChatWidget() {
         if (!token || !voiceGuardRef.current.canPlay(request)) return;
 
         // Load voice preference (in case updated elsewhere)
-        const savedPref = await AsyncStorage.getItem(VOICE_PREF_KEY).catch(() => null);
-        if (!voiceGuardRef.current.canPlay(request)) return;
-        const currentVoice = savedPref ?? voicePref;
-        if (savedPref && savedPref !== voicePref) setVoicePref(savedPref);
-
         // Fetch voice usage
         const usageReq = fetch(`${base}/api/kinfolk/voice-usage`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -602,7 +611,7 @@ export function AIChatWidget() {
           const sigRes = await fetch(`${base}/api/kinfolk/speak`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: currentVoice }),
+            body: JSON.stringify({ text: SIGNATURE_PHRASE, mode: await getVoiceMode(token), requestId: "daily-signature" }),
             signal: request.signal,
           });
           if (sigRes.ok && voiceGuardRef.current.canPlay(request)) {
@@ -639,7 +648,7 @@ export function AIChatWidget() {
         if (!queued) voiceGuardRef.current.finish(request);
       }
     })();
-  }, [open, voicePref]);
+  }, [open]);
 
   const speakMessage = async (msgId: string, text: string) => {
     if (Platform.OS === "web" || !openRef.current || appStateRef.current !== "active") return;
@@ -659,7 +668,7 @@ export function AIChatWidget() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ text, voice: voicePref }),
+        body: JSON.stringify({ text, mode: await getVoiceMode(token), requestId: msgId }),
         signal: request.signal,
       });
       if (!voiceGuardRef.current.canPlay(request)) return;
@@ -696,32 +705,32 @@ export function AIChatWidget() {
     }
   };
 
-  const previewVoice = async (voiceId: string) => {
+  const previewVoice = async (mode: string) => {
     if (Platform.OS === "web" || previewingVoice !== null || !openRef.current || appStateRef.current !== "active") return;
     const request = voiceGuardRef.current.begin();
     let queued = false;
-    setPreviewingVoice(voiceId);
+    setPreviewingVoice(mode);
     try {
       const base = getApiBase();
       const token = await getToken();
       if (!voiceGuardRef.current.canPlay(request)) return;
-      const r = await fetch(`${base}/api/kinfolk/speak`, {
+      const r = await fetch(`${base}/api/kinfolk/voice-preview`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: voiceId }),
+        body: JSON.stringify({ text: KINFOLK_PREVIEW_TEXT, mode, requestId: `preview-${mode}` }),
         signal: request.signal,
       });
       if (r.ok && voiceGuardRef.current.canPlay(request)) {
         const { audio, format } = await r.json() as { audio: string; format: string };
         if (!voiceGuardRef.current.canPlay(request)) return;
-        const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${voiceId}.${format}`);
+        const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${mode}.${format}`);
         file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
         if (!voiceGuardRef.current.canPlay(request)) return;
         queuedPlaybackRequestRef.current = request;
-        setPlayingId(`__preview_${voiceId}__`);
+        setPlayingId(`__preview_${mode}__`);
         setListenUri(file.uri);
         queued = true;
       }
@@ -931,7 +940,7 @@ export function AIChatWidget() {
               <TouchableOpacity
                 onPress={() => setVoiceSheet(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Choose Kinfolk spoken voice"
+                accessibilityLabel="Preview Kinfolk voice modes"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
               >
@@ -1254,6 +1263,15 @@ export function AIChatWidget() {
             <View style={[styles.voiceInputStatus, { backgroundColor: isRecording ? "#FEF2F2" : colors.muted }]}>
               <Feather name={isRecording ? "mic" : "message-circle"} size={14} color={isRecording ? "#B91C1C" : colors.mutedForeground} />
               <Text style={[styles.voiceInputStatusText, { color: isRecording ? "#B91C1C" : colors.mutedForeground }]}>{voiceInputStatus}</Text>
+              {isRecording ? (
+                <TouchableOpacity
+                  accessibilityLabel="Cancel and discard Kinfolk Voice recording"
+                  onPress={() => void discardVoiceRecording()}
+                  style={styles.discardVoiceBtn}
+                >
+                  <Text style={styles.discardVoiceText}>Discard</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 
@@ -1292,7 +1310,7 @@ export function AIChatWidget() {
             </TouchableOpacity>
           </View>
 
-          {/* ── Voice picker sheet ─────────────────────────────────────────── */}
+          {/* ── Kinfolk delivery preview sheet ─────────────────────────────── */}
           {voiceSheet && (
             <TouchableOpacity
               style={styles.voiceSheetOverlay}
@@ -1304,33 +1322,24 @@ export function AIChatWidget() {
                   <View style={styles.voiceSheetHeader}>
                     <View>
                       <Text style={[styles.voiceSheetTitle, { color: colors.foreground }]}>Kinfolk&apos;s Voice</Text>
-                      <Text style={[styles.voiceSheetSub, { color: colors.mutedForeground }]}>Tap Preview to hear each option</Text>
+                      <Text style={[styles.voiceSheetSub, { color: colors.mutedForeground }]}>One Kinfolk voice, delivered four ways. Tap Preview to hear each mode.</Text>
                     </View>
                     <TouchableOpacity onPress={() => setVoiceSheet(false)}>
                       <Feather name="x" size={18} color={colors.mutedForeground} />
                     </TouchableOpacity>
                   </View>
 
-                  {VOICE_OPTIONS.map((v) => (
+                  {VOICE_MODE_OPTIONS.map((v) => (
                     <View key={v.id} style={[styles.voiceRow, { borderBottomColor: colors.border }]}>
-                      <TouchableOpacity
-                        style={styles.voiceRowMain}
-                        onPress={() => {
-                          setVoicePref(v.id);
-                          AsyncStorage.setItem(VOICE_PREF_KEY, v.id).catch(() => {});
-                          if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }}
-                      >
+                      <View style={styles.voiceRowMain}>
                         <View style={[styles.voiceRadio, { borderColor: colors.primary }]}>
-                          {voicePref === v.id && (
-                            <View style={[styles.voiceRadioFill, { backgroundColor: colors.primary }]} />
-                          )}
+                          <View style={[styles.voiceRadioFill, { backgroundColor: colors.primary }]} />
                         </View>
                         <View style={styles.voiceRowText}>
                           <Text style={[styles.voiceRowLabel, { color: colors.foreground }]}>{v.label}</Text>
                           <Text style={[styles.voiceRowDesc, { color: colors.mutedForeground }]}>{v.desc}</Text>
                         </View>
-                      </TouchableOpacity>
+                      </View>
                       <TouchableOpacity
                         style={[styles.previewBtn, { borderColor: colors.primary + "66", opacity: previewingVoice === v.id ? 0.5 : 1 }]}
                         disabled={previewingVoice !== null}
@@ -1349,7 +1358,7 @@ export function AIChatWidget() {
                   ))}
 
                   <Text style={[styles.voiceSheetNote, { color: colors.mutedForeground }]}>
-                    Current beta voice. A signature Kinfolk voice is in development.
+                    Kinfolk&apos;s base voice is selected and protected by Mapping With Melanin. Your mode changes delivery, never the facts, citations, or safety standards.
                   </Text>
 
                   {/* ── AAVE Cultural Voice Style ─────────────────────────── */}
@@ -1578,6 +1587,8 @@ const styles = StyleSheet.create({
   },
   previewBtnTxt: { fontSize: 11, fontFamily: "Inter_500Medium" },
   voiceSheetNote: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 14, textAlign: "center", fontStyle: "italic" },
+  discardVoiceBtn: { marginLeft: "auto", borderWidth: 1, borderColor: "#FCA5A5", borderRadius: 12, paddingHorizontal: 9, paddingVertical: 4 },
+  discardVoiceText: { color: "#B91C1C", fontSize: 11, fontFamily: "Inter_600SemiBold" },
   aaveDivider: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 22, marginBottom: 18 },
   aaveHeader: { marginBottom: 10 },
   aaveTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
