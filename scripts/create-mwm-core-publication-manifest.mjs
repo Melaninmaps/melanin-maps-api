@@ -159,16 +159,20 @@ async function main() {
       throw new Error(`Source record fingerprint not found for ${receipt.sourceManifest}:${receipt.sourceRow}.`);
     }
     // Normalize the signed source row to the protected ingress wire contract.
-    // The original camelCase source fields remain embedded in source_record for
-    // audit, but the publisher consumes only these canonical snake_case values.
+    // `source_row` and `source_row_id` are unique *within this derived batch*,
+    // because source manifests legitimately reuse local IDs such as `1` or
+    // `11`. The immutable, source-local values remain separately preserved in
+    // `mwm_core_source_row` and `mwm_core_source_row_id`; no source evidence is
+    // overwritten or discarded by this collision-proof staging identity.
+    const ingressSourceRow = output.length + 1;
+    const ingressSourceRowId = `mwm-ingress:${receipt.sourceManifestSha256}:${receipt.sourceRow}`;
     const derived = {
       ...sourceRecord,
       target_kind: sourceRecord.target_kind ?? sourceRecord.targetKind,
-      // The source package may omit optional wire aliases. Use the immutable
-      // receipt values for identity rather than emitting JavaScript `undefined`
-      // into canonical JSONL, which would make the protected manifest invalid.
-      source_row: sourceRecord.source_row ?? sourceRecord.sourceRow ?? receipt.sourceRow,
-      source_row_id: sourceRecord.source_row_id ?? sourceRecord.sourceRowId ?? String(receipt.sourceRowId),
+      // The ingress fields must be globally unique for the combined 4,183-row
+      // batch. The original, signed values are retained below for provenance.
+      source_row: ingressSourceRow,
+      source_row_id: ingressSourceRowId,
       source_name: sourceRecord.source_name ?? sourceRecord.sourceName ?? receipt.evidence?.sourceName ?? null,
       source_url: sourceRecord.source_url ?? sourceRecord.sourceUrl ?? receipt.evidence?.sourceUrl ?? null,
       source_status: sourceRecord.source_status ?? sourceRecord.sourceStatus ?? null,
@@ -187,6 +191,8 @@ async function main() {
       mwm_core_source_manifest_sha256: receipt.sourceManifestSha256,
       mwm_core_source_row: receipt.sourceRow,
       mwm_core_source_row_id: String(receipt.sourceRowId),
+      mwm_core_ingress_row: ingressSourceRow,
+      mwm_core_ingress_row_id: ingressSourceRowId,
     };
     output.push(canonicalJson(derived));
     evidenceLaneCounts[evidenceLane] += 1;
