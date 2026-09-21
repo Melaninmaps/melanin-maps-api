@@ -26,12 +26,16 @@ const audioPlugin = (appJson.expo.plugins ?? []).find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-audio",
 );
 const audioOptions = Array.isArray(audioPlugin) ? audioPlugin[1] ?? {} : {};
-const expectedBuild = String(Number(buildRecord.lastIosSubmitted) + 1);
+// A build can be consumed by EAS or App Store Connect before it is recorded as
+// submitted here. Any integer above the recorded submitted build is valid; do
+// not block the next source release by assuming the value must be consecutive.
+const minimumBuild = Number(buildRecord.lastIosSubmitted) + 1;
+const configuredBuild = Number(config?.ios?.buildNumber);
 const failures = [];
 
 if (config?.ios?.bundleIdentifier !== "com.melaninmaps.app") failures.push("unexpected iOS bundle identifier");
-if (config?.ios?.buildNumber !== expectedBuild) {
-  failures.push(`expected next iOS build ${expectedBuild}, found ${config?.ios?.buildNumber ?? "missing"}`);
+if (!Number.isInteger(configuredBuild) || configuredBuild < minimumBuild) {
+  failures.push(`expected iOS build at least ${minimumBuild}, found ${config?.ios?.buildNumber ?? "missing"}`);
 }
 if (backgroundModes.includes("audio")) failures.push("generated UIBackgroundModes still contains audio");
 if (audioOptions.enableBackgroundPlayback !== false) {
