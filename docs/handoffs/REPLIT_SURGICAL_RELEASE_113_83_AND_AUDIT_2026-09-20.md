@@ -83,7 +83,7 @@ RELEASE_SHA=<new-exact-main-sha> bash scripts/replit-release-113-83.sh verify
 RELEASE_SHA=<new-exact-main-sha> bash scripts/replit-release-113-83.sh build
 ```
 
-The script is intentionally strict. It verifies the SHA, a clean checkout, iOS 113, Android 83, iPad support, iPad multitasking, library/API/web/mobile typechecks, focused regressions, production builds, synchronized static artifacts, and iOS/Android prebuild guards before starting EAS.
+The script is intentionally strict. It verifies the SHA, a clean checkout, iOS 113, Android 83, iPad support, iPad multitasking, library/API/web/mobile typechecks, focused regressions, production builds, synchronized static artifacts, and iOS/Android prebuild guards before starting EAS. Immediately before starting EAS, it also requires the public production API’s Railway SHA and compiled-source SHA to match `RELEASE_SHA`, with healthy API, readiness, and Kinfolk health endpoints. This prevents a new binary from shipping against the stale public runtime that caused earlier regressions.
 
 It uses the production API origin for both native builds. It requests an iOS production build with the existing TestFlight submit profile and produces an Android production AAB. It deliberately does **not** guess or add a Google Play submission track; a Play upload is a separate, auditable store action after the AAB completes and the intended Play track is confirmed.
 
