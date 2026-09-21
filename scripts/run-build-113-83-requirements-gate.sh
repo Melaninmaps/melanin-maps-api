@@ -91,7 +91,14 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/image-creation-safety.test.ts \
   src/kinfolk/__tests__/lean-general-chat.test.ts \
   src/kinfolk/__tests__/voice-delivery.test.ts \
-  src/__tests__/kinfolk-server-voice-contract.test.ts
+  src/__tests__/kinfolk-server-voice-contract.test.ts \
+  src/kinfolk/__tests__/designation-predicate-policy.test.ts \
+  src/kinfolk/__tests__/governed-business-repository.test.ts \
+  src/routes/__tests__/universal-search-hotfix.test.ts
+
+node scripts/test-mwm-core-evidence-lanes.mjs
+node scripts/test-mwm-core-source-policy.mjs
+node scripts/test-mwm-core-publication-manifest.mjs
 
 pnpm exec vitest run \
   lib/constants/src/map-discovery.test.ts \
