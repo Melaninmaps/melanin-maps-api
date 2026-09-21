@@ -69,7 +69,10 @@ async function main() {
     signedGet(apiUrl, "/api/founder/directory-import/service/publication-diagnostics", signingSecret, serviceToken),
   ]);
 
-  const expectedBatchPrefix = `mwm-core-chamber-institutional-${expectedRootHash.slice(0, 12)}`;
+  // Keep this aligned with the immutable sourceName emitted by
+  // submit-mwm-core-publication-manifest.mjs, so a receipt from another batch
+  // can never be reported as this source-receipted cohort.
+  const expectedBatchPrefix = `source-receipted-directory-${expectedRootHash.slice(0, 12)}`;
   const expectedBatch = Array.isArray(summary.batches)
     ? summary.batches.find((batch) => batch?.source_name === expectedBatchPrefix) ?? null
     : null;
