@@ -34,6 +34,11 @@ function sha256(value) {
 }
 
 function canonicalJson(value) {
+  // JSON.stringify(undefined) returns JavaScript undefined rather than JSON
+  // text. Manifest rows must always remain parseable JSONL even when a source
+  // package omits an optional field such as a social URL.
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") return "null";
+  if (typeof value === "number" && !Number.isFinite(value)) return "null";
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -159,11 +164,14 @@ async function main() {
     const derived = {
       ...sourceRecord,
       target_kind: sourceRecord.target_kind ?? sourceRecord.targetKind,
-      source_row: sourceRecord.source_row ?? sourceRecord.sourceRow,
-      source_row_id: sourceRecord.source_row_id ?? sourceRecord.sourceRowId,
-      source_name: sourceRecord.source_name ?? sourceRecord.sourceName,
-      source_url: sourceRecord.source_url ?? sourceRecord.sourceUrl,
-      source_status: sourceRecord.source_status ?? sourceRecord.sourceStatus,
+      // The source package may omit optional wire aliases. Use the immutable
+      // receipt values for identity rather than emitting JavaScript `undefined`
+      // into canonical JSONL, which would make the protected manifest invalid.
+      source_row: sourceRecord.source_row ?? sourceRecord.sourceRow ?? receipt.sourceRow,
+      source_row_id: sourceRecord.source_row_id ?? sourceRecord.sourceRowId ?? String(receipt.sourceRowId),
+      source_name: sourceRecord.source_name ?? sourceRecord.sourceName ?? receipt.evidence?.sourceName ?? null,
+      source_url: sourceRecord.source_url ?? sourceRecord.sourceUrl ?? receipt.evidence?.sourceUrl ?? null,
+      source_status: sourceRecord.source_status ?? sourceRecord.sourceStatus ?? null,
       social_source_url: sourceRecord.social_source_url ?? sourceRecord.socialSourceUrl,
       ownership_designations: sourceRecord.ownership_designations ?? sourceRecord.ownershipDesignations ?? [],
       ownership_evidence: sourceRecord.ownership_evidence ?? sourceRecord.ownershipEvidence ?? null,
