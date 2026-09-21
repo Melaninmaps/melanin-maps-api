@@ -11,6 +11,7 @@
  * a staged batch receipt. Read aggregate receipts with the paired reader script.
  */
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -106,6 +107,10 @@ function main() {
     "--expected-source-listing-count", String(laneCounts.reputableSource),
   ]);
   if (!existsSync(manifest)) throw new Error("Immutable publication manifest was not created.");
+  // This is the protected ingress checksum and therefore the exact batch
+  // selector required by the single-concurrency publication worker. It is
+  // derived locally from the bytes that will be signed and submitted below.
+  const manifestChecksum = createHash("sha256").update(readFileSync(manifest, "utf8")).digest("hex");
 
   execute("scripts/submit-mwm-core-publication-manifest.mjs", [
     "--apply",
@@ -125,7 +130,8 @@ function main() {
     candidateCount,
     evidenceLanes: laneCounts,
     manifest,
-    nextStep: "Keep DIRECTORY_PUBLICATION_WORKER_ENABLED=0 until this staged receipt is retained. Then deploy one worker with DIRECTORY_PUBLISHER_CONCURRENCY=1 and read aggregate receipts after terminal statuses.",
+    manifestChecksum,
+    nextStep: "Keep DIRECTORY_PUBLICATION_WORKER_ENABLED=0 until this staged receipt is retained. Then set DIRECTORY_PUBLICATION_BATCH_SHA256 to manifestChecksum, deploy one worker with DIRECTORY_PUBLISHER_CONCURRENCY=1, and read aggregate receipts after terminal statuses.",
   };
   writeFileSync(resolve(outDir, "staging-receipt.json"), `${JSON.stringify(receipt, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify(receipt, null, 2)}\n`);
