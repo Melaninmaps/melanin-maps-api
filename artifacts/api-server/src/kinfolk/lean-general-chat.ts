@@ -15,6 +15,8 @@ export type LeanGeneralChatInput = Readonly<{
   hasResolvedEntity: boolean;
   hasLibraryGrounding: boolean;
   hasRequestedVibes: boolean;
+  /** Ethical image-design questions require a product-specific safety contract. */
+  hasImageCreationSafetyGuidance?: boolean;
 }>;
 
 /**
@@ -33,7 +35,8 @@ export function canUseLeanGeneralChat(input: LeanGeneralChatInput): boolean {
     && !input.hasCircleContext
     && !input.hasResolvedEntity
     && !input.hasLibraryGrounding
-    && !input.hasRequestedVibes;
+    && !input.hasRequestedVibes
+    && !input.hasImageCreationSafetyGuidance;
 }
 
 /**

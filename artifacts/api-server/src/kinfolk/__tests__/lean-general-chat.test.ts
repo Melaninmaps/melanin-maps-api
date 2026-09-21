@@ -28,6 +28,7 @@ describe("lean general Kinfolk chat", () => {
     expect(canUseLeanGeneralChat({ ...ordinaryQuestion, hasNamedBusiness: true })).toBe(false);
     expect(canUseLeanGeneralChat({ ...ordinaryQuestion, hasResolvedEntity: true })).toBe(false);
     expect(canUseLeanGeneralChat({ ...ordinaryQuestion, hasLibraryGrounding: true })).toBe(false);
+    expect(canUseLeanGeneralChat({ ...ordinaryQuestion, hasImageCreationSafetyGuidance: true })).toBe(false);
   });
 
   it("preserves capable, impartial general chat without fabricated local results", () => {

@@ -78,7 +78,9 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/library/__tests__/registerLivingLibraryRoutes.test.ts \
   src/kinfolk/__tests__/city-briefing.test.ts \
   src/kinfolk/__tests__/collective-opinion-policy.test.ts \
-  src/kinfolk/__tests__/english-query-recovery-policy.test.ts
+  src/kinfolk/__tests__/english-query-recovery-policy.test.ts \
+  src/kinfolk/__tests__/image-creation-safety.test.ts \
+  src/kinfolk/__tests__/lean-general-chat.test.ts
 
 pnpm exec vitest run \
   lib/constants/src/map-discovery.test.ts \
