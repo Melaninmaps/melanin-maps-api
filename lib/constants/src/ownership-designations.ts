@@ -224,13 +224,15 @@ export function extractExplicitOwnershipDesignationFilterIds(message: string): s
   const matched: string[] = [];
   const hasFoundationalBlack = /\b(?:fba|foundational(?:ly)?\s+black(?:\s+american)?)\b/.test(text);
   if (hasFoundationalBlack) matched.push("foundational-black-american");
-  if (!hasFoundationalBlack && /\b(?:black|african[-\s]?american)\b/.test(text)) matched.push("black-african-american");
+  if (!hasFoundationalBlack && /\b(?:black|african[-\s]?americans?)\b/.test(text)) matched.push("black-african-american");
   if (/\b(?:woman|women|female)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("woman");
   if (/\b(?:divine\s*nine|d9)\b/.test(text)) matched.push("divine-nine-affiliated");
   if (/\b(?:veteran|veterans|military[-\s]?(?:owned|led)?)\b/.test(text)) matched.push("veteran");
   if (/\b(?:lgbtq(?:ia)?|queer)[+\s-]?(?:owned|led)?\b/.test(text)) matched.push("lgbtqia");
   if (/\b(?:disability|disabled)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("disability");
-  if (/\b(?:hispanic|latino|latina|latinx)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("latino-hispanic");
+  if (/\b(?:hispanic|hispanics|latino|latinos|latina|latinas|latinx)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("latino-hispanic");
+  if (/\b(?:asian|asian american|asians)[-\s]?(?:owned|led)?\b/.test(text)) matched.push("asian-american");
+  if (/\bguatemalans?[-\s]?(?:owned|led)?\b/.test(text)) matched.push("guatemalan");
   return normalizeOwnershipDesignationFilterIds(matched);
 }
 
