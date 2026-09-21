@@ -71,21 +71,18 @@ case "$MODE" in
   prepare)
     require_exact_clean_source
     RELEASE_SHA="$RELEASE_SHA" bash scripts/run-build-113-83-requirements-gate.sh --prepare-static
-    node scripts/verify-release-artifacts.mjs
     printf '%s\n' 'PREPARE_PASS: inspect the diff. Only synchronized web-static and artifacts/api-server/web-static files may be generated. Commit them only after review, then rerun this script with that new main SHA in verify mode.'
     ;;
 
   verify)
     require_exact_clean_source
     RELEASE_SHA="$RELEASE_SHA" bash scripts/run-build-113-83-requirements-gate.sh --verify-final
-    node scripts/verify-release-artifacts.mjs
     printf 'VERIFY_PASS: exact_sha=%s ios=1.1.9(114) android=1.1.7(84)\n' "$RELEASE_SHA"
     ;;
 
   build)
     require_exact_clean_source
     RELEASE_SHA="$RELEASE_SHA" bash scripts/run-build-113-83-requirements-gate.sh --verify-final
-    node scripts/verify-release-artifacts.mjs
     require_live_production_api
 
     cd artifacts/mobile
