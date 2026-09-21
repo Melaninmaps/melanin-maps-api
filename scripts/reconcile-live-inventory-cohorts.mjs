@@ -107,6 +107,10 @@ async function main() {
   const outputPath = resolve(argValue("--out", DEFAULT_OUTPUT));
   const receiptLines = (await readFile(receiptPath, "utf8")).split(/\r?\n/).filter(Boolean);
   const receipts = receiptLines.map((line) => JSON.parse(line));
+  const automaticMwmCohorts = new Set([
+    "mwm_chamber_backed_candidate",
+    "mwm_institutional_directory_candidate",
+  ]);
   const sourceStrong = new Map();
   const sourceBasic = new Map();
   for (const receipt of receipts) {
@@ -145,7 +149,7 @@ async function main() {
     };
     let cohort;
     let sourceReceipt = null;
-    if (uniqueSourceMatch?.cohort === "mwm_source_backed_candidate") {
+    if (uniqueSourceMatch && automaticMwmCohorts.has(uniqueSourceMatch.cohort)) {
       cohort = "source_backed_mwm_candidate_live";
       sourceReceipt = uniqueSourceMatch;
     } else if (uniqueSourceMatch) {
@@ -163,6 +167,7 @@ async function main() {
       sourceReceiptHash: sourceReceipt?.receiptHash ?? null,
       sourceManifest: sourceReceipt?.sourceManifest ?? null,
       sourceRow: sourceReceipt?.sourceRow ?? null,
+      sourceEvidenceLane: sourceReceipt?.evidenceLane ?? null,
       ambiguousSourceReceiptCount: cohort === "ambiguous_source_match_live" ? basicMatches.length : 0,
     };
     const receipt = { ...receiptWithoutHash, receiptHash: sha256(canonicalJson(receiptWithoutHash)) };
@@ -182,7 +187,7 @@ async function main() {
     liveReceiptRootHash: sha256(liveReceipts.map((receipt) => receipt.receiptHash).join("\n")),
     liveCohortCounts: Object.fromEntries(Object.entries(buckets).map(([key, value]) => [key, value.length])),
     interpretation: {
-      sourceBackedMwmCandidateLive: "Live record exactly matches one of the signed source-backed MWM candidate receipts. This does not claim it was created in this session.",
+      sourceBackedMwmCandidateLive: "Live record exactly matches one of the signed Chamber or institutional-directory MWM candidate receipts. This does not claim it was created in this session.",
       sourceBackedHeldLive: "Live record matches a signed source receipt but that source row is held from automatic future publication.",
       ambiguousSourceMatchLive: "Live record has more than one possible name/city/state source match; ownership/provenance cannot be asserted automatically.",
       legacyOrUnattributedLive: "No unique match in the current 6,576-row receipt set. It may be a historic seed, a community record, an owner-created record, or an import not included in the current package; it must not be silently hidden.",

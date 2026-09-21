@@ -2,9 +2,16 @@ export const MWM_CORE_PUBLICATION_MODE_ENV = "MWM_CORE_PUBLICATION_MODE" as cons
 export const MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH_ENV =
   "MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH" as const;
 export const MWM_CORE_PUBLICATION_POLICY_VERSION =
-  "mwm-core-black-latino-source-evidence-v2" as const;
-export const MWM_CORE_SOURCE_BACKED_COHORT =
-  "mwm_source_backed_candidate" as const;
+  "mwm-core-black-latino-source-evidence-v3" as const;
+export const MWM_CORE_CHAMBER_COHORT =
+  "mwm_chamber_backed_candidate" as const;
+export const MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT =
+  "mwm_institutional_directory_candidate" as const;
+export const MWM_CORE_AUTOMATIC_COHORTS = new Set<string>([
+  MWM_CORE_CHAMBER_COHORT,
+  MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT,
+]);
+export type MwmCoreEvidenceLane = "chamber" | "institutional_directory";
 
 export type MwmCorePublicationAdmission =
   | { ok: true }
@@ -62,11 +69,20 @@ export function validateMwmCorePublicationRecord(
       message: "MWM Core publication requires the approved source-evidence policy version.",
     };
   }
-  if (row.mwm_core_cohort !== MWM_CORE_SOURCE_BACKED_COHORT) {
+  const cohort = typeof row.mwm_core_cohort === "string"
+    ? row.mwm_core_cohort
+    : "";
+  const evidenceLane = row.mwm_core_evidence_lane;
+  const expectedCohort = evidenceLane === "chamber"
+    ? MWM_CORE_CHAMBER_COHORT
+    : evidenceLane === "institutional_directory"
+      ? MWM_CORE_INSTITUTIONAL_DIRECTORY_COHORT
+      : null;
+  if (!expectedCohort || cohort !== expectedCohort || !MWM_CORE_AUTOMATIC_COHORTS.has(cohort)) {
     return {
       ok: false,
-      code: "MWM_CORE_SOURCE_BACKED_COHORT_REQUIRED",
-      message: "MWM Core publication accepts only the approved source-backed cohort.",
+      code: "MWM_CORE_APPROVED_EVIDENCE_LANE_REQUIRED",
+      message: "MWM Core publication accepts only the approved Chamber or institutional-directory evidence lanes.",
     };
   }
   if (row.mwm_core_receipt_root_hash !== expectedRootHash) {
@@ -105,4 +121,4 @@ export function validateMwmCorePublicationBatch(
 }
 
 export const MWM_CORE_PUBLICATION_ACTIVATION_CONTRACT =
-  "Enable MWM_CORE_PUBLICATION_MODE=source_backed only with a derived, signed cohort whose receipt root hash matches MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH. This gate never infers identity and does not publish rows by itself.";
+  "Enable MWM_CORE_PUBLICATION_MODE=source_backed only with a derived, signed Chamber or institutional-directory cohort whose receipt root hash matches MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH. Editorial/promotional source rows require corroboration. This gate never infers identity and does not publish rows by itself.";
