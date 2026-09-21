@@ -1,6 +1,57 @@
 import type { Pool } from "pg";
 import { classifyDirectoryRecord, canonicalDirectoryPayload, sha256Hex } from "./reviewPipeline";
 
+function normalizedIdentityPart(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function publicDestination(payload: Record<string, unknown>): string | null {
+  const candidates = [
+    payload.website,
+    payload.social_source_url,
+    payload.socialSourceUrl,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string" || !candidate.trim()) continue;
+    try {
+      const parsed = new URL(candidate.trim());
+      if ((parsed.protocol === "https:" || parsed.protocol === "http:") &&
+          !parsed.username && !parsed.password && parsed.hostname) {
+        return parsed.toString();
+      }
+    } catch {
+      // The protected automated review has already required a valid customer
+      // destination. Keep this defensive layer deterministic as well.
+    }
+  }
+  return null;
+}
+
+function directoryBusinessIdentity(
+  payload: Record<string, unknown>,
+  online: boolean,
+  destination: string | null,
+): string {
+  const prefix = online ? "online" : "physical";
+  const base = [
+    prefix,
+    normalizedIdentityPart(payload.name),
+    normalizedIdentityPart(payload.city),
+    normalizedIdentityPart(payload.state),
+    normalizedIdentityPart(payload.country ?? "United States"),
+  ];
+  if (online) {
+    const host = destination ? new URL(destination).hostname.toLowerCase().replace(/^www\./, "") : "";
+    return [...base, host].join("|");
+  }
+  return [...base, normalizedIdentityPart(payload.address)].join("|");
+}
+
 export async function publishDirectoryCommand(
   productionPool: Pool, command: { eventKey: string; payload: Record<string, unknown>; payloadHash: string },
 ): Promise<{ recordId: string | null; status: "created" | "linked_existing" | "held" | "failed" }> {
@@ -28,7 +79,7 @@ export async function publishDirectoryCommand(
     const online = classifyDirectoryRecord(payload) === "online_business";
     const name = String(payload.name ?? "").trim();
     const city = String(payload.city ?? "").trim();
-    const website = payload.website ? String(payload.website) : null;
+    const website = publicDestination(payload);
     const sourceReportedDesignations = Array.isArray(payload.ownership_designations)
       ? payload.ownership_designations.map(String).filter(Boolean)
       : Array.isArray(payload.ownershipDesignations)
@@ -39,10 +90,39 @@ export async function publishDirectoryCommand(
     const ownershipClaim = sourceReportedDesignation && sourceReportedDesignations.length > 0
       ? "source_reported_ownership_unverified"
       : "source_reputable_listing_unverified";
-    const identity = `${online ? "online" : "physical"}|${name.toLowerCase()}|${city.toLowerCase()}|${website ?? payload.address ?? ""}`;
-    const existing = await client.query<{ id: string }>(
-      `SELECT id FROM businesses WHERE lower(name)=lower($1) AND lower(city)=lower($2)
-       AND COALESCE(website,'')=COALESCE($3,'') LIMIT 1 FOR UPDATE`, [name, city, website]);
+    const identity = directoryBusinessIdentity(payload, online, website);
+    // A physical storefront only links to the same normalized street address;
+    // a same-name business in another location remains an independent listing.
+    // Online records instead require the same name/city/destination host. The
+    // durable `dedupe_key` makes retries and later source batches idempotent.
+    const existing = online
+      ? await client.query<{ id: string }>(
+          `SELECT id FROM businesses
+            WHERE dedupe_key=$1 OR (
+              is_online_only=true
+              AND lower(name)=lower($2)
+              AND lower(city)=lower($3)
+              AND lower(COALESCE(state,''))=lower($4)
+              AND lower(COALESCE(country,'United States'))=lower($5)
+              AND lower(COALESCE(website,''))=lower(COALESCE($6,''))
+            )
+            LIMIT 1 FOR UPDATE`,
+          [identity, name, city, String(payload.state ?? ""), String(payload.country ?? "United States"), website],
+        )
+      : await client.query<{ id: string }>(
+          `SELECT id FROM businesses
+            WHERE dedupe_key=$1 OR (
+              COALESCE(is_online_only,false)=false
+              AND lower(regexp_replace(name,'[^a-z0-9]+',' ','gi'))=lower($2)
+              AND lower(regexp_replace(city,'[^a-z0-9]+',' ','gi'))=lower($3)
+              AND lower(COALESCE(state,''))=lower($4)
+              AND lower(COALESCE(country,'United States'))=lower($5)
+              AND lower(regexp_replace(COALESCE(address,''),'[^a-z0-9]+',' ','gi'))=lower($6)
+            )
+            LIMIT 1 FOR UPDATE`,
+          [identity, normalizedIdentityPart(name), normalizedIdentityPart(city),
+            String(payload.state ?? ""), String(payload.country ?? "United States"), normalizedIdentityPart(payload.address)],
+        );
     let recordId: string; let outcome: "created" | "linked_existing";
     if (existing.rows[0]) { recordId = existing.rows[0].id; outcome = "linked_existing"; }
     else {
@@ -55,13 +135,13 @@ export async function publishDirectoryCommand(
       const inserted = await client.query<{ id: string }>(`INSERT INTO businesses
         (id,name,category,subcategory,address,city,state,country,is_online_only,listing_status,
          owner_claim_status,verified,ownership_designations,verified_designations,ownership_claim,
-         description,latitude,longitude,website,source_url,status)
+         description,latitude,longitude,website,source_url,dedupe_key,status)
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'live_unclaimed','unclaimed',false,$10::jsonb,'[]'::jsonb,$11,
-               $12,$13,$14,$15,$16,'active')
+               $12,$13,$14,$15,$16,$17,'active')
         RETURNING id`, [id,name,String(payload.category ?? "Other"),String(payload.subcategory ?? "General"),
         address,city,payload.state ?? null,payload.country ?? null,online,
         JSON.stringify(sourceReportedDesignations),ownershipClaim,String(payload.description ?? ""),
-        latitude,longitude,website,payload.source_url ?? payload.sourceUrl ?? null]);
+        latitude,longitude,website,payload.source_url ?? payload.sourceUrl ?? null,identity]);
       recordId = inserted.rows[0]!.id; outcome = "created";
     }
     await client.query(`INSERT INTO directory_publication_provenance
