@@ -76,12 +76,14 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/map/__tests__/registerLocalBusinessSearchRoute.test.ts \
   src/library/__tests__/librarySearch.test.ts \
   src/library/__tests__/registerLivingLibraryRoutes.test.ts \
+  src/kinfolk/__tests__/city-briefing.test.ts \
   src/kinfolk/__tests__/collective-opinion-policy.test.ts \
   src/kinfolk/__tests__/english-query-recovery-policy.test.ts
 
 pnpm exec vitest run \
   lib/constants/src/map-discovery.test.ts \
   artifacts/web/src/__tests__/business-experience-social-ui.test.ts \
+  artifacts/web/src/__tests__/kinfolk-city-briefing-entry.test.ts \
   artifacts/web/src/__tests__/living-library-research.test.ts \
   artifacts/web/src/__tests__/map-discovery-card.test.ts \
   artifacts/web/src/__tests__/map-locality-first.test.ts \

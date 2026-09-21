@@ -210,6 +210,18 @@ function internalIsSufficient(plan: SemanticTurnPlan, internal: ContextualEviden
 
 function evidenceIsCorroborated(plan: SemanticTurnPlan, items: ContextualEvidenceItem[]): boolean {
   const isConsensus = plan.evidenceNeeds.includes("critical_consensus");
+  if (plan.taskMode === "city_briefing") {
+    const admissible = items.filter((item) =>
+      ["official", "reporting", "research", "reference"].includes(item.kind),
+    );
+    const independent = new Set(admissible.map((item) => sourceIdentity(item.url)));
+    const hasEstablishedSource = admissible.some((item) =>
+      item.kind === "official" || item.kind === "reporting" || item.kind === "research",
+    );
+    // A city update covers multiple changing topics. Do not synthesize one from a
+    // single result or an uncorroborated social/reference page.
+    return independent.size >= 2 && hasEstablishedSource;
+  }
   if (!isConsensus && items.some((item) => item.kind === "official")) return true;
   if (isConsensus && !items.some((item) => item.kind === "criticism")) return false;
   const independent = new Set(

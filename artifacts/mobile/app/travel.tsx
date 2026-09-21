@@ -106,6 +106,7 @@ const WELCOME_CHIPS = [
   "Where's good to eat in Atlanta?",
   "Best minority-owned hotels in Houston",
   "What's the vibe in New Orleans?",
+  "What should I know about Minneapolis?",
   "Hidden gems in DC",
   "Family spots in Chicago",
   "Would my community like this city?",

@@ -261,6 +261,11 @@ import {
   type SemanticTurnPlan,
 } from "../kinfolk/semantic-turn-planner";
 import {
+  buildCityBriefingPlan,
+  buildCityBriefingPromptBlock,
+  isCityBriefingRequest,
+} from "../kinfolk/city-briefing";
+import {
   contextualEvidenceNeedsFailClosedResponse,
   orchestrateContextualResearch,
   type ContextualEvidenceBundle,
@@ -6626,6 +6631,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           ].slice(0, 3),
         };
       }
+      // A resolved city plus an explicit update request is not an ambiguous
+      // business search or travel itinerary. Route it to the current-affairs
+      // briefing contract before generic ambiguity handling so the member gets
+      // a sourced overview instead of a needless clarification.
+      if (isCityBriefingRequest(message, destination)) {
+        contextualPlan = buildCityBriefingPlan({
+          message,
+          city: destination!,
+          stateCode: destinationState,
+        });
+      }
       if (
         contextualPlan.needsClarification &&
         contextualPlan.clarificationQuestion
@@ -8069,6 +8085,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           ...contextualEvidence.media,
         ])
       : "";
+    const cityBriefingPromptBlock =
+      contextualPlan?.taskMode === "city_briefing" && destination
+        ? buildCityBriefingPromptBlock({
+            city: destination,
+            stateCode: destinationState,
+            // `prefs` is already null when the member disables personalised
+            // suggestions. The helper admits only explicitly saved interest labels.
+            preferences: prefs,
+          })
+        : "";
     const baseSystemPrompt =
       buildSystemPrompt({
         prefs,
@@ -8106,7 +8132,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             "Use only supplied evidence for material claims. Do not generate a media link, entity relationship, Library path, metric, or citation unless its exact URL is supplied by the server.",
             "Never include personal profile, inferred identity, private memory, or raw history in structured fields.",
           ].join("\n")
-        : "");
+        : "") +
+      (cityBriefingPromptBlock ? `\n\n${cityBriefingPromptBlock}` : "");
 
     // Build server-authoritative supplemental blocks from context resolution
     const entityBlock = contextResolution.entityContextBlock;
@@ -8908,7 +8935,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : undefined,
       // Source relevance is server-authored guidance, not a model-generated
       // claim. Clients display it directly above the existing source links.
-      sourceContext: lifeGuidance?.sourceContext ?? undefined,
+      sourceContext:
+        lifeGuidance?.sourceContext ??
+        (contextualPlan?.taskMode === "city_briefing"
+          ? "This current city briefing uses the linked public sources. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
+          : undefined),
       // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
       sources: [
