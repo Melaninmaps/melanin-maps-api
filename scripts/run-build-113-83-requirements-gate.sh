@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build 113/83 requirements-to-proof source/artifact gate.
+# Build 114/84 requirements-to-proof source/artifact gate.
 #
 # Usage:
 #   bash scripts/run-build-113-83-requirements-gate.sh --prepare-static
@@ -26,7 +26,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 fail() {
-  printf 'BUILD_113_83_REQUIREMENTS_GATE_FAIL: %s\n' "$*" >&2
+  printf 'BUILD_114_84_REQUIREMENTS_GATE_FAIL: %s\n' "$*" >&2
   exit 1
 }
 
@@ -58,14 +58,14 @@ if [ "$MODE" = "--verify-final" ]; then
   [ -z "$(git status --porcelain)" ] || fail "final verification requires a clean checkout"
 fi
 
-printf 'BUILD_113_83_REQUIREMENTS_GATE\n'
+printf 'BUILD_114_84_REQUIREMENTS_GATE\n'
 printf 'mode=%s\nsha=%s\n' "$MODE" "$SHA"
 printf 'ios=1.1.9 (%s); android=1.1.7 (%s)\n' \
   "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" \
   "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)"
 
-[ "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" = "113" ] || fail "iOS build must be 113"
-[ "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)" = "83" ] || fail "Android versionCode must be 83"
+[ "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" = "114" ] || fail "iOS build must be 114"
+[ "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)" = "84" ] || fail "Android versionCode must be 84"
 [ "$(jq -r '.expo.ios.supportsTablet' artifacts/mobile/app.json)" = "true" ] || fail "iPad support must remain enabled"
 [ "$(jq -r '.expo.ios.infoPlist.UIRequiresFullScreen' artifacts/mobile/app.json)" = "false" ] || fail "iPad multitasking must remain enabled"
 
@@ -89,7 +89,9 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/collective-opinion-policy.test.ts \
   src/kinfolk/__tests__/english-query-recovery-policy.test.ts \
   src/kinfolk/__tests__/image-creation-safety.test.ts \
-  src/kinfolk/__tests__/lean-general-chat.test.ts
+  src/kinfolk/__tests__/lean-general-chat.test.ts \
+  src/kinfolk/__tests__/voice-delivery.test.ts \
+  src/__tests__/kinfolk-server-voice-contract.test.ts
 
 pnpm exec vitest run \
   lib/constants/src/map-discovery.test.ts \
@@ -137,5 +139,5 @@ else
 fi
 check_authored_source_whitespace
 
-printf 'BUILD_113_83_REQUIREMENTS_GATE_PASS: sha=%s mode=%s\n' "$SHA" "$MODE"
+printf 'BUILD_114_84_REQUIREMENTS_GATE_PASS: sha=%s mode=%s\n' "$SHA" "$MODE"
 printf '%s\n' 'NEXT: commit reviewed source/static assets, rerun --verify-final from clean final SHA, deploy API/web, then collect live and device evidence. No EAS build or directory publication is implied by this pass.'
