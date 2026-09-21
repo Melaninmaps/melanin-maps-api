@@ -69,6 +69,21 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("reply = buildValidatedItineraryReply(destination, itinerary)");
   });
 
+  it("applies only explicit member preferences to ordinary catalog ranking without overriding the current request", () => {
+    const catalogRanking = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
+    const promptBuild = chatRoute.indexOf("const baseSystemPrompt");
+
+    expect(catalogRanking).toBeGreaterThan(-1);
+    expect(catalogRanking).toBeLessThan(promptBuild);
+    expect(chatRoute).toContain("const explicitBusinessPreferenceTerms = [");
+    expect(chatRoute).toContain("...(prefs?.favoriteCategories ?? [])");
+    expect(chatRoute).toContain("...(prefs?.lifestyleServices ?? [])");
+    expect(chatRoute).toContain("...(prefs?.culturalInterests ?? [])");
+    expect(chatRoute).toContain("priorityPreferenceTerms: priorityBusinessPreferenceTerms");
+    expect(chatRoute).toContain("avoidTerms: prefs?.avoidCategories ?? []");
+    expect(chatRoute).toContain("currentRequest: message");
+  });
+
   it("returns a basic governed-catalog itinerary before any provider call", () => {
     const deterministicTravel = chatRoute.search(/const deterministicTravelEligible\s*=\s*travelPlanning/);
     const providerCall = chatRoute.indexOf('chatStage = "provider_call"');

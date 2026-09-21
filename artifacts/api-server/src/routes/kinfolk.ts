@@ -7582,8 +7582,26 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // Apply only preferences the member explicitly saved. The current request
+    // still has the strongest score inside rankGovernedBusinessesForMember, so
+    // Kinfolk never substitutes an old preference for what the member asks now.
+    const explicitBusinessPreferenceTerms = [
+      ...(prefs?.favoriteCategories ?? []),
+      ...(prefs?.lifestyleServices ?? []),
+      ...(prefs?.culturalInterests ?? []),
+      ...(prefs?.tripStyle ?? []),
+      ...(prefs?.dietaryNotes ? [prefs.dietaryNotes] : []),
+      ...(prefs?.budgetRange && prefs.budgetRange !== "any" ? [prefs.budgetRange] : []),
+    ];
+    const priorityBusinessPreferenceTerms = [
+      ...(prefs?.favoriteCategories ?? []),
+      ...(prefs?.lifestyleServices ?? []),
+    ];
     businessCatalog = rankGovernedBusinessesForMember(businessCatalog, {
       ageBand: effectiveAudienceBand,
+      preferenceTerms: explicitBusinessPreferenceTerms,
+      priorityPreferenceTerms: priorityBusinessPreferenceTerms,
+      avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: message,
     });
     if (
