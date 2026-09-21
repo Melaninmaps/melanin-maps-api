@@ -13,6 +13,7 @@ import {
   extractExplicitOwnershipDesignationFilterIds,
   findSafeSearchClarification,
   normalizeOwnershipDesignationFilterIds,
+  ownershipDesignationStorageValues,
   type CatalogSearchTerm,
 } from "@workspace/constants";
 import { FEATURE_FLAGS } from "../constants/featureFlags";
@@ -24,6 +25,7 @@ import {
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
 import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
+  buildDesignationPredicateSql,
   matchesDocumentedDesignationScope,
   resolveDesignationScope,
 } from "../kinfolk/designation-predicate-policy";
@@ -693,6 +695,7 @@ interface BusinessResult {
   longitude?: number;
   ownershipDesignations?: string[];
   blackOwned?: boolean;
+  ownershipClaim?: string | null;
   instagram?: string;
   website?: string;
   phone?: string;
@@ -735,6 +738,16 @@ async function searchBusinesses(opts: {
   // status must never expose held, private, or hidden rows through this route.
   const listingFilter = "b.listing_status IN ('live_unclaimed', 'live_claimed')";
   const nonDemoFilter = "COALESCE(b.name, '') NOT ILIKE '%[demo]%' AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'";
+  const appendDesignationScope = (params: unknown[]): string => {
+    if (requiredDesignationIds.length === 0) return "";
+    return requiredDesignationIds
+      .map((id) => {
+        const parameter = params.length + 1;
+        params.push(ownershipDesignationStorageValues(id).values);
+        return buildDesignationPredicateSql(id, "b.ownership_designations", parameter);
+      })
+      .join("\n            AND ");
+  };
 
   // ── PASS 1: Exact name match ──────────────────────────────────────────────
   // named_business intent: NEVER apply a geo filter here. Someone searching for
@@ -758,19 +771,20 @@ async function searchBusinesses(opts: {
       if (!isNamedBusiness && lat !== undefined && lng !== undefined) {
         geoClause = `AND ${appendBusinessRadiusFilter(params, lat, lng, radius)}`;
       }
+      const designationClause = appendDesignationScope(params);
 
       const rows = await pool.query<{
         id: string; name: string; category: string; subcategory: string;
         city: string; state: string; description: string; image_url: string;
         rating: string; review_count: string; verified: boolean;
         latitude: string; longitude: string; ownership_designations: string;
-        black_owned: boolean; instagram: string; website: string;
+        black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
         phone: string; price_range: string; confidence_score: string;
       }>(
         `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
                 b.description, b.image_url, b.rating, b.review_count,
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
-                b.black_owned, b.instagram, b.website, b.phone,
+                b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score
          FROM public.public_businesses b
          WHERE b.status = 'active'
@@ -779,6 +793,7 @@ async function searchBusinesses(opts: {
            AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND b.name ILIKE $1
            ${cityClause} ${stateClause} ${geoClause}
+           ${designationClause ? `AND ${designationClause}` : ""}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
          LIMIT ${Math.min(limit, 20)}`,
         params,
@@ -795,7 +810,8 @@ async function searchBusinesses(opts: {
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
           ownershipDesignations: safeParseArray(row.ownership_designations),
-          blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+           blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
+           instagram: row.instagram ?? undefined,
           website: row.website ?? undefined, phone: row.phone ?? undefined,
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -821,13 +837,14 @@ async function searchBusinesses(opts: {
       if (lat !== undefined && lng !== undefined) {
         p2GeoClause = ` AND ${appendBusinessRadiusFilter(params, lat, lng, radius)}`;
       }
+      const designationClause = appendDesignationScope(params);
 
       const rows = await pool.query<{
         id: string; name: string; category: string; subcategory: string;
         city: string; state: string; description: string; image_url: string;
         rating: string; review_count: string; verified: boolean;
         latitude: string; longitude: string; ownership_designations: string;
-        black_owned: boolean; instagram: string; website: string;
+        black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
         phone: string; price_range: string; confidence_score: string;
         matched_field: string; says_text: string;
       }>(
@@ -835,7 +852,7 @@ async function searchBusinesses(opts: {
                 b.id, b.name, b.category, b.subcategory, b.city, b.state,
                 b.description, b.image_url, b.rating, b.review_count,
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
-                b.black_owned, b.instagram, b.website, b.phone,
+                b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score,
                 CASE
                   WHEN b.description ILIKE $1 THEN 'description'
@@ -857,6 +874,7 @@ async function searchBusinesses(opts: {
              OR b.business_tagline ILIKE $1
            )
            ${p2CityClause} ${p2GeoClause}
+           ${designationClause ? `AND ${designationClause}` : ""}
          ORDER BY b.id, b.verified DESC
          LIMIT ${Math.min(limit, 20)}`,
         params,
@@ -873,7 +891,8 @@ async function searchBusinesses(opts: {
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
           ownershipDesignations: safeParseArray(row.ownership_designations),
-          blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+           blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
+           instagram: row.instagram ?? undefined,
           website: row.website ?? undefined, phone: row.phone ?? undefined,
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -886,12 +905,15 @@ async function searchBusinesses(opts: {
 
     // Also check community_says table
     try {
+      const params: unknown[] = [`%${extendedToken}%`];
+      if (city) params.push(`%${city}%`);
+      const designationClause = appendDesignationScope(params);
       const csRows = await pool.query<{
         id: string; name: string; category: string; subcategory: string;
         city: string; state: string; description: string; image_url: string;
         rating: string; review_count: string; verified: boolean;
         latitude: string; longitude: string; ownership_designations: string;
-        black_owned: boolean; instagram: string; website: string;
+        black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
         phone: string; price_range: string; confidence_score: string;
         says_text: string;
       }>(
@@ -899,7 +921,7 @@ async function searchBusinesses(opts: {
                 b.id, b.name, b.category, b.subcategory, b.city, b.state,
                 b.description, b.image_url, b.rating, b.review_count,
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
-                b.black_owned, b.instagram, b.website, b.phone,
+                b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score,
                 cs.says_text
          FROM public.public_businesses b
@@ -910,9 +932,10 @@ async function searchBusinesses(opts: {
            AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND cs.says_text ILIKE $1
            ${city ? `AND b.city ILIKE $2` : ""}
+            ${designationClause ? `AND ${designationClause}` : ""}
          ORDER BY b.id, b.verified DESC
          LIMIT ${Math.min(limit, 10)}`,
-        city ? [`%${extendedToken}%`, `%${city}%`] : [`%${extendedToken}%`],
+         params,
       );
 
       for (const row of csRows.rows) {
@@ -935,7 +958,8 @@ async function searchBusinesses(opts: {
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
           ownershipDesignations: safeParseArray(row.ownership_designations),
-          blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+           blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
+           instagram: row.instagram ?? undefined,
           website: row.website ?? undefined, phone: row.phone ?? undefined,
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -994,19 +1018,27 @@ async function searchBusinesses(opts: {
 
         if (locationTokens.length > 0 && contentTokens.length > 0) {
           const contentPatterns = contentTokens.map(t => `%${t}%`);
+          const locationParams: unknown[] = [locationTokens, contentPatterns];
+          const locationDesignationClause = requiredDesignationIds
+            .map((id) => {
+              const parameter = locationParams.length + 1;
+              locationParams.push(ownershipDesignationStorageValues(id).values);
+              return buildDesignationPredicateSql(id, "b.ownership_designations", parameter);
+            })
+            .join("\n                AND ");
 
           const locRows = await pool.query<{
             id: string; name: string; category: string; subcategory: string;
             city: string; state: string; description: string; image_url: string;
             rating: string; review_count: string; verified: boolean;
             latitude: string; longitude: string; ownership_designations: string;
-            black_owned: boolean; instagram: string; website: string;
+            black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
             phone: string; price_range: string; confidence_score: string;
           }>(
             `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
                     b.description, b.image_url, b.rating, b.review_count,
                     b.verified, b.latitude, b.longitude, b.ownership_designations,
-                    b.black_owned, b.instagram, b.website, b.phone,
+                    b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                     b.price_range, b.confidence_score
              FROM public.public_businesses b
              WHERE b.status = 'active'
@@ -1018,11 +1050,12 @@ async function searchBusinesses(opts: {
                  lower(b.name)           LIKE ANY($2::text[])
                  OR lower(b.category)    LIKE ANY($2::text[])
                  OR lower(b.subcategory) LIKE ANY($2::text[])
-                 OR lower(b.description) LIKE ANY($2::text[])
-               )
+                  OR lower(b.description) LIKE ANY($2::text[])
+                )
+                ${locationDesignationClause ? `AND ${locationDesignationClause}` : ""}
              ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
              LIMIT ${Math.min(limit * 2, 20)}`,
-            [locationTokens, contentPatterns],
+             locationParams,
           );
 
           for (const row of locRows.rows) {
@@ -1039,7 +1072,7 @@ async function searchBusinesses(opts: {
               latitude: row.latitude ? parseFloat(row.latitude) : undefined,
               longitude: row.longitude ? parseFloat(row.longitude) : undefined,
               ownershipDesignations: safeParseArray(row.ownership_designations),
-              blackOwned: row.black_owned,
+              blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
               instagram: row.instagram ?? undefined,
               website: row.website ?? undefined,
               phone: row.phone ?? undefined,
@@ -1176,6 +1209,7 @@ async function searchBusinesses(opts: {
         const geoRadius = serverExtractedGeo ? GEO_EXTRACT_RADIUS : radius;
         extraClauses += ` AND ${appendBusinessRadiusFilter(params, effectiveLat, effectiveLng, geoRadius)}`;
       }
+      const designationClause = appendDesignationScope(params);
 
       const already = [...results.keys()];
       const excludeClause = already.length > 0
@@ -1191,13 +1225,13 @@ async function searchBusinesses(opts: {
         city: string; state: string; description: string; image_url: string;
         rating: string; review_count: string; verified: boolean;
         latitude: string; longitude: string; ownership_designations: string;
-        black_owned: boolean; instagram: string; website: string;
+         black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
         phone: string; price_range: string; confidence_score: string;
       }>(
         `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
                 b.description, b.image_url, b.rating, b.review_count,
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
-                b.black_owned, b.instagram, b.website, b.phone,
+                b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score
          FROM public.public_businesses b
          WHERE b.status = 'active'
@@ -1205,7 +1239,9 @@ async function searchBusinesses(opts: {
            AND ${nonDemoFilter}
            AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND (${catIlikeParts})
-           ${extraClauses} ${excludeClause}
+           ${extraClauses}
+           ${designationClause ? `AND ${designationClause}` : ""}
+           ${excludeClause}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
          LIMIT ${Math.min(limit - results.size, 15)}`,
         params,
@@ -1223,7 +1259,8 @@ async function searchBusinesses(opts: {
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
           ownershipDesignations: safeParseArray(row.ownership_designations),
-          blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+           blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
+           instagram: row.instagram ?? undefined,
           website: row.website ?? undefined, phone: row.phone ?? undefined,
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -1263,6 +1300,7 @@ async function searchBusinesses(opts: {
       try {
         const params3b: unknown[] = [];
         const geoClause3b = appendBusinessRadiusFilter(params3b, effectiveLat, effectiveLng, GEO_EXTRACT_RADIUS);
+        const designationClause3b = appendDesignationScope(params3b);
         const already3b = [...results.keys()];
         const excludeClause3b = already3b.length > 0
           ? `AND b.id NOT IN (${already3b.map((_, i) => `$${params3b.length + i + 1}`).join(", ")})`
@@ -1272,14 +1310,14 @@ async function searchBusinesses(opts: {
           id: string; name: string; category: string; subcategory: string;
           city: string; state: string; description: string; image_url: string;
           rating: string; review_count: string; verified: boolean;
-          latitude: string; longitude: string; ownership_designations: string;
-          black_owned: boolean; instagram: string; website: string;
+         latitude: string; longitude: string; ownership_designations: string;
+         black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
           phone: string; price_range: string; confidence_score: string;
         }>(
           `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
                   b.description, b.image_url, b.rating, b.review_count,
                   b.verified, b.latitude, b.longitude, b.ownership_designations,
-                  b.black_owned, b.instagram, b.website, b.phone,
+                  b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                   b.price_range, b.confidence_score
            FROM public.public_businesses b
            WHERE b.status = 'active'
@@ -1287,6 +1325,7 @@ async function searchBusinesses(opts: {
              AND ${nonDemoFilter}
              AND ${mwmCoreDiscoverySqlPredicate("b.id")}
              AND ${geoClause3b}
+             ${designationClause3b ? `AND ${designationClause3b}` : ""}
              ${excludeClause3b}
            ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
            LIMIT ${Math.min(limit - results.size, 20)}`,
@@ -1303,7 +1342,8 @@ async function searchBusinesses(opts: {
             verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
             longitude: row.longitude ? parseFloat(row.longitude) : undefined,
             ownershipDesignations: safeParseArray(row.ownership_designations),
-            blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+             blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
+             instagram: row.instagram ?? undefined,
             website: row.website ?? undefined, phone: row.phone ?? undefined,
             priceRange: row.price_range ?? undefined,
             confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -1325,20 +1365,22 @@ async function searchBusinesses(opts: {
       const excludeClause = already.length > 0
         ? `AND b.id NOT IN (${already.map((_, i) => `$${i + 2}`).join(", ")})`
         : "";
+      const fuzzyParams: unknown[] = [q, ...already];
+      const designationClause = appendDesignationScope(fuzzyParams);
 
       const fuzzyRows = await pool.query<{
         id: string; name: string; category: string; subcategory: string;
         city: string; state: string; description: string; image_url: string;
         rating: string; review_count: string; verified: boolean;
         latitude: string; longitude: string; ownership_designations: string;
-        black_owned: boolean; instagram: string; website: string;
+         black_owned: boolean; ownership_claim: string | null; instagram: string; website: string;
         phone: string; price_range: string; confidence_score: string;
         similarity: string;
       }>(
         `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
                 b.description, b.image_url, b.rating, b.review_count,
                 b.verified, b.latitude, b.longitude, b.ownership_designations,
-                b.black_owned, b.instagram, b.website, b.phone,
+                b.black_owned, b.ownership_claim, b.instagram, b.website, b.phone,
                 b.price_range, b.confidence_score,
                 similarity(LOWER(b.name), LOWER($1)) as similarity
          FROM public.public_businesses b
@@ -1348,9 +1390,10 @@ async function searchBusinesses(opts: {
            AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND similarity(LOWER(b.name), LOWER($1)) > 0.2
            ${excludeClause}
+            ${designationClause ? `AND ${designationClause}` : ""}
          ORDER BY similarity DESC, b.verified DESC
          LIMIT 8`,
-        [q, ...already],
+         fuzzyParams,
       );
 
       for (const row of fuzzyRows.rows) {
@@ -1364,7 +1407,8 @@ async function searchBusinesses(opts: {
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
           ownershipDesignations: safeParseArray(row.ownership_designations),
-          blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+           blackOwned: row.black_owned, ownershipClaim: row.ownership_claim ?? null,
+           instagram: row.instagram ?? undefined,
           website: row.website ?? undefined, phone: row.phone ?? undefined,
           priceRange: row.price_range ?? undefined,
           confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
@@ -1384,7 +1428,8 @@ async function searchBusinesses(opts: {
     if (tierDiff !== 0) return tierDiff;
     return (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0);
     })
-    .slice(0, limit);
+    .slice(0, limit)
+    .map(({ ownershipClaim: _ownershipClaim, ...business }) => business);
 }
 
 // ── Event search ──────────────────────────────────────────────────────────────

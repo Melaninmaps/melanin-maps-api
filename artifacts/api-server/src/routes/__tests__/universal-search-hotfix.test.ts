@@ -148,6 +148,90 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     ]);
   });
 
+  it("accepts a documented legacy minority row and applies the lens in SQL before limits", async () => {
+    const calls: QueryCall[] = [];
+    const legacyMinorityBusiness = {
+      ...publicBusiness(),
+      id: "documented-legacy-minority",
+      ownership_designations: [],
+      black_owned: false,
+      ownership_claim: "community_reported_minority_owned",
+    };
+    poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
+      calls.push([query, params]);
+      if (query.includes("FROM public.public_businesses b")) {
+        return { rows: [legacyMinorityBusiness] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({
+        q: "coffee",
+        designations: "minority-general-legacy",
+        resultTypes: "businesses",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses).toEqual([
+      expect.objectContaining({ id: "documented-legacy-minority" }),
+    ]);
+    expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipClaim");
+
+    const businessReads = calls.filter(([query]) =>
+      query.includes("FROM public.public_businesses b") && query.includes("LIMIT"),
+    );
+    expect(businessReads.length).toBeGreaterThan(0);
+    for (const [query, params] of businessReads) {
+      const predicateOffset = query.indexOf("b.ownership_claim = 'community_reported_minority_owned'");
+      expect(predicateOffset).toBeGreaterThanOrEqual(0);
+      expect(predicateOffset).toBeLessThan(query.indexOf("LIMIT"));
+      expect(params).toEqual(expect.arrayContaining([
+        expect.arrayContaining(["minority-general-legacy"]),
+      ]));
+    }
+  });
+
+  it("accepts a documented legacy minority row found only by category search", async () => {
+    const calls: QueryCall[] = [];
+    const legacyMinorityBusiness = {
+      ...publicBusiness(),
+      id: "category-only-legacy-minority",
+      ownership_designations: [],
+      black_owned: false,
+      ownership_claim: "community_reported_minority_owned",
+    };
+    poolQuery.mockImplementation(async (query: string, params?: readonly unknown[]) => {
+      calls.push([query, params]);
+      if (query.includes("FROM public.public_businesses b") && query.includes("b.category ILIKE")) {
+        return { rows: [legacyMinorityBusiness] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({
+        q: "coffee",
+        designations: "minority-general-legacy",
+        resultTypes: "businesses",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses).toEqual([
+      expect.objectContaining({ id: "category-only-legacy-minority" }),
+    ]);
+    expect(response.body.results.businesses[0]).not.toHaveProperty("ownershipClaim");
+
+    const categoryRead = calls.find(([query]) =>
+      query.includes("FROM public.public_businesses b") && query.includes("b.category ILIKE"),
+    );
+    expect(categoryRead).toBeDefined();
+    expect(categoryRead![0].indexOf("b.ownership_claim = 'community_reported_minority_owned'"))
+      .toBeLessThan(categoryRead![0].indexOf("LIMIT"));
+  });
+
   it.each([
     ["missing privacy_mode", {}],
     ["invalid privacy_mode", { privacy_mode: "not_discovery_v1" }],
