@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Stages one already-derived MWM Core manifest through the protected review
+ * Stages one already-derived source-receipted manifest through the protected review
  * ingress. This script never starts the publication worker and refuses to send
  * anything unless --apply, exact count, and exact receipt root are supplied.
  */
@@ -8,9 +8,10 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v3";
+const POLICY_VERSION = "source-receipted-directory-publication-v1";
 const CHAMBER_COHORT = "mwm_chamber_backed_candidate";
 const INSTITUTIONAL_COHORT = "mwm_institutional_directory_candidate";
+const SOURCE_REPUTABLE_LISTING_COHORT = "source_reputable_listing_candidate";
 
 function argValue(name, fallback = undefined) {
   const index = process.argv.indexOf(name);
@@ -49,7 +50,7 @@ function assertApprovedRows(rows, expectedRootHash, expectedCount, expectedLaneC
   if (rows.length !== expectedCount) {
     throw new Error(`Manifest row count mismatch: expected ${expectedCount}, received ${rows.length}.`);
   }
-  const actualLaneCounts = { chamber: 0, institutional_directory: 0 };
+  const actualLaneCounts = { chamber: 0, institutional_directory: 0, reputable_source: 0 };
   for (const [index, row] of rows.entries()) {
     if (!row || typeof row !== "object" || Array.isArray(row)) {
       throw new Error(`Manifest row ${index + 1} is not an object.`);
@@ -58,10 +59,14 @@ function assertApprovedRows(rows, expectedRootHash, expectedCount, expectedLaneC
       ? CHAMBER_COHORT
       : row.mwm_core_evidence_lane === "institutional_directory"
         ? INSTITUTIONAL_COHORT
+        : row.mwm_core_evidence_lane === "reputable_source"
+          ? SOURCE_REPUTABLE_LISTING_COHORT
         : null;
     if (row.mwm_core_policy_version !== POLICY_VERSION ||
         !expectedCohort ||
         row.mwm_core_cohort !== expectedCohort ||
+        (row.mwm_publication_classification !== "source_reported_mwm_designation" &&
+          row.mwm_publication_classification !== "unverified_source_listing") ||
         row.mwm_core_receipt_root_hash !== expectedRootHash ||
         !isSha256(row.mwm_core_receipt_hash) ||
         !isSha256(row.mwm_core_source_manifest_sha256) ||
@@ -70,13 +75,14 @@ function assertApprovedRows(rows, expectedRootHash, expectedCount, expectedLaneC
         !Number.isInteger(row.mwm_core_source_row) ||
         row.mwm_core_source_row < 1 ||
         (typeof row.mwm_core_source_row_id !== "string" && typeof row.mwm_core_source_row_id !== "number")) {
-      throw new Error(`Manifest row ${index + 1} lacks an approved immutable MWM Core receipt.`);
+      throw new Error(`Manifest row ${index + 1} lacks an approved immutable source receipt.`);
     }
     actualLaneCounts[row.mwm_core_evidence_lane] += 1;
   }
   if (actualLaneCounts.chamber !== expectedLaneCounts.chamber ||
-      actualLaneCounts.institutional_directory !== expectedLaneCounts.institutional_directory) {
-    throw new Error(`Evidence lane count mismatch: expected Chamber ${expectedLaneCounts.chamber} / institutional ${expectedLaneCounts.institutional_directory}, received Chamber ${actualLaneCounts.chamber} / institutional ${actualLaneCounts.institutional_directory}.`);
+      actualLaneCounts.institutional_directory !== expectedLaneCounts.institutional_directory ||
+      actualLaneCounts.reputable_source !== expectedLaneCounts.reputable_source) {
+    throw new Error(`Evidence lane count mismatch: expected Chamber ${expectedLaneCounts.chamber} / institutional ${expectedLaneCounts.institutional_directory} / reputable source ${expectedLaneCounts.reputable_source}, received Chamber ${actualLaneCounts.chamber} / institutional ${actualLaneCounts.institutional_directory} / reputable source ${actualLaneCounts.reputable_source}.`);
   }
   return actualLaneCounts;
 }
@@ -92,13 +98,15 @@ async function main() {
   const expectedLaneCounts = {
     chamber: Number(requiredArg("--expected-chamber-count")),
     institutional_directory: Number(requiredArg("--expected-institutional-directory-count")),
+    reputable_source: Number(requiredArg("--expected-source-listing-count")),
   };
   if (!isSha256(expectedRootHash)) throw new Error("--expected-receipt-root-hash must be a SHA-256 hash.");
   if (!Number.isInteger(expectedCount) || expectedCount < 1 ||
       !Number.isInteger(expectedLaneCounts.chamber) || expectedLaneCounts.chamber < 0 ||
       !Number.isInteger(expectedLaneCounts.institutional_directory) || expectedLaneCounts.institutional_directory < 0 ||
-      expectedCount !== expectedLaneCounts.chamber + expectedLaneCounts.institutional_directory) {
-    throw new Error("Expected total must be positive and equal the Chamber plus institutional-directory lane counts.");
+      !Number.isInteger(expectedLaneCounts.reputable_source) || expectedLaneCounts.reputable_source < 0 ||
+      expectedCount !== expectedLaneCounts.chamber + expectedLaneCounts.institutional_directory + expectedLaneCounts.reputable_source) {
+    throw new Error("Expected total must be positive and equal the Chamber, institutional-directory, and reputable-source lane counts.");
   }
 
   const signingSecret = process.env.DIRECTORY_REVIEW_SIGNING_SECRET ?? "";
@@ -121,7 +129,7 @@ async function main() {
   const payload = {
     jsonl,
     manifest: {
-      sourceName: `mwm-core-chamber-institutional-${expectedRootHash.slice(0, 12)}`,
+      sourceName: `source-receipted-directory-${expectedRootHash.slice(0, 12)}`,
       sha256: checksum,
       rowCount: rows.length,
     },
