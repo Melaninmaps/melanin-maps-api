@@ -46,6 +46,8 @@ import { registerLocationResolutionRoutes } from "./location/registerLocationRes
 import { LocalBusinessSearch } from "./map/localBusinessSearch";
 import { registerLocalBusinessSearchRoute } from "./map/registerLocalBusinessSearchRoute";
 import { registerUniversalMapEntityRoutes } from "./map/registerUniversalMapEntityRoutes";
+import { createGoogleEssentialServicesSearch } from "./map/essentialServices";
+import { registerEssentialServicesRoute } from "./map/registerEssentialServicesRoute";
 import {
   requestCorrelationLogging,
   structuredErrorHandler,
@@ -435,6 +437,12 @@ registerUniversalMapEntityRoutes(app, pool);
 // Register before the aggregate /api router, whose global requireAuth middleware
 // would otherwise turn this intentionally public resolver into a cookie-only 401.
 registerLocationResolutionRoutes(app, pool);
+
+// ── Essential Services availability layer ────────────────────────────────────
+// This is deliberately separate from the directory: it serves a short-lived,
+// explicit member request for ordinary public facilities and never creates or
+// modifies an MWM business, ownership designation, community review, or rating.
+registerEssentialServicesRoute(app, createGoogleEssentialServicesSearch(process.env));
 
 app.use("/api", router);
 app.use(webSsrRouter);

@@ -1,7 +1,9 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import {
   countMapDiscoveryFocuses,
+  MAP_ESSENTIAL_SERVICE_CATEGORIES,
   matchesMapDiscoveryFocus,
+  type MapEssentialServiceCategory,
   type MapDiscoveryFocus,
 } from "@workspace/constants";
 import { Link, useLocation, useSearch } from "wouter";
@@ -63,6 +65,24 @@ type UniversalMapEntity = {
   latitude: number;
   longitude: number;
   detail_url: string;
+};
+
+type EssentialServicePlace = {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  primaryType: string | null;
+  directionsUrl: string;
+};
+
+type EssentialServicesResponse = {
+  category: MapEssentialServiceCategory;
+  radiusMiles: number;
+  places: EssentialServicePlace[];
+  source: "Google Maps";
+  disclaimer: string;
 };
 
 // ── Pin colour helpers ──────────────────────────────────────────────────────
@@ -231,6 +251,10 @@ export default function MapPage() {
   // Cleared whenever a new local search begins or the search is reset.
   const localSearchMarkersRef = useRef<GMarker[]>([]);
 
+  // Essential Services is an explicit, on-demand availability layer. It never
+  // enters mapPins, the MWM directory, or recommendation scoring.
+  const essentialServiceMarkersRef = useRef<GMarker[]>([]);
+
   // Sundown towns — available through the compact historical-context selector.
   const [sundownTowns, setSundownTowns] = useState<SundownTown[]>([]);
   const sundownMarkersRef = useRef<GMarker[]>([]);
@@ -305,6 +329,10 @@ export default function MapPage() {
   // records shown on the map; it does not hide data permanently or infer a
   // member's identity, health, budget, or other sensitive attributes.
   const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
+  const [essentialServiceCategory, setEssentialServiceCategory] = useState<MapEssentialServiceCategory | null>(null);
+  const [essentialServicePlaces, setEssentialServicePlaces] = useState<EssentialServicePlace[]>([]);
+  const [essentialServicesLoading, setEssentialServicesLoading] = useState(false);
+  const [essentialServicesError, setEssentialServicesError] = useState<string | null>(null);
 
   // Tracks whether the user explicitly denied location permission so we can
   // show a retry prompt instead of silently falling back to homeCity.
@@ -331,6 +359,60 @@ export default function MapPage() {
     if (profileCoords) return { lat: profileCoords.lat, lng: profileCoords.lng, label: "your home area" };
     return null;
   }, [detectedLocation, profileCoords, userCoords]);
+
+  const clearEssentialServices = useCallback(() => {
+    essentialServiceMarkersRef.current.forEach((marker) => marker.setMap(null));
+    essentialServiceMarkersRef.current = [];
+    setEssentialServiceCategory(null);
+    setEssentialServicePlaces([]);
+    setEssentialServicesError(null);
+  }, []);
+
+  const loadEssentialServices = useCallback(async (category: MapEssentialServiceCategory) => {
+    if (!activeLocalScope) {
+      setEssentialServicesError("Use your location or search a city before looking for public services.");
+      return;
+    }
+    const radius = Math.min(25, Math.max(1, nearMeRadius ?? 10));
+    setEssentialServiceCategory(category);
+    setEssentialServicesLoading(true);
+    setEssentialServicesError(null);
+    setEssentialServicePlaces([]);
+    essentialServiceMarkersRef.current.forEach((marker) => marker.setMap(null));
+    essentialServiceMarkersRef.current = [];
+
+    try {
+      const apiBase = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+      const params = new URLSearchParams({
+        category,
+        lat: String(activeLocalScope.lat),
+        lng: String(activeLocalScope.lng),
+        radius: String(radius),
+      });
+      const response = await fetch(`${apiBase}/api/map/essential-services?${params.toString()}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || "Public services are unavailable right now.");
+      }
+      const payload = await response.json() as EssentialServicesResponse;
+      if (payload.category !== category || !Array.isArray(payload.places)) {
+        throw new Error("Public services returned an unexpected response.");
+      }
+      setEssentialServicePlaces(payload.places);
+    } catch (error) {
+      setEssentialServicesError(error instanceof Error ? error.message : "Public services are unavailable right now.");
+    } finally {
+      setEssentialServicesLoading(false);
+    }
+  }, [activeLocalScope, nearMeRadius]);
+
+  // A location change invalidates the prior on-demand availability view. The
+  // old facilities are removed instead of being silently re-used elsewhere.
+  useEffect(() => {
+    clearEssentialServices();
+  }, [activeLocalScope?.lat, activeLocalScope?.lng, clearEssentialServices]);
 
   const isWithinActiveLocalScope = useCallback((latitude: number, longitude: number, radiusMiles = 50) => {
     if (exploreAllAreas) return true;
@@ -434,6 +516,9 @@ export default function MapPage() {
     // Lock synchronously, before geo-extract awaits, so an older asynchronous
     // browser GPS callback can never recenter over a city or ZIP the member typed.
     if (localIntent.city) searchViewportLockedRef.current = true;
+    // A direct search is always the current intent. Remove any optional public
+    // facility availability pins instead of blending them into its result set.
+    clearEssentialServices();
     setBusinessSearchActive(true);
     // A direct request always takes precedence over an exploratory grouping.
     setMapDiscoveryFocus("all");
@@ -566,7 +651,7 @@ export default function MapPage() {
       }
     } catch { /* fall through to client-side filtered list */ }
     finally { setUniversalLoading(false); }
-  }, [search, userCoords, fitMapToBusinessResults]);
+  }, [search, userCoords, fitMapToBusinessResults, clearEssentialServices]);
 
   // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
   // Effect runs when handoffQuery or map object readiness changes.
@@ -681,6 +766,53 @@ export default function MapPage() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discoverabilityPins, navigate]);
+
+  // ── Render explicit Essential Services availability pins ──────────────────
+  useEffect(() => {
+    const g = (window as any).google?.maps;
+    const map = mapRef.current;
+    if (!g || !map) return;
+
+    essentialServiceMarkersRef.current.forEach((marker) => marker.setMap(null));
+    essentialServiceMarkersRef.current = [];
+
+    essentialServicePlaces.forEach((place) => {
+      if (!Number.isFinite(place.latitude) || !Number.isFinite(place.longitude)) return;
+      const directionsUrl = safePublicUrl(place.directionsUrl);
+      const marker: GMarker = new g.Marker({
+        position: { lat: place.latitude, lng: place.longitude },
+        map,
+        title: place.name,
+        icon: {
+          path: g.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#0F766E",
+          fillOpacity: 0.94,
+          strokeColor: "#FFFFFF",
+          strokeWeight: 2,
+        },
+        zIndex: 4,
+      });
+      marker.addListener("click", () => {
+        infoWindowRef.current?.setContent(
+          `<div style="font-family:system-ui,sans-serif;padding:4px 2px;min-width:195px;max-width:260px">
+            <div style="margin-bottom:5px"><span style="background:#CCFBF1;color:#115E59;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">PUBLIC SERVICE · GOOGLE MAPS</span></div>
+            <div style="font-weight:700;font-size:14px;color:#2B1507;margin-bottom:3px;line-height:1.3">${escapeHtml(place.name)}</div>
+            <div style="font-size:11px;color:#3A1F0E99;line-height:1.4;margin-bottom:6px">${escapeHtml(place.address)}</div>
+            <div style="font-size:10px;color:#3A1F0EB3;line-height:1.4;margin-bottom:7px">Not an MWM listing, ownership designation, safety rating, or recommendation.</div>
+            ${directionsUrl ? `<a href="${escapeHtml(directionsUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#0F766E;font-weight:700;text-decoration:none">Open directions →</a>` : ""}
+          </div>`,
+        );
+        infoWindowRef.current?.open(map, marker);
+      });
+      essentialServiceMarkersRef.current.push(marker);
+    });
+
+    return () => {
+      essentialServiceMarkersRef.current.forEach((marker) => marker.setMap(null));
+      essentialServiceMarkersRef.current = [];
+    };
+  }, [essentialServicePlaces]);
 
   // Discoverability marker visibility — responds to legendFilter
   useEffect(() => {
@@ -1550,6 +1682,54 @@ export default function MapPage() {
                 Showing <strong className="text-[#3A1F0E]/75">{activeDiscoveryLabel.toLowerCase()}</strong> because you chose it. This grouping uses existing listing categories and tags; it does not replace a direct search.
               </p>
             )}
+
+            <div className="mt-3 border-t border-[#0F766E]/15 pt-2.5" data-testid="essential-services-card">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#0F766E]">Everyday essentials</p>
+                  <p className="mt-0.5 text-[10px] leading-snug text-[#3A1F0E]/55">
+                    Look up public facilities within {Math.min(25, nearMeRadius ?? 10)} miles. This opens an availability layer, not an MWM recommendation.
+                  </p>
+                </div>
+                {essentialServiceCategory && (
+                  <button
+                    type="button"
+                    onClick={clearEssentialServices}
+                    className="shrink-0 text-[10px] font-bold text-[#0F766E] hover:underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {MAP_ESSENTIAL_SERVICE_CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => void loadEssentialServices(category.id)}
+                    disabled={essentialServicesLoading}
+                    aria-pressed={essentialServiceCategory === category.id}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                      essentialServiceCategory === category.id
+                        ? "border-[#0F766E] bg-[#0F766E] text-white"
+                        : "border-[#0F766E]/25 bg-white text-[#115E59] hover:border-[#0F766E]/60"
+                    }`}
+                  >
+                    {essentialServicesLoading && essentialServiceCategory === category.id ? "Loading…" : category.shortLabel}
+                  </button>
+                ))}
+              </div>
+              {essentialServicesError && (
+                <p role="status" className="mt-2 text-[10px] leading-snug text-[#9F1239]">{essentialServicesError}</p>
+              )}
+              {!essentialServicesLoading && essentialServiceCategory && !essentialServicesError && (
+                <p role="status" className="mt-2 text-[10px] leading-snug text-[#3A1F0E]/55">
+                  {essentialServicePlaces.length === 0
+                    ? "No matching public facilities were returned in this area. Try another radius or category."
+                    : `${essentialServicePlaces.length} public ${essentialServicePlaces.length === 1 ? "facility is" : "facilities are"} shown as teal pins. Open a pin for directions.`} Source: Google Maps. No ownership, safety, or recommendation claim is implied.
+                </p>
+              )}
+            </div>
           </section>
         )}
 

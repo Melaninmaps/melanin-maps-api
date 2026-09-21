@@ -8,19 +8,18 @@ const mapSource = readFileSync(
 
 describe("website map locality-first presentation", () => {
   it("does not display business, cultural, or historical map pins without a local scope", () => {
-    expect(mapSource).toContain("const [exploreAllAreas, setExploreAllAreas] = useState(false)");
+    expect(mapSource).toContain("const exploreAllAreas = false");
     expect(mapSource).toContain("const [nearMeRadius, setNearMeRadius] = useState<number | null>(25)");
-    expect(mapSource).toContain("if (!activeLocalScope && !exploreAllAreas)");
-    expect(mapSource).toContain("map: null,");
-    expect(mapSource).toContain("Boolean(activeLocalScope || exploreAllAreas)");
+    expect(mapSource).toContain("if (!activeLocalScope) return false");
+    expect(mapSource).toContain("activeLocalScope.lat");
     expect(mapSource).toContain("visibleCulturalSites");
     expect(mapSource).toContain("visibleSundownTowns");
   });
 
-  it("keeps a deliberate all-area control instead of removing travel and heritage discovery", () => {
-    expect(mapSource).toContain('aria-pressed={exploreAllAreas}');
-    expect(mapSource).toContain('"Explore all areas"');
-    expect(mapSource).toContain('"Show nearby"');
-    expect(mapSource).toContain("Use “Explore all areas” only to plan farther away.");
+  it("keeps intentional search and heritage discovery while omitting the removed all-area shortcut", () => {
+    expect(mapSource).toContain('placeholder="Search businesses, heritage, events — press Enter"');
+    expect(mapSource).toContain("showSundownLayer");
+    expect(mapSource).not.toContain('aria-pressed={exploreAllAreas}');
+    expect(mapSource).not.toContain('"Explore all areas"');
   });
 });
