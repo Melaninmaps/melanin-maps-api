@@ -6,6 +6,7 @@ import {
   verifyDirectoryIngress, verifyDirectoryManifest, validateDirectorySourceRows, canonicalDirectoryPayload,
 } from "./reviewPipeline";
 import { classifyAutomatedReviewBatch } from "./automatedReviewPolicy";
+import { validateMwmCorePublicationBatch } from "./mwmCorePublicationPolicy";
 import { createHash } from "node:crypto";
 
 function operator(req: Request, res: Response) {
@@ -125,10 +126,24 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
       signature: String(headers["x-directory-signature"] ?? ""),
     }, process.env.DIRECTORY_REVIEW_SIGNING_SECRET ?? "");
     if (!verified.ok) { res.status(401).json({ error: verified.reason }); return; }
+    let records: unknown[];
+    try {
+      records = verifyDirectoryManifest(body, manifest);
+      validateDirectorySourceRows(records);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid manifest." });
+      return;
+    }
+    const mwmCoreAdmission = validateMwmCorePublicationBatch(records);
+    if (!mwmCoreAdmission.ok) {
+      res.status(422).json({
+        error: mwmCoreAdmission.message,
+        code: mwmCoreAdmission.code,
+      });
+      return;
+    }
     const client = await reviewPool.connect();
     try {
-      const records = verifyDirectoryManifest(body, manifest);
-      validateDirectorySourceRows(records);
       const sourceHash = verified.checksum;
       await client.query("BEGIN");
       const existing = await client.query(`SELECT id,source_row_count,manifest_count,source_name
