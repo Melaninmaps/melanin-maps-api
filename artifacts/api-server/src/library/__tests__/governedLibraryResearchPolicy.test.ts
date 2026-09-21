@@ -18,15 +18,16 @@ describe("governed Library research policy", () => {
     const scope = getLibraryResearchScope("What should Black women ages 45–50 know about planning for pregnancy?");
     expect(scope.domain).toBe("medical");
     expect(scope.requestedGroup).toBe("Black women ages 45–50");
-    expect(scope.groupGuidance).toMatch(/explicitly requested group/i);
-    expect(scope.groupGuidance).toMatch(/does not assume/i);
+    expect(scope.researchLenses.map((lens) => lens.tag)).toEqual(["#BlackWomen"]);
+    expect(scope.groupGuidance).toMatch(/research scope, not the reader/i);
     expect(scope.connectedTopics.map((topic) => topic.label)).toContain("Health & Wellness");
   });
 
-  it("does not assign a group when the member did not name one", () => {
+  it("uses the product-default diaspora research lens without assigning it as member identity", () => {
     const scope = getLibraryResearchScope("How do federal student grants work?");
     expect(scope.requestedGroup).toBeNull();
-    expect(scope.groupGuidance).toMatch(/No community, demographic, or life-stage group was assumed/i);
+    expect(scope.researchLenses.map((lens) => lens.tag)).toEqual(["#Diaspora"]);
+    expect(scope.groupGuidance).toMatch(/research scope, not the reader/i);
   });
 
   it("uses regulator and established economic-research sources for financial research", () => {

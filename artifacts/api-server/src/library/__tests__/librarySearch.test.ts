@@ -31,11 +31,12 @@ describe("Library search query parsing", () => {
         limit: "12",
         cursor: encodeLibrarySearchCursor(24),
       }),
-    ).toEqual({
+    ).toMatchObject({
       ok: true,
       value: {
         query: "HVAC Training",
         normalizedQuery: "hvac training",
+        researchLenses: [expect.objectContaining({ tag: "#Diaspora" })],
         limit: 12,
         offset: 24,
       },

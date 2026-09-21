@@ -32,6 +32,7 @@ type EntryResult = {
   body: string;
   topicSlug: string;
   topicTitle: string;
+  researchLenses: string[];
   sourceCount: number;
   sources: LibrarySourceLink[];
   refreshedAt: string;
@@ -42,6 +43,7 @@ type ProviderStatus = "not_needed" | "available" | "degraded" | "unavailable";
 
 type LibrarySearchResponse = {
   query: string;
+  researchLenses: Array<{ tag: string; label: string }>;
   results: SearchResult[];
   total: number;
   nextCursor: string | null;
@@ -76,6 +78,7 @@ type LibraryResearchScope = {
   sourceStandard: string;
   requestedGroup: string | null;
   groupGuidance: string;
+  researchLenses: Array<{ tag: string; label: string }>;
   connectedTopics: Array<{ label: string; href: string }>;
 };
 
@@ -190,6 +193,7 @@ function ExpandableAnswer({
       {researchScope ? (
         <aside className="library-research-scope" aria-label="Research scope">
           <h3>How this was researched</h3>
+          <p><strong>Research lens:</strong> {researchScope.researchLenses.map((lens) => lens.tag).join(" ")}</p>
           <p><strong>Source standard:</strong> {researchScope.sourceStandard}</p>
           <p>{researchScope.groupGuidance}</p>
           {researchScope.connectedTopics.length > 0 ? (
@@ -396,7 +400,11 @@ export function LibrarySearchPage() {
 
         {state !== "idle" && response ? (
           <div className="library-search-heading">
-            <div><p className="living-library-eyebrow">Approved internal matches</p><h2>Results for “{response.query}”</h2></div>
+            <div>
+              <p className="living-library-eyebrow">Approved internal matches</p>
+              <h2>Results for “{response.query}”</h2>
+              <p className="library-search-provider-note">Research lens: {response.researchLenses.map((lens) => lens.tag).join(" ")}. This scope guides evidence; it does not describe the reader.</p>
+            </div>
             <span>{response.total} {response.total === 1 ? "result" : "results"}</span>
           </div>
         ) : null}
@@ -422,7 +430,7 @@ export function LibrarySearchPage() {
               body={research.answer.body}
               disclaimer={research.answer.disclaimer}
               eyebrow={research.origin === "internal" || research.published ? "Source-governed Library entry" : "Current research · Private response"}
-              onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(question)}`)}
+              onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(`${research.researchScope.researchLenses.map((lens) => lens.tag).join(" ")} ${question}`.trim())}`)}
               refreshedAt={research.answer.refreshedAt}
               relatedQuestions={research.answer.relatedQuestions}
               researchScope={research.researchScope}

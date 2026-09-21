@@ -39,6 +39,8 @@ export type LibraryEntry = {
   body: string;
   domain: ResearchDomain;
   communityLens: string;
+  /** Searchable, explicit research scopes such as #Diaspora or #BlackWomen. */
+  researchLenses?: string[];
   locationLabel: string | null;
   disclaimer: string | null;
   sourceCount: number;
@@ -68,6 +70,7 @@ export type LibraryEntrySearchResult = {
   body: string;
   topicSlug: string;
   topicTitle: string;
+  researchLenses?: string[];
   sourceCount: number;
   sources: Array<Pick<KnowledgeSource, "url" | "title" | "publisher" | "whyItMatters">>;
   refreshedAt: Date;
@@ -113,6 +116,7 @@ export interface LibraryRepository {
     normalizedQuestion: string;
     domain: ResearchDomain;
     communityLens: string;
+    researchLensFacetKeys: string[];
     locationLabel: string | null;
     currentAfter: Date;
   }): Promise<LibraryEntry | null>;
@@ -139,6 +143,8 @@ export interface LibraryRepository {
     searchTerms: string[];
     patterns: string[];
     preferredTopicSlugs: string[];
+    /** All requested research-lens facets must be present before an entry is reused. */
+    requiredResearchLensFacetKeys?: string[];
     /** Optional member-selected context used for ranking, never exclusion. */
     rankingContextPatterns?: string[];
     limit: number;

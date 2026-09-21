@@ -1,4 +1,9 @@
 import type { ResearchDomain } from "./researchPolicy";
+import {
+  researchLensFacetKeys,
+  researchLensTagFromFacetKey,
+  resolveCommunityResearchLenses,
+} from "./communityResearchLens";
 import type {
   KnowledgeSource,
   LibraryEntry,
@@ -21,6 +26,7 @@ type EntryRow = {
   body: string;
   domain: ResearchDomain;
   community_lens: string;
+  research_lens_facets?: string[];
   location_label: string | null;
   disclaimer: string | null;
   source_count: number;
@@ -83,6 +89,23 @@ async function attachSources(
       mapSource(row),
     ]);
   }
+  const { rows: lensRows } = await db.query<{
+    entry_id: string;
+    facet_key: string;
+  }>(
+    `SELECT entry_id, facet_key
+     FROM library_entry_facets
+     WHERE entry_id = ANY($1::uuid[])
+       AND facet_key LIKE 'research-lens:%'
+     ORDER BY facet_key ASC`,
+    [entryIds],
+  );
+  const lensMap = new Map<string, string[]>();
+  for (const row of lensRows) {
+    const tag = researchLensTagFromFacetKey(row.facet_key);
+    if (!tag) continue;
+    lensMap.set(row.entry_id, [...(lensMap.get(row.entry_id) ?? []), tag]);
+  }
   return entries.map((row) => ({
     id: row.id,
     topicId: row.topic_id,
@@ -93,6 +116,7 @@ async function attachSources(
     body: row.body,
     domain: row.domain,
     communityLens: row.community_lens,
+    researchLenses: lensMap.get(row.id) ?? [],
     locationLabel: row.location_label,
     disclaimer: row.disclaimer,
     sourceCount: row.source_count,
@@ -119,6 +143,17 @@ export function createPostgresLibraryRepository(
            AND le.location_label IS NOT DISTINCT FROM $4
            AND le.publication_status = 'published'
            AND le.refreshed_at >= $5
+           AND (
+             cardinality($6::text[]) = 0
+             OR le.id IN (
+               SELECT facet.entry_id
+               FROM library_entry_facets facet
+               WHERE facet.entry_id = le.id
+                 AND facet.facet_key = ANY($6::text[])
+               GROUP BY facet.entry_id
+               HAVING COUNT(DISTINCT facet.facet_key) = cardinality($6::text[])
+             )
+           )
          ORDER BY le.refreshed_at DESC
          LIMIT 1`,
         [
@@ -127,6 +162,7 @@ export function createPostgresLibraryRepository(
           input.communityLens,
           input.locationLabel,
           input.currentAfter,
+          input.researchLensFacetKeys,
         ],
       );
       return (await attachSources(db, rows))[0] ?? null;
@@ -165,6 +201,18 @@ export function createPostgresLibraryRepository(
         ],
       );
       const entry = rows[0];
+
+      const lensFacetKeys = researchLensFacetKeys(
+        resolveCommunityResearchLenses((input.researchLenses ?? ["#Diaspora"]).join(" ")),
+      );
+      for (const facetKey of lensFacetKeys) {
+        await db.query(
+          `INSERT INTO library_entry_facets (entry_id, facet_key)
+           VALUES ($1, $2)
+           ON CONFLICT (entry_id, facet_key) DO NOTHING`,
+          [entry.id, facetKey],
+        );
+      }
 
       // Save sources one-by-one (no FK batch insert; URL is the natural key)
       for (const source of input.sources) {
@@ -257,6 +305,7 @@ export function createPostgresLibraryRepository(
       searchTerms,
       patterns,
       preferredTopicSlugs,
+      requiredResearchLensFacetKeys = [],
       rankingContextPatterns = [],
       limit,
       offset,
@@ -274,6 +323,7 @@ export function createPostgresLibraryRepository(
         topic_title: null;
         source_count: null;
         sources: null;
+        research_lens_facets: null;
         refreshed_at: null;
         total_count: number;
       };
@@ -295,6 +345,7 @@ export function createPostgresLibraryRepository(
           publisher: string | null;
           whyItMatters: string | null;
         }>;
+        research_lens_facets: string[];
         refreshed_at: Date;
         total_count: number;
       };
@@ -311,6 +362,7 @@ export function createPostgresLibraryRepository(
         topic_title: null;
         source_count: null;
         sources: null;
+        research_lens_facets: null;
         refreshed_at: null;
         total_count: number;
       };
@@ -330,6 +382,7 @@ export function createPostgresLibraryRepository(
              NULL::text AS topic_title,
              NULL::int AS source_count,
              NULL::jsonb AS sources,
+             NULL::text[] AS research_lens_facets,
              NULL::timestamptz AS refreshed_at,
              CASE
                WHEN topic.slug = ANY($3::text[]) THEN 400
@@ -343,6 +396,7 @@ export function createPostgresLibraryRepository(
             AND direct_entry.publication_status = 'published'
            WHERE topic.active = true
              AND topic.is_foundational = true
+             AND cardinality($8::text[]) = 0
              AND (
                topic.slug = ANY($3::text[])
                OR lower(topic.title) LIKE ANY($2::text[])
@@ -376,6 +430,12 @@ export function createPostgresLibraryRepository(
                FROM library_entry_sources source
                WHERE source.entry_id = entry.id
              ), '[]'::jsonb) AS sources,
+             COALESCE((
+               SELECT array_agg(lens.facet_key ORDER BY lens.facet_key)
+               FROM library_entry_facets lens
+               WHERE lens.entry_id = entry.id
+                 AND lens.facet_key LIKE 'research-lens:%'
+             ), ARRAY[]::text[]) AS research_lens_facets,
              entry.refreshed_at,
              CASE
                WHEN COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[]) THEN 150
@@ -395,6 +455,17 @@ export function createPostgresLibraryRepository(
            LEFT JOIN library_entry_facets facet
              ON facet.entry_id = entry.id
            WHERE entry.publication_status = 'published'
+             AND (
+               cardinality($8::text[]) = 0
+               OR entry.id IN (
+                 SELECT required_facet.entry_id
+                 FROM library_entry_facets required_facet
+                 WHERE required_facet.entry_id = entry.id
+                   AND required_facet.facet_key = ANY($8::text[])
+                 GROUP BY required_facet.entry_id
+                 HAVING COUNT(DISTINCT required_facet.facet_key) = cardinality($8::text[])
+               )
+             )
              AND (
                lower(entry.title) LIKE ANY($2::text[])
                OR lower(entry.summary) LIKE ANY($2::text[])
@@ -424,12 +495,12 @@ export function createPostgresLibraryRepository(
            LIMIT $5 OFFSET $6
          )
          SELECT kind, id, slug, title, summary, icon_key, entry_count, body,
-                topic_slug, topic_title, source_count, sources, refreshed_at, total_count,
+                topic_slug, topic_title, source_count, sources, research_lens_facets, refreshed_at, total_count,
                 result_order
          FROM page
          UNION ALL
          SELECT NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                NULL, NULL, NULL, COUNT(*)::int, NULL
+                NULL, NULL, NULL, NULL, COUNT(*)::int, NULL
          FROM ranked
          WHERE NOT EXISTS (SELECT 1 FROM page)
          ORDER BY result_order ASC NULLS LAST`,
@@ -441,6 +512,7 @@ export function createPostgresLibraryRepository(
           limit,
           offset,
           rankingContextPatterns,
+          requiredResearchLensFacetKeys,
         ],
       );
 
@@ -467,6 +539,9 @@ export function createPostgresLibraryRepository(
           body: row.body,
           topicSlug: row.topic_slug,
           topicTitle: row.topic_title,
+          researchLenses: row.research_lens_facets
+            .map(researchLensTagFromFacetKey)
+            .filter((tag): tag is string => Boolean(tag)),
           sourceCount: Number(row.source_count),
           sources: row.sources,
           refreshedAt: row.refreshed_at,

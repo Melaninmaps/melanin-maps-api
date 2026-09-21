@@ -1,3 +1,10 @@
+import {
+  buildCommunityLensResearchQuery,
+  researchLensGuidance,
+  resolveCommunityResearchLenses,
+  type CommunityResearchLens,
+} from "./communityResearchLens";
+
 /**
  * Research policy — governs which sources Kinfolk may use, how it prefixes
  * community-lens queries, and what disclaimer (if any) accompanies an entry.
@@ -34,6 +41,8 @@ export type LibraryResearchScope = {
   sourceStandard: string;
   requestedGroup: string | null;
   groupGuidance: string;
+  /** Explicit or product-default research scope; never a claim about the member. */
+  researchLenses: CommunityResearchLens[];
   connectedTopics: Array<{ label: string; href: string }>;
 };
 
@@ -243,7 +252,10 @@ export function getResearchPolicy(question: string): ResearchPolicy {
 }
 
 export function buildCommunityResearchQuery(question: string, _domain: ResearchDomain): string {
-  return question.trim().replace(/\s+/g, " ");
+  return buildCommunityLensResearchQuery(
+    question,
+    resolveCommunityResearchLenses(question),
+  );
 }
 
 function groupLanguageFromQuestion(question: string): string | null {
@@ -268,6 +280,7 @@ function groupLanguageFromQuestion(question: string): string | null {
  */
 export function getLibraryResearchScope(question: string): LibraryResearchScope {
   const policy = getResearchPolicy(question);
+  const researchLenses = resolveCommunityResearchLenses(question);
   const sourceStandard: Record<ResearchDomain, string> = {
     medical: "Public-health authorities, peer-reviewed medical journals, systematic reviews, and established health research organizations.",
     legal: "Government, court, legal-aid, bar-association, and established civil-rights or academic legal sources.",
@@ -307,14 +320,18 @@ export function getLibraryResearchScope(question: string): LibraryResearchScope 
       { label: "Careers & Professional Life", href: "/library/topics/careers-professional-life" },
     ],
   };
-  const requestedGroup = groupLanguageFromQuestion(question);
+  const explicitLensLabel = researchLenses
+    .filter((lens) => !lens.isProductDefault)
+    .map((lens) => lens.label)
+    .join(" and ");
+  const requestedGroup = groupLanguageFromQuestion(question)
+    ?? (explicitLensLabel || null);
   return {
     domain: policy.domain,
     sourceStandard: sourceStandard[policy.domain],
     requestedGroup,
-    groupGuidance: requestedGroup
-      ? `This research addresses the explicitly requested group: ${requestedGroup}. It does not assume that this group describes the reader.`
-      : "No community, demographic, or life-stage group was assumed. Add one to the question when it would change the evidence you want to review.",
+    groupGuidance: researchLensGuidance(researchLenses),
+    researchLenses,
     connectedTopics: connectedTopics[policy.domain],
   };
 }
