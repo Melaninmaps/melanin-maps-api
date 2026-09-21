@@ -466,6 +466,10 @@ function BusinessCard({ record }: { record: CanonicalBusinessSearchRecord }) {
       ? "Community-reported minority-owned · Not verified"
       : record.ownershipClaim === "community_reported_non_minority_owned"
         ? "Community-reported non-minority-owned · Not verified"
+        : record.ownershipClaim === "source_reported_ownership_unverified"
+          ? "Source-reported ownership · Not owner-verified"
+          : record.ownershipClaim === "source_reputable_listing_unverified"
+            ? "Published from a reputable source · Ownership not yet verified"
         : null;
   return (
     <Link

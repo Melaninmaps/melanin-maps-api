@@ -13,13 +13,14 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 
-const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v3";
+const POLICY_VERSION = "source-receipted-directory-publication-v1";
 const DIRECTORY_POLICY_VERSION = "directory-auto-review-v1";
 const DEFAULT_ROOT = "data/founder-imports";
 const DEFAULT_OUT = "artifacts/reports/inventory-cohort-preflight.jsonl";
 const DEFAULT_SUMMARY = "artifacts/reports/inventory-cohort-preflight-summary.json";
 const CHAMBER_COHORT = "mwm_chamber_backed_candidate";
 const INSTITUTIONAL_COHORT = "mwm_institutional_directory_candidate";
+const SOURCE_REPUTABLE_LISTING_COHORT = "source_reputable_listing_candidate";
 
 function argValue(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -129,12 +130,14 @@ function directoryDecision(record, sourceRow, seenIdentities) {
 }
 
 /**
- * First-launch MWM Core admission is deliberately positive-evidence only.
+ * Source-reported MWM Core designation is deliberately positive-evidence only.
  * These patterns are applied to the explicit ownership/designation field from
  * a traceable source—not to a name, cuisine, language, image, location, or
- * other proxy. Generic "minority-owned", BIPOC, diaspora, Indigenous,
- * Caribbean, LGBTQIA+, faith, and woman-owned labels remain held until their
- * own source-backed launch policy is approved.
+ * other proxy. A listing without this explicit designation may still be
+ * published as an *unverified source-reported listing* when the signed source,
+ * physical/online listing contract, dedupe, and safety checks pass. It is not
+ * placed in MWM Core designation filters until a source, owner claim, or later
+ * verification process supplies the relevant evidence.
  */
 const QUALIFYING_OWNERSHIP_PATTERNS = [
   /\bblack\b/,
@@ -147,11 +150,10 @@ const QUALIFYING_OWNERSHIP_PATTERNS = [
 ];
 
 /**
- * The combined launch policy has two automatic lanes. Chamber-backed records
- * are the strongest lane. Other governed/community/official directories are a
- * separate, visible automatic lane. Editorial/promotional sources remain
- * retained but require a future corroborating source; they are never deleted
- * or silently treated as Chamber evidence.
+ * Chamber and institutional records remain separately labelled because they
+ * can explicitly support MWM Core discovery. Other signed, reputable sources
+ * can still produce an unverified listing; publication never upgrades them to
+ * a Chamber or owner-verified designation.
  */
 const CHAMBER_SOURCE_PATTERNS = [
   /\b(?:black|african american|african-american|hispanic|latino|latina|latinx)\b.*\bchamber\b/,
@@ -203,26 +205,35 @@ function missionDecision(record, directory) {
   if (directory.outcome === "deduplicated") {
     return { cohort: "hold_within_package_duplicate", eligibleForReleasePreview: false, reasons: directory.exceptionCodes };
   }
-  if (!qualifying.length) {
-    return { cohort: "hold_mission_evidence_required", eligibleForReleasePreview: false, reasons: ["explicit_black_or_latino_hispanic_designation_required"] };
-  }
-  // Ownership evidence is the intended MWM Core admission signal. A
-  // source-backed Black/African American or Latino/a/x/Hispanic designation is
-  // not discarded merely because it needs a cohort receipt. It is still not
-  // publishable: this offline result only identifies a candidate for a later,
-  // explicit launch-cohort confirmation.
+  // A signed source proves where a listing was found. It does not itself prove
+  // an owner's identity unless its explicit designation field says so. Both
+  // outcomes can be published when the directory contract passes, but only the
+  // qualifying designation outcome is eligible for MWM Core filtering.
   if (
     (targetKind === "business" || targetKind === "online_business")
     && publicHost(sourceUrl)
     && remainingDirectoryExceptions.length === 0
   ) {
     const evidenceLane = sourceEvidenceLane(record);
+    const publicationClassification = qualifying.length
+      ? "source_reported_mwm_designation"
+      : "unverified_source_listing";
+    if (!qualifying.length) {
+      return {
+        cohort: SOURCE_REPUTABLE_LISTING_COHORT,
+        evidenceLane: "reputable_source",
+        eligibleForReleasePreview: true,
+        publicationClassification,
+        reasons: ["traceable_signed_reputable_source", "unverified_source_listing"],
+      };
+    }
     if (evidenceLane === "chamber") {
       return {
         cohort: CHAMBER_COHORT,
         evidenceLane,
         eligibleForReleasePreview: true,
-        reasons: ["explicit_approved_mwm_core_designation", "traceable_chamber_source", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+        publicationClassification,
+        reasons: ["traceable_chamber_source", ...(qualifying.length ? ["explicit_approved_mwm_core_designation"] : ["no_mwm_designation_asserted"]), ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
       };
     }
     if (evidenceLane === "institutional_directory") {
@@ -230,14 +241,16 @@ function missionDecision(record, directory) {
         cohort: INSTITUTIONAL_COHORT,
         evidenceLane,
         eligibleForReleasePreview: true,
-        reasons: ["explicit_approved_mwm_core_designation", "traceable_institutional_or_community_directory", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+        publicationClassification,
+        reasons: ["traceable_institutional_or_community_directory", ...(qualifying.length ? ["explicit_approved_mwm_core_designation"] : ["no_mwm_designation_asserted"]), ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
       };
     }
     return {
-      cohort: "hold_editorial_corroboration_required",
-      evidenceLane,
-      eligibleForReleasePreview: false,
-      reasons: ["explicit_approved_mwm_core_designation", "editorial_or_promotional_source_requires_second_approved_source", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+      cohort: SOURCE_REPUTABLE_LISTING_COHORT,
+      evidenceLane: "reputable_source",
+      eligibleForReleasePreview: true,
+      publicationClassification,
+      reasons: ["traceable_signed_reputable_source", `source_lane:${evidenceLane}`, ...(qualifying.length ? ["explicit_source_reported_designation"] : ["unverified_source_listing"]), ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
     };
   }
   if (remainingDirectoryExceptions.length > 0) {
@@ -245,13 +258,15 @@ function missionDecision(record, directory) {
       cohort: "hold_directory_evidence_required",
       evidenceLane: null,
       eligibleForReleasePreview: false,
-      reasons: [...remainingDirectoryExceptions, "explicit_mwm_designation_present_but_directory_evidence_incomplete"],
+      publicationClassification: qualifying.length ? "source_reported_mwm_designation" : "unverified_source_listing",
+      reasons: [...remainingDirectoryExceptions, "source_listing_directory_evidence_incomplete"],
     };
   }
   return {
     cohort: "hold_source_provenance_required",
     evidenceLane: null,
     eligibleForReleasePreview: false,
+    publicationClassification: qualifying.length ? "source_reported_mwm_designation" : "unverified_source_listing",
     reasons: ["traceable_source_directory_required"],
   };
 }
@@ -304,6 +319,7 @@ async function main() {
         directoryCanonicalSourceRow: directory.canonicalSourceRow,
         cohort: mission.cohort,
         evidenceLane: mission.evidenceLane ?? null,
+        publicationClassification: mission.publicationClassification ?? null,
         eligibleForReleasePreview: mission.eligibleForReleasePreview,
         reasonCodes: mission.reasons,
         recordIdentity: {
@@ -351,7 +367,7 @@ async function main() {
     evidenceLaneCounts,
     directoryOutcomeCounts: directoryOutcomes,
     rootReceiptHash: rootHash,
-    releaseRule: "No record is authorized for staging, publication, or public visibility by this file. The Chamber and institutional-directory lanes require an explicit signed launch-cohort confirmation; editorial/promotional rows require corroboration and remain held.",
+    releaseRule: "No record is authorized for staging, publication, or public visibility by this file. A separately signed source-receipted launch cohort may stage physical and online listings that pass the directory contract. Source-reported ownership is displayed as unverified unless and until an owner or approved verification process confirms it.",
   };
   await mkdir(dirname(out), { recursive: true });
   await mkdir(dirname(summaryOut), { recursive: true });

@@ -67,7 +67,7 @@ describe("automated directory MWM Core ingress admission", () => {
     expect(pool.connect).not.toHaveBeenCalled();
   });
 
-  it("queues a complete source-backed ownership-designated business without a generic ownership hold", async () => {
+  it("queues a complete source-reported business without upgrading it to owner verification", async () => {
     process.env.MWM_CORE_PUBLICATION_MODE = "source_backed";
     process.env.MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH = ROOT_HASH;
     process.env.DIRECTORY_REVIEW_SIGNING_SECRET = SIGNING_SECRET;
@@ -93,9 +93,10 @@ describe("automated directory MWM Core ingress admission", () => {
       website: "https://proven.example/",
       source_url: "https://approved-directory.example/proven",
       ownership_designations: ["Black-owned"],
-      mwm_core_policy_version: "mwm-core-black-latino-source-evidence-v3",
+      mwm_core_policy_version: "source-receipted-directory-publication-v1",
       mwm_core_cohort: "mwm_chamber_backed_candidate",
       mwm_core_evidence_lane: "chamber",
+      mwm_publication_classification: "source_reported_mwm_designation",
       mwm_core_receipt_root_hash: ROOT_HASH,
       mwm_core_receipt_hash: "a".repeat(64),
       mwm_core_source_manifest: "data/founder-imports/proven-review-only-candidates.jsonl",

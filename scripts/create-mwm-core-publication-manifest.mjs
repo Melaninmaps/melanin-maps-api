@@ -8,12 +8,14 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve, relative } from "node:path";
 
-const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v3";
+const POLICY_VERSION = "source-receipted-directory-publication-v1";
 const CHAMBER_COHORT = "mwm_chamber_backed_candidate";
 const INSTITUTIONAL_COHORT = "mwm_institutional_directory_candidate";
+const SOURCE_REPUTABLE_LISTING_COHORT = "source_reputable_listing_candidate";
 const AUTOMATIC_PUBLICATION_COHORTS = new Set([
   CHAMBER_COHORT,
   INSTITUTIONAL_COHORT,
+  SOURCE_REPUTABLE_LISTING_COHORT,
 ]);
 
 function argValue(name, fallback = undefined) {
@@ -66,17 +68,19 @@ async function main() {
   const expectedCandidateCount = Number(requiredArg("--expected-candidate-count"));
   const expectedChamberCount = Number(requiredArg("--expected-chamber-count"));
   const expectedInstitutionalCount = Number(requiredArg("--expected-institutional-directory-count"));
+  const expectedSourceListingCount = Number(requiredArg("--expected-source-listing-count"));
 
   if (!isSha256(expectedRootHash)) throw new Error("--expected-receipt-root-hash must be a SHA-256 hash.");
   for (const [name, value] of [
     ["--expected-candidate-count", expectedCandidateCount],
     ["--expected-chamber-count", expectedChamberCount],
     ["--expected-institutional-directory-count", expectedInstitutionalCount],
+    ["--expected-source-listing-count", expectedSourceListingCount],
   ]) {
     if (!Number.isInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer.`);
   }
-  if (expectedCandidateCount < 1 || expectedCandidateCount !== expectedChamberCount + expectedInstitutionalCount) {
-    throw new Error("Expected total must equal the Chamber and institutional-directory lane counts.");
+  if (expectedCandidateCount < 1 || expectedCandidateCount !== expectedChamberCount + expectedInstitutionalCount + expectedSourceListingCount) {
+    throw new Error("Expected total must equal the Chamber, institutional-directory, and reputable-source lane counts.");
   }
 
   const receipts = parseJsonl(await readFile(receiptsPath, "utf8"), receiptsPath);
@@ -122,7 +126,7 @@ async function main() {
   const output = [];
   let physicalCount = 0;
   let onlineOnlyCount = 0;
-  const evidenceLaneCounts = { chamber: 0, institutional_directory: 0 };
+  const evidenceLaneCounts = { chamber: 0, institutional_directory: 0, reputable_source: 0 };
   for (const receipt of candidates) {
     if (!isSha256(receipt.receiptHash) || !isSha256(receipt.sourceManifestSha256) ||
         !isSha256(receipt.recordFingerprint) || !Number.isInteger(receipt.sourceRow) ||
@@ -138,6 +142,8 @@ async function main() {
       ? CHAMBER_COHORT
       : evidenceLane === "institutional_directory"
         ? INSTITUTIONAL_COHORT
+        : evidenceLane === "reputable_source" || evidenceLane === "editorial_or_promotional"
+          ? SOURCE_REPUTABLE_LISTING_COHORT
         : null;
     if (!expectedCohort || receipt.cohort !== expectedCohort) {
       throw new Error(`Invalid evidence-lane/cohort pairing for ${receipt.sourceManifest}:${receipt.sourceRow}.`);
@@ -147,11 +153,26 @@ async function main() {
     if (!sourceRecord) {
       throw new Error(`Source record fingerprint not found for ${receipt.sourceManifest}:${receipt.sourceRow}.`);
     }
+    // Normalize the signed source row to the protected ingress wire contract.
+    // The original camelCase source fields remain embedded in source_record for
+    // audit, but the publisher consumes only these canonical snake_case values.
     const derived = {
       ...sourceRecord,
+      target_kind: sourceRecord.target_kind ?? sourceRecord.targetKind,
+      source_row: sourceRecord.source_row ?? sourceRecord.sourceRow,
+      source_row_id: sourceRecord.source_row_id ?? sourceRecord.sourceRowId,
+      source_name: sourceRecord.source_name ?? sourceRecord.sourceName,
+      source_url: sourceRecord.source_url ?? sourceRecord.sourceUrl,
+      source_status: sourceRecord.source_status ?? sourceRecord.sourceStatus,
+      social_source_url: sourceRecord.social_source_url ?? sourceRecord.socialSourceUrl,
+      ownership_designations: sourceRecord.ownership_designations ?? sourceRecord.ownershipDesignations ?? [],
+      ownership_evidence: sourceRecord.ownership_evidence ?? sourceRecord.ownershipEvidence ?? null,
+      regulated_profession: sourceRecord.regulated_profession ?? sourceRecord.regulatedProfession ?? false,
+      destination_reachable: sourceRecord.destination_reachable ?? sourceRecord.destinationReachable ?? true,
       mwm_core_policy_version: POLICY_VERSION,
       mwm_core_cohort: receipt.cohort,
       mwm_core_evidence_lane: evidenceLane,
+      mwm_publication_classification: receipt.publicationClassification,
       mwm_core_receipt_root_hash: expectedRootHash,
       mwm_core_receipt_hash: receipt.receiptHash,
       mwm_core_source_manifest: receipt.sourceManifest,
@@ -167,13 +188,14 @@ async function main() {
 
   const body = `${output.join("\n")}\n`;
   if (evidenceLaneCounts.chamber !== expectedChamberCount ||
-      evidenceLaneCounts.institutional_directory !== expectedInstitutionalCount) {
-    throw new Error(`Evidence lane count mismatch: expected Chamber ${expectedChamberCount} / institutional ${expectedInstitutionalCount}, received Chamber ${evidenceLaneCounts.chamber} / institutional ${evidenceLaneCounts.institutional_directory}.`);
+      evidenceLaneCounts.institutional_directory !== expectedInstitutionalCount ||
+      evidenceLaneCounts.reputable_source !== expectedSourceListingCount) {
+    throw new Error(`Evidence lane count mismatch: expected Chamber ${expectedChamberCount} / institutional ${expectedInstitutionalCount} / reputable source ${expectedSourceListingCount}, received Chamber ${evidenceLaneCounts.chamber} / institutional ${evidenceLaneCounts.institutional_directory} / reputable source ${evidenceLaneCounts.reputable_source}.`);
   }
   const manifestSha256 = sha256(body);
   const summary = {
     policyVersion: POLICY_VERSION,
-    cohorts: [CHAMBER_COHORT, INSTITUTIONAL_COHORT],
+    cohorts: [CHAMBER_COHORT, INSTITUTIONAL_COHORT, SOURCE_REPUTABLE_LISTING_COHORT],
     evidenceLaneCounts,
     sourceReceiptRootHash: expectedRootHash,
     sourceReceiptFile: relative(process.cwd(), receiptsPath),
@@ -187,7 +209,7 @@ async function main() {
     signed: false,
     stagingPerformed: false,
     publicationPerformed: false,
-    nextStep: "Review this manifest, then sign and submit it only through the isolated directory-review ingress.",
+    nextStep: "Sign and submit this immutable source-receipted manifest only through the isolated directory-review ingress. Source-reported designations remain unverified until owner or approved-verifier confirmation.",
   };
 
   await mkdir(dirname(out), { recursive: true });
