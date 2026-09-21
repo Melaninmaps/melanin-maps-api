@@ -30,11 +30,15 @@ describe("lean general Kinfolk chat", () => {
     expect(canUseLeanGeneralChat({ ...ordinaryQuestion, hasLibraryGrounding: true })).toBe(false);
   });
 
-  it("requires a minimal safe JSON envelope without fabricated local results", () => {
+  it("preserves capable, impartial general chat without fabricated local results", () => {
     const prompt = buildLeanGeneralChatPrompt();
     expect(prompt).toContain("modern chatbot");
+    expect(prompt).toContain("capable, warm, and impartial general assistant");
     expect(prompt).toContain("Big Cousin mode");
     expect(prompt).toContain("Do not invent facts, sources, business listings, addresses");
+    expect(prompt).toContain("complete answer at the depth the question needs");
+    expect(prompt).toContain("must never alter the factual answer or override a direct request");
+    expect(prompt).toContain("distinguish consensus, criticism, popularity, and your synthesis from objective fact");
     expect(prompt).toContain('"recommendations": null');
     expect(prompt).toContain('"followUpSuggestions": []');
     expect(prompt).toContain("Do not infer the member's identity");
