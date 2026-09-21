@@ -1,7 +1,7 @@
 import type { EvidenceRoute } from "./evidence-route";
 import { requiresCurrentResearch } from "./current-research";
 
-export type KinfolkTaskMode = "direct_answer" | "recipe_options" | "recipe_instructions" | "cultural_consensus" | "ranked_perspectives" | "entity_explorer" | "local_discovery" | "travel_plan" | "high_consequence" | "clarification";
+export type KinfolkTaskMode = "direct_answer" | "recipe_options" | "recipe_instructions" | "cultural_consensus" | "ranked_perspectives" | "entity_explorer" | "local_discovery" | "travel_plan" | "city_briefing" | "high_consequence" | "clarification";
 export type CandidateMeaning = { label: string; domain: string; confidence: number; evidenceQuery: string | null };
 export type SemanticTurnPlan = {
   taskMode: KinfolkTaskMode; primaryDomain: string;
