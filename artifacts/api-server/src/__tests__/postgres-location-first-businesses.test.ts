@@ -75,12 +75,19 @@ describe("location-first business repository", () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     await new LocalBusinessSearch(pool as never).search({ query: "Restaurant", latitude: 39.95, longitude: -75.16 });
     const sql = pool.query.mock.calls[0][0] as string;
-    expect(sql).toContain("FROM public.public_businesses b");
+    expect(sql).toContain("FROM public.public_businesses AS b");
     expect(sql).not.toContain("b.is_active");
     expect(sql).not.toContain("b.state_code");
+    expect(sql).toContain("AND TRUE");
     expect(sql).toContain("b.state AS \"stateCode\"");
-    expect(sql).toContain("coalesce(b.subcategory, '')");
-    expect(pool.query.mock.calls[0][1]).toContainEqual(["food", "food drink", "restaurant", "restaurants"]);
+    expect(sql).toContain("COALESCE(b.subcategory, '')");
+    expect(pool.query.mock.calls[0][1]).toContainEqual([
+      "\\mrestaurant\\M",
+      "\\mrestaurants\\M",
+      "\\mdining\\M",
+      "\\mfood\\M",
+      "\\mcuisine\\M",
+    ]);
   });
 
   it("returns Richmond cultural inventory with valid Explore destinations", async () => {

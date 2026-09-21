@@ -20,6 +20,7 @@ import {
   classifyGrowthSensitivity,
 } from "../lib/library-growth-engine";
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
+import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 // Maps universal-search IntentType → Library growth category
 const INTENT_TO_GROWTH_CATEGORY: Partial<Record<string, string>> = {
@@ -722,6 +723,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
+           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND b.name ILIKE $1
            ${cityClause} ${stateClause} ${geoClause}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
@@ -794,6 +796,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
+           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND (
              b.description ILIKE $1
              OR b.tags::text ILIKE $1
@@ -851,6 +854,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
+           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND cs.says_text ILIKE $1
            ${city ? `AND b.city ILIKE $2` : ""}
          ORDER BY b.id, b.verified DESC
@@ -911,6 +915,7 @@ async function searchBusinesses(opts: {
            WHERE status = 'active'
              AND COALESCE(name, '') NOT ILIKE '%[demo]%'
              AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+             AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
              AND lower(city) = ANY($1::text[])
            LIMIT 10`,
           [allWords],
@@ -954,6 +959,7 @@ async function searchBusinesses(opts: {
              WHERE b.status = 'active'
                AND ${listingFilter}
                AND ${nonDemoFilter}
+               AND ${mwmCoreDiscoverySqlPredicate("b.id")}
                AND lower(b.city) = ANY($1::text[])
                AND (
                  lower(b.name)           LIKE ANY($2::text[])
@@ -1049,10 +1055,11 @@ async function searchBusinesses(opts: {
           // to Illinois, silently excluding the LA business.
           const bizGate = await pool.query<{ id: string }>(
             `SELECT id FROM public.public_businesses
-             WHERE (name ILIKE $1 OR name ILIKE $2)
+            WHERE (name ILIKE $1 OR name ILIKE $2)
                AND status = 'active'
                AND COALESCE(name, '') NOT ILIKE '%[demo]%'
                AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+               AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
              LIMIT 1`,
             [geoQ, geoQ + "%"],
           );
@@ -1143,6 +1150,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
+           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND (${catIlikeParts})
            ${extraClauses} ${excludeClause}
          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
@@ -1224,6 +1232,7 @@ async function searchBusinesses(opts: {
            WHERE b.status = 'active'
              AND ${listingFilter}
              AND ${nonDemoFilter}
+             AND ${mwmCoreDiscoverySqlPredicate("b.id")}
              AND ${geoClause3b}
              ${excludeClause3b}
            ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
@@ -1283,6 +1292,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
+           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND similarity(LOWER(b.name), LOWER($1)) > 0.2
            ${excludeClause}
          ORDER BY similarity DESC, b.verified DESC
@@ -2151,6 +2161,7 @@ router.get("/search/suggest/universal", async (req: Request, res: Response) => {
            AND b.listing_status IN ('live_unclaimed', 'live_claimed')
            AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
            AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
+           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
            AND b.name ILIKE $1 ${cityClause}
          ORDER BY b.name ASC LIMIT 5`,
         params,

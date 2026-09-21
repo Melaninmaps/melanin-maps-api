@@ -4,22 +4,22 @@
 
 ## Purpose
 
-This release adds two read-only scripts that create a traceable inventory receipt before any directory action is allowed. The purpose is to distinguish records that have explicit, source-backed evidence for the Mapping with Melanin mission from records that need more evidence or are simply outside the currently supplied research packages. It does not infer a business owner’s identity from a name, cuisine, language, neighborhood, or image.
+This release adds read-only scripts that create a traceable inventory receipt before any directory action is allowed. The first-launch MWM Core rule is deliberately narrow: a record must have a traceable source that explicitly confirms **Black/African American or Latino/a/x/Hispanic ownership or designation**. It does not infer a business owner’s identity from a name, cuisine, language, neighborhood, or image.
 
-The receipt is designed for the product’s **Green Book meets AI** model. It protects the distinction between an explicit, source-backed diaspora designation and an unsupported assumption. It also preserves every existing record and its history while an eligibility policy is chosen.
+The receipt is designed for the product’s **Green Book meets AI** model. It protects the distinction between source-backed mission evidence and an unsupported assumption. Generic “minority-owned,” BIPOC, diaspora, Indigenous, Caribbean, LGBTQIA+, faith, and woman-owned labels are retained but held unless a qualifying first-launch designation is also supplied. It also preserves every existing record and its history.
 
 ## Exact Preview Results
 
-The offline preflight read **33 signed review-only manifests** containing **6,576 source rows**. It produced a deterministic root receipt hash of `43aa767bc709b02b0d027fc91b45bbd8714de996eb7faa8dd34851ad7d08fcff`.
+The offline preflight read **33 signed review-only manifests** containing **6,576 source rows**. Under the approved Black/African American and Latino/a/x/Hispanic-only rule, it produced a deterministic root receipt hash of `c2105d31ab2a9d71f9aefae58441d2cd6a6ac6d1c28c6581c5bbcb821e73ef01`.
 
 | Preview cohort | Count | Meaning |
 |---|---:|---|
-| `mwm_source_backed_candidate` | 1,411 | A physical or online business record with an explicit qualifying designation, a traceable source directory, and no remaining address or destination hold. This is **not published**. |
-| `hold_mission_evidence_required` | 4,901 | The source row lacks an explicit qualifying designation. It must not be presented as an MWM mission-aligned listing without stronger ownership or inclusion evidence. |
-| `hold_directory_evidence_required` | 239 | The record has an explicit qualifying designation but lacks another requirement, such as a usable customer destination, address, or regulated-profession review. |
+| `mwm_source_backed_candidate` | 1,406 | A physical or online business record with explicit approved MWM Core evidence, a traceable source directory, and no remaining address or destination hold. This is **not published**. |
+| `hold_mission_evidence_required` | 4,915 | The source row lacks an explicit Black/African American or Latino/a/x/Hispanic designation. It must not be presented as an MWM Core listing without stronger evidence. |
+| `hold_directory_evidence_required` | 230 | The record has explicit approved evidence but lacks another requirement, such as a usable customer destination, address, or regulated-profession review. |
 | `hold_invalid_source` | 25 | The source row lacks a minimally usable identity and needs repair before further review. |
 
-The separate read-only reconciliation downloaded every currently public listing from the live API and generated one receipt for each of **2,879** records. Its root receipt hash is `407499fe792dc6738fd48d7bd292158f9da55c5a1bc3caca20594f505e4ddbb9`.
+The prior separate read-only reconciliation downloaded every currently public listing from the live API and generated one receipt for each of **2,879** records. Its historical root receipt hash was `407499fe792dc6738fd48d7bd292158f9da55c5a1bc3caca20594f505e4ddbb9`. It must be re-run using the narrowed v2 source receipt before any MWM Core visibility activation.
 
 | Current live cohort | Count | What the count proves—and does not prove |
 |---|---:|---|
@@ -42,8 +42,8 @@ Both scripts use deterministic hashing, so re-running them against the same inpu
 
 No one should enable the publication worker or mass-publish from this preview. The next decision is a written launch-cohort rule:
 
-1. **Candidate rule:** confirm that an explicit, traceable Black, Latino/Hispanic, Indigenous, Caribbean, diaspora, or other product-approved designation is sufficient for the first MWM cohort when the business has a usable customer destination and passes the existing address, deduplication, regulated-profession, and safety checks.
-2. **Held records:** confirm that the 4,901 records with no explicit designation remain private in the review database until a permitted source supplies the needed evidence. The 239 incomplete records and 25 invalid records remain held as well.
+1. **Candidate rule:** only an explicit, traceable Black/African American or Latino/a/x/Hispanic designation is sufficient for the first MWM Core cohort when the business has a usable customer destination and passes the existing address, deduplication, regulated-profession, and safety checks.
+2. **Held records:** the 4,915 records with no qualifying first-launch evidence remain retained and held for later evidence or a separately approved cohort. The 230 incomplete records and 25 invalid records remain held as well.
 3. **Existing live records:** decide separately whether the current 2,879 records should continue to be visible during the migration. The safe default is **yes**: preserve them and show no cohort badge until a full source receipt is available.
 4. **Activation:** only after the rule is approved should the team stage the selected checksum-pinned batch into the isolated review database, verify row receipts, resolve duplicates automatically, and enable exactly one worker for the approved cohort. A dry-run receipt must be reviewed before the worker is enabled.
 
@@ -65,7 +65,17 @@ node scripts/reconcile-live-inventory-cohorts.mjs \
   --out /secure/reports/mwm-live-cohort-reconciliation.json
 ```
 
-The release scripts intentionally have no `--publish`, `--stage`, or visibility-switch flag. Staging and publication remain in the separately authenticated directory-review flow.
+The deployed schema includes an observation-only receipt table. The following command is deliberately separate and requires the exact verified source receipt hash and live count. It only records the current classification. It cannot publish, hide, delete, or alter a business.
+
+```bash
+node scripts/apply-inventory-cohort-receipts.mjs \
+  --apply \
+  --source-receipts /secure/reports/mwm-source-cohort.jsonl \
+  --expected-live-count 2879 \
+  --expected-source-root-hash c2105d31ab2a9d71f9aefae58441d2cd6a6ac6d1c28c6581c5bbcb821e73ef01
+```
+
+The receipt scripts intentionally have no `--publish`, `--stage`, or visibility-switch flag. Staging and publication remain in the separately authenticated directory-review flow.
 
 ## Non-Regression Contract
 

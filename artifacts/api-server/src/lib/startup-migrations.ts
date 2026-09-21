@@ -5086,6 +5086,33 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       applied_at   timestamptz  NOT NULL DEFAULT now()
     )`,
   },
+  // ── Inventory cohort receipts — observation only, never a visibility rule ──
+  // A receipt records how a current public business was reconciled with a
+  // checksum-pinned source package. It deliberately does not change a business,
+  // a listing status, a review, a claim, or public visibility. A separate,
+  // founder-approved policy is required before any later release operation.
+  {
+    name: "business_inventory_cohort_receipts_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_inventory_cohort_receipts (
+      business_id          varchar(255) PRIMARY KEY REFERENCES businesses(id) ON DELETE RESTRICT,
+      cohort               text NOT NULL CHECK (cohort IN (
+        'source_backed_mwm_candidate_live',
+        'source_backed_held_live',
+        'ambiguous_source_match_live',
+        'legacy_or_unattributed_live'
+      )),
+      source_receipt_hash  text,
+      source_manifest      text,
+      source_row           integer,
+      reason_codes         jsonb NOT NULL DEFAULT '[]'::jsonb,
+      receipt_hash         text NOT NULL,
+      policy_version       text NOT NULL,
+      observed_at          timestamptz NOT NULL DEFAULT now(),
+      CHECK (char_length(receipt_hash) = 64)
+    );
+    CREATE INDEX IF NOT EXISTS business_inventory_cohort_receipts_cohort_idx
+      ON business_inventory_cohort_receipts (cohort, observed_at DESC);`,
+  },
 ];
 
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<

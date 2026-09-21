@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, userPreferencesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { pool } from "@workspace/db";
+import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 const router: IRouter = Router();
 
@@ -187,6 +188,7 @@ router.get("/search/intent", async (req: Request, res: Response) => {
         `SELECT id, name, category, city, verified, description, listing_status, ownership_claim
          FROM public.public_businesses
          WHERE (name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1${categoryMatch})
+           AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
            ${cityScope}
          ORDER BY ${boostIdx ? `CASE WHEN category = ANY($${boostIdx}) THEN 0 ELSE 1 END,` : ""} verified DESC, name ASC
          LIMIT ${lim}`,
@@ -259,11 +261,11 @@ router.get("/search/suggest", async (req: Request, res: Response) => {
     if (city) params.push(`%${city}%`);
 
     const rows = await pool.query<{ name: string; category: string }>(
-      `SELECT DISTINCT name, category FROM businesses
-       WHERE status = 'active'
-         AND listing_status IN ('live_unclaimed', 'live_claimed')
-         AND name ILIKE $1 ${city ? "AND city ILIKE $2" : ""}
-       ORDER BY name ASC LIMIT 8`,
+      `SELECT DISTINCT b.name, b.category FROM public.public_businesses AS b
+       WHERE b.name ILIKE $1
+         AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+         ${city ? "AND b.city ILIKE $2" : ""}
+       ORDER BY b.name ASC LIMIT 8`,
       params,
     );
     res.json({ suggestions: rows.rows });
