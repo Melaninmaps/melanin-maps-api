@@ -25,6 +25,8 @@ export interface AutomatedReviewCandidate {
   website: string | null;
   socialSourceUrl: string | null;
   ownershipDesignations: readonly string[];
+  /** Set only by protected ingress after every row passes MWM receipt admission. */
+  sourceBackedMwmCore?: boolean;
   regulatedProfession: boolean;
   destinationReachable: boolean;
 }
@@ -112,7 +114,11 @@ function candidateExceptions(candidate: AutomatedReviewCandidate): string[] {
   if (candidate.targetKind === "regulated_review" || candidate.regulatedProfession) {
     exceptions.push("regulated_credential_review");
   }
-  if (candidate.ownershipDesignations.length > 0) {
+  // Ordinary ownership claims remain review-only. The sole exception is a row
+  // that protected ingress has already bound to the approved immutable MWM
+  // Core source receipt; callers cannot self-authorize this flag from a raw
+  // manifest because ingress sets it only after batch admission succeeds.
+  if (candidate.ownershipDesignations.length > 0 && !candidate.sourceBackedMwmCore) {
     exceptions.push("ownership_evidence_review");
   }
   if (!candidate.destinationReachable) exceptions.push("customer_destination_requires_review");

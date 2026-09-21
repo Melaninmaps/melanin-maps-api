@@ -66,4 +66,53 @@ describe("automated directory MWM Core ingress admission", () => {
     expect(response.body.code).toBe("MWM_CORE_POLICY_VERSION_REQUIRED");
     expect(pool.connect).not.toHaveBeenCalled();
   });
+
+  it("queues a complete source-backed ownership-designated business without a generic ownership hold", async () => {
+    process.env.MWM_CORE_PUBLICATION_MODE = "source_backed";
+    process.env.MWM_CORE_EXPECTED_RECEIPT_ROOT_HASH = ROOT_HASH;
+    process.env.DIRECTORY_REVIEW_SIGNING_SECRET = SIGNING_SECRET;
+    const clientQuery = vi.fn(async (sql: string) => {
+      if (sql.includes("FROM directory_import_batches")) return { rows: [] };
+      if (sql.includes("INSERT INTO directory_import_batches")) return { rows: [{ id: "batch-1" }] };
+      if (sql.includes("INSERT INTO directory_import_candidates")) return { rows: [{ id: "candidate-1" }] };
+      return { rows: [] };
+    });
+    const release = vi.fn();
+    const pool = {
+      connect: vi.fn().mockResolvedValue({ query: clientQuery, release }),
+    };
+    const requestPayload = signedRequestBody({
+      source_row: 1,
+      source_row_id: "proven-1",
+      name: "Proven Neighborhood Business",
+      city: "Philadelphia",
+      state: "PA",
+      country: "United States",
+      target_kind: "business",
+      address: "100 Main Street",
+      website: "https://proven.example/",
+      source_url: "https://approved-directory.example/proven",
+      ownership_designations: ["Black-owned"],
+      mwm_core_policy_version: "mwm-core-black-latino-source-evidence-v2",
+      mwm_core_cohort: "mwm_source_backed_candidate",
+      mwm_core_receipt_root_hash: ROOT_HASH,
+      mwm_core_receipt_hash: "a".repeat(64),
+      mwm_core_source_manifest: "data/founder-imports/proven-review-only-candidates.jsonl",
+      mwm_core_source_manifest_sha256: "b".repeat(64),
+      mwm_core_source_row: 1,
+      mwm_core_source_row_id: "proven-1",
+    });
+
+    const response = await request(routeApp(pool))
+      .post("/api/founder/directory-import/ingress")
+      .set(requestPayload.headers)
+      .send(requestPayload.body);
+
+    expect(response.status).toBe(202);
+    expect(response.body.counts).toEqual({ auto_ready: 1 });
+    const sql = clientQuery.mock.calls.map(([statement]) => String(statement));
+    expect(sql.some((statement) => statement.includes("INSERT INTO directory_review_outbox"))).toBe(true);
+    expect(sql).toContain("COMMIT");
+    expect(release).toHaveBeenCalledOnce();
+  });
 });

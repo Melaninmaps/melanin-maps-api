@@ -86,6 +86,17 @@ describe("automated directory review policy", () => {
     }
   });
 
+  it("auto-readies a complete ownership-designated row only after protected ingress marks it source-backed", () => {
+    const decision = classifyAutomatedReviewBatch([
+      candidate({
+        ownershipDesignations: ["Black-owned"],
+        sourceBackedMwmCore: true,
+      }),
+    ]).get(1);
+
+    expect(decision).toMatchObject({ outcome: "auto_ready", exceptionCodes: [] });
+  });
+
   it("preserves online-only services as mapless when their customer destination is reachable", () => {
     const online = candidate({
       targetKind: "online_business",

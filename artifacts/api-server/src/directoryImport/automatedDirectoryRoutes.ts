@@ -6,7 +6,10 @@ import {
   verifyDirectoryIngress, verifyDirectoryManifest, validateDirectorySourceRows, canonicalDirectoryPayload,
 } from "./reviewPipeline";
 import { classifyAutomatedReviewBatch } from "./automatedReviewPolicy";
-import { validateMwmCorePublicationBatch } from "./mwmCorePublicationPolicy";
+import {
+  isMwmCorePublicationEnabled,
+  validateMwmCorePublicationBatch,
+} from "./mwmCorePublicationPolicy";
 import { createHash } from "node:crypto";
 
 function operator(req: Request, res: Response) {
@@ -174,6 +177,10 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
           address: r.address == null ? null : String(r.address), website: r.website == null ? null : String(r.website),
           socialSourceUrl: r.social_source_url == null ? null : String(r.social_source_url),
           ownershipDesignations: Array.isArray(r.ownership_designations) ? r.ownership_designations.map(String) : [],
+          // This value is derived from protected server configuration after the
+          // complete batch passed immutable MWM receipt admission above. Raw
+          // manifest input cannot opt itself into automatic publication.
+          sourceBackedMwmCore: isMwmCorePublicationEnabled(),
           regulatedProfession: r.regulated_profession === true,
           destinationReachable: r.destination_reachable !== false,
           raw,
