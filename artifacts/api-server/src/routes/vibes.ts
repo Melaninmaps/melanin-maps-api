@@ -6,7 +6,7 @@ import {
   normalizeOwnerExperienceKey,
   VIBES_BY_CATEGORY,
 } from "@workspace/constants";
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 const router = Router();
 
@@ -140,7 +140,7 @@ router.get('/vibes/search', async (req, res) => {
         ) AS total_score
       FROM public.public_businesses b
       WHERE (${ownerVibeMatch} > 0 OR ${communityVibeMatch} > 0)
-        AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+        AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
         ${priceClause}
         ${cityClause}
       ORDER BY total_score DESC, b.name ASC

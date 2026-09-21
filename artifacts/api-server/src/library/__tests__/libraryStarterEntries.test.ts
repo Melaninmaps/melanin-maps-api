@@ -4,7 +4,10 @@ import { buildLibraryStarterEntry } from "../seedLibraryStarterEntries";
 
 describe("Living Library starter guides", () => {
   it("turns each vetted starter topic into a published source-linked explanation", () => {
-    expect(LIBRARY_STARTER_TOPICS).toHaveLength(100);
+    expect(LIBRARY_STARTER_TOPICS).toHaveLength(112);
+    const culture = LIBRARY_STARTER_TOPICS.find((topic) => topic.slug === "culture-history-identity");
+    expect(culture?.isFeatured).toBe(true);
+    expect(culture?.candidateSources.length).toBeGreaterThanOrEqual(2);
     const fertility = LIBRARY_STARTER_TOPICS.find((topic) => topic.slug === "infertility-evaluation-and-diagnosis");
     expect(fertility).toBeDefined();
     const guide = buildLibraryStarterEntry(fertility!);

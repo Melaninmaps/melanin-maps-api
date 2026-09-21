@@ -63,6 +63,21 @@ const CATEGORY_META: Record<string, { emoji: string; color: string; label: strin
   financial_wellness: { emoji: "💰", color: "#D97706", label: "Financial Wellness" },
 };
 
+const LIBRARY_COLLECTION_SHELVES = [
+  { title: "Culture, History & Identity", icon: "🏛️", subtopics: ["History of the Diaspora", "Foundational Black American History", "African, Caribbean & Afro-Latino Cultures", "Local Black History by City", "HBCUs & Alumni Traditions", "Genealogy & Family History"] },
+  { title: "Food, Music & Culture", icon: "🎶", subtopics: ["Regional Black Food Traditions", "African, Caribbean & Afro-Latino Cuisines", "Black Music History", "Books, Films, Podcasts & Documentaries", "Fashion, Beauty & Design"] },
+  { title: "Travel the Diaspora", icon: "✈️", subtopics: ["Diaspora Travel Destinations", "City Guides Built Around Real Life", "Accessible & Multigenerational Travel", "Solo Travel", "International Customs & Cultural Connections"] },
+  { title: "Money, Business & Ownership", icon: "📈", subtopics: ["Starting & Growing a Business", "Grants, Funding & Capital", "Business Credit", "Homeownership", "Saving & Investing", "Intellectual Property"] },
+  { title: "Health & Wellness", icon: "💛", subtopics: ["Culturally Responsive Care", "Maternal & Reproductive Health", "Mental Health & Therapy", "Men’s Health", "Children’s & Family Health", "Nutrition & Movement"] },
+  { title: "Education & Careers", icon: "🎓", subtopics: ["Scholarships & Financial Aid", "HBCUs, Colleges & Trade Schools", "Career Pathways & Certifications", "Technology & AI Skills", "Mentorship & Professional Networks"] },
+  { title: "Family, Love & Community", icon: "🤝", subtopics: ["Parenting Across Generations", "Dating, Relationships & Communication", "Caring for Aging Family Members", "Faith & Spiritual Communities", "LGBTQ+ Community Resources"] },
+  { title: "Entertainment & What’s Happening", icon: "✨", subtopics: ["Festivals & Homecomings", "Concerts, Exhibits & Cultural Programs", "Family Activities", "Nightlife & Entertainment", "Artists, Creators & Cultural Icons"] },
+  { title: "Life in Your City", icon: "📍", subtopics: ["What’s Happening in Your City", "Local History & Cultural Neighborhoods", "Community Organizations", "Professional & Social Groups"] },
+  { title: "Technology & the Future", icon: "💻", subtopics: ["AI Skills & Responsible Use", "Digital Privacy & Online Safety", "Technology Careers & Training", "Black Innovators in Technology"] },
+  { title: "Know Your Rights", icon: "⚖️", subtopics: ["Recognizing & Reporting Discrimination", "Workplace Rights", "Health-Care Advocacy", "School & Education Rights", "Consumer Protection"] },
+  { title: "Resources & Support", icon: "🧭", subtopics: ["Housing & Utility Support", "Food & Family Resources", "Disaster Recovery", "Emergency & Crisis Resources"] },
+] as const;
+
 interface Topic {
   id: string;
   topicName: string;
@@ -295,6 +310,7 @@ export default function LibraryScreen() {
   const [followCount, setFollowCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [expandedCollection, setExpandedCollection] = useState<string | null>(null);
   const [feedLoading, setFeedLoading] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [storySearch, setStorySearch] = useState("");
@@ -709,6 +725,46 @@ export default function LibraryScreen() {
           /* ── MY LIBRARY TAB ── */
           <ScrollView
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={styles.scroll}>
+            <View style={[styles.section, { marginTop: 18 }]}>
+              <Text style={[styles.collectionEyebrow, { color: "#8D5C17" }]}>BEGIN WITH OUR COMPLETE LIVES</Text>
+              <Text style={[styles.collectionHeading, { color: colors.foreground }]}>Choose a Library collection</Text>
+              <Text style={[styles.collectionIntro, { color: colors.mutedForeground }]}>Open a collection to choose a subject. Each subject starts a source-governed Library search with a longer brief, article links, and next questions.</Text>
+              <View style={styles.collectionList}>
+                {LIBRARY_COLLECTION_SHELVES.map((collection) => {
+                  const expanded = expandedCollection === collection.title;
+                  return (
+                    <View key={collection.title} style={[styles.collectionCard, { backgroundColor: colors.card, borderColor: expanded ? "#CA922B80" : colors.border }]}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded }}
+                        activeOpacity={0.8}
+                        onPress={() => setExpandedCollection((current) => current === collection.title ? null : collection.title)}
+                        style={styles.collectionToggle}
+                      >
+                        <Text style={styles.collectionIcon}>{collection.icon}</Text>
+                        <Text style={[styles.collectionTitle, { color: colors.foreground }]}>{collection.title}</Text>
+                        <Feather name={expanded ? "chevron-up" : "chevron-down"} size={19} color="#8D5C17" />
+                      </TouchableOpacity>
+                      {expanded ? (
+                        <View style={[styles.collectionSubtopics, { borderTopColor: colors.border }]}>
+                          {collection.subtopics.map((subtopic) => (
+                            <TouchableOpacity
+                              key={subtopic}
+                              activeOpacity={0.8}
+                              onPress={() => router.push({ pathname: "/library-research", params: { question: subtopic } } as never)}
+                              style={[styles.collectionSubtopic, { borderColor: "#CA922B35", backgroundColor: "#CA922B0D" }]}
+                            >
+                              <Text style={[styles.collectionSubtopicText, { color: "#70480F" }]}>{subtopic}</Text>
+                              <Feather name="arrow-up-right" size={14} color="#8D5C17" />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
             <View style={[styles.section, { marginTop: 18 }]}>
               <View style={[styles.livingLibraryResearchCard, { backgroundColor: "#2A0F05", borderColor: "#CA922B50" }]}>
                 <View style={styles.livingLibraryResearchHeading}>
@@ -1701,6 +1757,17 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   scroll: { flex: 1 },
   section: { paddingHorizontal: 14, paddingTop: 18, gap: 10 },
+  collectionEyebrow: { fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
+  collectionHeading: { fontSize: 21, lineHeight: 27, fontWeight: "900" },
+  collectionIntro: { fontSize: 13, lineHeight: 19 },
+  collectionList: { gap: 9, marginTop: 2 },
+  collectionCard: { borderWidth: 1, borderRadius: 14, overflow: "hidden" },
+  collectionToggle: { minHeight: 57, paddingHorizontal: 13, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10 },
+  collectionIcon: { fontSize: 19 },
+  collectionTitle: { flex: 1, fontSize: 14, lineHeight: 19, fontWeight: "800" },
+  collectionSubtopics: { borderTopWidth: 1, padding: 10, gap: 7 },
+  collectionSubtopic: { minHeight: 41, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 9, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 9 },
+  collectionSubtopicText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: "700" },
   livingLibraryResearchCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 9 },
   livingLibraryResearchHeading: { flexDirection: "row", alignItems: "center", gap: 7 },
   livingLibraryResearchEyebrow: { color: "#F4D58D", fontSize: 11, fontWeight: "900", letterSpacing: 0.8 },

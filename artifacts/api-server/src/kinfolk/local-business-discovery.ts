@@ -24,6 +24,7 @@ import {
   buildConversationalBusinessResultView,
   type ConversationalBusinessResultView,
 } from "./business-result-view";
+import { isMwmDiasporaPromotionEnabled } from "../businesses/mwmCoreDiscoveryPolicy";
 
 export type BusinessDiscoverySignalRepository = Readonly<{
   recordCoverageGap(input: {
@@ -411,6 +412,8 @@ export async function discoverLocalBusinesses(input: {
   personalization?: KinfolkBusinessPersonalization;
   /** Every value is an explicit owner-provided designation requirement. */
   requiredDesignationIds?: readonly string[];
+  /** Member explicitly consented to leave the Diaspora Promotion Catalog. */
+  allowAllPublicPlaces?: boolean;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
   let platformStatus: "completed" | "degraded" = "completed";
   let businessRows: GovernedKinfolkBusiness[] = [];
@@ -420,24 +423,40 @@ export async function discoverLocalBusinesses(input: {
     (value): value is string =>
       typeof value === "string" && value.trim().length > 0,
   );
-  const subjectBusinessRead = input.repository.findBySubject(
-    input.scope,
-    input.subject,
-    input.personalization ? 50 : 12,
-    input.requiredDesignationIds,
-  );
+  const subjectBusinessRead = input.allowAllPublicPlaces
+    ? input.repository.findBySubject(
+        input.scope,
+        input.subject,
+        input.personalization ? 50 : 12,
+        input.requiredDesignationIds,
+        true,
+      )
+    : input.repository.findBySubject(
+        input.scope,
+        input.subject,
+        input.personalization ? 50 : 12,
+        input.requiredDesignationIds,
+      );
   const businessRead =
     input.subject.key === "activity" && preferenceTerms.length > 0
       ? Promise.all([
           subjectBusinessRead,
-          input.repository.findByPreferenceTerms(
-            input.scope,
-            preferenceTerms,
-            50,
-            ...(input.requiredDesignationIds?.length
-              ? [input.requiredDesignationIds]
-              : []),
-          ),
+          input.allowAllPublicPlaces
+            ? input.repository.findByPreferenceTerms(
+                input.scope,
+                preferenceTerms,
+                50,
+                input.requiredDesignationIds ?? [],
+                true,
+              )
+            : input.repository.findByPreferenceTerms(
+                input.scope,
+                preferenceTerms,
+                50,
+                ...(input.requiredDesignationIds?.length
+                  ? [input.requiredDesignationIds]
+                  : []),
+              ),
         ]).then(([subjectMatches, preferenceMatches]) => {
           const unique = new Map<string, GovernedKinfolkBusiness>();
           for (const business of [...subjectMatches, ...preferenceMatches]) {
@@ -459,10 +478,16 @@ export async function discoverLocalBusinesses(input: {
     mapRows = platformResults[1].value;
   else platformStatus = "degraded";
 
-  // A strict Support Lens is documentary-only: never broaden it with a
-  // general web lookup whose results cannot carry equivalent ownership proof.
+  // A strict Support Lens and the default Diaspora Promotion Catalog are
+  // documentary-only. Kinfolk may answer general factual questions with
+  // sources, but it must never promote an externally found business unless a
+  // member first makes an explicit all-places expansion choice.
   let webOutcome: WebSearchOutcome;
-  if (input.requiredDesignationIds?.length) {
+  const promotionCatalogIsActive = isMwmDiasporaPromotionEnabled();
+  if (
+    input.requiredDesignationIds?.length ||
+    (promotionCatalogIsActive && !input.allowAllPublicPlaces)
+  ) {
     webOutcome = {
       state: "unavailable",
       attempted: false,
@@ -492,7 +517,7 @@ export async function discoverLocalBusinesses(input: {
     };
   }
 
-  const rankedWeb = (input.requiredDesignationIds?.length
+  const rankedWeb = (input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
     ? []
     : rankLocalBusinessResults(webOutcome.results))
     .filter((result) =>

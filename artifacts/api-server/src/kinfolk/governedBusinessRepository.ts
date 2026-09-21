@@ -1,5 +1,5 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
@@ -499,7 +499,7 @@ async function queryCityCatalog(
     WHERE LOWER(BTRIM(b.city)) = LOWER($1)
       AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
       AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-      AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+      AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
     ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
     LIMIT $3
   `,
@@ -529,6 +529,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       subject: NormalizedBusinessSubject,
       limit = 12,
       requiredDesignationIds: readonly string[] = [],
+      allowAllPublicPlaces = false,
     ): Promise<GovernedKinfolkBusiness[]> {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
@@ -551,7 +552,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+          AND ${mwmDiasporaPromotionSqlPredicate("b.id", allowAllPublicPlaces ? "all_public" : undefined)}
           -- Service matching intentionally uses governed classification,
           -- business name, or a governed specialty. General tags and
           -- descriptions/stories are not service taxonomies: e.g. a city
@@ -636,6 +637,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       preferenceTerms: readonly string[],
       limit = 50,
       requiredDesignationIds: readonly string[] = [],
+      allowAllPublicPlaces = false,
     ): Promise<GovernedKinfolkBusiness[]> {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
@@ -680,7 +682,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+          AND ${mwmDiasporaPromotionSqlPredicate("b.id", allowAllPublicPlaces ? "all_public" : undefined)}
           AND preference_match.hit_count > 0
           ${designationClauses}
         ORDER BY preference_match.hit_count DESC,
@@ -749,7 +751,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           WHERE b.latitude IS NOT NULL
             AND b.longitude IS NOT NULL
             AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-            AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+            AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
         )
         SELECT *
         FROM governed_nearby
@@ -780,7 +782,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           AND LOWER(BTRIM(b.city)) = LOWER($2)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $3
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+          AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
         ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT 1
       `,

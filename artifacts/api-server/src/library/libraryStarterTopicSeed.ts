@@ -5,6 +5,8 @@
  * legal, financial, or eligibility advice is stored here. Live articles remain
  * source-cited and publication-governed by the Living Library pipeline.
  */
+import { LIBRARY_PRIMARY_COLLECTION_TOPICS } from "./libraryPrimaryCollectionSeed";
+
 export type LibraryStarterTopic = Readonly<{
   slug: string;
   title: string;
@@ -19,7 +21,7 @@ export type LibraryStarterTopic = Readonly<{
   nextBricks: ReadonlyArray<Readonly<{ title: string; reason: string }>>;
 }>;
 
-export const LIBRARY_STARTER_TOPICS: readonly LibraryStarterTopic[] = [
+const LIBRARY_BASE_STARTER_TOPICS: readonly LibraryStarterTopic[] = [
   {
     "slug": "finding-rental-housing",
     "title": "Finding Rental Housing and Preparing to Apply",
@@ -4493,3 +4495,9 @@ export const LIBRARY_STARTER_TOPICS: readonly LibraryStarterTopic[] = [
     ]
   }
 ] as const;
+
+
+export const LIBRARY_STARTER_TOPICS: readonly LibraryStarterTopic[] = [
+  ...LIBRARY_PRIMARY_COLLECTION_TOPICS,
+  ...LIBRARY_BASE_STARTER_TOPICS,
+];

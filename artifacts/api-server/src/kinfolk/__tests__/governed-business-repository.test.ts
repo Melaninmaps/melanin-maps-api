@@ -275,7 +275,8 @@ describe("governed Kinfolk business repository", () => {
       sql.indexOf("ORDER BY"),
     );
     expect(serviceMatchSection).not.toContain("jsonb_array_elements_text");
-    expect(sql).toContain("AND TRUE");
+    expect(sql).toContain("b.ownership_designations");
+    expect(sql).toContain("jsonb_array_elements_text");
     // Identity/story fields remain selected for a governed card, but are never
     // service-match predicates (so incidental prose cannot qualify a result).
     expect(sql).toContain("bi.business_story");

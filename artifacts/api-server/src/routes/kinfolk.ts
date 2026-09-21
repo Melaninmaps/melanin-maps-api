@@ -5648,6 +5648,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     });
     return true;
   }
+  // A member can deliberately override their saved Support Lens for this one
+  // recommendation turn. This is the only way Kinfolk may leave the Diaspora
+  // Promotion Catalog; it is never an automatic fallback.
+  const explicitAllPlacesExpansion = /\b(?:show|search|include|open to|expand to)\s+(?:all\s+)?(?:public\s+)?(?:places|businesses|options)\b|\bopen\s+to\s+any(?:\s+place)?\b/i.test(input.message);
+  const discoveryDesignationIds = explicitAllPlacesExpansion
+    ? []
+    : requiredDesignationIds;
   const discoveryResult = await discoverLocalBusinesses({
     scope,
     subject,
@@ -5671,7 +5678,8 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: input.message,
     },
-    requiredDesignationIds,
+    requiredDesignationIds: discoveryDesignationIds,
+    allowAllPublicPlaces: explicitAllPlacesExpansion,
   });
   const resultView = buildConversationalBusinessResultView({
     businesses: discoveryResult.discovery.platformBusinesses,
@@ -5682,19 +5690,21 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const supportScope =
-    requiredDesignationIds.length > 0
+    discoveryDesignationIds.length > 0
       ? " that match every owner-provided support designation you named"
       : "";
   const conciseReply =
-    requiredDesignationIds.length > 0 && platformCount === 0
-      ? `I couldn't find a documented MWM match for every selected support designation in ${scope.city}. Would you like to keep the exact focus, remove one selection, choose another documented community, or show all businesses?`
+    discoveryDesignationIds.length > 0 && platformCount === 0
+      ? `I couldn't find a documented Diaspora-owned match for every selected support designation in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
+      : explicitAllPlacesExpansion && platformCount > 0
+        ? `You asked to expand beyond your saved support lens, so these are public listings—not Diaspora Promotion Catalog recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} matching MWM ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      ? `I found ${platformCount} documented Diaspora Promotion Catalog ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
           ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}${supportScope}. I did find current external sources below; they are not MWM-verified business listings.`
-          : `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}${supportScope}. Want me to widen the area or try a nearby city?`;
+          : `I didn't find a matching documented Diaspora Promotion Catalog listing for ${subject.label} in ${scope.city}${supportScope}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,

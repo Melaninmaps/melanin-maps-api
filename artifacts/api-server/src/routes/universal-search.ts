@@ -23,7 +23,7 @@ import {
   classifyGrowthSensitivity,
 } from "../lib/library-growth-engine";
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
   buildDesignationPredicateSql,
   matchesDocumentedDesignationScope,
@@ -748,6 +748,15 @@ async function searchBusinesses(opts: {
       })
       .join("\n            AND ");
   };
+  // A member who deliberately enters a specific business name can find an
+  // otherwise public listing. This does not make that record eligible for
+  // default promotion, suggestions, map discovery, or Kinfolk recommendations.
+  const directPublicLookup = intentType === "named_business";
+  const promotionPredicate = (businessIdExpression: string) =>
+    mwmDiasporaPromotionSqlPredicate(
+      businessIdExpression,
+      directPublicLookup ? "all_public" : undefined,
+    );
 
   // ── PASS 1: Exact name match ──────────────────────────────────────────────
   // named_business intent: NEVER apply a geo filter here. Someone searching for
@@ -790,7 +799,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
-           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
            AND b.name ILIKE $1
            ${cityClause} ${stateClause} ${geoClause}
            ${designationClause ? `AND ${designationClause}` : ""}
@@ -866,7 +875,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
-           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
            AND (
              b.description ILIKE $1
              OR b.tags::text ILIKE $1
@@ -929,7 +938,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
-           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
            AND cs.says_text ILIKE $1
            ${city ? `AND b.city ILIKE $2` : ""}
             ${designationClause ? `AND ${designationClause}` : ""}
@@ -992,7 +1001,7 @@ async function searchBusinesses(opts: {
            WHERE status = 'active'
              AND COALESCE(name, '') NOT ILIKE '%[demo]%'
              AND COALESCE(description, '') NOT ILIKE '%[demo]%'
-             AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
+             AND ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}
              AND lower(city) = ANY($1::text[])
            LIMIT 10`,
           [allWords],
@@ -1044,7 +1053,7 @@ async function searchBusinesses(opts: {
              WHERE b.status = 'active'
                AND ${listingFilter}
                AND ${nonDemoFilter}
-               AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+               AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
                AND lower(b.city) = ANY($1::text[])
                AND (
                  lower(b.name)           LIKE ANY($2::text[])
@@ -1145,7 +1154,7 @@ async function searchBusinesses(opts: {
                AND status = 'active'
                AND COALESCE(name, '') NOT ILIKE '%[demo]%'
                AND COALESCE(description, '') NOT ILIKE '%[demo]%'
-               AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
+               AND ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}
              LIMIT 1`,
             [geoQ, geoQ + "%"],
           );
@@ -1237,7 +1246,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
-           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
            AND (${catIlikeParts})
            ${extraClauses}
            ${designationClause ? `AND ${designationClause}` : ""}
@@ -1323,7 +1332,7 @@ async function searchBusinesses(opts: {
            WHERE b.status = 'active'
              AND ${listingFilter}
              AND ${nonDemoFilter}
-             AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+             AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
              AND ${geoClause3b}
              ${designationClause3b ? `AND ${designationClause3b}` : ""}
              ${excludeClause3b}
@@ -1387,7 +1396,7 @@ async function searchBusinesses(opts: {
          WHERE b.status = 'active'
            AND ${listingFilter}
            AND ${nonDemoFilter}
-           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
            AND similarity(LOWER(b.name), LOWER($1)) > 0.2
            ${excludeClause}
             ${designationClause ? `AND ${designationClause}` : ""}
@@ -2283,7 +2292,7 @@ router.get("/search/suggest/universal", async (req: Request, res: Response) => {
            AND b.listing_status IN ('live_unclaimed', 'live_claimed')
            AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
            AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
-           AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+           AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
            AND b.name ILIKE $1 ${cityClause}
          ORDER BY b.name ASC LIMIT 5`,
         params,

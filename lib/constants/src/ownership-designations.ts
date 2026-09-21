@@ -113,6 +113,28 @@ export const OWNERSHIP_DESIGNATIONS = [
   "Minority-Owned (general / legacy)",
 ] as const;
 
+/**
+ * Explicit community ownership designations eligible for MWM's Diaspora
+ * Promotion Catalog. These labels are documentary-only; they are never
+ * inferred from a business name, cuisine, neighborhood, imagery, language,
+ * or a member's profile. Role-only designations remain valid filters but do
+ * not establish a Diaspora ownership designation on their own.
+ */
+export const DIASPORA_OWNERSHIP_DESIGNATIONS = OWNERSHIP_DESIGNATIONS.filter(
+  (designation) =>
+    !new Set([
+      "Immigrant-Owned",
+      "Refugee-Owned",
+      "Woman-Owned",
+      "LGBTQIA+-Owned",
+      "Veteran-Owned",
+      "Disability-Owned",
+      "Divine Nine-Affiliated",
+      "Family-Owned",
+      "Cooperative / Worker-Owned",
+    ]).has(designation),
+);
+
 export type OwnershipDesignation = (typeof OWNERSHIP_DESIGNATIONS)[number];
 
 export const SUPPORT_LENS_MODES = [

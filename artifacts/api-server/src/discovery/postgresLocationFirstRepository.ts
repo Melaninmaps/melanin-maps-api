@@ -12,7 +12,7 @@ import type {
   DiscoveryRecord,
   LocationFirstQuery,
 } from "../shared/discoveryContracts";
-import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 type Pool = {
   query<T = Record<string, unknown>>(
@@ -141,7 +141,7 @@ export async function findExactRecords(
       WHERE LOWER(l.city_name) = $1
         AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
-        AND ${mwmCoreDiscoverySqlPredicate("b.id")}
+        AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
         ${stateClause}
         ${specialtyClause}
         ${categoryClause}
