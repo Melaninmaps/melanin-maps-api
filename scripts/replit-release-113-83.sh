@@ -13,10 +13,9 @@
 #   RELEASE_SHA=<full final GitHub main SHA> bash scripts/replit-release-113-83.sh verify
 #   RELEASE_SHA=<full final GitHub main SHA> bash scripts/replit-release-113-83.sh build
 #
-# `build` starts both store builds. It automatically submits iOS to the existing
-# TestFlight submit profile after the artifact succeeds. Android produces a
-# production AAB but intentionally does not submit to Google Play because this
-# repository has no reviewed Android submit profile or requested release track.
+# `build` starts both store builds but does not submit either artifact. This
+# keeps the new binary reviewable before TestFlight or any Google Play track
+# changes. Submission is a separate deliberate step after artifact/device proof.
 
 set -euo pipefail
 
@@ -93,11 +92,12 @@ case "$MODE" in
     pnpm exec eas whoami >/dev/null || fail "EAS is not authenticated; authenticate in the existing owner account without exposing credentials"
     pnpm exec eas project:info >/dev/null || fail "EAS project identity could not be verified"
 
-    # iOS build 114: production API, exact source gate, then TestFlight submission.
+    # iOS build 114: production API and exact source gate only. TestFlight
+    # submission intentionally occurs only after the completed artifact is
+    # reviewed and approved separately.
     pnpm exec eas build \
       --platform ios \
       --profile production \
-      --auto-submit-with-profile production \
       --what-to-test 'Build 114: server-owned Kinfolk voice with four delivery profiles and record-discard control; strict private Support Lens across directory, map, and Kinfolk; source-receipted governed directory staging controls; Library research, Community recovery, locality-first maps, and typo/collective-opinion handling. Verify fresh production API identity and microphone playback on a physical device.' \
       --clear-cache \
       --freeze-credentials \
@@ -117,6 +117,6 @@ case "$MODE" in
       --non-interactive \
       --json > "$ROOT/release-eas-android-84.json"
 
-    printf '%s\n' 'BUILD_STARTED: iOS TestFlight auto-submit was requested; Android production AAB build was requested. Record the JSON build IDs, wait for completed artifacts, then audit fresh binaries on real devices before claiming availability.'
+    printf '%s\n' 'BUILD_STARTED: iOS and Android production builds were requested without store submission. Record the JSON build IDs, wait for completed artifacts, then audit fresh binaries on real devices before a separate TestFlight or Play submission.'
     ;;
 esac
