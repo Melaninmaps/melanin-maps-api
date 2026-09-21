@@ -49,6 +49,7 @@ import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
 import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
+import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -252,6 +253,17 @@ function publicBusinessVisibilityCondition() {
   )`;
 }
 
+/**
+ * This applies only to public directory discovery. Detail, claim, moderation,
+ * contribution, and account paths remain available and are never filtered by
+ * MWM Core evidence policy.
+ */
+function mwmCorePublicDiscoveryCondition() {
+  return sql<boolean>`${sql.raw(
+    mwmCoreDiscoverySqlPredicate('"businesses"."id"'),
+  )}`;
+}
+
 router.use((req: Request, res: Response, next: NextFunction) => {
   if (!req.path.startsWith("/businesses")) return next();
   if (isPublicBusinessDiscoveryRead(req)) return next();
@@ -315,6 +327,7 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
       FROM public.public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
+        AND ${mwmCoreDiscoverySqlPredicate("public.public_businesses.id")}
         AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
@@ -375,6 +388,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
         conditions.push(publicBusinessVisibilityCondition());
+        conditions.push(mwmCorePublicDiscoveryCondition());
 
         if (category && typeof category === "string" && category !== "All") {
           const categoryValues = categoryFilterStorageValues(category);
@@ -794,7 +808,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
               .map((t) => t.replace(/[^a-z0-9'&-]/g, ""))
               .filter((t) => t.length >= 3 && !STOP.includes(t));
 
-            const fuzzyConditions = [publicBusinessVisibilityCondition()];
+            const fuzzyConditions = [
+              publicBusinessVisibilityCondition(),
+              mwmCorePublicDiscoveryCondition(),
+            ];
             if (city && typeof city === "string" && city.trim()) {
               fuzzyConditions.push(
                 sql<boolean>`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`,

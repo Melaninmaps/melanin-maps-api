@@ -249,7 +249,12 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])");
-    expect(sql).not.toContain("jsonb_array_elements_text");
+    const serviceMatchSection = sql.slice(
+      sql.indexOf("-- Service matching intentionally"),
+      sql.indexOf("ORDER BY"),
+    );
+    expect(serviceMatchSection).not.toContain("jsonb_array_elements_text");
+    expect(sql).toContain("AND TRUE");
     // Identity/story fields remain selected for a governed card, but are never
     // service-match predicates (so incidental prose cannot qualify a result).
     expect(sql).toContain("bi.business_story");
@@ -269,6 +274,7 @@ describe("governed Kinfolk business repository", () => {
       ["\\mbookstore\\M", "\\mbook[[:space:]-]+store\\M", "\\mbookshop\\M"],
       12,
       "bookstore",
+      [],
     ]);
   });
 

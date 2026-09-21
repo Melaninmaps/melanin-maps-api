@@ -13,7 +13,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 
-const POLICY_VERSION = "mwm-green-book-cohort-preflight-v1";
+const POLICY_VERSION = "mwm-core-black-latino-source-evidence-v2";
 const DIRECTORY_POLICY_VERSION = "directory-auto-review-v1";
 const DEFAULT_ROOT = "data/founder-imports";
 const DEFAULT_OUT = "artifacts/reports/inventory-cohort-preflight.jsonl";
@@ -126,9 +126,22 @@ function directoryDecision(record, sourceRow, seenIdentities) {
   };
 }
 
+/**
+ * First-launch MWM Core admission is deliberately positive-evidence only.
+ * These patterns are applied to the explicit ownership/designation field from
+ * a traceable source—not to a name, cuisine, language, image, location, or
+ * other proxy. Generic "minority-owned", BIPOC, diaspora, Indigenous,
+ * Caribbean, LGBTQIA+, faith, and woman-owned labels remain held until their
+ * own source-backed launch policy is approved.
+ */
 const QUALIFYING_OWNERSHIP_PATTERNS = [
-  /\bblack\b/, /\bafrican american\b/, /\bafro\b/, /\blatino\b/, /\blatina\b/, /\blatinx\b/, /\bhispanic\b/,
-  /\bindigenous\b/, /\bnative american\b/, /\bcaribbean\b/, /\bdiaspora\b/, /\bbipoc\b/, /\bpeople of color\b/,
+  /\bblack\b/,
+  /\bafrican american\b/,
+  /\bafro american\b/,
+  /\blatino\b/,
+  /\blatina\b/,
+  /\blatinx\b/,
+  /\bhispanic\b/,
 ];
 
 function missionDecision(record, directory) {
@@ -148,12 +161,13 @@ function missionDecision(record, directory) {
     return { cohort: "hold_within_package_duplicate", eligibleForReleasePreview: false, reasons: directory.exceptionCodes };
   }
   if (!qualifying.length) {
-    return { cohort: "hold_mission_evidence_required", eligibleForReleasePreview: false, reasons: ["explicit_mwm_diaspora_designation_required"] };
+    return { cohort: "hold_mission_evidence_required", eligibleForReleasePreview: false, reasons: ["explicit_black_or_latino_hispanic_designation_required"] };
   }
-  // Ownership evidence is the intended MWM admission signal. A source-backed
-  // Black/Latino/diaspora designation is not discarded merely because it needs
-  // a cohort receipt. It is still not publishable: this offline result only
-  // identifies a candidate for a later, explicit launch-cohort confirmation.
+  // Ownership evidence is the intended MWM Core admission signal. A
+  // source-backed Black/African American or Latino/a/x/Hispanic designation is
+  // not discarded merely because it needs a cohort receipt. It is still not
+  // publishable: this offline result only identifies a candidate for a later,
+  // explicit launch-cohort confirmation.
   if (
     (targetKind === "business" || targetKind === "online_business")
     && publicHost(sourceUrl)
@@ -162,7 +176,7 @@ function missionDecision(record, directory) {
     return {
       cohort: "mwm_source_backed_candidate",
       eligibleForReleasePreview: true,
-      reasons: ["explicit_mwm_diaspora_designation", "source_directory_traceable", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
+        reasons: ["explicit_approved_mwm_core_designation", "source_directory_traceable", ...qualifying.map((designation) => `designation:${normalize(designation)}`)],
     };
   }
   if (remainingDirectoryExceptions.length > 0) {

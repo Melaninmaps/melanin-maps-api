@@ -1,4 +1,5 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
+import { mwmCoreDiscoverySqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
   businessSubjectSearchPatterns,
   type NormalizedBusinessSubject,
@@ -497,6 +498,7 @@ async function queryCityCatalog(
     WHERE LOWER(BTRIM(b.city)) = LOWER($1)
       AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
       AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+      AND ${mwmCoreDiscoverySqlPredicate("b.id")}
     ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
     LIMIT $3
   `,
@@ -554,6 +556,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
           -- Service matching intentionally uses governed classification,
           -- business name, or a governed specialty. General tags and
           -- descriptions/stories are not service taxonomies: e.g. a city
@@ -666,6 +669,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
           AND preference_match.hit_count > 0
         ORDER BY preference_match.hit_count DESC,
           b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
@@ -727,6 +731,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           WHERE b.latitude IS NOT NULL
             AND b.longitude IS NOT NULL
             AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+            AND ${mwmCoreDiscoverySqlPredicate("b.id")}
         )
         SELECT *
         FROM governed_nearby
@@ -757,6 +762,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           AND LOWER(BTRIM(b.city)) = LOWER($2)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $3
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+          AND ${mwmCoreDiscoverySqlPredicate("b.id")}
         ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT 1
       `,
