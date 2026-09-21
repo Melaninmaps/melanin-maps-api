@@ -187,10 +187,24 @@ describe("publication worker", () => {
     const production = productionPool({ insertId: "dir-worker" });
     const stop = startDirectoryPublicationWorker(reviewPool, production.pool, {
       DIRECTORY_PUBLICATION_WORKER_ENABLED: "1",
+      DIRECTORY_PUBLICATION_BATCH_SHA256: "a".repeat(64),
     });
     await vi.runOnlyPendingTimersAsync();
     stop?.();
+    expect(reviewPool.query).toHaveBeenCalledWith(
+      expect.stringContaining("JOIN directory_import_batches b"),
+      ["a".repeat(64)],
+    );
     expect(reviewPool.query).toHaveBeenCalledWith(expect.stringContaining("SET status='sent'"), ["outbox-1"]);
     expect(reviewPool.query).toHaveBeenCalledWith(expect.stringContaining("directory_review_acknowledgements"), ["batch-1:1", row.payload_hash]);
+  });
+
+  it("refuses to process a mixed historical queue without an exact batch checksum", () => {
+    const reviewPool = { query: vi.fn() } as unknown as Pool;
+    const production = productionPool();
+    expect(() => startDirectoryPublicationWorker(reviewPool, production.pool, {
+      DIRECTORY_PUBLICATION_WORKER_ENABLED: "1",
+    })).toThrow("DIRECTORY_PUBLICATION_BATCH_SHA256");
+    expect(reviewPool.query).not.toHaveBeenCalled();
   });
 });
