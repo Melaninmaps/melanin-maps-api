@@ -2,7 +2,9 @@
 /**
  * Fixture test for first-launch MWM Core classification. It makes a temporary
  * local manifest, invokes the offline receipt generator, and asserts that only
- * explicit Black/African American or Latino/a/x/Hispanic designations qualify.
+ * explicit Black/African American or Latino/a/x/Hispanic designations enter
+ * MWM support filters. Other signed-source rows may be listed as unverified,
+ * but no identity is inferred from a name, source, cuisine, or location.
  */
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -55,14 +57,17 @@ try {
   );
   assert.equal(run.status, 0, run.stderr || run.stdout);
   const receipts = (await readFile(out, "utf8")).trim().split("\n").map(JSON.parse);
-  const candidateRows = receipts
-    .filter((receipt) => receipt.cohort === "mwm_source_backed_candidate")
+  const designatedRows = receipts
+    .filter((receipt) => receipt.publicationClassification === "source_reported_mwm_designation")
     .map((receipt) => receipt.sourceRow);
-  assert.deepEqual(candidateRows, [1, 2, 3, 4]);
-  for (const heldRow of [5, 6, 7, 8, 9, 10]) {
-    const receipt = receipts.find((item) => item.sourceRow === heldRow);
-    assert.equal(receipt.cohort, "hold_mission_evidence_required");
-    assert.deepEqual(receipt.reasonCodes, ["explicit_black_or_latino_hispanic_designation_required"]);
+  assert.deepEqual(designatedRows, [1, 2, 3, 4]);
+  for (const unverifiedRow of [5, 6, 7, 8, 9, 10]) {
+    const receipt = receipts.find((item) => item.sourceRow === unverifiedRow);
+    assert.equal(receipt.cohort, "source_reputable_listing_candidate");
+    assert.equal(receipt.publicationClassification, "unverified_source_listing");
+    assert.equal(receipt.eligibleForReleasePreview, true);
+    assert.equal(receipt.directoryOutcome, "auto_ready");
+    assert.equal(receipt.preAdmissionDirectoryOutcome, "needs_review");
   }
   process.stdout.write("MWM Core source-policy fixture test passed.\n");
 } finally {
