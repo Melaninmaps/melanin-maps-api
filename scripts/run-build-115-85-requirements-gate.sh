@@ -83,6 +83,9 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/directory-import-publication.test.ts \
   src/__tests__/directory-publication.test.ts \
   src/__tests__/founder-business-discoverability-contract.test.ts \
+  src/__tests__/canonical-vibes-contract.test.ts \
+  src/__tests__/community-experience-contract.test.ts \
+  src/__tests__/business-experience-social-contract.test.ts \
   src/map/__tests__/essentialServices.test.ts \
   src/map/__tests__/registerLocalBusinessSearchRoute.test.ts \
   src/library/__tests__/librarySearch.test.ts \
@@ -122,6 +125,7 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/waitlist-and-phone-recovery-contract.test.ts \
   artifacts/mobile/__tests__/map-clean-surface.test.ts \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \
+  artifacts/mobile/__tests__/business-discovery-contract.test.ts \
   artifacts/mobile/__tests__/map-locality-first.test.ts \
   artifacts/mobile/__tests__/essential-services-map.test.ts
 

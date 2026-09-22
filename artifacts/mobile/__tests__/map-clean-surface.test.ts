@@ -8,9 +8,10 @@ const mapSource = readFileSync(
 );
 
 describe("clean locality-first mobile map surface", () => {
-  it("preserves city and business search while removing crowded shortcut strips", () => {
-    expect(mapSource).toContain('placeholder="Search a city (e.g., Atlanta, GA)"');
-    expect(mapSource).toContain('placeholder="Search businesses, HBCUs, markets, or services"');
+  it("preserves one city, business, service, and item search while removing crowded shortcut strips", () => {
+    expect(mapSource).toContain('placeholder="Search a business, service, item, or city"');
+    expect(mapSource).toContain("const locality = parseMapSearchLocality(query)");
+    expect(mapSource).not.toContain('placeholder="Search a city (e.g., Atlanta, GA)"');
     for (const removedLabel of ["Support filters", "Explore all", "Safety Heat", "Gatherings"]) {
       expect(mapSource).not.toContain(removedLabel);
     }
@@ -19,8 +20,9 @@ describe("clean locality-first mobile map surface", () => {
   it("keeps cultural sites and physical businesses discoverable without map category chips", () => {
     expect(mapSource).toContain('pathname: "/cultural-heritage"');
     expect(mapSource).toContain('pathname: "/business/[id]"');
-    expect(mapSource).toContain("nearby sundown-town history");
-    expect(mapSource).toContain("showSundownHistory");
+    expect(mapSource).toContain("openMapDirections(");
+    expect(mapSource).toContain("Historical Sundown Town");
+    expect(mapSource).not.toContain("showSundownHistory");
     expect(mapSource).not.toContain("CategoryPill");
   });
 });

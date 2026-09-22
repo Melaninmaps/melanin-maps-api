@@ -32,6 +32,7 @@ type VibeResult = {
   id: string;
   name: string;
   category: string;
+  subcategory: string | null;
   city: string;
   state: string;
   imageUrl: string | null;
@@ -43,6 +44,8 @@ type VibeResult = {
   vibes: string[];
   ownerVibeMatches: number;
   communityTagCount: number;
+  communityReactionCount: number;
+  communitySignals: Array<{ key: string; label: string; count: number }>;
   isSaved: boolean;
   rankScore: number;
 };
@@ -58,25 +61,34 @@ export default function VibeSearchScreen() {
   const [vibes, setVibes] = useState<VibeOption[]>([]);
   const [vibesError, setVibesError] = useState<string | null>(null);
   const [results, setResults] = useState<VibeResult[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const response = await fetch(`${BASE}/api/vibes/list`);
-        const data = await response.json() as { vibes?: VibeOption[]; error?: string };
-        if (!response.ok) throw new Error(data.error ?? "VIBES could not be loaded");
-        if (active) setVibes(data.vibes ?? []);
-      } catch (error) {
-        if (active) setVibesError(error instanceof Error ? error.message : "VIBES could not be loaded");
-      }
-    })();
-    return () => { active = false; };
+  const loadVibes = useCallback(async () => {
+    setVibesError(null);
+    try {
+      // VIBES is member-aware because community feedback belongs to members.
+      // The API intentionally protects it; the previous screen omitted this
+      // existing session token and therefore rendered an empty picker.
+      const token = await getItemAsync("auth_session_token");
+      if (!token) throw new Error("Sign in to explore member VIBES.");
+      const response = await fetch(`${BASE}/api/vibes/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json().catch(() => ({})) as { vibes?: VibeOption[]; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "VIBES could not be loaded");
+      setVibes(data.vibes ?? []);
+    } catch (error) {
+      setVibesError(error instanceof Error ? error.message : "VIBES could not be loaded");
+    }
   }, []);
+
+  useEffect(() => {
+    void loadVibes();
+  }, [loadVibes]);
 
   const toggleVibe = (id: string) => {
     setSelectedVibes((prev) =>
@@ -94,20 +106,22 @@ export default function VibeSearchScreen() {
     if (selectedVibes.length === 0) return;
     setLoading(true);
     setSearched(true);
+    setSearchError(null);
     try {
       const token = await getItemAsync("auth_session_token");
+      if (!token) throw new Error("Sign in to search member VIBES.");
       const params = new URLSearchParams();
       selectedVibes.forEach((v) => params.append("vibes", v));
       selectedPrices.forEach((p) => params.append("price", p));
       const res = await fetch(`${BASE}/api/vibes/search?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (res.ok) {
-        const data = await res.json() as { businesses: VibeResult[] };
-        setResults(data.businesses ?? []);
-      }
-    } catch {
+      const data = await res.json().catch(() => ({})) as { businesses?: VibeResult[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "VIBES search could not be completed");
+      setResults(data.businesses ?? []);
+    } catch (error) {
       setResults([]);
+      setSearchError(error instanceof Error ? error.message : "VIBES search could not be completed");
     } finally {
       setLoading(false);
     }
@@ -124,10 +138,11 @@ export default function VibeSearchScreen() {
 
   const getRankBadge = (b: VibeResult) => {
     if (b.isSaved) return { label: "Saved", color: "#CA922B" };
-    if (b.ownerVibeMatches > 0 && b.communityTagCount > 5)
+    if (b.ownerVibeMatches > 0 && b.communityReactionCount > 0)
       return { label: "Community Pick", color: "#2D7A4F" };
     if (b.ownerVibeMatches > 0) return { label: "Vibe Match", color: "#5B6AF0" };
-    if (b.communityTagCount > 0) return { label: "Community Tagged", color: "#7A6030" };
+    if (b.communityTagCount > 0 || b.communityReactionCount > 0)
+      return { label: "Community Tagged", color: "#7A6030" };
     return null;
   };
 
@@ -197,6 +212,17 @@ export default function VibeSearchScreen() {
               })}
             </View>
           )}
+          {item.communityReactionCount > 0 && (
+            <View style={[styles.communitySays, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              <Feather name="message-circle" size={11} color={colors.primary} />
+              <Text style={[styles.communitySaysLabel, { color: colors.primary }]}>Community says</Text>
+              <Text style={[styles.communitySaysText, { color: colors.foreground }]} numberOfLines={1}>
+                {item.communitySignals.slice(0, 2).map((signal) => (
+                  signal.count > 1 ? `${signal.label} (${signal.count})` : signal.label
+                )).join(" · ") || `${item.communityReactionCount} positive signal${item.communityReactionCount === 1 ? "" : "s"}`}
+              </Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -253,7 +279,12 @@ export default function VibeSearchScreen() {
               })}
             </View>
             {vibesError ? (
-              <Text style={[styles.vibesError, { color: "#B91C1C" }]}>{vibesError}</Text>
+              <View style={styles.errorBlock}>
+                <Text style={[styles.vibesError, { color: "#B91C1C" }]}>{vibesError}</Text>
+                <TouchableOpacity onPress={() => { void loadVibes(); }} accessibilityRole="button">
+                  <Text style={[styles.retryText, { color: colors.primary }]}>Try again</Text>
+                </TouchableOpacity>
+              </View>
             ) : vibes.length === 0 ? (
               <Text style={[styles.vibesError, { color: colors.mutedForeground }]}>Loading available VIBES…</Text>
             ) : null}
@@ -297,16 +328,21 @@ export default function VibeSearchScreen() {
             {searched && !loading && results.length === 0 && selectedVibes.length > 0 && (
               <View style={[styles.emptyState, { borderColor: colors.border }]}>
                 <Feather name="search" size={32} color={colors.mutedForeground} />
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No spots yet</Text>
+                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{searchError ? "VIBES search unavailable" : "No spots yet"}</Text>
                 <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-                  Be the first to tag businesses with this vibe — help the community discover great spots.
+                  {searchError ?? "Be the first to tag businesses with this vibe — help the community discover great spots."}
                 </Text>
+                {searchError && (
+                  <TouchableOpacity onPress={() => { void search(); }} accessibilityRole="button">
+                    <Text style={[styles.retryText, { color: colors.primary }]}>Try again</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
             {results.length > 0 && (
               <Text style={[styles.rankNote, { color: colors.mutedForeground }]}>
-                Ranked by your saves · promotions · community tags
+                Ranked by member saves, eligible promotion signals, and community feedback
               </Text>
             )}
           </View>
@@ -337,7 +373,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
   },
-  vibesError: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginTop: 12 },
+  errorBlock: { gap: 5, marginTop: 12 },
+  vibesError: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  retryText: { fontFamily: "Inter_700Bold", fontSize: 13, marginTop: 2 },
   vibeCard: {
     width: "47%",
     borderRadius: 14,
@@ -393,4 +431,7 @@ const styles = StyleSheet.create({
   vibeRow: { flexDirection: "row", gap: 5, flexWrap: "wrap", marginTop: 2 },
   vibePill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
   vibePillText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
+  communitySays: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5, marginTop: 3 },
+  communitySaysLabel: { fontFamily: "Inter_700Bold", fontSize: 10 },
+  communitySaysText: { fontFamily: "Inter_400Regular", fontSize: 10, flex: 1 },
 });

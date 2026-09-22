@@ -63,7 +63,7 @@ describe("category-aware business experience contract", () => {
     expect(ownershipDesignationStorageValues("woman").values).toEqual(
       expect.arrayContaining(["woman-owned", "women-owned"]),
     );
-    expect(businessesSource).toContain('filter.id === "black-african-american"');
+    expect(businessesSource).toContain('legacyDesignationColumn(filter.id) === "black_owned"');
     expect(businessesSource).toContain("fuzzyWouldEscapeRestrictiveFilter");
     expect(businessesSource).toContain("!fuzzyWouldEscapeRestrictiveFilter");
     expect(businessesSource).toContain("Tester privileges never expose pending/review rows");

@@ -115,13 +115,15 @@ describe("FullMapView locality-first contracts", () => {
     expect(businessHookSource).toContain("city, state, designations, supportScope");
   });
 
-  it("adds a submitted business search without widening the member's local map scope", () => {
-    expect(fullMapSource).toContain('accessibilityLabel="Search businesses on this map"');
-    expect(fullMapSource).toContain('placeholder="Search businesses, HBCUs, markets, or services"');
+  it("uses one submitted search without widening the member's local map scope", () => {
+    expect(fullMapSource).toContain('accessibilityLabel="Search the map by business, service, item, or city"');
+    expect(fullMapSource).toContain('placeholder="Search a business, service, item, or city"');
     expect(fullMapSource).toContain("search: submittedBusinessSearch");
-    expect(fullMapSource).toContain("setSubmittedBusinessSearch(businessSearchInput.trim())");
+    expect(fullMapSource).toContain("const locality = parseMapSearchLocality(query)");
+    expect(fullMapSource).toContain("if (locality?.state)");
+    expect(fullMapSource).toContain("setSubmittedBusinessSearch(query)");
     expect(fullMapSource).toContain('enabled: exploringAllAreas || mapLocality !== null');
-    expect(fullMapSource).toContain('accessibilityLabel="Clear business search"');
+    expect(fullMapSource).toContain('accessibilityLabel="Clear map search and return to my local map"');
   });
 
   it("uses the saved strict Support Lens for map business requests", () => {
