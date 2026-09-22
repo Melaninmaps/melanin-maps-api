@@ -81,6 +81,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/community-feed-schema-guard.test.ts \
   src/__tests__/directory-import-publication.test.ts \
   src/__tests__/directory-publication.test.ts \
+  src/__tests__/founder-business-discoverability-contract.test.ts \
   src/map/__tests__/essentialServices.test.ts \
   src/map/__tests__/registerLocalBusinessSearchRoute.test.ts \
   src/library/__tests__/librarySearch.test.ts \

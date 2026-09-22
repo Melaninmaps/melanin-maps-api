@@ -282,6 +282,62 @@ function isDeliberateNamedBusinessLookup(value: string): boolean {
   return words.length <= 7 && words.some((word) => !generic.has(word));
 }
 
+/**
+ * Preserve the direct-name lookup promise even when a richer directory query
+ * has an operational database dependency failure. This read uses the already
+ * proven public view plus the normal detail endpoint's public record shape;
+ * it is neither a recommendation nor a broadening of category discovery.
+ */
+async function sendDirectNameAvailabilityFallback(
+  req: Request,
+  res: Response,
+): Promise<boolean> {
+  const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+  if (!isDeliberateNamedBusinessLookup(search)) return false;
+
+  const city = typeof req.query.city === "string" ? normalizeCityAlias(req.query.city) : "";
+  const state = typeof req.query.state === "string" ? req.query.state.trim() : "";
+  const limitParam = typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 20;
+  const limit = Math.min(50, Math.max(1, Number.isFinite(limitParam) ? limitParam : 20));
+  const params: unknown[] = [search];
+  const filters = ["name ILIKE '%' || $1 || '%'"];
+
+  if (city) {
+    params.push(city);
+    filters.push(`LOWER(BTRIM(COALESCE(city, ''))) = LOWER(BTRIM($${params.length}))`);
+  }
+  if (state) {
+    params.push(state);
+    filters.push(`UPPER(BTRIM(COALESCE(state, ''))) = UPPER(BTRIM($${params.length}))`);
+  }
+  params.push(limit);
+
+  const { rows } = await pool.query<Record<string, unknown>>(
+    `SELECT * FROM public.public_businesses
+      WHERE ${filters.join(" AND ")}
+      ORDER BY CASE WHEN LOWER(name) = LOWER($1) THEN 0 ELSE 1 END, name, id
+      LIMIT $${params.length}`,
+    params,
+  );
+  if (rows.length === 0) return false;
+
+  req.log.warn(
+    { search, city: city || null, state: state || null, resultCount: rows.length },
+    "Directory query failed; returned direct-name availability fallback",
+  );
+  sendDynamicJson(res, {
+    businesses: rows.map((business) => toPublicBusinessRecord(business)),
+    total: rows.length,
+    page: { offset: 0, limit },
+    featuredCount: 0,
+    usedFuzzyFallback: false,
+    searchScope: "explicit_public_listing",
+    searchClarification: null,
+    availabilityFallback: true,
+  });
+  return true;
+}
+
 router.use((req: Request, res: Response, next: NextFunction) => {
   if (!req.path.startsWith("/businesses")) return next();
   if (isPublicBusinessDiscoveryRead(req)) return next();
@@ -1084,6 +1140,14 @@ router.get("/businesses", async (req: Request, res: Response) => {
     );
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
+    try {
+      if (await sendDirectNameAvailabilityFallback(req, res)) return;
+    } catch (fallbackError) {
+      req.log.error(
+        { err: fallbackError },
+        "Direct-name directory availability fallback failed",
+      );
+    }
     res.status(500).json({ error: "Failed to fetch businesses" });
   }
 });
