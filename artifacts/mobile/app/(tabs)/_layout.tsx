@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
@@ -38,32 +37,31 @@ function ClassicTabLayout() {
     <Tabs
       initialRouteName="community"
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        // Keep icon and label selection visible on light iOS surfaces. The
+        // prior transparent blur made all eight destinations look alike.
+        tabBarActiveTintColor: isDark ? "#F0CF63" : "#70480F",
+        tabBarInactiveTintColor: isDark ? "#D9CFC3" : "#5A493B",
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
-          borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: colors.border,
-          elevation: 0,
+          backgroundColor: isDark ? "#201710" : "#FFFDF8",
+          borderTopWidth: 1,
+          borderTopColor: isDark ? "#5A493B" : "#C9AD7F",
+          elevation: 8,
+          shadowColor: "#2A0F05",
+          shadowOpacity: isIOS ? 0.12 : 0.18,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -2 },
           ...(isWeb ? { height: 84 } : {}),
         },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={100}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : isWeb ? (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.background },
-              ]}
-            />
-          ) : null,
+        tabBarBackground: () => (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: isDark ? "#201710" : "#FFFDF8" },
+            ]}
+          />
+        ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
           fontSize: 10,

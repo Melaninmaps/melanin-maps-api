@@ -321,6 +321,7 @@ describe("Community comments and count reconciliation", () => {
         author_name: "Member Two",
         author_initials: "MT",
         author_color: "#CA922B",
+        author_image_url: "https://cdn.example.test/member-two.jpg",
         content: "Still here",
         created_at: new Date("2026-09-03T12:00:00.000Z"),
       }],
@@ -328,10 +329,17 @@ describe("Community comments and count reconciliation", () => {
 
     const comments = await fetchActiveCommunityComments({ query } as never, "post-1");
 
-    expect(comments).toEqual([expect.objectContaining({ id: "comment-1", postId: "post-1", content: "Still here" })]);
+    expect(comments).toEqual([expect.objectContaining({
+      id: "comment-1",
+      postId: "post-1",
+      content: "Still here",
+      authorImageUrl: "https://cdn.example.test/member-two.jpg",
+    })]);
     const [sqlText, values] = query.mock.calls[0] as [string, unknown[]];
     expect(values).toEqual(["post-1"]);
     expect(sqlText).toContain("to_jsonb(c)->>'status'");
+    expect(sqlText).toContain("LEFT JOIN users u ON u.id = c.author_id");
+    expect(sqlText).toContain("u.profile_image_url AS author_image_url");
     expect(sqlText).not.toMatch(/SELECT\s+c\.\*/i);
   });
 

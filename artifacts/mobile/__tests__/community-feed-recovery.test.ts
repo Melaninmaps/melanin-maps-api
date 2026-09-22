@@ -19,8 +19,10 @@ describe("mobile Community feed recovery", () => {
 
   it("places the compose control and posts directly below Community navigation", () => {
     const feedList = source.split("data={filteredPosts}")[1] ?? "";
-    expect(feedList).toContain('contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}');
-    expect(feedList).not.toContain('contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}');
+    expect(feedList).toContain('justifyContent: "flex-start"');
+    expect(feedList).toContain("ListHeaderComponentStyle={styles.feedHeader}");
+    expect(source).toContain("feedHeader: { paddingTop: 0, marginTop: 0 }");
+    expect(source).toContain("list: { paddingHorizontal: 16, paddingTop: 8 }");
     expect(feedList.indexOf("ListHeaderComponent")).toBeLessThan(feedList.indexOf("ListEmptyComponent"));
     expect(feedList).toContain("What&apos;s on your mind?");
   });

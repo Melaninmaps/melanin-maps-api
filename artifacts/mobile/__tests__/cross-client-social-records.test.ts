@@ -45,6 +45,16 @@ describe("cross-client social record contracts", () => {
     expect(mobileComments).toContain('method: "POST"');
   });
 
+  it("shows a current profile photo on every comment and refreshes open conversations", () => {
+    expect(serverCommunity).toContain("authorImageUrl: commentAuthor?.profileImageUrl ?? null");
+    expect(webComments).toContain("authorImageUrl?: string | null");
+    expect(mobileComments).toContain("authorImageUrl?: string | null");
+    expect(webComments).toContain("<CommentAvatar comment={comment} />");
+    expect(mobileComments).toContain("<CommentAvatar comment={c} />");
+    expect(webComments).toContain("load(true)");
+    expect(mobileComments).toContain("loadComments(true)");
+  });
+
   it("treats transient feed failures as recoverable and preserves eligible content", () => {
     expect(preservationContract).toContain("same durable server-side records");
     expect(preservationContract).toContain("not removed because of a deployment");

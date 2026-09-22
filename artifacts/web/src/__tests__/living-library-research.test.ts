@@ -70,4 +70,15 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("Diaspora-centered knowledge");
     expect(pageSource).not.toMatch(/you are (?:black|african|christian|muslim|a woman)/i);
   });
+
+  it("offers explicit, non-persistent community research lens filters", () => {
+    expect(pageSource).toContain("RESEARCH_LENS_OPTIONS");
+    expect(pageSource).toContain("#Diaspora");
+    expect(pageSource).toContain("#BlackWomen");
+    expect(pageSource).toContain("#BlackStudents");
+    expect(pageSource).toContain("#HBCUStudents");
+    expect(pageSource).toContain('aria-label="Research lens choices"');
+    expect(pageSource).toContain("toggleResearchLens");
+    expect(pageSource).toContain("not saved as your identity");
+  });
 });

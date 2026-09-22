@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -28,6 +29,7 @@ interface Comment {
   authorName: string;
   authorInitials: string;
   authorColor: string;
+  authorImageUrl?: string | null;
   content: string;
   createdAt: string;
 }
@@ -40,6 +42,24 @@ function formatTimeAgo(iso: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+function CommentAvatar({ comment }: { comment: Comment }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  return (
+    <View style={[m.commentAvatar, { backgroundColor: comment.authorColor }]}>
+      {comment.authorImageUrl && !imageFailed ? (
+        <Image
+          accessibilityLabel={`${comment.authorName}'s profile photo`}
+          onError={() => setImageFailed(true)}
+          source={{ uri: comment.authorImageUrl }}
+          style={m.commentAvatarImage}
+        />
+      ) : (
+        <Text style={m.commentInitials}>{comment.authorInitials}</Text>
+      )}
+    </View>
+  );
 }
 
 interface Props {
@@ -75,9 +95,10 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const loadComments = useCallback(async () => {
+  const loadComments = useCallback(async (backgroundRefresh = false) => {
     if (!post?.id) return;
-    setLoading(true);
+    if (!backgroundRefresh) setLoading(true);
+    setCommentError("");
     try {
       const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
       const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`, {
@@ -91,7 +112,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
         setCommentError(data.error ?? "Could not load comments. Pull down and try again.");
       }
     } catch { /* silent */ }
-    finally { setLoading(false); }
+    finally { if (!backgroundRefresh) setLoading(false); }
   }, [post]);
 
   useEffect(() => {
@@ -106,6 +127,15 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
       }
     });
   }, [visible, post, loadComments]);
+
+  useEffect(() => {
+    if (!visible || !post?.id) return;
+    // New comments appear immediately for their author. This light refresh keeps
+    // an open conversation current for everyone else and resolves fresh profile
+    // photos from the canonical user profile without overwriting comment data.
+    const interval = setInterval(() => { void loadComments(true); }, 15_000);
+    return () => clearInterval(interval);
+  }, [visible, post?.id, loadComments]);
 
   const handleLike = async () => {
     if (!post) return;
@@ -256,9 +286,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
           }
           renderItem={({ item: c }) => (
             <View style={[m.commentCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={[m.commentAvatar, { backgroundColor: c.authorColor }]}>
-                <Text style={m.commentInitials}>{c.authorInitials}</Text>
-              </View>
+              <CommentAvatar comment={c} />
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={m.commentHeaderRow}>
                   <Text style={[m.commentAuthor, { color: colors.foreground }]}>{c.authorName}</Text>
@@ -358,7 +386,8 @@ const m = StyleSheet.create({
   actionCount: { fontFamily: "Inter_400Regular", fontSize: 14 },
   commentsLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginVertical: 4 },
   commentCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 14, borderWidth: 1, padding: 12 },
-  commentAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  commentAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  commentAvatarImage: { width: "100%", height: "100%", resizeMode: "cover" },
   commentInitials: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#FFF" },
   commentHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   commentAuthor: { fontFamily: "Inter_600SemiBold", fontSize: 13 },

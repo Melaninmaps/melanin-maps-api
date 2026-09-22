@@ -100,6 +100,24 @@ type ResearchFailure = {
   researchScope?: LibraryResearchScope;
 };
 
+const RESEARCH_LENS_OPTIONS = [
+  { tag: "#Diaspora", label: "Diaspora" },
+  { tag: "#BlackWomen", label: "Black women" },
+  { tag: "#BlackMen", label: "Black men & boys" },
+  { tag: "#BlackStudents", label: "Black students" },
+  { tag: "#HBCUStudents", label: "HBCU students & alumni" },
+] as const;
+
+function hasResearchLens(question: string, tag: string): boolean {
+  return new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "i").test(question.normalize("NFKC"));
+}
+
+function toggleResearchLens(question: string, tag: string): string {
+  const tagPattern = new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "ig");
+  if (hasResearchLens(question, tag)) return question.replace(tagPattern, " ").replace(/\s+/g, " ").trim();
+  return `${tag} ${question}`.replace(/\s+/g, " ").trim();
+}
+
 function formattedFreshness(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
@@ -266,6 +284,7 @@ export function LibrarySearchPage() {
   const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(routeQuery ? "loading" : "idle");
   const [researchState, setResearchState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [, navigate] = useLocation();
+  const activeResearchLensTags = RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(input, lens.tag)).map((lens) => lens.tag);
 
   useEffect(() => {
     setInput(routeQuery);
@@ -366,12 +385,31 @@ export function LibrarySearchPage() {
         <p className="living-library-introduction">
           Search approved Library knowledge first. When coverage is sparse, request a source-governed research brief with the evidence, why it matters, next steps, and related questions.
         </p>
-        <form className="living-library-search" onSubmit={submit}>
+          <form className="living-library-search" onSubmit={submit}>
           <label className="sr-only" htmlFor="library-result-search">Search the Library</label>
           <input id="library-result-search" maxLength={120} onChange={(event) => setInput(event.target.value)} placeholder="Try HVAC, oldest bookstore in the US, or life after death" required type="search" value={input} />
-          <button type="submit">Search</button>
-        </form>
-      </section>
+            <button type="submit">Search</button>
+          </form>
+          <div className="library-research-lens-filter" aria-label="Library research lens">
+            <p>Choose the community evidence that should lead this search. A lens is not saved as your identity.</p>
+            <div role="group" aria-label="Research lens choices">
+              {RESEARCH_LENS_OPTIONS.map((lens) => {
+                const selected = activeResearchLensTags.includes(lens.tag);
+                return (
+                  <button
+                    aria-pressed={selected}
+                    className={selected ? "is-selected" : undefined}
+                    key={lens.tag}
+                    onClick={() => setInput((current) => toggleResearchLens(current, lens.tag))}
+                    type="button"
+                  >
+                    {lens.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
       <section aria-live="polite" className="living-library-content library-search-content">
         {state === "idle" ? <p className="living-library-state">Ask a question or search approved Library knowledge.</p> : null}
