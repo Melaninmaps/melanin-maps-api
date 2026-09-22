@@ -148,5 +148,35 @@ describe("POST /api/library/research", () => {
     expect(response.body.researchScope.connectedTopics).toEqual(expect.arrayContaining([
       expect.objectContaining({ label: "Health & Wellness" }),
     ]));
+    expect(response.body).toMatchObject({
+      answer: expect.objectContaining({ researchLenses: ["#Diaspora"] }),
+      foundation: expect.objectContaining({ researchLenses: ["#Diaspora"] }),
+      communityContext: expect.objectContaining({
+        status: "available",
+        researchLenses: ["#BlackWomen"],
+        answer: expect.objectContaining({ researchLenses: ["#BlackWomen"] }),
+      }),
+    });
+  });
+
+  it("returns the foundation when a requested community supplement has no direct evidence", async () => {
+    const repository = createRepository();
+    const researchProvider = provider([
+      { url: "https://www.cdc.gov/a", title: "CDC breast cancer overview", content: "General breast cancer screening information from CDC. ".repeat(8), publisher: "cdc.gov", publishedAt: null },
+      { url: "https://www.cancer.gov/b", title: "NCI breast cancer overview", content: "General breast cancer screening research from NCI. ".repeat(8), publisher: "cancer.gov", publishedAt: null },
+    ]);
+    const response = await supertest(createApp(repository, { userId: "member-1", researchProvider }))
+      .post("/api/library/research")
+      .send({ question: "#BlackWomen breast cancer screening" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      foundation: { sourceCount: 2, researchLenses: ["#Diaspora"] },
+      communityContext: {
+        status: "insufficient",
+        researchLenses: ["#BlackWomen"],
+      },
+    });
+    expect(researchProvider.search).toHaveBeenCalledTimes(2);
   });
 });

@@ -64,6 +64,15 @@ type ResearchScope = {
 };
 type ResearchResponse = {
   answer: LibraryEntry;
+  /** General current information for any reader; mirrors answer for compatibility. */
+  foundation?: LibraryEntry;
+  communityContext?: {
+    status: "available" | "insufficient";
+    researchLenses: string[];
+    answer?: LibraryEntry;
+    message: string;
+    providerStatus: "available" | "degraded";
+  };
   origin: "internal" | "researched";
   provider: { status: "available" | "degraded"; message: string };
   researchScope: ResearchScope;
@@ -110,7 +119,7 @@ function sections(body: string): Array<{ heading: string | null; copy: string }>
     });
 }
 
-function AnswerCard({ answer, scope, onConnectedTopic }: { answer: LibraryEntry; scope?: ResearchScope; onConnectedTopic?: (topic: string) => void }) {
+function AnswerCard({ answer, scope, onConnectedTopic, researchTrack = "foundation" }: { answer: LibraryEntry; scope?: ResearchScope; onConnectedTopic?: (topic: string) => void; researchTrack?: "foundation" | "community" }) {
   const colors = useColors();
   const [expanded, setExpanded] = useState(false);
   const safeSources = useMemo(
@@ -120,7 +129,7 @@ function AnswerCard({ answer, scope, onConnectedTopic }: { answer: LibraryEntry;
 
   return (
     <View style={[styles.answerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.eyebrow, { color: "#936719" }]}>SOURCE-GOVERNED LIBRARY BRIEF</Text>
+      <Text style={[styles.eyebrow, { color: "#936719" }]}>{researchTrack === "foundation" ? "CURRENT FOUNDATION · SOURCE-GOVERNED" : "DIRECTLY EVIDENCED COMMUNITY PACKET"}</Text>
       {answer.researchLenses?.length ? <Text style={[styles.researchLens, { color: "#70480F" }]}>{answer.researchLenses.join(" ")}</Text> : null}
       <Text style={[styles.answerTitle, { color: colors.foreground }]}>{answer.title}</Text>
       <Text style={[styles.summary, { color: colors.mutedForeground }]}>{answer.summary}</Text>
@@ -151,8 +160,8 @@ function AnswerCard({ answer, scope, onConnectedTopic }: { answer: LibraryEntry;
       )}
       {scope ? (
         <View style={[styles.scopeCard, { backgroundColor: "#CA922B10", borderColor: "#CA922B45" }]}>
-          <Text style={[styles.scopeTitle, { color: colors.foreground }]}>How this was researched</Text>
-          <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}><Text style={{ fontWeight: "800" }}>Research lens: </Text>{scope.researchLenses.map((lens) => lens.tag).join(" ")}</Text>
+          <Text style={[styles.scopeTitle, { color: colors.foreground }]}>{researchTrack === "foundation" ? "How the current foundation was researched" : "How this was researched"}</Text>
+          <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>{researchTrack === "foundation" ? <><Text style={{ fontWeight: "800" }}>Current foundation: </Text>Current, authoritative information for any reader. An explicit community lens appears separately when directly evidenced.</> : <><Text style={{ fontWeight: "800" }}>Research lens: </Text>{scope.researchLenses.map((lens) => lens.tag).join(" ")}</>}</Text>
           <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}><Text style={{ fontWeight: "800" }}>Source standard: </Text>{scope.sourceStandard}</Text>
           <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>{scope.groupGuidance}</Text>
           {scope.connectedTopics.length > 0 ? (
@@ -281,7 +290,7 @@ export default function LibraryResearchScreen() {
         <View style={[styles.hero, { backgroundColor: "#2A0F05" }]}>
           <Text style={styles.heroEyebrow}>THE LIVING LIBRARY</Text>
           <Text style={styles.heroTitle}>Research that starts with reputable sources.</Text>
-          <Text style={styles.heroCopy}>Library research starts with the diaspora lens. Add a tag such as #BlackWomen or #BlackStudents when that scope should lead the evidence. A tag is a research instruction, not an assumption about you.</Text>
+          <Text style={styles.heroCopy}>Every search begins with current, reputable information for anyone. Add a tag such as #BlackWomen or #BlackStudents for a separately labeled community-evidence packet. A tag is a research instruction, not an assumption about you.</Text>
         </View>
         <View style={[styles.searchCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.label, { color: colors.foreground }]}>What would you like to understand?</Text>
@@ -296,7 +305,7 @@ export default function LibraryResearchScreen() {
           />
           <View style={styles.lensFilterSection}>
             <Text style={[styles.lensFilterLabel, { color: colors.foreground }]}>Research lens</Text>
-            <Text style={[styles.lensFilterCopy, { color: colors.mutedForeground }]}>Choose the community evidence that should lead this search. It is not saved as your identity.</Text>
+            <Text style={[styles.lensFilterCopy, { color: colors.mutedForeground }]}>Choose community evidence to add alongside the current foundation. It is not saved as your identity.</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.lensFilterRow}>
               {RESEARCH_LENS_OPTIONS.map((lens) => {
                 const selected = activeResearchLensTags.includes(lens.tag);
@@ -362,12 +371,25 @@ export default function LibraryResearchScreen() {
             <Feather name="chevron-right" size={18} color="#70480F" />
           </TouchableOpacity>
         ) : null}
-        {research ? <AnswerCard answer={research.answer} scope={research.researchScope} onConnectedTopic={(topic) => { setQuestion(topic); setSearchedQuestion(""); setSearch(null); setResearch(null); setState("idle"); }} /> : null}
-        {research?.answer.relatedQuestions?.length ? (
+        {research ? <AnswerCard answer={research.foundation ?? research.answer} researchTrack="foundation" scope={research.researchScope} onConnectedTopic={(topic) => { setQuestion(topic); setSearchedQuestion(""); setSearch(null); setResearch(null); setState("idle"); }} /> : null}
+        {research?.communityContext?.status === "available" && research.communityContext.answer ? (
+          <View style={{ gap: 8 }}>
+            <Text style={[styles.communityContextEyebrow, { color: "#70480F" }]}>COMMUNITY CONTEXT · {research.communityContext.researchLenses.join(" ")}</Text>
+            <Text style={[styles.communityContextCopy, { color: colors.mutedForeground }]}>{research.communityContext.message}</Text>
+            <AnswerCard answer={research.communityContext.answer} researchTrack="community" scope={research.researchScope} onConnectedTopic={(topic) => { setQuestion(`${research.communityContext!.researchLenses.join(" ")} ${topic}`); setSearchedQuestion(""); setSearch(null); setResearch(null); setState("idle"); }} />
+          </View>
+        ) : research?.communityContext ? (
+          <View style={[styles.emptyCard, { backgroundColor: "#FFF8E8", borderColor: "#CA922B" }]}>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Community context is limited for now</Text>
+            <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>{research.communityContext.message}</Text>
+            <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>The current foundation remains complete and separately sourced above.</Text>
+          </View>
+        ) : null}
+        {(research?.foundation ?? research?.answer)?.relatedQuestions?.length ? (
           <View style={[styles.relatedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.sectionHeading, { color: colors.foreground }]}>Related next questions</Text>
             <Text style={[styles.relatedCopy, { color: colors.mutedForeground }]}>These are evidence-led branches from this brief, not claims about the reader or a report of other members&apos; private searches.</Text>
-            {research.answer.relatedQuestions.map((related) => (
+            {((research.foundation ?? research.answer).relatedQuestions ?? []).map((related) => (
               <TouchableOpacity key={related} activeOpacity={0.8} onPress={() => { setQuestion(`${research.researchScope.researchLenses.map((lens) => lens.tag).join(" ")} ${related}`.trim()); setSearchedQuestion(""); setSearch(null); setResearch(null); setState("idle"); }} style={[styles.relatedButton, { borderColor: colors.border }]}>
                 <Text style={[styles.relatedText, { color: colors.primary }]}>{related}</Text>
                 <Feather name="arrow-up-right" size={14} color={colors.primary} />
@@ -441,6 +463,8 @@ const styles = StyleSheet.create({
   sourceReason: { marginTop: 3, fontSize: 11, lineHeight: 16 },
   freshness: { fontSize: 11, marginTop: 2 },
   relatedCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 9 },
+  communityContextEyebrow: { fontSize: 10, letterSpacing: 1.1, fontWeight: "800", paddingHorizontal: 2 },
+  communityContextCopy: { fontSize: 12, lineHeight: 18, paddingHorizontal: 2 },
   relatedCopy: { fontSize: 12, lineHeight: 18 },
   relatedButton: { borderWidth: 1, borderRadius: 10, padding: 11, flexDirection: "row", alignItems: "center", gap: 8 },
   relatedText: { flex: 1, fontSize: 13, fontWeight: "700", lineHeight: 18 },

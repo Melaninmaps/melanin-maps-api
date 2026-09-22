@@ -132,6 +132,49 @@ export function stripCommunityResearchLensTags(question: string): string {
     .trim();
 }
 
+/**
+ * The product-default diaspora lens is editorial context. A group-specific
+ * packet is requested only when the current question explicitly names a
+ * narrower lens, or when the reader deliberately types #Diaspora. This keeps
+ * an ordinary topic answer available to everyone while preserving the reader's
+ * right to ask for directly evidenced context.
+ */
+export function resolveCommunityResearchSupplementLenses(
+  question: string,
+  lenses = resolveCommunityResearchLenses(question),
+): CommunityResearchLens[] {
+  const includesExplicitDiasporaTag = /(?:^|\s)#diaspora\b/i.test(question.normalize("NFKC"));
+  return lenses.filter(
+    (lens) => !lens.isProductDefault || includesExplicitDiasporaTag,
+  );
+}
+
+/**
+ * Removes only the explicit population wording already selected for the
+ * supplemental packet. It is used to create the general research foundation,
+ * not to erase the member's original question or to infer their identity.
+ */
+export function stripCommunityResearchScope(
+  question: string,
+  lenses: readonly CommunityResearchLens[],
+): string {
+  let result = stripCommunityResearchLensTags(question);
+  for (const lens of lenses) {
+    if (lens.id === "black-women") {
+      result = result.replace(/\b(?:black|african[ -]?american)\s+women?\b/gi, " ");
+    } else if (lens.id === "black-men") {
+      result = result.replace(/\b(?:black|african[ -]?american)\s+(?:men|man|boys|boy)\b/gi, " ");
+    } else if (lens.id === "black-students") {
+      result = result.replace(/\b(?:black|african[ -]?american)\s+students?\b/gi, " ");
+    } else if (lens.id === "hbcu-students") {
+      result = result.replace(/\b(?:hbcu\s+(?:students?|alumni)|historically black colleges?(?: and universities)?\s+students?)\b/gi, " ");
+    } else if (lens.id === "diaspora") {
+      result = result.replace(/\b(?:african diaspora|black communities?)\b/gi, " ");
+    }
+  }
+  return result.replace(/\s+/g, " ").trim();
+}
+
 export function researchLensFacetKeys(lenses: readonly CommunityResearchLens[]): string[] {
   return [...new Set(lenses.map((lens) => lens.facetKey))];
 }
@@ -144,6 +187,35 @@ export function researchLensCommunityLabel(lenses: readonly CommunityResearchLen
   const tags = lenses.map((lens) => lens.tag).join(", ");
   const labels = lenses.map((lens) => lens.label).join(" and ");
   return `MWM diaspora-first research lens ${tags}: ${labels}. This is a requested evidence scope, not a claim about the reader's identity.`;
+}
+
+export function defaultCommunityResearchLenses(): CommunityResearchLens[] {
+  return [lensFor("diaspora")];
+}
+
+export function buildFoundationResearchQuery(question: string): string {
+  const searchableQuestion = stripCommunityResearchLensTags(question) || question.trim();
+  return [
+    searchableQuestion,
+    "Build a current, authoritative foundation that answers this topic for any reader.",
+    "Do not turn a general source into a group-specific claim. Community-specific context, if separately requested, must use its own directly relevant evidence.",
+  ].join("\n");
+}
+
+export function buildCommunitySupplementResearchQuery(
+  question: string,
+  lenses: readonly CommunityResearchLens[],
+): string {
+  const searchableQuestion = stripCommunityResearchScope(question, lenses)
+    || stripCommunityResearchLensTags(question)
+    || question.trim();
+  const labels = lenses.map((lens) => lens.researchTerms).join("; ");
+  return [
+    searchableQuestion,
+    `Community context requested: ${labels}.`,
+    "Retrieve only authoritative evidence that directly names the requested population or institution.",
+    "This is a separately labeled supplement to the general answer. Do not replace the general foundation and do not use general evidence as proof of a group-specific claim.",
+  ].join("\n");
 }
 
 export function buildCommunityLensResearchQuery(
