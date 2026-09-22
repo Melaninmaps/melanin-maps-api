@@ -37,4 +37,18 @@ describe("governed Library research policy", () => {
     expect(isTrustedResearchUrl("https://www.urban.org/research", policy)).toBe(true);
     expect(isTrustedResearchUrl("https://quick-riches.example/guide", policy)).toBe(false);
   });
+
+  it("routes redlining to governed housing and economic sources instead of the narrow general catalog", () => {
+    const policy = getResearchPolicy("redlining");
+    expect(policy.domain).toBe("financial");
+    expect(policy.allowDomains).toEqual(expect.arrayContaining([
+      "*.gov",
+      "hud.gov",
+      "consumerfinance.gov",
+      "ncrc.org",
+      "urban.org",
+    ]));
+    expect(isTrustedResearchUrl("https://www.hud.gov/example", policy)).toBe(true);
+    expect(isTrustedResearchUrl("https://ncrc.org/example", policy)).toBe(true);
+  });
 });

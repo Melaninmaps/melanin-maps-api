@@ -60,6 +60,37 @@ describe("Library research provider chain", () => {
     expect(result).toMatchObject({ provider: "tavily", status: "degraded" });
   });
 
+  it("combines one governed source from each reachable provider instead of discarding both", async () => {
+    const primary: ExternalResearchProvider = {
+      name: "openai",
+      search: vi.fn().mockResolvedValue({
+        documents: [document("https://www.hud.gov/redlining")],
+        provider: "openai",
+        status: "available",
+      }),
+    };
+    const fallback: ExternalResearchProvider = {
+      name: "tavily",
+      search: vi.fn().mockResolvedValue({
+        documents: [document("https://ncrc.org/redlining")],
+        provider: "tavily",
+        status: "available",
+      }),
+    };
+
+    const result = await createResearchProviderChain([primary, fallback]).search({
+      query: "redlining",
+      allowedDomains: ["*.gov", "hud.gov", "ncrc.org"],
+      maxResults: 6,
+    });
+
+    expect(result).toMatchObject({ provider: "tavily", status: "available" });
+    expect(result.documents.map((item) => item.url)).toEqual([
+      "https://www.hud.gov/redlining",
+      "https://ncrc.org/redlining",
+    ]);
+  });
+
   it("throws a retryable unavailable error rather than returning zero results", async () => {
     const primary: ExternalResearchProvider = { name: "openai", search: vi.fn().mockResolvedValue({ documents: [], provider: "openai", status: "available" }) };
     await expect(createResearchProviderChain([primary]).search({ query: "history", allowedDomains: ["loc.gov"], maxResults: 6 })).rejects.toBeInstanceOf(LibraryResearchProviderUnavailableError);
