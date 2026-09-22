@@ -511,9 +511,21 @@ export async function sendBusinessOutreach(to: string, businessName: string, cla
   });
 }
 
-export async function sendApprovalNotification(to: string, firstName: string | null) {
+export async function sendApprovalNotification(
+  to: string,
+  firstName: string | null,
+  options: { hasExistingAccount?: boolean } = {},
+) {
   if (!resend) return;
   const name = firstName ?? "there";
+  const hasExistingAccount = options.hasExistingAccount === true;
+  const actionLabel = hasExistingAccount ? "Sign In Now" : "Create Your Account";
+  const actionUrl = hasExistingAccount
+    ? "https://mappingwithmelanin.com/login"
+    : "https://mappingwithmelanin.com/signup";
+  const accountInstruction = hasExistingAccount
+    ? "Sign in now to start discovering Minority-owned businesses, community events, and Community Intelligence for your area."
+    : "Create your account now with this approved email address to start discovering Minority-owned businesses, community events, and Community Intelligence for your area.";
   await sendEmail({
     from: FROM,
     to,
@@ -524,10 +536,10 @@ export async function sendApprovalNotification(to: string, firstName: string | n
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
         <h1 style="font-size:28px;color:#2B1507;margin:0 0 12px">You're in, ${name}! 🎉</h1>
         <p style="color:#3A1F0E;opacity:0.7;font-size:16px;line-height:1.6;margin:0 0 28px">
-          Your early access to <strong>Mapping With Melanin™</strong> has been approved. Sign in now to start discovering Minority-owned businesses, community events, and Community Intelligence for your area.
+          Your early access to <strong>Mapping With Melanin™</strong> has been approved. ${accountInstruction}
         </p>
-        <a href="https://mappingwithmelanin.com/login" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
-          Sign In Now →
+        <a href="${actionUrl}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
+          ${actionLabel} →
         </a>
         <p style="color:#3A1F0E;opacity:0.5;font-size:13px;margin:0">
           Questions? Reach us at <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>

@@ -1,13 +1,12 @@
 {
   "lastIosSubmitted": 112,
   "lastAndroidSubmitted": 82,
-  "iosEasBuildId": "5e725a1c-1e08-44f5-8272-fba150a96c65",
-  "iosEasSubmissionId": "500e723c-c65a-41c4-a99a-bf5bc7151406",
-  "iosArtifactUrl": "https://expo.dev/accounts/tlindsay428/projects/mobile/builds/5e725a1c-1e08-44f5-8272-fba150a96c65",
-  "iosSubmissionStatus": "SUBMITTED_TO_ASC",
-  "androidEasBuildId": "4af656bf-4d90-4506-a3b0-8c88e24fc0db",
-  "androidArtifactUrl": "https://expo.dev/artifacts/eas/Uc_BVRoW627ll6JDHMQHmByrijJrgThO5_e2-f3YXcs.aab",
-  "androidSubmissionStatus": "BUILD_COMPLETE_NOT_SUBMITTED",
-  "sourceCommit": "81d6735aadf1647fd2419490e1c2be82d91719d3",
-  "notes": "Release history confirmed in TestFlight and EAS: iOS 1.1.9 build 112 is installed by testers, and Android versionCode 82 was started from an earlier source revision. The next source-corrected release is iOS build 113 and Android versionCode 83; do not reuse consumed identifiers."
+  "lastIosReserved": 114,
+  "lastAndroidReserved": 84,
+  "iosEasBuildId": "38270d2c-e2f2-4fd7-aa49-b7efa3402363",
+  "iosEasArtifactStatus": "FINISHED_NOT_SUBMITTED_SOURCE_UNVERIFIED",
+  "androidEasBuildId": "66f1e8ff-b151-42b6-9ac0-0d3263632141",
+  "androidEasArtifactStatus": "FINISHED_NOT_SUBMITTED_SOURCE_UNVERIFIED",
+  "sourceCommit": null,
+  "notes": "Authenticated EAS history confirmed that iOS 1.1.9 build 114 and Android versionCode 84 completed as artifacts on 2026-09-21, but the history did not expose their source commit. They are reserved and must never be reused or distributed as proof of the controlling source. The next source-traceable release is iOS build 115 and Android versionCode 85."
 }

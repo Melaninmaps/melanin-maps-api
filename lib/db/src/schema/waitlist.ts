@@ -27,6 +27,14 @@ export const waitlistTable = pgTable("waitlist_signups", {
   niche: varchar("niche", { length: 100 }),
   platforms: text("platforms"),
   safetyPriorities: text("safety_priorities"),
+  // Explicit system-maintained marker for automated audit fixtures. It is
+  // never supplied by a public join request and lets the admin list default
+  // to actual people without deleting or concealing their records.
+  isSyntheticTest: boolean("is_synthetic_test").notNull().default(false),
+  // Comma-separated, server-validated history of public entry surfaces such as
+  // "web", "ios", and "android". This is not a device identifier and never
+  // replaces the single email-keyed waitlist record.
+  signupSources: text("signup_sources").notNull().default(""),
 });
 
 export type WaitlistEntry = typeof waitlistTable.$inferSelect;

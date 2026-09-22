@@ -22,13 +22,15 @@ export default function ForgotPasswordScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-  const valid = email.includes("@") && email.includes(".");
+  const valid = method === "email" ? email.includes("@") && email.includes(".") : /^\+\d{7,15}$/.test(phone.replace(/[\s()-]/g, ""));
 
   const [codeVal, setCodeVal] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -48,10 +50,10 @@ export default function ForgotPasswordScreen() {
       const base = getApiBaseUrl();
       let response: Response;
       try {
-        response = await fetch(`${base}/api/auth/forgot-password`, {
+        response = await fetch(`${base}${method === "email" ? "/api/auth/forgot-password" : "/api/auth/phone/forgot-password/send"}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim() }),
+          body: JSON.stringify(method === "email" ? { email: email.trim() } : { phone: phone.trim() }),
         });
       } catch (fetchErr: unknown) {
         const e = fetchErr as Error;
@@ -82,7 +84,7 @@ export default function ForgotPasswordScreen() {
   const handleReset = async () => {
     Keyboard.dismiss();
     setResetError("");
-    if (codeVal.trim().length !== 6) { setResetError("Please enter the 6-digit code from your email."); return; }
+    if (codeVal.trim().length !== 6) { setResetError(`Please enter the 6-digit code from your ${method === "email" ? "email" : "phone"}.`); return; }
     if (newPw.length < 8) { setResetError("New password must be at least 8 characters."); return; }
     if (newPw !== confirmPw) { setResetError("Passwords don't match."); return; }
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -91,10 +93,10 @@ export default function ForgotPasswordScreen() {
       const base = getApiBaseUrl();
       let response: Response;
       try {
-        response = await fetch(`${base}/api/auth/reset-password`, {
+        response = await fetch(`${base}${method === "email" ? "/api/auth/reset-password" : "/api/auth/phone/reset-password"}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), code: codeVal.trim(), newPassword: newPw }),
+          body: JSON.stringify(method === "email" ? { email: email.trim(), code: codeVal.trim(), newPassword: newPw } : { phone: phone.trim(), code: codeVal.trim(), newPassword: newPw }),
         });
       } catch (fetchErr: unknown) {
         const e = fetchErr as Error;
@@ -161,27 +163,38 @@ export default function ForgotPasswordScreen() {
               </View>
               <Text style={[styles.title, { color: colors.foreground }]}>Forgot Password?</Text>
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-                No worries. Enter your email and we&apos;ll send you a 6-digit reset code.
+                No worries. Choose email or a verified phone number and we&apos;ll send you a 6-digit reset code.
               </Text>
             </View>
 
             <View style={styles.form}>
+              <View style={[styles.methodRow, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+                <TouchableOpacity style={[styles.methodBtn, method === "email" && { backgroundColor: colors.card }]} onPress={() => { setMethod("email"); setResetError(""); }} activeOpacity={0.8}>
+                  <Feather name="mail" size={14} color={method === "email" ? colors.primary : colors.mutedForeground} />
+                  <Text style={[styles.methodText, { color: method === "email" ? colors.primary : colors.mutedForeground }]}>Email</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.methodBtn, method === "phone" && { backgroundColor: colors.card }]} onPress={() => { setMethod("phone"); setResetError(""); }} activeOpacity={0.8}>
+                  <Feather name="phone" size={14} color={method === "phone" ? colors.primary : colors.mutedForeground} />
+                  <Text style={[styles.methodText, { color: method === "phone" ? colors.primary : colors.mutedForeground }]}>Verified phone</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.field}>
-                <Text style={[styles.label, { color: colors.foreground }]}>Email Address</Text>
+                <Text style={[styles.label, { color: colors.foreground }]}>{method === "email" ? "Email Address" : "Verified Phone Number"}</Text>
                 <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Feather name="mail" size={18} color={colors.mutedForeground} style={styles.icon} />
+                  <Feather name={method === "email" ? "mail" : "phone"} size={18} color={colors.mutedForeground} style={styles.icon} />
                   <TextInput
                     style={[styles.input, { color: colors.foreground }]}
-                    placeholder="you@example.com"
+                    placeholder={method === "email" ? "you@example.com" : "+1 202 555 0123"}
                     placeholderTextColor={colors.mutedForeground}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
+                    value={method === "email" ? email : phone}
+                    onChangeText={method === "email" ? setEmail : setPhone}
+                    keyboardType={method === "email" ? "email-address" : "phone-pad"}
                     autoCapitalize="none"
                     autoCorrect={false}
                     autoFocus
                   />
                 </View>
+                {method === "phone" && <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Use the number already verified on your account, including country code.</Text>}
               </View>
 
               {!!resetError && (
@@ -228,18 +241,18 @@ export default function ForgotPasswordScreen() {
         ) : (
           <View style={styles.codeSection}>
             <View style={[styles.iconWrap, { backgroundColor: colors.primary + "15" }]}>
-              <Feather name="mail" size={36} color={colors.primary} />
+              <Feather name={method === "email" ? "mail" : "phone"} size={36} color={colors.primary} />
             </View>
-            <Text style={[styles.title, { color: colors.foreground }]}>Check your email</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>Check your {method === "email" ? "email" : "phone"}</Text>
             <Text style={[styles.sub, { color: colors.mutedForeground }]}>
               We sent a 6-digit code to{" "}
-              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{email}</Text>
+              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{method === "email" ? email : phone}</Text>
             </Text>
 
             <View style={[styles.tipBox, { backgroundColor: colors.secondary, marginBottom: 20 }]}>
               <Feather name="info" size={15} color={colors.mutedForeground} />
               <Text style={[styles.tipTxt, { color: colors.mutedForeground }]}>
-                Check your spam folder if you don&apos;t see it. Codes expire after 15 minutes.
+                {method === "email" ? "Check your spam folder if you don&apos;t see it." : "Check your text messages if you don&apos;t see it."} Codes expire after 15 minutes.
               </Text>
             </View>
 
@@ -338,8 +351,12 @@ const styles = StyleSheet.create({
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 8 },
   title: { fontSize: 26, fontFamily: "Inter_700Bold", marginBottom: 10, textAlign: "center" },
   sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 24, color: "#A87A40" },
-  form: { gap: 16 },
-  field: { gap: 8 },
+  form: { gap: 14 },
+  methodRow: { flexDirection: "row", gap: 4, padding: 4, borderRadius: 12, borderWidth: 1 },
+  methodBtn: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, paddingVertical: 10, borderRadius: 9 },
+  methodText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  field: { gap: 6 },
+  fieldHint: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
   label: { fontSize: 14, fontFamily: "Inter_500Medium" },
   inputRow: {
     flexDirection: "row", alignItems: "center", borderWidth: 1,

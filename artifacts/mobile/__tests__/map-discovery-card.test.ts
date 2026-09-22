@@ -28,4 +28,12 @@ describe("mobile map discovery card", () => {
     expect(mapSource).toContain("width: 440");
     expect(mapSource).toContain("maxWidth: \"100%\"");
   });
+
+  it("retains the restaurant card after a business-pin tap and links to its MWM page", () => {
+    expect(mapSource).toContain("markerPressInFlightRef");
+    expect(mapSource).toContain("if (markerPressInFlightRef.current)");
+    expect(mapSource).toContain("setSelectedBusiness(biz)");
+    expect(mapSource).toContain('pathname: "/business/[id]"');
+    expect(mapSource).toContain("View Business");
+  });
 });

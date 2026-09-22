@@ -772,6 +772,27 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS safety_priorities TEXT`,
   },
   {
+    // One shared email-keyed queue keeps a non-identifying history of the
+    // entry points that have submitted the same email (web / iOS / Android).
+    // Existing records remain intact and simply start with an empty history.
+    name: "waitlist_signup_sources_col",
+    sql: `ALTER TABLE waitlist_signups
+      ADD COLUMN IF NOT EXISTS signup_sources TEXT NOT NULL DEFAULT ''`,
+  },
+  {
+    // Automated audit fixtures must not be mixed into the default human
+    // waitlist view. This narrow, one-time classification only recognizes
+    // machine fixture domains/markers; it does not guess from a person's name.
+    name: "waitlist_synthetic_test_marker",
+    sql: `ALTER TABLE waitlist_signups
+      ADD COLUMN IF NOT EXISTS is_synthetic_test BOOLEAN NOT NULL DEFAULT false;
+      UPDATE waitlist_signups
+      SET is_synthetic_test = true
+      WHERE lower(email) LIKE '%@example.com'
+         OR lower(email) LIKE '%@testmwm.dev'
+         OR lower(email) ~ '(^|[._+-])(test|smoke|regression|synthetic)([._+-]|@)'`,
+  },
+  {
     name: "business_suggestions_table",
     sql: `CREATE TABLE IF NOT EXISTS business_suggestions (
       id SERIAL PRIMARY KEY,

@@ -300,6 +300,129 @@ router.post("/auth/phone/link-to-existing", async (req: Request, res: Response) 
   }
 });
 
+// ─── POST /auth/phone/forgot-password/send ────────────────────────────────────
+// Password recovery is available only to an account that has already verified
+// this exact number. The success response is intentionally identical for an
+// unknown or unverified number so this endpoint cannot enumerate accounts.
+router.post("/auth/phone/forgot-password/send", async (req: Request, res: Response) => {
+  const { phone } = req.body as { phone?: string };
+  if (!phone?.trim()) {
+    res.status(400).json({ error: "Phone number is required." });
+    return;
+  }
+
+  const normalized = normalizePhone(phone.trim());
+  if (!/^\+\d{7,15}$/.test(normalized)) {
+    res.status(400).json({ error: "Invalid phone number. Please include your country code." });
+    return;
+  }
+
+  try {
+    const [user] = await db
+      .select({ id: usersTable.id, phoneVerified: usersTable.phoneVerified })
+      .from(usersTable)
+      .where(eq(usersTable.phoneNumber, normalized))
+      .limit(1);
+
+    if (!user || !user.phoneVerified) {
+      req.log.info({ event: "AUTH_PHONE_RESET_NO_VERIFIED_ACCOUNT" }, "phone password recovery unavailable");
+      res.json({ success: true });
+      return;
+    }
+
+    if (!IS_PRODUCTION && normalized === TEST_PHONE) {
+      res.json({ success: true });
+      return;
+    }
+
+    const { client, serviceSid } = getTwilioClient();
+    await client.verify.v2.services(serviceSid).verifications.create({
+      to: normalized,
+      channel: "sms",
+    });
+    req.log.info({ event: "AUTH_PHONE_RESET_CODE_SENT", userId: user.id.slice(0, 8) }, "phone password reset code sent");
+    res.json({ success: true });
+  } catch (err: unknown) {
+    req.log.error({ err }, "POST /api/auth/phone/forgot-password/send error");
+    res.status(500).json({ error: "Failed to send verification code. Please try again." });
+  }
+});
+
+// ─── POST /auth/phone/reset-password ─────────────────────────────────────────
+// A valid Twilio Verify check for an already-linked, already-verified number
+// permits an email-password reset. It does not create a phone-only account or
+// alter the account's approved/role/member data.
+router.post("/auth/phone/reset-password", async (req: Request, res: Response) => {
+  const { phone, code, newPassword } = req.body as {
+    phone?: string;
+    code?: string;
+    newPassword?: string;
+  };
+  if (!phone?.trim() || !code?.trim() || !newPassword) {
+    res.status(400).json({ error: "Phone number, verification code, and new password are required." });
+    return;
+  }
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters." });
+    return;
+  }
+
+  const normalized = normalizePhone(phone.trim());
+  if (!/^\+\d{7,15}$/.test(normalized)) {
+    res.status(400).json({ error: "Invalid phone number. Please include your country code." });
+    return;
+  }
+
+  try {
+    const [user] = await db
+      .select({ id: usersTable.id, phoneVerified: usersTable.phoneVerified })
+      .from(usersTable)
+      .where(eq(usersTable.phoneNumber, normalized))
+      .limit(1);
+    if (!user || !user.phoneVerified) {
+      res.status(400).json({ error: "Invalid or expired verification code." });
+      return;
+    }
+
+    const isTestPhone = !IS_PRODUCTION && normalized === TEST_PHONE;
+    if (isTestPhone) {
+      if (code.trim() !== TEST_OTP) {
+        res.status(400).json({ error: "Invalid or expired verification code." });
+        return;
+      }
+    } else {
+      const { client, serviceSid } = getTwilioClient();
+      const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
+        to: normalized,
+        code: code.trim(),
+      });
+      if (check.status !== "approved") {
+        res.status(400).json({ error: "Invalid or expired verification code." });
+        return;
+      }
+    }
+
+    const bcrypt = await import("bcryptjs");
+    const passwordHash = await bcrypt.hash(newPassword, 8);
+    await db
+      .update(usersTable)
+      .set({
+        passwordHash,
+        mustChangePassword: false,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      })
+      .where(eq(usersTable.id, user.id));
+    req.log.info({ event: "AUTH_PHONE_RESET_SUCCESS", userId: user.id.slice(0, 8) }, "phone password reset completed");
+    res.json({ success: true });
+  } catch (err: unknown) {
+    req.log.error({ err }, "POST /api/auth/phone/reset-password error");
+    res.status(500).json({ error: "Password reset failed. Please try again." });
+  }
+});
+
 // GET /auth/phone/check  — check if a phone number is already registered
 router.get("/auth/phone/check", async (req: Request, res: Response) => {
   const { phone } = req.query as { phone?: string };

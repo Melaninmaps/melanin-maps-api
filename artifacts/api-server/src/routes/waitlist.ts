@@ -8,11 +8,39 @@ import { isAdmin } from "../lib/adminAuth";
 
 const router: IRouter = Router();
 
+const WAITLIST_SIGNUP_SOURCES = ["web", "ios", "android"] as const;
+type WaitlistSignupSource = (typeof WAITLIST_SIGNUP_SOURCES)[number];
+
+/**
+ * Keep one email-keyed waitlist record even when the same person joins from
+ * the website and later downloads an iOS or Android build. The source is a
+ * coarse user-declared surface label, never a device identifier or tracker.
+ */
+function resolveWaitlistSignupSource(raw: unknown): WaitlistSignupSource {
+  const candidate = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+  return (WAITLIST_SIGNUP_SOURCES as readonly string[]).includes(candidate)
+    ? (candidate as WaitlistSignupSource)
+    : "web";
+}
+
+function appendWaitlistSignupSource(
+  existing: string | null | undefined,
+  source: WaitlistSignupSource,
+): string {
+  const prior = String(existing ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value): value is WaitlistSignupSource =>
+      (WAITLIST_SIGNUP_SOURCES as readonly string[]).includes(value),
+    );
+  return [...new Set([...prior, source])].join(",");
+}
+
 // ── Public: join waitlist ────────────────────────────────────────────────────
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign, niche, platforms, safetyPriorities } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign, niche, platforms, safetyPriorities, signupSource } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
@@ -31,6 +59,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       niche?: string;
       platforms?: string;
       safetyPriorities?: string;
+      signupSource?: string;
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,6 +78,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const digits = Math.floor(1000 + Math.random() * 9000);
     const code = referralCode ?? `MWM-${namePrefix}-${digits}`;
     const primaryEmail = email.toLowerCase().trim();
+    const source = resolveWaitlistSignupSource(signupSource);
 
     // Validate and deduplicate family emails
     const validFamilyEmails = Array.isArray(familyEmails)
@@ -62,37 +92,93 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       ? `fg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
       : null;
 
-    await db
-      .insert(waitlistTable)
-      .values({
-        email: primaryEmail,
-        firstName: firstName?.trim() || null,
-        lastName: lastName?.trim() || null,
-        city: city?.trim() || null,
-        state: state?.trim().toUpperCase() || null,
-        isBusinessOwner: Boolean(isBusinessOwner),
-        websiteUrl: websiteUrl?.trim() || null,
-        referralCode: code,
-        referredBy: referredBy ?? null,
-        status: "pending",
-        familyGroupId,
-        cityNomination: cityNomination?.trim() || null,
-        previewChoice: ['safety', 'discovery', 'business', 'community', 'ambassador'].includes(previewChoice ?? '') ? previewChoice : null,
-        niche: niche?.trim() || null,
-        platforms: platforms?.trim() || null,
-        safetyPriorities: safetyPriorities?.trim() || null,
-        notes: (utmSource || utmMedium || utmCampaign) ? JSON.stringify({ utmSource, utmMedium, utmCampaign }) : null,
+    // This deliberately preserves the original entry details and position.
+    // A repeat join from a different surface updates only source history.
+    const [priorEntry] = await db
+      .select({
+        id: waitlistTable.id,
+        signupSources: waitlistTable.signupSources,
       })
-      .onConflictDoNothing();
+      .from(waitlistTable)
+      .where(eq(waitlistTable.email, primaryEmail))
+      .limit(1);
 
-    const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
-    const position = Number(total);
-    const [insertedEntry] = await db.select({ id: waitlistTable.id }).from(waitlistTable).where(eq(waitlistTable.email, primaryEmail)).limit(1);
+    let created = false;
+    if (priorEntry) {
+      await db
+        .update(waitlistTable)
+        .set({
+          signupSources: appendWaitlistSignupSource(
+            priorEntry.signupSources,
+            source,
+          ),
+        })
+        .where(eq(waitlistTable.id, priorEntry.id));
+    } else {
+      const inserted = await db
+        .insert(waitlistTable)
+        .values({
+          email: primaryEmail,
+          firstName: firstName?.trim() || null,
+          lastName: lastName?.trim() || null,
+          city: city?.trim() || null,
+          state: state?.trim().toUpperCase() || null,
+          isBusinessOwner: Boolean(isBusinessOwner),
+          websiteUrl: websiteUrl?.trim() || null,
+          referralCode: code,
+          referredBy: referredBy ?? null,
+          status: "pending",
+          familyGroupId,
+          cityNomination: cityNomination?.trim() || null,
+          previewChoice: ['safety', 'discovery', 'business', 'community', 'ambassador'].includes(previewChoice ?? '') ? previewChoice : null,
+          niche: niche?.trim() || null,
+          platforms: platforms?.trim() || null,
+          safetyPriorities: safetyPriorities?.trim() || null,
+          notes: (utmSource || utmMedium || utmCampaign) ? JSON.stringify({ utmSource, utmMedium, utmCampaign }) : null,
+          signupSources: source,
+        })
+        .onConflictDoNothing()
+        .returning({ id: waitlistTable.id });
+      created = inserted.length > 0;
+      // A concurrent request won the insert. Preserve its data and append this
+      // surface label rather than creating a second record or sending a second
+      // confirmation email.
+      if (!created) {
+        const [concurrentEntry] = await db
+          .select({ id: waitlistTable.id, signupSources: waitlistTable.signupSources })
+          .from(waitlistTable)
+          .where(eq(waitlistTable.email, primaryEmail))
+          .limit(1);
+        if (concurrentEntry) {
+          await db
+            .update(waitlistTable)
+            .set({
+              signupSources: appendWaitlistSignupSource(
+                concurrentEntry.signupSources,
+                source,
+              ),
+            })
+            .where(eq(waitlistTable.id, concurrentEntry.id));
+        }
+      }
+    }
+
+    const [insertedEntry] = await db.select({
+      id: waitlistTable.id,
+      signupSources: waitlistTable.signupSources,
+      referralCode: waitlistTable.referralCode,
+    }).from(waitlistTable).where(eq(waitlistTable.email, primaryEmail)).limit(1);
     const entryId = insertedEntry?.id ?? null;
+    const canonicalReferralCode = insertedEntry?.referralCode ?? code;
+    const allEntriesForPosition = await db
+      .select({ id: waitlistTable.id })
+      .from(waitlistTable)
+      .orderBy(asc(waitlistTable.createdAt));
+    const position = Math.max(1, allEntriesForPosition.findIndex((entry) => entry.id === entryId) + 1);
 
     // Register each family member as a separate waitlist entry, grouped by familyGroupId
     let familyAdded = 0;
-    if (validFamilyEmails.length > 0 && familyGroupId) {
+    if (created && validFamilyEmails.length > 0 && familyGroupId) {
       for (const fe of validFamilyEmails) {
         try {
           const feCode = fe.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
@@ -101,9 +187,10 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
             .values({
               email: fe,
               familyGroupId,
-              referredBy: code,
+              referredBy: canonicalReferralCode,
               referralCode: feCode,
               status: "pending",
+              signupSources: source,
             })
             .onConflictDoNothing();
           const [{ total: feTotal }] = await db.select({ total: count() }).from(waitlistTable);
@@ -119,14 +206,16 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const cleanEmail = email.toLowerCase().trim();
     const cleanFirst = firstName?.trim() || null;
     const cleanLast = lastName?.trim() || null;
-    sendWaitlistConfirmation(cleanEmail, position, code, cleanFirst ?? "there", cleanLast ?? undefined)
-      .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, code)))
-      .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
-    sendWelcomeEmail(cleanEmail, cleanFirst)
-      .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
+    if (created) {
+      sendWaitlistConfirmation(cleanEmail, position, canonicalReferralCode, cleanFirst ?? "there", cleanLast ?? undefined)
+        .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, canonicalReferralCode)))
+        .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
+      sendWelcomeEmail(cleanEmail, cleanFirst)
+        .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
+    }
 
     // Fire referral milestone update to the referrer when someone joins via their code
-    if (referredBy?.trim()) {
+    if (created && referredBy?.trim()) {
       const referrerCode = referredBy.trim().toUpperCase();
       (async () => {
         try {
@@ -163,7 +252,15 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       })();
     }
 
-    res.status(201).json({ success: true, position, referralCode: code, familyAdded, id: entryId });
+    res.status(201).json({
+      success: true,
+      position,
+      referralCode: canonicalReferralCode,
+      familyAdded,
+      id: entryId,
+      created,
+      signupSources: insertedEntry?.signupSources ?? source,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to join waitlist");
     res.status(500).json({ error: "Failed to join waitlist" });
@@ -172,11 +269,14 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
 
 router.get("/waitlist/count", async (_req: Request, res: Response) => {
   try {
-    const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.isSyntheticTest, false));
     const cityRows = await db
       .select({ city: waitlistTable.city, total: count() })
       .from(waitlistTable)
-      .where(isNotNull(waitlistTable.city))
+      .where(and(isNotNull(waitlistTable.city), eq(waitlistTable.isSyntheticTest, false)))
       .groupBy(waitlistTable.city)
       .orderBy(desc(count()))
       .limit(8);
@@ -410,18 +510,21 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const statusFilter = String(req.query.status ?? "");
     const allowed = ["pending", "approved", "rejected"];
     const filterByStatus = allowed.includes(statusFilter) ? statusFilter : null;
-
-    const whereClause = filterByStatus ? eq(waitlistTable.status, filterByStatus) : undefined;
+    const syntheticFilter = String(req.query.synthetic ?? "people");
+    const showingSynthetic = syntheticFilter === "only";
+    const whereClause = and(
+      filterByStatus ? eq(waitlistTable.status, filterByStatus) : undefined,
+      showingSynthetic
+        ? eq(waitlistTable.isSyntheticTest, true)
+        : eq(waitlistTable.isSyntheticTest, false),
+    );
     const offset = (page - 1) * pageSize;
 
-    const [entriesResult, totalResult, pendingResult] = await Promise.all([
-      filterByStatus
-        ? db.select().from(waitlistTable).where(whereClause!).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset)
-        : db.select().from(waitlistTable).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset),
-      filterByStatus
-        ? db.select({ total: count() }).from(waitlistTable).where(whereClause!)
-        : db.select({ total: count() }).from(waitlistTable),
-      db.select({ pending: count() }).from(waitlistTable).where(eq(waitlistTable.status, "pending")),
+    const [entriesResult, totalResult, pendingResult, testCountResult] = await Promise.all([
+      db.select().from(waitlistTable).where(whereClause).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset),
+      db.select({ total: count() }).from(waitlistTable).where(whereClause),
+      db.select({ pending: count() }).from(waitlistTable).where(and(eq(waitlistTable.status, "pending"), eq(waitlistTable.isSyntheticTest, false))),
+      db.select({ total: count() }).from(waitlistTable).where(eq(waitlistTable.isSyntheticTest, true)),
     ]);
 
     const total = Number(totalResult[0]?.total ?? 0);
@@ -430,6 +533,7 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const allForPositions = await db
       .select({ id: waitlistTable.id })
       .from(waitlistTable)
+      .where(showingSynthetic ? eq(waitlistTable.isSyntheticTest, true) : eq(waitlistTable.isSyntheticTest, false))
       .orderBy(asc(waitlistTable.createdAt));
     const positionMap = new Map(allForPositions.map((r, i) => [r.id, i + 1]));
 
@@ -445,6 +549,8 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
       pageSize,
       totalPages,
       pendingCount: Number(pendingResult[0]?.pending ?? 0),
+      syntheticTestCount: Number(testCountResult[0]?.total ?? 0),
+      showingSynthetic,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch waitlist");
@@ -483,7 +589,9 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    // When approved: also approve their user account (if they have one) and send notification email
+    // When approved: also approve their user account (if they have one) and
+    // send the right next action. A waitlist approval is enough to register;
+    // it must not tell a person to sign in before an account exists.
     if (status === "approved" && updated.email) {
       const [existingUser] = await db
         .select({ id: usersTable.id, firstName: usersTable.firstName, approved: usersTable.approved })
@@ -498,7 +606,9 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
           .where(eq(usersTable.id, existingUser.id));
       }
 
-      sendApprovalNotification(updated.email, updated.firstName ?? null)
+      sendApprovalNotification(updated.email, updated.firstName ?? null, {
+        hasExistingAccount: Boolean(existingUser),
+      })
         .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist approval email"));
     }
 
@@ -506,6 +616,122 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update waitlist entry");
     res.status(500).json({ error: "Failed to update entry" });
+  }
+});
+
+// ── Admin: remove an unconverted test/signup record ───────────────────────────
+// This intentionally refuses to delete an account, sessions, or pre-launch
+// submissions. Member-account deletion remains an explicit action in the
+// Registered Users tab, where the administrator sees the separate warning.
+router.delete("/admin/waitlist/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const id = String(req.params.id);
+  try {
+    const found = await pool.query<{ id: string; email: string }>(
+      `SELECT id, email FROM waitlist_signups WHERE id = $1 FOR UPDATE`,
+      [id],
+    );
+    const entry = found.rows[0];
+    if (!entry) {
+      res.status(404).json({ error: "Waitlist entry not found." });
+      return;
+    }
+
+    const [accountResult, suggestionResult, safetyResult] = await Promise.all([
+      pool.query<{ id: string }>(
+        `SELECT id FROM users WHERE lower(email) = lower($1) LIMIT 1`,
+        [entry.email],
+      ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM business_suggestions WHERE waitlist_id = $1`,
+        [entry.id],
+      ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM waitlist_safety_reports WHERE waitlist_id = $1`,
+        [entry.id],
+      ),
+    ]);
+    if (accountResult.rows.length > 0) {
+      res.status(409).json({
+        error: "This email has a registered account. Use Registered Users to manage or delete that account; its waitlist history is retained.",
+        code: "WAITLIST_ENTRY_HAS_ACCOUNT",
+      });
+      return;
+    }
+    if (Number(suggestionResult.rows[0]?.total ?? 0) > 0 || Number(safetyResult.rows[0]?.total ?? 0) > 0) {
+      res.status(409).json({
+        error: "This signup has saved pre-launch contributions and cannot be removed from this screen.",
+        code: "WAITLIST_ENTRY_HAS_CONTRIBUTIONS",
+      });
+      return;
+    }
+
+    await pool.query(`DELETE FROM waitlist_signups WHERE id = $1`, [entry.id]);
+    req.log.info({ event: "ADMIN_WAITLIST_ENTRY_REMOVED", waitlistEntryId: entry.id, by: req.user?.id }, "standalone waitlist entry removed");
+    res.json({ deleted: true, id: entry.id });
+  } catch (err) {
+    req.log.error({ err }, "Failed to remove standalone waitlist entry");
+    res.status(500).json({ error: "Failed to remove waitlist entry." });
+  }
+});
+
+// ── Admin: remove safe synthetic waitlist fixtures ───────────────────────────
+// This is deliberately narrower than account deletion. It clears only marked
+// audit records that have neither a registered account nor stored community
+// contributions; everything else is returned as held for explicit handling.
+router.post("/admin/waitlist/synthetic-tests/cleanup", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  if (req.body?.confirmation !== "REMOVE SYNTHETIC TEST WAITLIST ENTRIES") {
+    res.status(400).json({
+      error: "Enter the exact confirmation phrase to remove safe synthetic waitlist entries.",
+      code: "SYNTHETIC_WAITLIST_CONFIRMATION_REQUIRED",
+    });
+    return;
+  }
+  try {
+    const result = await pool.query<{
+      id: string;
+      email: string;
+      has_account: boolean;
+      suggestion_count: string;
+      safety_count: string;
+    }>(
+      `SELECT w.id, w.email,
+        EXISTS(SELECT 1 FROM users u WHERE lower(u.email) = lower(w.email)) AS has_account,
+        (SELECT COUNT(*)::text FROM business_suggestions b WHERE b.waitlist_id = w.id) AS suggestion_count,
+        (SELECT COUNT(*)::text FROM waitlist_safety_reports s WHERE s.waitlist_id = w.id) AS safety_count
+       FROM waitlist_signups w
+       WHERE w.is_synthetic_test = true
+       ORDER BY w.created_at ASC`,
+    );
+    const safeIds: string[] = [];
+    let heldAccounts = 0;
+    let heldContributions = 0;
+    for (const entry of result.rows) {
+      if (entry.has_account) {
+        heldAccounts++;
+        continue;
+      }
+      if (Number(entry.suggestion_count) > 0 || Number(entry.safety_count) > 0) {
+        heldContributions++;
+        continue;
+      }
+      safeIds.push(entry.id);
+    }
+    if (safeIds.length > 0) {
+      await pool.query(`DELETE FROM waitlist_signups WHERE id = ANY($1::varchar[])`, [safeIds]);
+    }
+    req.log.info({ event: "ADMIN_SYNTHETIC_WAITLIST_CLEANUP", deleted: safeIds.length, heldAccounts, heldContributions, by: req.user?.id }, "safe synthetic waitlist cleanup completed");
+    res.json({ deleted: safeIds.length, heldAccounts, heldContributions });
+  } catch (err) {
+    req.log.error({ err }, "Failed synthetic waitlist cleanup");
+    res.status(500).json({ error: "Failed to clean up synthetic waitlist entries." });
   }
 });
 
@@ -635,7 +861,9 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
         if (existingUser && !existingUser.approved) {
           await db.update(usersTable).set({ approved: true }).where(eq(usersTable.id, existingUser.id));
         }
-        sendApprovalNotification(entry.email, entry.firstName ?? null)
+        sendApprovalNotification(entry.email, entry.firstName ?? null, {
+          hasExistingAccount: Boolean(existingUser),
+        })
           .catch((err: unknown) => req.log.error({ err }, "Failed to send bulk approval email"));
       }
     }

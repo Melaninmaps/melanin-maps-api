@@ -17,17 +17,27 @@ const projectRoot = path.resolve(__dirname, "..");
 const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "app.json"), "utf8")) as AppJson;
 const buildRecord = JSON.parse(
   fs.readFileSync(path.join(projectRoot, ".build-record.json"), "utf8"),
-) as { lastIosSubmitted: number };
+) as {
+  lastIosSubmitted: number;
+  lastIosReserved?: number;
+  lastAndroidSubmitted: number;
+  lastAndroidReserved?: number;
+};
 const eas = JSON.parse(fs.readFileSync(path.join(projectRoot, "eas.json"), "utf8")) as {
   build: { production: { env: { EXPO_PUBLIC_API_ORIGIN: string } } };
   submit: { production: { ios: { ascAppId: string } } };
 };
 
 describe("iOS App Review background-audio configuration", () => {
-  it("uses the next build after the last submitted TestFlight binary", () => {
-    expect(Number(appJson.expo.ios.buildNumber)).toBe(buildRecord.lastIosSubmitted + 1);
-    expect(appJson.expo.ios.buildNumber).toBe("113");
-    expect(appJson.expo.android.versionCode).toBe(83);
+  it("uses the next unused identifiers after submitted and reserved artifacts", () => {
+    expect(Number(appJson.expo.ios.buildNumber)).toBe(
+      Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0) + 1,
+    );
+    expect(appJson.expo.android.versionCode).toBe(
+      Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0) + 1,
+    );
+    expect(appJson.expo.ios.buildNumber).toBe("115");
+    expect(appJson.expo.android.versionCode).toBe(85);
     expect(appJson.expo.version).toBe("1.1.9");
     expect(appJson.expo.android.version).toBe("1.1.7");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");

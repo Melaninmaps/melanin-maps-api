@@ -26,10 +26,12 @@ const audioPlugin = (appJson.expo.plugins ?? []).find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-audio",
 );
 const audioOptions = Array.isArray(audioPlugin) ? audioPlugin[1] ?? {} : {};
-// A build can be consumed by EAS or App Store Connect before it is recorded as
-// submitted here. Any integer above the recorded submitted build is valid; do
-// not block the next source release by assuming the value must be consecutive.
-const minimumBuild = Number(buildRecord.lastIosSubmitted) + 1;
+// A build can be consumed by EAS or App Store Connect before it is submitted.
+// The configured release must be above every known submitted or reserved build.
+const minimumBuild = Math.max(
+  Number(buildRecord.lastIosSubmitted) || 0,
+  Number(buildRecord.lastIosReserved) || 0,
+) + 1;
 const configuredBuild = Number(config?.ios?.buildNumber);
 const failures = [];
 
