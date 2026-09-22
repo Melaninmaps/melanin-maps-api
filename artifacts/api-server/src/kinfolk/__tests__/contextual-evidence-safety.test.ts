@@ -20,6 +20,29 @@ const plan: SemanticTurnPlan = {
 };
 
 describe("contextual evidence safety", () => {
+  it("does not retain unrelated published links for a changing public statistic", async () => {
+    const currentPlan: SemanticTurnPlan = {
+      ...plan,
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: ["How many people live in the United States?"],
+    };
+    const bundle = await orchestrateContextualResearch(currentPlan, {
+      searchInternal: async () => [{
+        title: "City of Philadelphia — Business Services",
+        url: "https://www.phila.gov/services/business-self-employment/",
+        publisher: "City of Philadelphia",
+        kind: "library_published",
+        excerpt: "Permits and business support.",
+        publishedAt: null,
+        retrievedAt: "2026-09-22T00:00:00.000Z",
+        supports: ["Business services"],
+      }],
+    });
+    expect(bundle.internal).toEqual([]);
+    expect(bundle.gaps).toContain("No source-backed evidence was available.");
+  });
+
   it("removes instruction-like source text and quotes remaining evidence as data", async () => {
     const bundle = await orchestrateContextualResearch(plan, {
       searchInternal: async () => [{

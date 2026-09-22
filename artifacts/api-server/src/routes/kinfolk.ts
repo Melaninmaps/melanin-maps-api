@@ -233,6 +233,11 @@ import {
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import {
+  buildConsentedPlanningContextPrompt,
+  isConsentedPlanningMemoryRelevant,
+} from "../kinfolk/consented-planning-context";
+import { filterMemberFacingSources } from "../kinfolk/source-relevance";
+import {
   buildCompanionMemoryOffer,
   formatCompanionMemory,
   isCompanionMemoryRelevant,
@@ -5304,6 +5309,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       "preference",
       "goal",
       "ongoing_context",
+      "planning_context",
       "companion_context",
     ];
     const requestedPurpose = String(body.purpose ?? "personalization");
@@ -8142,8 +8148,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : [];
     const relevantPrivateMemories = activePrivateMemories.filter(
       (memory) =>
-        (!memory.isSensitive ||
-          isSensitiveMemoryRelevant(memory.content, message)) &&
+        (memory.purpose === "planning_context"
+          ? isConsentedPlanningMemoryRelevant(memory, message)
+          : (!memory.isSensitive ||
+            isSensitiveMemoryRelevant(memory.content, message))) &&
         (memory.purpose !== "companion_context" ||
           isCompanionMemoryRelevant(memory.content, message)),
     );
@@ -8199,6 +8207,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (lifeGuidance ? `\n\n${lifeGuidance.responseInstruction}` : "") +
       ownerBusinessContext +
       privateMemoryBlock +
+      buildConsentedPlanningContextPrompt(relevantPrivateMemories) +
       (contextualPlan
         ? [
             "\nCONTEXTUAL ANSWER CONTRACT — SERVER CONTROLLED:",
@@ -8970,6 +8979,43 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           contextualEvidence.media.length
         : 0,
     });
+    const memberFacingSources = filterMemberFacingSources(
+      [
+        ...contextResolution.sources.map((s) => ({
+          id: s.url,
+          label: s.tier,
+          title: s.title,
+          url: s.url,
+        })),
+        ...healthRetrievalSources.map((s) => ({
+          id: s.url,
+          label: s.source,
+          title: s.title,
+          url: s.url,
+        })),
+        ...knowledgeGraphSources.map((s) => ({
+          id: s.url,
+          label: s.source,
+          title: s.title,
+          url: s.url,
+        })),
+        ...(contextualEvidence
+          ? [
+              ...contextualEvidence.internal,
+              ...contextualEvidence.external,
+              ...contextualEvidence.media,
+            ].map((source) => ({
+              id: source.url,
+              label:
+                source.kind === "library_published" ? "library" : "web_search",
+              title: source.title,
+              url: source.url,
+              evidenceText: `${source.excerpt} ${source.supports.join(" ")}`,
+            }))
+          : []),
+      ],
+      message,
+    );
     res.json({
       sessionId: finalSessionId,
       reply,
@@ -9019,39 +9065,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : undefined),
       // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
-      sources: [
-        ...contextResolution.sources.map((s) => ({
-          id: s.url,
-          label: s.tier,
-          title: s.title,
-          url: s.url,
-        })),
-        ...healthRetrievalSources.map((s) => ({
-          id: s.url,
-          label: s.source,
-          title: s.title,
-          url: s.url,
-        })),
-        ...knowledgeGraphSources.map((s) => ({
-          id: s.url,
-          label: s.source,
-          title: s.title,
-          url: s.url,
-        })),
-        ...(contextualEvidence
-          ? [
-              ...contextualEvidence.internal,
-              ...contextualEvidence.external,
-              ...contextualEvidence.media,
-            ].map((source) => ({
-              id: source.url,
-              label:
-                source.kind === "library_published" ? "library" : "web_search",
-              title: source.title,
-              url: source.url,
-            }))
-          : []),
-      ] as { id: string; label: string; title?: string; url?: string }[],
+      sources: memberFacingSources,
       // Additive V1 fields are emitted only under the server-controlled gate.
       // `reply` remains the complete compatibility surface for Build 105.
       ...(contextualPlan
@@ -9061,13 +9075,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             // server evidence. Links must exactly match a normalized source URL.
             structuredContent:
               contextualStructuredContent &&
-              contextResolution.sources.length +
-                healthRetrievalSources.length +
-                knowledgeGraphSources.length +
-                (contextualEvidence?.internal.length ?? 0) +
-                (contextualEvidence?.external.length ?? 0) +
-                (contextualEvidence?.media.length ?? 0) >
-                0
+              memberFacingSources.length > 0
                 ? contextualStructuredContent
                 : null,
             mediaLinks: contextualMediaLinks,

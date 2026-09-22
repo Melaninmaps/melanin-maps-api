@@ -1,6 +1,7 @@
 import type { ExternalResearchProvider, ResearchDocument } from "../library/types";
 import { canonicalizeContextualUrl } from "./contextual-url";
 import type { SemanticTurnPlan } from "./semantic-turn-planner";
+import { sourceHasMemberQuestionRelevance } from "./source-relevance";
 
 export type ContextualEvidenceItem = {
   title: string;
@@ -338,7 +339,17 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
     }
     if (documents.length > 0) break;
   }
-  return dedupe(documents.filter((item) => allowedForPlan(plan, item)));
+  const accepted = dedupe(documents.filter((item) => allowedForPlan(plan, item)));
+  // A current claim must be supported by sources about the member's actual
+  // question. This prevents a generic city/business link from appearing beside
+  // an unrelated population, price, policy, or other changing fact.
+  if (plan.freshness !== "current") return accepted;
+  const memberQuestion = plan.retrievalQueries[0] ?? "";
+  return accepted.filter((item) => sourceHasMemberQuestionRelevance({
+    title: item.title,
+    url: item.url,
+    evidenceText: `${item.excerpt} ${item.supports.join(" ")}`,
+  }, memberQuestion));
 }
 
 export function contextualEvidenceNeedsFailClosedResponse(plan: SemanticTurnPlan, bundle: ContextualEvidenceBundle): boolean {
@@ -372,6 +383,17 @@ export async function orchestrateContextualResearch(
           const normalized = normalizeItem(item, now);
           return normalized && allowedForPlan(plan, normalized) ? [normalized] : [];
         }));
+        // Published Library material can provide stable background, but it may
+        // never stand in for a changing fact or render as an unrelated link.
+        // Keep it only when its title/excerpt actually concerns this turn.
+        if (plan.freshness === "current") {
+          const memberQuestion = plan.retrievalQueries[0] ?? "";
+          internal = internal.filter((item) => sourceHasMemberQuestionRelevance({
+            title: item.title,
+            url: item.url,
+            evidenceText: `${item.excerpt} ${item.supports.join(" ")}`,
+          }, memberQuestion));
+        }
       } catch (error) {
         if (controller.signal.aborted) providerUnavailable = true;
       }
