@@ -54,6 +54,7 @@ import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
 import BusinessExperienceCard from "@/components/BusinessExperienceCard";
 import { detectSocialVideoPlatform } from "@workspace/constants";
+import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
 const SOCIAL_PROFILE_HOSTS: Record<string, readonly string[]> = {
   tiktok: ["tiktok.com"],
@@ -136,6 +137,7 @@ export default function BusinessDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
+  const { allows } = useSocialVideoPreferences();
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [renderedAt] = useState(() => Date.now());
@@ -225,6 +227,10 @@ export default function BusinessDetailScreen() {
   const [contributionCaption, setContributionCaption] = useState("");
   const [contributionSubmitting, setContributionSubmitting] = useState(false);
   const [contributionError, setContributionError] = useState<string | null>(null);
+  const visibleContributions = approvedContributions.filter((item) => {
+    const href = approvedContributionUrl(item.source_url, item.source_type);
+    return Boolean(href) && allows(detectSocialVideoPlatform(href!));
+  });
 
   const { business, isLoading } = useBusinessById(id ?? "");
 
@@ -847,8 +853,7 @@ export default function BusinessDetailScreen() {
           </View>
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
-          {(safeOfficialWebsite(business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)) || approvedContributions.length > 0) && (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
               {safeOfficialWebsite(business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)) && (
                 <TouchableOpacity
                   onPress={handleWebsite}
@@ -862,20 +867,27 @@ export default function BusinessDetailScreen() {
                   <Feather name="external-link" size={13} color={colors.primary} />
                 </TouchableOpacity>
               )}
-              {approvedContributions.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => mainScrollRef.current?.scrollTo({ y: Math.max(0, communityMediaYRef.current - 16), animated: true })}
-                  activeOpacity={0.82}
-                  accessibilityRole="button"
-                  accessibilityLabel={`View ${approvedContributions.length} approved community experiences`}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
-                >
-                  <Feather name="play-circle" size={15} color={colors.foreground} />
-                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.foreground }}>Community experiences ({approvedContributions.length})</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+            <TouchableOpacity
+              onPress={() => mainScrollRef.current?.scrollTo({ y: Math.max(0, communityMediaYRef.current - 16), animated: true })}
+              activeOpacity={0.82}
+              accessibilityRole="button"
+              accessibilityLabel={`Watch ${visibleContributions.length} community videos for ${business.name}`}
+              style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
+            >
+              <Feather name="play-circle" size={15} color={colors.foreground} />
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.foreground }}>Watch community posts ({visibleContributions.length})</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setContributionModalOpen(true)}
+              activeOpacity={0.82}
+              accessibilityRole="button"
+              accessibilityLabel={`Share your visit to ${business.name}`}
+              style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.primary + "55", backgroundColor: colors.primary + "0D", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
+            >
+              <Feather name="video" size={15} color={colors.primary} />
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>Share your visit</Text>
+            </TouchableOpacity>
+          </View>
           {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4, backgroundColor: "#16A34A0D", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: "#16A34A25" }}>
               <Text style={{ fontSize: 10, color: "#16A34A", fontFamily: "Inter_600SemiBold" }}>{"\u2714"} {weightedRating.toFixed(1)} trust-weighted avg</Text>
@@ -1274,10 +1286,10 @@ export default function BusinessDetailScreen() {
           <View onLayout={(event) => { communityMediaYRef.current = event.nativeEvent.layout.y; }} style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.communityMediaHeader}>
                 <Feather name="play-circle" size={17} color={colors.primary} />
-                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community creator videos</Text>
+                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Watch community posts</Text>
               </View>
-              <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved public links shared by community members. They open on the original creator platform.</Text>
-              {approvedContributions.some((item) => approvedContributionUrl(item.source_url, item.source_type)) ? approvedContributions.map((item) => {
+              <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved public links shared by community members. Your Video Sources choices decide which platforms appear here; links open on the original creator platform.</Text>
+              {visibleContributions.length > 0 ? visibleContributions.map((item) => {
                 const href = approvedContributionUrl(item.source_url, item.source_type);
                 if (!href) return null;
                 const platform = item.source_type.charAt(0).toUpperCase() + item.source_type.slice(1);
@@ -1304,16 +1316,24 @@ export default function BusinessDetailScreen() {
                     <Feather name="external-link" size={16} color={colors.primary} />
                   </TouchableOpacity>
                 );
-              }) : <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>No approved community videos yet. Be the first to share a public video about this place.</Text>}
+              }) : approvedContributions.length > 0 ? (
+                <View style={{ gap: 8 }}>
+                  <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved videos are available, but none match your current Video Sources choices.</Text>
+                  <TouchableOpacity onPress={() => router.push("/social-video-preferences" as never)} accessibilityRole="button" style={[styles.communityMediaAddButton, { borderColor: colors.primary + "55" }]}>
+                    <Feather name="sliders" size={15} color={colors.primary} />
+                    <Text style={[styles.communityMediaAddText, { color: colors.primary }]}>Choose video sources</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>No approved community videos yet. Be the first to share a public visit video.</Text>}
               <TouchableOpacity
                 onPress={() => setContributionModalOpen(true)}
                 style={[styles.communityMediaAddButton, { borderColor: colors.primary + "55" }]}
                 accessibilityRole="button"
-                accessibilityLabel="Add a public video to this place"
+                accessibilityLabel="Share your visit to this place"
                 activeOpacity={0.82}
               >
                 <Feather name="plus" size={15} color={colors.primary} />
-                <Text style={[styles.communityMediaAddText, { color: colors.primary }]}>Add a public video</Text>
+                <Text style={[styles.communityMediaAddText, { color: colors.primary }]}>Share your visit</Text>
               </TouchableOpacity>
             </View>
 

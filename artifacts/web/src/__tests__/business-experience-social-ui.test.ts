@@ -83,8 +83,8 @@ describe("website social video choices", () => {
   it("submits member public videos to the shared moderation queue", () => {
     const detail = source("../pages/business-detail.tsx");
     expect(detail).toContain("/contributions");
-    expect(detail).toContain("Community experiences");
-    expect(detail).toContain("Share a public video");
+    expect(detail).toContain("Watch community posts");
+    expect(detail).toContain("Share your visit");
     expect(detail).toContain("setContribSuccess(true)");
   });
 
@@ -93,6 +93,14 @@ describe("website social video choices", () => {
     expect(detail).toContain("Approved public posts shared by members");
     expect(detail).toContain("closeContributionModal");
     expect(detail).toContain('event.key === "Escape"');
+  });
+
+  it("filters business-profile public videos by the member's explicit Video Sources choices", () => {
+    const detail = source("../pages/business-detail.tsx");
+    expect(detail).toContain("useSocialVideoPreferences");
+    expect(detail).toContain("visibleCommunityVibes");
+    expect(detail).toContain("allows(platform)");
+    expect(detail).toContain("Choose video sources");
   });
 
   it("gives administrators an explicit review and publication queue", () => {

@@ -72,19 +72,29 @@ describe("Expo social video choices", () => {
   it("shows approved place videos and lets members submit a public video for moderation", () => {
     const detail = source("../app/business/[id].tsx");
     expect(detail).toContain("/contributions");
-    expect(detail).toContain("Community creator videos");
+    expect(detail).toContain("Watch community posts");
     expect(detail).toContain("Add a public video");
     expect(detail).toContain("Submit for review");
     expect(detail).toContain("detectSocialVideoPlatform(sourceUrl)");
     expect(detail).toContain("after moderation confirms the public link and context");
     expect(detail).toContain("openApprovedContribution(item)");
+    expect(detail).toContain("Watch community posts");
+    expect(detail).toContain("Share your visit");
   });
 
   it("keeps the official website and approved community media near the listing identity", () => {
     const detail = source("../app/business/[id].tsx");
     expect(detail).toContain("safeOfficialWebsite");
     expect(detail).toContain("Official website");
-    expect(detail).toContain("Community experiences (");
+    expect(detail).toContain("Watch community posts (");
     expect(detail).toContain("communityMediaYRef.current");
+  });
+
+  it("filters business-profile public videos by the member's explicit Video Sources choices", () => {
+    const detail = source("../app/business/[id].tsx");
+    expect(detail).toContain("useSocialVideoPreferences");
+    expect(detail).toContain("visibleContributions");
+    expect(detail).toContain("allows(detectSocialVideoPlatform");
+    expect(detail).toContain("Choose video sources");
   });
 });
