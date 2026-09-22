@@ -51,7 +51,7 @@ import {
 } from "@/lib/mapLocality";
 import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
 
-import { getApiBase } from "@/lib/api";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
 const GOLD = "#CA922B";
 // KinfolkAI restore tab lives at bottom: insets.bottom + 90 in the root layout.
@@ -326,6 +326,8 @@ function getCategoryStyle(
 interface FullMapViewProps {
   /** When set, the map pans to this tour_cultural_sites ID and opens its card. */
   focusSiteId?: string;
+  /** A distinct cultural_sites ID; never interpreted as a tour site. */
+  focusCulturalSiteId?: string;
   focusLat?: string;
   focusLng?: string;
   /** Explicit city/state scope supplied by a search or deep link. */
@@ -335,6 +337,7 @@ interface FullMapViewProps {
 
 export function FullMapView({
   focusSiteId,
+  focusCulturalSiteId,
   focusLat,
   focusLng,
   searchCity,
@@ -436,6 +439,7 @@ export function FullMapView({
     useState<TourHeritageSite | null>(null);
   const isFetchingTourSites = useRef(false);
   const isFetchingFocusedTourSite = useRef(false);
+  const isFetchingFocusedCulturalSite = useRef(false);
 
   // Global destination coordinates are an opt-in travel planning layer. They
   // are never mixed with business pins and do not represent verified venues.
@@ -706,6 +710,51 @@ export function FullMapView({
     return () => clearTimeout(timer);
   }, [focusSiteId, focusLat, focusLng, mapReady, tourSites]);
 
+  // Cultural Explorer uses canonical cultural_sites records, which have a
+  // different contract from the tour layer above. Keep these focus paths
+  // distinct so an HBCU/landmark never becomes a tour-site deep link.
+  useEffect(() => {
+    if (!focusCulturalSiteId || !mapReady || isFetchingFocusedCulturalSite.current) return;
+    if (culturalSites.some((site) => site.id === focusCulturalSiteId)) return;
+    isFetchingFocusedCulturalSite.current = true;
+    void (async () => {
+      try {
+        const headers = await getMemberApiHeaders();
+        const response = await fetch(`${getApiBase()}/api/cultural-sites/${encodeURIComponent(focusCulturalSiteId)}`, { headers, credentials: "include" });
+        if (!response.ok) return;
+        const payload = await response.json() as { site?: CulturalSite } & CulturalSite;
+        const site = payload.site ?? payload;
+        if (site?.id) setCulturalSites((current) => current.some((item) => item.id === site.id) ? current : [...current, site]);
+      } catch {}
+      finally { isFetchingFocusedCulturalSite.current = false; }
+    })();
+  }, [focusCulturalSiteId, mapReady, culturalSites]);
+
+  useEffect(() => {
+    if (!focusCulturalSiteId || !mapReady) return;
+    const site = culturalSites.find((item) => item.id === focusCulturalSiteId);
+    const lat = site ? Number(site.latitude) : Number(focusLat);
+    const lng = site ? Number(site.longitude) : Number(focusLng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    setSelectedCulturalSite(site ?? null);
+    setSelectedBusiness(null);
+    setSelectedMapEvent(null);
+    setSelectedOrg(null);
+    setSelectedTourEvent(null);
+    setSelectedTourSite(null);
+    mapRef.current?.animateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 }, 700);
+  }, [focusCulturalSiteId, focusLat, focusLng, mapReady, culturalSites]);
+
+  // Markets and recurring events do not share a cultural-site detail route, but
+  // a card with verified coordinates may still open the map at that location.
+  useEffect(() => {
+    if (focusSiteId || focusCulturalSiteId || !mapReady) return;
+    const lat = Number(focusLat);
+    const lng = Number(focusLng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    mapRef.current?.animateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 }, 700);
+  }, [focusSiteId, focusCulturalSiteId, focusLat, focusLng, mapReady]);
+
   // A new local/search scope earns a new fit. Ordinary map views must never
   // fit a country- or world-sized result set; only explicit exploration may.
   useEffect(() => {
@@ -784,7 +833,10 @@ export function FullMapView({
     try {
       const base = getApiBase();
       if (!base) return;
-      const res = await fetch(`${base}/api/cultural-sites${collectionScopeSuffix}`);
+      const res = await fetch(`${base}/api/cultural-sites${collectionScopeSuffix}`, {
+        headers: await getMemberApiHeaders(),
+        credentials: "include",
+      });
       if (res.ok) {
         const data = (await res.json()) as {
           sites?: CulturalSite[];

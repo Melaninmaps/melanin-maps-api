@@ -5,6 +5,7 @@ import { useLocalSearchParams } from "expo-router";
 export default function MapScreen() {
   const params = useLocalSearchParams<{
     focusSiteId?: string;
+    focusCulturalSiteId?: string;
     focusLat?: string;
     focusLng?: string;
     city?: string;
@@ -13,6 +14,7 @@ export default function MapScreen() {
   return (
     <FullMapView
       focusSiteId={params.focusSiteId}
+      focusCulturalSiteId={params.focusCulturalSiteId}
       focusLat={params.focusLat}
       focusLng={params.focusLng}
       searchCity={params.city}
