@@ -55,6 +55,12 @@ describe("MWM Core discovery evidence policy", () => {
     expect(predicate).not.toContain("LGBTQIA+-Owned");
   });
 
+  it("builds a valid ownership column reference for quoted Drizzle identifiers", () => {
+    const predicate = mwmDiasporaPromotionSqlPredicate('"businesses"."id"');
+    expect(predicate).toContain('"businesses"."ownership_designations"');
+    expect(predicate).not.toContain('"businesses".."ownership_designations"');
+  });
+
   it("does not infer Diaspora promotion from a role-only label, name, cuisine, or location", () => {
     expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Woman-Owned"] })).toBe(false);
     expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["LGBTQIA+-Owned"] })).toBe(false);

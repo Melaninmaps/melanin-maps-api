@@ -43,7 +43,7 @@ export function isMwmDiasporaPromotionEnabled(
 
 function ownershipDesignationExpressionFor(businessIdExpression: string): string {
   if (businessIdExpression.endsWith('."id"')) {
-    return `${businessIdExpression.slice(0, -4)}."ownership_designations"`;
+    return `${businessIdExpression.slice(0, -5)}."ownership_designations"`;
   }
   if (businessIdExpression.endsWith(".id")) {
     return `${businessIdExpression.slice(0, -3)}.ownership_designations`;
