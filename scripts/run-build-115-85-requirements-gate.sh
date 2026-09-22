@@ -92,6 +92,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/lean-general-chat.test.ts \
   src/kinfolk/__tests__/voice-delivery.test.ts \
   src/__tests__/kinfolk-server-voice-contract.test.ts \
+  src/routes/__tests__/waitlist-unified-contract.test.ts \
   src/kinfolk/__tests__/designation-predicate-policy.test.ts \
   src/kinfolk/__tests__/governed-business-repository.test.ts \
   src/routes/__tests__/universal-search-hotfix.test.ts
@@ -105,6 +106,7 @@ pnpm exec vitest run \
   artifacts/web/src/__tests__/business-experience-social-ui.test.ts \
   artifacts/web/src/__tests__/kinfolk-city-briefing-entry.test.ts \
   artifacts/web/src/__tests__/living-library-research.test.ts \
+  artifacts/web/src/__tests__/waitlist-and-phone-recovery-contract.test.ts \
   artifacts/web/src/__tests__/map-discovery-card.test.ts \
   artifacts/web/src/__tests__/map-locality-first.test.ts \
   artifacts/web/src/__tests__/essential-services-map.test.ts \
@@ -112,6 +114,7 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
   artifacts/mobile/__tests__/library-research.test.ts \
+  artifacts/mobile/__tests__/waitlist-and-phone-recovery-contract.test.ts \
   artifacts/mobile/__tests__/map-clean-surface.test.ts \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \
   artifacts/mobile/__tests__/map-locality-first.test.ts \

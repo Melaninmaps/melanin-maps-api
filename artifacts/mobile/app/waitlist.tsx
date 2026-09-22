@@ -285,6 +285,7 @@ export default function WaitlistScreen() {
   const [familyEmails, setFamilyEmails] = useState<string[]>([""]);
   const [familyAdded, setFamilyAdded] = useState(0);
   const [cityNomination, setCityNomination] = useState("");
+  const [joinError, setJoinError] = useState("");
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -296,6 +297,7 @@ export default function WaitlistScreen() {
   const handleJoin = async () => {
     if (!valid) return;
     setLoading(true);
+    setJoinError("");
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const apiBase = getApiBase();
@@ -314,16 +316,22 @@ export default function WaitlistScreen() {
           familyEmails: showFamilySection
             ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase())
             : undefined,
+          signupSource: Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web",
         }),
       });
-      if (res.ok) {
-        const data = (await res.json()) as { position?: number; familyAdded?: number };
-        if (data.position) setPosition(data.position);
-        if (data.familyAdded) setFamilyAdded(data.familyAdded);
+      const data = (await res.json().catch(() => ({}))) as { position?: number; familyAdded?: number; error?: string };
+      if (!res.ok) {
+        setJoinError(data.error ?? "We could not join the waitlist. Please try again.");
+        return;
       }
-    } catch {}
-    setLoading(false);
-    setSubmitted(true);
+      if (data.position) setPosition(data.position);
+      if (data.familyAdded) setFamilyAdded(data.familyAdded);
+      setSubmitted(true);
+    } catch {
+      setJoinError("We could not connect. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopy = async () => {
@@ -544,6 +552,13 @@ export default function WaitlistScreen() {
                   onChangeText={setCityNomination}
                 />
               </View>
+
+              {!!joinError && (
+                <View style={styles.errorBox}>
+                  <Feather name="alert-circle" size={14} color="#B91C1C" />
+                  <Text style={styles.errorText}>{joinError}</Text>
+                </View>
+              )}
 
               <TouchableOpacity
                 style={[styles.joinBtn, { backgroundColor: valid ? colors.primary : colors.muted }]}
@@ -1138,6 +1153,8 @@ const styles = StyleSheet.create({
   archivePitchHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   archivePitchTitle: { fontFamily: "Inter_700Bold", fontSize: 14, flex: 1 },
   archivePitchText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  errorBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, backgroundColor: "#FEF2F2", borderColor: "#FECACA", borderWidth: 1, padding: 12, borderRadius: 12 },
+  errorText: { flex: 1, color: "#B91C1C", fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
   inviteCard: {
     flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 2,
     borderRadius: 20, padding: 16,

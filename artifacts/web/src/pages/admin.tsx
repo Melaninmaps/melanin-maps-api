@@ -79,6 +79,7 @@ type WaitlistEntry = {
   approvedAt: string | null;
   createdAt: string;
   position: number | null;
+  signupSources: string;
 };
 
 type AdminUser = {
@@ -654,6 +655,8 @@ export default function Admin() {
   const [waitlistPage, setWaitlistPage] = useState(1);
   const [waitlistTotalPages, setWaitlistTotalPages] = useState(1);
   const [pendingWaitlistCount, setPendingWaitlistCount] = useState(0);
+  const [syntheticTestCount, setSyntheticTestCount] = useState(0);
+  const [showSyntheticWaitlist, setShowSyntheticWaitlist] = useState(false);
   const PAGE_SIZE = 50;
 
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -828,13 +831,14 @@ export default function Admin() {
   }, []);
 
   const loadWaitlist = useCallback(
-    (page = 1, status = "all") => {
+    (page = 1, status = "all", syntheticOnly = showSyntheticWaitlist) => {
       setWaitlistLoading(true);
       const params = new URLSearchParams({
         page: String(page),
         pageSize: String(PAGE_SIZE),
       });
       if (status !== "all") params.set("status", status);
+      if (syntheticOnly) params.set("synthetic", "only");
       return fetch(`${BASE}api/admin/waitlist?${params}`, {
         credentials: "include",
       })
@@ -845,10 +849,11 @@ export default function Admin() {
           setWaitlistPage(data.page ?? 1);
           setWaitlistTotalPages(data.totalPages ?? 1);
           setPendingWaitlistCount(data.pendingCount ?? 0);
+          setSyntheticTestCount(data.syntheticTestCount ?? 0);
         })
         .finally(() => setWaitlistLoading(false));
     },
-    [PAGE_SIZE],
+    [PAGE_SIZE, showSyntheticWaitlist],
   );
 
   const loadUsers = useCallback(() => {
@@ -1062,7 +1067,13 @@ export default function Admin() {
   const handleStatusFilter = (newStatus: string) => {
     setStatusFilter(newStatus);
     setWaitlistPage(1);
-    loadWaitlist(1, newStatus);
+    loadWaitlist(1, newStatus, showSyntheticWaitlist);
+  };
+
+  const handleSyntheticWaitlistFilter = (syntheticOnly: boolean) => {
+    setShowSyntheticWaitlist(syntheticOnly);
+    setWaitlistPage(1);
+    loadWaitlist(1, statusFilter, syntheticOnly);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -1096,6 +1107,60 @@ export default function Admin() {
     });
     await loadWaitlist(waitlistPage, statusFilter);
     setUpdating(null);
+  };
+
+  const removeStandaloneWaitlistEntry = async (entry: WaitlistEntry) => {
+    if (
+      !window.confirm(
+        `Remove waitlist signup "${entry.email}"? This only removes an unregistered entry with no saved contributions. It will not delete a member account.`,
+      )
+    )
+      return;
+    setUpdating(entry.id + "-remove");
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/${entry.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "This waitlist entry could not be removed.");
+        return;
+      }
+      await loadWaitlist(waitlistPage, statusFilter);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const removeSafeSyntheticWaitlistEntries = async () => {
+    const confirmation = window.prompt(
+      `This will remove only synthetic test waitlist rows without accounts or contributions. Type REMOVE SYNTHETIC TEST WAITLIST ENTRIES to continue. Registered accounts and contributed records will be held, not deleted.`,
+    );
+    if (confirmation !== "REMOVE SYNTHETIC TEST WAITLIST ENTRIES") return;
+    setUpdating("synthetic-waitlist-cleanup");
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/synthetic-tests/cleanup`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        deleted?: number;
+        heldAccounts?: number;
+        heldContributions?: number;
+        error?: string;
+      };
+      if (!response.ok) {
+        window.alert(body.error ?? "Synthetic test cleanup failed.");
+        return;
+      }
+      window.alert(`Removed ${body.deleted ?? 0} synthetic waitlist entries. Held: ${body.heldAccounts ?? 0} registered account(s), ${body.heldContributions ?? 0} contributed record(s).`);
+      await loadWaitlist(1, statusFilter, showSyntheticWaitlist);
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const updateUser = async (id: string, approved: boolean) => {
@@ -1137,7 +1202,7 @@ export default function Admin() {
   const deleteUser = async (id: string, email: string | null) => {
     if (
       !window.confirm(
-        `Are you sure? Permanently delete user${email ? ` "${email}"` : ""} and revoke their access? This removes the account and sessions, cannot be undone, and preserves only a private administrator audit trace.`,
+        `Are you sure? Permanently delete user${email ? ` "${email}"` : ""} and revoke their access? This removes the account and sessions, cannot be undone. The separate waitlist history is retained.`,
       )
     )
       return;
@@ -2482,10 +2547,42 @@ export default function Admin() {
 
             {/* ── Full Table ───────────────────────────────────────────── */}
             <div>
-              <h2 className="text-base font-bold text-[#3A1F0E] mb-3 flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-[#CA922B]" />
-                All Signups ({waitlist.length})
-              </h2>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-[#3A1F0E] flex items-center gap-2">
+                    <BarChart2 className="w-4 h-4 text-[#CA922B]" />
+                    {showSyntheticWaitlist ? "Synthetic Audit Signups" : "People on the Waitlist"} ({waitlist.length})
+                  </h2>
+                  <p className="mt-1 text-xs text-[#3A1F0E]/50">
+                    {showSyntheticWaitlist
+                      ? "Automated fixtures are separated from real people and are never part of the default list."
+                      : "Website, iOS, and Android joins are one email-keyed list. Use the source column to see where each person joined."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => handleSyntheticWaitlistFilter(false)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-bold ${!showSyntheticWaitlist ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/15 text-[#3A1F0E]/60 hover:bg-[#FAF6EF]"}`}
+                  >
+                    People
+                  </button>
+                  <button
+                    onClick={() => handleSyntheticWaitlistFilter(true)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-bold ${showSyntheticWaitlist ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/15 text-[#3A1F0E]/60 hover:bg-[#FAF6EF]"}`}
+                  >
+                    Synthetic tests ({syntheticTestCount})
+                  </button>
+                  {showSyntheticWaitlist && syntheticTestCount > 0 && (
+                    <button
+                      onClick={removeSafeSyntheticWaitlistEntries}
+                      disabled={updating === "synthetic-waitlist-cleanup"}
+                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {updating === "synthetic-waitlist-cleanup" ? "Removing…" : "Remove safe synthetic entries"}
+                    </button>
+                  )}
+                </div>
+              </div>
               {waitlist.length === 0 ? (
                 <div className="text-center py-20 text-[#3A1F0E]/40">
                   <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -2513,6 +2610,9 @@ export default function Admin() {
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                           Email
+                        </th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                          Joined From
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                           Location
@@ -2567,6 +2667,11 @@ export default function Admin() {
                                   />
                                 )}
                               </div>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-[#3A1F0E]/60 capitalize">
+                              {entry.signupSources
+                                ? entry.signupSources.split(",").join(" · ")
+                                : "Earlier signup"}
                             </td>
                             <td className="px-4 py-3 text-[#3A1F0E]/70">
                               {entry.city || entry.state ? (
@@ -2670,6 +2775,15 @@ export default function Admin() {
                                     Reset
                                   </Button>
                                 )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => removeStandaloneWaitlistEntry(entry)}
+                                  disabled={updating === entry.id + "-remove"}
+                                  className="h-7 px-3 rounded-full border-[#3A1F0E]/15 text-[#3A1F0E]/55 hover:bg-red-50 hover:text-red-700 text-xs"
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1" /> Remove
+                                </Button>
                               </div>
                             </td>
                           </tr>

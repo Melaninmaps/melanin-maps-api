@@ -344,6 +344,10 @@ export function FullMapView({
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+  // react-native-maps may dispatch a MapView press after a Marker press on
+  // some iOS/Android combinations. Without this guard, a selected restaurant
+  // card can be set and immediately cleared in the same tap.
+  const markerPressInFlightRef = useRef(false);
   const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once per scope
   const hasRequestedInitialLocationRef = useRef(false);
   const { user } = useAuth();
@@ -1186,6 +1190,10 @@ export function FullMapView({
             }
           : {})}
         onPress={() => {
+          if (markerPressInFlightRef.current) {
+            markerPressInFlightRef.current = false;
+            return;
+          }
           setSelectedBusiness(null);
           setSelectedCulturalSite(null);
           setSelectedOrg(null);
@@ -1201,6 +1209,10 @@ export function FullMapView({
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
             onPress={() => {
+              markerPressInFlightRef.current = true;
+              setTimeout(() => {
+                markerPressInFlightRef.current = false;
+              }, 250);
               setSelectedBusiness(biz);
               setSelectedCulturalSite(null);
             }}

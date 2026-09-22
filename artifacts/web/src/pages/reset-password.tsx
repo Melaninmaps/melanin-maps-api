@@ -10,7 +10,9 @@ function getQueryParam(name: string): string {
 }
 
 export default function ResetPassword() {
+  const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -22,10 +24,14 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const e = getQueryParam("email");
+    const p = getQueryParam("phone");
     const c = getQueryParam("code");
+    const phoneRecovery = getQueryParam("method") === "phone";
+    setMethod(phoneRecovery ? "phone" : "email");
     setEmail(e);
+    setPhone(p);
     setCode(c);
-    if (!e || !c) setMissingParams(true);
+    if ((!phoneRecovery && !e) || (phoneRecovery && !p) || !c) setMissingParams(true);
   }, []);
 
   const valid = newPw.length >= 8 && newPw === confirmPw;
@@ -37,10 +43,10 @@ export default function ResetPassword() {
     if (newPw !== confirmPw) { setError("Passwords don't match."); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(method === "phone" ? "/api/auth/phone/reset-password" : "/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code, newPassword: newPw }),
+        body: JSON.stringify(method === "phone" ? { phone, code, newPassword: newPw } : { email, code, newPassword: newPw }),
       });
       const data = await res.json() as { success?: boolean; error?: string };
       if (!res.ok || !data.success) {
@@ -55,7 +61,9 @@ export default function ResetPassword() {
     }
   };
 
-  const appDeepLink = `mappingwithmelanin://reset-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`;
+  const appDeepLink = method === "phone"
+    ? "mappingwithmelanin://login"
+    : `mappingwithmelanin://reset-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF6EF]">
@@ -148,10 +156,10 @@ export default function ResetPassword() {
                 {/* Email read-only */}
                 <div>
                   <label className="block text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider mb-2">
-                    Account email
+                    {method === "phone" ? "Verified phone number" : "Account email"}
                   </label>
                   <div className="bg-[#FAF6EF] border border-[#2B1507]/10 rounded-xl px-4 py-3 text-sm text-[#3A1F0E]/60 font-medium">
-                    {email}
+                    {method === "phone" ? phone : email}
                   </div>
                 </div>
 

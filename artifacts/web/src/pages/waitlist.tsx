@@ -36,6 +36,7 @@ export default function WaitlistPage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
+  const [submitError, setSubmitError] = useState("");
   const refParsed = useRef(false);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function WaitlistPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || submitting) return;
+    setSubmitError("");
     setSubmitting(true);
     try {
       const res = await fetch(`${BASE}api/waitlist`, {
@@ -70,14 +72,19 @@ export default function WaitlistPage() {
           isBusinessOwner,
           websiteUrl: isBusinessOwner ? websiteUrl.trim() : undefined,
           referredBy: referredBy.trim() || undefined,
+          signupSource: "web",
         }),
       });
-      const data = await res.json() as { position?: number; referralCode?: string };
+      const data = await res.json().catch(() => ({})) as { position?: number; referralCode?: string; error?: string };
+      if (!res.ok) {
+        setSubmitError(data.error ?? "We could not join the waitlist. Please try again.");
+        return;
+      }
       setPosition(data.position ?? null);
       setReferralCode(data.referralCode ?? null);
       setSubmitted(true);
     } catch {
-      setSubmitted(true);
+      setSubmitError("We could not connect. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -264,6 +271,12 @@ export default function WaitlistPage() {
                       <span className="text-xs text-[#3A1F0E]/70 font-medium">
                         Referred by code <span className="font-bold text-[#CA922B]">{referredBy}</span>
                       </span>
+                    </div>
+                  )}
+
+                  {submitError && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                      {submitError}
                     </div>
                   )}
 

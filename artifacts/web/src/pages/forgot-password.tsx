@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, KeyRound, Mail, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, KeyRound, Mail, Phone, AlertCircle, CheckCircle } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
 type Step = "email" | "code" | "done";
+type RecoveryMethod = "email" | "phone";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState<Step>("email");
+  const [method, setMethod] = useState<RecoveryMethod>("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,16 +20,19 @@ export default function ForgotPassword() {
   const inputClass =
     "w-full border border-[#2B1507]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B] bg-white";
 
-  async function handleEmailSubmit(e: React.FormEvent) {
+  async function handleRecoveryRequest(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!email.trim()) { setError("Email is required."); return; }
+    if (method === "email" && !email.trim()) { setError("Email is required."); return; }
+    if (method === "phone" && !phone.trim()) { setError("Phone number is required."); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch(
+        method === "email" ? "/api/auth/forgot-password" : "/api/auth/phone/forgot-password/send",
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify(method === "email" ? { email: email.trim() } : { phone: phone.trim() }),
       });
       const data = await res.json() as { success?: boolean; error?: string };
       if (!res.ok) {
@@ -46,10 +52,13 @@ export default function ForgotPassword() {
     setError("");
     const trimmed = code.trim();
     if (!trimmed || trimmed.length !== 6 || !/^\d{6}$/.test(trimmed)) {
-      setError("Please enter the 6-digit code from your email.");
+      setError(`Please enter the 6-digit code from your ${method === "email" ? "email" : "phone"}.`);
       return;
     }
-    navigate(`/reset-password?email=${encodeURIComponent(email.trim())}&code=${encodeURIComponent(trimmed)}`);
+    const identity = method === "email"
+      ? `email=${encodeURIComponent(email.trim())}`
+      : `phone=${encodeURIComponent(phone.trim())}&method=phone`;
+    navigate(`/reset-password?${identity}&code=${encodeURIComponent(trimmed)}`);
   }
 
   return (
@@ -80,34 +89,43 @@ export default function ForgotPassword() {
               <KeyRound size={32} />
             </div>
             <h1 className="text-3xl font-serif font-bold text-white mb-2">
-              {step === "email" ? "Forgot Password?" : step === "code" ? "Check Your Email" : "All Set"}
+              {step === "email" ? "Forgot Password?" : step === "code" ? `Check Your ${method === "email" ? "Email" : "Phone"}` : "All Set"}
             </h1>
             <p className="text-[#F5EBD8]/60 text-sm font-light">
               {step === "email"
-                ? "Enter your email and we'll send a reset code."
+                ? "Choose email or a verified phone number and we'll send a reset code."
                 : step === "code"
-                ? `We sent a 6-digit code to ${email}`
+                ? `We sent a 6-digit code to ${method === "email" ? email : phone}`
                 : "Your password has been reset."}
             </p>
           </div>
 
           <div className="px-10 py-8">
             {step === "email" && (
-              <form onSubmit={handleEmailSubmit} className="space-y-5" noValidate>
+              <form onSubmit={handleRecoveryRequest} className="space-y-5" noValidate>
+                <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#FAF6EF] p-1">
+                  <button type="button" onClick={() => { setMethod("email"); setError(""); }} className={`rounded-lg px-3 py-2 text-sm font-bold ${method === "email" ? "bg-white text-[#2B1507] shadow-sm" : "text-[#3A1F0E]/50"}`}>
+                    <Mail size={14} className="mr-1 inline" /> Email
+                  </button>
+                  <button type="button" onClick={() => { setMethod("phone"); setError(""); }} className={`rounded-lg px-3 py-2 text-sm font-bold ${method === "phone" ? "bg-white text-[#2B1507] shadow-sm" : "text-[#3A1F0E]/50"}`}>
+                    <Phone size={14} className="mr-1 inline" /> Verified phone
+                  </button>
+                </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider mb-1.5">Email Address</label>
+                  <label className="block text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider mb-1.5">{method === "email" ? "Email Address" : "Verified Phone Number"}</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#3A1F0E]/30" />
+                    {method === "email" ? <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#3A1F0E]/30" /> : <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#3A1F0E]/30" />}
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
+                      type={method === "email" ? "email" : "tel"}
+                      value={method === "email" ? email : phone}
+                      onChange={(e) => method === "email" ? setEmail(e.target.value) : setPhone(e.target.value)}
+                      placeholder={method === "email" ? "you@example.com" : "+1 202 555 0123"}
                       className={`${inputClass} pl-10`}
-                      autoComplete="email"
+                      autoComplete={method === "email" ? "email" : "tel"}
                       required
                     />
                   </div>
+                  {method === "phone" && <p className="mt-2 text-xs text-[#3A1F0E]/45">Use a number already verified on this account, including country code.</p>}
                 </div>
 
                 {error && (
@@ -141,7 +159,7 @@ export default function ForgotPassword() {
                 <div className="bg-[#FAF6EF] rounded-2xl p-4 flex items-start gap-3">
                   <CheckCircle size={18} className="text-green-500 shrink-0 mt-0.5" />
                   <p className="text-sm text-[#3A1F0E]/70 leading-relaxed">
-                    A 6-digit code was sent to <strong>{email}</strong>. Check your inbox (and spam folder) and enter the code below.
+                    A 6-digit code was sent to <strong>{method === "email" ? email : phone}</strong>. {method === "email" ? "Check your inbox (and spam folder)" : "Check your text messages"} and enter the code below.
                   </p>
                 </div>
 
@@ -179,7 +197,7 @@ export default function ForgotPassword() {
                   onClick={() => { setCode(""); setError(""); setStep("email"); }}
                   className="w-full text-xs text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 transition-colors"
                 >
-                  Try a different email
+                  Try a different email or phone number
                 </button>
               </form>
             )}
