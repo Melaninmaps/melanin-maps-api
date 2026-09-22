@@ -12,6 +12,23 @@ const spiritualDocuments = [
   { url: "https://pluralism.org/religious-traditions", title: "Pluralism Project", content: "Traditions hold different teachings about ancestors, rebirth, resurrection, and mortality. ".repeat(6), publisher: "pluralism.org", publishedAt: null },
 ];
 
+const blackWomenCancerDocuments = [
+  {
+    url: "https://www.cdc.gov/cancer/health-equity/african-american.html",
+    title: "Cancer and African American People",
+    content: "CDC explains that Black women are more likely to die from breast cancer and may be diagnosed at later stages. Screening and discussions with a qualified clinician remain important. ".repeat(4),
+    publisher: "cdc.gov",
+    publishedAt: null,
+  },
+  {
+    url: "https://www.cancer.gov/news-events/cancer-currents-blog/2021/breast-cancer-risk-calculator-us-black-women",
+    title: "New Risk Model Aims to Reduce Breast Cancer Disparities in Black Women",
+    content: "The National Cancer Institute describes evidence and research tools for breast cancer risk and screening discussions in Black women. Individual screening decisions should be made with a qualified clinician. ".repeat(4),
+    publisher: "cancer.gov",
+    publishedAt: null,
+  },
+];
+
 describe("Living Library evidence and identity policy", () => {
   it("rejects unsafe links while accepting governed wildcard and conventional www hosts", () => {
     expect(isSafeSourceUrl("https://www.loc.gov/item/1")).toBe(true);
@@ -29,6 +46,48 @@ describe("Living Library evidence and identity policy", () => {
     expect(faithQuery).toContain("life after death");
     expect(historyQuery).toContain("Research lens: African diaspora and Black communities.");
     expect(faithQuery).toContain("Research lens: African diaspora and Black communities.");
+  });
+
+  it("completes a Black-women breast-cancer brief only with direct authoritative evidence", async () => {
+    const repo = repository();
+    const researchProvider: ExternalResearchProvider = {
+      name: "openai",
+      search: vi.fn().mockResolvedValue({
+        documents: blackWomenCancerDocuments,
+        provider: "openai",
+        status: "available",
+      }),
+    };
+    const writer: LibrarySynthesisWriter = {
+      writeStructured: vi.fn().mockResolvedValue({
+        title: "Breast cancer screening evidence for Black women",
+        summary: "A source-cited education brief.",
+        body: "This is educational information, not individual screening advice.",
+        citedSourceIndexes: [0, 1],
+        sourceNotes: [
+          { sourceIndex: 0, whyItMatters: "CDC describes cancer disparities and breast-cancer context." },
+          { sourceIndex: 1, whyItMatters: "NCI describes Black-women-specific breast-cancer research." },
+        ],
+        relatedQuestions: ["What questions can I ask a clinician about my screening plan?"],
+      }),
+    };
+
+    const result = await answerAndArchiveResearchQuestion({
+      question: "#BlackWomen breast cancer screening",
+      locationLabel: null,
+      repository: repo,
+      researchProvider,
+      writer,
+    });
+
+    expect(researchProvider.search).toHaveBeenCalledWith(expect.objectContaining({
+      query: expect.stringContaining("National Cancer Institute (cancer.gov)"),
+    }));
+    expect(result.entry).toMatchObject({
+      publicationStatus: "published",
+      researchLenses: ["#BlackWomen"],
+      sourceCount: 2,
+    });
   });
 
   it("requires multi-perspective spiritual framing and publishes a general, fully cited brief", async () => {

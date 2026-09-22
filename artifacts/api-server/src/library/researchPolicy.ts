@@ -95,6 +95,7 @@ const DOMAIN_POLICIES: Record<
       "*.edu",
       "mayoclinic.org",
       "hopkinsmedicine.org",
+      "cancer.gov",
       "cancer.org",
       "heart.org",
       "diabetes.org",
@@ -252,11 +253,20 @@ export function getResearchPolicy(question: string): ResearchPolicy {
   return { domain, ...policy, searchPrefix: !hasExplicitLens };
 }
 
-export function buildCommunityResearchQuery(question: string, _domain: ResearchDomain): string {
-  return buildCommunityLensResearchQuery(
-    question,
-    resolveCommunityResearchLenses(question),
-  );
+export function buildCommunityResearchQuery(question: string, domain: ResearchDomain): string {
+  const researchLenses = resolveCommunityResearchLenses(question);
+  const baseQuery = buildCommunityLensResearchQuery(question, researchLenses);
+  const isBlackWomenCancerScope = domain === "medical"
+    && researchLenses.some((lens) => lens.id === "black-women")
+    && /\b(breast cancer|cancer|mammogram|mammography|screening)\b/i.test(question);
+
+  if (!isBlackWomenCancerScope) return baseQuery;
+
+  return [
+    baseQuery,
+    "For Black women and breast-cancer screening, seek direct authoritative evidence from the CDC (cdc.gov) and the National Cancer Institute (cancer.gov) before adding clearly labeled general clinical foundation sources.",
+    "Return at least two distinct allowed citations and keep individual screening decisions with the member and a qualified clinician.",
+  ].join("\n");
 }
 
 function groupLanguageFromQuestion(question: string): string | null {
