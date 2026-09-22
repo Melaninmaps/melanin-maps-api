@@ -2065,8 +2065,15 @@ export default function TravelScreen() {
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
     if (!msg) return;
-    if (!isAuthenticated || !subscription) {
-      setShowUpgrade(true);
+    if (!isAuthenticated) {
+      Alert.alert(
+        "Sign in to ask Kinfolk",
+        "Create or sign in to a free account to start a Kinfolk conversation and keep control of your preferences.",
+        [
+          { text: "Not now", style: "cancel" },
+          { text: "Sign in", onPress: () => router.push("/login" as never) },
+        ],
+      );
       return;
     }
     const attachedImages = [...kinfolkImages];
@@ -2083,7 +2090,7 @@ export default function TravelScreen() {
     setKinfolkImages([]);
     setRememberThis(false);
     setIncludeCommunityPerspective(false);
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);

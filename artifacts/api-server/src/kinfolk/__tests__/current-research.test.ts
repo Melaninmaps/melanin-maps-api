@@ -15,6 +15,8 @@ describe("current research routing", () => {
     "Plan this weekend in Baltimore",
     "What are the hours?",
     "Give me real-time weather and prices",
+    "How many people live in the United States?",
+    "What is the population of the United States?",
     "What is up-to-date as of today?",
     "update",
     "availability",

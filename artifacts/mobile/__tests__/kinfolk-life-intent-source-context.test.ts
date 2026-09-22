@@ -11,6 +11,12 @@ const travelSource = readFileSync(
 );
 
 describe("Kinfolk life-intent source context on mobile", () => {
+  it("lets a signed-in free member use welcome prompts without a subscription gate", () => {
+    expect(travelSource).toContain("if (!isAuthenticated) {");
+    expect(travelSource).not.toContain("if (!isAuthenticated || !subscription)");
+    expect(travelSource).toContain("onChipPress={(t) => void handleSend(t)}");
+  });
+
   it("retains the optional API field and presents it before source actions", () => {
     expect(hookSource).toContain("sourceContext?: string | null");
     expect(hookSource).toContain("sourceContext: data.sourceContext ?? null");
