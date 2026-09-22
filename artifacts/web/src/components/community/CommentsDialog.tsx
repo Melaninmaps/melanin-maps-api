@@ -13,6 +13,7 @@ interface CommunityComment {
   authorName: string;
   authorInitials: string;
   authorColor: string;
+  authorImageUrl?: string | null;
   content: string;
   createdAt: string;
 }
@@ -21,6 +22,17 @@ interface CommentAccess {
   canComment: boolean;
   commentPolicy: CommentPolicy;
   restrictionReason?: string | null;
+}
+
+function CommentAvatar({ comment }: { comment: CommunityComment }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white" style={{ backgroundColor: comment.authorColor }}>
+      {comment.authorImageUrl && !imageFailed ? (
+        <img alt={`${comment.authorName}'s profile photo`} className="h-full w-full object-cover" onError={() => setImageFailed(true)} src={comment.authorImageUrl} />
+      ) : comment.authorInitials}
+    </div>
+  );
 }
 
 export function CommentsDialog({
@@ -43,9 +55,9 @@ export function CommentsDialog({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
+  const load = useCallback(async (backgroundRefresh = false) => {
+    if (!backgroundRefresh) setLoading(true);
+    if (!backgroundRefresh) setLoadError(null);
     try {
       const response = await authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments`);
       const body = await response.json().catch(() => ({})) as { comments?: CommunityComment[]; access?: CommentAccess; error?: string };
@@ -55,11 +67,16 @@ export function CommentsDialog({
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Could not load comments.");
     } finally {
-      setLoading(false);
+      if (!backgroundRefresh) setLoading(false);
     }
   }, [postId]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => { void load(true); }, 15_000);
+    return () => window.clearInterval(interval);
+  }, [load]);
 
   const submit = async () => {
     const trimmed = content.trim();
@@ -131,7 +148,7 @@ export function CommentsDialog({
             <div className="space-y-4">
               {comments.map((comment) => (
                 <article key={comment.id} className="flex gap-3" data-testid={`community-comment-${comment.id}`}>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: comment.authorColor }}>{comment.authorInitials}</div>
+                  <CommentAvatar comment={comment} />
                   <div className="min-w-0 flex-1 rounded-2xl bg-[#FAF6EF] px-4 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-xs font-bold text-[#2B1507]">{comment.authorName}</p>

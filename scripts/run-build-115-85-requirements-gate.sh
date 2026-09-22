@@ -78,6 +78,7 @@ pnpm --dir artifacts/mobile run typecheck
 
 pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/compiled-build-identity.test.ts \
+  src/__tests__/community-feed.test.ts \
   src/__tests__/community-feed-schema-guard.test.ts \
   src/__tests__/directory-import-publication.test.ts \
   src/__tests__/directory-publication.test.ts \
@@ -107,6 +108,7 @@ pnpm exec vitest run \
   artifacts/web/src/__tests__/business-experience-social-ui.test.ts \
   artifacts/web/src/__tests__/kinfolk-city-briefing-entry.test.ts \
   artifacts/web/src/__tests__/living-library-research.test.ts \
+  artifacts/web/src/__tests__/community-feed-error-state.test.ts \
   artifacts/web/src/__tests__/waitlist-and-phone-recovery-contract.test.ts \
   artifacts/web/src/__tests__/map-discovery-card.test.ts \
   artifacts/web/src/__tests__/map-locality-first.test.ts \
@@ -114,7 +116,9 @@ pnpm exec vitest run \
   artifacts/web/src/__tests__/map-profile-navigation.test.ts \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
+  artifacts/mobile/__tests__/cross-client-social-records.test.ts \
   artifacts/mobile/__tests__/library-research.test.ts \
+  artifacts/mobile/__tests__/navigation-visibility.test.ts \
   artifacts/mobile/__tests__/waitlist-and-phone-recovery-contract.test.ts \
   artifacts/mobile/__tests__/map-clean-surface.test.ts \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \

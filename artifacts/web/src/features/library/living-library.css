@@ -89,6 +89,48 @@
   background: #5e2d10;
 }
 
+.library-research-lens-filter {
+  max-width: 44rem;
+  margin: 0.75rem auto 0;
+  text-align: left;
+}
+
+.library-research-lens-filter > p {
+  margin: 0 0 0.45rem;
+  color: #f1dfcc;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.library-research-lens-filter > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.library-research-lens-filter button {
+  border: 1px solid #f1dfcc;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #4b230d;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.library-research-lens-filter button.is-selected {
+  border-color: #f0cf63;
+  background: #70480f;
+  color: #fffdf8;
+}
+
+.library-research-lens-filter button:focus-visible {
+  outline: 3px solid #f0cf63;
+  outline-offset: 3px;
+}
+
 /* ── Content area ─────────────────────────────────────────────────────────── */
 .living-library-content {
   background: #fdf9f0;

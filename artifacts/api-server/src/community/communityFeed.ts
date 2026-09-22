@@ -60,6 +60,8 @@ export type ActiveCommunityComment = {
   authorName: string;
   authorInitials: string;
   authorColor: string;
+  /** Current profile photo, resolved at read time rather than frozen at comment creation. */
+  authorImageUrl: string | null;
   content: string;
   createdAt: Date;
 };
@@ -507,6 +509,7 @@ export async function fetchActiveCommunityComments(
     author_name: string;
     author_initials: string;
     author_color: string;
+    author_image_url: string | null;
     content: string;
     created_at: Date;
   }>(`
@@ -517,9 +520,11 @@ export async function fetchActiveCommunityComments(
       c.author_name,
       c.author_initials,
       c.author_color,
+      u.profile_image_url AS author_image_url,
       c.content,
       c.created_at
     FROM community_post_comments c
+    LEFT JOIN users u ON u.id = c.author_id
     WHERE c.post_id = $1
       AND COALESCE(NULLIF(to_jsonb(c)->>'status', ''), 'active') = 'active'
     ORDER BY c.created_at DESC
@@ -532,6 +537,7 @@ export async function fetchActiveCommunityComments(
     authorName: row.author_name,
     authorInitials: row.author_initials,
     authorColor: row.author_color,
+    authorImageUrl: row.author_image_url,
     content: row.content,
     createdAt: row.created_at,
   }));

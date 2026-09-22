@@ -69,6 +69,24 @@ type ResearchResponse = {
   researchScope: ResearchScope;
 };
 
+const RESEARCH_LENS_OPTIONS = [
+  { tag: "#Diaspora", label: "Diaspora" },
+  { tag: "#BlackWomen", label: "Black women" },
+  { tag: "#BlackMen", label: "Black men & boys" },
+  { tag: "#BlackStudents", label: "Black students" },
+  { tag: "#HBCUStudents", label: "HBCU students & alumni" },
+] as const;
+
+function hasResearchLens(question: string, tag: string): boolean {
+  return new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "i").test(question.normalize("NFKC"));
+}
+
+function toggleResearchLens(question: string, tag: string): string {
+  const tagPattern = new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "ig");
+  if (hasResearchLens(question, tag)) return question.replace(tagPattern, " ").replace(/\s+/g, " ").trim();
+  return `${tag} ${question}`.replace(/\s+/g, " ").trim();
+}
+
 function safeUrl(value: string): string | null {
   try {
     const url = new URL(value);
@@ -181,6 +199,7 @@ export default function LibraryResearchScreen() {
   const [research, setResearch] = useState<ResearchResponse | null>(null);
   const [state, setState] = useState<"idle" | "searching" | "researching" | "ready" | "error">("idle");
   const [message, setMessage] = useState("");
+  const activeResearchLensTags = RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(question, lens.tag)).map((lens) => lens.tag);
 
   const internalEntry = search?.results.find((result): result is { kind: "entry" } & LibraryEntry => result.kind === "entry") ?? null;
 
@@ -275,6 +294,27 @@ export default function LibraryResearchScreen() {
             placeholderTextColor={colors.mutedForeground}
             style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
           />
+          <View style={styles.lensFilterSection}>
+            <Text style={[styles.lensFilterLabel, { color: colors.foreground }]}>Research lens</Text>
+            <Text style={[styles.lensFilterCopy, { color: colors.mutedForeground }]}>Choose the community evidence that should lead this search. It is not saved as your identity.</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.lensFilterRow}>
+              {RESEARCH_LENS_OPTIONS.map((lens) => {
+                const selected = activeResearchLensTags.includes(lens.tag);
+                return (
+                  <TouchableOpacity
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}
+                    activeOpacity={0.8}
+                    key={lens.tag}
+                    onPress={() => setQuestion((current) => toggleResearchLens(current, lens.tag))}
+                    style={[styles.lensFilterChip, { backgroundColor: selected ? "#70480F" : colors.background, borderColor: selected ? "#70480F" : colors.border }]}
+                  >
+                    <Text style={[styles.lensFilterChipText, { color: selected ? "#FFFDF8" : colors.foreground }]}>{lens.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
           <TouchableOpacity activeOpacity={0.85} disabled={state === "searching" || state === "researching"} onPress={() => void searchLibrary()} style={[styles.searchButton, { backgroundColor: colors.primary, opacity: state === "searching" || state === "researching" ? 0.65 : 1 }]}>
             {state === "searching" ? <ActivityIndicator color="#fff" /> : <><Feather name="search" color="#fff" size={16} /><Text style={styles.searchButtonText}>Search the Library</Text></>}
           </TouchableOpacity>
@@ -354,6 +394,12 @@ const styles = StyleSheet.create({
   searchCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
   label: { fontSize: 15, fontWeight: "800" },
   input: { minHeight: 96, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, fontSize: 14, lineHeight: 20, textAlignVertical: "top" },
+  lensFilterSection: { gap: 5 },
+  lensFilterLabel: { fontSize: 13, fontWeight: "800" },
+  lensFilterCopy: { fontSize: 11, lineHeight: 16 },
+  lensFilterRow: { gap: 7, paddingTop: 3, paddingRight: 8 },
+  lensFilterChip: { minHeight: 34, justifyContent: "center", paddingHorizontal: 11, borderRadius: 17, borderWidth: 1 },
+  lensFilterChipText: { fontSize: 12, fontWeight: "800" },
   searchButton: { minHeight: 46, borderRadius: 12, justifyContent: "center", alignItems: "center", flexDirection: "row", gap: 8 },
   searchButtonText: { color: "#fff", fontSize: 14, fontWeight: "800" },
   governanceCopy: { fontSize: 11, lineHeight: 16 },

@@ -1309,7 +1309,10 @@ export default function CommunityScreen() {
             data={filteredPosts}
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
-            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
+            // The Community feed is the first thing a member should see below
+            // the tabs—not a bottom-anchored composer or an empty spacer.
+            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
+            ListHeaderComponentStyle={styles.feedHeader}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
@@ -2444,7 +2447,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   joinChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
-  list: { paddingHorizontal: 16, paddingTop: 16 },
+  list: { paddingHorizontal: 16, paddingTop: 8 },
+  feedHeader: { paddingTop: 0, marginTop: 0 },
   empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
   emptyTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingHorizontal: 40 },

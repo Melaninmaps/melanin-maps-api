@@ -924,6 +924,11 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
     }
 
     const { name, initials, color } = await resolveAuthorInfo(req.user.id);
+    const [commentAuthor] = await db
+      .select({ profileImageUrl: usersTable.profileImageUrl })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
     const result = await db.transaction(async (tx) => {
       const [comment] = await tx
         .insert(communityPostCommentsTable)
@@ -953,7 +958,14 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
       }).catch(() => {});
     }
 
-    res.status(201).json({ comment: result.comment });
+    res.status(201).json({
+      comment: {
+        ...result.comment,
+        // The list endpoint also joins the current profile photo. Returning it
+        // here keeps the just-posted comment visually complete until refresh.
+        authorImageUrl: commentAuthor?.profileImageUrl ?? null,
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to add comment");
     res.status(500).json({ error: "Failed to add comment" });

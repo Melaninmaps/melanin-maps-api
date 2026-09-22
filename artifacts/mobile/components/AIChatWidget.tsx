@@ -4,7 +4,14 @@ import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, setAudioModeAsync, RecordingPresets } from "expo-audio";
+import {
+  useAudioRecorder,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  RecordingPresets,
+} from "expo-audio";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { NativeScrollEvent, NativeSyntheticEvent ,
   Alert,
@@ -69,9 +76,6 @@ async function getToken(): Promise<string | null> {
 }
 
 const GREETING = "Kinfolk's here. Let's map it out.";
-
-const SIGNATURE_PHRASE = "Kinfolk's here.";
-const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
 const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
 
@@ -262,6 +266,7 @@ export function AIChatWidget() {
   const [isRecording, setIsRecording] = useState(false);
   const [isStartingVoice, setIsStartingVoice] = useState(false);
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
+  const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [listenUri, setListenUri] = useState<string | undefined>(undefined);
   const [voiceUsage, setVoiceUsage] = useState<{ used: number; limit: number; percent: number; tierName: string } | null>(null);
@@ -272,6 +277,7 @@ export function AIChatWidget() {
   const [aaveSaving, setAaveSaving] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
+  const playerStatus = useAudioPlayerStatus(player);
   const recordingStartedAtRef = useRef<number | null>(null);
   const listRef = useRef<FlatList>(null);
   const openRef = useRef(false);
@@ -535,6 +541,7 @@ export function AIChatWidget() {
     setListenUri(undefined);
     setPlayingId(null);
     setPreviewingVoice(null);
+    setVoiceOutputStatus(null);
   }, [player]);
 
   const setWidgetOpen = useCallback((nextOpen: boolean) => {
@@ -553,17 +560,49 @@ export function AIChatWidget() {
   }, [router, setWidgetOpen]);
 
   // ── Play audio only while the app is active and the widget remains open ──
+  // The player status is reactive. Calling play() before the local WAV has
+  // loaded was the silent-failure path seen on physical devices.
   useEffect(() => {
     const request = queuedPlaybackRequestRef.current;
-    if (!listenUri || !player.isLoaded || !request) return;
+    if (!listenUri || !playerStatus.isLoaded || !request) return;
     if (!voiceGuardRef.current.canPlay(request) || appStateRef.current !== "active" || !openRef.current) {
       stopPlayback("playback_not_allowed");
       return;
     }
-    player.play();
-    voiceGuardRef.current.finish(request);
-    queuedPlaybackRequestRef.current = null;
-  }, [listenUri, player, player.isLoaded, stopPlayback]);
+    let cancelled = false;
+    void (async () => {
+      try {
+        // Reset the recording session before TTS playback and explicitly allow
+        // speaker output even when the phone's mute switch is on.
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          interruptionMode: "duckOthers",
+          shouldPlayInBackground: false,
+          shouldRouteThroughEarpiece: false,
+        });
+        if (cancelled || !voiceGuardRef.current.canPlay(request)) return;
+        player.volume = 1;
+        player.play();
+        voiceGuardRef.current.finish(request);
+        queuedPlaybackRequestRef.current = null;
+      } catch (error) {
+        if (cancelled) return;
+        const detail = error instanceof Error ? error.message : "The audio player could not start.";
+        console.warn("[Kinfolk Voice] playback start failed", detail);
+        setVoiceOutputStatus("Kinfolk created audio but your device could not play it. Check volume and try Listen again.");
+        stopPlayback("playback_start_failed");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [listenUri, player, playerStatus.isLoaded, stopPlayback]);
+
+  useEffect(() => {
+    if (!playerStatus.error || !playingId) return;
+    console.warn("[Kinfolk Voice] playback failed", playerStatus.error);
+    setVoiceOutputStatus("Kinfolk audio could not play on this device. Check volume and try again.");
+    stopPlayback("playback_error");
+  }, [playerStatus.error, playingId, stopPlayback]);
 
   // ── Clear playingId when audio finishes ───────────────────────────────────
   useEffect(() => {
@@ -586,55 +625,23 @@ export function AIChatWidget() {
     };
   }, [stopPlayback]);
 
-  // ── Fetch voice usage + play daily signature when chat opens ─────────────
+  // ── Fetch the member-visible voice allowance when chat opens ──────────────
   useEffect(() => {
     if (!open || !openRef.current || appStateRef.current !== "active") return;
-    const request = voiceGuardRef.current.begin();
-    let queued = false;
     void (async () => {
       try {
         const base = getApiBase();
         const token = await getToken();
-        if (!token || !voiceGuardRef.current.canPlay(request)) return;
-
-        // Load voice preference (in case updated elsewhere)
-        // Fetch voice usage
-        const usageReq = fetch(`${base}/api/kinfolk/voice-usage`, {
+        if (!token || !openRef.current || appStateRef.current !== "active") return;
+        const usageRes = await fetch(`${base}/api/kinfolk/voice-usage`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Daily audio signature — play once per calendar day
-        const today = new Date().toISOString().slice(0, 10);
-        const lastSig = await AsyncStorage.getItem(SIGNATURE_DATE_KEY).catch(() => null);
-        if (lastSig !== today && Platform.OS !== "web" && voiceGuardRef.current.canPlay(request)) {
-          await AsyncStorage.setItem(SIGNATURE_DATE_KEY, today).catch(() => {});
-          const sigRes = await fetch(`${base}/api/kinfolk/speak`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ text: SIGNATURE_PHRASE, mode: await getVoiceMode(token), requestId: "daily-signature" }),
-            signal: request.signal,
-          });
-          if (sigRes.ok && voiceGuardRef.current.canPlay(request)) {
-            const { audio, format } = await sigRes.json() as { audio: string; format: string };
-            if (!voiceGuardRef.current.canPlay(request)) return;
-            const sigFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_sig.${format}`);
-            sigFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
-            if (!voiceGuardRef.current.canPlay(request)) return;
-            queuedPlaybackRequestRef.current = request;
-            setPlayingId("__signature__");
-            setListenUri(sigFile.uri);
-            queued = true;
-          }
-        }
-
-        // Resolve usage without allowing a closed/backgrounded effect to update UI.
-        const usageRes = await usageReq;
-        if (usageRes.ok && voiceGuardRef.current.canPlay(request)) {
+        if (usageRes.ok && openRef.current && appStateRef.current === "active") {
           const data = await usageRes.json() as {
             charsUsed: number; charsLimit: number;
             tierName: string; percentRemaining: number;
           };
-          if (voiceGuardRef.current.canPlay(request)) {
+          if (openRef.current && appStateRef.current === "active") {
             setVoiceUsage({
               used: data.charsUsed,
               limit: data.charsLimit,
@@ -644,9 +651,6 @@ export function AIChatWidget() {
           }
         }
       } catch { /* non-critical */ }
-      finally {
-        if (!queued) voiceGuardRef.current.finish(request);
-      }
     })();
   }, [open]);
 
@@ -656,6 +660,7 @@ export function AIChatWidget() {
       stopPlayback("manual_stop");
       return;
     }
+    setVoiceOutputStatus(null);
     const request = voiceGuardRef.current.begin();
     let queued = false;
     try {
@@ -684,11 +689,24 @@ export function AIChatWidget() {
         Alert.alert("Sign In Required", "Sign in to use voice responses.", [{ text: "OK" }]);
         return;
       }
-      if (!r.ok) return;
+      if (!r.ok) {
+        let serverMessage = "Kinfolk could not create audio right now. Please try again or read the text.";
+        try {
+          const payload = await r.json() as { message?: string };
+          if (payload.message) serverMessage = payload.message;
+        } catch { /* use the safe fallback above */ }
+        setVoiceOutputStatus(serverMessage);
+        Alert.alert("Kinfolk Voice", serverMessage);
+        return;
+      }
       const { audio, format, charsUsed, charsLimit, percentRemaining, tierName } = await r.json() as {
         audio: string; format: string; charsUsed: number;
         charsLimit: number; percentRemaining: number; tierName: string;
       };
+      if (!audio || !format) {
+        setVoiceOutputStatus("Kinfolk did not return playable audio. Please try Listen again.");
+        return;
+      }
       if (!voiceGuardRef.current.canPlay(request)) return;
       setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
       const tempFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}.${format}`);
@@ -699,7 +717,11 @@ export function AIChatWidget() {
       setListenUri(tempFile.uri);
       queued = true;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch { /* non-critical */ }
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Kinfolk audio request failed.";
+      console.warn("[Kinfolk Voice] speak request failed", detail);
+      setVoiceOutputStatus("Kinfolk could not request audio. Check your connection and try Listen again.");
+    }
     finally {
       if (!queued) voiceGuardRef.current.finish(request);
     }
@@ -710,6 +732,7 @@ export function AIChatWidget() {
     const request = voiceGuardRef.current.begin();
     let queued = false;
     setPreviewingVoice(mode);
+    setVoiceOutputStatus(null);
     try {
       const base = getApiBase();
       const token = await getToken();
@@ -723,8 +746,22 @@ export function AIChatWidget() {
         body: JSON.stringify({ text: KINFOLK_PREVIEW_TEXT, mode, requestId: `preview-${mode}` }),
         signal: request.signal,
       });
-      if (r.ok && voiceGuardRef.current.canPlay(request)) {
+      if (!r.ok) {
+        let serverMessage = "Kinfolk could not create a voice preview right now. Please try again.";
+        try {
+          const payload = await r.json() as { message?: string };
+          if (payload.message) serverMessage = payload.message;
+        } catch { /* use the safe fallback above */ }
+        setVoiceOutputStatus(serverMessage);
+        Alert.alert("Kinfolk Voice Preview", serverMessage);
+        return;
+      }
+      if (voiceGuardRef.current.canPlay(request)) {
         const { audio, format } = await r.json() as { audio: string; format: string };
+        if (!audio || !format) {
+          setVoiceOutputStatus("Kinfolk did not return playable preview audio. Please try again.");
+          return;
+        }
         if (!voiceGuardRef.current.canPlay(request)) return;
         const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${mode}.${format}`);
         file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
@@ -734,7 +771,11 @@ export function AIChatWidget() {
         setListenUri(file.uri);
         queued = true;
       }
-    } catch { /* non-critical */ }
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Kinfolk preview request failed.";
+      console.warn("[Kinfolk Voice] preview request failed", detail);
+      setVoiceOutputStatus("Kinfolk could not request a voice preview. Check your connection and try again.");
+    }
     finally {
       if (voiceGuardRef.current.isCurrent(request)) setPreviewingVoice(null);
       if (!queued) voiceGuardRef.current.finish(request);
@@ -983,10 +1024,16 @@ export function AIChatWidget() {
                 />
               </View>
               <Text style={[styles.voiceMeterTxt, { color: colors.mutedForeground }]}>
-                {voiceUsage.tierName} — {voiceUsage.percent}% remaining
+                Voice audio allowance — {voiceUsage.percent}% of this month&apos;s characters remaining
               </Text>
             </View>
           )}
+          {voiceOutputStatus ? (
+            <View accessibilityRole="alert" style={styles.voiceOutputAlert}>
+              <Feather name="volume-x" size={15} color="#8A2424" />
+              <Text style={styles.voiceOutputAlertText}>{voiceOutputStatus}</Text>
+            </View>
+          ) : null}
 
           <FlatList
             keyboardDismissMode="on-drag"
@@ -1558,6 +1605,8 @@ const styles = StyleSheet.create({
   voiceMeterTrack: { height: 3, borderRadius: 2, overflow: "hidden", marginBottom: 5 },
   voiceMeterFill: { height: "100%", borderRadius: 2 },
   voiceMeterTxt: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  voiceOutputAlert: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginHorizontal: 16, marginTop: 8, padding: 10, borderWidth: 1, borderColor: "#D59A9A", borderRadius: 10, backgroundColor: "#FFF1EF" },
+  voiceOutputAlertText: { flex: 1, color: "#8A2424", fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
   voiceSheetOverlay: {
     position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end", zIndex: 100,
