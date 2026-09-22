@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildCommunityResearchQuery,
   getLibraryResearchScope,
   getResearchPolicy,
   isTrustedResearchUrl,
@@ -11,7 +12,16 @@ describe("governed Library research policy", () => {
     expect(policy.domain).toBe("medical");
     expect(isTrustedResearchUrl("https://pubmed.ncbi.nlm.nih.gov/123456/", policy)).toBe(true);
     expect(isTrustedResearchUrl("https://www.cochranelibrary.com/cdsr/reviews", policy)).toBe(true);
+    expect(isTrustedResearchUrl("https://www.cancer.gov/types/breast/screening", policy)).toBe(true);
     expect(isTrustedResearchUrl("https://random-health-blog.example/article", policy)).toBe(false);
+  });
+
+  it("targets CDC and NCI evidence for the explicit Black-women breast-cancer scope", () => {
+    const query = buildCommunityResearchQuery("#BlackWomen breast cancer screening", "medical");
+    expect(query).toContain("Research lens: Black women.");
+    expect(query).toContain("CDC (cdc.gov)");
+    expect(query).toContain("National Cancer Institute (cancer.gov)");
+    expect(query).toContain("at least two distinct allowed citations");
   });
 
   it("allows an explicitly requested population and age range without treating it as reader identity", () => {
