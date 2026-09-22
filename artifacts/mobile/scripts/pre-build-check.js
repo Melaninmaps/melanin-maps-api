@@ -8,8 +8,8 @@
  *   node scripts/pre-build-check.js all
  *
  * Reads app.json for current build numbers and .build-record.json for
- * the last numbers submitted to Apple / Google. Blocks the build if
- * the current number is not strictly greater than the last submitted.
+ * the last numbers submitted to or reserved by Apple / Google. Blocks the
+ * build if the current number is not strictly greater than every known value.
  *
  * After a successful EAS build, update .build-record.json manually
  * (or run: node scripts/pre-build-check.js --record ios|android).
@@ -64,7 +64,17 @@ if (!appJson) {
 const record = readJSON(RECORD_FILE) ?? {
   lastIosSubmitted: 0,
   lastAndroidSubmitted: 0,
+  lastIosReserved: 0,
+  lastAndroidReserved: 0,
 };
+const lastIosConsumed = Math.max(
+  Number(record.lastIosSubmitted) || 0,
+  Number(record.lastIosReserved) || 0,
+);
+const lastAndroidConsumed = Math.max(
+  Number(record.lastAndroidSubmitted) || 0,
+  Number(record.lastAndroidReserved) || 0,
+);
 
 // ── read current state ─────────────────────────────────────────────────────
 
@@ -98,9 +108,9 @@ if (arg === "--record") {
   const platform = process.argv[3];
   const updated = { ...record };
   if (platform === "ios" || platform === "all")
-    updated.lastIosSubmitted = iosBuild;
+    updated.lastIosReserved = iosBuild;
   if (platform === "android" || platform === "all")
-    updated.lastAndroidSubmitted = androidCode;
+    updated.lastAndroidReserved = androidCode;
   fs.writeFileSync(RECORD_FILE, JSON.stringify(updated, null, 2) + "\n");
   console.log("✅  .build-record.json updated:", updated);
   process.exit(0);
@@ -122,14 +132,14 @@ info("App version", version);
 
 console.log("\n  BUILD NUMBERS");
 if (checkIos) {
-  info("iOS — last submitted", record.lastIosSubmitted);
+  info("iOS — last consumed", lastIosConsumed);
   info("iOS — current in app.json", iosBuild);
-  info("iOS — required minimum", record.lastIosSubmitted + 1);
+  info("iOS — required minimum", lastIosConsumed + 1);
 }
 if (checkAndroid) {
-  info("Android — last submitted", record.lastAndroidSubmitted);
+  info("Android — last consumed", lastAndroidConsumed);
   info("Android — current in app.json", androidCode);
-  info("Android — required minimum", record.lastAndroidSubmitted + 1);
+  info("Android — required minimum", lastAndroidConsumed + 1);
 }
 
 // ── validation ─────────────────────────────────────────────────────────────
@@ -139,24 +149,24 @@ banner("VALIDATION RESULTS");
 let blocked = false;
 
 if (checkIos) {
-  if (iosBuild > record.lastIosSubmitted) {
-    pass("iOS build number", `${iosBuild} > ${record.lastIosSubmitted} ✓`);
+  if (iosBuild > lastIosConsumed) {
+    pass("iOS build number", `${iosBuild} > ${lastIosConsumed} ✓`);
   } else {
     fail(
       "iOS build number",
-      `${iosBuild} is NOT > ${record.lastIosSubmitted} — must increment`
+      `${iosBuild} is NOT > ${lastIosConsumed} — must increment`
     );
     blocked = true;
   }
 }
 
 if (checkAndroid) {
-  if (androidCode > record.lastAndroidSubmitted) {
-    pass("Android versionCode", `${androidCode} > ${record.lastAndroidSubmitted} ✓`);
+  if (androidCode > lastAndroidConsumed) {
+    pass("Android versionCode", `${androidCode} > ${lastAndroidConsumed} ✓`);
   } else {
     fail(
       "Android versionCode",
-      `${androidCode} is NOT > ${record.lastAndroidSubmitted} — must increment`
+      `${androidCode} is NOT > ${lastAndroidConsumed} — must increment`
     );
     blocked = true;
   }
