@@ -26,12 +26,12 @@ describe("founder business discoverability correction", () => {
     expect(routesIndex.match(/router\.use\(businessesRouter\)/g)).toHaveLength(1);
   });
 
-  it("whitelists only GET list, categories, map pins, mention search, and safe single-record detail", () => {
+  it("whitelists safe public directory reads while preserving private routes", () => {
     expect(isPublicBusinessDiscoveryRead({ method: "GET", path: "/businesses" })).toBe(true);
     expect(isPublicBusinessDiscoveryRead({ method: "GET", path: "/businesses/42" })).toBe(true);
     expect(isPublicBusinessDiscoveryRead({ method: "GET", path: "/businesses/mine" })).toBe(false);
     expect(isPublicBusinessDiscoveryRead({ method: "GET", path: "/businesses/duplicate-check" })).toBe(false);
-    expect(isPublicBusinessDiscoveryRead({ method: "GET", path: "/businesses/42/contributions" })).toBe(false);
+    expect(isPublicBusinessDiscoveryRead({ method: "GET", path: "/businesses/42/contributions" })).toBe(true);
     expect(isPublicBusinessDiscoveryRead({ method: "POST", path: "/businesses" })).toBe(false);
     expect(businesses).toContain("return requireAuth(req, res, next)");
   });
@@ -56,6 +56,14 @@ describe("founder business discoverability correction", () => {
     expect(businesses).not.toContain("SELECT b.*");
     expect(businesses).toContain("let fuzzyRows");
     expect(businesses).toContain(".from(businessesTable)");
+  });
+
+  it("keeps a deliberate business-name lookup available if the richer directory query fails", () => {
+    expect(businesses).toContain("sendDirectNameAvailabilityFallback");
+    expect(businesses).toContain("Directory query failed; returned direct-name availability fallback");
+    expect(businesses).toContain("SELECT * FROM public.public_businesses");
+    expect(businesses).toContain('searchScope: "explicit_public_listing"');
+    expect(businesses).toContain("if (await sendDirectNameAvailabilityFallback(req, res)) return");
   });
 
   it("compiles the canonical visibility predicate to the installed eight-argument function", () => {
