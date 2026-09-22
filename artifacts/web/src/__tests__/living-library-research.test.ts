@@ -81,4 +81,14 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("toggleResearchLens");
     expect(pageSource).toContain("not saved as your identity");
   });
+
+  it("renders general research and direct-evidence community context as distinct packets", () => {
+    expect(pageSource).toContain("Current foundation · Source-governed Library entry");
+    expect(pageSource).toContain("Directly evidenced community packet");
+    expect(pageSource).toContain("Community context is limited for now");
+    expect(pageSource).toContain("The current foundation remains complete and separately sourced above.");
+    expect(pageSource).toContain("communityContext?.status === \"available\"");
+    expect(pageSource).toContain("researchTrack=\"foundation\"");
+    expect(pageSource).toContain("researchTrack=\"community\"");
+  });
 });

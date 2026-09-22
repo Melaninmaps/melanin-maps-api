@@ -6802,6 +6802,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           libraryAction: null,
           intentClass,
           sources: result.sources,
+          communityContext: result.communityContext,
           libraryEntry: result.libraryEntry,
           provenanceNote: result.disclaimer ?? null,
           needsClarification: false,
