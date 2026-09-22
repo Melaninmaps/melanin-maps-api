@@ -62,7 +62,7 @@ const DOMAIN_PATTERNS: Array<{ domain: ResearchDomain; pattern: RegExp }> = [
   {
     domain: "financial",
     pattern:
-      /\b(debt|credit|tax|invest\w*|insurance|mortgage|loan|retirement|budget|money|financ\w*|bank|savings|credit score|student loan|credit card|reparations|wealth|asset|financial literacy|cfpb|irs)\b/i,
+      /\b(debt|credit|tax|invest\w*|insurance|mortgage|loan|retirement|budget|money|financ\w*|bank|savings|credit score|student loan|credit card|reparations|wealth|asset|financial literacy|cfpb|irs|redlin\w*)\b/i,
   },
   {
     domain: "stem",
@@ -139,6 +139,7 @@ const DOMAIN_POLICIES: Record<
     allowDomains: [
       "*.gov",
       "consumerfinance.gov",
+      "hud.gov",
       "investor.gov",
       "irs.gov",
       "usa.gov",
