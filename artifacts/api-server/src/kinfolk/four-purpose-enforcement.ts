@@ -29,6 +29,7 @@ export type SafeBusiness = {
   evidence?: BusinessEvidence[];
   paidPlacement?: boolean;
   claimed?: boolean;
+  recommendationReason?: string;
 };
 
 export type RecommendationProposal = {
@@ -41,6 +42,7 @@ export type RecommendationProposal = {
   phone?: unknown;
   description?: unknown;
   paidPlacement?: unknown;
+  recommendationReason?: unknown;
 };
 
 export type SafeSource = {

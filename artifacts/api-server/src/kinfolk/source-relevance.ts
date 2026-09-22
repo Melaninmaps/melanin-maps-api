@@ -9,7 +9,7 @@ export type MemberFacingSourceCandidate = Readonly<{
 }>;
 
 const STOP_WORDS = new Set([
-  "a", "an", "and", "are", "as", "at", "be", "by", "can", "do", "does", "for", "from", "get", "how", "i", "in", "is", "it", "live", "many", "me", "my", "of", "on", "or", "people", "please", "the", "their", "this", "to", "us", "what", "when", "where", "who", "will", "with", "you", "your",
+  "a", "an", "and", "are", "as", "ask", "at", "be", "by", "can", "conversation", "current", "directly", "do", "does", "for", "follow", "from", "get", "how", "i", "in", "is", "it", "live", "many", "me", "member", "my", "not", "of", "on", "only", "or", "people", "please", "preceding", "relevant", "repeat", "reputable", "request", "retrieve", "subject", "the", "their", "this", "to", "up", "us", "what", "when", "where", "who", "will", "with", "you", "your", "article", "articles", "link", "links", "news", "report", "reports", "source", "sources",
 ]);
 
 function normalizedTokens(value: string): string[] {
@@ -49,7 +49,13 @@ export function sourceHasMemberQuestionRelevance(
   const haystack = `${source.title ?? ""} ${source.evidenceText ?? ""} ${source.url ?? ""}`
     .normalize("NFKC")
     .toLowerCase();
-  return terms.some((term) => haystack.includes(term));
+  const matchingTerms = terms.filter((term) => haystack.includes(term));
+  // One word is enough only when that is genuinely all the member supplied
+  // (for example, a named place). Multi-word questions must match at least two
+  // substantive terms, preventing generic “article/image” search results from
+  // appearing below an unrelated answer.
+  const requiredMatches = terms.length >= 3 ? 2 : 1;
+  return matchingTerms.length >= requiredMatches;
 }
 
 /**

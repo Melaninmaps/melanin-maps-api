@@ -79,6 +79,30 @@ const GREETING = "Kinfolk's here. Let's map it out.";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
 const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
 
+function renderKinfolkMessageText(text: string, color: string, linkColor: string): React.ReactNode[] {
+  const tokens = text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|\*\*[^*]+\*\*)/g);
+  return tokens.filter(Boolean).map((token, index) => {
+    const markdownLink = token.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (markdownLink) {
+      const safe = parseSafeSourceLink({ title: markdownLink[1], url: markdownLink[2] });
+      return safe ? (
+        <Text
+          key={`${safe.url}-${index}`}
+          style={{ color: linkColor, textDecorationLine: "underline", fontFamily: "Inter_600SemiBold" }}
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL(safe.url).catch(() => undefined)}
+        >
+          {safe.title}
+        </Text>
+      ) : <Text key={index} style={{ color }}>{markdownLink[1]}</Text>;
+    }
+    const bold = token.match(/^\*\*([^*]+)\*\*$/);
+    return bold ? (
+      <Text key={index} style={{ color, fontFamily: "Inter_700Bold" }}>{bold[1]}</Text>
+    ) : <Text key={index} style={{ color }}>{token}</Text>;
+  });
+}
+
 const AAVE_OPTIONS = [
   { level: 0, label: "Off",       desc: "Standard Kinfolk voice" },
   { level: 1, label: "Subtle",    desc: "Cultural knowledge, local terms, always clean" },
@@ -1024,7 +1048,7 @@ export function AIChatWidget() {
                 />
               </View>
               <Text style={[styles.voiceMeterTxt, { color: colors.mutedForeground }]}>
-                Voice audio allowance — {voiceUsage.percent}% of this month&apos;s characters remaining
+                Kinfolk Voice is ready — {voiceUsage.percent}% of this month&apos;s voice time remains
               </Text>
             </View>
           )}
@@ -1061,7 +1085,11 @@ export function AIChatWidget() {
                       : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 },
                   ]}>
                     <Text style={[styles.bubbleTxt, { color: item.fromUser ? "#FFF" : colors.foreground }]}>
-                      {item.text}
+                      {renderKinfolkMessageText(
+                        item.text,
+                        item.fromUser ? "#FFF" : colors.foreground,
+                        item.fromUser ? "#FFF" : colors.primary,
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -1174,6 +1202,11 @@ export function AIChatWidget() {
                             <Text style={[styles.recommendationMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
                               {[recommendation.category, recommendation.city, recommendation.state].filter(Boolean).join(" · ")}
                             </Text>
+                            {recommendation.recommendationReason ? (
+                              <Text style={[styles.recommendationReason, { color: colors.mutedForeground }]} numberOfLines={2}>
+                                {recommendation.recommendationReason}
+                              </Text>
+                            ) : null}
                           </View>
                           <Feather name="chevron-right" size={18} color={colors.primary} />
                         </TouchableOpacity>
@@ -1553,6 +1586,7 @@ const styles = StyleSheet.create({
   recommendationIcon: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   recommendationName: { fontSize: 13, fontFamily: "Inter_700Bold" },
   recommendationMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  recommendationReason: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 15, marginTop: 4 },
   sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
   sourceLinks: { maxWidth: "78%", marginTop: 7, gap: 5 },
   sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },

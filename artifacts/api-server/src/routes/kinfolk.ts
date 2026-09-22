@@ -266,6 +266,7 @@ import {
 import {
   deterministicArithmeticAnswer,
   planSemanticTurn,
+  resolveConversationalResearchSubject,
   type KinfolkTaskMode,
   type SemanticTurnPlan,
 } from "../kinfolk/semantic-turn-planner";
@@ -6316,6 +6317,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     const existingMessages: SessionMessage[] = currentSession?.messages ?? [];
+    const conversationHistoryForContext: Array<{ role: "user" | "assistant"; content: string }> = buildKinfolkHistory(
+      existingMessages,
+      modelPolicy,
+    ).map((entry) => ({
+      role: entry.role === "assistant" ? "assistant" : "user",
+      content: entry.content,
+    }));
+    // A short request for articles or sources inherits only the immediately
+    // preceding member subject. This keeps a conversation continuous without
+    // persisting a new preference or making any identity inference.
+    const conversationalResearchSubject = resolveConversationalResearchSubject(
+      message,
+      conversationHistoryForContext,
+    );
+    const researchContextMessage = conversationalResearchSubject.researchMessage;
 
     // Resolve current-turn geography before session continuity. A city explicitly
     // named now is authoritative and may change an enabled session's destination.
@@ -6493,7 +6509,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const shouldResearchInLibrary =
       (!lifeGuidance && intentClass === "medical_health") ||
       intentClass === "legal_regulated" ||
-      (intentClass === "general_knowledge" && requiresCurrentResearch(message));
+      (intentClass === "general_knowledge" &&
+        requiresCurrentResearch(researchContextMessage));
 
     // Kinfolk is the member's conversational companion; the Library is shared,
     // curator-approved community knowledge. For stable general questions, reuse
@@ -6611,14 +6628,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let contextualPlan: SemanticTurnPlan | null = null;
     if (contextualIntelligenceEnabled) {
       contextualPlan = await planSemanticTurn({
-        message,
+        message: researchContextMessage,
         evidenceRoute,
-        history: buildKinfolkHistory(existingMessages, modelPolicy).map(
-          (entry) => ({
-            role: entry.role === "assistant" ? "assistant" : "user",
-            content: entry.content,
-          }),
-        ),
+        history: conversationHistoryForContext,
         // The planner is only called by planSemanticTurn for materially ambiguous
         // turns. It receives bounded turn text/history only, never preferences,
         // identity context, memories, location history, or business data.
@@ -6748,7 +6760,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // researchQuery replaces the raw message in external searches only —
     // it never changes Kinfolk's spoken answer or identifies the member.
     // clarification is an optional offer rendered AFTER the general answer.
-    const researchPlan = prepareKinfolkResearchPlan(message, {
+    const researchPlan = prepareKinfolkResearchPlan(researchContextMessage, {
       subject: "unknown",
     });
 
@@ -8335,7 +8347,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "";
     const leanGeneralChat = canUseLeanGeneralChat({
       intentClass,
-      requiresCurrentEvidence: requiresCurrentResearch(message),
+      requiresCurrentEvidence: requiresCurrentResearch(researchContextMessage),
       hasLocation: Boolean(destination),
       hasImages: verifiedImageUrls.length > 0,
       hasContextualResearch:
@@ -8351,7 +8363,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const responseDepth = resolveKinfolkResponseDepth({
       message,
       intentClass,
-      requiresCurrentEvidence: requiresCurrentResearch(message),
+      requiresCurrentEvidence: requiresCurrentResearch(researchContextMessage),
       isTravelPlanning: travelPlanning,
       hasLocation: Boolean(destination),
       hasContextualResearch: Boolean(contextualEvidence) || Boolean(communityHashtagContext.promptBlock),
@@ -8371,7 +8383,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
 
-    const currentUserText = `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
+    const continuityInstruction = conversationalResearchSubject.inheritedSubject
+      ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`
+      : "";
+    const currentUserText = `${message}${continuityInstruction}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
     const currentUserContent: Parameters<
       typeof openai.chat.completions.create
     >[0]["messages"][number]["content"] =
@@ -8638,8 +8653,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // session messages JSON; no schema migration or new broad cultural field is used.
     if (
       namedBusiness &&
-      businessCatalog.some((business) => business.id === namedBusiness.id) &&
-      modelPayload.valid &&
       !travelPlanning
     ) {
       recommendations = {
@@ -8650,6 +8663,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             name: namedBusiness.name,
             city: namedBusiness.city,
             category: namedBusiness.category,
+            recommendationReason: `You asked for ${namedBusiness.name} by name. Tap its card to open the Mapping With Melanin listing.`,
           },
         ],
       };
@@ -8912,6 +8926,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       verified: business.verified,
       matchReasons: business.matchReasons,
     }));
+    // A direct-name lookup is a deliberate member request, not a default
+    // promotion. Keep its MWM card available even when the listing falls
+    // outside the default documented-Diaspora recommendation catalog.
+    const directNameCatalog = namedBusiness
+      ? [
+          ...safeCatalog.filter((business) => business.id !== namedBusiness.id),
+          {
+            id: namedBusiness.id,
+            name: namedBusiness.name,
+            category: namedBusiness.category,
+            city: namedBusiness.city,
+            state: namedBusiness.stateCode,
+            address: namedBusiness.address ?? undefined,
+            description: namedBusiness.description ?? undefined,
+            website: namedBusiness.website ?? undefined,
+            phone: namedBusiness.phone ?? undefined,
+            verified: namedBusiness.verified ?? null,
+            recommendationReason: `You asked for ${namedBusiness.name} by name. Tap its card to open the Mapping With Melanin listing.`,
+          },
+        ]
+      : safeCatalog;
     const localCoverageNote =
       webResearchSourceNote ??
       (assembledSources.length === 0 && destination
@@ -8927,7 +8962,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       reply,
       modelRecommendations:
         (recommendations as { businesses?: unknown } | null)?.businesses ?? [],
-      catalog: safeCatalog,
+      catalog: directNameCatalog,
       sources: assembledSources,
       libraryAction,
       intentClass,
@@ -9014,7 +9049,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             }))
           : []),
       ],
-      message,
+      researchContextMessage,
     );
     res.json({
       sessionId: finalSessionId,
