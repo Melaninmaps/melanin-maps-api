@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { findVibeKeysForSearch } from "@workspace/constants";
+import { findVibeKeysForSearch, getBusinessExperiencePolicy } from "@workspace/constants";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { describe, expect, it } from "vitest";
 
@@ -37,9 +37,27 @@ describe("canonical VIBES discovery", () => {
     const businessSearch = source("../routes/businesses.ts");
     const governed = source("../kinfolk/governedBusinessRepository.ts");
     expect(mobile).toContain("/api/vibes/list");
+    expect(mobile).toContain('headers: { Authorization: `Bearer ${token}` }');
+    expect(mobile).toContain("communityReactionCount");
     expect(identity).toContain("getBusinessExperiencePolicy(category, subcategory)");
     expect(identity).toContain(".set({ vibes: data.vibes");
     expect(businessSearch).toContain("findVibeKeysForSearch(q)");
     expect(governed).toContain("const vibeKeys = subject.vibeKeys ?? []");
+  });
+
+  it("uses the unified Community Experience record in VIBES results", () => {
+    const route = source("../routes/vibes.ts");
+    expect(route).toContain("business_member_feedback");
+    expect(route).toContain("communityReactionCount");
+    expect(route).toContain("communitySignals");
+    expect(route).toContain("getBusinessExperiencePolicy(row.category, row.subcategory)");
+  });
+
+  it("uses service-specific Community Intelligence instead of VIBES for attorneys", () => {
+    const policy = getBusinessExperiencePolicy("Legal & Government Services", "Attorneys & Law Firms");
+    expect(policy.atmosphereLabel).toBe("About the experience");
+    expect(policy.vibeChoices).toHaveLength(0);
+    expect(policy.reactionLabel).toBe("Community Intelligence");
+    expect(policy.reactionChoices.length).toBeGreaterThan(0);
   });
 });

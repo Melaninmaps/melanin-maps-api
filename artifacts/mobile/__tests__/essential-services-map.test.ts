@@ -20,6 +20,6 @@ describe("mobile map essential services availability layer", () => {
   it("clears location-specific availability data instead of reusing it after a move", () => {
     expect(mapSource).toContain("A changed device coordinate invalidates old availability data");
     expect(mapSource).toContain("clearEssentialServices();");
-    expect(mapSource).toContain("setSubmittedBusinessSearch(businessSearchInput.trim())");
+    expect(mapSource).toContain("setSubmittedBusinessSearch(query)");
   });
 });

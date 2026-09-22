@@ -366,12 +366,14 @@ export function FullMapView({
   // Global collections are never a default. This is an explicit exploration
   // mode; individual travel and deep-link focus actions remain available.
   const exploringAllAreas = false;
-  const [mapSearchInput, setMapSearchInput] = useState("");
   const [searchedLocality, setSearchedLocality] = useState<ReturnType<
     typeof parseMapSearchLocality
   >>(null);
   // Keep the member's draft separate from the submitted request so typing in
-  // the map toolbar never floods the business API or resets a local map view.
+  // the single map search field never floods the business API or resets a
+  // local map view. A city must include its state (for example, "Atlanta, GA")
+  // so ordinary service searches such as "girls clothes" are never mistaken
+  // for a city.
   const [businessSearchInput, setBusinessSearchInput] = useState("");
   const [submittedBusinessSearch, setSubmittedBusinessSearch] = useState("");
   // Reversible local grouping for the map's actual loaded records. It never
@@ -400,9 +402,6 @@ export function FullMapView({
 
   const showHeatmap = false;
   const showCulturalSites = true;
-  // Historical sundown-town records are available on demand and are never a
-  // present-day safety rating. Keeping this separate avoids a crowded map UI.
-  const [showSundownHistory, setShowSundownHistory] = useState(false);
   const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [culturalSitesLoading, setCulturalSitesLoading] = useState(false);
@@ -732,7 +731,10 @@ export function FullMapView({
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
-    if (site.heritageCategory === "Historical Sundown Town" && !showSundownHistory) return false;
+    // Historical sundown-town records remain source-backed data for the
+    // optional travel-alert system. They are intentionally not persistent map
+    // pins or a present-day safety rating.
+    if (site.heritageCategory === "Historical Sundown Town") return false;
     if (activeCulturalCategory && site.heritageCategory !== activeCulturalCategory) return false;
     if (!normalizedMapSearch) return true;
     return [site.name, site.heritageCategory, site.city, site.state, site.description, site.significance]
@@ -1576,39 +1578,9 @@ export function FullMapView({
           </TouchableOpacity>
         )}
 
-        {/* An explicit city search narrows every default pin layer. */}
-        <View style={[s.localitySearchWrap, wideMapOverlayStyle]}>
-          <TextInput
-            value={mapSearchInput}
-            onChangeText={setMapSearchInput}
-            onSubmitEditing={() => {
-              const locality = parseMapSearchLocality(mapSearchInput);
-              if (locality) {
-                clearEssentialServices();
-                setSearchedLocality(locality);
-              }
-            }}
-            placeholder="Search a city (e.g., Atlanta, GA)"
-            placeholderTextColor="rgba(255,255,255,0.72)"
-            style={s.localitySearchInput}
-            returnKeyType="search"
-            accessibilityLabel="Search map by city"
-          />
-          {(searchedLocality || routeSearchLocality) && (
-            <TouchableOpacity
-              onPress={() => {
-                setMapSearchInput("");
-                setSearchedLocality(null);
-              }}
-              accessibilityLabel="Return to my local map"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Feather name="x" size={15} color="#F5EBD8" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Search stays local to the current city or precise-location scope. */}
+        {/* One canonical search drives local business, service, item, and explicit
+            city queries. The existing server search supplies normalization and
+            typo-tolerant matching; an explicit "City, ST" changes the map scope. */}
         <View style={[s.businessSearchWrap, wideMapOverlayStyle]}>
           <Feather name="search" size={16} color="#F5EBD8" />
           <TextInput
@@ -1616,23 +1588,31 @@ export function FullMapView({
             onChangeText={setBusinessSearchInput}
             onSubmitEditing={() => {
               clearEssentialServices();
-              setSubmittedBusinessSearch(businessSearchInput.trim());
+              const query = businessSearchInput.trim();
+              const locality = parseMapSearchLocality(query);
+              if (locality?.state) {
+                setSearchedLocality(locality);
+                setSubmittedBusinessSearch("");
+              } else {
+                setSubmittedBusinessSearch(query);
+              }
               setSelectedBusiness(null);
             }}
-            placeholder="Search businesses, HBCUs, markets, or services"
+            placeholder="Search a business, service, item, or city"
             placeholderTextColor="rgba(255,255,255,0.72)"
             style={s.businessSearchInput}
             returnKeyType="search"
-            accessibilityLabel="Search businesses on this map"
+            accessibilityLabel="Search the map by business, service, item, or city"
           />
-          {businessSearchInput.length > 0 && (
+          {(businessSearchInput.length > 0 || searchedLocality || routeSearchLocality) && (
             <TouchableOpacity
               onPress={() => {
                 setBusinessSearchInput("");
                 setSubmittedBusinessSearch("");
+                setSearchedLocality(null);
                 setSelectedBusiness(null);
               }}
-              accessibilityLabel="Clear business search"
+              accessibilityLabel="Clear map search and return to my local map"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Feather name="x" size={15} color="#F5EBD8" />
@@ -1791,21 +1771,6 @@ export function FullMapView({
             </View>
           </View>
         )}
-
-        <TouchableOpacity
-          accessibilityLabel="Toggle nearby historical sundown-town context"
-          accessibilityRole="button"
-          accessibilityState={{ selected: showSundownHistory }}
-          activeOpacity={0.8}
-          onPress={() => setShowSundownHistory((visible) => !visible)}
-          style={[s.historyToggle, wideMapOverlayStyle, showSundownHistory && s.historyToggleActive]}
-        >
-          <Feather name="book-open" size={13} color="#F5EBD8" />
-          <View style={{ flex: 1 }}>
-            <Text style={s.historyToggleTitle}>{showSundownHistory ? "Hide" : "Show"} nearby sundown-town history</Text>
-            <Text style={s.historyToggleDetail}>Documented history only — not a current safety rating.</Text>
-          </View>
-        </TouchableOpacity>
 
         {!mapLocality && !exploringAllAreas && (
           <View style={[s.localityPrompt, wideMapOverlayStyle]}>
@@ -2743,19 +2708,35 @@ export function FullMapView({
             )}
           </View>
 
-          <TouchableOpacity
-            style={[s.cardBtn, { backgroundColor: GOLD }]}
-            activeOpacity={0.85}
-            onPress={() =>
-              router.push({
-                pathname: "/business/[id]",
-                params: { id: selectedBusiness.id },
-              })
-            }
-          >
-            <Feather name="briefcase" size={14} color="#fff" />
-            <Text style={s.cardBtnTxt}>View Business</Text>
-          </TouchableOpacity>
+          <View style={s.cardBtnRow}>
+            <TouchableOpacity
+              style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: GOLD }]}
+              activeOpacity={0.85}
+              onPress={() =>
+                void openMapDirections(
+                  selectedBusiness.latitude,
+                  selectedBusiness.longitude,
+                  selectedBusiness.name,
+                )
+              }
+            >
+              <Feather name="navigation" size={14} color={GOLD} />
+              <Text style={[s.cardBtnTxt, { color: GOLD }]}>Directions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.cardBtnHalf, { backgroundColor: GOLD }]}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: "/business/[id]",
+                  params: { id: selectedBusiness.id },
+                })
+              }
+            >
+              <Feather name="briefcase" size={14} color="#fff" />
+              <Text style={s.cardBtnTxt}>View Business</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -2822,25 +2803,6 @@ const s = StyleSheet.create({
   },
   navTxt: { fontFamily: "Inter_500Medium", fontSize: 11 },
 
-  localitySearchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginHorizontal: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 2,
-    borderRadius: 10,
-    backgroundColor: "rgba(0,0,0,0.62)",
-    borderWidth: 1,
-    borderColor: "rgba(245,235,216,0.34)",
-  },
-  localitySearchInput: {
-    flex: 1,
-    color: "#fff",
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    paddingVertical: 8,
-  },
   businessSearchWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -2871,35 +2833,6 @@ const s = StyleSheet.create({
     color: "#F5EBD8",
     fontFamily: "Inter_500Medium",
     fontSize: 11,
-  },
-  historyToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginHorizontal: 12,
-    marginTop: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(245,235,216,0.26)",
-    backgroundColor: "rgba(33,24,18,0.82)",
-  },
-  historyToggleActive: {
-    borderColor: "rgba(245,235,216,0.65)",
-    backgroundColor: "rgba(68,64,60,0.92)",
-  },
-  historyToggleTitle: {
-    color: "#F5EBD8",
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-  },
-  historyToggleDetail: {
-    color: "rgba(245,235,216,0.72)",
-    fontFamily: "Inter_400Regular",
-    fontSize: 10,
-    lineHeight: 14,
-    marginTop: 1,
   },
   localityPrompt: {
     marginHorizontal: 12,

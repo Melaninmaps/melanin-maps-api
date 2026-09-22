@@ -121,6 +121,35 @@ router.get('/vibes/search', async (req, res) => {
       WHERE bvt.business_id = b.id
         AND ${normalizedVibeSql('bvt.vibe')} = ANY($1::text[])
     )`;
+    // Unified Community Experience is the governed source for the positive
+    // quick feedback shown on a business profile. Keep it distinct from a
+    // VIBE: legal, health, and other professional services use precise
+    // service feedback rather than atmosphere language.
+    const communityReactionMatch = `(
+      SELECT COUNT(*)::int
+      FROM business_member_feedback bmf
+      WHERE bmf.business_id = b.id
+        AND bmf.status = 'active'
+        AND bmf.is_load_test = FALSE
+        AND bmf.kind = 'caption'
+        AND bmf.key NOT LIKE 'price:%'
+    )`;
+    const communitySignals = `COALESCE((
+      SELECT jsonb_agg(jsonb_build_object('key', signal.key, 'count', signal.count)
+        ORDER BY signal.count DESC, signal.key ASC)
+      FROM (
+        SELECT bmf.key, COUNT(*)::int AS count
+        FROM business_member_feedback bmf
+        WHERE bmf.business_id = b.id
+          AND bmf.status = 'active'
+          AND bmf.is_load_test = FALSE
+          AND bmf.kind = 'caption'
+          AND bmf.key NOT LIKE 'price:%'
+        GROUP BY bmf.key
+        ORDER BY count DESC, bmf.key ASC
+        LIMIT 3
+      ) signal
+    ), '[]'::jsonb)`;
     const sql = `
       SELECT
         b.id, b.name, b.category, b.subcategory, b.description, b.city, b.state,
@@ -128,6 +157,8 @@ router.get('/vibes/search', async (req, res) => {
         b.confidence_score, b.verified, b.ownership_designations, b.vibes,
         b.hours, b.phone, b.website, b.latitude, b.longitude,
         ${communityVibeMatch} AS community_tag_count,
+        ${communityReactionMatch} AS community_reaction_count,
+        ${communitySignals} AS community_signals,
         ${ownerVibeMatch} AS owner_vibe_matches,
         ${savedSubquery} AS saved_boost,
         (
@@ -136,6 +167,7 @@ router.get('/vibes/search', async (req, res) => {
           b.review_count * 0.1 +
           ${savedSubquery} +
           ${communityVibeMatch} * 2 +
+          ${communityReactionMatch} * 3 +
           ${ownerVibeMatch} * 5
         ) AS total_score
       FROM public.public_businesses b
@@ -149,33 +181,49 @@ router.get('/vibes/search', async (req, res) => {
     const result = await pool.query(sql, params);
 
     res.json({
-      businesses: result.rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        category: row.category,
-        subcategory: row.subcategory,
-        description: row.description,
-        city: row.city,
-        state: row.state,
-        address: row.address,
-        imageUrl: row.image_url,
-        priceRange: row.price_range,
-        rating: parseFloat(row.rating ?? '0'),
-        reviewCount: row.review_count,
-        confidenceScore: row.confidence_score,
-        verified: row.verified,
-        ownershipDesignations: row.ownership_designations ?? [],
-        vibes: row.vibes ?? [],
-        hours: row.hours,
-        phone: row.phone,
-        website: row.website,
-        latitude: row.latitude,
-        longitude: row.longitude,
-        communityTagCount: row.community_tag_count,
-        ownerVibeMatches: row.owner_vibe_matches,
-        isSaved: Number(row.saved_boost) > 0,
-        rankScore: parseFloat(row.total_score ?? '0'),
-      })),
+      businesses: result.rows.map((row) => {
+        const policy = getBusinessExperiencePolicy(row.category, row.subcategory);
+        const labels = new Map(policy.reactionChoices.map((choice) => [choice.key, choice.label]));
+        const rawSignals = Array.isArray(row.community_signals) ? row.community_signals : [];
+        return {
+          id: row.id,
+          name: row.name,
+          category: row.category,
+          subcategory: row.subcategory,
+          description: row.description,
+          city: row.city,
+          state: row.state,
+          address: row.address,
+          imageUrl: row.image_url,
+          priceRange: row.price_range,
+          rating: parseFloat(row.rating ?? '0'),
+          reviewCount: row.review_count,
+          confidenceScore: row.confidence_score,
+          verified: row.verified,
+          ownershipDesignations: row.ownership_designations ?? [],
+          vibes: row.vibes ?? [],
+          hours: row.hours,
+          phone: row.phone,
+          website: row.website,
+          latitude: row.latitude,
+          longitude: row.longitude,
+          communityTagCount: Number(row.community_tag_count ?? 0),
+          communityReactionCount: Number(row.community_reaction_count ?? 0),
+          communitySignals: rawSignals.flatMap((signal: unknown) => {
+            if (!signal || typeof signal !== 'object') return [];
+            const item = signal as { key?: unknown; count?: unknown };
+            if (typeof item.key !== 'string') return [];
+            return [{
+              key: item.key,
+              label: labels.get(item.key) ?? item.key.replace(/_/g, ' '),
+              count: Number(item.count ?? 0),
+            }];
+          }),
+          ownerVibeMatches: Number(row.owner_vibe_matches ?? 0),
+          isSaved: Number(row.saved_boost) > 0,
+          rankScore: parseFloat(row.total_score ?? '0'),
+        };
+      }),
       meta: { vibesSearched: vibes, pricesFiltered: prices, city: city ?? null, total: result.rows.length },
     });
   } catch (err) {
