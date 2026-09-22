@@ -20,11 +20,15 @@ describe("unified waitlist and recovery contract", () => {
   });
 
   it("hides marked synthetic fixtures from the default people list", () => {
+    const migrations = source("../../lib/startup-migrations.ts");
     expect(schema).toContain('isSyntheticTest: boolean("is_synthetic_test")');
     expect(waitlistRoute).toContain('syntheticFilter = String(req.query.synthetic ?? "people")');
     expect(waitlistRoute).toContain("eq(waitlistTable.isSyntheticTest, false)");
     expect(waitlistRoute).toContain('"/admin/waitlist/synthetic-tests/cleanup"');
     expect(waitlistRoute).toContain('"REMOVE SYNTHETIC TEST WAITLIST ENTRIES"');
+    expect(migrations).toContain("lower(email) LIKE '%@example.com'");
+    expect(migrations).toContain("lower(email) LIKE '%@testmwm.dev'");
+    expect(migrations).not.toContain("test|smoke|regression|synthetic");
   });
 
   it("permits phone password recovery only for an already verified phone", () => {
