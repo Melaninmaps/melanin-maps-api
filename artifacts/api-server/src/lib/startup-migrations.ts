@@ -781,16 +781,15 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   },
   {
     // Automated audit fixtures must not be mixed into the default human
-    // waitlist view. This narrow, one-time classification only recognizes
-    // machine fixture domains/markers; it does not guess from a person's name.
+    // waitlist view. This deliberately recognizes only the reserved fixture
+    // domains, never a word in a person's name or normal email address.
     name: "waitlist_synthetic_test_marker",
     sql: `ALTER TABLE waitlist_signups
       ADD COLUMN IF NOT EXISTS is_synthetic_test BOOLEAN NOT NULL DEFAULT false;
       UPDATE waitlist_signups
       SET is_synthetic_test = true
       WHERE lower(email) LIKE '%@example.com'
-         OR lower(email) LIKE '%@testmwm.dev'
-         OR lower(email) ~ '(^|[._+-])(test|smoke|regression|synthetic)([._+-]|@)'`,
+         OR lower(email) LIKE '%@testmwm.dev'`,
   },
   {
     name: "business_suggestions_table",
