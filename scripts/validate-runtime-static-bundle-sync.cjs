@@ -12,6 +12,7 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const dockerfilePath = path.join(root, "artifacts", "api-server", "Dockerfile");
+const staticServerPath = path.join(root, "static-server.mjs");
 const rootStatic = path.join(root, "web-static");
 const apiStatic = path.join(root, "artifacts", "api-server", "web-static");
 
@@ -29,6 +30,7 @@ function read(file) {
 }
 
 const dockerfile = read(dockerfilePath);
+const staticServer = read(staticServerPath);
 const copyDist = dockerfile.indexOf("COPY dist/ ./dist/");
 const copyStatic = dockerfile.indexOf("COPY web-static/ ./web-static/");
 const syncRuntimeStatic = dockerfile.indexOf("RUN rm -rf ./dist/public && mkdir -p ./dist/public && cp -a ./web-static/. ./dist/public/");
@@ -40,6 +42,14 @@ if (syncRuntimeStatic < 0) {
 }
 if (!(copyDist < copyStatic && copyStatic < syncRuntimeStatic)) {
   fail("Dockerfile static-copy ordering must be dist, web-static, then runtime synchronization");
+}
+
+const reviewedPublicStatic = 'path.join(__dirname, "artifacts", "api-server", "web-static")';
+if (!staticServer.includes(reviewedPublicStatic)) {
+  fail("static-server.mjs must serve artifacts/api-server/web-static, not a legacy root snapshot");
+}
+if (staticServer.includes('path.join(__dirname, "web-static")')) {
+  fail("static-server.mjs must not serve the legacy root web-static directory");
 }
 
 const rootIndex = read(path.join(rootStatic, "index.html"));
@@ -59,8 +69,20 @@ for (const asset of referencedAssets) {
   }
 }
 
+const javascriptAsset = referencedAssets.find((asset) => asset.endsWith(".js"));
+if (!javascriptAsset) fail("reviewed index.html does not reference a JavaScript asset");
+const kinfolkMarker = "Start a conversation";
+for (const directory of [rootStatic, apiStatic]) {
+  const bundle = read(path.join(directory, javascriptAsset));
+  if (!bundle.includes(kinfolkMarker)) {
+    fail(`${path.relative(root, directory)} JavaScript bundle is missing the conversation-first Kinfolk marker`);
+  }
+}
+
 console.log(JSON.stringify({
   ok: true,
   docker_runtime_static_sync: true,
+  public_frontend_runtime_static_sync: true,
+  kinfolk_marker: kinfolkMarker,
   reviewed_assets: referencedAssets.sort(),
 }, null, 2));

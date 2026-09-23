@@ -7,7 +7,12 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number.parseInt(process.env.PORT || "8080", 10);
 const UPSTREAM = new URL("https://mwm-staging.35.196.78.19.nip.io");
-const WEB_STATIC = path.join(__dirname, "web-static");
+// The root web-static directory is a legacy deployment snapshot and can be
+// overlaid by the public Railway service's cached/static mount. The release
+// build copies the reviewed Vite output into this API-owned directory on every
+// build. Serve only that reviewed output so an updated server cannot pair with
+// a prior browser bundle.
+const WEB_STATIC = path.join(__dirname, "artifacts", "api-server", "web-static");
 const INDEX = path.join(WEB_STATIC, "index.html");
 const HOP_BY_HOP = new Set([
   "connection",
@@ -26,7 +31,7 @@ function fail(message) {
 }
 
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) fail("invalid PORT");
-if (!fs.existsSync(INDEX) || fs.statSync(INDEX).size < 1024) fail("web-static/index.html is missing or truncated");
+if (!fs.existsSync(INDEX) || fs.statSync(INDEX).size < 1024) fail("reviewed API web-static/index.html is missing or truncated");
 if (process.env.DATABASE_URL) {
   process.stderr.write("PUBLIC_FRONTEND: DATABASE_URL is intentionally ignored; this process has no database client\n");
 }
