@@ -62,21 +62,29 @@ type ResearchScope = {
   researchLenses: Array<{ tag: string; label: string }>;
   connectedTopics: Array<{ label: string; href: string }>;
 };
+type LibraryPurposeConsent = {
+  granted: boolean;
+  purpose: "library_saved_context";
+  controlsSavedContextAugmentation: true;
+  controlsRankingPersonalization: true;
+};
 type ResearchResponse = {
   answer: LibraryEntry;
   /** General current information for any reader; mirrors answer for compatibility. */
   foundation?: LibraryEntry;
   communityContext?: {
-    status: "available" | "insufficient";
+    status: "available" | "insufficient" | "operational_failure";
     researchLenses: string[];
     answer?: LibraryEntry;
     message: string;
-    providerStatus: "available" | "degraded";
+    providerStatus: "available" | "degraded" | "unavailable";
+    retryable: boolean;
   };
   origin: "internal" | "researched";
   provider: { status: "available" | "degraded"; message: string };
   researchScope: ResearchScope;
   memberContextApplied?: string[];
+  libraryPurposeConsent?: LibraryPurposeConsent;
 };
 
 const RESEARCH_LENS_OPTIONS = [
@@ -219,6 +227,8 @@ export default function LibraryResearchScreen() {
   const [state, setState] = useState<"idle" | "searching" | "researching" | "ready" | "error">("idle");
   const [message, setMessage] = useState("");
   const [lensPickerOpen, setLensPickerOpen] = useState(false);
+  const [contextConsent, setContextConsent] = useState<LibraryPurposeConsent | null>(null);
+  const [contextConsentState, setContextConsentState] = useState<"idle" | "saving" | "error">("idle");
   const appliedSuggestedQuestion = useRef(false);
   const activeResearchLensTags = RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(question, lens.tag)).map((lens) => lens.tag);
 
@@ -228,18 +238,60 @@ export default function LibraryResearchScreen() {
   );
 
   useEffect(() => {
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const headers = await authHeaders();
+        const request = await fetch(`${getApiBase()}/api/library/context-consent`, {
+          credentials: "include",
+          headers: { ...headers, Accept: "application/json" },
+          signal: controller.signal,
+        });
+        if (request.status === 401) return;
+        if (!request.ok) throw new Error("LIBRARY_CONSENT_UNAVAILABLE");
+        setContextConsent(await request.json() as LibraryPurposeConsent);
+      } catch (error) {
+        if ((error as { name?: string }).name !== "AbortError") setContextConsentState("error");
+      }
+    })();
+    return () => controller.abort();
+  }, []);
+
+  async function updateContextConsent(granted: boolean) {
+    if (!contextConsent || contextConsentState === "saving") return;
+    setContextConsentState("saving");
+    try {
+      const headers = await authHeaders();
+      const request = await fetch(`${getApiBase()}/api/library/context-consent`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { ...headers, Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ granted }),
+      });
+      const body = await request.json() as LibraryPurposeConsent | { error?: string };
+      if (!request.ok || !("granted" in body)) throw new Error("LIBRARY_CONSENT_UPDATE_FAILED");
+      setContextConsent(body);
+      setContextConsentState("idle");
+      // The next search and research request both use this same consent state;
+      // existing evidence is not silently rewritten when it changes.
+    } catch {
+      setContextConsentState("error");
+    }
+  }
+
+  useEffect(() => {
     if (!appliedSuggestedQuestion.current && typeof suggestedQuestion === "string" && suggestedQuestion.trim()) {
       const routedQuestion = suggestedQuestion.trim().slice(0, 500);
       setQuestion(routedQuestion);
       appliedSuggestedQuestion.current = true;
       // Collection subjects are intentional, prefilled Library questions—not
       // decoration. Search approved Library material immediately, then obtain a
-      // current source-governed brief only when that coverage is sparse.
-      if (researchOnOpen === "true") void searchLibrary(routedQuestion);
+      // current source-governed brief without requiring the member to retype it.
+      if (researchOnOpen === "true") void searchLibrary(routedQuestion, true);
     }
   }, [researchOnOpen, suggestedQuestion]);
 
-  async function searchLibrary(questionOverride?: string) {
+  async function searchLibrary(questionOverride?: string, forceResearch = false) {
     const cleaned = (questionOverride ?? question).normalize("NFKC").trim().replace(/\s+/g, " ");
     if (cleaned.length < 3) {
       setMessage("Enter a question with at least three characters.");
@@ -261,7 +313,7 @@ export default function LibraryResearchScreen() {
         return;
       }
       const hasPublishedEntry = internal.results.some((result) => result.kind === "entry");
-      if (!hasPublishedEntry) {
+      if (forceResearch || !hasPublishedEntry) {
         // First-time questions take longer: Library research gathers and checks
         // authorized sources before it returns a brief and next-question path.
         await researchVettedSources(cleaned, internal.total);
@@ -299,7 +351,7 @@ export default function LibraryResearchScreen() {
   function startPrefilledResearch(nextQuestion: string) {
     const cleaned = nextQuestion.normalize("NFKC").trim().replace(/\s+/g, " ");
     setQuestion(cleaned);
-    void searchLibrary(cleaned);
+    void searchLibrary(cleaned, true);
   }
 
   return (
@@ -373,6 +425,23 @@ export default function LibraryResearchScreen() {
               </View>
             ) : null}
           </View>
+          {contextConsent ? (
+            <TouchableOpacity
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: contextConsent.granted, disabled: contextConsentState === "saving" }}
+              activeOpacity={0.8}
+              disabled={contextConsentState === "saving"}
+              onPress={() => void updateContextConsent(!contextConsent.granted)}
+              style={[styles.consentControl, { borderColor: contextConsent.granted ? "#CA922B" : colors.border, backgroundColor: contextConsent.granted ? "#CA922B10" : colors.background }]}
+            >
+              <Feather name={contextConsent.granted ? "check-square" : "square"} size={20} color={contextConsent.granted ? "#936719" : colors.mutedForeground} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.consentTitle, { color: colors.foreground }]}>Use my saved context for the Library</Text>
+                <Text style={[styles.consentCopy, { color: colors.mutedForeground }]}>This one revocable choice controls both optional saved-context community supplements and result ranking. It never changes the general foundation or asserts your identity.</Text>
+              </View>
+            </TouchableOpacity>
+          ) : null}
+          {contextConsentState === "error" ? <Text style={styles.consentError}>Library context consent could not be updated. Your current setting is unchanged.</Text> : null}
           <TouchableOpacity activeOpacity={0.85} disabled={state === "searching" || state === "researching"} onPress={() => void searchLibrary()} style={[styles.searchButton, { backgroundColor: colors.primary, opacity: state === "searching" || state === "researching" ? 0.65 : 1 }]}>
             {state === "searching" ? <ActivityIndicator color="#fff" /> : <><Feather name="search" color="#fff" size={16} /><Text style={styles.searchButtonText}>Search the Library</Text></>}
           </TouchableOpacity>
@@ -464,10 +533,15 @@ export default function LibraryResearchScreen() {
             <AnswerCard answer={research.communityContext.answer} researchTrack="community" scope={research.researchScope} onConnectedTopic={(topic) => startPrefilledResearch(`${research.communityContext!.researchLenses.join(" ")} ${topic}`)} />
           </View>
         ) : research?.communityContext ? (
-          <View style={[styles.emptyCard, { backgroundColor: "#FFF8E8", borderColor: "#CA922B" }]}>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Community context is limited for now</Text>
+          <View style={[styles.emptyCard, { backgroundColor: research.communityContext.status === "operational_failure" ? "#FFF1EF" : "#FFF8E8", borderColor: research.communityContext.status === "operational_failure" ? "#D59A9A" : "#CA922B" }]}>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{research.communityContext.status === "operational_failure" ? "Community research service is temporarily unavailable" : "Community evidence is insufficient for now"}</Text>
             <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>{research.communityContext.message}</Text>
             <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>The current foundation remains complete and separately sourced above.</Text>
+            {research.communityContext.retryable ? (
+              <TouchableOpacity activeOpacity={0.85} onPress={() => void researchVettedSources()} style={[styles.retryButton, { borderColor: "#B95E5E" }]}>
+                <Text style={styles.retryButtonText}>Retry community research</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
         {(research?.foundation ?? research?.answer)?.relatedQuestions?.length ? (
@@ -510,6 +584,10 @@ const styles = StyleSheet.create({
   lensFilterOption: { minHeight: 56, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, flexDirection: "row", alignItems: "center", gap: 10 },
   lensFilterChipText: { fontSize: 12, fontWeight: "800" },
   lensOptionCopy: { marginTop: 2, fontSize: 11, lineHeight: 15 },
+  consentControl: { minHeight: 76, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  consentTitle: { fontSize: 13, lineHeight: 18, fontWeight: "800" },
+  consentCopy: { marginTop: 3, fontSize: 11, lineHeight: 16 },
+  consentError: { color: "#8A2424", fontSize: 11, lineHeight: 16 },
   searchButton: { minHeight: 46, borderRadius: 12, justifyContent: "center", alignItems: "center", flexDirection: "row", gap: 8 },
   searchButtonText: { color: "#fff", fontSize: 14, fontWeight: "800" },
   governanceCopy: { fontSize: 11, lineHeight: 16 },
@@ -526,6 +604,8 @@ const styles = StyleSheet.create({
   starterTopicList: { gap: 7, marginTop: 5 },
   starterTopicButton: { minHeight: 40, borderWidth: 1, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   starterTopicText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: "700" },
+  retryButton: { alignSelf: "flex-start", minHeight: 38, borderWidth: 1, borderRadius: 19, paddingHorizontal: 12, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  retryButtonText: { color: "#8A2424", fontSize: 12, fontWeight: "800" },
   topicResultsCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 9 },
   topicResultRow: { minHeight: 58, borderWidth: 1, borderRadius: 10, padding: 11, flexDirection: "row", alignItems: "center", gap: 8 },
   topicResultCopy: { marginTop: 3, fontSize: 11, lineHeight: 16 },

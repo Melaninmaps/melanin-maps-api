@@ -91,12 +91,12 @@ const videoUpload = multer({
 
 const AUTHOR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B"];
 
-async function resolveAuthorInfo(userId: string): Promise<{ name: string; initials: string; color: string }> {
+async function resolveAuthorInfo(userId: string): Promise<{ name: string; initials: string; color: string; imageUrl: string | null }> {
   const user = await storage.getUser(userId);
   const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member";
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "CM";
   const color = AUTHOR_COLORS[Math.floor(Math.random() * AUTHOR_COLORS.length)];
-  return { name, initials, color };
+  return { name, initials, color, imageUrl: user?.profileImageUrl ?? null };
 }
 
 type CommentPolicy = "everyone" | "followers" | "off";
@@ -226,7 +226,8 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     // Map snake_case → camelCase to match existing shape
     const posts = rows.map((r: any) => ({
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
-      authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
+      authorColor: r.author_color, authorImageUrl: r.author_image_url ?? null,
+      content: r.content, category: r.category, postType: r.post_type,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
       mediaUrls: normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
@@ -520,7 +521,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       return;
     }
 
-    const { name, initials, color } = await resolveAuthorInfo(req.user.id);
+    const { name, initials, color, imageUrl } = await resolveAuthorInfo(req.user.id);
 
     // Resolve business name + ownership if businessId provided
     let resolvedBusinessName = providedBusinessName ?? null;
@@ -719,7 +720,10 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       }
     }
 
-    res.status(201).json({ post, ...(kinfolkSuggestions.length ? { kinfolkSuggestions } : {}) });
+    res.status(201).json({
+      post: { ...post, authorImageUrl: imageUrl },
+      ...(kinfolkSuggestions.length ? { kinfolkSuggestions } : {}),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to create community post");
     res.status(500).json({ error: "Failed to create post" });
@@ -945,7 +949,10 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
           )`,
         })
         .where(eq(communityPostsTable.id, postId))
-        .returning({ authorId: communityPostsTable.authorId });
+        .returning({
+          authorId: communityPostsTable.authorId,
+          commentsCount: communityPostsTable.commentsCount,
+        });
       return { comment, updatedPost };
     });
 
@@ -965,6 +972,7 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
         // here keeps the just-posted comment visually complete until refresh.
         authorImageUrl: commentAuthor?.profileImageUrl ?? null,
       },
+      commentsCount: result.updatedPost?.commentsCount ?? 0,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to add comment");
@@ -1002,8 +1010,8 @@ router.delete("/community/posts/:postId/comments/:commentId", async (req: Reques
           eq(communityPostCommentsTable.status, "active"),
         ))
         .returning({ id: communityPostCommentsTable.id });
-      if (!softDeleted) return false;
-      await tx
+      if (!softDeleted) return null;
+      const [updatedPost] = await tx
         .update(communityPostsTable)
         .set({
           commentsCount: sql`(
@@ -1013,12 +1021,16 @@ router.delete("/community/posts/:postId/comments/:commentId", async (req: Reques
               AND ${communityPostCommentsTable.status} = 'active'
           )`,
         })
-        .where(eq(communityPostsTable.id, postId));
-      return true;
+        .where(eq(communityPostsTable.id, postId))
+        .returning({ commentsCount: communityPostsTable.commentsCount });
+      return {
+        commentId: softDeleted.id,
+        commentsCount: updatedPost?.commentsCount ?? 0,
+      };
     });
 
     if (!deleted) { res.status(404).json({ error: "Comment not found" }); return; }
-    res.json({ ok: true, commentId });
+    res.json({ ok: true, commentId: deleted.commentId, commentsCount: deleted.commentsCount });
   } catch (err) {
     req.log.error({ err }, "Failed to delete comment");
     res.status(500).json({ error: "Failed to delete comment" });

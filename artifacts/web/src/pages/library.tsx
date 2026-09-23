@@ -11,6 +11,11 @@
 import { useEffect, useState } from "react";
 import { Link, useSearch, useParams, useLocation } from "wouter";
 import { GoldFeatherMark, GoldFeatherBadge } from "@/components/brand/GoldFeatherMark";
+import {
+  governedLibraryResearchHref,
+  loadLibraryResearchPathManifest,
+  type LibraryResearchCollection,
+} from "@/features/library/libraryResearchPaths";
 import "./library-topic-page.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -57,112 +62,6 @@ const RELATED_FOUNDATIONS = [
   { slug: "careers-professional-life", title: "Careers & Professional Life" },
   { slug: "community-resources-help", title: "Community Resources & Help" },
 ];
-
-const COLLECTION_SUBTOPICS: Record<string, readonly { title: string; query: string }[]> = {
-  "culture-history-identity": [
-    { title: "History of the Diaspora", query: "Black diaspora history" },
-    { title: "Foundational Black American History", query: "African American history" },
-    { title: "African, Caribbean & Afro-Latino Cultures", query: "African Caribbean Afro-Latino cultures" },
-    { title: "Local Black History by City", query: "local Black history" },
-    { title: "HBCUs & Alumni Traditions", query: "HBCU traditions" },
-    { title: "Historic Neighborhoods & Heritage Sites", query: "historic neighborhoods heritage sites" },
-    { title: "Genealogy & Family History", query: "genealogy family history" },
-    { title: "Black Inventors, Leaders & Movements", query: "Black inventors leaders movements" },
-  ],
-  "food-music-culture": [
-    { title: "Regional Black Food Traditions", query: "regional Black food traditions" },
-    { title: "African, Caribbean & Afro-Latino Cuisines", query: "African Caribbean Afro-Latino cuisines" },
-    { title: "Recipes & the Stories Behind Them", query: "food history recipes" },
-    { title: "Black Music History", query: "Black music history" },
-    { title: "Hip-Hop, Jazz, Gospel & R&B", query: "hip hop jazz gospel R&B history" },
-    { title: "Books, Films, Podcasts & Documentaries", query: "Black books films documentaries" },
-    { title: "Fashion, Beauty & Design", query: "Black fashion beauty design history" },
-    { title: "Festivals & Cultural Celebrations", query: "cultural festivals celebrations" },
-  ],
-  "travel-the-diaspora": [
-    { title: "Diaspora Travel Destinations", query: "diaspora travel destinations" },
-    { title: "City Guides Built Around Real Life", query: "city orientation moving travel" },
-    { title: "Traveling While Black or Brown", query: "travel rights safety preparation" },
-    { title: "Accessible & Multigenerational Travel", query: "accessible multigenerational travel" },
-    { title: "Solo Travel", query: "solo travel preparation" },
-    { title: "Black-Owned Hotels & Travel Services", query: "Black owned travel services" },
-    { title: "International Customs & Cultural Connections", query: "international customs cultural connections" },
-  ],
-  "money-business-ownership": [
-    { title: "Starting & Growing a Business", query: "starting growing business" },
-    { title: "Grants, Funding & Capital", query: "business grants funding capital" },
-    { title: "Business Credit", query: "building business credit" },
-    { title: "Homeownership", query: "buying a home mortgages" },
-    { title: "Saving & Investing", query: "saving investing basics" },
-    { title: "Estate Planning & Generational Wealth", query: "estate planning generational wealth" },
-    { title: "Intellectual Property", query: "intellectual property copyright trademark" },
-    { title: "Contracting & Government Opportunities", query: "government contracting small business" },
-  ],
-  "health-wellness-care": [
-    { title: "Culturally Responsive Doctors", query: "culturally responsive health care" },
-    { title: "Maternal & Reproductive Health", query: "Black maternal reproductive health" },
-    { title: "Mental Health & Therapy", query: "mental health therapy" },
-    { title: "Men’s Health", query: "men health" },
-    { title: "Children’s & Family Health", query: "children family health" },
-    { title: "Disability & Access", query: "disability health access" },
-    { title: "Nutrition & Movement", query: "nutrition movement" },
-    { title: "Hair & Skin Health", query: "hair skin health" },
-  ],
-  "education-careers": [
-    { title: "Scholarships & Financial Aid", query: "scholarships financial aid FAFSA" },
-    { title: "HBCUs, Colleges & Trade Schools", query: "HBCU college trade school" },
-    { title: "Career Pathways & Certifications", query: "career pathways certifications" },
-    { title: "Technology & AI Skills", query: "technology AI skills careers" },
-    { title: "Mentorship & Professional Networks", query: "mentorship professional networks" },
-    { title: "Internships & Youth Opportunities", query: "internships youth opportunities" },
-    { title: "Career Changes & Returning to School", query: "career change returning school" },
-  ],
-  "family-love-community": [
-    { title: "Parenting Across Generations", query: "parenting family" },
-    { title: "Dating, Relationships & Communication", query: "healthy relationships communication" },
-    { title: "Caring for Aging Family Members", query: "family caregiving aging" },
-    { title: "Faith & Spiritual Communities", query: "faith spiritual communities" },
-    { title: "LGBTQ+ Community Resources", query: "LGBTQ community resources" },
-    { title: "Building Community After Moving", query: "building community after moving" },
-    { title: "Conflict, Boundaries & Emotional Wellness", query: "boundaries emotional wellness" },
-  ],
-  "entertainment-whats-happening": [
-    { title: "Festivals & Homecomings", query: "festivals homecomings" },
-    { title: "Concerts, Exhibits & Cultural Programs", query: "concerts exhibits cultural programs" },
-    { title: "Family Activities", query: "family activities" },
-    { title: "Nightlife & Entertainment", query: "nightlife entertainment" },
-    { title: "Artists, Creators & Cultural Icons", query: "artists creators cultural icons" },
-  ],
-  "life-in-your-city": [
-    { title: "What’s Happening in Your City", query: "city current events culture" },
-    { title: "Local History & Cultural Neighborhoods", query: "local history cultural neighborhoods" },
-    { title: "Community Organizations", query: "community organizations" },
-    { title: "Volunteer & Public Participation", query: "volunteer public participation" },
-    { title: "Professional & Social Groups", query: "professional social groups" },
-    { title: "Family Life in a New City", query: "moving new city family" },
-  ],
-  "technology-future": [
-    { title: "AI Skills & Responsible Use", query: "AI responsible use" },
-    { title: "Digital Privacy & Online Safety", query: "digital privacy online safety" },
-    { title: "Technology Careers & Training", query: "technology careers training" },
-    { title: "Black Innovators in Technology", query: "Black innovators technology" },
-    { title: "Digital Tools for Business", query: "digital tools small business" },
-  ],
-  "know-your-rights": [
-    { title: "Recognizing & Reporting Discrimination", query: "report discrimination civil rights" },
-    { title: "Workplace Rights", query: "workplace rights" },
-    { title: "Health-Care Advocacy", query: "health care advocacy rights" },
-    { title: "School & Education Rights", query: "school education rights" },
-    { title: "Consumer Protection", query: "consumer protection" },
-    { title: "Digital Privacy & Online Safety", query: "digital privacy online safety" },
-  ],
-  "resources-support": [
-    { title: "Housing & Utility Support", query: "housing utility support" },
-    { title: "Food & Family Resources", query: "food family resources" },
-    { title: "Disaster Recovery", query: "disaster recovery assistance" },
-    { title: "Emergency & Crisis Resources", query: "emergency crisis resources" },
-  ],
-};
 
 function topicSummary(topic: LibraryTopic): string {
   return `${topic.title} is a Living Library topic book for source-cited research, practical resources, and community-relevant context that stays available for the next person.`;
@@ -418,23 +317,34 @@ export function LibraryTopicPage() {
   const [, navigate] = useLocation();
   const [topic, setTopic] = useState<LibraryTopic | null>(null);
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
+  const [researchCollection, setResearchCollection] = useState<LibraryResearchCollection | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
+    const controller = new AbortController();
     setLoading(true);
-    fetch(`${BASE}api/library/topics/${encodeURIComponent(slug)}`, { credentials: "include" })
-      .then((r) => {
+    Promise.all([
+      fetch(`${BASE}api/library/topics/${encodeURIComponent(slug)}`, {
+        credentials: "include",
+        signal: controller.signal,
+      }).then((r) => {
         if (r.status === 404) { navigate("/library"); return null; }
         return r.json();
-      })
-      .then((payload: { topic: LibraryTopic; entries: LibraryEntry[] } | null) => {
+      }),
+      loadLibraryResearchPathManifest(controller.signal),
+    ])
+      .then(([payload, manifest]: [{ topic: LibraryTopic; entries: LibraryEntry[] } | null, { collections: LibraryResearchCollection[] }]) => {
         if (!payload) return;
         setTopic(payload.topic);
         setEntries(payload.entries ?? []);
+        setResearchCollection(manifest.collections.find((collection) => collection.slug === slug) ?? null);
       })
-      .catch(console.error)
+      .catch((error: unknown) => {
+        if ((error as { name?: string }).name !== "AbortError") console.error(error);
+      })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [slug, navigate]);
 
   async function setFollow(following: boolean) {
@@ -452,7 +362,7 @@ export function LibraryTopicPage() {
     return <main className="p-10 text-center text-[#3A1F0E]/50">Loading this living book…</main>;
   }
   if (!topic) return null;
-  const collectionSubtopics = COLLECTION_SUBTOPICS[topic.slug] ?? [];
+  const collectionSubtopics = researchCollection?.paths ?? [];
   const relatedTopics = RELATED_FOUNDATIONS
     .filter((item) => item.slug !== topic.slug)
     .slice(0, 3);
@@ -496,7 +406,7 @@ export function LibraryTopicPage() {
             {collectionSubtopics.map((subtopic) => (
               <Link
                 className="rounded-xl border border-[#CA922B]/35 bg-[#CA922B]/[0.06] px-4 py-3 text-sm font-semibold text-[#6E4511] transition hover:bg-[#CA922B]/[0.12]"
-                href={`/library/search?q=${encodeURIComponent(subtopic.query)}`}
+                href={governedLibraryResearchHref(subtopic.question)}
                 key={subtopic.title}
               >
                 {subtopic.title} →
@@ -531,7 +441,7 @@ export function LibraryTopicPage() {
               approved-content search; if coverage is sparse, the Library will request a
               current source-governed foundation brief rather than leave a dead end.
             </p>
-            <Link href={`/library/search?q=${encodeURIComponent(topic.title)}`}>Research this collection</Link>
+            <Link href={governedLibraryResearchHref(researchCollection?.defaultQuestion ?? topic.title)}>Research this collection</Link>
             <Link href="/library">Explore another foundation</Link>
           </section>
         )}

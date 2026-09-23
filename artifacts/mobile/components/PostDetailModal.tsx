@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -67,7 +68,7 @@ interface Props {
   post: CommunityPost | null;
   onClose: () => void;
   onLike?: () => void;
-  onCommentAdded?: () => void;
+  onCommentCountChanged?: (count: number) => void;
   maxCommentLength?: number;
 }
 
@@ -78,27 +79,39 @@ const POST_TYPE_CONFIG: Record<string, { label: string; color: string; icon: str
   community: { label: "Community", color: "#C4622D", icon: "users" },
 };
 
-export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded, maxCommentLength = 500 }: Props) {
+export function PostDetailModal({ visible, post, onClose, onLike, onCommentCountChanged, maxCommentLength = 500 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const inputRef = useRef<TextInput>(null);
+  const commentCountRef = useRef(0);
+  const onCommentCountChangedRef = useRef(onCommentCountChanged);
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshingComments, setRefreshingComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [commentLoadError, setCommentLoadError] = useState("");
   const [commentAccess, setCommentAccess] = useState<{ canComment: boolean; restrictionReason?: string | null; commentPolicy: "everyone" | "followers" | "off" }>({ canComment: true, commentPolicy: "everyone" });
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(0);
+  const [postImageFailed, setPostImageFailed] = useState(false);
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
+  useEffect(() => {
+    onCommentCountChangedRef.current = onCommentCountChanged;
+  }, [onCommentCountChanged]);
+
   const loadComments = useCallback(async (backgroundRefresh = false) => {
     if (!post?.id) return;
-    if (!backgroundRefresh) setLoading(true);
-    setCommentError("");
+    if (!backgroundRefresh) {
+      if (commentCountRef.current > 0) setRefreshingComments(true);
+      else setLoading(true);
+    }
+    setCommentLoadError("");
     try {
       const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
       const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`, {
@@ -106,14 +119,23 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
       });
       const data = await res.json().catch(() => ({})) as { comments?: Comment[]; access?: { canComment: boolean; restrictionReason?: string | null; commentPolicy: "everyone" | "followers" | "off" }; error?: string };
       if (res.ok) {
-        setComments(data.comments ?? []);
+        const nextComments = data.comments ?? [];
+        commentCountRef.current = nextComments.length;
+        setComments(nextComments);
+        onCommentCountChangedRef.current?.(nextComments.length);
         setCommentAccess(data.access ?? { canComment: true, commentPolicy: post.commentPolicy ?? "everyone" });
       } else {
-        setCommentError(data.error ?? "Could not load comments. Pull down and try again.");
+        setCommentLoadError(data.error ?? "Could not refresh comments. Please try again.");
       }
-    } catch { /* silent */ }
-    finally { if (!backgroundRefresh) setLoading(false); }
-  }, [post]);
+    } catch {
+      setCommentLoadError("Could not refresh comments. Check your connection and try again.");
+    } finally {
+      if (!backgroundRefresh) {
+        setLoading(false);
+        setRefreshingComments(false);
+      }
+    }
+  }, [post?.commentPolicy, post?.id]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -121,20 +143,30 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
         void loadComments();
         setLocalLiked(post.liked);
         setLocalLikes(post.likes);
+        setPostImageFailed(false);
       } else {
+        commentCountRef.current = 0;
         setComments([]);
         setCommentText("");
       }
     });
-  }, [visible, post, loadComments]);
+  }, [visible, post?.id, loadComments]);
 
   useEffect(() => {
     if (!visible || !post?.id) return;
-    // New comments appear immediately for their author. This light refresh keeps
-    // an open conversation current for everyone else and resolves fresh profile
-    // photos from the canonical user profile without overwriting comment data.
-    const interval = setInterval(() => { void loadComments(true); }, 15_000);
-    return () => clearInterval(interval);
+    // Keep the open conversation current only while the app is active. Loaded
+    // comments stay rendered when a refresh fails.
+    const refreshWhenActive = () => {
+      if (AppState.currentState === "active") void loadComments(true);
+    };
+    const interval = setInterval(refreshWhenActive, 30_000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void loadComments(true);
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
   }, [visible, post?.id, loadComments]);
 
   const handleLike = async () => {
@@ -167,10 +199,12 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
         body: JSON.stringify({ content: commentText.trim() }),
       });
       if (res.ok) {
-        const data = await res.json() as { comment: Comment };
+        const data = await res.json() as { comment: Comment; commentsCount?: number };
+        const nextCount = data.commentsCount ?? commentCountRef.current + 1;
+        commentCountRef.current = nextCount;
         setComments((prev) => [data.comment, ...prev]);
         setCommentText("");
-        onCommentAdded?.();
+        onCommentCountChangedRef.current?.(nextCount);
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         const data = await res.json() as { error?: string };
@@ -201,7 +235,13 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
             headers: { ...(isOwn ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             ...(isOwn ? {} : { body: JSON.stringify({ reason: "inappropriate" }) }),
           });
-          if (response.ok && isOwn) setComments((items) => items.filter((item) => item.id !== comment.id));
+          if (response.ok && isOwn) {
+            const body = await response.json().catch(() => ({})) as { commentsCount?: number };
+            const nextCount = body.commentsCount ?? Math.max(0, commentCountRef.current - 1);
+            commentCountRef.current = nextCount;
+            setComments((items) => items.filter((item) => item.id !== comment.id));
+            onCommentCountChangedRef.current?.(nextCount);
+          }
           Alert.alert(response.ok ? (isOwn ? "Comment deleted" : "Report received") : "Couldn’t complete that action", response.ok && !isOwn ? "Thank you for helping keep the community safe." : undefined);
         },
       },
@@ -232,13 +272,24 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
           keyExtractor={(c) => c.id}
           contentContainerStyle={{ paddingBottom: bottomPad + 80, paddingHorizontal: 16, paddingTop: 16, gap: 12 }}
           showsVerticalScrollIndicator={false}
+          onRefresh={() => { void loadComments(); }}
+          refreshing={refreshingComments}
           ListHeaderComponent={
             <>
               {/* Original post */}
               <View style={[m.postCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={m.postHeader}>
                   <View style={[m.avatar, { backgroundColor: post.authorColor }]}>
-                    <Text style={m.initials}>{post.authorInitials}</Text>
+                    {post.authorImageUrl && !postImageFailed ? (
+                      <Image
+                        source={{ uri: post.authorImageUrl }}
+                        style={m.postAvatarImage}
+                        accessibilityLabel={`${post.author}'s profile photo`}
+                        onError={() => setPostImageFailed(true)}
+                      />
+                    ) : (
+                      <Text style={m.initials}>{post.authorInitials}</Text>
+                    )}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[m.author, { color: colors.foreground }]}>{post.author}</Text>
@@ -282,6 +333,20 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
               </Text>
 
               {loading && <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 16 }} />}
+              {!loading && commentLoadError ? (
+                <View style={[m.commentLoadError, { backgroundColor: "#FEF2F2", borderColor: "#FCA5A5" }]}>
+                  <Text style={m.commentErrorTxt}>{commentLoadError}</Text>
+                  <TouchableOpacity
+                    onPress={() => { void loadComments(); }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Retry loading comments"
+                    style={m.commentRetryButton}
+                  >
+                    <Feather name="refresh-cw" size={13} color="#B91C1C" />
+                    <Text style={m.commentRetryText}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </>
           }
           renderItem={({ item: c }) => (
@@ -315,7 +380,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded
         <View style={[m.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           {isAuthenticated && commentAccess.canComment ? (
             <>
-              {commentError ? (
+              {commentError && comments.length > 0 ? (
                 <View style={[m.commentErrorBanner, { backgroundColor: "#FEF2F2" }]}>
                   <Text style={m.commentErrorTxt}>{commentError}</Text>
                   <TouchableOpacity onPress={() => setCommentError("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -372,7 +437,8 @@ const m = StyleSheet.create({
   topBarTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
   postCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
   postHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  postAvatarImage: { width: "100%", height: "100%", resizeMode: "cover" },
   initials: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFF" },
   author: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   time: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
@@ -396,7 +462,10 @@ const m = StyleSheet.create({
   emptyComments: { alignItems: "center", gap: 10, paddingVertical: 28 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21, maxWidth: 260 },
   commentErrorBanner: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 6, width: "100%" },
+  commentLoadError: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 10, padding: 10, marginVertical: 8 },
   commentErrorTxt: { color: "#DC2626", fontSize: 12, fontFamily: "Inter_400Regular", flex: 1 },
+  commentRetryButton: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 6 },
+  commentRetryText: { color: "#B91C1C", fontFamily: "Inter_700Bold", fontSize: 12 },
   inputBar: { flexDirection: "column", paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1 },
   inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
   inputWrap: { flex: 1, position: "relative" },

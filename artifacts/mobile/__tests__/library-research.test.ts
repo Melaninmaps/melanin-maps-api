@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  LIBRARY_COLLECTION_SHELVES,
-  LIBRARY_COLLECTION_SUBTOPICS,
   libraryCollectionResearchParams,
 } from "../lib/libraryCollections";
 
@@ -68,17 +66,16 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("appliedSuggestedQuestion.current = true");
   });
 
-  it("makes every Library collection subject an immediate governed research handoff", () => {
-    expect(LIBRARY_COLLECTION_SHELVES.length).toBeGreaterThan(0);
-    expect(LIBRARY_COLLECTION_SUBTOPICS.length).toBeGreaterThan(50);
-    expect(new Set(LIBRARY_COLLECTION_SUBTOPICS).size).toBe(LIBRARY_COLLECTION_SUBTOPICS.length);
-    for (const subtopic of LIBRARY_COLLECTION_SUBTOPICS) {
-      expect(libraryCollectionResearchParams(subtopic)).toEqual({ question: subtopic, research: "true" });
-    }
-    expect(libraryTab).toContain("libraryCollectionResearchParams(subtopic)");
+  it("makes every server-provided Library collection path an immediate governed research handoff", () => {
+    expect(libraryCollectionResearchParams("  Redlining  ")).toEqual({ question: "Redlining", research: "true" });
+    expect(libraryTab).toContain("loadLibraryResearchPathManifest");
+    expect(libraryTab).toContain("collection.paths.map");
+    expect(libraryTab).toContain("libraryCollectionResearchParams(path.question)");
+    expect(libraryTab).toContain('pathname: "/library-research"');
+    expect(libraryTab).toContain("params: libraryCollectionResearchParams(path.question)");
     expect(researchScreen).toContain('researchOnOpen === "true"');
-    expect(researchScreen).toContain("void searchLibrary(routedQuestion)");
-    expect(researchScreen).toContain("if (!hasPublishedEntry)");
+    expect(researchScreen).toContain("void searchLibrary(routedQuestion, true)");
+    expect(researchScreen).toContain("if (forceResearch || !hasPublishedEntry)");
   });
 
   it("runs connected and related questions through the same approved-first path", () => {
@@ -108,7 +105,7 @@ describe("mobile Library research experience", () => {
   it("renders current foundation and community context in separate cards", () => {
     expect(researchScreen).toContain("CURRENT FOUNDATION · SOURCE-GOVERNED");
     expect(researchScreen).toContain("DIRECTLY EVIDENCED COMMUNITY PACKET");
-    expect(researchScreen).toContain("Community context is limited for now");
+    expect(researchScreen).toContain("Community evidence is insufficient for now");
     expect(researchScreen).toContain('researchTrack="foundation"');
     expect(researchScreen).toContain('researchTrack="community"');
   });

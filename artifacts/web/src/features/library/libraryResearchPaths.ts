@@ -18,6 +18,8 @@ export type LibraryResearchPathManifest = {
   collections: LibraryResearchCollection[];
 };
 
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function isResearchCollection(value: unknown): value is LibraryResearchCollection {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<LibraryResearchCollection>;
@@ -34,12 +36,11 @@ function isResearchCollection(value: unknown): value is LibraryResearchCollectio
       && typeof path.question === "string");
 }
 
-/** Mobile consumes the same canonical server manifest as web. */
 export async function loadLibraryResearchPathManifest(
-  apiBase: string,
   signal?: AbortSignal,
 ): Promise<LibraryResearchPathManifest> {
-  const response = await fetch(`${apiBase}/api/library/research-paths`, {
+  const response = await fetch(`${BASE}/api/library/research-paths`, {
+    credentials: "include",
     headers: { Accept: "application/json" },
     signal,
   });
@@ -51,14 +52,6 @@ export async function loadLibraryResearchPathManifest(
   return { collections: body.collections };
 }
 
-/**
- * A collection or subject carries an intentional, prefilled question into the
- * approved-first route and requests governed research immediately. The member
- * can still edit or erase the prefill on the destination screen.
- */
-export function libraryCollectionResearchParams(question: string): {
-  question: string;
-  research: "true";
-} {
-  return { question: question.normalize("NFKC").trim(), research: "true" };
+export function governedLibraryResearchHref(question: string): string {
+  return `/library/search?q=${encodeURIComponent(question.trim())}&research=true`;
 }

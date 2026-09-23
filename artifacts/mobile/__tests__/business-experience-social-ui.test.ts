@@ -81,7 +81,7 @@ describe("Expo social video choices", () => {
     expect(detail).toContain("detectSocialVideoPlatform(sourceUrl)");
     expect(detail).toContain("after moderation confirms the public link and context");
     expect(detail).toContain("openApprovedContribution(item)");
-    expect(detail).toContain("View posts");
+    expect(detail).toContain("Watch community posts");
     expect(detail).toContain("Share your visit");
   });
 
@@ -90,10 +90,17 @@ describe("Expo social video choices", () => {
     expect(detail).toContain("safeOfficialWebsite");
     expect(detail).toContain("Official website");
     expect(detail).toContain("Community posts");
-    expect(detail).toContain("View posts");
-    expect(detail).toContain("Share a visit");
-    expect(detail).not.toContain("communityMediaYRef.current");
+    expect(detail).toContain("Watch community posts");
+    expect(detail).toContain("Share your visit");
+    expect(detail).toContain("communityMediaYRef.current");
     expect(detail).not.toContain("Show Me the Vibe");
+  });
+
+  it("keeps ownership designations while removing public listing-status disclaimers", () => {
+    const detail = source("../app/business/[id].tsx");
+    expect(detail).toContain("OwnershipBadges");
+    expect(detail).not.toContain("Ownership designations indicate the business is owned and operated 51%");
+    expect(detail).not.toContain("This business has not yet claimed its profile");
   });
 
   it("withholds confidence scores until enough member feedback exists", () => {
@@ -101,6 +108,7 @@ describe("Expo social video choices", () => {
     const snapshot = source("../components/CommunitySnapshot.tsx");
     const score = source("../components/CommunityConfidenceScore.tsx");
     expect(detail).toContain("MINIMUM_COMMUNITY_SIGNAL");
+    expect(detail).toContain("(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL ? business.safetyRating : null");
     expect(snapshot).toContain("Community scores will appear after at least");
     expect(snapshot).toContain("MINIMUM_COMMUNITY_SIGNAL = 5");
     expect(score).toContain("MINIMUM_COMMUNITY_REVIEWS = 5");

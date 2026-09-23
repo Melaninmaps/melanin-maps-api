@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applySavedMemberResearchContext } from "../saved-member-research-context";
+import {
+  applySavedMemberResearchContext,
+  libraryPurposeConsent,
+} from "../saved-member-research-context";
 
 describe("saved member research context", () => {
   const blackWomanDefault = {
@@ -7,6 +10,18 @@ describe("saved member research context", () => {
     communities: ["Black women"],
     cultures: [],
   };
+
+  it("uses one explicit revocable consent decision for every Library purpose", () => {
+    expect(libraryPurposeConsent(blackWomanDefault)).toEqual({
+      granted: true,
+      purpose: "library_saved_context",
+    });
+    expect(libraryPurposeConsent({ useMemberContextByDefault: false })).toEqual({
+      granted: false,
+      purpose: "library_saved_context",
+    });
+    expect(libraryPurposeConsent(null).granted).toBe(false);
+  });
 
   it("adds an explicitly consented default as a separate research lens", () => {
     expect(applySavedMemberResearchContext({

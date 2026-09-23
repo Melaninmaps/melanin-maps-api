@@ -4,7 +4,27 @@ export type SavedMemberResearchPreferences = Readonly<{
   cultures?: unknown;
 }>;
 
+export type LibraryPurposeConsent = Readonly<{
+  granted: boolean;
+  purpose: "library_saved_context";
+}>;
+
 const MEMBER_CONTEXT_OPT_OUT = /\b(?:general\s+only|without\s+(?:my\s+)?(?:saved\s+)?context|this\s+is\s+for\s+(?:my\s+)?(?:friend|family|patient|client)|not\s+about\s+me|donat(?:e|ing|ion)|fundrais(?:e|ing)|charit(?:y|able)|nonprofit|non-profit|scholarship\s+fund|grant\s+fund(?:ing)?)\b/i;
+
+/**
+ * The single revocable consent gate for every Library use of saved context.
+ * Turning the existing preference off immediately disables both query
+ * augmentation and ranking personalization; no secondary inferred consent is
+ * accepted at this boundary.
+ */
+export function libraryPurposeConsent(
+  preferences: Pick<SavedMemberResearchPreferences, "useMemberContextByDefault"> | null,
+): LibraryPurposeConsent {
+  return {
+    granted: preferences?.useMemberContextByDefault === true,
+    purpose: "library_saved_context",
+  };
+}
 
 function normalizedValues(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -34,15 +54,16 @@ export function applySavedMemberResearchContext(input: {
   question: string;
   preferences: SavedMemberResearchPreferences | null;
 }): { question: string; appliedTags: string[] } {
-  if (!input.preferences?.useMemberContextByDefault || MEMBER_CONTEXT_OPT_OUT.test(input.question)) {
+  const preferences = input.preferences;
+  if (!preferences || !libraryPurposeConsent(preferences).granted || MEMBER_CONTEXT_OPT_OUT.test(input.question)) {
     return { question: input.question, appliedTags: [] };
   }
   if (/#(?:diaspora|blackwomen|blackwoman|blackmen|blackman|blackstudents|blackstudent|hbcustudents|hbcustudent)\b|\b(?:black women?|black men?|black students?|hbcu students?)\b/i.test(input.question)) {
     return { question: input.question, appliedTags: [] };
   }
   const tags = tagsFor(normalizedValues([
-    ...(normalizedValues(input.preferences.communities)),
-    ...(normalizedValues(input.preferences.cultures)),
+    ...(normalizedValues(preferences.communities)),
+    ...(normalizedValues(preferences.cultures)),
   ]));
   return tags.length
     ? { question: `${tags.join(" ")} ${input.question}`.trim(), appliedTags: tags }

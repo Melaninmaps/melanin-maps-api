@@ -54,6 +54,7 @@ function samplePost(overrides: Record<string, unknown> = {}) {
     author_name: "Member Two",
     author_initials: "MT",
     author_color: "#CA922B",
+    author_image_url: "https://cdn.example.test/member-two.jpg",
     content: "Community discussion",
     category: "culture",
     post_type: "community",
@@ -171,6 +172,7 @@ describe("Community feed SQL safety and visibility", () => {
   it("reads legacy post fields through JSON while preserving visibility and moderation defaults", () => {
     const query = queryFor("everyone");
 
+    expect(query.text).toContain("u.profile_image_url AS author_image_url");
     expect(query.text).toContain("to_jsonb(cp)->'media_urls' AS media_urls");
     expect(query.text).toContain("to_jsonb(cp)->>'visibility'");
     expect(query.text).toContain("to_jsonb(cp)->>'requires_moderation'");
@@ -356,6 +358,19 @@ describe("Community comments and count reconciliation", () => {
     expect(commentRoutes).toContain("communityPostCommentsTable.status} = 'active'");
     expect(commentRoutes).not.toContain("commentsCount} + 1");
     expect(commentRoutes).not.toContain("commentsCount} - 1");
+    expect(commentRoutes).toContain("commentsCount: result.updatedPost?.commentsCount ?? 0");
+    expect(commentRoutes).toContain("commentsCount: deleted.commentsCount");
+  });
+
+  it("maps current post author photos without changing feed inputs or ranking", () => {
+    const feedRoute = communityRouteSource.slice(
+      communityRouteSource.indexOf('// GET /community/posts'),
+      communityRouteSource.indexOf('// POST /community/posts'),
+    );
+
+    expect(feedRoute).toContain("authorImageUrl: r.author_image_url ?? null");
+    expect(feedRoute).not.toContain("communityFeedDisplay");
+    expect(queryFor("foryou").values).toEqual([injectedViewerId, 100]);
   });
 });
 

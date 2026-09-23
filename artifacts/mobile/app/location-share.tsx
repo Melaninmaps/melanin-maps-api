@@ -34,6 +34,9 @@ type LocationShare = {
   currentLat: number | null;
   currentLng: number | null;
   lastUpdatedAt: string | null;
+  coordinateState?: "published" | "waiting_for_first_update";
+  updateMode?: "foreground_while_screen_open";
+  linkDeliveryState?: "not_sent_by_service";
 };
 
 const DURATION_OPTIONS = [
@@ -179,8 +182,8 @@ export default function LocationShareScreen() {
         Alert.alert(
           firstLocation ? "Location Sharing Active" : "Share Link Ready",
           firstLocation
-            ? `Your current location is now available. Copy the link to send to ${recipientEmail || "your contact"}.`
-            : "The secure link is active but is still waiting for your first location update. Keep the app open and we will retry.",
+            ? `Your current location is now available. Copy the link to send to ${recipientEmail || "your contact"}. Updates continue only while this screen remains open.`
+            : "The secure link is ready but is still waiting for your first location update. Keep this screen open and we will retry.",
           [
             { text: "Copy Link", onPress: () => { void Clipboard.setStringAsync(shareUrl); Haptics.selectionAsync(); } },
             { text: "Done" },
@@ -259,7 +262,7 @@ export default function LocationShareScreen() {
           <View style={[styles.infoBanner, { backgroundColor: "#2563EB0F", borderColor: "#2563EB30" }]}>
             <Feather name="map-pin" size={18} color="#2563EB" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              Share a live location link with a trusted contact. The link shows your real-time position until the share expires or you stop it.
+              This is temporary location sharing, not an emergency alert. Coordinates refresh about every 30 seconds only while this screen is open; background updates are not enabled. Copy and send the link yourself.
             </Text>
           </View>
 
@@ -282,10 +285,10 @@ export default function LocationShareScreen() {
                 value={label}
                 onChangeText={setLabel}
               />
-              <Text style={[styles.formLabel, { color: colors.foreground }]}>Recipient Email (optional)</Text>
+              <Text style={[styles.formLabel, { color: colors.foreground }]}>Recipient Email Label (optional)</Text>
               <TextInput
                 style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                placeholder="Send link to email address"
+                placeholder="For your reference; no email is sent"
                 placeholderTextColor={colors.mutedForeground}
                 value={recipientEmail}
                 onChangeText={setRecipientEmail}
@@ -336,6 +339,7 @@ export default function LocationShareScreen() {
                       <Text style={[styles.shareLabel, { color: colors.foreground }]}>{share.label}</Text>
                       <Text style={[styles.shareExpiry, { color: "#D97706" }]}>Waiting for first location — retrying</Text>
                       <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>{formatExpiry(share.expiresAt)}</Text>
+                      <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Link not sent by the app · updates require this screen to stay open</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.stopBtn, { borderColor: "#DC2626" }]}
@@ -370,7 +374,7 @@ export default function LocationShareScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.shareLabel, { color: colors.foreground }]}>{s.label}</Text>
-                      <Text style={[styles.shareExpiry, { color: "#2563EB" }]}>{formatExpiry(s.expiresAt)}</Text>
+                      <Text style={[styles.shareExpiry, { color: "#2563EB" }]}>Latest coordinate available · {formatExpiry(s.expiresAt)}</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.stopBtn, { borderColor: "#DC2626" }]}
@@ -383,9 +387,10 @@ export default function LocationShareScreen() {
                   </View>
                   {s.lastUpdatedAt && (
                     <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>
-                      Last updated: {new Date(s.lastUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                      Last update received: {new Date(s.lastUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} · foreground only
                     </Text>
                   )}
+                  <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Link delivery: not sent by the app; copy it below.</Text>
                   <TouchableOpacity
                     style={[styles.copyBtn, { backgroundColor: "#2563EB18", borderColor: "#2563EB30" }]}
                     onPress={() => void handleCopyLink(s.shareToken)}
@@ -404,7 +409,7 @@ export default function LocationShareScreen() {
               <Feather name="map-pin" size={28} color={colors.mutedForeground} />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No location shares yet</Text>
               <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-                Start a share before a meetup or trip so a trusted contact can see where you are in real time.
+                Start a temporary link before a meetup or trip. It updates while this screen is open and must be sent manually.
               </Text>
             </View>
           )}

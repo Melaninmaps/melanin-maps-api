@@ -101,6 +101,7 @@ export interface CommunityPost {
   author: string;
   authorInitials: string;
   authorColor: string;
+  authorImageUrl?: string | null;
   authorId?: string;
   content: string;
   likes: number;

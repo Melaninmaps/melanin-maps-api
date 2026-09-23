@@ -58,6 +58,14 @@ type LibrarySearchResponse = {
     choices: Array<{ label: string; query: string }>;
   } | null;
   webResearch: { status: ProviderStatus; message: string };
+  libraryPurposeConsent?: LibraryPurposeConsent;
+};
+
+type LibraryPurposeConsent = {
+  granted: boolean;
+  purpose: "library_saved_context";
+  controlsSavedContextAugmentation: true;
+  controlsRankingPersonalization: true;
 };
 
 type ResearchAnswer = {
@@ -87,11 +95,12 @@ type LibraryResearchResponse = {
   /** General current information for any reader; mirrors answer for compatibility. */
   foundation?: ResearchAnswer;
   communityContext?: {
-    status: "available" | "insufficient";
+    status: "available" | "insufficient" | "operational_failure";
     researchLenses: string[];
     answer?: ResearchAnswer;
     message: string;
-    providerStatus: "available" | "degraded";
+    providerStatus: "available" | "degraded" | "unavailable";
+    retryable: boolean;
   };
   origin: "internal" | "researched";
   reused: boolean;
@@ -100,6 +109,7 @@ type LibraryResearchResponse = {
   provider: { name: "internal" | "openai" | "tavily"; status: "available" | "degraded"; message: string };
   researchScope: LibraryResearchScope;
   memberContextApplied?: string[];
+  libraryPurposeConsent?: LibraryPurposeConsent;
 };
 
 type ResearchFailure = {
@@ -108,6 +118,7 @@ type ResearchFailure = {
   retryable?: boolean;
   provider?: { name?: string; status?: ProviderStatus };
   researchScope?: LibraryResearchScope;
+  libraryPurposeConsent?: LibraryPurposeConsent;
 };
 
 const RESEARCH_LENS_OPTIONS = [
@@ -292,15 +303,59 @@ export function LibrarySearchPage() {
   const rawSearch = useSearch();
   const params = new URLSearchParams(rawSearch);
   const routeQuery = params.get("q")?.trim() ?? "";
+  const researchOnOpen = params.get("research") === "true";
   const [input, setInput] = useState(routeQuery);
   const [response, setResponse] = useState<LibrarySearchResponse | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [research, setResearch] = useState<LibraryResearchResponse | null>(null);
   const [researchFailure, setResearchFailure] = useState<ResearchFailure | null>(null);
+  const [contextConsent, setContextConsent] = useState<LibraryPurposeConsent | null>(null);
+  const [contextConsentState, setContextConsentState] = useState<"idle" | "saving" | "error">("idle");
   const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(routeQuery ? "loading" : "idle");
   const [researchState, setResearchState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [, navigate] = useLocation();
   const activeResearchLensTags = RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(input, lens.tag)).map((lens) => lens.tag);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${BASE}/api/library/context-consent`, {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (request) => {
+        if (request.status === 401) return null;
+        if (!request.ok) throw new Error("LIBRARY_CONSENT_UNAVAILABLE");
+        return request.json() as Promise<LibraryPurposeConsent>;
+      })
+      .then((consent) => setContextConsent(consent))
+      .catch((error: unknown) => {
+        if ((error as { name?: string }).name !== "AbortError") setContextConsentState("error");
+      });
+    return () => controller.abort();
+  }, []);
+
+  const updateContextConsent = useCallback(async (granted: boolean) => {
+    if (!contextConsent || contextConsentState === "saving") return;
+    setContextConsentState("saving");
+    try {
+      const request = await fetch(`${BASE}/api/library/context-consent`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ granted }),
+      });
+      const body = await request.json() as LibraryPurposeConsent | { error?: string };
+      if (!request.ok || !("granted" in body)) throw new Error("LIBRARY_CONSENT_UPDATE_FAILED");
+      setContextConsent(body);
+      setContextConsentState("idle");
+      // Ranking changes only after explicit consent changes; rerun the current
+      // approved-index search rather than silently mutating visible ordering.
+      if (routeQuery) navigate(`/library/search?q=${encodeURIComponent(routeQuery)}`);
+    } catch {
+      setContextConsentState("error");
+    }
+  }, [contextConsent, contextConsentState, navigate, routeQuery]);
 
   useEffect(() => {
     setInput(routeQuery);
@@ -372,11 +427,11 @@ export function LibrarySearchPage() {
     // Do not spend a source-governed research request until that choice is made.
     if (response.searchClarification) return;
     const hasPublishedEntry = results.some((result) => result.kind === "entry");
-    if (hasPublishedEntry || response.webResearch.status === "not_needed") return;
+    if (!researchOnOpen && (hasPublishedEntry || response.webResearch.status === "not_needed")) return;
     // A new general Library question does the source-governed work on its first
     // search. The server, not the client, decides whether it is reusable.
     void researchCurrentQuestion();
-  }, [research, researchCurrentQuestion, researchState, response, results, routeQuery, state]);
+  }, [research, researchCurrentQuestion, researchOnOpen, researchState, response, results, routeQuery, state]);
 
   async function loadMore() {
     if (!response?.nextCursor) return;
@@ -425,6 +480,21 @@ export function LibrarySearchPage() {
               })}
             </div>
           </div>
+          {contextConsent ? (
+            <label className="library-context-consent">
+              <input
+                checked={contextConsent.granted}
+                disabled={contextConsentState === "saving"}
+                onChange={(event) => void updateContextConsent(event.currentTarget.checked)}
+                type="checkbox"
+              />
+              <span>
+                <strong>Use my saved context for the Library</strong>
+                <small>This one revocable choice controls both optional saved-context community supplements and result ranking. It never changes the general foundation or asserts your identity.</small>
+              </span>
+            </label>
+          ) : null}
+          {contextConsentState === "error" ? <p className="library-context-consent-error" role="alert">Library context consent could not be updated. Your current setting is unchanged.</p> : null}
         </section>
 
       <section aria-live="polite" className="living-library-content library-search-content">
@@ -519,10 +589,11 @@ export function LibrarySearchPage() {
                 />
               </section>
             ) : research.communityContext ? (
-              <section className="library-provider-error" aria-live="polite">
-                <h2>Community context is limited for now</h2>
+              <section className={research.communityContext.status === "operational_failure" ? "library-provider-error" : "library-community-insufficient"} aria-live="polite">
+                <h2>{research.communityContext.status === "operational_failure" ? "Community research service is temporarily unavailable" : "Community evidence is insufficient for now"}</h2>
                 <p>{research.communityContext.message}</p>
                 <p>The current foundation remains complete and separately sourced above.</p>
+                {research.communityContext.retryable ? <button onClick={() => void researchCurrentQuestion()} type="button">Retry community research</button> : null}
               </section>
             ) : null}
           </>

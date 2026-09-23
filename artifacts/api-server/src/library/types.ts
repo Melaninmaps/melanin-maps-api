@@ -58,11 +58,12 @@ export type LibraryEntry = {
  * sources, cache key, or eligibility for reuse.
  */
 export type CommunityResearchContext = {
-  status: "available" | "insufficient";
+  status: "available" | "insufficient" | "operational_failure";
   researchLenses: string[];
   answer?: LibraryEntry;
   message: string;
-  providerStatus: ResearchProviderStatus;
+  providerStatus: ResearchProviderStatus | "unavailable";
+  retryable: boolean;
 };
 
 export type LibraryTopicSearchResult = {

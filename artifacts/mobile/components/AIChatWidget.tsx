@@ -34,6 +34,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 import {
@@ -78,6 +79,7 @@ async function getToken(): Promise<string | null> {
 const GREETING = "Kinfolk's here. Let's map it out.";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
 const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
+const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 function renderKinfolkMessageText(text: string, color: string, linkColor: string): React.ReactNode[] {
   const tokens = text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|\*\*[^*]+\*\*)/g);
@@ -116,13 +118,20 @@ const VOICE_MODE_OPTIONS = [
   { id: "business_manager", label: "Business Manager", desc: "Priorities, risks, decisions, and next actions" },
   { id: "best_friend", label: "Best Friend", desc: "Supportive, candid, natural, and honest" },
 ] as const;
+type VoiceMode = (typeof VOICE_MODE_OPTIONS)[number]["id"];
+
+function normalizeVoiceMode(value: unknown): VoiceMode {
+  if (VOICE_MODE_OPTIONS.some((option) => option.id === value)) return value as VoiceMode;
+  if (value === "cultural_curator") return "professor";
+  if (value === "travel_companion") return "best_friend";
+  return "community";
+}
 
 let sessionId: string | undefined;
 
-let cachedVoiceMode: string | null = null;
+let cachedVoiceMode: VoiceMode | null = null;
 
-async function getVoiceMode(token: string | null): Promise<string> {
-  if (cachedVoiceMode) return cachedVoiceMode;
+async function getVoiceMode(token: string | null): Promise<VoiceMode> {
   if (!token) return "community";
   try {
     const base = getApiBase();
@@ -131,7 +140,7 @@ async function getVoiceMode(token: string | null): Promise<string> {
     });
     if (res.ok) {
       const data = await res.json() as { preferences?: { personalityMode?: string | null } };
-      const mode = data.preferences?.personalityMode ?? "community";
+      const mode = normalizeVoiceMode(data.preferences?.personalityMode);
       cachedVoiceMode = mode;
       return mode;
     }
@@ -157,7 +166,7 @@ async function nearbyCityHint(message: string): Promise<string | undefined> {
   }
 }
 
-async function sendToKinfolk(message: string, token: string | null, cityHint?: string): Promise<{
+async function sendToKinfolk(message: string, token: string | null, voiceMode: VoiceMode, cityHint?: string): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
   followUpSuggestions: string[];
@@ -173,8 +182,6 @@ async function sendToKinfolk(message: string, token: string | null, cityHint?: s
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  const voiceMode = await getVoiceMode(token);
 
   const res = await fetch(`${base}/api/kinfolk/chat`, {
     method: "POST",
@@ -276,6 +283,7 @@ export function AIChatWidget() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -297,12 +305,16 @@ export function AIChatWidget() {
   const [voiceSheet, setVoiceSheet] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<KinfolkBusinessRecommendation | null>(null);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  const [voiceMode, setVoiceMode] = useState<VoiceMode>("community");
+  const [voiceModeSaving, setVoiceModeSaving] = useState(false);
   const [aaveLevel, setAaveLevel] = useState<number>(0);
   const [aaveSaving, setAaveSaving] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
   const playerStatus = useAudioPlayerStatus(player);
   const recordingStartedAtRef = useRef<number | null>(null);
+  const recordingDraftRef = useRef("");
+  const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
   const listRef = useRef<FlatList>(null);
   const openRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
@@ -327,7 +339,8 @@ export function AIChatWidget() {
   const [fabTranslateY] = useState(() => new Animated.Value(0));
   const [fabOpacity] = useState(() => new Animated.Value(1));
 
-  const suppressed = ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
+  const onPrimaryKinfolkConversation = pathname === "/travel" || pathname.startsWith("/travel/");
+  const suppressed = onPrimaryKinfolkConversation || ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -401,6 +414,19 @@ export function AIChatWidget() {
 
   const startVoice = async () => {
     if (Platform.OS === "web" || isStartingVoice || recorder.isRecording) return;
+    if (authLoading) return;
+    const token = await getToken();
+    if (!isAuthenticated || !token) {
+      Alert.alert(
+        "Sign in to use Kinfolk Voice",
+        "Sign in before recording so your audio is sent only to your authenticated Kinfolk session. You can still type your question.",
+        [
+          { text: "Not now", style: "cancel" },
+          { text: "Sign in", onPress: () => router.push("/login" as never) },
+        ],
+      );
+      return;
+    }
     setIsStartingVoice(true);
     try {
       const permission = await requestRecordingPermissionsAsync();
@@ -419,8 +445,10 @@ export function AIChatWidget() {
       await recorder.prepareToRecordAsync();
       recorder.record();
       recordingStartedAtRef.current = Date.now();
+      recordingDraftRef.current = input;
+      setRecordingElapsedSeconds(0);
       setIsRecording(true);
-      setVoiceInputStatus("Listening… tap the microphone again when you’re finished.");
+      setVoiceInputStatus("Recording… 60-second maximum. Tap the microphone again when you’re finished.");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       recordingStartedAtRef.current = null;
@@ -435,7 +463,7 @@ export function AIChatWidget() {
     }
   };
 
-  const stopVoice = async () => {
+  const stopVoice = useCallback(async () => {
     if (!recorder.isRecording) return;
     setIsRecording(false);
     setVoiceInputStatus("Turning your words into text…");
@@ -454,6 +482,10 @@ export function AIChatWidget() {
 
       const base = getApiBase();
       const token = await getToken();
+      if (!token) {
+        setInput(recordingDraftRef.current);
+        throw new Error("Your sign-in expired before transcription. Your draft was restored; please sign in and try again.");
+      }
       const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
       const mimeType = ({
         m4a: "audio/mp4",
@@ -477,7 +509,7 @@ export function AIChatWidget() {
       const r = await fetch(`${base}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: form,
       });
@@ -507,14 +539,18 @@ export function AIChatWidget() {
       const msg = err instanceof Error ? err.message : String(err);
       Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
     } finally {
+      recordingStartedAtRef.current = null;
+      setRecordingElapsedSeconds(0);
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  };
+  }, [recorder]);
 
-  const discardVoiceRecording = async () => {
+  const discardVoiceRecording = useCallback(async () => {
     if (!recorder.isRecording) return;
     setIsRecording(false);
-    setVoiceInputStatus(null);
+    const draft = recordingDraftRef.current;
+    setInput(draft);
+    setVoiceInputStatus(draft ? "Recording canceled. Your draft was restored." : "Recording canceled. Nothing was uploaded.");
     try {
       await recorder.stop();
       const uri = recorder.uri;
@@ -525,9 +561,67 @@ export function AIChatWidget() {
     } catch { /* discard is intentionally quiet */ }
     finally {
       recordingStartedAtRef.current = null;
+      setRecordingElapsedSeconds(0);
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  };
+  }, [recorder]);
+
+  useEffect(() => {
+    if (!isRecording || recordingStartedAtRef.current === null) return;
+    const updateElapsed = () => {
+      const elapsedMs = Math.max(0, Date.now() - (recordingStartedAtRef.current ?? Date.now()));
+      setRecordingElapsedSeconds(Math.min(60, Math.floor(elapsedMs / 1000)));
+    };
+    updateElapsed();
+    const ticker = setInterval(updateElapsed, 250);
+    const remainingMs = Math.max(0, NATIVE_VOICE_MAX_DURATION_MS - (Date.now() - recordingStartedAtRef.current));
+    const limit = setTimeout(() => {
+      setVoiceInputStatus("60-second limit reached. Turning your words into text…");
+      void stopVoice();
+    }, remainingMs);
+    return () => {
+      clearInterval(ticker);
+      clearTimeout(limit);
+    };
+  }, [isRecording, stopVoice]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      cachedVoiceMode = null;
+      setVoiceMode("community");
+      return;
+    }
+    let active = true;
+    void getToken()
+      .then((token) => getVoiceMode(token))
+      .then((mode) => { if (active) setVoiceMode(mode); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [isAuthenticated, open]);
+
+  const saveVoiceMode = useCallback(async (nextMode: VoiceMode) => {
+    if (nextMode === voiceMode || voiceModeSaving) return;
+    const previousMode = voiceMode;
+    setVoiceMode(nextMode);
+    cachedVoiceMode = nextMode;
+    setVoiceModeSaving(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("AUTH_REQUIRED");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/preferences`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ personalityMode: nextMode }),
+      });
+      if (!response.ok) throw new Error("MODE_SAVE_FAILED");
+    } catch {
+      cachedVoiceMode = previousMode;
+      setVoiceMode(previousMode);
+      Alert.alert("Mode not saved", "Kinfolk could not save that delivery mode. Your previous mode is still active.");
+    } finally {
+      setVoiceModeSaving(false);
+    }
+  }, [voiceMode, voiceModeSaving]);
 
   // ── Load saved AAVE preference on mount ──────────────────────────────────
   useEffect(() => {
@@ -700,7 +794,7 @@ export function AIChatWidget() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ text, mode: await getVoiceMode(token), requestId: msgId }),
+        body: JSON.stringify({ text, mode: voiceMode, requestId: msgId }),
         signal: request.signal,
       });
       if (!voiceGuardRef.current.canPlay(request)) return;
@@ -837,7 +931,7 @@ export function AIChatWidget() {
         recommendations,
         intentClass,
         companionMemoryOffer,
-      } = await sendToKinfolk(text, token, await nearbyCityHint(text));
+      } = await sendToKinfolk(text, token, voiceMode, await nearbyCityHint(text));
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {
@@ -1005,15 +1099,17 @@ export function AIChatWidget() {
                 <Feather name="check-square" size={14} color={colors.primary} />
                 <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>My Lists</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setVoiceSheet(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Preview Kinfolk voice modes"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
-              >
-                <Feather name="volume-2" size={15} color={colors.mutedForeground} />
-              </TouchableOpacity>
+              {Platform.OS !== "web" ? (
+                <TouchableOpacity
+                  onPress={() => setVoiceSheet(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Choose and preview Kinfolk delivery modes"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                >
+                  <Feather name="volume-2" size={15} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              ) : null}
               <TouchableOpacity
                 onPress={() => {
                   setWidgetOpen(false);
@@ -1105,7 +1201,7 @@ export function AIChatWidget() {
                     </Text>
                   </View>
                 )}
-                {!item.fromUser && (
+                {!item.fromUser && Platform.OS !== "web" && (
                   <TouchableOpacity
                     onPress={() => void speakMessage(item.id, item.text)}
                     style={[styles.listenBtn, { marginLeft: 42 }]}
@@ -1345,7 +1441,9 @@ export function AIChatWidget() {
           {voiceInputStatus ? (
             <View style={[styles.voiceInputStatus, { backgroundColor: isRecording ? "#FEF2F2" : colors.muted }]}>
               <Feather name={isRecording ? "mic" : "message-circle"} size={14} color={isRecording ? "#B91C1C" : colors.mutedForeground} />
-              <Text style={[styles.voiceInputStatusText, { color: isRecording ? "#B91C1C" : colors.mutedForeground }]}>{voiceInputStatus}</Text>
+              <Text style={[styles.voiceInputStatusText, { color: isRecording ? "#B91C1C" : colors.mutedForeground }]}>
+                {isRecording ? `${voiceInputStatus} ${recordingElapsedSeconds}s / 60s` : voiceInputStatus}
+              </Text>
               {isRecording ? (
                 <TouchableOpacity
                   accessibilityLabel="Cancel and discard Kinfolk Voice recording"
@@ -1359,15 +1457,17 @@ export function AIChatWidget() {
           ) : null}
 
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
-            <TouchableOpacity
-              style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted, opacity: isStartingVoice ? 0.6 : 1 }]}
-              onPress={() => isRecording ? void stopVoice() : void startVoice()}
-              disabled={isStartingVoice}
-              accessibilityLabel={isRecording ? "Stop Kinfolk Voice recording" : isStartingVoice ? "Starting Kinfolk Voice recording" : "Start Kinfolk Voice recording"}
-              activeOpacity={0.8}
-            >
-              <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : colors.mutedForeground} />
-            </TouchableOpacity>
+            {Platform.OS !== "web" ? (
+              <TouchableOpacity
+                style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted, opacity: isStartingVoice || authLoading ? 0.6 : 1 }]}
+                onPress={() => isRecording ? void stopVoice() : void startVoice()}
+                disabled={isStartingVoice || authLoading}
+                accessibilityLabel={isRecording ? "Stop Kinfolk Voice recording" : isStartingVoice ? "Starting Kinfolk Voice recording" : "Start Kinfolk Voice recording, 60 second maximum"}
+                activeOpacity={0.8}
+              >
+                <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : colors.mutedForeground} />
+              </TouchableOpacity>
+            ) : null}
             <TextInput
               style={[styles.input, { backgroundColor: colors.card, borderColor: isRecording ? "#DC262640" : colors.border, color: colors.foreground }]}
               placeholder={isRecording ? "Recording… tap mic to stop" : "What's on your mind today?"}
@@ -1412,17 +1512,26 @@ export function AIChatWidget() {
                     </TouchableOpacity>
                   </View>
 
-                  {VOICE_MODE_OPTIONS.map((v) => (
-                    <View key={v.id} style={[styles.voiceRow, { borderBottomColor: colors.border }]}>
-                      <View style={styles.voiceRowMain}>
+                  {VOICE_MODE_OPTIONS.map((v) => {
+                    const selected = voiceMode === v.id;
+                    return (
+                    <View key={v.id} style={[styles.voiceRow, { borderBottomColor: colors.border, backgroundColor: selected ? colors.primary + "10" : "transparent" }]}>
+                      <TouchableOpacity
+                        style={styles.voiceRowMain}
+                        onPress={() => void saveVoiceMode(v.id)}
+                        disabled={voiceModeSaving}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: selected, disabled: voiceModeSaving }}
+                        accessibilityLabel={`Use ${v.label} delivery mode`}
+                      >
                         <View style={[styles.voiceRadio, { borderColor: colors.primary }]}>
-                          <View style={[styles.voiceRadioFill, { backgroundColor: colors.primary }]} />
+                          {selected ? <View style={[styles.voiceRadioFill, { backgroundColor: colors.primary }]} /> : null}
                         </View>
                         <View style={styles.voiceRowText}>
                           <Text style={[styles.voiceRowLabel, { color: colors.foreground }]}>{v.label}</Text>
                           <Text style={[styles.voiceRowDesc, { color: colors.mutedForeground }]}>{v.desc}</Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.previewBtn, { borderColor: colors.primary + "66", opacity: previewingVoice === v.id ? 0.5 : 1 }]}
                         disabled={previewingVoice !== null}
@@ -1438,7 +1547,8 @@ export function AIChatWidget() {
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  ))}
+                    );
+                  })}
 
                   <Text style={[styles.voiceSheetNote, { color: colors.mutedForeground }]}>
                     Kinfolk&apos;s base voice is selected and protected by Mapping With Melanin. Your mode changes delivery, never the facts, citations, or safety standards.
