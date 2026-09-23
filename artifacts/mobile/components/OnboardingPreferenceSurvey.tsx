@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
@@ -11,11 +12,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import type { UserPreferences } from "@/hooks/useUserPreferences";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSubmit?: (data: OnboardingPreferences) => void;
+  initialPreferences: UserPreferences | null;
+  onSubmit: (data: OnboardingPreferences) => Promise<boolean>;
 }
 
 export interface OnboardingPreferences {
@@ -70,9 +73,45 @@ const COMFORT_OPTIONS = [
   "Large Print Available", "Sign Language", "Gender-Neutral Restrooms", "None needed",
 ];
 
-const STORAGE_KEY = "mapping_with_melanin_preferences";
+const CULTURE_AND_COMMUNITY_SET = new Set(CULTURE_AND_COMMUNITY);
+const STORED_TO_SURVEY_GROUP: Record<string, string> = {
+  solo: "solo",
+  partner: "couple",
+  friends: "friends",
+  family: "family",
+  colleagues: "business",
+};
 
-export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props) {
+export function toKinfolkPreferenceUpdate(
+  prefs: OnboardingPreferences,
+): Partial<Omit<UserPreferences, "userId">> {
+  return {
+    tripStyle: prefs.travelStyle,
+    favoriteCities: prefs.cities,
+    travelCompanion: prefs.groupType === "couple"
+      ? "partner"
+      : prefs.groupType === "business"
+        ? "colleagues"
+        : prefs.groupType,
+    budgetRange: prefs.budget === "upscale" ? "luxury" : prefs.budget,
+    favoriteCategories: prefs.interests.filter((interest) => !CULTURE_AND_COMMUNITY_SET.has(interest)),
+    culturalInterests: prefs.interests.filter((interest) => CULTURE_AND_COMMUNITY_SET.has(interest)),
+    lifestyleServices: prefs.accessibilityNeeds,
+  };
+}
+
+function fromKinfolkPreferences(preferences: UserPreferences): OnboardingPreferences {
+  return {
+    travelStyle: preferences.tripStyle ?? [],
+    cities: preferences.favoriteCities ?? [],
+    groupType: STORED_TO_SURVEY_GROUP[preferences.travelCompanion] ?? "",
+    budget: preferences.budgetRange === "any" ? "" : preferences.budgetRange,
+    interests: [...new Set([...(preferences.favoriteCategories ?? []), ...(preferences.culturalInterests ?? [])])],
+    accessibilityNeeds: preferences.lifestyleServices ?? [],
+  };
+}
+
+export function OnboardingPreferenceSurvey({ visible, onClose, initialPreferences, onSubmit }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
@@ -85,17 +124,17 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
     accessibilityNeeds: [],
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (visible) {
-      try {
-        const saved = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-        if (saved) queueMicrotask(() => setPrefs(JSON.parse(saved)));
-      } catch {}
+    if (visible && initialPreferences) {
+      const restored = fromKinfolkPreferences(initialPreferences);
+      queueMicrotask(() => setPrefs(restored));
     }
-  }, [visible]);
+  }, [initialPreferences, visible]);
 
-  const reset = () => { setStep(0); setSubmitted(false); };
+  const reset = () => { setStep(0); setSubmitted(false); setSaveError(null); };
   const handleClose = () => { reset(); onClose(); };
 
   const toggle = (key: keyof OnboardingPreferences, val: string) => {
@@ -113,14 +152,23 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (step < 3) { setStep(step + 1); return; }
+    setIsSaving(true);
+    setSaveError(null);
     try {
-      if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-    } catch {}
-    setSubmitted(true);
-    onSubmit?.(prefs);
+      if (!(await onSubmit(prefs))) {
+        setSaveError("Preferences were not saved. Check your connection and sign-in, then try again.");
+        return;
+      }
+      setSubmitted(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      setSaveError("Preferences were not saved. Check your connection and sign-in, then try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const STEPS = ["Travel Style", "Cities of Interest", "Trip Details", "Interests"];
@@ -165,7 +213,7 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
               </View>
               <Text style={[styles.thankTitle, { color: colors.foreground }]}>All Set!</Text>
               <Text style={[styles.thankSub, { color: colors.mutedForeground }]}>
-                Your preferences are saved. Your Discover feed and For You section will now be personalized to your tastes.
+                Your choices were saved to your Kinfolk preferences. Recommendations can now use them across signed-in experiences.
               </Text>
               <View style={[styles.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.previewLabel, { color: colors.mutedForeground }]}>Personalized for</Text>
@@ -341,22 +389,29 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
         </ScrollView>
 
         {!submitted && (
-          <View style={[styles.footer, { borderTopColor: colors.border }]}>
-            {step > 0 && (
-              <TouchableOpacity style={[styles.backBtn, { borderColor: colors.border }]} onPress={() => setStep(step - 1)}>
-                <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
+          <View style={[styles.footerWrap, { borderTopColor: colors.border }]}>
+            {saveError && <Text style={[styles.saveError, { color: colors.destructive }]}>{saveError}</Text>}
+            <View style={styles.footer}>
+              {step > 0 && (
+                <TouchableOpacity style={[styles.backBtn, { borderColor: colors.border }]} onPress={() => setStep(step - 1)} disabled={isSaving}>
+                  <Text style={[styles.backBtnText, { color: colors.foreground }]}>Back</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.nextBtn, { backgroundColor: canNext() && !isSaving ? "#C4622D" : colors.border, flex: 1 }]}
+                onPress={() => void handleNext()}
+                disabled={!canNext() || isSaving}
+              >
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={colors.mutedForeground} />
+                ) : (
+                  <Feather name={step === 3 ? "check" : "arrow-right"} size={16} color={canNext() ? "#FBF7F0" : colors.mutedForeground} />
+                )}
+                <Text style={[styles.nextBtnText, { color: canNext() && !isSaving ? "#FBF7F0" : colors.mutedForeground }]}>
+                  {isSaving ? "Saving…" : step === 3 ? "Save Preferences" : "Next"}
+                </Text>
               </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[styles.nextBtn, { backgroundColor: canNext() ? "#C4622D" : colors.border, flex: 1 }]}
-              onPress={handleNext}
-              disabled={!canNext()}
-            >
-              <Text style={[styles.nextBtnText, { color: canNext() ? "#FBF7F0" : colors.mutedForeground }]}>
-                {step === 3 ? "Save Preferences" : "Next"}
-              </Text>
-              <Feather name={step === 3 ? "check" : "arrow-right"} size={16} color={canNext() ? "#FBF7F0" : colors.mutedForeground} />
-            </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
@@ -404,7 +459,9 @@ const styles = StyleSheet.create({
   budgetCard: { alignItems: "center", gap: 4, padding: 14, borderRadius: 14, borderWidth: 1 },
   budgetSymbol: { fontFamily: "Inter_700Bold", fontSize: 18 },
   budgetSub: { fontFamily: "Inter_400Regular", fontSize: 10, textAlign: "center" },
-  footer: { flexDirection: "row", gap: 10, paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1 },
+  footerWrap: { paddingHorizontal: 20, paddingTop: 10, borderTopWidth: 1, gap: 8 },
+  footer: { flexDirection: "row", gap: 10 },
+  saveError: { fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
   backBtn: { paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   backBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   nextBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 14 },

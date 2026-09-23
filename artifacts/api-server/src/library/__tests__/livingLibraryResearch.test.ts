@@ -205,6 +205,49 @@ describe("Living Library evidence and identity policy", () => {
     expect(writer.writeStructured).toHaveBeenCalledTimes(1);
   });
 
+  it("distinguishes a community provider failure from insufficient community evidence", async () => {
+    const repo = repository();
+    const researchProvider: ExternalResearchProvider = {
+      name: "openai",
+      search: vi.fn().mockImplementation(async ({ query }) => {
+        if (String(query).includes("Community context requested")) {
+          throw new Error("provider timed out");
+        }
+        return {
+          documents: generalBreastCancerDocuments,
+          provider: "openai",
+          status: "available",
+        };
+      }),
+    };
+    const writer: LibrarySynthesisWriter = {
+      writeStructured: vi.fn().mockResolvedValue({
+        title: "Breast cancer screening evidence",
+        summary: "A source-cited education brief.",
+        body: "Educational information, not individual screening advice.",
+        citedSourceIndexes: [0, 1],
+        sourceNotes: [{ sourceIndex: 0, whyItMatters: "It supports the first general source." }, { sourceIndex: 1, whyItMatters: "It supports the second general source." }],
+        relatedQuestions: [],
+      }),
+    };
+
+    const result = await answerAndArchiveResearchQuestion({
+      question: "#BlackWomen breast cancer screening",
+      locationLabel: null,
+      repository: repo,
+      researchProvider,
+      writer,
+    });
+
+    expect(result.foundation.sourceCount).toBe(2);
+    expect(result.communityContext).toMatchObject({
+      status: "operational_failure",
+      providerStatus: "unavailable",
+      retryable: true,
+      message: expect.stringMatching(/operational failure/i),
+    });
+  });
+
   it("keeps an untagged question as one foundation-only research request", async () => {
     const repo = repository();
     const researchProvider: ExternalResearchProvider = {

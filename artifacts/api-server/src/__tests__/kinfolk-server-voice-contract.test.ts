@@ -31,7 +31,9 @@ describe("Kinfolk server-owned voice cross-client contract", () => {
 
   it("sends delivery mode instead of a client-selected voice from web and mobile", () => {
     expect(mobileSource).toContain("/api/kinfolk/voice-preview");
-    expect(mobileSource).toContain("mode: await getVoiceMode(token)");
+    expect(mobileSource).toContain("body: JSON.stringify({ text: KINFOLK_PREVIEW_TEXT, mode, requestId:");
+    expect(mobileSource).toContain("body: JSON.stringify({ text, mode: voiceMode, requestId:");
+    expect(mobileSource).toContain("personalityMode: nextMode");
     expect(mobileSource).not.toContain("VOICE_PREF_KEY");
     expect(mobileSource).not.toContain("VOICE_OPTIONS");
     expect(webSource).toContain("mode: kinfolkMode");

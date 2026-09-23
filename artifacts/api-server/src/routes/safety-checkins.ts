@@ -23,6 +23,30 @@ type CheckinRecipient = {
   notifiedAt: Date | null;
 };
 
+export function checkinDeliverySummary(recipients: CheckinRecipient[]) {
+  const delivered = recipients.filter((recipient) => recipient.deliveryStatus === "delivered").length;
+  const skipped = recipients.filter((recipient) => recipient.deliveryStatus === "skipped").length;
+  const pending = recipients.length - delivered - skipped;
+  return {
+    channel: "in_app_notification",
+    total: recipients.length,
+    pending,
+    delivered,
+    skipped,
+    state: recipients.length === 0
+      ? "legacy_email_unobserved"
+      : pending === recipients.length
+        ? "scheduled_not_sent"
+        : delivered === recipients.length
+          ? "delivered"
+          : pending > 0
+            ? "partially_processed"
+            : delivered > 0
+              ? "partially_delivered"
+              : "skipped",
+  } as const;
+}
+
 function requireAuth(req: Request, res: Response): string | null {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
@@ -161,10 +185,14 @@ router.get("/safety/checkins", async (req: Request, res: Response) => {
       .limit(50);
     const recipientsByCheckin = await loadCheckinRecipients(checkins.map((checkin) => checkin.id));
     res.json({
-      checkins: checkins.map((checkin) => ({
-        ...checkin,
-        recipients: recipientsByCheckin.get(checkin.id) ?? [],
-      })),
+      checkins: checkins.map((checkin) => {
+        const recipients = recipientsByCheckin.get(checkin.id) ?? [];
+        return {
+          ...checkin,
+          recipients,
+          deliverySummary: checkinDeliverySummary(recipients),
+        };
+      }),
     });
   } catch (error) {
     req.log.error({ error }, "GET /safety/checkins error");
@@ -255,7 +283,18 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
         );
       }
       await client.query("COMMIT");
-      res.status(201).json({ checkin: { ...checkin, recipients: selectedRecipients.map((recipient) => ({ ...recipient, deliveryStatus: "pending", notifiedAt: null })) } });
+      const recipients = selectedRecipients.map((recipient) => ({
+        ...recipient,
+        deliveryStatus: "pending" as const,
+        notifiedAt: null,
+      }));
+      res.status(201).json({
+        checkin: {
+          ...checkin,
+          recipients,
+          deliverySummary: checkinDeliverySummary(recipients),
+        },
+      });
     } catch (error) {
       await client.query("ROLLBACK").catch(() => undefined);
       throw error;

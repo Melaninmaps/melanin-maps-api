@@ -8,6 +8,7 @@ export type CommunityPostRow = {
   author_name: string;
   author_initials: string;
   author_color: string;
+  author_image_url: string | null;
   content: string;
   category: string;
   post_type: string;
@@ -126,6 +127,7 @@ function communityPostProjection(capabilities: CommunityFeedCapabilities): strin
   cp.author_name,
   cp.author_initials,
   cp.author_color,
+  u.profile_image_url AS author_image_url,
   cp.content,
   cp.category,
   COALESCE(NULLIF(to_jsonb(cp)->>'post_type', ''), 'community') AS post_type,

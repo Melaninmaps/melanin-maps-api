@@ -1,5 +1,6 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import { FoundationTopicRepository } from "./foundationTopicRepository";
+import { LIBRARY_RESEARCH_PATH_MANIFEST } from "./libraryResearchPathManifest";
 
 /**
  * GET /api/library/foundation-topics
@@ -16,6 +17,14 @@ export function registerFoundationTopicRoutes(
   app: Express,
   repository: FoundationTopicRepository,
 ): void {
+  app.get(
+    "/api/library/research-paths",
+    (_request: Request, response: Response) => {
+      response.setHeader("Cache-Control", "public, max-age=300");
+      return response.json(LIBRARY_RESEARCH_PATH_MANIFEST);
+    },
+  );
+
   app.get(
     "/api/library/foundation-topics",
     async (request: Request, response: Response, next: NextFunction) => {

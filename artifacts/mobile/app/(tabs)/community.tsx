@@ -18,7 +18,7 @@ import { Image ,
   View,
   ActivityIndicator,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessMentionPicker, type SelectedBusiness } from "@/components/BusinessMentionPicker";
@@ -111,6 +111,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     author: (raw.authorName as string) ?? "Community Member",
     authorInitials: (raw.authorInitials as string) ?? "CM",
     authorColor: (raw.authorColor as string) ?? "#CA922B",
+    authorImageUrl: (raw.authorImageUrl as string) ?? null,
     authorId: (raw.authorId as string) ?? undefined,
     content: raw.content as string,
     likes: (raw.upvotes as number) ?? 0,
@@ -289,6 +290,8 @@ export default function CommunityScreen() {
   const [groupCreatePrivate, setGroupCreatePrivate] = useState(false);
   const [groupCreateSubmitting, setGroupCreateSubmitting] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const feedRequestInFlightRef = useRef(false);
+  const lastFeedRequestAtRef = useRef(0);
 
   const { businesses } = useBusinesses();
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -395,7 +398,17 @@ export default function CommunityScreen() {
     }
   }, [communityFeedDisplay]);
 
-  const loadPosts = useCallback(async () => {
+  const loadPosts = useCallback(async ({ force = false }: { force?: boolean } = {}) => {
+    const now = Date.now();
+    if (feedRequestInFlightRef.current) {
+      if (force) setRefreshing(false);
+      return;
+    }
+    // Re-focuses can fire several times during tab/modal transitions. Keep those
+    // refreshes bounded while allowing explicit pull-to-refresh and retries.
+    if (!force && now - lastFeedRequestAtRef.current < 30_000) return;
+    feedRequestInFlightRef.current = true;
+    lastFeedRequestAtRef.current = now;
     setLoadError(false);
     setFeedError(null);
     try {
@@ -439,12 +452,17 @@ export default function CommunityScreen() {
         message,
       });
     } finally {
+      feedRequestInFlightRef.current = false;
       setLoading(false);
       setRefreshing(false);
     }
   }, [feedMode]);
 
-  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
+  useEffect(() => { queueMicrotask(() => { void loadPosts({ force: true }); }); }, [loadPosts]);
+
+  useFocusEffect(useCallback(() => {
+    if (activeTab === "Feed") void loadPosts();
+  }, [activeTab, loadPosts]));
 
   // Fetch trending hashtags on mount
   useEffect(() => {
@@ -513,7 +531,7 @@ export default function CommunityScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    void loadPosts();
+    void loadPosts({ force: true });
     void refetchGroups();
     void refetchEvents();
   };
@@ -1378,9 +1396,9 @@ export default function CommunityScreen() {
             data={filteredPosts}
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
-            // The Community feed is the first thing a member should see below
-            // the tabs. View controls, filters, and composing stay reachable
-            // from the header and floating button without pushing posts down.
+            // Cards remain immediately below the tabs. Presentation controls,
+            // people, topics, and composing stay reachable without a promo or
+            // discovery block displacing the content-first feed.
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
@@ -1410,7 +1428,7 @@ export default function CommunityScreen() {
                         return;
                       }
                       setLoading(true);
-                      void loadPosts();
+                      void loadPosts({ force: true });
                     }}
                     style={[styles.retryBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
                   >
@@ -1552,11 +1570,11 @@ export default function CommunityScreen() {
         visible={selectedPost !== null}
         post={selectedPost}
         onClose={() => setSelectedPost(null)}
-        onLike={() => void loadPosts()}
-        onCommentAdded={() => {
+        onLike={() => void loadPosts({ force: true })}
+        onCommentCountChanged={(count) => {
           if (!selectedPost) return;
-          setPosts((items) => items.map((item) => item.id === selectedPost.id ? { ...item, comments: item.comments + 1 } : item));
-          setSelectedPost((item) => item ? { ...item, comments: item.comments + 1 } : item);
+          setPosts((items) => items.map((item) => item.id === selectedPost.id ? { ...item, comments: count } : item));
+          setSelectedPost((item) => item ? { ...item, comments: count } : item);
         }}
       />
 

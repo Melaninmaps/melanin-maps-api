@@ -7,6 +7,10 @@ import {
   parseProfileHomeLocality,
   resolveMapLocality,
 } from "../lib/mapLocality";
+import {
+  buildBusinessesRequestUrl,
+  isDeliberateMapBusinessNameSearch,
+} from "../hooks/support-lens-request";
 
 const fullMapSource = readFileSync(
   decodeURIComponent(
@@ -82,7 +86,7 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const DEFAULT_REGION: Region = NEUTRAL_LOCAL_REGION");
     expect(fullMapSource).not.toContain("latitudeDelta: 32");
     expect(fullMapSource).not.toContain("longitudeDelta: 52");
-    expect(fullMapSource).toContain("enabled: exploringAllAreas || mapLocality !== null");
+    expect(fullMapSource).toContain("enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null");
   });
 
   it("requests precise foreground location once on the first native map visit", () => {
@@ -112,7 +116,8 @@ describe("FullMapView locality-first contracts", () => {
     expect(businessHookSource).toContain("enabled?: boolean;");
     expect(businessHookSource).toContain("if (!enabled)");
     expect(businessHookSource).toContain("buildBusinessesRequestUrl");
-    expect(businessHookSource).toContain("city, state, designations, supportScope");
+    expect(businessHookSource).toContain("directName?: boolean;");
+    expect(businessHookSource).toContain("supportScope: directName ? undefined : supportScope");
   });
 
   it("uses one submitted search without widening the member's local map scope", () => {
@@ -122,8 +127,31 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const locality = parseMapSearchLocality(query)");
     expect(fullMapSource).toContain("if (locality?.state)");
     expect(fullMapSource).toContain("setSubmittedBusinessSearch(query)");
-    expect(fullMapSource).toContain('enabled: exploringAllAreas || mapLocality !== null');
+    expect(fullMapSource).toContain('enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null');
     expect(fullMapSource).toContain('accessibilityLabel="Clear map search and return to my local map"');
+  });
+
+  it("keeps ordinary service browse local while allowing a deliberate public business name to show its pin", () => {
+    expect(isDeliberateMapBusinessNameSearch("AMINA")).toBe(true);
+    expect(isDeliberateMapBusinessNameSearch("restaurants")).toBe(false);
+    expect(isDeliberateMapBusinessNameSearch("girls clothes")).toBe(false);
+    expect(
+      buildBusinessesRequestUrl("https://api.example.test", {
+        search: "AMINA",
+        directName: true,
+      }),
+    ).toBe("https://api.example.test/api/businesses?search=AMINA&lookup=direct_name");
+    expect(fullMapSource).toContain("const deliberateMapNameSearch = isDeliberateMapBusinessNameSearch");
+    expect(fullMapSource).toContain("directName: deliberateMapNameSearch");
+    expect(fullMapSource).toContain('searchScope: businessSearchScope');
+    expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
+    expect(fullMapSource).toContain("Show pin");
+  });
+
+  it("offers 50 miles for business discovery without widening public-facility availability", () => {
+    expect(fullMapSource).toContain("useState<5 | 10 | 25 | 50>(10)");
+    expect(fullMapSource).toContain("[5, 10, 25, 50].map");
+    expect(fullMapSource).toContain("radius: String(Math.min(mapDiscoveryRadius, 25))");
   });
 
   it("uses the saved strict Support Lens for map business requests", () => {

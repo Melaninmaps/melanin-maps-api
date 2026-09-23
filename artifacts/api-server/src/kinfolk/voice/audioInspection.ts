@@ -61,6 +61,51 @@ function detectedMimeType(audio: Uint8Array): CanonicalVoiceFormat["mimeType"] |
 }
 
 /**
+ * Some valid, uncompressed recordings do not carry enough optional metadata
+ * for music-metadata to calculate duration. Expo and test recorders may emit
+ * this small PCM WAV shape, so read the canonical RIFF chunks as a narrowly
+ * scoped fallback. It does not accept arbitrary bytes: all required chunk
+ * bounds and linear-PCM fields must be present.
+ */
+function inspectLinearPcmWavDuration(audio: Uint8Array): VoiceAudioInspection | null {
+  const bytes = Buffer.from(audio.buffer, audio.byteOffset, audio.byteLength);
+  if (bytes.length < 44 || bytes.toString("ascii", 0, 4) !== "RIFF" || bytes.toString("ascii", 8, 12) !== "WAVE") return null;
+
+  let offset = 12;
+  let channels: number | null = null;
+  let sampleRate: number | null = null;
+  let bitsPerSample: number | null = null;
+  let dataLength: number | null = null;
+
+  while (offset + 8 <= bytes.length) {
+    const chunkId = bytes.toString("ascii", offset, offset + 4);
+    const chunkLength = bytes.readUInt32LE(offset + 4);
+    const bodyStart = offset + 8;
+    const bodyEnd = bodyStart + chunkLength;
+    if (bodyEnd > bytes.length) return null;
+
+    if (chunkId === "fmt " && chunkLength >= 16) {
+      const audioFormat = bytes.readUInt16LE(bodyStart);
+      if (audioFormat !== 1) return null;
+      channels = bytes.readUInt16LE(bodyStart + 2);
+      sampleRate = bytes.readUInt32LE(bodyStart + 4);
+      bitsPerSample = bytes.readUInt16LE(bodyStart + 14);
+    } else if (chunkId === "data") {
+      dataLength = chunkLength;
+      break;
+    }
+
+    offset = bodyEnd + (chunkLength % 2);
+  }
+
+  if (!channels || !sampleRate || !bitsPerSample || dataLength === null || bitsPerSample % 8 !== 0) return null;
+  const bytesPerFrame = channels * (bitsPerSample / 8);
+  if (!Number.isSafeInteger(bytesPerFrame) || bytesPerFrame <= 0 || dataLength % bytesPerFrame !== 0) return null;
+  const durationMs = Math.ceil((dataLength / bytesPerFrame / sampleRate) * 1_000);
+  return Number.isFinite(durationMs) && durationMs > 0 ? { durationMs, container: "WAVE" } : null;
+}
+
+/**
  * Parse the actual in-memory audio bytes. The declared MIME may choose the
  * parser, but it cannot override the detected container or measured duration.
  */
@@ -103,6 +148,16 @@ export async function inspectVoiceAudio(
     }
     return { durationMs, container };
   } catch (error) {
+    if (error instanceof VoiceAudioInspectionError && error.code !== "AUDIO_UNREADABLE") throw error;
+    if (declaredMimeType === "audio/wav") {
+      const fallback = inspectLinearPcmWavDuration(audio);
+      if (fallback) {
+        if (fallback.durationMs > maxDurationMs) {
+          throw new VoiceAudioInspectionError("AUDIO_DURATION_EXCEEDED", "The recording exceeds the maximum duration.");
+        }
+        return fallback;
+      }
+    }
     if (error instanceof VoiceAudioInspectionError) throw error;
     throw new VoiceAudioInspectionError("AUDIO_UNREADABLE", "The recording container could not be parsed.");
   }

@@ -22,6 +22,8 @@ interface UseBusinessesOptions {
   radiusMiles?: number;
   designations?: readonly string[];
   supportScope?: "all_businesses" | "strict_documented_designations";
+  /** A server-validated explicit public business-name lookup. */
+  directName?: boolean;
   /** Prevent an unscoped request while a map surface awaits a locality. */
   enabled?: boolean;
 }
@@ -30,6 +32,7 @@ interface UseBusinessesResult {
   businesses: Business[];
   isLoading: boolean;
   error: string | null;
+  searchScope: "diaspora_promotion_catalog" | "all_public_places" | "explicit_public_listing" | null;
   refetch: () => void;
 }
 
@@ -138,6 +141,7 @@ export function useBusinesses(
     radiusMiles = 25,
     designations = [],
     supportScope,
+    directName = false,
     enabled = true,
   } = options;
   const designationKey =
@@ -145,6 +149,7 @@ export function useBusinesses(
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchScope, setSearchScope] = useState<UseBusinessesResult["searchScope"]>(null);
   const requestIdRef = useRef(0);
   const lastSuccessfulBusinessesRef = useRef<Business[]>([]);
 
@@ -158,6 +163,7 @@ export function useBusinesses(
       // deliberate business search still replaces its result when it resolves.
       setBusinesses(lastSuccessfulBusinessesRef.current);
       setError(null);
+      setSearchScope(null);
       setIsLoading(false);
       return;
     }
@@ -167,9 +173,15 @@ export function useBusinesses(
     try {
       const apiBase = getApiBaseUrl();
       const url = buildBusinessesRequestUrl(apiBase, {
-        search, category, city, state, designations, supportScope,
+        search,
+        category,
+        city: directName ? "" : city,
+        state: directName ? "" : state,
+        designations: directName ? [] : designations,
+        supportScope: directName ? undefined : supportScope,
+        directName,
       });
-      const urlWithGeo = Number.isFinite(latitude) && Number.isFinite(longitude)
+      const urlWithGeo = !directName && Number.isFinite(latitude) && Number.isFinite(longitude)
         ? `${url}${url.includes("?") ? "&" : "?"}lat=${latitude}&lng=${longitude}&radius=${Math.min(100, Math.max(1, radiusMiles))}`
         : url;
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
@@ -181,7 +193,7 @@ export function useBusinesses(
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { businesses?: unknown };
+        const data = (await res.json()) as { businesses?: unknown; searchScope?: unknown };
         if (!Array.isArray(data.businesses)) {
           throw new Error("Invalid businesses response");
         }
@@ -195,6 +207,13 @@ export function useBusinesses(
           // or origin problem cannot make previously loaded businesses vanish.
           lastSuccessfulBusinessesRef.current = mappedBusinesses;
           setBusinesses(mappedBusinesses);
+          setSearchScope(
+            data.searchScope === "explicit_public_listing" ||
+            data.searchScope === "all_public_places" ||
+            data.searchScope === "diaspora_promotion_catalog"
+              ? data.searchScope
+              : null,
+          );
         }
       } finally {
         clearTimeout(timeout);
@@ -203,17 +222,18 @@ export function useBusinesses(
       if (requestId === requestIdRef.current) {
         setBusinesses(lastSuccessfulBusinessesRef.current);
         setError(BUSINESS_LOAD_ERROR);
+        setSearchScope(null);
       }
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope]);
+  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope, directName]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);
   }, [fetchBusinesses]);
 
-  return { businesses, isLoading, error, refetch: fetchBusinesses };
+  return { businesses, isLoading, error, searchScope, refetch: fetchBusinesses };
 }
 
 export function useBusinessById(id: string): UseBusinessByIdResult {

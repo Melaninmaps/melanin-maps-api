@@ -20,7 +20,11 @@ import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { PrivacyPinModal, isSensitiveCategory } from "@/components/PrivacyPinModal";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
-import { LIBRARY_COLLECTION_SHELVES, libraryCollectionResearchParams } from "@/lib/libraryCollections";
+import {
+  libraryCollectionResearchParams,
+  loadLibraryResearchPathManifest,
+  type LibraryResearchCollection,
+} from "@/lib/libraryCollections";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_API_ORIGIN) return process.env.EXPO_PUBLIC_API_ORIGIN;
@@ -296,6 +300,8 @@ export default function LibraryScreen() {
   const [followCount, setFollowCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [libraryCollections, setLibraryCollections] = useState<LibraryResearchCollection[]>([]);
+  const [libraryCollectionsUnavailable, setLibraryCollectionsUnavailable] = useState(false);
   const [expandedCollection, setExpandedCollection] = useState<string | null>(null);
   const [feedLoading, setFeedLoading] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
@@ -338,6 +344,21 @@ export default function LibraryScreen() {
       } catch {}
       finally { setSitesLoading(false); }
     })();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadLibraryResearchPathManifest(getApiBase(), controller.signal)
+      .then((manifest) => {
+        setLibraryCollections(manifest.collections);
+        setLibraryCollectionsUnavailable(false);
+      })
+      .catch((error: unknown) => {
+        if ((error as { name?: string }).name !== "AbortError") {
+          setLibraryCollectionsUnavailable(true);
+        }
+      });
+    return () => controller.abort();
   }, []);
 
   const loadData = useCallback(async () => {
@@ -714,33 +735,45 @@ export default function LibraryScreen() {
             <View style={[styles.section, { marginTop: 18 }]}>
               <Text style={[styles.collectionEyebrow, { color: "#8D5C17" }]}>BEGIN WITH OUR COMPLETE LIVES</Text>
               <Text style={[styles.collectionHeading, { color: colors.foreground }]}>Choose a Library collection</Text>
-              <Text style={[styles.collectionIntro, { color: colors.mutedForeground }]}>Open a collection to choose a subject. Each subject starts a source-governed Library search with a longer brief, article links, and next questions.</Text>
+              <Text style={[styles.collectionIntro, { color: colors.mutedForeground }]}>Opening a collection immediately starts its approved-first, source-governed research path. You can also choose a narrower subject without retyping it.</Text>
+              {libraryCollectionsUnavailable ? (
+                <Text style={[styles.collectionIntro, { color: "#8A2424" }]}>Library research paths are temporarily unavailable. The rest of your Library remains available.</Text>
+              ) : null}
               <View style={styles.collectionList}>
-                {LIBRARY_COLLECTION_SHELVES.map((collection) => {
-                  const expanded = expandedCollection === collection.title;
+                {libraryCollections.map((collection) => {
+                  const expanded = expandedCollection === collection.slug;
                   return (
-                    <View key={collection.title} style={[styles.collectionCard, { backgroundColor: colors.card, borderColor: expanded ? "#CA922B80" : colors.border }]}>
+                    <View key={collection.slug} style={[styles.collectionCard, { backgroundColor: colors.card, borderColor: expanded ? "#CA922B80" : colors.border }]}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        activeOpacity={0.8}
+                        onPress={() => router.push({ pathname: "/library-research", params: libraryCollectionResearchParams(collection.defaultQuestion) } as never)}
+                        style={styles.collectionToggle}
+                      >
+                        <Text style={styles.collectionIcon}>{collection.mobileIcon}</Text>
+                        <Text style={[styles.collectionTitle, { color: colors.foreground }]}>{collection.title}</Text>
+                        <Feather name="arrow-up-right" size={18} color="#8D5C17" />
+                      </TouchableOpacity>
                       <TouchableOpacity
                         accessibilityRole="button"
                         accessibilityState={{ expanded }}
                         activeOpacity={0.8}
-                        onPress={() => setExpandedCollection((current) => current === collection.title ? null : collection.title)}
-                        style={styles.collectionToggle}
+                        onPress={() => setExpandedCollection((current) => current === collection.slug ? null : collection.slug)}
+                        style={[styles.collectionPathToggle, { borderTopColor: colors.border }]}
                       >
-                        <Text style={styles.collectionIcon}>{collection.icon}</Text>
-                        <Text style={[styles.collectionTitle, { color: colors.foreground }]}>{collection.title}</Text>
-                        <Feather name={expanded ? "chevron-up" : "chevron-down"} size={19} color="#8D5C17" />
+                        <Text style={[styles.collectionPathToggleText, { color: colors.mutedForeground }]}>Choose a subject</Text>
+                        <Feather name={expanded ? "chevron-up" : "chevron-down"} size={17} color="#8D5C17" />
                       </TouchableOpacity>
                       {expanded ? (
                         <View style={[styles.collectionSubtopics, { borderTopColor: colors.border }]}>
-                          {collection.subtopics.map((subtopic) => (
+                          {collection.paths.map((path) => (
                             <TouchableOpacity
-                              key={subtopic}
+                              key={path.id}
                               activeOpacity={0.8}
-                              onPress={() => router.push({ pathname: "/library-research", params: libraryCollectionResearchParams(subtopic) } as never)}
+                              onPress={() => router.push({ pathname: "/library-research", params: libraryCollectionResearchParams(path.question) } as never)}
                               style={[styles.collectionSubtopic, { borderColor: "#CA922B35", backgroundColor: "#CA922B0D" }]}
                             >
-                              <Text style={[styles.collectionSubtopicText, { color: "#70480F" }]}>{subtopic}</Text>
+                              <Text style={[styles.collectionSubtopicText, { color: "#70480F" }]}>{path.title}</Text>
                               <Feather name="arrow-up-right" size={14} color="#8D5C17" />
                             </TouchableOpacity>
                           ))}
@@ -1751,6 +1784,8 @@ const styles = StyleSheet.create({
   collectionToggle: { minHeight: 57, paddingHorizontal: 13, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10 },
   collectionIcon: { fontSize: 19 },
   collectionTitle: { flex: 1, fontSize: 14, lineHeight: 19, fontWeight: "800" },
+  collectionPathToggle: { minHeight: 38, borderTopWidth: 1, paddingHorizontal: 13, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  collectionPathToggleText: { fontSize: 11, lineHeight: 16, fontWeight: "700" },
   collectionSubtopics: { borderTopWidth: 1, padding: 10, gap: 7 },
   collectionSubtopic: { minHeight: 41, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 9, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 9 },
   collectionSubtopicText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: "700" },

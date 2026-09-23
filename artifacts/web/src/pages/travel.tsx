@@ -203,12 +203,14 @@ interface Prefs {
   kinfolkVoice: string; autoSpeak: boolean; aaveLevel: number;
 }
 
+type KinfolkMode = "community" | "professor" | "business_manager" | "best_friend";
+
 const DEFAULT_PREFS: Prefs = {
   recommendationLifeStage: "unspecified",
   favoriteCategories: [], favoriteCities: [], avoidCategories: [],
   budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
   ownershipTypes: [], lifestyleServices: [],
-  communicationStyle: "friendly", personalityMode: "neighborhood_guide",
+  communicationStyle: "friendly", personalityMode: "community",
   emojiLevel: "some", humorLevel: "light", regionalFlavor: "off",
   kinfolkVoice: "onyx", autoSpeak: false, aaveLevel: 0,
 };
@@ -262,7 +264,19 @@ function resolveActiveCommunicationStyle(
   if (typeof legacyStyle === "string" && ACTIVE_ID_TO_RESPONSE_STYLE[legacyStyle]) return legacyStyle;
   return "friendly";
 }
-const PERSONALITY_MODES = [{ id: "neighborhood_guide", label: "Neighborhood Guide" }, { id: "cultural_curator", label: "Cultural Curator" }, { id: "travel_companion", label: "Travel Companion" }, { id: "community", label: "Community Voice" }];
+const PERSONALITY_MODES: Array<{ id: KinfolkMode; label: string }> = [
+  { id: "community", label: "Just Big Cousin" },
+  { id: "professor", label: "Professor" },
+  { id: "business_manager", label: "Business Manager" },
+  { id: "best_friend", label: "Best Friend" },
+];
+
+function normalizeSavedKinfolkMode(value: unknown): KinfolkMode {
+  if (PERSONALITY_MODES.some((mode) => mode.id === value)) return value as KinfolkMode;
+  if (value === "cultural_curator") return "professor";
+  if (value === "travel_companion") return "best_friend";
+  return "community";
+}
 const EMOJI_LEVELS = [{ id: "none", label: "None" }, { id: "some", label: "Balanced" }, { id: "lots", label: "Expressive" }];
 const HUMOR_LEVELS = [{ id: "none", label: "Straightforward" }, { id: "light", label: "Light" }, { id: "playful", label: "Playful" }];
 
@@ -975,7 +989,7 @@ function TravelPage() {
   const [responseStatus, setResponseStatus] = useState<(typeof KINFOLK_RESPONSE_STATUS_STAGES)[number]>(
     KINFOLK_RESPONSE_STATUS_STAGES[0],
   );
-  const [kinfolkMode, setKinfolkMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
+  const [kinfolkMode, setKinfolkMode] = useState<KinfolkMode>("community");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -995,6 +1009,7 @@ function TravelPage() {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
+  const [modeSaveStatus, setModeSaveStatus] = useState<"idle" | "saving" | "error">("idle");
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   // Pick one welcome headline per mount — stays stable for the session
@@ -1114,7 +1129,7 @@ function TravelPage() {
         const raw = d.preferences ?? {};
         const ensureArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
 
-        setPrefs({
+        const hydratedPrefs: Prefs = {
           ...DEFAULT_PREFS,
           ...raw,
           recommendationLifeStage: RECOMMENDATION_LIFE_STAGES.some(option => option.id === raw.recommendationLifeStage)
@@ -1128,14 +1143,16 @@ function TravelPage() {
           ownershipTypes:     ensureArr(raw.ownershipTypes),
           lifestyleServices:  ensureArr(raw.lifestyleServices),
           communicationStyle: resolveActiveCommunicationStyle(d, raw.communicationStyle),
-          personalityMode:    typeof raw.personalityMode === "string" ? raw.personalityMode : DEFAULT_PREFS.personalityMode,
+          personalityMode:    normalizeSavedKinfolkMode(raw.personalityMode),
           emojiLevel:         typeof raw.emojiLevel === "string" ? raw.emojiLevel : DEFAULT_PREFS.emojiLevel,
           humorLevel:         typeof raw.humorLevel === "string" ? raw.humorLevel : DEFAULT_PREFS.humorLevel,
           regionalFlavor:     normalizeWebRegionalFlavor(raw.regionalFlavor),
           kinfolkVoice:       normalizeWebVoice(raw.kinfolkVoice),
           autoSpeak:          raw.autoSpeak === true,
           aaveLevel:          Number.isInteger(raw.aaveLevel) && Number(raw.aaveLevel) >= 0 && Number(raw.aaveLevel) <= 3 ? Number(raw.aaveLevel) : 0,
-        });
+        };
+        setPrefs(hydratedPrefs);
+        setKinfolkMode(normalizeSavedKinfolkMode(hydratedPrefs.personalityMode));
         setPreferencesHydrated(true);
       }
     } finally { setPrefsLoaded(true); }
@@ -1151,8 +1168,32 @@ function TravelPage() {
     if (!response.ok) throw new Error("PREFERENCE_SAVE_FAILED");
     // The primary preferences endpoint persists communicationStyle into the
     // delivery profile transactionally, so a second partial save is unnecessary.
-    setPrefs(p);
+    const saved = { ...p, personalityMode: normalizeSavedKinfolkMode(p.personalityMode) };
+    setPrefs(saved);
+    setKinfolkMode(normalizeSavedKinfolkMode(saved.personalityMode));
   }, []);
+
+  const selectKinfolkMode = useCallback(async (nextMode: KinfolkMode) => {
+    if (!isLoggedIn || modeSaveStatus === "saving" || nextMode === kinfolkMode) return;
+    const previousMode = kinfolkMode;
+    setKinfolkMode(nextMode);
+    setPrefs(current => ({ ...current, personalityMode: nextMode }));
+    setModeSaveStatus("saving");
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/preferences`, {
+        method: "PUT",
+        credentials: "include",
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ personalityMode: nextMode }),
+      });
+      if (!response.ok) throw new Error("MODE_SAVE_FAILED");
+      setModeSaveStatus("idle");
+    } catch {
+      setKinfolkMode(previousMode);
+      setPrefs(current => ({ ...current, personalityMode: previousMode }));
+      setModeSaveStatus("error");
+    }
+  }, [isLoggedIn, kinfolkMode, modeSaveStatus]);
 
   // ── Voice: stop recording and submit the captured clip ─────────────────────
   const stopRecording = useCallback(() => {
@@ -2401,11 +2442,21 @@ function TravelPage() {
                 )}
 
                 <div className="mb-2 flex max-w-3xl flex-wrap items-center gap-2 mx-auto">
-                  {([[
-                    "community", "Just Big Cousin"
-                  ], ["professor", "Professor"], ["business_manager", "Business Manager"], ["best_friend", "Best Friend"]] as const).map(([value, label]) => (
-                    <button key={value} onClick={() => setKinfolkMode(value)} className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${kinfolkMode === value ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/50"}`}>{label}</button>
+                  {PERSONALITY_MODES.map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      data-testid={`kinfolk-mode-${id}`}
+                      aria-pressed={kinfolkMode === id}
+                      disabled={!preferencesHydrated || modeSaveStatus === "saving"}
+                      onClick={() => void selectKinfolkMode(id)}
+                      className={`rounded-full px-3 py-1.5 text-[11px] font-bold disabled:opacity-50 ${kinfolkMode === id ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/50"}`}
+                    >
+                      {label}
+                    </button>
                   ))}
+                  {modeSaveStatus === "saving" && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/45">Saving mode…</span>}
+                  {modeSaveStatus === "error" && <span role="alert" className="text-[10px] text-red-700">Mode was not saved; your previous mode was restored.</span>}
                   <div className="ml-auto flex items-center gap-3">
                     <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Save only this message to your private Kinfolk memory. This is off by default; you can view, edit, or forget saved memory at any time.">
                       <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} />

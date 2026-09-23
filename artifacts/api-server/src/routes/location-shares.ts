@@ -7,6 +7,18 @@ import { requireFamilySafety } from "../middleware/requireFamilySafety";
 const router: IRouter = Router();
 const ALLOWED_DURATION_MINUTES = new Set([30, 60, 120, 240, 480, 1440]);
 
+function ownerLocationShare<T extends { currentLat: number | null; currentLng: number | null; lastUpdatedAt: Date | null }>(share: T) {
+  return {
+    ...share,
+    coordinateState:
+      share.currentLat !== null && share.currentLng !== null && share.lastUpdatedAt
+        ? "published"
+        : "waiting_for_first_update",
+    updateMode: "foreground_while_screen_open",
+    linkDeliveryState: "not_sent_by_service",
+  } as const;
+}
+
 function requireAuth(req: Request, res: Response): string | null {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return null; }
   return req.user.id;
@@ -33,7 +45,7 @@ router.get("/safety/location-shares", async (req: Request, res: Response) => {
   try {
     const shares = await db.select().from(locationSharesTable)
       .where(eq(locationSharesTable.sharerId, userId));
-    res.json({ shares });
+    res.json({ shares: shares.map(ownerLocationShare) });
   } catch (err) {
     req.log.error({ err }, "GET /safety/location-shares error");
     res.status(500).json({ error: "Failed to load location shares" });
@@ -59,7 +71,7 @@ router.post("/safety/location-shares", requireFamilySafety, async (req: Request,
       expiresAt,
       isActive: true,
     }).returning();
-    res.status(201).json({ share });
+    res.status(201).json({ share: ownerLocationShare(share) });
   } catch (err) {
     req.log.error({ err }, "POST /safety/location-shares error");
     res.status(500).json({ error: "Failed to create location share" });
@@ -83,7 +95,12 @@ router.patch("/safety/location-shares/:token/update", async (req: Request, res: 
       ))
       .returning();
     if (!share) { res.status(404).json({ error: "Share not found or expired" }); return; }
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      coordinateState: "published",
+      updateMode: "foreground_while_screen_open",
+      lastUpdatedAt: share.lastUpdatedAt,
+    });
   } catch (err) {
     req.log.error({ err }, "PATCH /safety/location-shares/:token/update error");
     res.status(500).json({ error: "Failed to update location" });

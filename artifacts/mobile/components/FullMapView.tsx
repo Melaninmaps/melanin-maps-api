@@ -34,6 +34,7 @@ import {
   type AlertType,
 } from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { isDeliberateMapBusinessNameSearch } from "@/hooks/support-lens-request";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
@@ -382,7 +383,7 @@ export function FullMapView({
   // Reversible local grouping for the map's actual loaded records. It never
   // persists assumptions about a member or suppresses records from search.
   const [mapDiscoveryFocus, setMapDiscoveryFocus] = useState<MapDiscoveryFocus>("all");
-  const [mapDiscoveryRadius, setMapDiscoveryRadius] = useState<5 | 10 | 25>(10);
+  const [mapDiscoveryRadius, setMapDiscoveryRadius] = useState<5 | 10 | 25 | 50>(10);
   // The public-facility layer is opt-in and remains distinct from MWM
   // businesses, reviews, ownership designations, and safety information.
   const [essentialServiceCategory, setEssentialServiceCategory] = useState<MapEssentialServiceCategory | null>(null);
@@ -485,6 +486,9 @@ export function FullMapView({
   const localityScopeKey = mapLocalityKey(mapLocality, exploringAllAreas);
   const collectionScopeQuery = mapCollectionScopeQuery(mapLocality, exploringAllAreas);
   const collectionScopeSuffix = collectionScopeQuery ? `?${collectionScopeQuery}` : "";
+  const deliberateMapNameSearch = isDeliberateMapBusinessNameSearch(
+    submittedBusinessSearch,
+  );
 
   // GPS remains on-device. Confirmed device coordinates are proximity-ranked;
   // a profile home locality is a city/state fallback. No ordinary map request
@@ -493,16 +497,18 @@ export function FullMapView({
     businesses,
     isLoading: isBusinessSearchLoading,
     error: businessSearchError,
+    searchScope: businessSearchScope,
   } = useBusinesses({
     search: submittedBusinessSearch,
-    latitude: memberLocation?.latitude ?? null,
-    longitude: memberLocation?.longitude ?? null,
-    city: mapLocality?.city,
-    state: mapLocality?.state,
+    latitude: deliberateMapNameSearch ? null : memberLocation?.latitude ?? null,
+    longitude: deliberateMapNameSearch ? null : memberLocation?.longitude ?? null,
+    city: deliberateMapNameSearch ? "" : mapLocality?.city,
+    state: deliberateMapNameSearch ? "" : mapLocality?.state,
     radiusMiles: mapDiscoveryRadius,
     designations: designationIds,
     supportScope: memberPreferences?.supportLensMode,
-    enabled: exploringAllAreas || mapLocality !== null,
+    directName: deliberateMapNameSearch,
+    enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null,
   });
 
   const {
@@ -572,6 +578,25 @@ export function FullMapView({
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
+  const directMatch = businessSearchScope === "explicit_public_listing"
+    ? businesses[0] ?? null
+    : null;
+  const directMatchHasCoordinates = Boolean(
+    directMatch &&
+    Number.isFinite(directMatch.latitude) &&
+    Number.isFinite(directMatch.longitude) &&
+    (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
+  );
+  const showDirectMatchOnMap = useCallback(() => {
+    if (!directMatch || !directMatchHasCoordinates) return;
+    setSelectedBusiness(directMatch);
+    mapRef.current?.animateToRegion({
+      latitude: directMatch.latitude,
+      longitude: directMatch.longitude,
+      latitudeDelta: 0.08,
+      longitudeDelta: 0.08,
+    }, 500);
+  }, [directMatch, directMatchHasCoordinates]);
 
   const clearEssentialServices = useCallback(() => {
     setEssentialServiceCategory(null);
@@ -597,7 +622,9 @@ export function FullMapView({
         category,
         lat: String(memberLocation.latitude),
         lng: String(memberLocation.longitude),
-        radius: String(mapDiscoveryRadius),
+        // Public-facility availability has a separate upstream ceiling. The
+        // member-selected 50-mile business expansion never widens this layer.
+        radius: String(Math.min(mapDiscoveryRadius, 25)),
       });
       const response = await fetch(`${base}/api/map/essential-services?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -1675,13 +1702,27 @@ export function FullMapView({
           <View style={[s.businessSearchStatus, wideMapOverlayStyle]}>
             <Text style={s.businessSearchStatusText}>
               {isBusinessSearchLoading
-                ? "Searching local listings…"
+                ? deliberateMapNameSearch
+                  ? "Finding the business you named…"
+                  : "Searching local listings…"
                 : businessSearchError
                   ? "Couldn’t search local listings. Try again."
-                  : mapped.length + culturalSearchMatchCount > 0
+                  : directMatch
+                    ? `${directMatch.name} is available by direct name${directMatchHasCoordinates ? ". Show its pin below." : "."}`
+                    : mapped.length + culturalSearchMatchCount > 0
                     ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
                     : "No mapped local results. Try another name, service, or location."}
             </Text>
+            {directMatchHasCoordinates && !isBusinessSearchLoading && (
+              <TouchableOpacity
+                onPress={showDirectMatchOnMap}
+                accessibilityLabel={`Show ${directMatch?.name ?? "this business"} on the map`}
+                style={s.directMatchAction}
+              >
+                <Feather name="map-pin" size={13} color="#FFFFFF" />
+                <Text style={s.directMatchActionText}>Show pin</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -1713,10 +1754,10 @@ export function FullMapView({
 
             {memberLocation && (
               <View style={s.mapDiscoveryRadiusRow}>
-                {[5, 10, 25].map((radius) => (
+                {[5, 10, 25, 50].map((radius) => (
                   <TouchableOpacity
                     key={radius}
-                    onPress={() => setMapDiscoveryRadius(radius as 5 | 10 | 25)}
+                    onPress={() => setMapDiscoveryRadius(radius as 5 | 10 | 25 | 50)}
                     accessibilityLabel={`Show places within ${radius} miles`}
                     accessibilityState={{ selected: mapDiscoveryRadius === radius }}
                     style={[
@@ -2884,6 +2925,22 @@ const s = StyleSheet.create({
   businessSearchStatusText: {
     color: "#F5EBD8",
     fontFamily: "Inter_500Medium",
+    fontSize: 11,
+  },
+  directMatchAction: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 7,
+    borderRadius: 14,
+    backgroundColor: GOLD,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  directMatchActionText: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_700Bold",
     fontSize: 11,
   },
   localityPrompt: {

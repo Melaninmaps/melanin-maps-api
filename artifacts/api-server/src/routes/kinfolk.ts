@@ -10501,7 +10501,11 @@ const MAX_VOICE_PAYLOAD_BYTES = 4 * 1024 * 1024; // 4 MB binary cap for multipar
 import multer from "multer";
 const transcribeUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 3 },
+  // A voice request carries one audio part plus optional duration and MIME
+  // metadata. Busboy's part accounting includes the multipart terminator in
+  // some runtimes, so retain the strict one-file/two-field caps while allowing
+  // one additional framing part for a valid native request.
+  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 4 },
   fileFilter: (_req, file, cb) => {
     const ok = file.fieldname === "audio" && /^audio\//i.test(file.mimetype);
     if (!ok) {
@@ -10607,6 +10611,39 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     });
   }
   const { safeFormat, mimeType: canonicalMimeType } = format;
+  const declaredMimeType = typeof req.body?.mimeType === "string"
+    ? req.body.mimeType.trim()
+    : "";
+  if (declaredMimeType) {
+    const declaredFormat = canonicalVoiceFormat(declaredMimeType);
+    if (!declaredFormat || declaredFormat.mimeType !== canonicalMimeType) {
+      return void res.status(400).json({
+        error: "AUDIO_MIME_MISMATCH",
+        message: "The recording metadata did not match its file type. Please record again or type your question.",
+        audioRetained: false,
+      });
+    }
+  }
+  const declaredDuration = typeof req.body?.durationMs === "string"
+    ? req.body.durationMs.trim()
+    : "";
+  if (declaredDuration) {
+    const durationMs = Number(declaredDuration);
+    if (!/^\d+$/.test(declaredDuration) || !Number.isSafeInteger(durationMs)) {
+      return void res.status(400).json({
+        error: "AUDIO_METADATA_INVALID",
+        message: "Kinfolk could not verify that recording's duration. Please record again or type your question.",
+        audioRetained: false,
+      });
+    }
+    if (durationMs > MAX_VOICE_DURATION_MS) {
+      return void res.status(400).json({
+        error: "AUDIO_DURATION_EXCEEDED",
+        message: `Keep voice messages under ${VOICE_MAX_DURATION_SECONDS} seconds.`,
+        audioRetained: false,
+      });
+    }
+  }
 
   if (buffer.length > MAX_VOICE_PAYLOAD_BYTES) {
     return void res.status(413).json({

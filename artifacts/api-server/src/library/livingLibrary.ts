@@ -295,7 +295,20 @@ function insufficientCommunityContext(
     status: "insufficient",
     researchLenses: tags,
     providerStatus: "degraded",
+    retryable: false,
     message: `The current foundation above is still available. The Library could not verify enough direct evidence for a separate ${tags.join(" ")} community-context packet right now, so it has not made a group-specific claim.`,
+  };
+}
+
+function failedCommunityContext(
+  tags: string[],
+): CommunityResearchContext {
+  return {
+    status: "operational_failure",
+    researchLenses: tags,
+    providerStatus: "unavailable",
+    retryable: true,
+    message: `The current foundation above is still available. The provider could not complete the separate ${tags.join(" ")} community-context packet right now. This is an operational failure, not a finding that community evidence is absent.`,
   };
 }
 
@@ -388,12 +401,15 @@ export async function answerAndArchiveResearchQuestion(input: {
         researchLenses: tags,
         answer: supplement.entry,
         providerStatus: supplement.providerStatus,
+        retryable: false,
         message: `Directly sourced community context for ${tags.join(" ")} is shown separately from the current foundation.`,
       };
-    } catch {
+    } catch (error) {
       // Community evidence has a stricter direct-evidence bar. Its absence must
       // never erase, degrade, or silently relabel the foundation answer.
-      communityContext = insufficientCommunityContext(tags);
+      communityContext = error instanceof LibraryEvidenceInsufficientError
+        ? insufficientCommunityContext(tags)
+        : failedCommunityContext(tags);
     }
   }
 

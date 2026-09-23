@@ -49,6 +49,7 @@ import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voice
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
+const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 const ALL_CATEGORIES = [
   "Food & Drink", "Nightlife", "Culture & Art", "Music & Live Events",
@@ -664,13 +665,16 @@ function AiMessageBubble({
         {/* Reply text */}
         <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
-          <TouchableOpacity
-            style={aiStyles.speakBtn}
-            onPress={() => onSpeak(msg.content)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
-          </TouchableOpacity>
+          {Platform.OS !== "web" ? (
+            <TouchableOpacity
+              style={aiStyles.speakBtn}
+              onPress={() => onSpeak(msg.content)}
+              accessibilityLabel="Listen to this Kinfolk reply"
+              activeOpacity={0.7}
+            >
+              <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* Location resolution pill — shows which city Kinfolk resolved so the member
@@ -1961,8 +1965,10 @@ export default function TravelScreen() {
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
+  const [voiceRecordingElapsedSeconds, setVoiceRecordingElapsedSeconds] = useState(0);
   const primaryRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const primaryRecordingStartedAtRef = useRef<number | null>(null);
+  const primaryRecordingDraftRef = useRef("");
   const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
   const serverVoicePlayerStatus = useAudioPlayerStatus(serverVoicePlayer);
   const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
@@ -2211,8 +2217,10 @@ export default function TravelScreen() {
       await primaryRecorder.prepareToRecordAsync();
       primaryRecorder.record();
       primaryRecordingStartedAtRef.current = Date.now();
+      primaryRecordingDraftRef.current = inputText;
+      setVoiceRecordingElapsedSeconds(0);
       setIsRecordingVoice(true);
-      setVoiceInputStatus("Listening… tap the microphone again when you’re finished.");
+      setVoiceInputStatus("Recording… 60-second maximum. Tap stop when you’re finished.");
     } catch (cause) {
       primaryRecordingStartedAtRef.current = null;
       setIsRecordingVoice(false);
@@ -2220,7 +2228,7 @@ export default function TravelScreen() {
       Alert.alert("Kinfolk Voice could not start", cause instanceof Error ? cause.message : "Check microphone permission and try again, or type your question.");
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [isAuthenticated, isTranscribingVoice, primaryRecorder]);
+  }, [inputText, isAuthenticated, isTranscribingVoice, primaryRecorder]);
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
@@ -2298,10 +2306,52 @@ export default function TravelScreen() {
       Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
     } finally {
       primaryRecordingStartedAtRef.current = null;
+      setVoiceRecordingElapsedSeconds(0);
       setIsTranscribingVoice(false);
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
   }, [handleSend, primaryRecorder]);
+
+  const cancelPrimaryVoiceRecording = useCallback(async () => {
+    if (!primaryRecorder.isRecording) return;
+    setIsRecordingVoice(false);
+    setInputText(primaryRecordingDraftRef.current);
+    setVoiceInputStatus(primaryRecordingDraftRef.current
+      ? "Recording canceled. Your draft was restored."
+      : "Recording canceled. Nothing was uploaded.");
+    try {
+      await primaryRecorder.stop();
+      const uri = primaryRecorder.uri;
+      if (uri) {
+        const temporaryFile = new FileSystem.File(uri);
+        try { temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
+      }
+    } catch { /* cancellation must never trigger an upload */ }
+    finally {
+      primaryRecordingStartedAtRef.current = null;
+      setVoiceRecordingElapsedSeconds(0);
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+  }, [primaryRecorder]);
+
+  useEffect(() => {
+    if (!isRecordingVoice || primaryRecordingStartedAtRef.current === null) return;
+    const updateElapsed = () => {
+      const elapsedMs = Math.max(0, Date.now() - (primaryRecordingStartedAtRef.current ?? Date.now()));
+      setVoiceRecordingElapsedSeconds(Math.min(60, Math.floor(elapsedMs / 1000)));
+    };
+    updateElapsed();
+    const ticker = setInterval(updateElapsed, 250);
+    const remainingMs = Math.max(0, NATIVE_VOICE_MAX_DURATION_MS - (Date.now() - primaryRecordingStartedAtRef.current));
+    const limit = setTimeout(() => {
+      setVoiceInputStatus("60-second limit reached. Turning your words into text…");
+      void stopPrimaryVoiceRecording();
+    }, remainingMs);
+    return () => {
+      clearInterval(ticker);
+      clearTimeout(limit);
+    };
+  }, [isRecordingVoice, stopPrimaryVoiceRecording]);
 
   useEffect(() => () => {
     if (primaryRecorder.isRecording) void primaryRecorder.stop();
@@ -2682,7 +2732,20 @@ export default function TravelScreen() {
         {voiceInputStatus ? (
           <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             {isRecordingVoice || isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="mic-outline" size={15} color={colors.primary} />}
-            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceInputStatus}</Text>
+            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>
+              {isRecordingVoice ? `${voiceInputStatus} ${voiceRecordingElapsedSeconds}s / 60s` : voiceInputStatus}
+            </Text>
+            {isRecordingVoice ? (
+              <TouchableOpacity
+                onPress={() => void cancelPrimaryVoiceRecording()}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel recording and restore my draft"
+                style={styles.voiceCancelButton}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.voiceCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
 
@@ -2697,33 +2760,38 @@ export default function TravelScreen() {
           >
             {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="image-outline" size={18} color={colors.mutedForeground} />}
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
-            onPress={() => {
-              const nextVoiceOutput = !voiceOutputRef.current;
-              voiceOutputRef.current = nextVoiceOutput;
-              setVoiceOutput(nextVoiceOutput);
-              if (!nextVoiceOutput) {
-                stopServerVoice("voice_output_disabled");
-              } else if (isLoading && appStateRef.current === "active") {
-                armAutoSpeech();
-              }
-            }}
-            activeOpacity={0.75}
-          >
-            <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.voiceOutputBtn, { backgroundColor: isRecordingVoice ? "#B42318" : colors.background, borderColor: isRecordingVoice ? "#B42318" : colors.border, opacity: isTranscribingVoice || isLoading ? 0.55 : 1 }]}
-            onPress={() => void (isRecordingVoice ? stopPrimaryVoiceRecording() : startPrimaryVoiceRecording())}
-            disabled={isTranscribingVoice || isLoading}
-            accessibilityRole="button"
-            accessibilityLabel={isRecordingVoice ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk"}
-            accessibilityState={{ busy: isTranscribingVoice, selected: isRecordingVoice }}
-            activeOpacity={0.75}
-          >
-            {isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={isRecordingVoice ? "stop" : "mic-outline"} size={18} color={isRecordingVoice ? "#fff" : colors.mutedForeground} />}
-          </TouchableOpacity>
+          {Platform.OS !== "web" ? (
+            <TouchableOpacity
+              style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
+              onPress={() => {
+                const nextVoiceOutput = !voiceOutputRef.current;
+                voiceOutputRef.current = nextVoiceOutput;
+                setVoiceOutput(nextVoiceOutput);
+                if (!nextVoiceOutput) {
+                  stopServerVoice("voice_output_disabled");
+                } else if (isLoading && appStateRef.current === "active") {
+                  armAutoSpeech();
+                }
+              }}
+              accessibilityLabel={voiceOutput ? "Turn off automatic Kinfolk spoken replies" : "Turn on automatic Kinfolk spoken replies"}
+              activeOpacity={0.75}
+            >
+              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
+            </TouchableOpacity>
+          ) : null}
+          {Platform.OS !== "web" ? (
+            <TouchableOpacity
+              style={[styles.voiceOutputBtn, { backgroundColor: isRecordingVoice ? "#B42318" : colors.background, borderColor: isRecordingVoice ? "#B42318" : colors.border, opacity: isTranscribingVoice || isLoading ? 0.55 : 1 }]}
+              onPress={() => void (isRecordingVoice ? stopPrimaryVoiceRecording() : startPrimaryVoiceRecording())}
+              disabled={isTranscribingVoice || isLoading}
+              accessibilityRole="button"
+              accessibilityLabel={isRecordingVoice ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk, 60 second maximum"}
+              accessibilityState={{ busy: isTranscribingVoice, selected: isRecordingVoice }}
+              activeOpacity={0.75}
+            >
+              {isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={isRecordingVoice ? "stop" : "mic-outline"} size={18} color={isRecordingVoice ? "#fff" : colors.mutedForeground} />}
+            </TouchableOpacity>
+          ) : null}
           <TextInput
             style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             placeholder="Or tell me anything…"
@@ -2818,6 +2886,8 @@ const styles = StyleSheet.create({
   voicePillLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 8 },
   voiceInputStatusText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
+  voiceCancelButton: { borderWidth: 1, borderColor: "#FCA5A5", borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
+  voiceCancelButtonText: { color: "#B42318", fontFamily: "Inter_600SemiBold", fontSize: 11 },
   inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },
   input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
   voiceOutputBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },

@@ -88,6 +88,16 @@ describe("website social video choices", () => {
     expect(detail).toContain("setContribSuccess(true)");
   });
 
+  it("keeps business details first and makes creator-media actions immediately reachable", () => {
+    const detail = source("../pages/business-detail.tsx");
+    expect(detail).toContain("const officialWebsite = safePublicReferenceUrl");
+    expect(detail).toContain("About");
+    expect(detail).toContain('id="community-videos"');
+    expect(detail).toContain('getElementById("community-videos")?.scrollIntoView');
+    expect(detail).not.toContain("Ownership designations indicate the business is owned and operated 51%");
+    expect(detail).not.toContain("This business has not yet claimed its profile");
+  });
+
   it("makes approved community posts prominent and keeps submission escapable", () => {
     const detail = source("../pages/business-detail.tsx");
     expect(detail).toContain("Approved public posts shared by members");

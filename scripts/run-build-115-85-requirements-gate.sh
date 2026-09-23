@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the complete 118/88
+# Requirements-to-proof source/artifact gate. Defaults to the complete 119/89
 # repair release while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
@@ -26,12 +26,13 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-118}"
-EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-88}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-119}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-89}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "117/87" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "118/88" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "118/88" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "119/89" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
@@ -101,6 +102,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/map/__tests__/essentialServices.test.ts \
   src/map/__tests__/registerLocalBusinessSearchRoute.test.ts \
   src/library/__tests__/librarySearch.test.ts \
+  src/library/__tests__/livingLibraryResearch.test.ts \
   src/library/__tests__/registerLivingLibraryRoutes.test.ts \
   src/kinfolk/__tests__/city-briefing.test.ts \
   src/kinfolk/__tests__/collective-opinion-policy.test.ts \
@@ -112,6 +114,8 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/source-relevance.test.ts \
   src/kinfolk/__tests__/contextual-evidence-safety.test.ts \
   src/kinfolk/__tests__/voice-delivery.test.ts \
+  src/kinfolk/__tests__/audio-inspection.test.ts \
+  src/kinfolk/__tests__/transcription-handler.test.ts \
   src/__tests__/kinfolk-server-voice-contract.test.ts \
   src/routes/__tests__/waitlist-unified-contract.test.ts \
   src/kinfolk/__tests__/designation-predicate-policy.test.ts \
@@ -126,6 +130,7 @@ node scripts/test-mwm-core-publication-manifest.mjs
 pnpm exec vitest run \
   lib/constants/src/map-discovery.test.ts \
   artifacts/web/src/__tests__/business-experience-social-ui.test.ts \
+  artifacts/web/src/__tests__/kinfolk-audit-repairs.test.ts \
   artifacts/web/src/__tests__/kinfolk-city-briefing-entry.test.ts \
   artifacts/web/src/__tests__/living-library-research.test.ts \
   artifacts/web/src/__tests__/community-feed-error-state.test.ts \
@@ -137,6 +142,8 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
   artifacts/mobile/__tests__/community-map-voice-regressions.test.ts \
+  artifacts/mobile/__tests__/business-experience-social-ui.test.ts \
+  artifacts/mobile/__tests__/kinfolk-audit-repairs.test.ts \
   artifacts/mobile/__tests__/cross-client-social-records.test.ts \
   artifacts/mobile/__tests__/library-research.test.ts \
   artifacts/mobile/__tests__/navigation-visibility.test.ts \

@@ -155,6 +155,7 @@ export default function BusinessDetailScreen() {
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const mainScrollRef = useRef<ScrollView>(null);
   const experienceYRef = useRef(0);
+  const communityMediaYRef = useRef(0);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
@@ -814,39 +815,14 @@ export default function BusinessDetailScreen() {
                   size="md"
                 />
               </View>
-              {business.listingStatus === "live_unclaimed" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Unclaimed · Not verified</Text>
-              )}
-              {business.ownershipClaim === "community_reported_minority_owned" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
-              )}
-              {business.ownershipClaim === "community_reported_ownership_unverified" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported designation(s) · Not verified</Text>
-              )}
-              {(business as any).ownershipClaim === "source_reported_ownership_unverified" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Source-reported ownership · Not owner-verified</Text>
-              )}
-              {(business as any).ownershipClaim === "source_reputable_listing_unverified" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Published from a reputable source · Ownership not yet verified</Text>
-              )}
-              {business.ownershipClaim === "community_reported_non_minority_owned" && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported non-minority-owned · Not verified</Text>
-              )}
-              {business.ownershipDesignations?.length > 0 && (
-                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>
-                  {business.ownershipClaim?.startsWith("community_reported_")
-                    ? "* These ownership designations were reported by a community member and are not verified owner identity."
-                    : "* Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status."}
-                </Text>
-              )}
               <BusinessTimeBadges
                 currentLocationSince={(business as any).currentLocationSince}
                 businessFoundedDate={(business as any).businessFoundedDate}
                 trustBadges={(business as any).trustBadges}
-                safetyRating={business.safetyRating}
-                wouldReturnAlone={business.wouldReturnAlone}
-                recommendationRate={business.recommendationRate}
-                rating={business.rating}
+                safetyRating={(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL ? business.safetyRating : null}
+                wouldReturnAlone={(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL ? business.wouldReturnAlone : null}
+                recommendationRate={(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL ? business.recommendationRate : null}
+                rating={(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL ? business.rating : null}
                 reviewCount={business.reviewCount}
               />
             </View>
@@ -855,7 +831,9 @@ export default function BusinessDetailScreen() {
             ) : null}
           </View>
 
-          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
+          {(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL ? (
+            <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
+          ) : null}
           {business.description ? (
             <View style={styles.aboutPreview}>
               <Text style={[styles.aboutPreviewTitle, { color: colors.foreground }]}>About</Text>
@@ -879,12 +857,57 @@ export default function BusinessDetailScreen() {
                 </TouchableOpacity>
               )}
           </View>
-          {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
+          <View style={styles.creatorMediaTopActions}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                mainScrollRef.current?.scrollTo({
+                  y: Math.max(0, communityMediaYRef.current - 18),
+                  animated: true,
+                });
+              }}
+              style={[styles.creatorMediaTopAction, styles.creatorMediaTopActionPrimary, { backgroundColor: colors.primary }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Watch community posts about ${business.name}`}
+              activeOpacity={0.85}
+            >
+              <Feather name="play-circle" size={17} color="#FFFFFF" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.creatorMediaTopActionTitle}>Watch community posts</Text>
+                <Text style={styles.creatorMediaTopActionSub}>
+                  {visibleContributions.length > 0
+                    ? `${visibleContributions.length} creator ${visibleContributions.length === 1 ? "post" : "posts"} to explore`
+                    : "See videos and photos shared here"}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={17} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setContributionModalOpen(true)}
+              style={[styles.creatorMediaTopAction, { backgroundColor: colors.card, borderColor: colors.primary + "55" }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Share your visit to ${business.name}`}
+              activeOpacity={0.85}
+            >
+              <Feather name="video" size={17} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.creatorMediaTopActionTitle, { color: colors.foreground }]}>Share your visit</Text>
+                <Text style={[styles.creatorMediaTopActionSub, { color: colors.mutedForeground }]}>Add a public video or photo link</Text>
+              </View>
+              <Feather name="plus" size={17} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          {(business.reviewCount ?? 0) > 0 && (
+            <Text style={[styles.creatorMediaSignal, { color: colors.mutedForeground }]}>
+              {business.reviewCount} community {business.reviewCount === 1 ? "member has" : "members have"} shared an experience. Browse the posts, vibe, and notes below.
+            </Text>
+          )}
+          {(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL && weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4, backgroundColor: "#16A34A0D", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: "#16A34A25" }}>
               <Text style={{ fontSize: 10, color: "#16A34A", fontFamily: "Inter_600SemiBold" }}>{"\u2714"} {weightedRating.toFixed(1)} trust-weighted avg</Text>
             </View>
           )}
-          {reviewStats && reviewStats.total > 0 && (
+          {(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL && reviewStats && reviewStats.total > 0 && (
             <ReviewSourceBar stats={reviewStats} />
           )}
 
@@ -959,9 +982,6 @@ export default function BusinessDetailScreen() {
               sensory_friendly: "Sensory-Friendly",
             };
 
-            const hasTagData = audCfg || (environmentTags?.length ?? 0) > 0 || (amenityTags?.length ?? 0) > 0;
-            const isCommunityListed = !profileStatus || profileStatus === "community_listed";
-
             return (
               <View style={{ marginTop: 12, gap: 8 }}>
                 {/* Audience type badge */}
@@ -992,15 +1012,6 @@ export default function BusinessDetailScreen() {
                   </View>
                 )}
 
-                {/* Profile status notice for community-listed businesses */}
-                {isCommunityListed && (
-                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginTop: hasTagData ? 2 : 0 }}>
-                    <Feather name="info" size={13} color={colors.mutedForeground} style={{ marginTop: 1 }} />
-                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1, lineHeight: 16 }}>
-                      Community Listed — This business has not yet claimed its profile. Some information may be community-provided.
-                    </Text>
-                  </View>
-                )}
                 {profileStatus === "claimed" && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}>
                     <Feather name="check-circle" size={11} color="#2D7A4F" />
@@ -1274,7 +1285,10 @@ export default function BusinessDetailScreen() {
             })()}
           </View>
 
-          <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View
+            onLayout={(event) => { communityMediaYRef.current = event.nativeEvent.layout.y; }}
+            style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
               <View style={styles.communityMediaHeader}>
                 <Feather name="play-circle" size={17} color={colors.primary} />
                 <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community posts</Text>
@@ -1325,7 +1339,7 @@ export default function BusinessDetailScreen() {
                   activeOpacity={0.82}
                 >
                   <Feather name="play-circle" size={15} color={colors.foreground} />
-                  <Text style={[styles.communityMediaAddText, { color: colors.foreground }]}>View posts</Text>
+                  <Text style={[styles.communityMediaAddText, { color: colors.foreground }]}>Watch community posts</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setContributionModalOpen(true)}
@@ -2494,6 +2508,12 @@ const styles = StyleSheet.create({
   socialBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   primarySocialCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, marginBottom: 10 },
   primarySocialIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  creatorMediaTopActions: { gap: 9, marginTop: 14 },
+  creatorMediaTopAction: { minHeight: 62, borderWidth: 1, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 10 },
+  creatorMediaTopActionPrimary: { borderColor: "transparent" },
+  creatorMediaTopActionTitle: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 14 },
+  creatorMediaTopActionSub: { color: "rgba(255,255,255,0.88)", fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, marginTop: 2 },
+  creatorMediaSignal: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 8 },
   communityMediaCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
   communityMediaHeader: { flexDirection: "row", alignItems: "center", gap: 7 },
   communityMediaIntro: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },

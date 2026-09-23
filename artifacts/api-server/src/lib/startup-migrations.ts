@@ -15056,6 +15056,50 @@ async function ensureBusinessDedupSchema(
       `CREATE INDEX IF NOT EXISTS bri_review_type_idx ON business_review_items(review_type)`,
     );
 
+    // Append-only event history makes every manual merge reversible without
+    // deleting either business row or rewriting the record of what happened.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_merge_audit_events (
+        id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        review_item_id        uuid NOT NULL REFERENCES business_review_items(id) ON DELETE RESTRICT,
+        action                text NOT NULL CHECK (action IN ('merge', 'restore')),
+        duplicate_business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        canonical_business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        actor_user_id         text NOT NULL,
+        confirmation_phrase   text NOT NULL,
+        reason                text NOT NULL,
+        related_event_id      uuid REFERENCES business_merge_audit_events(id) ON DELETE RESTRICT,
+        detail                jsonb NOT NULL,
+        created_at            timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS business_merge_audit_review_idx
+        ON business_merge_audit_events(review_item_id, created_at DESC)
+    `);
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION reject_business_merge_audit_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        RAISE EXCEPTION 'business_merge_audit_events is append-only';
+      END;
+      $$
+    `);
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_trigger
+          WHERE tgname = 'business_merge_audit_events_immutable'
+        ) THEN
+          CREATE TRIGGER business_merge_audit_events_immutable
+          BEFORE UPDATE OR DELETE ON business_merge_audit_events
+          FOR EACH ROW EXECUTE FUNCTION reject_business_merge_audit_mutation();
+        END IF;
+      END
+      $$
+    `);
+
     log("ensureBusinessDedupSchema: schema ready");
   } catch (err: unknown) {
     warn(

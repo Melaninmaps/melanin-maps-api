@@ -11,6 +11,10 @@ const collectionSource = readFileSync(
   fileURLToPath(new URL("../pages/library.tsx", import.meta.url)),
   "utf8",
 );
+const researchPathSource = readFileSync(
+  fileURLToPath(new URL("../features/library/libraryResearchPaths.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("Living Library research presentation", () => {
   it("allows visible HTTPS citations and rejects unsafe source schemes or credentials", () => {
@@ -89,7 +93,7 @@ describe("Living Library research presentation", () => {
   it("renders general research and direct-evidence community context as distinct packets", () => {
     expect(pageSource).toContain("Current foundation · Source-governed Library entry");
     expect(pageSource).toContain("Directly evidenced community packet");
-    expect(pageSource).toContain("Community context is limited for now");
+    expect(pageSource).toContain("Community evidence is insufficient for now");
     expect(pageSource).toContain("The current foundation remains complete and separately sourced above.");
     expect(pageSource).toContain("communityContext?.status === \"available\"");
     expect(pageSource).toContain("researchTrack=\"foundation\"");
@@ -104,11 +108,13 @@ describe("Living Library research presentation", () => {
   });
 
   it("gives each website collection subject a prefilled governed search and no empty collection dead end", () => {
-    expect(collectionSource).toContain("const COLLECTION_SUBTOPICS");
+    expect(collectionSource).toContain("loadLibraryResearchPathManifest");
+    expect(collectionSource).toContain("governedLibraryResearchHref");
     expect(collectionSource).toContain("collectionSubtopics.map");
-    expect(collectionSource).toContain("href={`/library/search?q=${encodeURIComponent(subtopic.query)}`}");
+    expect(collectionSource).toContain("href={governedLibraryResearchHref(subtopic.question)}");
     expect(collectionSource).toContain("Research this collection");
-    expect(collectionSource).toContain("href={`/library/search?q=${encodeURIComponent(topic.title)}`}");
+    expect(collectionSource).toContain("governedLibraryResearchHref(researchCollection?.defaultQuestion ?? topic.title)");
+    expect(researchPathSource).toContain("&research=true");
     expect(pageSource).toContain("void researchCurrentQuestion();");
   });
 });

@@ -97,6 +97,41 @@ describe("actual Kinfolk transcription handler", () => {
     expect(transcribe).not.toHaveBeenCalled();
   });
 
+  it("rejects contradictory or invalid multipart metadata before provider upload", async () => {
+    const mismatchedMime = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("mimeType", "audio/mpeg")
+      .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
+    expect(mismatchedMime.status).toBe(400);
+    expect(mismatchedMime.body).toMatchObject({ error: "AUDIO_MIME_MISMATCH", audioRetained: false });
+
+    const invalidDuration = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("durationMs", "not-a-duration")
+      .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
+    expect(invalidDuration.status).toBe(400);
+    expect(invalidDuration.body).toMatchObject({ error: "AUDIO_METADATA_INVALID", audioRetained: false });
+    expect(transcribe).not.toHaveBeenCalled();
+  });
+
+  it("uses declared duration as an early bound but still inspects accepted bytes", async () => {
+    const declaredTooLong = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("durationMs", "60001")
+      .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
+    expect(declaredTooLong.status).toBe(400);
+    expect(declaredTooLong.body).toMatchObject({ error: "AUDIO_DURATION_EXCEEDED", audioRetained: false });
+
+    const understatedLongAudio = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("durationMs", "1000")
+      .field("mimeType", "audio/wav")
+      .attach("audio", longPcmWav(61), { filename: "voice.wav", contentType: "audio/wav" });
+    expect(understatedLongAudio.status).toBe(400);
+    expect(understatedLongAudio.body).toMatchObject({ error: "AUDIO_DURATION_EXCEEDED", audioRetained: false });
+    expect(transcribe).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["MIME/container mismatch", "voice.wav", "voice.mp3", "audio/mpeg", "AUDIO_MIME_MISMATCH"],
     ["video-bearing MP4", "video-with-audio.mp4", "video-with-audio.mp4", "audio/mp4", "AUDIO_MIME_MISMATCH"],

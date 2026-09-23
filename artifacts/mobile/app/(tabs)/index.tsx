@@ -24,7 +24,10 @@ import { SkipFeedbackModal } from "@/components/SkipFeedbackModal";
 import { SwipeableBusinessCard } from "@/components/SwipeableBusinessCard";
 import { SkeletonBusinessCardHorizontal, SkeletonBusinessCardVertical } from "@/components/SkeletonCard";
 import { NeighborhoodSafetySurvey } from "@/components/NeighborhoodSafetySurvey";
-import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSurvey";
+import {
+  OnboardingPreferenceSurvey,
+  toKinfolkPreferenceUpdate,
+} from "@/components/OnboardingPreferenceSurvey";
 import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -928,6 +931,8 @@ export default function DiscoverScreen() {
       <OnboardingPreferenceSurvey
         visible={showPrefsSurvey}
         onClose={() => setShowPrefsSurvey(false)}
+        initialPreferences={preferences}
+        onSubmit={(surveyPreferences) => updatePreferences(toKinfolkPreferenceUpdate(surveyPreferences))}
       />
 
       {/* ── Sponsored business pill — bottom-left, scales to screen ── */}

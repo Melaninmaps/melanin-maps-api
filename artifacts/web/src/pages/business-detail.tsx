@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, CheckCircle, Instagram, Award, Users, MessageCircle, Heart, UtensilsCrossed, Scissors, HeartPulse, BriefcaseBusiness, Palette, ShoppingBag, Landmark, GraduationCap, Wrench, Plane, Store, Sparkles } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, CheckCircle, Instagram, Award, Users, MessageCircle, Heart, UtensilsCrossed, Scissors, HeartPulse, BriefcaseBusiness, Palette, ShoppingBag, Landmark, GraduationCap, Wrench, Plane, Store, Sparkles, PlayCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -293,6 +293,12 @@ export default function BusinessDetail() {
   const { data: auth } = useGetCurrentAuthUser();
   const { data: businessData, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
   const business = businessData?.business;
+  const officialWebsite = safePublicReferenceUrl(
+    business?.website ?? ((business as { isReferenceOnly?: boolean; sourceUrl?: string | null } | undefined)?.isReferenceOnly
+      ? (business as { sourceUrl?: string | null }).sourceUrl
+      : null),
+  );
+  const hasEnoughCommunityEvidence = (business?.reviewCount ?? 0) >= 5;
   const { data: reviewsData, isLoading: isLoadingReviews } = useListReviews({ businessId: id });
   const reviews = reviewsData?.reviews ?? [];
   const { data: savedPlaces } = useListSavedPlaces({ query: { queryKey: ['listSavedPlaces'], enabled: !!auth?.user } });
@@ -901,32 +907,32 @@ export default function BusinessDetail() {
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 container mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="text-white max-w-3xl">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
+              <h1 data-testid="business-name" className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>
+              <div className="flex flex-wrap items-center gap-3 text-[#F5EBD8] text-lg">
                 <span data-testid="business-category" className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
                   {business.category}
                 </span>
-                {/* confidenceScore is an internal metric — never shown; community builds scores */}
+                <span className="flex items-center gap-2"><MapPin size={18} /><span>{business.city}, {business.state}</span></span>
               </div>
-              <h1 data-testid="business-name" className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>
-              <div className="flex items-center gap-2 text-[#F5EBD8] text-lg">
-                <MapPin size={18} />
-                <span>{business.city}, {business.state}</span>
+              {business.description ? (
+                <div className="mt-5 max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#CA922B]">About</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#F5EBD8]/90 line-clamp-3">{business.description.replace(/^\[DEMO\]\s*/i, "")}</p>
+                </div>
+              ) : null}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {officialWebsite ? (
+                  <a href={officialWebsite} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[#CA922B]/60 bg-black/25 px-4 py-2 text-sm font-bold text-white transition hover:bg-[#CA922B]">
+                    <Globe className="h-4 w-4" /> Official website <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                ) : null}
+                <button onClick={() => document.getElementById("community-videos")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/25 px-4 py-2 text-sm font-bold text-white transition hover:border-[#CA922B] hover:bg-black/40">
+                  <PlayCircle className="h-4 w-4" /> Watch community posts {visibleCommunityVibes.length > 0 ? `(${visibleCommunityVibes.length})` : ""}
+                </button>
+                <button onClick={() => setShowContribModal(true)} className="inline-flex items-center gap-2 rounded-full bg-[#CA922B] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#B38024]">
+                  <Camera className="h-4 w-4" /> Share your visit
+                </button>
               </div>
-              {(business as any).listingStatus === "live_unclaimed" && (
-                <p className="mt-3 text-sm font-semibold text-[#F5EBD8]">Unclaimed · Not verified</p>
-              )}
-              {(business as any).ownershipClaim === "community_reported_minority_owned" && (
-                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported minority-owned · Not verified</p>
-              )}
-              {(business as any).ownershipClaim === "source_reported_ownership_unverified" && (
-                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Source-reported ownership · Not owner-verified</p>
-              )}
-              {(business as any).ownershipClaim === "source_reputable_listing_unverified" && (
-                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Published from a reputable source · Ownership not yet verified</p>
-              )}
-              {(business as any).ownershipClaim === "community_reported_non_minority_owned" && (
-                <p className="mt-1 text-sm font-semibold text-[#E5B94B]">Community-reported non-minority-owned · Not verified</p>
-              )}
             </div>
             
             <div className="flex gap-3">
@@ -954,11 +960,11 @@ export default function BusinessDetail() {
                 {isSaved ? <><BookmarkCheck className="mr-2 w-5 h-5" /> Saved</> : <><Bookmark className="mr-2 w-5 h-5" /> Save</>}
               </Button>
               <Button
-                onClick={() => setShowContribModal(true)}
+                onClick={() => document.getElementById("community-videos")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 variant="outline"
                 className="rounded-full h-12 px-6 border-white/20 backdrop-blur-md bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"
               >
-                <Camera className="mr-2 w-5 h-5" /> Show the Vibe
+                <PlayCircle className="mr-2 w-5 h-5" /> Watch community posts
               </Button>
               <Button
                 onClick={handleCheckIn}
@@ -1013,13 +1019,6 @@ export default function BusinessDetail() {
                   </span>
                 )}
               </div>
-              {badges.length > 0 && (
-                <p className="text-[10px] text-white/40 leading-relaxed mb-4">
-                  {isCommunityReportedOwnership
-                    ? "These ownership designations were reported by a community member and are not verified owner identity."
-                    : "Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for verified status."}
-                </p>
-              )}
             </div>
           );
         })()}
@@ -1027,7 +1026,7 @@ export default function BusinessDetail() {
         {/* Row 2: Put Your People On */}
         <div className="flex items-center gap-2 mb-5">
           <Award className="w-5 h-5 text-[#CA922B]" />
-          {(business.reviewCount ?? 0) > 0 ? (
+          {hasEnoughCommunityEvidence ? (
             <>
               <span className="font-serif font-bold text-white text-lg">Put Your People On</span>
               <span className="font-serif font-bold text-[#CA922B] text-lg ml-1">{business.averageRating?.toFixed(1)}</span>
@@ -1042,7 +1041,7 @@ export default function BusinessDetail() {
             Labels: "Would Return", "Experience Rating", "Recommend"
             Color: green (#2D7A4F). Only shown when data exists.
             NOT "Community Safety Stats" / NOT "Safety Rating" / NOT "Would Return Alone" */}
-        {((business as any).wouldReturnAlone != null || (business as any).safetyRating != null) && (
+        {hasEnoughCommunityEvidence && ((business as any).wouldReturnAlone != null || (business as any).safetyRating != null) && (
           <div className="rounded-2xl border p-5 mb-3" style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }}>
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-4 h-4" style={{ color: "#2D7A4F" }} />
@@ -1072,7 +1071,7 @@ export default function BusinessDetail() {
         )}
 
         {/* Welcoming Environment badge — matches mobile: shown when wouldReturnAlone ≥ 70 */}
-        {(business as any).wouldReturnAlone != null && parseInt((business as any).wouldReturnAlone) >= 70 && (
+        {hasEnoughCommunityEvidence && (business as any).wouldReturnAlone != null && parseInt((business as any).wouldReturnAlone) >= 70 && (
           <div className="rounded-2xl border p-4 mb-3 flex items-center gap-3" style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F40" }}>
             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#2D7A4F20" }}>
               <Shield className="w-4 h-4" style={{ color: "#2D7A4F" }} />
@@ -1173,7 +1172,7 @@ export default function BusinessDetail() {
                 {/* Approved community links belong in the Overview, independent
                     of whether an owner supplied social handles. Pending and
                     rejected contributions never reach communityVibes. */}
-                <section className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3" aria-labelledby="community-experiences-heading">
+                <section id="community-videos" className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3 scroll-mt-8" aria-labelledby="community-experiences-heading">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Watch community posts</h3>
@@ -1227,7 +1226,7 @@ export default function BusinessDetail() {
                   const safetyRating = (business as any).safetyRating as number | null;
                   const wouldReturnAlone = (business as any).wouldReturnAlone as number | null;
                   const recommendationRate = (business as any).recommendationRate as number | null;
-                  const hasSafetyData = (safetyRating != null && safetyRating > 0) || wouldReturnAlone != null || recommendationRate != null;
+                  const hasSafetyData = hasEnoughCommunityEvidence && ((safetyRating != null && safetyRating > 0) || wouldReturnAlone != null || recommendationRate != null);
                   if (!hasSafetyData) return null;
                   return (
                     <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10 space-y-5">

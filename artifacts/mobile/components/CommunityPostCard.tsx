@@ -104,11 +104,12 @@ function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () 
   );
 }
 
-function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasized = false }: {
+function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasized = false, compact = false }: {
   mediaUrls: string[];
   hasContentWarning: boolean;
   contentWarningType?: string;
   emphasized?: boolean;
+  compact?: boolean;
 }) {
   const [revealed, setRevealed] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
@@ -139,7 +140,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
       {activeVideoUrl ? (
         <NativeCommunityVideoModal url={activeVideoUrl} onClose={() => setActiveVideoUrl(null)} />
       ) : null}
-      <View style={[s.mediaGrid, emphasized && s.mediaGridEmphasized]}>
+      <View style={[s.mediaGrid, compact && s.mediaGridCompact, emphasized && s.mediaGridEmphasized]}>
       {hasContentWarning && revealed && (
         <TouchableOpacity
           style={s.warningBadge}
@@ -156,7 +157,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
         return socialPlatform ? (
           <TouchableOpacity
             key={i}
-            style={[s.mediaThumb, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
+            style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
             onPress={() => { void openExternalUrl(url, { unavailableMessage: "This public social video is unavailable." }); }}
             activeOpacity={0.8}
             accessibilityRole="link"
@@ -170,7 +171,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
         ) : isVideo ? (
           <TouchableOpacity
             key={i}
-            style={[s.mediaThumb, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
+            style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
             onPress={() => setActiveVideoUrl(url)}
             activeOpacity={0.8}
           >
@@ -178,7 +179,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
             <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Play Video</Text>
           </TouchableOpacity>
         ) : (
-          <Image key={i} source={{ uri: url }} style={[s.mediaThumb, emphasized && s.mediaThumbEmphasized]} resizeMode="cover" />
+          <Image key={i} source={{ uri: url }} style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized]} resizeMode="cover" />
         );
       })}
       </View>
@@ -295,6 +296,7 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
+  const [failedAuthorImageUrl, setFailedAuthorImageUrl] = useState<string | null>(null);
   const [showBizCard, setShowBizCard] = useState(false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
 
@@ -345,13 +347,16 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const categoryConfig = CATEGORY_CONFIG[post.category] ?? CATEGORY_CONFIG.discussion;
   const accentColor = POST_TYPE_ACCENT[post.postType ?? "community"] ?? POST_TYPE_ACCENT.community;
   const isRepost = !!post.repostId;
+  const isConversation = presentation === "text_first";
   const showMediaBeforeText = presentation === "video_first";
+  const showAuthorImage = !!post.authorImageUrl && failedAuthorImageUrl !== post.authorImageUrl;
   const postMedia = post.mediaUrls && post.mediaUrls.length > 0 ? (
     <MediaGrid
       mediaUrls={post.mediaUrls}
       hasContentWarning={post.hasContentWarning ?? false}
       contentWarningType={post.contentWarningType}
       emphasized={presentation === "video_first"}
+      compact={isConversation}
     />
   ) : null;
 
@@ -403,6 +408,8 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
     <View style={[
       s.card,
       { backgroundColor: colors.card, shadowColor: colors.foreground },
+      isConversation && [s.cardConversation, { borderColor: colors.border }],
+      presentation === "video_first" && s.cardWatch,
       isBusinessPost && { borderLeftWidth: 3, borderLeftColor: accentColor },
       isRepost && { borderLeftWidth: 3, borderLeftColor: "#2D7A4F" },
     ]}>
@@ -455,8 +462,20 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
           activeOpacity={post.authorId ? 0.7 : 1}
           onPress={() => { if (post.authorId) onAuthorPress?.(post.authorId); }}
           style={[s.avatar, { backgroundColor: post.authorColor }]}
+          accessibilityRole={post.authorId ? "button" : undefined}
+          accessibilityLabel={post.authorId ? `Open ${post.author}'s profile` : `${post.author}'s profile`}
         >
-          <Text style={s.initials}>{post.authorInitials}</Text>
+          {showAuthorImage ? (
+            <Image
+              source={{ uri: post.authorImageUrl! }}
+              style={s.avatarImage}
+              resizeMode="cover"
+              accessibilityLabel={`${post.author}'s profile photo`}
+              onError={() => setFailedAuthorImageUrl(post.authorImageUrl ?? null)}
+            />
+          ) : (
+            <Text style={s.initials}>{post.authorInitials}</Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={s.authorInfo}
@@ -497,7 +516,7 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
       {showMediaBeforeText ? postMedia : null}
 
       {/* Content — inline hashtag tapping */}
-      <Text style={[s.content, { color: colors.foreground }]}>
+      <Text style={[s.content, isConversation && s.contentConversation, { color: colors.foreground }]}>
         {post.content.split(/(#\w+)/g).map((part, i) => {
           if (/^#\w+$/.test(part)) {
             const tag = part.slice(1);
@@ -693,6 +712,12 @@ const s = StyleSheet.create({
     elevation: 2,
     overflow: "hidden",
   },
+  cardConversation: {
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  cardWatch: { borderRadius: 10 },
   repostBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -730,7 +755,8 @@ const s = StyleSheet.create({
     paddingBottom: 10,
     gap: 10,
   },
-  avatar: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  avatarImage: { width: "100%", height: "100%" },
   initials: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
   authorInfo: { flex: 1 },
   author: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
@@ -751,6 +777,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 12,
   },
+  contentConversation: { fontSize: 15, lineHeight: 23, paddingBottom: 14 },
   // Link preview
   linkPreview: {
     flexDirection: "row",
@@ -792,6 +819,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 0,
     gap: 0,
   },
+  mediaGridCompact: { flexWrap: "nowrap" },
   mediaThumb: {
     width: "31%",
     aspectRatio: 1,
@@ -803,6 +831,7 @@ const s = StyleSheet.create({
     aspectRatio: 9 / 12,
     borderRadius: 0,
   },
+  mediaThumbCompact: { width: 72, height: 72, aspectRatio: 1 },
   warningOverlay: {
     marginHorizontal: 14,
     marginBottom: 10,

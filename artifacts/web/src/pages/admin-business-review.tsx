@@ -4,7 +4,7 @@ import { Redirect } from "wouter";
 import { getWebToken } from "@/lib/webAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, GitMerge, MapPin, ExternalLink, RefreshCw, AlertTriangle, Copy } from "lucide-react";
+import { Check, X, GitMerge, MapPin, ExternalLink, RefreshCw, AlertTriangle, Copy, Undo2 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -33,6 +33,11 @@ type ReviewItem = {
   resolvedBy: string | null;
   resolvedAt: string | null;
   createdAt: string;
+  mergeEventId: string | null;
+  duplicateBusinessId: string | null;
+  mergeReason: string | null;
+  mergedAt: string | null;
+  restoredAt: string | null;
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -99,6 +104,16 @@ export default function AdminBusinessReview({ embedded }: { embedded?: boolean }
   useEffect(() => { fetchItems(); }, [filter]);
 
   async function act(id: string, action: string) {
+    let confirmation: string | undefined;
+    let reason: string | undefined;
+    if (action === "merge") {
+      confirmation = window.prompt(
+        "This hides the candidate as a duplicate but keeps both records and creates an audit trail. Type MERGE DUPLICATE to continue.",
+      ) ?? undefined;
+      if (confirmation !== "MERGE DUPLICATE") return;
+      reason = window.prompt("Required: briefly explain why these records are duplicates.")?.trim();
+      if (!reason) return;
+    }
     setActing(id + action);
     try {
       const res = await fetch(`${BASE}api/admin/business-review/${id}`, {
@@ -108,9 +123,37 @@ export default function AdminBusinessReview({ embedded }: { embedded?: boolean }
           ...(token ? { authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, confirmation, reason }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
+      await fetchItems();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setActing(null);
+    }
+  }
+
+  async function restoreMerge(item: ReviewItem) {
+    const confirmation = window.prompt(
+      "This restores the duplicate record to its exact pre-merge state and appends a restore audit event. Type RESTORE MERGED BUSINESS to continue.",
+    );
+    if (confirmation !== "RESTORE MERGED BUSINESS") return;
+    const reason = window.prompt("Required: briefly explain why this merge is being restored.")?.trim();
+    if (!reason) return;
+    setActing(item.id + "restore");
+    try {
+      const res = await fetch(`${BASE}api/admin/business-review/${item.id}/restore-merge`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ confirmation, reason }),
+      });
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? `${res.status}`);
       await fetchItems();
     } catch (e) {
       setError(String(e));
@@ -335,8 +378,24 @@ export default function AdminBusinessReview({ embedded }: { embedded?: boolean }
               )}
 
               {item.status !== "pending" && item.resolvedAt && (
-                <div className="text-xs text-muted-foreground mt-3 pt-3 border-t">
-                  Resolved {new Date(item.resolvedAt).toLocaleDateString()} — {item.status}
+                <div className="text-xs text-muted-foreground mt-3 pt-3 border-t space-y-2">
+                  <div>Resolved {new Date(item.resolvedAt).toLocaleDateString()} — {item.status}</div>
+                  {item.status === "merged" && item.mergeReason && (
+                    <div>Audit reason: {item.mergeReason}</div>
+                  )}
+                  {item.status === "merged" && item.mergeEventId && !item.restoredAt && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-amber-300 text-amber-800"
+                      disabled={!!acting}
+                      onClick={() => void restoreMerge(item)}
+                    >
+                      <Undo2 className="w-3.5 h-3.5 mr-1" />
+                      {acting === item.id + "restore" ? "Restoring…" : "Restore merged record"}
+                    </Button>
+                  )}
+                  {item.restoredAt && <div>Restored {new Date(item.restoredAt).toLocaleDateString()}</div>}
                 </div>
               )}
             </div>

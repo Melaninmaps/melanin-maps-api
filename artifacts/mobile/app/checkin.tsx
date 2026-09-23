@@ -34,6 +34,14 @@ type SafetyCheckin = {
   city: string | null;
   location: string | null;
   recipients?: TrustedProfile[];
+  deliverySummary?: {
+    channel: "in_app_notification";
+    total: number;
+    pending: number;
+    delivered: number;
+    skipped: number;
+    state: "legacy_email_unobserved" | "scheduled_not_sent" | "delivered" | "partially_processed" | "partially_delivered" | "skipped";
+  };
 };
 
 type TrustedProfile = {
@@ -68,6 +76,24 @@ const STATUS_LABELS: Record<string, string> = {
   overdue: "⚠️ Overdue",
   cancelled: "Cancelled",
 };
+
+function deliveryLabel(checkin: SafetyCheckin): string {
+  const summary = checkin.deliverySummary;
+  if (!summary || summary.total === 0) {
+    return checkin.trustedContactEmail
+      ? "Legacy email delivery is not tracked here"
+      : "No in-app delivery record";
+  }
+  if (summary.state === "scheduled_not_sent") {
+    return `Alert scheduled, not sent · ${summary.pending}/${summary.total} waiting`;
+  }
+  const parts = [
+    summary.delivered > 0 ? `${summary.delivered} delivered` : null,
+    summary.pending > 0 ? `${summary.pending} waiting` : null,
+    summary.skipped > 0 ? `${summary.skipped} skipped` : null,
+  ].filter(Boolean);
+  return `In-app alert delivery · ${parts.join(" · ")}`;
+}
 
 export default function CheckinScreen() {
   const colors = useColors();
@@ -179,7 +205,7 @@ export default function CheckinScreen() {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
           "Check-In Scheduled ✓",
-          `If you don't confirm your safety by ${scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}, your selected trusted profile${selectedShareIds.length === 1 ? "" : "s"} will receive an in-app alert.`,
+          `The alert is scheduled, not sent yet. If you don't confirm by ${scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}, delivery will be attempted to your selected trusted profile${selectedShareIds.length === 1 ? "" : "s"}.`,
         );
       } else {
         Alert.alert("Error", d.error ?? "Failed to schedule check-in.");
@@ -232,7 +258,7 @@ export default function CheckinScreen() {
           <View style={[styles.infoBanner, { backgroundColor: "#16A34A0F", borderColor: "#16A34A30" }]}>
             <Feather name="check-circle" size={18} color="#16A34A" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              Schedule a check-in before going somewhere. If you do not tap &quot;I&apos;m Safe&quot; in time, the trusted Kinfolk profiles you choose receive an in-app safety alert. No email is required.
+              Schedule an in-app alert attempt if you miss your check-in. This is not live location tracking, emergency dispatch, or a substitute for calling local emergency services. No email is required.
             </Text>
           </View>
 
@@ -360,7 +386,7 @@ export default function CheckinScreen() {
               <Feather name="check-circle" size={28} color={colors.mutedForeground} />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No check-ins yet</Text>
               <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-                Before your next meetup, schedule a check-in so someone you trust always knows you&apos;re safe.
+                Before a meetup, schedule an alert attempt to trusted profiles if you miss your check-in.
               </Text>
             </View>
           ) : (
@@ -396,6 +422,10 @@ export default function CheckinScreen() {
                           <Text style={[styles.checkinTime, { color: colors.mutedForeground }]}>{c.location}</Text>
                         </>
                       )}
+                    </View>
+                    <View style={[styles.deliveryRow, { borderTopColor: colors.border }]}>
+                      <Feather name="bell" size={12} color={colors.mutedForeground} />
+                      <Text style={[styles.deliveryText, { color: colors.mutedForeground }]}>{deliveryLabel(c)}</Text>
                     </View>
                     {isPending && (
                       <TouchableOpacity
@@ -461,6 +491,8 @@ const styles = StyleSheet.create({
   statusText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   checkinMeta: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
   checkinTime: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  deliveryRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderTopWidth: 1 },
+  deliveryText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
   iAmSafeBtn: { backgroundColor: "#16A34A", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, margin: 12, marginTop: 0, borderRadius: 12 },
   iAmSafeBtnText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 14 },
   deleteBtn: { position: "absolute", top: 14, right: 14, padding: 4 },

@@ -71,6 +71,11 @@ describe("GET /api/library/search", () => {
     expect(response.body.results[0]).toMatchObject({ kind: "entry", id: "entry-1", sourceCount: 2 });
     expect(response.body.webResearch.status).toBe("not_needed");
     expect(response.body.clarification.choices).toHaveLength(5);
+    expect(response.body.libraryPurposeConsent).toMatchObject({
+      purpose: "library_saved_context",
+      controlsSavedContextAugmentation: true,
+      controlsRankingPersonalization: true,
+    });
   });
 
   it("marks a zero-entry HVAC foundation as sparse and researchable", async () => {
@@ -97,6 +102,11 @@ describe("POST /api/library/research", () => {
     const response = await supertest(createApp(repository, { userId: "member-1", researchProvider })).post("/api/library/research").send({ question: "How do I start HVAC training?", internalResultCount: 1 });
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ origin: "internal", reused: true, published: true, persisted: false, provider: { name: "internal" } });
+    expect(response.body.libraryPurposeConsent).toMatchObject({
+      purpose: "library_saved_context",
+      controlsSavedContextAugmentation: true,
+      controlsRankingPersonalization: true,
+    });
     expect(researchProvider.search).not.toHaveBeenCalled();
     expect(repository.recordCoverageSignal).toHaveBeenCalledWith(expect.objectContaining({ outcome: "internal", internalResultCount: 1 }));
   });

@@ -19,7 +19,10 @@ import {
 } from "./livingLibrary";
 import { parseLibrarySearchQuery, searchLivingLibrary } from "./librarySearch";
 import { LibraryResearchProviderUnavailableError } from "./researchProviderChain";
-import { applySavedMemberResearchContext } from "../kinfolk/saved-member-research-context";
+import {
+  applySavedMemberResearchContext,
+  libraryPurposeConsent,
+} from "../kinfolk/saved-member-research-context";
 import type {
   ExternalResearchProvider,
   LibraryRepository,
@@ -54,7 +57,7 @@ function normalizedMemberContext(value: unknown): string[] {
 async function applyMemberLibraryDefaultContext(input: {
   memberId: string;
   question: string;
-}): Promise<{ question: string; appliedTags: string[] }> {
+}): Promise<{ question: string; appliedTags: string[]; consentGranted: boolean }> {
   try {
     const [preferences] = await db
       .select({
@@ -65,38 +68,65 @@ async function applyMemberLibraryDefaultContext(input: {
       .from(userPreferencesTable)
       .where(eq(userPreferencesTable.userId, input.memberId))
       .limit(1);
-    return applySavedMemberResearchContext({
+    const applied = applySavedMemberResearchContext({
       question: input.question,
       preferences,
     });
+    return {
+      ...applied,
+      consentGranted: libraryPurposeConsent(preferences ?? null).granted,
+    };
   } catch {
     // Context access must never block a general Library answer.
-    return { question: input.question, appliedTags: [] };
+    return { question: input.question, appliedTags: [], consentGranted: false };
   }
+}
+
+async function setMemberLibraryPurposeConsent(
+  memberId: string,
+  granted: boolean,
+): Promise<void> {
+  await db
+    .insert(userPreferencesTable)
+    .values({
+      userId: memberId,
+      useMemberContextByDefault: granted,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: userPreferencesTable.userId,
+      set: {
+        useMemberContextByDefault: granted,
+        updatedAt: new Date(),
+      },
+    });
 }
 
 async function memberLibraryRankingContext(
   memberId: string | undefined,
-): Promise<string[]> {
-  if (!memberId) return [];
+): Promise<{ consentGranted: boolean; values: string[] }> {
+  if (!memberId) return { consentGranted: false, values: [] };
   try {
     const [preferences] = await db
       .select({
         communities: userPreferencesTable.communities,
         cultures: userPreferencesTable.cultures,
         preferredLanguages: userPreferencesTable.preferredLanguages,
+        useMemberContextByDefault: userPreferencesTable.useMemberContextByDefault,
       })
       .from(userPreferencesTable)
       .where(eq(userPreferencesTable.userId, memberId))
       .limit(1);
-    return normalizedMemberContext([
+    const consent = libraryPurposeConsent(preferences ?? null);
+    if (!consent.granted) return { consentGranted: false, values: [] };
+    return { consentGranted: true, values: normalizedMemberContext([
       ...(preferences?.communities ?? []),
       ...(preferences?.cultures ?? []),
       ...(preferences?.preferredLanguages ?? []),
-    ]);
+    ]) };
   } catch {
     // A missing or unavailable preference row must never block Library access.
-    return [];
+    return { consentGranted: false, values: [] };
   }
 }
 
@@ -113,6 +143,50 @@ export function registerLivingLibraryRoutes(
   const researchHandlers: RequestHandler[] = [];
   if (dependencies.researchLimiter)
     researchHandlers.push(dependencies.researchLimiter);
+
+  app.get(
+    "/api/library/context-consent",
+    async (request: AuthenticatedRequest, response: Response) => {
+      if (!request.user?.id) {
+        return response.status(401).json({ error: "Authentication required" });
+      }
+      const rankingContext = await memberLibraryRankingContext(request.user.id);
+      response.setHeader("Cache-Control", "private, no-store");
+      return response.status(200).json({
+        granted: rankingContext.consentGranted,
+        purpose: "library_saved_context",
+        controlsSavedContextAugmentation: true,
+        controlsRankingPersonalization: true,
+      });
+    },
+  );
+
+  app.put(
+    "/api/library/context-consent",
+    async (request: AuthenticatedRequest, response: Response) => {
+      if (!request.user?.id) {
+        return response.status(401).json({ error: "Authentication required" });
+      }
+      if (typeof request.body?.granted !== "boolean") {
+        return response.status(400).json({ error: "Consent must be true or false." });
+      }
+      try {
+        await setMemberLibraryPurposeConsent(request.user.id, request.body.granted);
+        response.setHeader("Cache-Control", "private, no-store");
+        return response.status(200).json({
+          granted: request.body.granted,
+          purpose: "library_saved_context",
+          controlsSavedContextAugmentation: true,
+          controlsRankingPersonalization: true,
+        });
+      } catch (error) {
+        console.error("Unable to update Library-purpose context consent", error);
+        return response.status(503).json({
+          error: "Library context consent could not be updated. Please retry.",
+        });
+      }
+    },
+  );
 
   app.post(
     "/api/library/research",
@@ -145,6 +219,12 @@ export function registerLivingLibraryRoutes(
         memberId: request.user.id,
         question,
       });
+      const libraryPurposeConsentStatus = {
+        granted: memberContext.consentGranted,
+        purpose: "library_saved_context" as const,
+        controlsSavedContextAugmentation: true,
+        controlsRankingPersonalization: true,
+      };
       const effectiveQuestion = memberContext.question;
       const researchScope = getLibraryResearchScope(effectiveQuestion);
       if (!researchProvider) {
@@ -171,6 +251,7 @@ export function registerLivingLibraryRoutes(
           provider: { name: "none", status: "unavailable" },
           researchScope,
           memberContextApplied: memberContext.appliedTags,
+          libraryPurposeConsent: libraryPurposeConsentStatus,
         });
       }
 
@@ -212,6 +293,7 @@ export function registerLivingLibraryRoutes(
           },
           researchScope,
           memberContextApplied: memberContext.appliedTags,
+          libraryPurposeConsent: libraryPurposeConsentStatus,
         });
       } catch (error) {
         if (error instanceof LibraryEvidenceInsufficientError) {
@@ -222,6 +304,7 @@ export function registerLivingLibraryRoutes(
             provider: { name: researchProvider.name, status: "degraded" },
             researchScope,
             memberContextApplied: memberContext.appliedTags,
+            libraryPurposeConsent: libraryPurposeConsentStatus,
           });
         }
         console.error("Living Library research provider failed", error);
@@ -236,6 +319,7 @@ export function registerLivingLibraryRoutes(
           provider: { name: researchProvider.name, status: "unavailable" },
           researchScope,
           memberContextApplied: memberContext.appliedTags,
+          libraryPurposeConsent: libraryPurposeConsentStatus,
         });
       }
     },
@@ -253,11 +337,20 @@ export function registerLivingLibraryRoutes(
         const rankingContext = await memberLibraryRankingContext(
           request.user?.id,
         );
-        return response
-          .status(200)
-          .json(
-            await searchLivingLibrary(repository, parsed.value, rankingContext),
-          );
+        const result = await searchLivingLibrary(
+          repository,
+          parsed.value,
+          rankingContext.values,
+        );
+        return response.status(200).json({
+          ...result,
+          libraryPurposeConsent: {
+            granted: rankingContext.consentGranted,
+            purpose: "library_saved_context",
+            controlsSavedContextAugmentation: true,
+            controlsRankingPersonalization: true,
+          },
+        });
       } catch (error) {
         console.error("Living Library search failed", error);
         return response

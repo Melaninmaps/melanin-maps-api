@@ -5774,6 +5774,11 @@ router.get("/admin/business-review", async (req: Request, res: Response) => {
       resolved_by: string | null;
       resolved_at: string | null;
       created_at: string;
+      merge_event_id: string | null;
+      duplicate_business_id: string | null;
+      merge_reason: string | null;
+      merged_at: string | null;
+      restored_at: string | null;
     }>(
       `SELECT bri.id, bri.review_type, bri.status,
               bri.candidate_name, bri.candidate_address, bri.candidate_city,
@@ -5783,9 +5788,28 @@ router.get("/admin/business-review", async (req: Request, res: Response) => {
               bri.score, bri.reason, bri.requested_attribute, bri.matched_business_id,
               b.name AS matched_business_name, b.address AS matched_business_address,
               b.website AS matched_business_website,
-              bri.resolved_by, bri.resolved_at, bri.created_at
+              bri.resolved_by, bri.resolved_at, bri.created_at,
+              merge_event.id AS merge_event_id,
+              merge_event.duplicate_business_id,
+              merge_event.reason AS merge_reason,
+              merge_event.created_at AS merged_at,
+              restore_event.created_at AS restored_at
        FROM business_review_items bri
        LEFT JOIN businesses b ON b.id = bri.matched_business_id::uuid
+       LEFT JOIN LATERAL (
+         SELECT event.id, event.duplicate_business_id, event.reason, event.created_at
+         FROM business_merge_audit_events event
+         WHERE event.review_item_id = bri.id AND event.action = 'merge'
+         ORDER BY event.created_at DESC
+         LIMIT 1
+       ) merge_event ON true
+       LEFT JOIN LATERAL (
+         SELECT event.created_at
+         FROM business_merge_audit_events event
+         WHERE event.related_event_id = merge_event.id AND event.action = 'restore'
+         ORDER BY event.created_at DESC
+         LIMIT 1
+       ) restore_event ON true
        ${whereClause}
        ORDER BY bri.created_at DESC
        LIMIT 200`,
@@ -5828,6 +5852,11 @@ router.get("/admin/business-review", async (req: Request, res: Response) => {
         resolvedBy: r.resolved_by,
         resolvedAt: r.resolved_at,
         createdAt: r.created_at,
+        mergeEventId: r.merge_event_id,
+        duplicateBusinessId: r.duplicate_business_id,
+        mergeReason: r.merge_reason,
+        mergedAt: r.merged_at,
+        restoredAt: r.restored_at,
       })),
       stats: {
         pending: parseInt(statRows[0]?.pending ?? "0"),
@@ -5855,7 +5884,8 @@ async function findDuplicateReviewCandidate(
   },
 ) {
   const { rows } = await client.query(
-    `SELECT id, duplicate_of_id, is_duplicate, status, listing_status
+    `SELECT id, duplicate_of_id, is_duplicate, duplicate_reason,
+            duplicate_marked_at, status, listing_status
        FROM businesses
       WHERE id <> COALESCE($1, '')
         AND lower(regexp_replace(name, '[^a-z0-9]+', '', 'gi')) =
@@ -5891,7 +5921,11 @@ router.patch(
       return;
     }
     const { id } = req.params;
-    const { action } = req.body as { action: string };
+    const { action, confirmation, reason } = req.body as {
+      action: string;
+      confirmation?: string;
+      reason?: string;
+    };
     const allowed = [
       "approve",
       "reject",
@@ -5915,7 +5949,8 @@ router.patch(
         `SELECT id, review_type, status, candidate_name, candidate_address,
               candidate_city, candidate_state, candidate_website, candidate_phone,
               candidate_latitude, candidate_longitude, candidate_category,
-              candidate_source_provider, candidate_source_url, matched_business_id
+              candidate_source_provider, candidate_source_url, matched_business_id,
+              resolved_by, resolved_at
          FROM business_review_items
         WHERE id = $1
         FOR UPDATE`,
@@ -5939,6 +5974,18 @@ router.patch(
 
       // ── Merge ──────────────────────────────────────────────────────────────────
       if (action === "merge") {
+        if (confirmation !== "MERGE DUPLICATE") {
+          await client.query("ROLLBACK");
+          res.status(400).json({
+            error: "Type MERGE DUPLICATE to confirm this reversible cleanup",
+          });
+          return;
+        }
+        if (!reason?.trim()) {
+          await client.query("ROLLBACK");
+          res.status(400).json({ error: "A merge reason is required for the audit record" });
+          return;
+        }
         if (!item.matched_business_id) {
           await client.query("ROLLBACK");
           res.status(422).json({
@@ -5981,6 +6028,8 @@ router.patch(
           return;
         }
 
+        const mergeEventId = randomUUID();
+        const mergedAt = new Date();
         // Mark candidate as duplicate + permanently hidden.
         await client.query(
           `UPDATE businesses
@@ -6006,12 +6055,47 @@ router.patch(
           [adminId, item.matched_business_id, id],
         );
 
+        await client.query(
+          `INSERT INTO business_merge_audit_events
+             (id, review_item_id, action, duplicate_business_id,
+              canonical_business_id, actor_user_id, confirmation_phrase,
+              reason, detail, created_at)
+           VALUES ($1::uuid,$2::uuid,'merge',$3::uuid,$4::uuid,$5,$6,$7,$8::jsonb,$9)`,
+          [
+            mergeEventId,
+            id,
+            candidate.id,
+            item.matched_business_id,
+            adminId ?? "unknown_admin",
+            confirmation,
+            reason.trim(),
+            JSON.stringify({
+              businessBefore: {
+                isDuplicate: candidate.is_duplicate,
+                duplicateOfId: candidate.duplicate_of_id,
+                duplicateReason: candidate.duplicate_reason ?? null,
+                duplicateMarkedAt: candidate.duplicate_marked_at ?? null,
+                listingStatus: candidate.listing_status,
+                status: candidate.status,
+              },
+              reviewBefore: {
+                status: item.status,
+                matchedBusinessId: item.matched_business_id,
+                resolvedBy: item.resolved_by ?? null,
+                resolvedAt: item.resolved_at ?? null,
+              },
+            }),
+            mergedAt,
+          ],
+        );
+
         await client.query("COMMIT");
         res.json({
           ok: true,
           status: "merged",
           duplicateId: candidate.id,
           canonicalId: item.matched_business_id,
+          mergeEventId,
         });
         return;
       }
@@ -6101,6 +6185,182 @@ router.patch(
       await client.query("ROLLBACK");
       req.log.error({ err }, "PATCH /admin/business-review/:id error");
       res.status(500).json({ error: "Failed", detail: String(err) });
+    } finally {
+      client.release();
+    }
+  },
+);
+
+router.post(
+  "/admin/business-review/:id/restore-merge",
+  async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { confirmation, reason } = req.body as {
+      confirmation?: string;
+      reason?: string;
+    };
+    if (confirmation !== "RESTORE MERGED BUSINESS") {
+      res.status(400).json({
+        error: "Type RESTORE MERGED BUSINESS to confirm this restore",
+      });
+      return;
+    }
+    if (!reason?.trim()) {
+      res.status(400).json({ error: "A restore reason is required for the audit record" });
+      return;
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const auditResult = await client.query<{
+        id: string;
+        duplicate_business_id: string;
+        canonical_business_id: string;
+        detail: {
+          businessBefore?: {
+            isDuplicate?: boolean;
+            duplicateOfId?: string | null;
+            duplicateReason?: string | null;
+            duplicateMarkedAt?: string | null;
+            listingStatus?: string;
+            status?: string;
+          };
+          reviewBefore?: {
+            status?: string;
+            matchedBusinessId?: string | null;
+            resolvedBy?: string | null;
+            resolvedAt?: string | null;
+          };
+        };
+      }>(
+        `SELECT event.id, event.duplicate_business_id, event.canonical_business_id, event.detail
+           FROM business_merge_audit_events event
+          WHERE event.review_item_id = $1::uuid
+            AND event.action = 'merge'
+          ORDER BY event.created_at DESC
+          LIMIT 1
+          FOR UPDATE`,
+        [req.params.id],
+      );
+      const mergeEvent = auditResult.rows[0];
+      if (!mergeEvent) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "No audited merge found for this review item" });
+        return;
+      }
+      const priorRestore = await client.query(
+        `SELECT id FROM business_merge_audit_events
+          WHERE related_event_id = $1::uuid AND action = 'restore'
+          LIMIT 1`,
+        [mergeEvent.id],
+      );
+      if (priorRestore.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "This merge has already been restored" });
+        return;
+      }
+
+      const businessBefore = mergeEvent.detail.businessBefore ?? {};
+      const reviewBefore = mergeEvent.detail.reviewBefore ?? {};
+      const currentBusiness = await client.query(
+        `SELECT id, duplicate_of_id, is_duplicate, duplicate_reason,
+                duplicate_marked_at, status, listing_status
+           FROM businesses
+          WHERE id = $1::uuid
+          FOR UPDATE`,
+        [mergeEvent.duplicate_business_id],
+      );
+      const currentReview = await client.query(
+        `SELECT id, status, matched_business_id, resolved_by, resolved_at
+           FROM business_review_items
+          WHERE id = $1::uuid
+          FOR UPDATE`,
+        [req.params.id],
+      );
+      if (!currentBusiness.rows[0] || !currentReview.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The merged rows required for restore no longer exist" });
+        return;
+      }
+
+      await client.query(
+        `UPDATE businesses
+            SET is_duplicate = $1,
+                duplicate_of_id = $2::uuid,
+                duplicate_reason = $3,
+                duplicate_marked_at = $4,
+                listing_status = $5,
+                status = $6,
+                updated_at = NOW()
+          WHERE id = $7::uuid`,
+        [
+          businessBefore.isDuplicate ?? false,
+          businessBefore.duplicateOfId ?? null,
+          businessBefore.duplicateReason ?? null,
+          businessBefore.duplicateMarkedAt ?? null,
+          businessBefore.listingStatus ?? "staged",
+          businessBefore.status ?? "pending_review",
+          mergeEvent.duplicate_business_id,
+        ],
+      );
+      await client.query(
+        `UPDATE business_review_items
+            SET status = $1,
+                matched_business_id = $2,
+                resolved_by = $3,
+                resolved_at = $4,
+                updated_at = NOW()
+          WHERE id = $5::uuid`,
+        [
+          reviewBefore.status ?? "pending",
+          reviewBefore.matchedBusinessId ?? mergeEvent.canonical_business_id,
+          reviewBefore.resolvedBy ?? null,
+          reviewBefore.resolvedAt ?? null,
+          req.params.id,
+        ],
+      );
+
+      const restoreEventId = randomUUID();
+      await client.query(
+        `INSERT INTO business_merge_audit_events
+           (id, review_item_id, action, duplicate_business_id,
+            canonical_business_id, actor_user_id, confirmation_phrase,
+            reason, related_event_id, detail)
+         VALUES ($1::uuid,$2::uuid,'restore',$3::uuid,$4::uuid,$5,$6,$7,$8::uuid,$9::jsonb)`,
+        [
+          restoreEventId,
+          req.params.id,
+          mergeEvent.duplicate_business_id,
+          mergeEvent.canonical_business_id,
+          req.user?.id ?? "unknown_admin",
+          confirmation,
+          reason.trim(),
+          mergeEvent.id,
+          JSON.stringify({
+            businessBeforeRestore: currentBusiness.rows[0],
+            reviewBeforeRestore: currentReview.rows[0],
+            restoredFromMergeEventId: mergeEvent.id,
+          }),
+        ],
+      );
+
+      await client.query("COMMIT");
+      res.json({
+        ok: true,
+        status: reviewBefore.status ?? "pending",
+        duplicateId: mergeEvent.duplicate_business_id,
+        canonicalId: mergeEvent.canonical_business_id,
+        mergeEventId: mergeEvent.id,
+        restoreEventId,
+      });
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      req.log.error({ err }, "POST /admin/business-review/:id/restore-merge error");
+      res.status(500).json({ error: "Failed to restore merged business" });
     } finally {
       client.release();
     }
