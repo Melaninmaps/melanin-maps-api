@@ -6,14 +6,17 @@ const root = resolve(__dirname, "..");
 const source = (relativePath: string) => readFileSync(resolve(root, relativePath), "utf8");
 
 describe("Community, map, and primary Kinfolk regressions", () => {
-  it("puts a compact display choice above the Community composer and feed", () => {
+  it("keeps the member-selected display choice reachable without pushing posts below controls", () => {
     const community = source("app/(tabs)/community.tsx");
     expect(community).toContain('label: "Conversation"');
     expect(community).toContain('label: "Community Mix"');
     expect(community).toContain('label: "Watch"');
     expect(community).toContain('communityFeedDisplay');
     expect(community).toContain('presentation={communityFeedDisplay}');
-    expect(community.lastIndexOf("styles.feedPresentation")).toBeLessThan(community.lastIndexOf("styles.composeBar"));
+    expect(community).toContain("setShowFeedControls(true)");
+    expect(community).toContain("Feed options");
+    const feed = community.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
+    expect(feed).not.toContain("ListHeaderComponent");
     expect(community).toContain('body: JSON.stringify({ communityFeedDisplay: next })');
   });
 

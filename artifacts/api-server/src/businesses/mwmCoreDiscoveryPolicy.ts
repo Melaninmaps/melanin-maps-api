@@ -12,7 +12,11 @@ export const MWM_DOCUMENTED_DIASPORA_PROMOTION_MODE =
   "documented_diaspora" as const;
 
 const DIASPORA_OWNERSHIP_VALUE_SQL = DIASPORA_OWNERSHIP_DESIGNATIONS
-  .map((value) => `'${value.replace(/'/g, "''")}'`)
+  // The database expression below normalizes a stored source designation to
+  // lower-case before comparing it. The approved literal set must use the
+  // same normalization; otherwise every source-documented designation misses
+  // the predicate and the promotion catalog (including map pins) is empty.
+  .map((value) => `'${value.toLocaleLowerCase("en-US").replace(/'/g, "''")}'`)
   .join(", ");
 
 /**

@@ -17,13 +17,24 @@ describe("mobile Community feed recovery", () => {
     expect(source).toContain("Community could not refresh right now");
   });
 
-  it("places the compose control and posts directly below Community navigation", () => {
-    const feedList = source.split("data={filteredPosts}")[1] ?? "";
+  it("renders posts directly below Community navigation while retaining compose and filter controls", () => {
+    const feedList = source.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
     expect(feedList).toContain('justifyContent: "flex-start"');
-    expect(feedList).toContain("ListHeaderComponentStyle={styles.feedHeader}");
-    expect(source).toContain("feedHeader: { paddingTop: 0, marginTop: 0 }");
     expect(source).toContain("list: { paddingHorizontal: 16, paddingTop: 0 }");
-    expect(feedList.indexOf("ListHeaderComponent")).toBeLessThan(feedList.indexOf("ListEmptyComponent"));
-    expect(feedList).toContain("What&apos;s on your mind?");
+    expect(feedList).not.toContain("ListHeaderComponent");
+    expect(source).toContain("setShowFeedControls(true)");
+    expect(source).toContain("setShowCompose(true)");
+  });
+
+  it("keeps a submitted comment visible immediately and refreshes the post count", () => {
+    const modal = readFileSync(
+      fileURLToPath(new URL("../components/PostDetailModal.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(modal).toContain('method: "POST"');
+    expect(modal).toContain("/api/community/posts/${post.id}/comments");
+    expect(modal).toContain("setComments((prev) => [data.comment, ...prev])");
+    expect(modal).toContain("onCommentAdded?.()");
+    expect(source).toContain("comments: item.comments + 1");
   });
 });

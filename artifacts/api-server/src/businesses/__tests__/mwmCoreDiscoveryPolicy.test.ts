@@ -49,10 +49,13 @@ describe("MWM Core discovery evidence policy", () => {
     const predicate = mwmDiasporaPromotionSqlPredicate("b.id");
     expect(predicate).toContain("b.ownership_designations");
     expect(predicate).toContain("jsonb_array_elements_text");
-    expect(predicate).toContain("Black / African American-Owned");
-    expect(predicate).toContain("Asian American-Owned");
-    expect(predicate).not.toContain("Woman-Owned");
-    expect(predicate).not.toContain("LGBTQIA+-Owned");
+    // Both sides of the SQL comparison are lower-cased. Keeping the approved
+    // values normalized is essential: a case-sensitive IN set would silently
+    // empty the default map and recommendation catalog.
+    expect(predicate).toContain("black / african american-owned");
+    expect(predicate).toContain("asian american-owned");
+    expect(predicate).not.toContain("woman-owned");
+    expect(predicate).not.toContain("lgbtqia-owned");
   });
 
   it("builds a valid ownership column reference for quoted Drizzle identifiers", () => {

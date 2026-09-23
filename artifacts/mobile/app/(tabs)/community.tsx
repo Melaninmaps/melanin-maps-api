@@ -252,6 +252,7 @@ export default function CommunityScreen() {
   // Community feed reads, so it cannot change which posts are eligible or how
   // they rank the same permitted posts.
   const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
+  const [showFeedControls, setShowFeedControls] = useState(false);
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
@@ -773,13 +774,22 @@ export default function CommunityScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Community</Text>
-        <TouchableOpacity activeOpacity={0.85}
-          style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
-          onPress={() => router.push("/connections")}
-          accessibilityLabel="Find people in Community"
-        >
-          <Feather name="users" size={18} color={colors.foreground} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity activeOpacity={0.85}
+            style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
+            onPress={() => setShowFeedControls(true)}
+            accessibilityLabel="Choose Community feed view and filters"
+          >
+            <Feather name="sliders" size={18} color={colors.foreground} />
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.85}
+            style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
+            onPress={() => router.push("/connections")}
+            accessibilityLabel="Find people in Community"
+          >
+            <Feather name="users" size={18} color={colors.foreground} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -1369,165 +1379,12 @@ export default function CommunityScreen() {
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
             // The Community feed is the first thing a member should see below
-            // the tabs—not a bottom-anchored composer or an empty spacer.
+            // the tabs. View controls, filters, and composing stay reachable
+            // from the header and floating button without pushing posts down.
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
-            ListHeaderComponentStyle={styles.feedHeader}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-            ListHeaderComponent={
-              <>
-                {/* Presentation changes only the same allowed posts; it never
-                    changes feed eligibility, privacy, source opt-outs, or rank. */}
-                <View style={[styles.feedPresentation, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.feedPresentationLabel, { color: colors.mutedForeground }]}>View</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.feedPresentationChoices}>
-                    {COMMUNITY_FEED_DISPLAY_OPTIONS.map((option) => {
-                      const selected = communityFeedDisplay === option.id;
-                      return (
-                        <TouchableOpacity
-                          key={option.id}
-                          activeOpacity={0.82}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected }}
-                          accessibilityLabel={option.accessibilityLabel}
-                          onPress={() => { void selectCommunityFeedDisplay(option.id); }}
-                          style={[
-                            styles.feedPresentationChoice,
-                            {
-                              backgroundColor: selected ? colors.primary : colors.card,
-                              borderColor: selected ? colors.primary : colors.border,
-                            },
-                          ]}
-                        >
-                          <Feather name={option.icon} size={14} color={selected ? "#FFFFFF" : colors.mutedForeground} />
-                          <Text style={[styles.feedPresentationChoiceText, { color: selected ? "#FFFFFF" : colors.foreground }]}>
-                            {option.label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
-
-                {/* Compact composer, immediately followed by the feed. */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 8 }]}
-                  onPress={() => {
-                    if (!isAuthenticated) {
-                      setUpgradeFeature("Community Posts");
-                      setShowUpgrade(true);
-                      return;
-                    }
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setShowCompose(true);
-                    setTimeout(() => inputRef.current?.focus(), 150);
-                  }}
-                >
-                  <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
-                    <Feather name="edit-3" size={15} color={colors.primary} />
-                  </View>
-                  <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>
-                    What&apos;s on your mind? Type{" "}
-                    <Text style={{ fontFamily: "Inter_700Bold", color: colors.primary }}>@</Text>
-                    {" "}to mention someone
-                  </Text>
-                  <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "22", borderColor: colors.primary + "45" }]}>
-                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>@</Text>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Feed mode toggle */}
-                <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4, gap: 8 }}>
-                  {(isAuthenticated
-                    ? (["foryou", "following"] as const)
-                    : (["everyone", "following"] as const)
-                  ).map((mode) => (
-                    <TouchableOpacity activeOpacity={0.85}
-                      key={mode}
-                      onPress={() => {
-                        setFeedMode(mode as "foryou" | "everyone" | "following");
-                        setActiveHashtagFilter(null);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                      style={{
-                        paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20,
-                        backgroundColor: feedMode === mode ? colors.primary : colors.card,
-                        borderWidth: 1,
-                        borderColor: feedMode === mode ? colors.primary : colors.border,
-                      }}
-                    >
-                      <Text style={{
-                        fontFamily: "Inter_600SemiBold", fontSize: 13,
-                        color: feedMode === mode ? "#FFFFFF" : colors.mutedForeground,
-                      }}>
-                        {mode === "foryou" ? "For You" : mode === "everyone" ? "Explore" : "Following"}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Trending hashtags strip */}
-                {trendingHashtags.length > 0 && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
-                  >
-                    {activeHashtagFilter && (
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
-                        onPress={() => { setActiveHashtagFilter(null); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                      >
-                        <Feather name="x" size={12} color={colors.mutedForeground} />
-                        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }}>Clear</Text>
-                      </TouchableOpacity>
-                    )}
-                    {trendingHashtags.map((ht) => {
-                      const isActive = activeHashtagFilter === ht.tag;
-                      const isFollowed = followedHashtags.includes(ht.tag);
-                      return (
-                        <TouchableOpacity
-                          key={ht.tag}
-                          activeOpacity={0.8}
-                          style={{
-                            flexDirection: "row", alignItems: "center", gap: 4,
-                            paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16,
-                            backgroundColor: isActive ? colors.primary : isFollowed ? colors.primary + "15" : colors.card,
-                            borderWidth: 1,
-                            borderColor: isActive ? colors.primary : isFollowed ? colors.primary + "40" : colors.border,
-                          }}
-                          onPress={() => {
-                            router.push({ pathname: "/hashtag-feed", params: { tag: ht.tag } } as any);
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          }}
-                        >
-                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: isActive ? "#FFFFFF" : isFollowed ? colors.primary : colors.foreground }}>
-                            #{ht.tag}
-                          </Text>
-                          {ht.weeklyPostCount > 0 && !isActive && (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground }}>
-                              {ht.weeklyPostCount > 999 ? `${Math.floor(ht.weeklyPostCount / 1000)}k` : String(ht.weeklyPostCount)}
-                            </Text>
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
-                      onPress={() => router.push("/safe-spaces" as any)}
-                    >
-                      <Feather name="shield" size={12} color="#2D7A4F" />
-                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: "#2D7A4F" }}>Safe Spaces</Text>
-                    </TouchableOpacity>
-                  </ScrollView>
-                )}
-
-              </>
-            }
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Feather
@@ -1603,6 +1460,93 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <Modal
+        visible={showFeedControls}
+        animationType="slide"
+        transparent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setShowFeedControls(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20, maxHeight: "82%" }]}>
+            <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.composeTitle, { color: colors.foreground }]}>Feed options</Text>
+              <TouchableOpacity onPress={() => setShowFeedControls(false)} accessibilityLabel="Close feed options">
+                <Feather name="x" size={22} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
+              <View style={{ gap: 4 }}>
+                <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>HOW TO VIEW COMMUNITY</Text>
+                <Text style={[styles.sheetSubtext, { color: colors.mutedForeground }]}>This changes presentation only. It never changes which posts are permitted, their privacy, or their ranking.</Text>
+              </View>
+              {COMMUNITY_FEED_DISPLAY_OPTIONS.map((option) => {
+                const selected = communityFeedDisplay === option.id;
+                return (
+                  <TouchableOpacity
+                    key={option.id}
+                    activeOpacity={0.85}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={option.accessibilityLabel}
+                    onPress={() => { void selectCommunityFeedDisplay(option.id); }}
+                    style={[styles.feedOptionRow, { backgroundColor: selected ? colors.primary + "12" : colors.background, borderColor: selected ? colors.primary : colors.border }]}
+                  >
+                    <Feather name={option.icon} size={19} color={selected ? colors.primary : colors.mutedForeground} />
+                    <Text style={[styles.feedOptionText, { color: colors.foreground }]}>{option.label}</Text>
+                    {selected ? <Feather name="check" size={18} color={colors.primary} /> : null}
+                  </TouchableOpacity>
+                );
+              })}
+
+              <View style={{ gap: 8, marginTop: 4 }}>
+                <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>SHOW POSTS FROM</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {(isAuthenticated ? (["foryou", "following"] as const) : (["everyone", "following"] as const)).map((mode) => (
+                    <TouchableOpacity
+                      key={mode}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setFeedMode(mode);
+                        setActiveHashtagFilter(null);
+                        setShowFeedControls(false);
+                        if (Platform.OS !== "web") void Haptics.selectionAsync();
+                      }}
+                      style={[styles.feedFilterChip, { backgroundColor: feedMode === mode ? colors.primary : colors.background, borderColor: feedMode === mode ? colors.primary : colors.border }]}
+                    >
+                      <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: feedMode === mode ? "#FFFFFF" : colors.foreground }}>
+                        {mode === "foryou" ? "For You" : mode === "everyone" ? "Explore" : "Following"}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {trendingHashtags.length > 0 ? (
+                <View style={{ gap: 8 }}>
+                  <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>TRENDING TOPICS</Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {trendingHashtags.map((topic) => (
+                      <TouchableOpacity
+                        key={topic.tag}
+                        activeOpacity={0.85}
+                        style={[styles.feedFilterChip, { backgroundColor: colors.background, borderColor: colors.border }]}
+                        onPress={() => {
+                          setShowFeedControls(false);
+                          router.push({ pathname: "/hashtag-feed", params: { tag: topic.tag } } as any);
+                        }}
+                      >
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground }}>#{topic.tag}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <PostDetailModal
         visible={selectedPost !== null}
@@ -2600,6 +2544,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
   },
+  sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 11, letterSpacing: 0.7 },
+  sheetSubtext: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  feedOptionRow: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  feedOptionText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  feedFilterChip: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 13, paddingVertical: 8 },
   composeTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   composeCancelText: { fontFamily: "Inter_400Regular", fontSize: 15 },
   composePostText: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
