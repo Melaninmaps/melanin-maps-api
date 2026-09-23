@@ -13,11 +13,14 @@ describe("web Kinfolk conversation-first visuals", () => {
     expect(travelPageSource).toContain("Start a conversation");
     expect(travelPageSource).toContain("Start here");
     expect(travelPageSource).toContain("More ways Kinfolk can help");
+    expect(travelPageSource).toContain("See example questions");
     expect(travelPageSource).toContain("KINFOLK_LIFE_CHIPS.slice(0, 4)");
     expect(travelPageSource).toContain("KINFOLK_LIFE_CHIPS.slice(4)");
     expect(travelPageSource).toContain("KINFOLK_EXAMPLE_CHIPS.map");
-    expect(travelPageSource).toContain("grid grid-cols-2 gap-2 sm:grid-cols-4");
-    expect(travelPageSource).toContain("More ways Kinfolk can help");
+    expect(travelPageSource).toContain('isEmpty ? "flex-none overflow-visible" : "flex-1 overflow-y-auto"');
+    expect(travelPageSource).toContain("inline-flex items-center gap-2 rounded-xl");
+    expect(travelPageSource).not.toContain("min-h-[50vh]");
+    expect(travelPageSource).not.toContain("min-h-20 flex-col");
     expect(travelPageSource).not.toContain("grid grid-cols-4 gap-2 max-w-lg mb-5 w-full");
     expect(travelPageSource).not.toContain('>Or try asking:</div>');
   });
