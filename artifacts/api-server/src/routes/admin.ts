@@ -168,7 +168,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /admin/businesses/:id/listing-status — archive or restore a business listing
+// PATCH /admin/businesses/:id/listing-status — remove or restore a public business listing.
+// This is intentionally a reversible governance control, never a destructive
+// delete: removal immediately stops public discovery and Kinfolk promotion while
+// keeping the source record, reports, and restoration history intact.
 router.patch(
   "/admin/businesses/:id/listing-status",
   async (req: Request, res: Response) => {
@@ -177,27 +180,130 @@ router.patch(
       return;
     }
     const { id } = req.params;
-    const { listingStatus } = req.body as { listingStatus: string };
+    const { listingStatus, reason } = req.body as {
+      listingStatus?: string;
+      reason?: string;
+    };
     const ALLOWED = ["live_unclaimed", "live_claimed", "archived", "staged"];
-    if (!ALLOWED.includes(listingStatus)) {
+    if (typeof listingStatus !== "string" || !ALLOWED.includes(listingStatus)) {
       res
         .status(400)
         .json({ error: `listingStatus must be one of: ${ALLOWED.join(", ")}` });
       return;
     }
+    const normalizedReason = typeof reason === "string" ? reason.trim() : "";
+    if (normalizedReason.length < 3 || normalizedReason.length > 1_000) {
+      res.status(400).json({
+        error:
+          "A 3–1,000 character administrator reason is required to remove or restore a listing.",
+      });
+      return;
+    }
+
+    const client = await pool.connect();
     try {
-      await pool.query(
-        `UPDATE businesses SET listing_status = $1, updated_at = NOW() WHERE id = $2`,
-        [listingStatus, id],
+      await client.query("BEGIN");
+      const currentResult = await client.query<{
+        id: string;
+        name: string;
+        listing_status: string | null;
+        status: string;
+        promotion_eligible: boolean;
+        featured: boolean;
+        promoted_until: string | null;
+      }>(
+        `SELECT id, name, listing_status, status, promotion_eligible, featured, promoted_until
+           FROM businesses WHERE id = $1 FOR UPDATE`,
+        [id],
       );
+      const current = currentResult.rows[0];
+      if (!current) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Business not found" });
+        return;
+      }
+
+      const beforeState = {
+        listingStatus: current.listing_status,
+        status: current.status,
+        promotionEligible: current.promotion_eligible,
+        featured: current.featured,
+        promotedUntil: current.promoted_until,
+      };
+      const removing = listingStatus === "archived";
+      let restoredFrom: typeof beforeState | null = null;
+
+      if (!removing) {
+        const removalAudit = await client.query<{ before_state: typeof beforeState }>(
+          `SELECT before_state
+             FROM business_listing_status_audit_events
+            WHERE business_id = $1 AND action = 'remove_public_discovery'
+            ORDER BY created_at DESC
+            LIMIT 1`,
+          [id],
+        );
+        restoredFrom = removalAudit.rows[0]?.before_state ?? null;
+      }
+
+      const nextState = removing
+        ? {
+            listingStatus: "archived",
+            status: "suspended",
+            promotionEligible: false,
+            featured: false,
+            promotedUntil: null,
+          }
+        : {
+            listingStatus: listingStatus,
+            status: restoredFrom?.status ?? "active",
+            promotionEligible: restoredFrom?.promotionEligible ?? current.promotion_eligible,
+            featured: restoredFrom?.featured ?? false,
+            promotedUntil: restoredFrom?.promotedUntil ?? null,
+          };
+
+      await client.query(
+        `UPDATE businesses
+            SET listing_status = $1,
+                status = $2,
+                promotion_eligible = $3,
+                featured = $4,
+                promoted_until = $5,
+                updated_at = NOW()
+          WHERE id = $6`,
+        [
+          nextState.listingStatus,
+          nextState.status,
+          nextState.promotionEligible,
+          nextState.featured,
+          nextState.promotedUntil,
+          id,
+        ],
+      );
+      await client.query(
+        `INSERT INTO business_listing_status_audit_events
+           (id, business_id, action, actor_user_id, reason, before_state, after_state)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
+        [
+          id,
+          removing ? "remove_public_discovery" : "restore_public_discovery",
+          req.user?.id ?? null,
+          normalizedReason,
+          JSON.stringify(beforeState),
+          JSON.stringify(nextState),
+        ],
+      );
+      await client.query("COMMIT");
       req.log?.info(
-        { id, listingStatus },
-        "Admin updated business listing_status",
+        { id, listingStatus: nextState.listingStatus, action: removing ? "remove" : "restore" },
+        "Admin completed audited business public-discovery status change",
       );
-      res.json({ ok: true, id, listingStatus });
+      res.json({ ok: true, id, listingStatus: nextState.listingStatus, action: removing ? "removed" : "restored" });
     } catch (err) {
+      await client.query("ROLLBACK").catch(() => undefined);
       req.log?.error({ err }, "Failed to update business listing_status");
       res.status(500).json({ error: "Failed to update" });
+    } finally {
+      client.release();
     }
   },
 );

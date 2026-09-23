@@ -24,6 +24,7 @@
         "UIRequiresFullScreen": false,
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera when you choose to take a profile or community photo or video.",
+        "NSMicrophoneUsageDescription": "Mapping With Melanin uses your microphone only when you choose to send a voice question to Kinfolk AI.",
         "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses only the photos and videos you select for your profile or community posts.",
         "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves media to your library only when you choose to save it.",
         "NSUserNotificationsUsageDescription": "Mapping With Melanin sends notifications about nearby businesses, community safety alerts, and activity in your circles.",
@@ -133,6 +134,7 @@
         "expo-audio",
         {
           "microphonePermission": "Mapping With Melanin uses your microphone so you can send voice messages to Kinfolk AI.",
+          "recordAudioAndroid": true,
           "enableBackgroundPlayback": false,
           "enableBackgroundRecording": false
         }

@@ -8,6 +8,7 @@ function source(relativePath: string): string {
 
 const map = source("../components/FullMapView.tsx");
 const canonicalPins = source("../hooks/useCanonicalMapPins.ts");
+const businesses = source("../hooks/useBusinesses.ts");
 const business = source("../app/business/[id].tsx");
 const travel = source("../app/travel.tsx");
 const kinfolk = source("../hooks/useKinfolk.ts");
@@ -21,6 +22,9 @@ describe("native map, business, and Kinfolk continuity", () => {
     expect(map).toContain("nearbyCanonicalMapPins.forEach");
     expect(canonicalPins).toContain("Keep the last good web-equivalent layer");
     expect(canonicalPins).toContain("/api/businesses/map-pins");
+    expect(businesses).toContain('import { getApiBase } from "@/lib/api";');
+    expect(businesses).toContain("const apiBase = getApiBase();");
+    expect(businesses).not.toContain("function getApiBaseUrl()");
   });
 
   it("gives every native map member a keyboard exit path", () => {
@@ -37,6 +41,8 @@ describe("native map, business, and Kinfolk continuity", () => {
     expect(kinfolk).toContain("const interruptCurrentReply = useCallback");
     expect(kinfolk).toContain("activeRequestRef.current?.abort()");
     expect(kinfolk).toContain("requestGeneration !== requestGenerationRef.current");
+    expect(kinfolk).toContain("const conversationContext = messagesRef.current.slice(-6)");
+    expect(kinfolk).toContain("conversationContext,");
   });
 
   it("does not hide owner-editable About text or a creator's pending post", () => {

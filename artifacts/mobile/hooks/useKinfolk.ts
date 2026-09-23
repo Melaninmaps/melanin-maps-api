@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
@@ -186,6 +186,7 @@ function makeId() {
 
 export function useKinfolk() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -195,6 +196,10 @@ export function useKinfolk() {
   const [pendingRetryText, setPendingRetryText] = useState<string | null>(null);
   const activeRequestRef = useRef<AbortController | null>(null);
   const requestGenerationRef = useRef(0);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const interruptCurrentReply = useCallback(() => {
     const request = activeRequestRef.current;
@@ -218,6 +223,14 @@ export function useKinfolk() {
     activeRequestRef.current = controller;
     const token = await getToken();
     const apiBase = getApiBase();
+    const conversationContext = messagesRef.current.slice(-6).map((message) => ({
+      role: message.role,
+      content: message.content,
+      resultView: message.resultView ?? null,
+    }));
+    const cityHint = [...messagesRef.current]
+      .reverse()
+      .find((message) => message.location?.city)?.location?.city;
 
     const userMsg: ChatMessage = {
       id: makeId(),
@@ -248,6 +261,8 @@ export function useKinfolk() {
           voiceMode: opts?.voiceMode ?? "community",
           imageUrls: opts?.imageUrls ?? [],
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
+          cityHint,
+          conversationContext,
         }),
         signal: controller.signal,
       }).finally(() => clearTimeout(chatTimeout));

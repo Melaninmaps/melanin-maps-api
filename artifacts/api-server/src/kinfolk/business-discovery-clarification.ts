@@ -33,11 +33,17 @@ export function businessDiscoveryClarification(input: {
   subjectKey: BusinessSubjectKey;
   ageBand: BusinessAudienceBand;
   city?: string;
+  /**
+   * Broad hair preferences refine results after the first search. They must not
+   * prevent a member from seeing the matching public MWM listings in the first
+   * place; the UI can offer the same temporary options as follow-ups.
+   */
+  includeOptionalHairRefinement?: boolean;
 }): ClarificationStep[] {
   const locationSuffix = input.city?.trim() ? ` in ${input.city.trim()}` : "";
   const broadHairRequest = input.subjectKey === "salon"
     && !/\b(?:locs?|natural hair|braids?|protective styles?|hair color|wash and style|wash and go|silk press|barber|general hair salon|keep this search broad)\b/i.test(input.message);
-  if (broadHairRequest) {
+  if (broadHairRequest && input.includeOptionalHairRefinement === true) {
     return [{
       id: "business-hair-service",
       question: "What kind of hair service should I focus on?",

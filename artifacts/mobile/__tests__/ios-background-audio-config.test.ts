@@ -7,7 +7,13 @@ type AppJson = {
   expo: {
     version: string;
     runtimeVersion: string;
-    ios: { buildNumber: string; infoPlist?: { UIBackgroundModes?: string[] } };
+    ios: {
+      buildNumber: string;
+      infoPlist?: {
+        UIBackgroundModes?: string[];
+        NSMicrophoneUsageDescription?: string;
+      };
+    };
     android: { version: string; versionCode: number; runtimeVersion: string };
     plugins: PluginEntry[];
   };
@@ -29,15 +35,19 @@ const eas = JSON.parse(fs.readFileSync(path.join(projectRoot, "eas.json"), "utf8
 };
 
 describe("iOS App Review background-audio configuration", () => {
-  it("uses the next unused identifiers after submitted and reserved artifacts", () => {
-    expect(Number(appJson.expo.ios.buildNumber)).toBe(
-      Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0) + 1,
+  it("uses identifiers above every recorded submitted or reserved artifact", () => {
+    // The build record is historical evidence, not the EAS source of truth.
+    // It deliberately remains conservative when a newer identifier was reserved
+    // by EAS after the record was written. The release gate enforces this
+    // reviewed source's exact 120/90 identifiers before a build is allowed.
+    expect(Number(appJson.expo.ios.buildNumber)).toBeGreaterThan(
+      Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0),
     );
-    expect(appJson.expo.android.versionCode).toBe(
-      Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0) + 1,
+    expect(appJson.expo.android.versionCode).toBeGreaterThan(
+      Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0),
     );
-    expect(appJson.expo.ios.buildNumber).toBe("115");
-    expect(appJson.expo.android.versionCode).toBe(85);
+    expect(appJson.expo.ios.buildNumber).toBe("120");
+    expect(appJson.expo.android.versionCode).toBe(90);
     expect(appJson.expo.version).toBe("1.1.9");
     expect(appJson.expo.android.version).toBe("1.1.7");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");
@@ -52,6 +62,8 @@ describe("iOS App Review background-audio configuration", () => {
 
     expect(audioPlugin).toBeDefined();
     expect(audioPlugin?.[1].microphonePermission).toEqual(expect.any(String));
+    expect(audioPlugin?.[1].recordAudioAndroid).toBe(true);
+    expect(appJson.expo.ios.infoPlist?.NSMicrophoneUsageDescription).toEqual(expect.any(String));
     expect(audioPlugin?.[1].enableBackgroundPlayback).toBe(false);
     expect(audioPlugin?.[1].enableBackgroundRecording).toBe(false);
     expect(appJson.expo.ios.infoPlist?.UIBackgroundModes ?? []).not.toContain("audio");

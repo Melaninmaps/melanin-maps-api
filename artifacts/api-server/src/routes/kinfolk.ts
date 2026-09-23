@@ -5532,6 +5532,34 @@ type SessionMessageWithResultView = SessionMessage & {
 };
 
 /**
+ * Keeps a single active chat understandable when the member has not enabled
+ * optional private-memory storage. This payload is supplied by the current
+ * device only, bounded to six recent turns, never written to a profile or a
+ * session record, and only used to resolve an explicit "these/those" follow-up.
+ */
+function boundedEphemeralConversation(value: unknown): SessionMessage[] {
+  if (!Array.isArray(value)) return [];
+  const timestamp = new Date().toISOString();
+  return value.slice(-6).flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const candidate = entry as { role?: unknown; content?: unknown; resultView?: unknown };
+    if ((candidate.role !== "user" && candidate.role !== "assistant") || typeof candidate.content !== "string") {
+      return [];
+    }
+    const content = candidate.content.trim().slice(0, 2_000);
+    if (!content) return [];
+    return [{
+      role: candidate.role,
+      content,
+      timestamp,
+      resultView: candidate.resultView && typeof candidate.resultView === "object"
+        ? candidate.resultView
+        : null,
+    } as SessionMessage];
+  });
+}
+
+/**
  * Only inherit a business subject for an explicit conversational follow-up to
  * the immediately preceding result cards. This preserves a continuous chat
  * without guessing an identity or repurposing an unrelated older question.
@@ -5577,6 +5605,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   vibes: string[];
   memoryEnabled: boolean;
   cityHint?: string;
+  conversationContext?: unknown;
 }): Promise<boolean> {
   let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
   if (input.memoryEnabled && input.sessionId && input.req.user?.id) {
@@ -5600,12 +5629,15 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
 
   // A mobile "near me" request can provide a reverse-geocoded city/region only.
   // Coordinates never enter this chat route or the saved conversation payload.
+  const conversationMessages = currentSession?.messages?.length
+    ? currentSession.messages
+    : boundedEphemeralConversation(input.conversationContext);
   const location = resolveTurnGeography(
     input.message,
     input.cityHint ?? currentSession?.destination ?? null,
   );
   const followUp = resolveBusinessResultFollowUp(
-    currentSession?.messages ?? [],
+    conversationMessages,
     input.message,
   );
   const subject = deriveBusinessSubject(input.message) ?? followUp?.subject ?? null;
@@ -5621,7 +5653,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     const namedBusiness = await resolveNamedBusinessTurn({
       message: input.message,
       scope,
-      existingMessages: currentSession?.messages ?? [],
+      existingMessages: conversationMessages,
       repository: governedBusinessRepository,
     });
     if (namedBusiness.state !== "not_named") return false;
@@ -5665,69 +5697,6 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     ...(prefs?.cultures ?? []),
     ...(prefs?.preferredLanguages ?? []),
   ];
-  const clarificationSteps = businessDiscoveryClarification({
-    message: input.message,
-    subjectKey: subject.key,
-    ageBand,
-    city: scope.city,
-  });
-  if (clarificationSteps.length > 0) {
-    const reply =
-      clarificationSteps[0]?.id === "business-hair-service"
-        ? `I can search MWM’s public listings and the current web for hair options in ${scope.city}. One detail will make the results much better.`
-        : `I can narrow the things to do in ${scope.city} without guessing who the activity is for.`;
-    const clarificationSessionId = await persistDeterministicDiscoveryTurn({
-      userId: input.req.user!.id,
-      memoryEnabled: input.memoryEnabled,
-      sessionId: input.sessionId,
-      message: input.message,
-      reply,
-      recommendations: null,
-      resultView: null,
-      followUpSuggestions: [],
-      sources: [],
-      destination: `${scope.city}, ${scope.stateCode}`,
-      vibes: input.vibes,
-    });
-    input.res.status(200).json({
-      sessionId: clarificationSessionId,
-      reply,
-      recommendations: null,
-      itinerary: null,
-      followUpSuggestions: clarificationSteps[0]!.options.map(
-        (option) => option.label,
-      ),
-      clarificationSteps,
-      intentClass: "business_discovery",
-      sources: [],
-      sourceNote:
-        "No business result was selected before the optional clarification.",
-      educationalStatus: "limited",
-      needsClarification: true,
-      originalQuery: input.message,
-      location: {
-        city: location.city,
-        state: location.state,
-        source: location.source,
-      },
-      locationSource: location.source,
-      degraded: false,
-      researchStatus: {
-        usedInternal: false,
-        usedLiveWeb: false,
-        degraded: false,
-        web: {
-          attempted: false,
-          state: "unavailable",
-          provider: null,
-          fallbackUsed: false,
-          partial: false,
-        },
-        asOf: new Date().toISOString(),
-      },
-    });
-    return true;
-  }
   // A member can deliberately override their saved Support Lens for this one
   // recommendation turn. This is the only way Kinfolk may leave the Diaspora
   // Promotion Catalog; it is never an automatic fallback.
@@ -5770,21 +5739,18 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
-  const supportScope = discoveryDesignationIds.length > 0
-    ? ` that match every ${designationSummary} designation you named`
-    : "";
   const conciseReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
       ? `I couldn't find a documented ${designationSummary} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
         ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} ${designationSummary} ${platformCount === 1 ? "place" : "places"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      ? `I found ${platformCount} ${designationSummary} ${subject.label} ${platformCount === 1 ? "option" : "options"} in ${scope.city}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
-          ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}${supportScope}. I did find current external sources below; they are not MWM-verified business listings.`
-          : `I didn't find a matching ${designationSummary} place for ${subject.label} in ${scope.city}${supportScope}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
+          ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
+          : `I didn't find a matching ${designationSummary} place for ${subject.label} in ${scope.city}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
@@ -5871,6 +5837,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     imageUrls = [],
     cityHint,
     includeCommunityPerspective,
+    conversationContext,
   } = req.body as {
     sessionId?: string;
     message: string;
@@ -5879,6 +5846,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     imageUrls?: unknown;
     cityHint?: unknown;
     includeCommunityPerspective?: unknown;
+    conversationContext?: unknown;
   };
 
   if (!message?.trim()) {
@@ -6101,8 +6069,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       memoryEnabled,
       cityHint:
         typeof cityHint === "string" && cityHint.length <= 120
-          ? cityHint.trim()
+          ? cityHint
           : undefined,
+      conversationContext,
     }))
   )
     return;
@@ -10568,7 +10537,14 @@ const transcribeUpload = multer({
   // one additional framing part for a valid native request.
   limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 4 },
   fileFilter: (_req, file, cb) => {
-    const ok = file.fieldname === "audio" && /^audio\//i.test(file.mimetype);
+    // Expo's native Blob bridge can label a local recording
+    // application/octet-stream even when its separately supplied mimeType is
+    // valid. Accept that one transport fallback only; the route below requires
+    // a recognized declared audio MIME and verifies the actual byte container
+    // before any provider call.
+    const ok = file.fieldname === "audio" && (
+      /^audio\//i.test(file.mimetype) || file.mimetype === "application/octet-stream"
+    );
     if (!ok) {
       cb(new Error("UNSUPPORTED_FIELD"));
       return;
@@ -10662,7 +10638,14 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     });
   }
   const buffer = req.file.buffer;
-  const format = canonicalVoiceFormat(req.file.mimetype ?? "");
+  const uploadedFormat = canonicalVoiceFormat(req.file.mimetype ?? "");
+  const declaredMimeType = typeof req.body?.mimeType === "string"
+    ? req.body.mimeType.trim()
+    : "";
+  const declaredFormat = declaredMimeType
+    ? canonicalVoiceFormat(declaredMimeType)
+    : null;
+  const format = uploadedFormat ?? declaredFormat;
 
   if (!format || !ALLOWED_AUDIO_FORMATS.has(format.safeFormat)) {
     return void res.status(400).json({
@@ -10672,12 +10655,8 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     });
   }
   const { safeFormat, mimeType: canonicalMimeType } = format;
-  const declaredMimeType = typeof req.body?.mimeType === "string"
-    ? req.body.mimeType.trim()
-    : "";
   if (declaredMimeType) {
-    const declaredFormat = canonicalVoiceFormat(declaredMimeType);
-    if (!declaredFormat || declaredFormat.mimeType !== canonicalMimeType) {
+    if (!declaredFormat || (uploadedFormat && declaredFormat.mimeType !== canonicalMimeType)) {
       return void res.status(400).json({
         error: "AUDIO_MIME_MISMATCH",
         message: "The recording metadata did not match its file type. Please record again or type your question.",
