@@ -10,11 +10,20 @@ function source(relativePath: string): string {
 
 describe("HBCU canonical map details", () => {
   it("keeps the curated national seed institution-specific", () => {
-    expect(HBCU_COMPLETE_SEED).toHaveLength(103);
-    expect(new Set(HBCU_COMPLETE_SEED.map((item) => item.name.toLowerCase())).size).toBe(103);
+    expect(HBCU_COMPLETE_SEED).toHaveLength(107);
+    expect(new Set(HBCU_COMPLETE_SEED.map((item) => item.name.toLowerCase())).size).toBe(107);
     expect(HBCU_COMPLETE_SEED.every((item) => item.description.length >= 180)).toBe(true);
     expect(HBCU_COMPLETE_SEED.every((item) => item.significance.length >= 80)).toBe(true);
     expect(HBCU_COMPLETE_SEED.every((item) => Number.isInteger(item.founded))).toBe(true);
+  });
+
+  it("includes the four missing institutions in the published 107-school roster", () => {
+    expect(HBCU_COMPLETE_SEED.map((item) => item.name)).toEqual(expect.arrayContaining([
+      "Arkansas Baptist College",
+      "Shorter College",
+      "Southern University Law Center",
+      "St. Philip's College",
+    ]));
   });
 
   it("restores Cheyney as the oldest HBCU with its actual founding year", () => {

@@ -491,6 +491,18 @@ export default function CulturalSiteDetail() {
           </div>
         )}
 
+        <div className="rounded-2xl p-5 border bg-white" style={{ borderColor: `${accentColor}30` }}>
+          <h2 className="font-serif font-bold text-lg text-[#2B1507]">Keep learning</h2>
+          <p className="text-sm text-[#3A1F0E]/70 leading-relaxed mt-1">
+            Open a guided Library search for historical context, reputable sources, and connected topics about {site.name}.
+          </p>
+          <Link href={`/library?q=${encodeURIComponent(`${site.name}: history, context, and reputable sources`)}`}>
+            <span className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold cursor-pointer hover:underline" style={{ color: accentColor }}>
+              <BookOpen className="w-4 h-4" /> Research this in the Library
+            </span>
+          </Link>
+        </div>
+
         {heritage.toUpperCase() === "HBCU" && hbcuContext && (
           <section className="space-y-4" aria-label="Source-backed HBCU profile">
             <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">

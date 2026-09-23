@@ -14,10 +14,11 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(community).toContain('communityFeedDisplay');
     expect(community).toContain('presentation={communityFeedDisplay}');
     expect(community).toContain("setShowFeedControls(true)");
-    expect(community).toContain("Feed options");
+    expect(community).toContain("Community Settings");
     const feed = community.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
-    expect(feed).toContain("ListHeaderComponent");
-    expect(feed).toContain("styles.feedComposeBar");
+    expect(feed).not.toContain("ListHeaderComponent");
+    expect(feed).not.toContain("feedComposeBar");
+    expect(feed).toContain('justifyContent: "flex-start"');
     expect(feed).not.toContain("HappeningNowPanel");
     expect(community).toContain('body: JSON.stringify({ communityFeedDisplay: next })');
   });

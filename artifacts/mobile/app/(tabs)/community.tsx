@@ -5,6 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Image ,
   Alert,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -297,6 +298,22 @@ export default function CommunityScreen() {
   const inputRef = useRef<TextInput>(null);
   const feedRequestInFlightRef = useRef(false);
   const lastFeedRequestAtRef = useRef(0);
+
+  const dismissCommunityKeyboard = useCallback(() => {
+    inputRef.current?.blur();
+    Keyboard.dismiss();
+    setMentionQuery(null);
+  }, []);
+
+  // Closing the composer is deliberately separate from clearing it. A member
+  // can back out of posting without being trapped by the keyboard or losing an
+  // unfinished thought when they reopen the composer.
+  const closeCompose = useCallback(() => {
+    dismissCommunityKeyboard();
+    setShowLocationPicker(false);
+    setShowTopicPicker(false);
+    setShowCompose(false);
+  }, [dismissCommunityKeyboard]);
 
   const { businesses } = useBusinesses();
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -705,7 +722,7 @@ export default function CommunityScreen() {
         setMentionedStanceTag(null);
         setNewPostTagUrl("");
         setNewPostTagUrlIsSocialVideo(false);
-        setShowCompose(false);
+        closeCompose();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if (data.kinfolkSuggestions?.length) {
           setKinfolkSuggestions(data.kinfolkSuggestions);
@@ -714,7 +731,7 @@ export default function CommunityScreen() {
       } else {
         const err = await res.json() as { error?: string; code?: string };
         if (err.code === "TIER_LIMIT_REACHED") {
-          setShowCompose(false);
+          closeCompose();
           setUpgradeFeature(newPostType === "business" ? "Business Posts" : "Unlimited Community Posts");
           setShowUpgrade(true);
         } else {
@@ -814,22 +831,15 @@ export default function CommunityScreen() {
             {activeGroupId ? <Text style={[styles.groupFeedLabel, { color: colors.mutedForeground }]}>Group posts</Text> : null}
           </View>
         </View>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <TouchableOpacity activeOpacity={0.85}
-            style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
-            onPress={() => setShowFeedControls(true)}
-            accessibilityLabel="Choose Community feed view and filters"
-          >
-            <Feather name="sliders" size={18} color={colors.foreground} />
-          </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
-            onPress={() => router.push("/connections")}
-            accessibilityLabel="Find people in Community"
-          >
-            <Feather name="users" size={18} color={colors.foreground} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.settingsBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+          onPress={() => setShowFeedControls(true)}
+          accessibilityLabel="Open Community settings"
+        >
+          <Feather name="sliders" size={16} color={colors.foreground} />
+          <Text style={[styles.settingsBtnText, { color: colors.foreground }]}>Settings</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -1425,30 +1435,6 @@ export default function CommunityScreen() {
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-            ListHeaderComponent={
-              <TouchableOpacity
-                activeOpacity={0.82}
-                style={[styles.feedComposeBar, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => {
-                  if (!isAuthenticated) {
-                    setUpgradeFeature("Community Posts");
-                    setShowUpgrade(true);
-                    return;
-                  }
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowCompose(true);
-                  setTimeout(() => inputRef.current?.focus(), 150);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Add a Community post, photo, or video"
-              >
-                <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
-                  <Text style={[styles.composeAvatarText, { color: colors.primary }]}>{(user?.firstName ?? "M").slice(0, 1).toUpperCase()}</Text>
-                </View>
-                <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>Share a thought, photo, or video</Text>
-                <Feather name="plus-circle" size={19} color={colors.primary} />
-              </TouchableOpacity>
-            }
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Feather
@@ -1509,6 +1495,8 @@ export default function CommunityScreen() {
           <TouchableOpacity
             style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad + 90 }]}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Add a Community post, photo, or video"
             onPress={() => {
               if (!isAuthenticated) {
                 setUpgradeFeature("Community Posts");
@@ -1535,15 +1523,15 @@ export default function CommunityScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20, maxHeight: "82%" }]}>
             <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.composeTitle, { color: colors.foreground }]}>Feed options</Text>
-              <TouchableOpacity onPress={() => setShowFeedControls(false)} accessibilityLabel="Close feed options">
+              <Text style={[styles.composeTitle, { color: colors.foreground }]}>Community Settings</Text>
+              <TouchableOpacity onPress={() => setShowFeedControls(false)} accessibilityLabel="Close Community settings">
                 <Feather name="x" size={22} color={colors.foreground} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
               <View style={{ gap: 4 }}>
-                <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>HOW TO VIEW COMMUNITY</Text>
-                <Text style={[styles.sheetSubtext, { color: colors.mutedForeground }]}>This changes presentation only. It never changes which posts are permitted, their privacy, or their ranking.</Text>
+                <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CHOOSE YOUR COMMUNITY EXPERIENCE</Text>
+                <Text style={[styles.sheetSubtext, { color: colors.mutedForeground }]}>Choose whether shared posts feel conversation-first, balanced, or video-first. This changes presentation only. It never changes which posts are permitted, their privacy, or their ranking.</Text>
               </View>
               {COMMUNITY_FEED_DISPLAY_OPTIONS.map((option) => {
                 const selected = communityFeedDisplay === option.id;
@@ -1563,6 +1551,25 @@ export default function CommunityScreen() {
                   </TouchableOpacity>
                 );
               })}
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                accessibilityLabel="Open people and connections"
+                onPress={() => {
+                  setShowFeedControls(false);
+                  router.push("/connections");
+                }}
+                style={[styles.peopleSettingsRow, { backgroundColor: colors.background, borderColor: colors.border }]}
+              >
+                <View style={[styles.peopleSettingsIcon, { backgroundColor: colors.primary + "15" }]}>
+                  <Feather name="users" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.peopleSettingsTitle, { color: colors.foreground }]}>People & connections</Text>
+                  <Text style={[styles.peopleSettingsSubtext, { color: colors.mutedForeground }]}>Find people, manage requests, and see who you follow.</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+              </TouchableOpacity>
 
               <View style={{ gap: 8, marginTop: 4 }}>
                 <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>SHOW POSTS FROM</Text>
@@ -1860,11 +1867,21 @@ export default function CommunityScreen() {
         </View>
       </Modal>
 
-      <Modal visible={showCompose} animationType="slide" transparent presentationStyle="overFullScreen">
+      <Modal
+        visible={showCompose}
+        animationType="slide"
+        transparent
+        presentationStyle="overFullScreen"
+        onRequestClose={closeCompose}
+      >
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
           <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20 }]}>
             <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => setShowCompose(false)}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={closeCompose}
+                accessibilityLabel="Cancel Community post and return to feed"
+              >
                 <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
               </TouchableOpacity>
               <Text style={[styles.composeTitle, { color: colors.foreground }]}>New Post</Text>
@@ -1879,8 +1896,21 @@ export default function CommunityScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={dismissCommunityKeyboard}
+              accessibilityLabel="Hide Community keyboard"
+              style={[styles.hideKeyboardButton, { borderColor: colors.border, backgroundColor: colors.secondary }]}
+            >
+              <Feather name="chevron-down" size={16} color={colors.mutedForeground} />
+              <Text style={[styles.hideKeyboardText, { color: colors.mutedForeground }]}>Hide keyboard</Text>
+            </TouchableOpacity>
             <ScrollView
-        keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
+            >
 
             {/* Post type selector */}
             <View style={[styles.categoryRow, { borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 10 }]}>
@@ -2512,6 +2542,16 @@ const styles = StyleSheet.create({
   title: { fontFamily: "Inter_700Bold", fontSize: 26 },
   groupFeedLabel: { fontFamily: "Inter_500Medium", fontSize: 11, marginTop: 1 },
   searchBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  settingsBtn: {
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 11,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  settingsBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   tabRow: { borderBottomWidth: 1, flexShrink: 0, height: 44 },
   tabBtn: { alignItems: "center", justifyContent: "center", paddingHorizontal: 16, height: 44, borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabText: { fontFamily: "Inter_500Medium", fontSize: 13, lineHeight: 18, includeFontPadding: false },
@@ -2550,17 +2590,6 @@ const styles = StyleSheet.create({
   },
   joinChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   list: { paddingHorizontal: 16, paddingTop: 0 },
-  feedComposeBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    minHeight: 52,
-  },
   feedHeader: { paddingTop: 0, marginTop: 0 },
   feedPresentation: {
     flexDirection: "row",
@@ -2632,10 +2661,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedOptionText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  peopleSettingsRow: {
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  peopleSettingsIcon: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  peopleSettingsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  peopleSettingsSubtext: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginTop: 2 },
   feedFilterChip: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 13, paddingVertical: 8 },
   composeTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   composeCancelText: { fontFamily: "Inter_400Regular", fontSize: 15 },
   composePostText: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  hideKeyboardButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 2,
+    minHeight: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  hideKeyboardText: { fontFamily: "Inter_500Medium", fontSize: 12 },
   categoryRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20, paddingVertical: 12 },
   filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
   filterChipText: { fontFamily: "Inter_500Medium", fontSize: 13 },

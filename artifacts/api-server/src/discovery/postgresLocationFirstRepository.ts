@@ -58,6 +58,10 @@ function exploreLensTerms(category: string | null): string[] {
   return [...(EXPLORE_LENS_TERMS[normalized] ?? [normalized])];
 }
 
+function isHbcuExploreLens(category: string | null): boolean {
+  return category?.normalize("NFKC").trim().toLocaleLowerCase("en-US") === "hbcus";
+}
+
 // ── Haversine distance (miles) helper injected as SQL expression ──────────────
 function haversineMiles(
   latCol: string,
@@ -93,6 +97,54 @@ export async function findExactRecords(
   const recordTypes = query.filters.recordTypes;
 
   const results: DiscoveryRecord[] = [];
+
+  // HBCUs are a national, institution-specific catalogue—not a loose local
+  // keyword lens. A local search for "college" otherwise admitted unrelated
+  // landmarks and events (for example, a university homecoming) into the HBCU
+  // view. Keep this route directly attached to the curated HBCU records so the
+  // Explore button consistently exposes every catalogued campus.
+  if (isHbcuExploreLens(category) && recordTypes.includes("cultural_site")) {
+    const { rows } = await pool.query<{
+      id: string;
+      name: string;
+      category: string | null;
+      city: string;
+      state: string | null;
+      latitude: string | null;
+      longitude: string | null;
+    }>(
+      `
+      SELECT id, name, category, city, state,
+             latitude::text AS latitude, longitude::text AS longitude
+      FROM cultural_sites
+      WHERE UPPER(COALESCE(heritage_category, '')) = 'HBCU'
+        AND COALESCE(is_published, TRUE) = TRUE
+      ORDER BY state ASC NULLS LAST, city ASC NULLS LAST, name ASC
+      LIMIT 150
+      `,
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      recordType: "cultural_site" as const,
+      name: row.name,
+      category: row.category ?? "HBCU",
+      specialty: null,
+      city: row.city,
+      stateCode: row.state,
+      neighborhood: null,
+      latitude: row.latitude ? parseFloat(row.latitude) : null,
+      longitude: row.longitude ? parseFloat(row.longitude) : null,
+      distanceMiles: null,
+      detailUrl: `/cultural-sites/${row.id}`,
+      isVerified: true,
+      contextTags: [{
+        slug: "hbcu",
+        label: "HBCU",
+        reason: "National HBCU catalogue",
+      }],
+    }));
+  }
 
   // ── Business records ────────────────────────────────────────────────────────
   if (recordTypes.includes("business")) {
