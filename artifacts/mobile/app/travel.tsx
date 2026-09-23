@@ -1923,6 +1923,7 @@ export default function TravelScreen() {
   const [rememberThis, setRememberThis] = useState(false);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
+  const [showComposerControls, setShowComposerControls] = useState(false);
   const appStateRef = useRef(AppState.currentState);
   const voiceOutputRef = useRef(false);
   const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
@@ -2382,6 +2383,27 @@ export default function TravelScreen() {
           </View>
         )}
 
+        <TouchableOpacity
+          activeOpacity={0.82}
+          onPress={() => setShowComposerControls((visible) => !visible)}
+          style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showComposerControls }}
+          accessibilityLabel="Open Kinfolk voice and privacy controls"
+        >
+          <View style={styles.composerSettingsLeading}>
+            <Ionicons name="options-outline" size={16} color={colors.primary} />
+            <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>
+              {KINFOLK_VOICES.find((voice) => voice.id === voiceMode)?.label ?? "Big Cousin"}
+            </Text>
+            <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
+              Voice &amp; privacy
+            </Text>
+          </View>
+          <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
+        </TouchableOpacity>
+
+        {showComposerControls && <>
         {/* Kinfolk Voices™ mode selector */}
         <View style={[styles.voicesBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
           <Text style={[styles.voicesBarLabel, { color: colors.mutedForeground }]}>Kinfolk Voices™</Text>
@@ -2438,6 +2460,7 @@ export default function TravelScreen() {
           </TouchableOpacity>
           {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((url) => <View key={url} style={{ marginRight: 8 }}><Image source={{ uri: url }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => setKinfolkImages((items) => items.filter((item) => item !== url))} style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
         </View>
+        </>}
 
         {/* Input row */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
@@ -2547,6 +2570,10 @@ const styles = StyleSheet.create({
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   compareGoBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  composerSettingsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1 },
+  composerSettingsLeading: { flexDirection: "row", alignItems: "center", gap: 7, flex: 1 },
+  composerSettingsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  composerSettingsSummary: { fontFamily: "Inter_400Regular", fontSize: 11 },
   voicesBar: { flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 14, paddingRight: 8, paddingVertical: 8, borderTopWidth: 1 },
   voicesBarLabel: { fontFamily: "Inter_600SemiBold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
   voicesPills: { flexDirection: "row", gap: 6, paddingVertical: 2 },

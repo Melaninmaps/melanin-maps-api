@@ -29,6 +29,23 @@ const blackWomenCancerDocuments = [
   },
 ];
 
+const generalBreastCancerDocuments = [
+  {
+    url: "https://www.cdc.gov/cancer/breast/basic_info/index.htm",
+    title: "What Is Breast Cancer?",
+    content: "CDC explains breast cancer basics, risk, symptoms, and the importance of speaking with a qualified clinician about screening. ".repeat(4),
+    publisher: "cdc.gov",
+    publishedAt: null,
+  },
+  {
+    url: "https://www.cancer.gov/types/breast/patient/breast-screening-pdq",
+    title: "Breast Cancer Screening",
+    content: "The National Cancer Institute provides current educational information about breast cancer screening research and informed conversations with a clinician. ".repeat(4),
+    publisher: "cancer.gov",
+    publishedAt: null,
+  },
+];
+
 describe("Living Library evidence and identity policy", () => {
   it("rejects unsafe links while accepting governed wildcard and conventional www hosts", () => {
     expect(isSafeSourceUrl("https://www.loc.gov/item/1")).toBe(true);
@@ -48,25 +65,27 @@ describe("Living Library evidence and identity policy", () => {
     expect(faithQuery).toContain("Research lens: African diaspora and Black communities.");
   });
 
-  it("completes a Black-women breast-cancer brief only with direct authoritative evidence", async () => {
+  it("returns a current breast-cancer foundation and a separately sourced Black-women packet", async () => {
     const repo = repository();
     const researchProvider: ExternalResearchProvider = {
       name: "openai",
-      search: vi.fn().mockResolvedValue({
-        documents: blackWomenCancerDocuments,
+      search: vi.fn().mockImplementation(async ({ query }) => ({
+        documents: String(query).includes("Community context requested")
+          ? blackWomenCancerDocuments
+          : generalBreastCancerDocuments,
         provider: "openai",
         status: "available",
-      }),
+      })),
     };
     const writer: LibrarySynthesisWriter = {
       writeStructured: vi.fn().mockResolvedValue({
-        title: "Breast cancer screening evidence for Black women",
+        title: "Breast cancer screening evidence",
         summary: "A source-cited education brief.",
         body: "This is educational information, not individual screening advice.",
         citedSourceIndexes: [0, 1],
         sourceNotes: [
-          { sourceIndex: 0, whyItMatters: "CDC describes cancer disparities and breast-cancer context." },
-          { sourceIndex: 1, whyItMatters: "NCI describes Black-women-specific breast-cancer research." },
+          { sourceIndex: 0, whyItMatters: "The source supports the cited educational context." },
+          { sourceIndex: 1, whyItMatters: "The source supports the cited current research context." },
         ],
         relatedQuestions: ["What questions can I ask a clinician about my screening plan?"],
       }),
@@ -80,14 +99,127 @@ describe("Living Library evidence and identity policy", () => {
       writer,
     });
 
-    expect(researchProvider.search).toHaveBeenCalledWith(expect.objectContaining({
-      query: expect.stringContaining("National Cancer Institute (cancer.gov)"),
+    expect(researchProvider.search).toHaveBeenCalledTimes(2);
+    expect(researchProvider.search).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      query: expect.stringContaining("Build a current, authoritative foundation"),
     }));
-    expect(result.entry).toMatchObject({
+    expect(researchProvider.search).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      query: expect.stringContaining("Community context requested: Black women"),
+    }));
+    expect(result.foundation).toMatchObject({
       publicationStatus: "published",
-      researchLenses: ["#BlackWomen"],
+      researchLenses: ["#Diaspora"],
       sourceCount: 2,
     });
+    expect(result.communityContext).toMatchObject({
+      status: "available",
+      researchLenses: ["#BlackWomen"],
+      answer: { researchLenses: ["#BlackWomen"], sourceCount: 2 },
+    });
+    expect(JSON.stringify(result.foundation.sources)).not.toMatch(/black women/i);
+  });
+
+  it("keeps HUD-style home-buying information alongside directly sourced Black-homeownership context", async () => {
+    const repo = repository();
+    const foundationDocuments = [
+      { url: "https://www.hud.gov/buying", title: "Homebuying resources", content: "HUD explains home-buying preparation, housing counseling, and questions to consider before applying for a mortgage. ".repeat(4), publisher: "hud.gov", publishedAt: null },
+      { url: "https://www.consumerfinance.gov/owning-a-home/", title: "Owning a home", content: "The Consumer Financial Protection Bureau explains mortgages, closing costs, and informed financial choices for prospective homebuyers. ".repeat(4), publisher: "consumerfinance.gov", publishedAt: null },
+    ];
+    const communityDocuments = [
+      { url: "https://www.urban.org/research/publication/black-homeownership", title: "Black homeownership research", content: "Urban Institute research examines Black homeownership and barriers that shape housing opportunities for Black households. ".repeat(4), publisher: "urban.org", publishedAt: null },
+      { url: "https://www.hud.gov/black-homeownership", title: "Black homeownership context", content: "HUD data and program context discuss Black homeownership, fair housing, and access to homeownership opportunities. ".repeat(4), publisher: "hud.gov", publishedAt: null },
+    ];
+    const researchProvider: ExternalResearchProvider = {
+      name: "openai",
+      search: vi.fn().mockImplementation(async ({ query }) => ({
+        documents: String(query).includes("Community context requested") ? communityDocuments : foundationDocuments,
+        provider: "openai",
+        status: "available",
+      })),
+    };
+    const writer: LibrarySynthesisWriter = {
+      writeStructured: vi.fn().mockResolvedValue({
+        title: "Home buying information",
+        summary: "A current, source-cited overview.",
+        body: "Educational information only.",
+        citedSourceIndexes: [0, 1],
+        sourceNotes: [{ sourceIndex: 0, whyItMatters: "It provides the first source's housing information." }, { sourceIndex: 1, whyItMatters: "It provides the second source's housing information." }],
+        relatedQuestions: ["What does a housing counselor help with?"],
+      }),
+    };
+
+    const result = await answerAndArchiveResearchQuestion({
+      question: "#Diaspora how do I buy a home?",
+      locationLabel: null,
+      repository: repo,
+      researchProvider,
+      writer,
+    });
+
+    expect(result.foundation.domain).toBe("financial");
+    expect(result.foundation.sources.map((source) => source.publisher)).toEqual(expect.arrayContaining(["hud.gov", "consumerfinance.gov"]));
+    expect(result.communityContext).toMatchObject({
+      status: "available",
+      researchLenses: ["#Diaspora"],
+      answer: { sources: expect.arrayContaining([expect.objectContaining({ publisher: "urban.org" })]) },
+    });
+  });
+
+  it("keeps a complete foundation when direct supplemental evidence is unavailable", async () => {
+    const repo = repository();
+    const researchProvider: ExternalResearchProvider = {
+      name: "openai",
+      search: vi.fn().mockImplementation(async ({ query }) => ({
+        documents: String(query).includes("Community context requested")
+          ? generalBreastCancerDocuments
+          : generalBreastCancerDocuments,
+        provider: "openai",
+        status: "available",
+      })),
+    };
+    const writer: LibrarySynthesisWriter = {
+      writeStructured: vi.fn().mockResolvedValue({
+        title: "Breast cancer screening evidence",
+        summary: "A source-cited education brief.",
+        body: "Educational information, not individual screening advice.",
+        citedSourceIndexes: [0, 1],
+        sourceNotes: [{ sourceIndex: 0, whyItMatters: "It supports the first general source." }, { sourceIndex: 1, whyItMatters: "It supports the second general source." }],
+        relatedQuestions: [],
+      }),
+    };
+
+    const result = await answerAndArchiveResearchQuestion({
+      question: "#BlackWomen breast cancer screening",
+      locationLabel: null,
+      repository: repo,
+      researchProvider,
+      writer,
+    });
+
+    expect(result.foundation.sourceCount).toBe(2);
+    expect(result.communityContext).toMatchObject({
+      status: "insufficient",
+      researchLenses: ["#BlackWomen"],
+      message: expect.stringMatching(/foundation above is still available/i),
+    });
+    expect(writer.writeStructured).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an untagged question as one foundation-only research request", async () => {
+    const repo = repository();
+    const researchProvider: ExternalResearchProvider = {
+      name: "openai",
+      search: vi.fn().mockResolvedValue({ documents: spiritualDocuments, provider: "openai", status: "available" }),
+    };
+    const writer: LibrarySynthesisWriter = {
+      writeStructured: vi.fn().mockResolvedValue({ title: "Perspectives on life after death", summary: "Traditions differ.", body: "Evidence-led overview.", citedSourceIndexes: [0, 1], sourceNotes: [{ sourceIndex: 0, whyItMatters: "It documents variation." }, { sourceIndex: 1, whyItMatters: "It explains traditions." }], relatedQuestions: [] }),
+    };
+
+    const result = await answerAndArchiveResearchQuestion({ question: "life after death", locationLabel: null, repository: repo, researchProvider, writer });
+
+    expect(researchProvider.search).toHaveBeenCalledTimes(1);
+    expect(result.communityContext).toBeUndefined();
+    expect(result.foundation.researchLenses).toEqual(["#Diaspora"]);
   });
 
   it("requires multi-perspective spiritual framing and publishes a general, fully cited brief", async () => {

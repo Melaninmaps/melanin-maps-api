@@ -26,6 +26,7 @@ export type KinfolkBusinessRecommendation = {
   phone?: string | null;
   verified?: boolean | null;
   claimed?: boolean;
+  recommendationReason?: string;
 };
 
 type Props = {
@@ -90,7 +91,7 @@ export function KinfolkBusinessRecommendationSheet({
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             <View style={[styles.notice, { backgroundColor: "#CA922B12", borderColor: "#CA922B45" }]}>
               <Feather name="star" size={20} color="#A66D15" />
-              <Text style={[styles.noticeText, { color: colors.foreground }]}>Kinfolk matched this currently public listing to your request. Confirm details directly with the business before you go.</Text>
+              <Text style={[styles.noticeText, { color: colors.foreground }]}>{recommendation.recommendationReason ?? "Kinfolk matched this currently public listing to your request. Confirm details directly with the business before you go."}</Text>
             </View>
 
             {recommendation.description ? <Text style={[styles.description, { color: colors.mutedForeground }]}>{recommendation.description}</Text> : null}

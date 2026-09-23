@@ -1,9 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildCommunityLensResearchQuery,
+  buildCommunitySupplementResearchQuery,
+  buildFoundationResearchQuery,
   hasDirectEvidenceForExplicitResearchLenses,
   researchLensFacetKeys,
   resolveCommunityResearchLenses,
+  resolveCommunityResearchSupplementLenses,
+  stripCommunityResearchScope,
   stripCommunityResearchLensTags,
 } from "../communityResearchLens";
 import {
@@ -28,6 +32,22 @@ describe("Library community research lenses", () => {
       "breast cancer screening",
     );
     expect(researchLensFacetKeys(lenses)).toEqual(["research-lens:black-women"]);
+  });
+
+  it("builds a general foundation independently from an explicit community packet", () => {
+    const question = "#BlackWomen breast cancer screening";
+    const lenses = resolveCommunityResearchLenses(question);
+    const supplementLenses = resolveCommunityResearchSupplementLenses(question, lenses);
+    expect(stripCommunityResearchScope(question, supplementLenses)).toBe("breast cancer screening");
+    expect(buildFoundationResearchQuery(question)).toContain("current, authoritative foundation");
+    expect(buildFoundationResearchQuery(question)).not.toContain("Community context requested");
+    expect(buildCommunitySupplementResearchQuery(question, supplementLenses)).toContain("Community context requested: Black women");
+    expect(buildCommunitySupplementResearchQuery(question, supplementLenses)).toContain("Do not replace the general foundation");
+  });
+
+  it("does not create a supplemental packet for the editorial default unless #Diaspora is typed", () => {
+    expect(resolveCommunityResearchSupplementLenses("breast cancer screening")).toEqual([]);
+    expect(resolveCommunityResearchSupplementLenses("#Diaspora breast cancer screening").map((lens) => lens.tag)).toEqual(["#Diaspora"]);
   });
 
   it("requires a subject after a lens tag", () => {

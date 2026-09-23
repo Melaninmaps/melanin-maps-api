@@ -154,7 +154,12 @@ export function registerLivingLibraryRoutes(
         });
         response.setHeader("Cache-Control", "private, no-store");
         return response.status(200).json({
+          // `answer` remains the compatibility field and is always the general
+          // authoritative foundation. A direct-evidence community packet is
+          // additive and never relabels the foundation's citations.
           answer: result.entry,
+          foundation: result.foundation,
+          communityContext: result.communityContext,
           origin: result.origin,
           reused: result.reused,
           persisted:

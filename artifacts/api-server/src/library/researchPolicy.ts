@@ -1,5 +1,7 @@
 import {
   buildCommunityLensResearchQuery,
+  buildCommunitySupplementResearchQuery as buildSupplementQuery,
+  buildFoundationResearchQuery as buildFoundationQuery,
   researchLensGuidance,
   resolveCommunityResearchLenses,
   type CommunityResearchLens,
@@ -62,7 +64,7 @@ const DOMAIN_PATTERNS: Array<{ domain: ResearchDomain; pattern: RegExp }> = [
   {
     domain: "financial",
     pattern:
-      /\b(debt|credit|tax|invest\w*|insurance|mortgage|loan|retirement|budget|money|financ\w*|bank|savings|credit score|student loan|credit card|reparations|wealth|asset|financial literacy|cfpb|irs|redlin\w*)\b/i,
+      /\b(debt|credit|tax|invest\w*|insurance|mortgage|loan|retirement|budget|money|financ\w*|bank|savings|credit score|student loan|credit card|reparations|wealth|asset|financial literacy|cfpb|irs|redlin\w*|interest rates?|home ?buying|buying (?:a )?home|buy (?:a )?home|homeownership|down payment)\b/i,
   },
   {
     domain: "stem",
@@ -253,9 +255,12 @@ export function getResearchPolicy(question: string): ResearchPolicy {
   return { domain, ...policy, searchPrefix: !hasExplicitLens };
 }
 
-export function buildCommunityResearchQuery(question: string, domain: ResearchDomain): string {
-  const researchLenses = resolveCommunityResearchLenses(question);
-  const baseQuery = buildCommunityLensResearchQuery(question, researchLenses);
+function withBlackWomenCancerResearchGuard(
+  baseQuery: string,
+  question: string,
+  domain: ResearchDomain,
+  researchLenses: readonly CommunityResearchLens[],
+): string {
   const isBlackWomenCancerScope = domain === "medical"
     && researchLenses.some((lens) => lens.id === "black-women")
     && /\b(breast cancer|cancer|mammogram|mammography|screening)\b/i.test(question);
@@ -267,6 +272,50 @@ export function buildCommunityResearchQuery(question: string, domain: ResearchDo
     "For Black women and breast-cancer screening, seek direct authoritative evidence from the CDC (cdc.gov) and the National Cancer Institute (cancer.gov) before adding clearly labeled general clinical foundation sources.",
     "Return at least two distinct allowed citations and keep individual screening decisions with the member and a qualified clinician.",
   ].join("\n");
+}
+
+/** The authoritative topic answer remains available to every reader. */
+export function buildFoundationResearchQuery(
+  question: string,
+  domain: ResearchDomain,
+): string {
+  const baseQuery = buildFoundationQuery(question);
+  if (domain !== "medical" || !/\b(breast cancer|cancer|mammogram|mammography|screening)\b/i.test(question)) {
+    return baseQuery;
+  }
+  return [
+    baseQuery,
+    "For breast cancer and screening, seek current authoritative information from the CDC (cdc.gov) and National Cancer Institute (cancer.gov) before adding other allowed clinical sources.",
+    "Keep individual screening decisions with the member and a qualified clinician.",
+  ].join("\n");
+}
+
+/**
+ * A community packet is separately retrieved and may never replace or relabel
+ * the foundation answer. Direct evidence remains mandatory inside this packet.
+ */
+export function buildCommunitySupplementResearchQuery(
+  question: string,
+  domain: ResearchDomain,
+  lenses: readonly CommunityResearchLens[],
+): string {
+  return withBlackWomenCancerResearchGuard(
+    buildSupplementQuery(question, lenses),
+    question,
+    domain,
+    lenses,
+  );
+}
+
+/** Backward-compatible name for callers that intentionally request only a scoped packet. */
+export function buildCommunityResearchQuery(question: string, domain: ResearchDomain): string {
+  const researchLenses = resolveCommunityResearchLenses(question);
+  return withBlackWomenCancerResearchGuard(
+    buildCommunityLensResearchQuery(question, researchLenses),
+    question,
+    domain,
+    researchLenses,
+  );
 }
 
 function groupLanguageFromQuestion(question: string): string | null {

@@ -18,11 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { openExternalUrl } from "@/lib/safeLinking";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
 function trackExternalClick(params: {
   institutionName: string;
@@ -61,6 +57,10 @@ function heritageInstitutionType(heritageCategory: string | null | undefined): s
 
 type CulturalSite = {
   id: string;
+  kind: "cultural_site" | "market" | "recurring_event" | "resource";
+  explorerTab: string;
+  sourceLabel: string;
+  actions: ExplorerAction[];
   name: string;
   description: string;
   category: string;
@@ -86,6 +86,13 @@ type CulturalSite = {
   isVerified: boolean;
 };
 
+type ExplorerAction =
+  | { type: "map"; culturalSiteId?: string; latitude: number; longitude: number }
+  | { type: "cultural_detail"; culturalSiteId: string }
+  | { type: "library"; question: string }
+  | { type: "event_list" }
+  | { type: "external"; url: string };
+
 type HeritageCategoryMeta = {
   label: string;
   value: string;
@@ -94,21 +101,13 @@ type HeritageCategoryMeta = {
 };
 
 const HERITAGE_CATEGORIES: HeritageCategoryMeta[] = [
-  { label: "All Sites", value: "", color: "#6B7280", icon: "globe" },
-  { label: "HBCUs", value: "HBCU", color: "#1D4ED8", icon: "book" },
-  { label: "African American", value: "African American Heritage", color: "#CA922B", icon: "star" },
-  { label: "Civil Rights", value: "Civil Rights", color: "#DC2626", icon: "shield" },
-  { label: "Native American", value: "Native American Heritage", color: "#92400E", icon: "triangle" },
-  { label: "Hispanic & Latino", value: "Hispanic & Latino Heritage", color: "#065F46", icon: "sun" },
-  { label: "LGBTQ+ History", value: "LGBTQ+ History", color: "#7C3AED", icon: "heart" },
-  { label: "Women's History", value: "Women's History", color: "#DB2777", icon: "users" },
-  { label: "Immigrant Heritage", value: "Immigrant Heritage", color: "#0891B2", icon: "anchor" },
-  { label: "Cultural Districts", value: "Cultural Neighborhood", color: "#059669", icon: "map-pin" },
-  { label: "Religious Heritage", value: "Religious Heritage", color: "#6B21A8", icon: "home" },
-  { label: "Freedom Trails", value: "Freedom Trail", color: "#B45309", icon: "navigation" },
-  // Historical Sundown Towns — archival color (warm stone), no danger/warning hue.
-  // Exact value must match the heritageCategory string returned by the API.
-  { label: "Sundown Towns", value: "Historical Sundown Town", color: "#44403C", icon: "book-open" },
+  { label: "All", value: "all", color: "#6B7280", icon: "globe" },
+  { label: "HBCUs", value: "hbcus", color: "#1D4ED8", icon: "book" },
+  { label: "Landmarks", value: "landmarks", color: "#CA922B", icon: "map-pin" },
+  { label: "Historic Districts", value: "historic_districts", color: "#059669", icon: "map" },
+  { label: "Markets", value: "markets", color: "#B45309", icon: "shopping-bag" },
+  { label: "Curated Events", value: "curated_events", color: "#7C3AED", icon: "calendar" },
+  { label: "Heritage Resources", value: "heritage_resources", color: "#065F46", icon: "book-open" },
 ];
 
 function getHeritageMeta(value: string | null | undefined): HeritageCategoryMeta {
@@ -141,7 +140,7 @@ export default function CulturalHeritagePage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
-  const [selectedHeritage, setSelectedHeritage] = useState(params.initialCategory ?? "");
+  const [selectedHeritage, setSelectedHeritage] = useState(params.initialCategory ?? "all");
   const [selectedSite, setSelectedSite] = useState<CulturalSite | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
@@ -153,24 +152,29 @@ export default function CulturalHeritagePage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const params = new URLSearchParams();
-      if (heritage) params.set("heritageCategory", heritage);
-      if (search) params.set("search", search);
-      const resp = await fetch(`${getApiBase()}/api/cultural-sites?${params.toString()}`);
+      const query = new URLSearchParams();
+      query.set("tab", heritage || "all");
+      if (search) query.set("search", search);
+      const resp = await fetch(`${getApiBase()}/api/cultural-explorer?${query.toString()}`, {
+        headers: await getMemberApiHeaders(),
+        credentials: "include",
+      });
       if (!resp.ok) throw new Error(`Cultural-site request failed with ${resp.status}`);
       const data = (await resp.json()) as {
-        sites?: CulturalSite[];
         items?: (Partial<CulturalSite> & {
           id: string;
           name: string;
-          stateCode?: string | null;
-          learnMoreUrl?: string | null;
+          tab?: string;
         })[];
-        categories?: { label: string; count: number }[];
+        counts?: Record<string, number>;
       };
-      const rawSites = data.sites ?? data.items ?? [];
+      const rawSites = data.items ?? [];
       const normalizedSites: CulturalSite[] = rawSites.map((site) => ({
         id: site.id,
+        kind: site.kind ?? "cultural_site",
+        explorerTab: site.explorerTab ?? site.tab ?? "landmarks",
+        sourceLabel: site.sourceLabel ?? "Cultural site",
+        actions: site.actions ?? [],
         name: site.name,
         description: site.description ?? "",
         category: site.category ?? "Cultural Heritage",
@@ -178,13 +182,13 @@ export default function CulturalHeritagePage() {
         subcategory: site.subcategory ?? null,
         ethnicCommunity: site.ethnicCommunity ?? null,
         city: site.city ?? "",
-        state: site.state ?? site.stateCode ?? "",
+        state: site.state ?? "",
         address: site.address ?? null,
         latitude: String(site.latitude ?? ""),
         longitude: String(site.longitude ?? ""),
         era: site.era ?? null,
         significance: site.significance ?? null,
-        externalUrl: site.externalUrl ?? site.learnMoreUrl ?? null,
+        externalUrl: site.externalUrl ?? null,
         yearEstablished: site.yearEstablished ?? null,
         isAccessible: site.isAccessible ?? false,
         isFamilyFriendly: site.isFamilyFriendly ?? false,
@@ -194,11 +198,7 @@ export default function CulturalHeritagePage() {
         isVerified: site.isVerified ?? false,
       }));
       setSites(normalizedSites);
-      if (data.categories) {
-        const map: Record<string, number> = {};
-        for (const c of data.categories) map[c.label] = c.count;
-        setCategoryCounts(map);
-      }
+      setCategoryCounts(data.counts ?? {});
     } catch {
       setSites([]);
       setLoadError("We could not load cultural sites. Check your connection and try again.");
@@ -225,6 +225,41 @@ export default function CulturalHeritagePage() {
   const openDetail = (site: CulturalSite) => {
     setSelectedSite(site);
     setModalVisible(true);
+  };
+
+  const runExplorerAction = (action: ExplorerAction, site: CulturalSite) => {
+    if (action.type === "map") {
+      router.push({
+        pathname: "/(tabs)/map",
+        params: {
+          ...(action.culturalSiteId ? { focusCulturalSiteId: action.culturalSiteId } : {}),
+          focusLat: String(action.latitude),
+          focusLng: String(action.longitude),
+        },
+      } as never);
+      return;
+    }
+    if (action.type === "cultural_detail") {
+      openDetail(site);
+      return;
+    }
+    if (action.type === "library") {
+      router.push({ pathname: "/library-research", params: { question: action.question } } as never);
+      return;
+    }
+    if (action.type === "event_list") {
+      router.push("/(tabs)/events" as never);
+      return;
+    }
+    void openExternalUrl(action.url);
+  };
+
+  const primaryExplorerAction = (site: CulturalSite): ExplorerAction | null => {
+    if (site.kind === "cultural_site") return site.actions.find((action) => action.type === "cultural_detail") ?? null;
+    return site.actions.find((action) => action.type === "map")
+      ?? site.actions.find((action) => action.type === "external")
+      ?? site.actions.find((action) => action.type === "event_list")
+      ?? null;
   };
 
   const renderFilterChip = ({ item }: { item: HeritageCategoryMeta }) => {
@@ -257,16 +292,19 @@ export default function CulturalHeritagePage() {
 
   const renderSiteCard = ({ item }: { item: CulturalSite }) => {
     const meta = getHeritageMeta(item.heritageCategory);
+    const primaryAction = primaryExplorerAction(item);
+    const mapAction = item.actions.find((action): action is Extract<ExplorerAction, { type: "map" }> => action.type === "map");
+    const libraryAction = item.actions.find((action): action is Extract<ExplorerAction, { type: "library" }> => action.type === "library");
     return (
       <TouchableOpacity
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={() => openDetail(item)}
+        onPress={() => primaryAction && runExplorerAction(primaryAction, item)}
         activeOpacity={0.75}
       >
         <View style={styles.cardHeader}>
           <View style={[styles.heritagePill, { backgroundColor: meta.color + "18", borderColor: meta.color + "44" }]}>
             <Feather name={meta.icon} size={11} color={meta.color} />
-            <Text style={[styles.heritagePillText, { color: meta.color }]}>{meta.label}</Text>
+            <Text style={[styles.heritagePillText, { color: meta.color }]}>{item.sourceLabel}</Text>
           </View>
           {item.admissionFree && (
             <View style={[styles.freePill, { backgroundColor: "#16A34A18", borderColor: "#16A34A44" }]}>
@@ -298,32 +336,30 @@ export default function CulturalHeritagePage() {
         </Text>
 
         <View style={styles.cardFooter}>
-          {item.externalUrl && (
+          {mapAction && (
             <TouchableOpacity
               style={[styles.websiteBtn, { borderColor: colors.border }]}
               onPress={(e) => {
                 e.stopPropagation?.();
-                trackExternalClick({
-                  institutionName: item.name,
-                  institutionType: heritageInstitutionType(item.heritageCategory),
-                  institutionUrl: item.externalUrl!,
-                  referenceType: "cultural_heritage_visit",
-                  referenceId: item.id,
-                  source: "cultural_heritage",
-                  city: item.city,
-                  state: item.state,
-                });
-                void openExternalUrl(item.externalUrl);
+                runExplorerAction(mapAction, item);
               }}
             >
-              <Feather name="external-link" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.websiteBtnText, { color: colors.mutedForeground }]}>Visit Site</Text>
+              <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+              <Text style={[styles.websiteBtnText, { color: colors.mutedForeground }]}>View Map</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.moreBtn} onPress={() => openDetail(item)}>
-            <Text style={[styles.moreBtnText, { color: meta.color }]}>Learn More</Text>
+          {libraryAction && (
+            <TouchableOpacity style={styles.moreBtn} onPress={() => runExplorerAction(libraryAction, item)}>
+              <Text style={[styles.moreBtnText, { color: meta.color }]}>Explore in Library</Text>
+              <Feather name="book-open" size={13} color={meta.color} />
+            </TouchableOpacity>
+          )}
+          {primaryAction && !libraryAction && (
+            <TouchableOpacity style={styles.moreBtn} onPress={() => runExplorerAction(primaryAction, item)}>
+              <Text style={[styles.moreBtnText, { color: meta.color }]}>{item.kind === "resource" ? "Open resource" : item.kind === "market" ? "View market" : "View events"}</Text>
             <Feather name="chevron-right" size={13} color={meta.color} />
           </TouchableOpacity>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -674,23 +710,23 @@ function DetailModal({
     queueMicrotask(() => { setSubmitSuccess(false); });
     queueMicrotask(() => { setHbcuContext(null); });
 
-    fetch(`${getApiBase()}/api/cultural-sites/${site.id}/stories${activeStoryCategory ? `?contentCategory=${encodeURIComponent(activeStoryCategory)}` : ""}`)
+    void getMemberApiHeaders().then((headers) => fetch(`${getApiBase()}/api/cultural-sites/${site.id}/stories${activeStoryCategory ? `?contentCategory=${encodeURIComponent(activeStoryCategory)}` : ""}`, { headers, credentials: "include" })
       .then((r) => r.json())
       .then((d: { stories?: LivingStory[] }) => setStories(d.stories ?? []))
       .catch(() => setStories([]))
-      .finally(() => setLoadingStories(false));
+      .finally(() => setLoadingStories(false)));
 
-    fetch(`${getApiBase()}/api/cultural-sites/${site.id}/support-links`)
+    void getMemberApiHeaders().then((headers) => fetch(`${getApiBase()}/api/cultural-sites/${site.id}/support-links`, { headers, credentials: "include" })
       .then((r) => r.json())
       .then((d: { links?: SupportLink[] }) => setSupportLinks(d.links ?? []))
       .catch(() => setSupportLinks([]))
-      .finally(() => setLoadingLinks(false));
+      .finally(() => setLoadingLinks(false)));
 
     if (site.heritageCategory === "HBCU") {
-      fetch(`${getApiBase()}/api/cultural-sites/${site.id}/hbcu-context`)
+      void getMemberApiHeaders().then((headers) => fetch(`${getApiBase()}/api/cultural-sites/${site.id}/hbcu-context`, { headers, credentials: "include" })
         .then((r) => r.ok ? (r.json() as Promise<{ context?: HbcuProfileContext }>) : null)
         .then((d) => setHbcuContext(d?.context ?? null))
-        .catch(() => setHbcuContext(null));
+        .catch(() => setHbcuContext(null)));
     }
   }, [site, activeStoryCategory]);
 
@@ -1172,7 +1208,8 @@ function SubmitStoryModal({
     try {
       const resp = await fetch(`${getApiBase()}/api/cultural-sites/${siteId}/stories`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await getMemberApiHeaders()) },
+        credentials: "include",
         body: JSON.stringify({
           relationshipType: relationship,
           contentCategory,

@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
 import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
+import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
 function safeExternalProfileUrl(value: unknown, expectedPlatform: SocialVideoPlatform): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -286,6 +287,7 @@ export default function BusinessDetail() {
   const id = paramsLong?.id || paramsShort?.id || "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { allows } = useSocialVideoPreferences();
   const prevMetaRef = useRef<{ title: string; ogTitle: string | null; ogDesc: string | null; ogImage: string | null }>({ title: "", ogTitle: null, ogDesc: null, ogImage: null });
 
   const { data: auth } = useGetCurrentAuthUser();
@@ -365,6 +367,10 @@ export default function BusinessDetail() {
   const [contribSuccess, setContribSuccess] = useState(false);
   const [contribError, setContribError] = useState<string | null>(null);
   const [communityVibes, setCommunityVibes] = useState<any[]>([]);
+  const visibleCommunityVibes = communityVibes.filter((contribution) => {
+    const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
+    return platform !== null && allows(platform);
+  });
 
   function closeContributionModal() {
     setShowContribModal(false);
@@ -1170,16 +1176,16 @@ export default function BusinessDetail() {
                 <section className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3" aria-labelledby="community-experiences-heading">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Community experiences</h3>
-                      <p className="mt-1 text-xs leading-relaxed text-white/55">Approved public posts shared by members. Each opens on the original creator platform.</p>
+                      <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Watch community posts</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-white/55">Approved public posts shared by members. Your Video Sources choices decide which platforms appear; each opens on its original creator platform.</p>
                     </div>
                     <button onClick={() => setShowContribModal(true)} className="inline-flex items-center gap-1.5 rounded-full border border-[#CA922B]/35 px-3 py-1.5 text-xs font-bold text-[#CA922B] hover:border-[#CA922B] hover:bg-[#CA922B]/10 transition-colors">
-                      <Camera className="h-3.5 w-3.5" /> Share a public video
+                      <Camera className="h-3.5 w-3.5" /> Share your visit
                     </button>
                   </div>
-                  {communityVibes.length > 0 ? (
+                  {visibleCommunityVibes.length > 0 ? (
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {communityVibes.slice(0, 3).map((contribution: any) => {
+                      {visibleCommunityVibes.slice(0, 3).map((contribution: any) => {
                         const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
                         const href = platform ? safeExternalProfileUrl(contribution.source_url, platform) : null;
                         if (!platform || !href) return null;
@@ -1195,6 +1201,8 @@ export default function BusinessDetail() {
                         );
                       })}
                     </div>
+                  ) : communityVibes.length > 0 ? (
+                    <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">Approved videos are available, but none match your current Video Sources choices. <Link className="font-semibold text-[#CA922B] hover:underline" href="/profile">Choose video sources</Link>.</p>
                   ) : (
                     <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">No approved community videos yet. You can share an original public post for review.</p>
                   )}
@@ -1638,12 +1646,12 @@ export default function BusinessDetail() {
                       )}
 
                       {/* Community media contributions */}
-                      {communityVibes.length > 0 && (
+                      {visibleCommunityVibes.length > 0 && (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Community experiences</span>
+                            <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Watch community posts</span>
                           </div>
-                          {communityVibes.slice(0, 5).map((c: any) => {
+                          {visibleCommunityVibes.slice(0, 5).map((c: any) => {
                             const detected = detectSocialVideoPlatform(c.source_url ?? "");
                             if (!detected) return null;
                             const href = safeExternalProfileUrl(c.source_url, detected);
@@ -1669,7 +1677,7 @@ export default function BusinessDetail() {
                             );
                           })}
                           <button onClick={() => setShowContribModal(true)} className="w-full text-xs text-[#CA922B] font-semibold hover:text-[#B38024] text-center py-1 transition-colors">
-                            + Add your content
+                            + Share your visit
                           </button>
                         </div>
                       )}

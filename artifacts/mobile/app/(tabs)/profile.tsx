@@ -914,8 +914,16 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* List / manage your business — top-of-profile CTA */}
-          <TouchableOpacity
+          {isAuthenticated && (
+            <StatusComposer
+              authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
+              authorInitials={((user as any)?.username ?? "YO").slice(0, 2).toUpperCase()}
+              authorColor="#CA922B"
+            />
+          )}
+
+          {/* Business management remains reachable from Settings, not the social Profile. */}
+          {false && <TouchableOpacity
             style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
             onPress={() => router.push("/list-business")}
             activeOpacity={0.88}
@@ -933,7 +941,7 @@ export default function ProfileScreen() {
               <Text style={styles.listBizCtaText}>List Free</Text>
               <Feather name="arrow-right" size={14} color="#FFFFFF" />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
           {/* Profession community + mentorship quick actions */}
           {user?.industry ? (
