@@ -78,6 +78,7 @@ pnpm --dir artifacts/mobile run typecheck
 
 pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/compiled-build-identity.test.ts \
+  src/__tests__/release-static-sync-order.test.ts \
   src/__tests__/community-feed.test.ts \
   src/__tests__/community-feed-schema-guard.test.ts \
   src/__tests__/directory-import-publication.test.ts \
@@ -134,14 +135,19 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/essential-services-map.test.ts
 
 pnpm --dir artifacts/web run build
-pnpm --dir artifacts/api-server run build
 
+# The API build embeds artifacts/api-server/web-static/index.html into its
+# fallback SPA bundle. Synchronize the fresh web output before that API build,
+# not after it, so a no-cache fallback cannot refer to a previous hashed
+# JavaScript or CSS asset.
 if [ "$MODE" = "--prepare-static" ]; then
   find web-static -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   find artifacts/api-server/web-static -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   cp -a artifacts/web/dist/public/. web-static/
   cp -a artifacts/web/dist/public/. artifacts/api-server/web-static/
 fi
+
+pnpm --dir artifacts/api-server run build
 
 node scripts/verify-release-artifacts.mjs
 
