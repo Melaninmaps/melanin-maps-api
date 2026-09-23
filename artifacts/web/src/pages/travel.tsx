@@ -1006,6 +1006,7 @@ function TravelPage() {
   const [responseFeedbackError, setResponseFeedbackError] = useState<Record<string, string>>({});
   const [showPrefs, setShowPrefs] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showComposerControls, setShowComposerControls] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
@@ -1962,30 +1963,32 @@ function TravelPage() {
         hydrated={preferencesHydrated} />}
 
       {/* Header */}
-      <div className="bg-[#2B1507] px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#CA922B]/20 flex items-center justify-center">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#F5EBD8]/10 bg-[#2B1507] px-4 py-3 md:px-6">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#CA922B]/15 ring-1 ring-[#CA922B]/20">
             <Sparkles className="w-4 h-4 text-[#CA922B]" />
           </div>
           <div>
-            <div className="text-white font-serif font-bold text-base leading-tight">KinfolkAI™</div>
-            <div className="text-[#F5EBD8]/50 text-[10px] uppercase tracking-widest">Your Community Companion</div>
+            <div className="font-serif text-base font-bold leading-tight text-white">KinfolkAI™</div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-[#F5EBD8]/45">Conversation companion</div>
           </div>
         </div>
         {isLoggedIn && (
-          <div className="flex items-center gap-2">
-            {/* Mobile history toggle */}
+          <div className="flex items-center gap-1.5">
             <button onClick={() => setShowHistory(v => !v)}
-              className="md:hidden flex items-center gap-1.5 text-xs font-bold text-[#F5EBD8]/70 hover:text-[#CA922B] transition-colors px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-[#CA922B]/30">
+              aria-label={showHistory ? "Close conversation history" : "Open conversation history"}
+              aria-pressed={showHistory}
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
               <History size={13} />
+              <span className="hidden lg:inline">History</span>
             </button>
             <button onClick={() => setShowPrefs(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#F5EBD8]/70 hover:text-[#CA922B] transition-colors px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-[#CA922B]/30">
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
               <Settings size={13} />
               <span className="hidden sm:inline">Preferences</span>
             </button>
             <button onClick={newChat}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#F5EBD8]/70 hover:text-[#CA922B] transition-colors px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-[#CA922B]/30">
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
               <Plus size={13} /><span className="hidden sm:inline">New Chat</span>
             </button>
           </div>
@@ -1998,19 +2001,25 @@ function TravelPage() {
           <div className="fixed inset-0 z-30 md:hidden bg-black/40" onClick={() => setShowHistory(false)} />
         )}
 
-        {/* Sidebar — session history */}
+        {/* History is available when wanted, rather than occupying the conversation by default. */}
         <div className={`
-          ${showHistory ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:flex
-          fixed md:relative top-0 left-0 h-full z-30
-          flex flex-col w-64 bg-white border-r border-[#3A1F0E]/8 overflow-y-auto shrink-0
-          transition-transform duration-300 shadow-xl md:shadow-none
+          ${showHistory ? "translate-x-0 lg:w-[17rem] lg:border-r" : "-translate-x-full lg:w-0 lg:border-r-0"}
+          fixed lg:relative top-0 left-0 z-30 h-full
+          flex shrink-0 flex-col overflow-y-auto border-[#3A1F0E]/8 bg-white shadow-xl transition-[transform,width] duration-300 lg:shadow-none
         `}>
-          <div className="px-3 py-3 border-b border-[#3A1F0E]/8 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40">Past Conversations</span>
-            <button onClick={newChat} className="flex items-center gap-1 text-[10px] text-[#CA922B] hover:text-[#B38024] font-bold">
-              <Plus size={10} /> New
-            </button>
+          <div className="flex min-w-[17rem] items-center justify-between border-b border-[#3A1F0E]/8 px-4 py-4">
+            <div>
+              <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#3A1F0E]/40">Past conversations</span>
+              <span className="mt-1 block text-xs text-[#3A1F0E]/52">Return whenever you want.</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={newChat} className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#CA922B] transition-colors hover:bg-[#CA922B]/8 hover:text-[#B38024]">
+                <Plus size={11} /> New
+              </button>
+              <button onClick={() => setShowHistory(false)} aria-label="Close conversation history" className="rounded-lg p-1.5 text-[#3A1F0E]/40 transition-colors hover:bg-[#FAF6EF] hover:text-[#3A1F0E]">
+                <X size={13} />
+              </button>
+            </div>
           </div>
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 size={16} className="text-[#CA922B] animate-spin" /></div>
@@ -2057,54 +2066,84 @@ function TravelPage() {
             <>
               <div ref={msgContainerRef} onScroll={handleConversationScroll} data-testid="kinfolk-conversation-scroll-region" className="min-h-0 flex-1 overflow-y-auto px-4 py-6 space-y-4">
                 {isEmpty && (
-                  <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-                    <div className="w-16 h-16 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center mb-5">
-                      <Sparkles className="w-7 h-7 text-[#CA922B]" />
-                    </div>
-                    {/* Contextual greeting — new user vs returning user vs returning with context */}
-                    <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">
-                      {sessions.length > 0 && (authData?.user as { firstName?: string })?.firstName
-                        ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}!`
-                        : sessions.length > 0
-                        ? "Welcome back!"
-                        : kinfolkWelcomeHeadline}
-                    </h2>
-                    <p className="text-[#3A1F0E]/50 text-sm mb-4 max-w-md leading-relaxed">
-                      {sessions.length > 0 && sessions[0]?.title
-                        ? `Last time we talked about "${sessions[0].title}." Want to pick up where we left off, or is there something new on your mind?`
-                        : sessions.length > 0
-                        ? "What can I help with today?"
-                        : KINFOLK_DEFAULT_GREETING_BODY}
-                    </p>
-                    {prefsLoaded && !hasPrefs && (
-                      <button onClick={() => setShowPrefs(true)} className="mb-4 flex items-center gap-1.5 text-xs text-[#CA922B] font-semibold hover:underline">
-                        <Settings size={12} /> Set your taste profile to get personalized picks →
-                      </button>
-                    )}
-                    {prefsLoaded && hasPrefs && (
-                      <p className="mb-4 text-xs text-[#CA922B] font-medium">✓ Personalized based on your taste profile</p>
-                    )}
-                    {/* Life-category chips — primary CTAs, mirrors mobile LIFE_CHIPS */}
-                    <div className="grid grid-cols-4 gap-2 max-w-lg mb-5 w-full">
-                      {KINFOLK_LIFE_CHIPS.map(chip => (
-                        <button key={chip.label} onClick={() => send(chip.prompt)}
-                          className="flex flex-col items-center gap-1.5 px-2 py-3 bg-white border border-[#3A1F0E]/10 rounded-2xl text-center hover:border-[#CA922B]/40 hover:bg-[#CA922B]/5 transition-colors shadow-sm group">
-                          <chip.Icon size={20} color="#CA922B" aria-hidden />
-                          <span className="text-[10px] font-semibold text-[#3A1F0E]/60 leading-tight">{chip.label}</span>
+                  <section data-testid="kinfolk-conversation-welcome" aria-label="Start a Kinfolk conversation" className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col justify-center py-6 md:py-10">
+                    <div className="rounded-[1.75rem] border border-[#3A1F0E]/8 bg-white p-5 shadow-[0_18px_60px_rgba(58,31,14,0.06)] sm:p-8">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#CA922B]/10 ring-1 ring-[#CA922B]/15">
+                          <Sparkles className="h-5 w-5 text-[#CA922B]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8D5C17]">Start a conversation</p>
+                          <h2 className="mt-1 font-serif text-2xl font-bold tracking-[-0.02em] text-[#2B1507] sm:text-3xl">
+                            {sessions.length > 0 && (authData?.user as { firstName?: string })?.firstName
+                              ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}.`
+                              : sessions.length > 0
+                              ? "Welcome back."
+                              : kinfolkWelcomeHeadline}
+                          </h2>
+                        </div>
+                      </div>
+                      <p className="mt-4 max-w-2xl text-sm leading-6 text-[#3A1F0E]/60">
+                        {sessions.length > 0 && sessions[0]?.title
+                          ? `Last time we talked about “${sessions[0].title}.” Pick up where you left off, or bring something new.`
+                          : sessions.length > 0
+                          ? "Bring a question, a decision, or a place you want to understand better."
+                          : KINFOLK_DEFAULT_GREETING_BODY}
+                      </p>
+                      {prefsLoaded && !hasPrefs && (
+                        <button onClick={() => setShowPrefs(true)} className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-2 text-xs font-semibold text-[#8D5C17] transition-colors hover:bg-[#CA922B]/10">
+                          <Settings size={12} /> Set a taste profile for personalized picks
                         </button>
-                      ))}
+                      )}
+                      {prefsLoaded && hasPrefs && (
+                        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-2 text-xs font-semibold text-[#8D5C17]">
+                          <Check size={12} /> Your taste profile is active for recommendations
+                        </p>
+                      )}
+
+                      <div className="mt-7 border-t border-[#3A1F0E]/8 pt-5">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <p className="text-xs font-bold text-[#2B1507]">Start here</p>
+                          <span className="text-[11px] text-[#3A1F0E]/45">Choose a direction or type anything below.</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {KINFOLK_LIFE_CHIPS.slice(0, 4).map(chip => (
+                            <button key={chip.label} onClick={() => send(chip.prompt)}
+                              className="group flex min-h-20 flex-col items-start justify-between rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[#CA922B]/35 hover:bg-[#FFF8EC]">
+                              <chip.Icon size={17} color="#CA922B" aria-hidden />
+                              <span className="text-xs font-semibold leading-tight text-[#3A1F0E]/72 group-hover:text-[#8D5C17]">{chip.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <details className="group mt-3">
+                          <summary className="cursor-pointer list-none text-xs font-semibold text-[#8D5C17] marker:hidden">
+                            <span className="inline-flex items-center gap-1.5">More ways Kinfolk can help <ChevronRight size={12} className="transition-transform group-open:rotate-90" /></span>
+                          </summary>
+                          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            {KINFOLK_LIFE_CHIPS.slice(4).map(chip => (
+                              <button key={chip.label} onClick={() => send(chip.prompt)}
+                                className="group flex min-h-20 flex-col items-start justify-between rounded-2xl border border-[#3A1F0E]/8 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[#CA922B]/35 hover:bg-[#FFF8EC]">
+                                <chip.Icon size={17} color="#CA922B" aria-hidden />
+                                <span className="text-xs font-semibold leading-tight text-[#3A1F0E]/72 group-hover:text-[#8D5C17]">{chip.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </details>
+                      </div>
+
+                      <div className="mt-6 border-t border-[#3A1F0E]/8 pt-5">
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#3A1F0E]/38">Try a specific question</p>
+                        <div className="flex flex-wrap gap-2">
+                          {KINFOLK_EXAMPLE_CHIPS.map(chip => (
+                            <button key={chip} onClick={() => send(chip)}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#3A1F0E]/10 bg-white px-3 py-2 text-xs text-[#3A1F0E]/62 transition-colors hover:border-[#CA922B]/40 hover:text-[#8D5C17]">
+                              <ChevronRight size={10} className="shrink-0 text-[#CA922B]" />{chip}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    {/* Example prompts — secondary, mirrors mobile WELCOME_CHIPS */}
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/30 mb-2 self-start ml-1">Or try asking:</div>
-                    <div className="flex flex-wrap gap-2 justify-start max-w-lg">
-                      {KINFOLK_EXAMPLE_CHIPS.map(chip => (
-                        <button key={chip} onClick={() => send(chip)}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#3A1F0E]/10 rounded-full text-xs text-[#3A1F0E]/60 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors shadow-sm">
-                          <ChevronRight size={10} className="text-[#CA922B] shrink-0" />{chip}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  </section>
                 )}
 
                 {messages.map(msg => (
@@ -2441,34 +2480,48 @@ function TravelPage() {
                   </div>
                 )}
 
-                <div className="mb-2 flex max-w-3xl flex-wrap items-center gap-2 mx-auto">
-                  {PERSONALITY_MODES.map(({ id, label }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      data-testid={`kinfolk-mode-${id}`}
-                      aria-pressed={kinfolkMode === id}
-                      disabled={!preferencesHydrated || modeSaveStatus === "saving"}
-                      onClick={() => void selectKinfolkMode(id)}
-                      className={`rounded-full px-3 py-1.5 text-[11px] font-bold disabled:opacity-50 ${kinfolkMode === id ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/50"}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                  {modeSaveStatus === "saving" && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/45">Saving mode…</span>}
-                  {modeSaveStatus === "error" && <span role="alert" className="text-[10px] text-red-700">Mode was not saved; your previous mode was restored.</span>}
-                  <div className="ml-auto flex items-center gap-3">
-                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Save only this message to your private Kinfolk memory. This is off by default; you can view, edit, or forget saved memory at any time.">
-                      <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} />
-                      Save this to my private Kinfolk memory
-                    </label>
-                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
-                      <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} />
-                      Use approved public Community posts
-                    </label>
-                    <button aria-label="Manage private Kinfolk memory" onClick={() => setShowMemoryManager(true)} className="text-[11px] font-bold text-[#CA922B] hover:underline">Manage memory</button>
-                  </div>
+                <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowComposerControls((visible) => !visible)}
+                    aria-expanded={showComposerControls}
+                    aria-controls="kinfolk-composer-controls"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 py-1.5 text-[11px] font-semibold text-[#3A1F0E]/65 transition-colors hover:border-[#CA922B]/35 hover:text-[#8D5C17]"
+                  >
+                    <Settings size={12} className="text-[#CA922B]" />
+                    <span>{({ community: "Just Big Cousin", professor: "Professor", business_manager: "Business Manager", best_friend: "Best Friend" } as const)[kinfolkMode]}</span>
+                    <span className="text-[#3A1F0E]/35">· Voice & privacy</span>
+                    <ChevronRight size={12} className={`transition-transform ${showComposerControls ? "rotate-90" : ""}`} />
+                  </button>
+                  <span className="hidden text-[10px] text-[#3A1F0E]/38 sm:block">Private memory stays off unless you turn it on.</span>
                 </div>
+                {showComposerControls && (
+                  <div id="kinfolk-composer-controls" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="mr-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#3A1F0E]/38">Reply style</span>
+                      {PERSONALITY_MODES.map(({ id, label }) => (
+                        <button key={id} data-testid={`kinfolk-mode-${id}`} onClick={() => void selectKinfolkMode(id)} className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${kinfolkMode === id ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/55 hover:border-[#CA922B]/35 hover:text-[#8D5C17]"}`}>{label}</button>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 border-t border-[#3A1F0E]/8 pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save only this message to your private Kinfolk memory. This is off by default; you can view, edit, or forget saved memory at any time.">
+                        <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} className="mt-0.5" />
+                        Save this to my private Kinfolk memory
+                      </label>
+                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
+                        <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} className="mt-0.5" />
+                        Use approved public Community posts
+                      </label>
+                      <button aria-label="Manage private Kinfolk memory" onClick={() => setShowMemoryManager(true)} className="justify-self-start text-[11px] font-bold text-[#8D5C17] hover:underline sm:justify-self-end">Manage memory</button>
+                    </div>
+                    {modeSaveStatus === "saving" && (
+                      <span aria-live="polite" className="mt-2 block text-[10px] text-[#3A1F0E]/45">Saving reply style…</span>
+                    )}
+                    {modeSaveStatus === "error" && (
+                      <span role="alert" className="mt-2 block text-[10px] text-red-700">Mode was not saved; your previous mode was restored.</span>
+                    )}
+                  </div>
+                )}
 
                 {imageUrls.length > 0 && <div className="mb-2 flex max-w-3xl gap-2 mx-auto">
                   {imageUrls.map((url) => <div key={url} className="relative"><img src={url} alt="Ready to ask Kinfolk about" className="h-20 w-20 rounded-xl object-cover" /><button onClick={() => setImageUrls((items) => items.filter((item) => item !== url))} aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-[#2B1507] p-1 text-white"><X size={11} /></button></div>)}

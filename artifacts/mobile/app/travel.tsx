@@ -1154,7 +1154,9 @@ function WelcomeScreen({
 }) {
   const [headline] = useState(() => WELCOME_HEADLINES[Math.floor(Math.random() * WELCOME_HEADLINES.length)]);
   const [showMorePrompts, setShowMorePrompts] = useState(false);
+  const [showMorePaths, setShowMorePaths] = useState(false);
   const visiblePrompts = showMorePrompts ? WELCOME_CHIPS : WELCOME_CHIPS.slice(0, 3);
+  const visiblePaths = showMorePaths ? LIFE_CHIPS : LIFE_CHIPS.slice(0, 4);
 
 
   return (
@@ -1170,20 +1172,25 @@ function WelcomeScreen({
         </View>
       </View>
 
-      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Start here</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={wsStyles.lifeChipsRail}>
-        {LIFE_CHIPS.map((c) => (
+      <View style={[wsStyles.pathSection, { borderTopColor: colors.border }]}>
+        <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Start here</Text>
+        {visiblePaths.map((c) => (
           <TouchableOpacity
             key={c.label}
-            style={[wsStyles.lifeChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[wsStyles.lifePath, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => onChipPress(c.prompt)}
             activeOpacity={0.75}
           >
-            <Text style={wsStyles.lifeChipEmoji}>{c.emoji}</Text>
-            <Text style={[wsStyles.lifeChipText, { color: colors.text }]}>{c.label}</Text>
+            <Text style={wsStyles.lifePathEmoji}>{c.emoji}</Text>
+            <Text style={[wsStyles.lifePathText, { color: colors.text }]}>{c.label}</Text>
+            <Ionicons name="arrow-forward" size={15} color={colors.mutedForeground} />
           </TouchableOpacity>
         ))}
-      </ScrollView>
+        <TouchableOpacity onPress={() => setShowMorePaths((visible) => !visible)} activeOpacity={0.75} style={wsStyles.morePromptsBtn}>
+          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>{showMorePaths ? "Show fewer paths" : "More ways Kinfolk can help"}</Text>
+          <Ionicons name={showMorePaths ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
 
       <View style={[wsStyles.promptSection, { borderTopColor: colors.border }]}>
         <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Try a specific question</Text>
@@ -1230,8 +1237,10 @@ const wsStyles = StyleSheet.create({
   title: { fontFamily: "Inter_700Bold", fontSize: 21, lineHeight: 27, marginBottom: 5 },
   sub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
   sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 },
-  cityChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
-  cityChipText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  pathSection: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 18, paddingTop: 18 },
+  lifePath: { alignItems: "center", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 10, marginBottom: 8, paddingHorizontal: 13, paddingVertical: 12 },
+  lifePathEmoji: { fontSize: 17 },
+  lifePathText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 13 },
   promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 13, marginBottom: 8, width: "100%" },
   promptText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   promptSection: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 18, paddingTop: 18 },
@@ -1241,10 +1250,6 @@ const wsStyles = StyleSheet.create({
   journalEmoji: { fontSize: 21 },
   journalTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 2 },
   journalSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
-  lifeChipsRail: { gap: 8, paddingRight: 16 },
-  lifeChip: { alignItems: "flex-start", justifyContent: "space-between", width: 126, minHeight: 86, borderRadius: 16, borderWidth: 1, padding: 12 },
-  lifeChipEmoji: { fontSize: 14 },
-  lifeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12.5, lineHeight: 17 },
 });
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────
