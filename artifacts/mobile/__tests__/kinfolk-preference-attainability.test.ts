@@ -16,6 +16,29 @@ describe("mobile Kinfolk preference attainability", () => {
     expect(hook).toContain('"18_39", "40_64", "65_plus"');
   });
 
+  it("asks for optional private identity and community context before taste preferences", () => {
+    expect(onboarding).toContain("Start with what you choose to share");
+    expect(onboarding).toContain("Sex assigned at birth");
+    expect(onboarding).toContain("Gender identity");
+    expect(onboarding).toContain("Culture & community");
+    expect(onboarding).toContain("Black history & culture");
+    expect(onboarding).toContain("LGBTQ+ community");
+    expect(onboarding).toContain("Veteran community");
+    expect(onboarding).toContain("Everything on this page is optional, private, editable");
+    expect(onboarding).toContain("allowMedicallyRelevantContext");
+    expect(onboarding).toContain("communities: communityContexts");
+    expect(hook).toContain("personalizationContextCompleted");
+  });
+
+  it("uses one vertical, section-based setup instead of a carousel or stepper", () => {
+    expect(onboarding).toContain('animationType="fade"');
+    expect(onboarding).toContain("Optional Kinfolk setup");
+    expect(onboarding).toContain("const showAllSections = true");
+    expect(onboarding).not.toContain('animationType="slide"');
+    expect(onboarding).not.toContain("setStep(");
+    expect(onboarding).not.toContain("totalSteps");
+  });
+
   it("supports bounded specific interests and keeps failed saves visible", () => {
     expect(onboarding).toMatch(/author events, candle making, board games/);
     expect(tasteProfile).toMatch(/author events, candle making, board games/);

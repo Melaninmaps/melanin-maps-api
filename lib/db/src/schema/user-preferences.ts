@@ -69,6 +69,12 @@ export const userPreferencesTable = pgTable("user_preferences", {
     "personalization_context_completed_at",
     { withTimezone: true },
   ),
+  // Explicit private consent to use the member's saved communities as a
+  // relevant default context. General information remains available first;
+  // this never authorizes identity inference or public exposure.
+  useMemberContextByDefault: boolean("use_member_context_by_default")
+    .notNull()
+    .default(false),
   lifestyleServices: jsonb("lifestyle_services").$type<string[]>().default([]),
   searchHistory: jsonb("search_history")
     .$type<

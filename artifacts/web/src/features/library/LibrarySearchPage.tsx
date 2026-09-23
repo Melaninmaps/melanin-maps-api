@@ -99,6 +99,7 @@ type LibraryResearchResponse = {
   published: boolean;
   provider: { name: "internal" | "openai" | "tavily"; status: "available" | "degraded"; message: string };
   researchScope: LibraryResearchScope;
+  memberContextApplied?: string[];
 };
 
 type ResearchFailure = {
@@ -479,6 +480,11 @@ export function LibrarySearchPage() {
         {research ? (
           <>
             <p className={`library-provider-status library-provider-status--${research.provider.status}`} role="status">{research.provider.message}</p>
+            {research.memberContextApplied?.length ? (
+              <p className="library-search-provider-note">
+                <strong>Private default context:</strong> {research.memberContextApplied.join(" ")} was added because the signed-in member chose it in Kinfolk setup. The foundation remains general; “general only” or “this is for a friend” overrides it.
+              </p>
+            ) : null}
             <ExpandableAnswer
               body={(research.foundation ?? research.answer).body}
               disclaimer={(research.foundation ?? research.answer).disclaimer}

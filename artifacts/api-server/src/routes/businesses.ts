@@ -2627,7 +2627,28 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
   }
 });
 
-// ── GET /businesses/duplicate-check — 4-step soft-match for submissions & claims ──
+function normalizedDuplicateValue(value: string | undefined): string {
+  return (value ?? "")
+    .normalize("NFKC")
+    .toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function socialDuplicateNeedle(value: string | undefined): string {
+  return (value ?? "")
+    .normalize("NFKC")
+    .toLocaleLowerCase("en-US")
+    .replace(/^https?:\/\/(?:www\.)?/, "")
+    .replace(/^@/, "")
+    .replace(/\/$/, "")
+    .trim();
+}
+
+// ── GET /businesses/duplicate-check — confirmable soft-match before submission ──
+// This applies to every community submission—minority-owned, non-minority-owned,
+// and ownership-unknown. It only returns already-public listings and never
+// publishes, promotes, verifies, or changes any business record.
 router.get(
   "/businesses/duplicate-check",
   async (req: Request, res: Response) => {
@@ -2635,7 +2656,7 @@ router.get(
       res.status(401).json({ error: "Authentication required" });
       return;
     }
-    const { name, address, city, state } = req.query as Record<string, string>;
+    const { name, address, city, state, website, instagram, facebook, tiktok, youtube } = req.query as Record<string, string>;
     if (!name || !city || !state) {
       res.status(400).json({ error: "name, city, and state are required" });
       return;
@@ -2681,6 +2702,82 @@ router.get(
             .catch(() => ({ rows: [] })) // pg_trgm may not be installed
         : { rows: [] };
 
+      // Step 5: a public web or social identifier can independently suggest an
+      // existing listing. It is a confirmation prompt, not an automatic merge:
+      // a franchise, reused address, or similarly named account may be distinct.
+      const instagramNeedle = socialDuplicateNeedle(instagram);
+      const facebookNeedle = socialDuplicateNeedle(facebook);
+      const tiktokNeedle = socialDuplicateNeedle(tiktok);
+      const youtubeNeedle = socialDuplicateNeedle(youtube);
+      const socialNeedles = [instagramNeedle, facebookNeedle, tiktokNeedle, youtubeNeedle]
+        .filter(Boolean);
+      const websiteNeedle = socialDuplicateNeedle(website);
+      const linkedProfiles = websiteNeedle || socialNeedles.length > 0
+        ? await pool.query<{
+            id: string;
+            name: string;
+            address: string | null;
+            city: string;
+            state: string | null;
+            website: string | null;
+            instagram: string | null;
+            facebook: string | null;
+            tiktok: string | null;
+            youtube: string | null;
+            listing_status: string | null;
+            owner_claim_status: string | null;
+          }>(
+             `SELECT id, name, address, city, state, website, instagram, facebook, tiktok, youtube,
+                    listing_status, owner_claim_status
+             FROM public.public_businesses
+             WHERE ($1 <> '' AND LOWER(COALESCE(website, '')) LIKE '%' || $1 || '%')
+                OR ($2 <> '' AND LOWER(COALESCE(instagram, '')) LIKE '%' || $2 || '%')
+                OR ($3 <> '' AND LOWER(COALESCE(facebook, '')) LIKE '%' || $3 || '%')
+                OR ($4 <> '' AND LOWER(COALESCE(tiktok, '')) LIKE '%' || $4 || '%')
+                OR ($5 <> '' AND LOWER(COALESCE(youtube, '')) LIKE '%' || $5 || '%')
+             ORDER BY name, id
+             LIMIT 10`,
+            [websiteNeedle, instagramNeedle, facebookNeedle, tiktokNeedle, youtubeNeedle],
+          )
+        : { rows: [] };
+
+      const allCandidates = [
+        ...exact.rows,
+        ...sameAddr.rows,
+        ...sameName.rows,
+        ...fuzzy.rows,
+        ...linkedProfiles.rows,
+      ];
+      const candidates = [...new Map(allCandidates.map((row) => [String((row as { id: string }).id), row])).values()].map((row) => {
+        const candidate = row as {
+          id: string;
+          name: string;
+          address?: string | null;
+          city: string;
+          state?: string | null;
+          website?: string | null;
+          instagram?: string | null;
+          facebook?: string | null;
+          tiktok?: string | null;
+          youtube?: string | null;
+          listing_status?: string | null;
+          owner_claim_status?: string | null;
+        };
+        const reasons: string[] = [];
+        const sameName = normalizedDuplicateValue(candidate.name) === normalizedDuplicateValue(name);
+        const sameAddress = Boolean(address?.trim())
+          && normalizedDuplicateValue(candidate.address ?? "") === normalizedDuplicateValue(address);
+        if (sameName && sameAddress) reasons.push("same_name_and_address");
+        else if (sameName) reasons.push("same_name");
+        else if (sameAddress) reasons.push("same_address");
+        const linkedValues = [candidate.website, candidate.instagram, candidate.facebook, candidate.tiktok, candidate.youtube]
+          .map(socialDuplicateNeedle)
+          .filter(Boolean);
+        if (websiteNeedle && linkedValues.some((value) => value.includes(websiteNeedle) || websiteNeedle.includes(value))) reasons.push("same_website");
+        if (socialNeedles.some((needle) => linkedValues.some((value) => value.includes(needle) || needle.includes(value)))) reasons.push("same_social_profile");
+        return { ...candidate, matchReasons: reasons };
+      });
+
       const isDuplicate = exact.rows.length > 0 && !!address?.trim();
       res.json({
         isDuplicate,
@@ -2688,6 +2785,8 @@ router.get(
         step2_sameAddress: sameAddr.rows,
         step3_sameName: sameName.rows,
         step4_fuzzy: fuzzy.rows,
+        step5_linkedProfiles: linkedProfiles.rows,
+        candidates,
         recommendation: isDuplicate
           ? "reject"
           : exact.rows.length > 0

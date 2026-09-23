@@ -24,11 +24,13 @@ import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { ENDORSEMENT_TAGS } from "@workspace/db";
 import { ENDORSEMENT_TAG_VARIANTS } from "@workspace/db";
 import { THE_REAL_TAGS } from "@workspace/db";
+import { DIASPORA_OWNERSHIP_DESIGNATIONS, ownershipDesignationFilterId } from "@workspace/constants";
 import { createSession } from "../lib/auth";
 import {
   dedupeKey as _dedupeKey,
   normalizeText as _normalizeText,
 } from "../lib/business-dedup.js";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 const router: IRouter = Router();
 
@@ -303,6 +305,8 @@ router.post(
           id: businessesTable.id,
           name: businessesTable.name,
           blackOwned: businessesTable.blackOwned,
+          promotionEligible: businessesTable.promotionEligible,
+          ownershipDesignations: businessesTable.ownershipDesignations,
         })
         .from(businessesTable)
         .where(eq(businessesTable.id, businessId))
@@ -313,7 +317,19 @@ router.post(
         return;
       }
 
-      if (!business.blackOwned) {
+      const documentedDiasporaDesignations = new Set(DIASPORA_OWNERSHIP_DESIGNATIONS.map(ownershipDesignationFilterId));
+      const hasDocumentedDiasporaOwnership = business.promotionEligible === true
+        && (business.ownershipDesignations ?? []).some((designation) => documentedDiasporaDesignations.has(ownershipDesignationFilterId(designation)));
+      const communityOwnership = await pool.query(
+        `SELECT 1
+           FROM community_business_submissions
+          WHERE matched_business_id = $1
+            AND community_reported_ownership = 'minority_owned'
+          LIMIT 1`,
+        [businessId],
+      );
+      const hasCommunityReportedMinorityOwnership = communityOwnership.rows.length > 0;
+      if (!hasDocumentedDiasporaOwnership && !hasCommunityReportedMinorityOwnership) {
         res.status(403).json({
           error: "Outreach emails are only sent to minority-owned businesses.",
         });
@@ -339,6 +355,124 @@ router.post(
     } catch (err) {
       req.log.error({ err }, "Failed to send business outreach");
       res.status(500).json({ error: "Failed to send outreach email" });
+    }
+  },
+);
+
+// ── Minority-owner nudge drafts ───────────────────────────────────────────────
+// This endpoint intentionally creates reviewable drafts only. It does not send
+// email or social DMs, disclose member identities, or broaden the program to
+// non-minority-owned listings. Delivery remains a separate, admin-approved
+// action; social delivery additionally requires the platform's official API
+// authorization and recipient-policy eligibility.
+router.post(
+  "/admin/business-owner-nudges/refresh",
+  async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const { rows } = await pool.query<{
+        id: string;
+        name: string;
+        public_destination: string;
+        channel: string;
+        community_reported_minority_owned: boolean;
+        views_30d: string;
+        saves_30d: string;
+        searches_30d: string;
+        member_adds: string;
+      }>(
+        `SELECT
+           b.id,
+           b.name,
+           COALESCE(NULLIF(b.instagram, ''), NULLIF(b.facebook, ''), NULLIF(b.tiktok, ''), NULLIF(b.website, '')) AS public_destination,
+           CASE
+             WHEN NULLIF(b.instagram, '') IS NOT NULL THEN 'instagram_review'
+             WHEN NULLIF(b.facebook, '') IS NOT NULL THEN 'facebook_review'
+             WHEN NULLIF(b.tiktok, '') IS NOT NULL THEN 'tiktok_review'
+             ELSE 'website_review'
+           END AS channel,
+           EXISTS (
+             SELECT 1
+               FROM community_business_submissions c
+              WHERE c.matched_business_id = b.id
+                AND c.community_reported_ownership = 'minority_owned'
+           ) AS community_reported_minority_owned,
+           (SELECT count(*) FROM business_profile_views v WHERE v.business_id = b.id AND v.viewed_at >= NOW() - INTERVAL '30 days') AS views_30d,
+           (SELECT count(*) FROM saved_places s WHERE s.business_id = b.id AND s.created_at >= NOW() - INTERVAL '30 days') AS saves_30d,
+           (SELECT count(*) FROM business_search_inquiries q
+             WHERE q.created_at >= NOW() - INTERVAL '30 days'
+               AND lower(btrim(q.business_name)) = lower(btrim(b.name))
+               AND (q.city IS NULL OR lower(btrim(q.city)) = lower(btrim(b.city)))
+           ) AS searches_30d,
+           (SELECT count(*) FROM community_business_submissions c WHERE c.matched_business_id = b.id) AS member_adds
+         FROM businesses b
+         WHERE public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)
+           AND COALESCE(b.owner_claim_status, 'unclaimed') = 'unclaimed'
+           AND COALESCE(NULLIF(b.instagram, ''), NULLIF(b.facebook, ''), NULLIF(b.tiktok, ''), NULLIF(b.website, '')) IS NOT NULL
+           AND (
+             (COALESCE(b.promotion_eligible, false) = TRUE AND ${mwmDiasporaPromotionSqlPredicate("b.id", "documented_diaspora")})
+             OR EXISTS (
+               SELECT 1
+                 FROM community_business_submissions c
+                WHERE c.matched_business_id = b.id
+                  AND c.community_reported_ownership = 'minority_owned'
+             )
+           )
+         ORDER BY b.created_at DESC
+         LIMIT 500`,
+      );
+
+      const minimumViews = 15;
+      const minimumSaves = 3;
+      const minimumSearches = 3;
+      const minimumMemberAdds = 3;
+      const candidates = rows.filter((row) =>
+        Number(row.views_30d) >= minimumViews
+        || Number(row.saves_30d) >= minimumSaves
+        || Number(row.searches_30d) >= minimumSearches
+        || Number(row.member_adds) >= minimumMemberAdds,
+      );
+      const actorId = (req as { user?: { id?: string } }).user?.id ?? null;
+      let drafted = 0;
+      for (const candidate of candidates) {
+        const evidence = {
+          period: "30d",
+          views: Number(candidate.views_30d),
+          saves: Number(candidate.saves_30d),
+          searches: Number(candidate.searches_30d),
+          communityAdds: Number(candidate.member_adds),
+          ownershipBasis: candidate.community_reported_minority_owned
+            ? "community_reported_minority_owned_not_verified"
+            : "source_documented_diaspora_ownership",
+        };
+        const message = `Mapping With Melanin has recorded community interest in ${candidate.name} over the last 30 days. Claiming the existing listing lets the owner review public business details and begin the separate verification process. Interest totals are aggregated; no member identities are shared.`;
+        const result = await pool.query(
+          `INSERT INTO business_owner_outreach
+             (business_id, channel, public_destination, status, prepared_by, template_version, message_snapshot, campaign_key, evidence_snapshot)
+           VALUES ($1,$2,$3,'draft',$4,'minority-owner-nudge-v1',$5,'interest-threshold-30d',$6::jsonb)
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [candidate.id, candidate.channel, candidate.public_destination, actorId, message, JSON.stringify(evidence)],
+        );
+        if (result.rows[0]) drafted += 1;
+      }
+
+      res.json({
+        ok: true,
+        evaluated: rows.length,
+        eligible: candidates.length,
+        drafted,
+        delivery: "not_sent",
+        policy: "Only source-documented or community-reported minority-owned unclaimed listings are eligible. Non-minority-owned listings are excluded.",
+        thresholds: { minimumViews, minimumSaves, minimumSearches, minimumMemberAdds, period: "30d" },
+      });
+    } catch (err) {
+      req.log.error({ err }, "Failed to prepare minority-owner nudge drafts");
+      res.status(500).json({ error: "Failed to prepare owner nudge drafts. No outreach was sent." });
     }
   },
 );

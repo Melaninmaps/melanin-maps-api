@@ -525,11 +525,13 @@ export function LibraryTopicPage() {
           </div>
         ) : (
           <section className="library-topic-page__empty">
-            <h3>This foundation is ready to grow.</h3>
+            <h3>Research this foundation now.</h3>
             <p>
-              It has a defined place in the Living Library. Research and community-relevant
-              resources will appear here as they are verified and added.
+              This collection has a defined place in the Living Library. Start with an
+              approved-content search; if coverage is sparse, the Library will request a
+              current source-governed foundation brief rather than leave a dead end.
             </p>
+            <Link href={`/library/search?q=${encodeURIComponent(topic.title)}`}>Research this collection</Link>
             <Link href="/library">Explore another foundation</Link>
           </section>
         )}

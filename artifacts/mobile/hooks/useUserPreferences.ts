@@ -35,6 +35,11 @@ export interface UserPreferences {
   preferredOwnershipTypes: string[];
   supportLensMode: "all_businesses" | "strict_documented_designations";
   diasporaCountries: string[];
+  communities: string[];
+  cultures: string[];
+  preferredLanguages: string[];
+  personalizationContextCompleted: boolean;
+  useMemberContextByDefault: boolean;
   lifestyleServices: string[];
 }
 
@@ -57,6 +62,11 @@ const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
   preferredOwnershipTypes: [],
   supportLensMode: "all_businesses",
   diasporaCountries: [],
+  communities: [],
+  cultures: [],
+  preferredLanguages: [],
+  personalizationContextCompleted: false,
+  useMemberContextByDefault: false,
   lifestyleServices: [],
 };
 

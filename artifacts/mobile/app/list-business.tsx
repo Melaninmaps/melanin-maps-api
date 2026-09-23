@@ -3,7 +3,7 @@ import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -42,6 +42,17 @@ interface SubmissionOutcome {
   message: string;
   businessId?: string;
   mapPin: boolean;
+}
+
+interface DuplicateCandidate {
+  id: string;
+  name: string;
+  address?: string | null;
+  city: string;
+  state?: string | null;
+  listing_status?: string | null;
+  owner_claim_status?: string | null;
+  matchReasons: string[];
 }
 
 interface FormData {
@@ -292,6 +303,9 @@ export default function ListBusinessScreen() {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
+  const [duplicateCandidates, setDuplicateCandidates] = useState<DuplicateCandidate[]>([]);
+  const [duplicateCheckLoading, setDuplicateCheckLoading] = useState(false);
+  const [duplicateReviewAcknowledged, setDuplicateReviewAcknowledged] = useState(false);
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const [slideAnim] = useState(() => new Animated.Value(0));
 
@@ -300,6 +314,11 @@ export default function ListBusinessScreen() {
 
   const update = (field: keyof FormData) => (value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  useEffect(() => {
+    setDuplicateCandidates([]);
+    setDuplicateReviewAcknowledged(false);
+  }, [form.name, form.address, form.city, form.state, form.website, form.instagram, form.facebook, form.tiktok, form.youtube]);
 
   const animateToStep = (nextStep: number) => {
     const direction = nextStep > step ? 1 : -1;
@@ -374,10 +393,44 @@ export default function ListBusinessScreen() {
     }
   };
 
+  const checkPotentialDuplicates = async (): Promise<boolean> => {
+    if (duplicateReviewAcknowledged) return false;
+    const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    if (!token) throw new Error("Sign in with your approved community account to submit a business.");
+    const params = new URLSearchParams({
+      name: form.name.trim(),
+      address: form.address.trim(),
+      city: form.city.trim(),
+      state: form.state.trim(),
+      ...(form.website.trim() ? { website: form.website.trim() } : {}),
+      ...(form.instagram.trim() ? { instagram: form.instagram.trim() } : {}),
+      ...(form.facebook.trim() ? { facebook: form.facebook.trim() } : {}),
+      ...(form.tiktok.trim() ? { tiktok: form.tiktok.trim() } : {}),
+      ...(form.youtube.trim() ? { youtube: form.youtube.trim() } : {}),
+    });
+    setDuplicateCheckLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/api/businesses/duplicate-check?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("We could not check for existing listings. Please try again before submitting.");
+      }
+      const result = await response.json() as { candidates?: DuplicateCandidate[] };
+      const candidates = Array.isArray(result.candidates) ? result.candidates : [];
+      setDuplicateCandidates(candidates);
+      return candidates.length > 0;
+    } finally {
+      setDuplicateCheckLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (submitting) return;
     setSubmitting(true);
     try {
+      if (await checkPotentialDuplicates()) return;
       const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
       const token = await SecureStore.getItemAsync("auth_session_token");
       if (!token) throw new Error("Sign in with your approved community account to submit a business.");
@@ -946,6 +999,26 @@ export default function ListBusinessScreen() {
                       </Text>
                     </View>
                   </View>
+                  {duplicateCandidates.length > 0 && !duplicateReviewAcknowledged ? (
+                    <View style={[styles.duplicateCard, { backgroundColor: "#FFF8E8", borderColor: "#CA922B" }]}>
+                      <Text style={[styles.duplicateTitle, { color: colors.foreground }]}>Is this the place you meant?</Text>
+                      <Text style={[styles.duplicateCopy, { color: colors.mutedForeground }]}>We found an existing public listing with a matching name, address, website, or social profile. Confirm before creating a second record.</Text>
+                      {duplicateCandidates.map((candidate) => (
+                        <View key={candidate.id} style={[styles.duplicateCandidate, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                          <Text style={[styles.duplicateCandidateName, { color: colors.foreground }]}>{candidate.name}</Text>
+                          <Text style={[styles.duplicateCandidateCopy, { color: colors.mutedForeground }]}>{[candidate.address, candidate.city, candidate.state].filter(Boolean).join(", ")}</Text>
+                          <Text style={[styles.duplicateCandidateCopy, { color: colors.mutedForeground }]}>{candidate.matchReasons.map((reason) => reason.replaceAll("_", " ")).join(" · ") || "possible match"}</Text>
+                          <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: candidate.id } } as never)} activeOpacity={0.8} style={[styles.useExistingButton, { borderColor: colors.primary }]}>
+                            <Text style={[styles.useExistingText, { color: colors.primary }]}>Yes, use this listing</Text>
+                            <Feather name="arrow-up-right" size={15} color={colors.primary} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      <TouchableOpacity onPress={() => { setDuplicateReviewAcknowledged(true); setDuplicateCandidates([]); }} activeOpacity={0.8} style={[styles.differentPlaceButton, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.differentPlaceText, { color: colors.primaryForeground }]}>No, this is a different place</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
                 </View>
               )}
             </Animated.View>
@@ -977,10 +1050,10 @@ export default function ListBusinessScreen() {
               ]}
               onPress={isLastForm ? () => { void handleSubmit(); } : goNext}
               activeOpacity={0.85}
-              disabled={!canProceed()}
+              disabled={!canProceed() || duplicateCheckLoading}
             >
               <Text style={[styles.nextBtnText, { color: canProceed() ? colors.primaryForeground : colors.mutedForeground }]}>
-                {isLastForm ? "Add Community Business" : "Continue"}
+                {isLastForm ? (duplicateCheckLoading ? "Checking listings…" : "Add Community Business") : "Continue"}
               </Text>
               <Feather
                 name={isLastForm ? "send" : "arrow-right"}
@@ -1031,6 +1104,32 @@ const styles = StyleSheet.create({
   },
   reviewNoticeTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 4 },
   reviewNoticeText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  duplicateCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    gap: 10,
+    marginTop: 14,
+  },
+  duplicateTitle: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  duplicateCopy: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  duplicateCandidate: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
+  duplicateCandidateName: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  duplicateCandidateCopy: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  useExistingButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 5,
+  },
+  useExistingText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  differentPlaceButton: { alignItems: "center", borderRadius: 10, paddingVertical: 11 },
+  differentPlaceText: { fontFamily: "Inter_700Bold", fontSize: 13 },
   footer: {
     flexDirection: "column",
     paddingHorizontal: 20,

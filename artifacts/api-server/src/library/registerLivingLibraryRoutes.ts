@@ -19,6 +19,7 @@ import {
 } from "./livingLibrary";
 import { parseLibrarySearchQuery, searchLivingLibrary } from "./librarySearch";
 import { LibraryResearchProviderUnavailableError } from "./researchProviderChain";
+import { applySavedMemberResearchContext } from "../kinfolk/saved-member-research-context";
 import type {
   ExternalResearchProvider,
   LibraryRepository,
@@ -48,6 +49,30 @@ function normalizedMemberContext(value: unknown): string[] {
         .filter((item) => item.length >= 2 && item.length <= 100),
     ),
   ].slice(0, 25);
+}
+
+async function applyMemberLibraryDefaultContext(input: {
+  memberId: string;
+  question: string;
+}): Promise<{ question: string; appliedTags: string[] }> {
+  try {
+    const [preferences] = await db
+      .select({
+        communities: userPreferencesTable.communities,
+        cultures: userPreferencesTable.cultures,
+        useMemberContextByDefault: userPreferencesTable.useMemberContextByDefault,
+      })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, input.memberId))
+      .limit(1);
+    return applySavedMemberResearchContext({
+      question: input.question,
+      preferences,
+    });
+  } catch {
+    // Context access must never block a general Library answer.
+    return { question: input.question, appliedTags: [] };
+  }
 }
 
 async function memberLibraryRankingContext(
@@ -116,17 +141,22 @@ export function registerLivingLibraryRoutes(
       )
         ? Math.max(0, Math.min(100, Number(request.body.internalResultCount)))
         : 0;
-      const researchScope = getLibraryResearchScope(question);
+      const memberContext = await applyMemberLibraryDefaultContext({
+        memberId: request.user.id,
+        question,
+      });
+      const effectiveQuestion = memberContext.question;
+      const researchScope = getLibraryResearchScope(effectiveQuestion);
       if (!researchProvider) {
         await repository
           .recordCoverageSignal({
             queryFingerprint: createHash("sha256")
-              .update(question.normalize("NFKC").toLowerCase().trim())
+              .update(effectiveQuestion.normalize("NFKC").toLowerCase().trim())
               .digest("hex"),
-            domain: classifyResearchDomain(question),
+            domain: classifyResearchDomain(effectiveQuestion),
             topicSlug: researchTopicSlug(
-              question,
-              classifyResearchDomain(question),
+              effectiveQuestion,
+              classifyResearchDomain(effectiveQuestion),
             ),
             internalResultCount,
             usedLiveResearch: true,
@@ -140,12 +170,13 @@ export function registerLivingLibraryRoutes(
           retryable: true,
           provider: { name: "none", status: "unavailable" },
           researchScope,
+          memberContextApplied: memberContext.appliedTags,
         });
       }
 
       try {
         const result = await answerAndArchiveResearchQuestion({
-          question,
+          question: effectiveQuestion,
           locationLabel: stringBody(request, "locationLabel"),
           repository,
           researchProvider,
@@ -180,6 +211,7 @@ export function registerLivingLibraryRoutes(
                   : "Current research completed for this response. It remains private until it clears the reusable Library gate.",
           },
           researchScope,
+          memberContextApplied: memberContext.appliedTags,
         });
       } catch (error) {
         if (error instanceof LibraryEvidenceInsufficientError) {
@@ -189,6 +221,7 @@ export function registerLivingLibraryRoutes(
             retryable: false,
             provider: { name: researchProvider.name, status: "degraded" },
             researchScope,
+            memberContextApplied: memberContext.appliedTags,
           });
         }
         console.error("Living Library research provider failed", error);
@@ -202,6 +235,7 @@ export function registerLivingLibraryRoutes(
           retryable: true,
           provider: { name: researchProvider.name, status: "unavailable" },
           researchScope,
+          memberContextApplied: memberContext.appliedTags,
         });
       }
     },

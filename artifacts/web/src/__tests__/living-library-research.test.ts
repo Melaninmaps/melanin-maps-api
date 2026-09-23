@@ -7,6 +7,10 @@ const pageSource = readFileSync(
   fileURLToPath(new URL("../features/library/LibrarySearchPage.tsx", import.meta.url)),
   "utf8",
 );
+const collectionSource = readFileSync(
+  fileURLToPath(new URL("../pages/library.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Living Library research presentation", () => {
   it("allows visible HTTPS citations and rejects unsafe source schemes or credentials", () => {
@@ -89,6 +93,22 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("The current foundation remains complete and separately sourced above.");
     expect(pageSource).toContain("communityContext?.status === \"available\"");
     expect(pageSource).toContain("researchTrack=\"foundation\"");
-    expect(pageSource).toContain("researchTrack=\"community\"");
+    expect(pageSource).toContain('researchTrack="community"');
+  });
+
+  it("discloses a member-selected default context without replacing the foundation", () => {
+    expect(pageSource).toContain("memberContextApplied?: string[]");
+    expect(pageSource).toContain("Private default context:");
+    expect(pageSource).toContain("The foundation remains general");
+    expect(pageSource).toContain("this is for a friend");
+  });
+
+  it("gives each website collection subject a prefilled governed search and no empty collection dead end", () => {
+    expect(collectionSource).toContain("const COLLECTION_SUBTOPICS");
+    expect(collectionSource).toContain("collectionSubtopics.map");
+    expect(collectionSource).toContain("href={`/library/search?q=${encodeURIComponent(subtopic.query)}`}");
+    expect(collectionSource).toContain("Research this collection");
+    expect(collectionSource).toContain("href={`/library/search?q=${encodeURIComponent(topic.title)}`}");
+    expect(pageSource).toContain("void researchCurrentQuestion();");
   });
 });

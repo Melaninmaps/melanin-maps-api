@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors } from "@/hooks/useColors";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
 const ONBOARDING_KEY = "@melanin_maps_kinfolk_onboarding";
 const GOLD = "#C9922B";
@@ -54,6 +55,37 @@ const RECOMMENDATION_LIFE_STAGES = [
   { id: "65_plus" as const, label: "65+" },
 ];
 
+const SEX_ASSIGNED_AT_BIRTH_OPTIONS = [
+  { id: "female", label: "Female" },
+  { id: "male", label: "Male" },
+  { id: "intersex", label: "Intersex" },
+  { id: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+const GENDER_IDENTITY_OPTIONS = [
+  { id: "woman", label: "Woman" },
+  { id: "man", label: "Man" },
+  { id: "nonbinary", label: "Nonbinary" },
+  { id: "another_identity", label: "Another identity" },
+  { id: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+const COMMUNITY_CONTEXT_OPTIONS = [
+  "Black woman",
+  "Black / African American",
+  "Black history & culture",
+  "HBCU culture",
+  "African & diaspora culture",
+  "Caribbean culture",
+  "Afro-Latino culture",
+  "LGBTQ+ community",
+  "Disability community",
+  "Veteran community",
+  "Faith & spiritual communities",
+  "Minority-owned businesses",
+  "Community-led events",
+];
+
 const LIFESTYLE_SERVICE_OPTIONS = [
   { id: "barber", label: "Barber", emoji: "💈" },
   { id: "loctician", label: "Loctician", emoji: "🫱🏾‍🫲🏾" },
@@ -100,10 +132,15 @@ interface Props {
 export function KinfolkOnboarding({ visible, onComplete }: Props) {
   const colors = useColors();
   const { update } = useUserPreferences();
-  const [step, setStep] = useState(0);
+  const showAllSections = true;
   const [favCats, setFavCats] = useState<string[]>([]);
   const [specificInterests, setSpecificInterests] = useState("");
   const [recommendationLifeStage, setRecommendationLifeStage] = useState<"unspecified" | "18_39" | "40_64" | "65_plus">("unspecified");
+  const [sexAssignedAtBirth, setSexAssignedAtBirth] = useState<string | null>(null);
+  const [genderIdentity, setGenderIdentity] = useState<string | null>(null);
+  const [allowMedicalContext, setAllowMedicalContext] = useState(false);
+  const [communityContexts, setCommunityContexts] = useState<string[]>([]);
+  const [useMemberContextByDefault, setUseMemberContextByDefault] = useState(false);
   const [budget, setBudget] = useState("any");
   const [tripStyles, setTripStyles] = useState<string[]>([]);
   const [companion, setCompanion] = useState("solo");
@@ -122,40 +159,81 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
     setLifestyleServices((p) => p.includes(id) ? p.filter((s) => s !== id) : [...p, id]);
   }
 
+  function toggleCommunityContext(id: string) {
+    setCommunityContexts((p) => {
+      const next = p.includes(id) ? p.filter((item) => item !== id) : [...p, id];
+      if (next.length > 0) setUseMemberContextByDefault(true);
+      return next;
+    });
+  }
+
+  async function saveOptionalIdentityContext(): Promise<boolean> {
+    if (!sexAssignedAtBirth && !genderIdentity) return true;
+    try {
+      const headers = await getMemberApiHeaders();
+      if (!headers.Authorization) return false;
+      const apiBase = getApiBase();
+      const existingResponse = await fetch(`${apiBase}/api/me/identity-context`, { headers });
+      if (!existingResponse.ok) return false;
+      const current = await existingResponse.json() as { version?: number };
+      const response = await fetch(`${apiBase}/api/me/identity-context`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expectedVersion: current.version ?? 0,
+          ...(sexAssignedAtBirth ? { sexAssignedAtBirth } : {}),
+          ...(genderIdentity ? { genderIdentity } : {}),
+          allowMedicallyRelevantContext: allowMedicalContext,
+        }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async function handleFinish() {
     setSaving(true);
     const enteredInterests = specificInterests
       .split(/[,\n]/)
       .map(value => value.trim())
       .filter(value => value.length >= 2 && value.length <= 80);
-    const saved = await update({
+    const [saved, identitySaved] = await Promise.all([
+      update({
       recommendationLifeStage,
       favoriteCategories: [...new Set([...favCats, ...enteredInterests])].slice(0, 50),
       budgetRange: budget,
       tripStyle: tripStyles,
       travelCompanion: companion,
       lifestyleServices,
-    });
+      communities: communityContexts,
+      personalizationContextCompleted: true,
+      useMemberContextByDefault,
+      }),
+      saveOptionalIdentityContext(),
+    ]);
     if (saved) await markKinfolkOnboardingDone();
     setSaving(false);
-    if (saved) onComplete();
+    if (saved) {
+      if (!identitySaved && (sexAssignedAtBirth || genderIdentity)) {
+        Alert.alert("Preferences saved", "Your optional identity context was not saved. You can add it later in Settings.");
+      }
+      onComplete();
+    }
     else Alert.alert("Preferences not saved", "Kinfolk could not save those preferences. Nothing was marked complete; please try again.");
   }
 
-  const totalSteps = 6;
-
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal visible={visible} animationType="fade" presentationStyle="pageSheet">
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <View style={styles.progressRow}>
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <View key={i} style={[styles.dot, { backgroundColor: i <= step ? colors.primary : colors.border }]} />
-          ))}
+        <View style={styles.setupHeader}>
+          <Text style={[styles.setupHeaderTitle, { color: colors.text }]}>Optional Kinfolk setup</Text>
+          <Text style={[styles.setupHeaderCopy, { color: colors.mutedForeground }]}>Choose only what helps. Every section is private, editable, and skippable.</Text>
         </View>
 
         <ScrollView
         keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {step === 0 && (
+          {showAllSections && (
             <View style={styles.centered}>
               <View style={[styles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
                 <Ionicons name="sparkles" size={44} color={colors.primary} />
@@ -170,7 +248,97 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             </View>
           )}
 
-          {step === 1 && (
+          {showAllSections && (
+            <View>
+              <Text style={[styles.heading, { color: colors.text }]}>Start with what you choose to share</Text>
+              <Text style={[styles.subheading, { color: colors.mutedForeground }]}>Everything on this page is optional, private, editable, and never shown on your profile. Kinfolk does not infer any of it from your activity.</Text>
+
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Age range <Text style={[styles.optionalText, { color: colors.mutedForeground }]}>optional</Text></Text>
+              <Text style={[styles.sectionCopy, { color: colors.mutedForeground }]}>This replaces a date of birth. Use it only when age-relevant recommendations would help.</Text>
+              <View style={styles.stackedOptions}>
+                {RECOMMENDATION_LIFE_STAGES.map(option => (
+                  <TouchableOpacity key={option.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: recommendationLifeStage === option.id }}
+                    style={[styles.contextOption, { backgroundColor: recommendationLifeStage === option.id ? colors.primary + "14" : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
+                    onPress={() => setRecommendationLifeStage(option.id)}>
+                    <Text style={[styles.contextOptionText, { color: colors.text }]}>{option.label}</Text>
+                    {recommendationLifeStage === option.id ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Sex assigned at birth <Text style={[styles.optionalText, { color: colors.mutedForeground }]}>optional</Text></Text>
+              <Text style={[styles.sectionCopy, { color: colors.mutedForeground }]}>Only for health context when you turn on the consent below. It is never used to make a general recommendation.</Text>
+              <View style={styles.stackedOptions}>
+                {SEX_ASSIGNED_AT_BIRTH_OPTIONS.map(option => (
+                  <TouchableOpacity key={option.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: sexAssignedAtBirth === option.id }}
+                    style={[styles.contextOption, { backgroundColor: sexAssignedAtBirth === option.id ? colors.primary + "14" : colors.card, borderColor: sexAssignedAtBirth === option.id ? colors.primary : colors.border }]}
+                    onPress={() => setSexAssignedAtBirth(option.id)}>
+                    <Text style={[styles.contextOptionText, { color: colors.text }]}>{option.label}</Text>
+                    {sexAssignedAtBirth === option.id ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {sexAssignedAtBirth && sexAssignedAtBirth !== "prefer_not_to_say" ? (
+                <TouchableOpacity
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: allowMedicalContext }}
+                  onPress={() => setAllowMedicalContext((enabled) => !enabled)}
+                  style={[styles.medicalConsent, { backgroundColor: allowMedicalContext ? colors.primary + "14" : colors.card, borderColor: allowMedicalContext ? colors.primary : colors.border }]}
+                >
+                  <Ionicons name={allowMedicalContext ? "checkbox" : "square-outline"} size={22} color={colors.primary} />
+                  <Text style={[styles.medicalConsentText, { color: colors.text }]}>I want Kinfolk to consider this only when I ask a health question. It does not replace clinical care or change the source standards.</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Gender identity <Text style={[styles.optionalText, { color: colors.mutedForeground }]}>optional</Text></Text>
+              <View style={styles.stackedOptions}>
+                {GENDER_IDENTITY_OPTIONS.map(option => (
+                  <TouchableOpacity key={option.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: genderIdentity === option.id }}
+                    style={[styles.contextOption, { backgroundColor: genderIdentity === option.id ? colors.primary + "14" : colors.card, borderColor: genderIdentity === option.id ? colors.primary : colors.border }]}
+                    onPress={() => setGenderIdentity(option.id)}>
+                    <Text style={[styles.contextOptionText, { color: colors.text }]}>{option.label}</Text>
+                    {genderIdentity === option.id ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Culture & community <Text style={[styles.optionalText, { color: colors.mutedForeground }]}>choose any or skip</Text></Text>
+              <Text style={[styles.sectionCopy, { color: colors.mutedForeground }]}>Use it as a private default only if you choose the checkbox below. It is not a public label, a ranking rule, or an assumption about you.</Text>
+              <View style={styles.stackedOptions}>
+                {COMMUNITY_CONTEXT_OPTIONS.map(option => {
+                  const selected = communityContexts.includes(option);
+                  return (
+                    <TouchableOpacity key={option}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: selected }}
+                      style={[styles.contextOption, { backgroundColor: selected ? colors.primary + "14" : colors.card, borderColor: selected ? colors.primary : colors.border }]}
+                      onPress={() => toggleCommunityContext(option)}>
+                      <Text style={[styles.contextOptionText, { color: colors.text }]}>{option}</Text>
+                      <Ionicons name={selected ? "checkbox" : "square-outline"} size={21} color={selected ? colors.primary : colors.mutedForeground} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: useMemberContextByDefault }}
+                onPress={() => setUseMemberContextByDefault((enabled) => !enabled)}
+                style={[styles.medicalConsent, { backgroundColor: useMemberContextByDefault ? colors.primary + "14" : colors.card, borderColor: useMemberContextByDefault ? colors.primary : colors.border }]}
+              >
+                <Ionicons name={useMemberContextByDefault ? "checkbox" : "square-outline"} size={22} color={colors.primary} />
+                <Text style={[styles.medicalConsentText, { color: colors.text }]}>Use the context I selected as my private default in relevant Kinfolk and Library questions. I can say “general only,” “this is for a friend,” or change it anytime.</Text>
+              </TouchableOpacity>
+              <Text style={[styles.privacyNote, { color: colors.mutedForeground }]}>You can skip every option, remove it later, or ask a question with no personal context at all.</Text>
+            </View>
+          )}
+
+          {showAllSections && (
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>What do you love?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
@@ -202,23 +370,10 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
                 multiline
                 style={[styles.specificInput, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
               />
-              <Text style={[styles.fieldLabel, { color: colors.text }]}>Recommendation life stage (optional)</Text>
-              <View style={styles.catGrid}>
-                {RECOMMENDATION_LIFE_STAGES.map(option => (
-                  <TouchableOpacity key={option.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: recommendationLifeStage === option.id }}
-                    style={[styles.ageChip, { backgroundColor: recommendationLifeStage === option.id ? colors.primary : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
-                    onPress={() => setRecommendationLifeStage(option.id)}>
-                    <Text style={[styles.catLabel, { color: recommendationLifeStage === option.id ? "#fff" : colors.text }]}>{option.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text style={[styles.privacyNote, { color: colors.mutedForeground }]}>Used only when life stage matters. Kinfolk does not collect your birth date here or infer health, income, mobility, or family status. “Prefer not to say” opts out.</Text>
             </View>
           )}
 
-          {step === 2 && (
+          {showAllSections && (
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>What&apos;s your budget vibe?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
@@ -244,7 +399,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             </View>
           )}
 
-          {step === 3 && (
+          {showAllSections && (
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>How do you travel?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
@@ -270,7 +425,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             </View>
           )}
 
-          {step === 4 && (
+          {showAllSections && (
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>Who&apos;s rolling with you?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
@@ -293,7 +448,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             </View>
           )}
 
-          {step === 5 && (
+          {showAllSections && (
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>Your go-to services 💈</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
@@ -334,25 +489,13 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 
         <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
           <View style={styles.footerRow}>
-            {step > 0 ? (
-              <TouchableOpacity style={[styles.backBtn, { borderColor: colors.border }]} onPress={() => setStep((s) => s - 1)}>
-                <Text style={[styles.backBtnText, { color: colors.text }]}>Back</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={() => { void markKinfolkOnboardingDone(); onComplete(); }}>
-                <Text style={[styles.skipText, { color: colors.mutedForeground }]}>Skip for now</Text>
-              </TouchableOpacity>
-            )}
-            {step < totalSteps - 1 ? (
-              <TouchableOpacity style={[styles.nextBtn, { backgroundColor: colors.primary }]} onPress={() => setStep((s) => s + 1)}>
-                <Text style={styles.nextBtnText}>{step === 0 ? "Let's go →" : "Next →"}</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={[styles.nextBtn, { backgroundColor: colors.primary }]} onPress={handleFinish} disabled={saving}>
-                <Ionicons name="checkmark-circle" size={18} color="#fff" />
-                <Text style={styles.nextBtnText}>{saving ? "Saving…" : "Save my taste"}</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity onPress={() => { void markKinfolkOnboardingDone(); onComplete(); }}>
+              <Text style={[styles.skipText, { color: colors.mutedForeground }]}>Skip for now</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.nextBtn, { backgroundColor: colors.primary }]} onPress={handleFinish} disabled={saving}>
+              <Ionicons name="checkmark-circle" size={18} color="#fff" />
+              <Text style={styles.nextBtnText}>{saving ? "Saving…" : "Save my setup"}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -362,8 +505,9 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  progressRow: { flexDirection: "row", justifyContent: "center", gap: 6, paddingTop: 20, paddingBottom: 4 },
-  dot: { width: 22, height: 4, borderRadius: 2 },
+  setupHeader: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 6 },
+  setupHeaderTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
+  setupHeaderCopy: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginTop: 4 },
   scroll: { padding: 24, paddingBottom: 16 },
   centered: { alignItems: "center", paddingTop: 24 },
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 20 },
@@ -372,6 +516,13 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: "Inter_700Bold", fontSize: 14, marginTop: 20, marginBottom: 6 },
   specificInput: { minHeight: 64, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 14, textAlignVertical: "top" },
   ageChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 10 },
+  optionalText: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  sectionCopy: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginBottom: 8 },
+  stackedOptions: { gap: 8 },
+  contextOption: { minHeight: 48, borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  contextOptionText: { fontFamily: "Inter_600SemiBold", fontSize: 14, flex: 1 },
+  medicalConsent: { borderRadius: 12, borderWidth: 1.5, marginTop: 10, padding: 12, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  medicalConsentText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, flex: 1 },
   privacyNote: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 10 },
   catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
   catChip: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 10 },

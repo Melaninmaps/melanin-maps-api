@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import {
+  LIBRARY_COLLECTION_SHELVES,
+  LIBRARY_COLLECTION_SUBTOPICS,
+  libraryCollectionResearchParams,
+} from "../lib/libraryCollections";
 
 const researchScreen = readFileSync(new URL("../app/library-research.tsx", import.meta.url), "utf8");
 const libraryTab = readFileSync(new URL("../app/(tabs)/library.tsx", import.meta.url), "utf8");
@@ -47,6 +52,52 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain('accessibilityRole="checkbox"');
     expect(researchScreen).toContain("toggleResearchLens");
     expect(researchScreen).toContain("It is not saved as your identity.");
+  });
+
+  it("uses an optional expandable community-context section instead of a horizontal carousel", () => {
+    expect(researchScreen).toContain("lensPickerOpen");
+    expect(researchScreen).toContain("Community research context");
+    expect(researchScreen).toContain("Current foundation only. Add a community packet if you want one.");
+    expect(researchScreen).toContain('accessibilityState={{ expanded: lensPickerOpen }}');
+    expect(researchScreen).not.toContain("<ScrollView horizontal");
+  });
+
+  it("applies a routed starter topic only once so members can erase or replace it", () => {
+    expect(researchScreen).toContain("const appliedSuggestedQuestion = useRef(false)");
+    expect(researchScreen).toContain("!appliedSuggestedQuestion.current");
+    expect(researchScreen).toContain("appliedSuggestedQuestion.current = true");
+  });
+
+  it("makes every Library collection subject an immediate governed research handoff", () => {
+    expect(LIBRARY_COLLECTION_SHELVES.length).toBeGreaterThan(0);
+    expect(LIBRARY_COLLECTION_SUBTOPICS.length).toBeGreaterThan(50);
+    expect(new Set(LIBRARY_COLLECTION_SUBTOPICS).size).toBe(LIBRARY_COLLECTION_SUBTOPICS.length);
+    for (const subtopic of LIBRARY_COLLECTION_SUBTOPICS) {
+      expect(libraryCollectionResearchParams(subtopic)).toEqual({ question: subtopic, research: "true" });
+    }
+    expect(libraryTab).toContain("libraryCollectionResearchParams(subtopic)");
+    expect(researchScreen).toContain('researchOnOpen === "true"');
+    expect(researchScreen).toContain("void searchLibrary(routedQuestion)");
+    expect(researchScreen).toContain("if (!hasPublishedEntry)");
+  });
+
+  it("runs connected and related questions through the same approved-first path", () => {
+    expect(researchScreen).toContain("function startPrefilledResearch(nextQuestion: string)");
+    expect(researchScreen).toContain("onConnectedTopic={startPrefilledResearch}");
+    expect(researchScreen).toContain("startPrefilledResearch(`${research.researchScope.researchLenses");
+  });
+
+  it("keeps an approved-topic recovery path visible when current research is unavailable", () => {
+    expect(researchScreen).toContain("APPROVED_TOPIC_STARTERS");
+    expect(researchScreen).toContain("browse a verified Library topic instead of seeing a dead end");
+    expect(researchScreen).toContain("Breast cancer screening");
+    expect(researchScreen).toContain("HBCU college admissions");
+  });
+
+  it("keeps matching approved Library topics visible alongside current research", () => {
+    expect(researchScreen).toContain("Available Library paths");
+    expect(researchScreen).toContain('pathname: "/library-topic"');
+    expect(researchScreen).toContain("matchingTopics");
   });
 
   it("does not misrepresent related questions as other members private search data", () => {

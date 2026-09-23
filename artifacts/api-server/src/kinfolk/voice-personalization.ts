@@ -298,7 +298,7 @@ export function validateKinfolkPreferenceUpdate(
   ) {
     issues.push("aaveLevel must be an integer from 0 through 3");
   }
-  for (const field of ["autoSpeak", "knowBeforeYouGo"] as const) {
+  for (const field of ["autoSpeak", "knowBeforeYouGo", "useMemberContextByDefault"] as const) {
     if (body[field] !== undefined && typeof body[field] !== "boolean")
       issues.push(`${field} must be a boolean`);
   }

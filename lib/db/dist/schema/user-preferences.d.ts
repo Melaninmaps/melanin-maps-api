@@ -489,6 +489,23 @@ export declare const userPreferencesTable: import("drizzle-orm/pg-core").PgTable
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        useMemberContextByDefault: import("drizzle-orm/pg-core").PgColumn<{
+            name: "use_member_context_by_default";
+            tableName: "user_preferences";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         lifestyleServices: import("drizzle-orm/pg-core").PgColumn<{
             name: "lifestyle_services";
             tableName: "user_preferences";
@@ -1061,6 +1078,23 @@ export declare const insertUserPreferencesSchema: import("drizzle-zod").BuildSch
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    useMemberContextByDefault: import("drizzle-orm/pg-core").PgColumn<{
+        name: "use_member_context_by_default";
+        tableName: "user_preferences";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     lifestyleServices: import("drizzle-orm/pg-core").PgColumn<{
         name: "lifestyle_services";
         tableName: "user_preferences";
@@ -1623,6 +1657,23 @@ export declare const selectUserPreferencesSchema: import("drizzle-zod").BuildSch
         driverParam: string;
         notNull: false;
         hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    useMemberContextByDefault: import("drizzle-orm/pg-core").PgColumn<{
+        name: "use_member_context_by_default";
+        tableName: "user_preferences";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
         isPrimaryKey: false;
         isAutoincrement: false;
         hasRuntimeDefault: false;

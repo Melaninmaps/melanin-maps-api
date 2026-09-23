@@ -3564,6 +3564,20 @@ ON CONFLICT (city_slug) DO UPDATE SET
       updated_at timestamptz NOT NULL DEFAULT now()
     )`,
   },
+  // An eligible-owner nudge is a reviewable draft, never an automatic message.
+  // Eligibility is intentionally limited to source-documented or clearly
+  // community-reported minority-owned listings; non-minority records never
+  // enter this program. The unique campaign index keeps repeated signal checks
+  // from creating a stack of duplicate drafts for one unclaimed listing.
+  {
+    name: "minority_owner_nudge_drafts_v1",
+    sql: `ALTER TABLE business_owner_outreach
+      ADD COLUMN IF NOT EXISTS campaign_key varchar(80),
+      ADD COLUMN IF NOT EXISTS evidence_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb;
+      CREATE UNIQUE INDEX IF NOT EXISTS business_owner_outreach_open_campaign_idx
+        ON business_owner_outreach (business_id, campaign_key)
+        WHERE campaign_key IS NOT NULL AND status IN ('draft', 'approved', 'sending', 'sent');`,
+  },
   // Claim record enrichment — evidence + review audit trail.
   {
     name: "community_business_claims_v2_claims_cols",
@@ -5165,6 +5179,13 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     );
     CREATE INDEX IF NOT EXISTS business_inventory_cohort_receipts_cohort_idx
       ON business_inventory_cohort_receipts (cohort, observed_at DESC);`,
+  },
+  {
+    // Private, explicit consent only. Existing members remain opted out until
+    // they make a choice in Kinfolk setup or Settings.
+    name: "user_preferences_member_context_default_consent_v1",
+    sql: `ALTER TABLE user_preferences
+            ADD COLUMN IF NOT EXISTS use_member_context_by_default BOOLEAN NOT NULL DEFAULT FALSE`,
   },
 ];
 

@@ -219,6 +219,7 @@ import {
   type EntityCandidate,
 } from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
+import { applySavedMemberResearchContext } from "../kinfolk/saved-member-research-context";
 import {
   answerPlanDomainForIntent,
   persistAnswerPlan,
@@ -4486,6 +4487,8 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           personalizationContextCompleted: Boolean(
             prefs.personalizationContextCompletedAt,
           ),
+          useMemberContextByDefault:
+            prefs.useMemberContextByDefault === true,
           // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
           preferredOwnershipTypes: normalizeOwnershipDesignationFilterIds(
             normalizeArr(prefs.preferredOwnershipTypes),
@@ -4525,6 +4528,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           cultures: [],
           preferredLanguages: [],
           personalizationContextCompleted: false,
+          useMemberContextByDefault: false,
           communicationStyle: "friendly",
           personalityMode: "neighborhood_guide",
           emojiLevel: "some",
@@ -4598,6 +4602,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
     aaveLevel,
     recommendationLifeStage,
     supportLensMode,
+    useMemberContextByDefault,
   } = body;
   // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
   const rawOwnershipTypes = Array.isArray(preferredOwnershipTypes)
@@ -4713,6 +4718,10 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         lifestyleServices: Array.isArray(lifestyleServices)
           ? (lifestyleServices as string[])
           : undefined,
+        useMemberContextByDefault:
+          typeof useMemberContextByDefault === "boolean"
+            ? useMemberContextByDefault
+            : undefined,
       })
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
@@ -4775,6 +4784,9 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           }),
           ...(Array.isArray(lifestyleServices) && {
             lifestyleServices: lifestyleServices as string[],
+          }),
+          ...(typeof useMemberContextByDefault === "boolean" && {
+            useMemberContextByDefault,
           }),
           updatedAt: new Date(),
         },
@@ -6165,6 +6177,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedConversationMode: unknown = undefined;
     let savedSupportLensMode: string | null = null;
     let savedSupportLensDesignationIds: string[] = [];
+    let savedMemberResearchContextTags: string[] = [];
 
     if (req.user?.id) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
@@ -6331,7 +6344,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       message,
       conversationHistoryForContext,
     );
-    const researchContextMessage = conversationalResearchSubject.researchMessage;
+    let researchContextMessage = conversationalResearchSubject.researchMessage;
+    // Apply an affirmative private default only after the current turn (and its
+    // conversational subject) has been resolved. The helper preserves a general
+    // foundation and yields to an explicit lens, general-only request, or a
+    // stated purpose for someone else.
+    const savedMemberResearchContext = applySavedMemberResearchContext({
+      question: researchContextMessage,
+      preferences: prefs,
+    });
+    researchContextMessage = savedMemberResearchContext.question;
+    savedMemberResearchContextTags = savedMemberResearchContext.appliedTags;
 
     // Resolve current-turn geography before session continuity. A city explicitly
     // named now is authoritative and may change an enabled session's destination.
@@ -9055,6 +9078,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     res.json({
       sessionId: finalSessionId,
       reply,
+      // Private response metadata for the current member only. It is never used
+      // for profile identity, business eligibility, ranking, or promotion.
+      memberContextApplied: savedMemberResearchContextTags,
       recommendations,
       itinerary,
       followUpSuggestions,

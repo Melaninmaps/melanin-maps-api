@@ -39,7 +39,9 @@ const IdentityPatch = z.object({
   customPronouns: z.string().trim().min(1).max(80).nullable().optional(),
   allowMedicallyRelevantContext: z.boolean().optional(),
   allowPronounAwareLanguage: z.boolean().optional(),
-  expectedVersion: z.number().int().positive(),
+  // A member without a record receives version 0 from GET and must be able to
+  // create their first optional context without a false validation failure.
+  expectedVersion: z.number().int().nonnegative(),
 }).superRefine((value, ctx) => {
   if (value.pronounSet === "custom" && !value.customPronouns) {
     ctx.addIssue({ code: "custom", path: ["customPronouns"], message: "Custom pronouns are required when custom is selected." });

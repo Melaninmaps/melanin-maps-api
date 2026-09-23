@@ -26,6 +26,7 @@ import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
 import { createResearchProviderChain } from "./library/researchProviderChain";
 import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
 import { createExtractiveLibraryWriter } from "./library/extractiveLibraryWriter";
+import { resolveOpenAIConfiguration } from "@workspace/integrations-openai-ai-server";
 import { assertKinfolkModelEnvironment, kinfolkModel } from "./kinfolk/model-config";
 import { kinfolkTavilyApiKey } from "./kinfolk/provider-config";
 import { registerExploreRoutes } from "./explore/registerExploreRoutes";
@@ -404,14 +405,16 @@ if (process.env.DIRECTORY_REVIEW_ENABLED === "1" && directoryReviewPool) {
 // Register before the aggregate /api router: its global requireAuth middleware
 // would otherwise block the public Library home and topic-book GET requests.
 // Follow/research mutations still enforce authentication in their own handlers.
-const libraryOpenAiConfigured = Boolean(
-  process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-);
+// Resolve the same server-owned OpenAI configuration used by Kinfolk. Railway
+// may provide OPENAI_API_KEY rather than the integration-prefixed aliases;
+// treating that as "no Library provider" made a healthy service look empty.
+const libraryOpenAiConfiguration = resolveOpenAIConfiguration();
+const libraryOpenAiConfigured = Boolean(libraryOpenAiConfiguration);
 const libraryTavilyApiKey = kinfolkTavilyApiKey();
 const libraryProviders = [
   ...(libraryOpenAiConfigured ? [createOpenAiWebResearchProvider({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-    baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
+    apiKey: libraryOpenAiConfiguration!.apiKey,
+    baseUrl: libraryOpenAiConfiguration!.baseURL,
     model: kinfolkModel("libraryResearch"),
   })] : []),
   ...(libraryTavilyApiKey ? [createTavilyResearchProvider(libraryTavilyApiKey)] : []),
@@ -421,8 +424,8 @@ registerLivingLibraryRoutes(app, {
   researchProvider: libraryProviders.length > 0 ? createResearchProviderChain(libraryProviders) : null,
   writer: libraryOpenAiConfigured
     ? createOpenAiLibraryWriter({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-        baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
+        apiKey: libraryOpenAiConfiguration!.apiKey,
+        baseUrl: libraryOpenAiConfiguration!.baseURL,
         model: kinfolkModel("libraryResearch"),
       })
     : createExtractiveLibraryWriter(),
