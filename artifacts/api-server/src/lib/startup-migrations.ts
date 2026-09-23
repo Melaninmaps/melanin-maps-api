@@ -15063,8 +15063,12 @@ async function ensureBusinessDedupSchema(
         id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         review_item_id        uuid NOT NULL REFERENCES business_review_items(id) ON DELETE RESTRICT,
         action                text NOT NULL CHECK (action IN ('merge', 'restore')),
-        duplicate_business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
-        canonical_business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        -- businesses.id is the long-standing varchar public-listing key.
+        -- Audit event references must keep that exact type: using uuid here
+        -- prevents PostgreSQL from creating the foreign keys and stops the
+        -- guarded server before it can accept health checks.
+        duplicate_business_id varchar NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        canonical_business_id varchar NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
         actor_user_id         text NOT NULL,
         confirmation_phrase   text NOT NULL,
         reason                text NOT NULL,

@@ -99,6 +99,8 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/canonical-vibes-contract.test.ts \
   src/__tests__/community-experience-contract.test.ts \
   src/__tests__/business-experience-social-contract.test.ts \
+  src/lib/__tests__/business-merge-audit-schema.test.ts \
+  src/lib/__tests__/publication-schema-diagnostics.test.ts \
   src/map/__tests__/essentialServices.test.ts \
   src/map/__tests__/registerLocalBusinessSearchRoute.test.ts \
   src/library/__tests__/librarySearch.test.ts \
