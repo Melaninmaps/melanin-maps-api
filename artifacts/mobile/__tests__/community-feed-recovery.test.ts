@@ -25,10 +25,12 @@ describe("mobile Community feed recovery", () => {
     const feedList = source.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
     expect(feedList).toContain('justifyContent: "flex-start"');
     expect(source).toContain("list: { paddingHorizontal: 16, paddingTop: 0 }");
-    expect(feedList).toContain("ListHeaderComponent");
-    expect(feedList).toContain("styles.feedComposeBar");
+    expect(feedList).not.toContain("ListHeaderComponent");
+    expect(feedList).not.toContain("feedComposeBar");
     expect(source).toContain("setShowFeedControls(true)");
     expect(source).toContain("setShowCompose(true)");
+    expect(source).toContain('accessibilityLabel="Hide Community keyboard"');
+    expect(source).toContain("onRequestClose={closeCompose}");
   });
 
   it("keeps comments retryable and reconciles canonical counts after create and delete", () => {

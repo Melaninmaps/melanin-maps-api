@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { findExactRecords } from "../discovery/postgresLocationFirstRepository";
 
 describe("Explore category lenses", () => {
-  it("applies the selected HBCU lens to every non-business Explore record query", async () => {
+  it("uses the national HBCU catalogue instead of loose local keyword matches", async () => {
     const query = vi.fn().mockResolvedValue({ rows: [] });
 
     await findExactRecords({ query }, {
@@ -28,13 +28,12 @@ describe("Explore category lenses", () => {
       searchText: null,
     });
 
-    expect(query).toHaveBeenCalledTimes(3);
-    const statements = query.mock.calls.map(([statement]) => String(statement));
-    expect(statements[0]).toContain("COALESCE(tc.site_type, '') ILIKE ANY");
-    expect(statements[1]).toContain("COALESCE(re.category, '') ILIKE ANY");
-    expect(statements[2]).toContain("COALESCE(co.mission, '') ILIKE ANY");
-    for (const [, params] of query.mock.calls) {
-      expect(params).toEqual(expect.arrayContaining([expect.arrayContaining(["%hbcu%"])]));
-    }
+    expect(query).toHaveBeenCalledTimes(1);
+    const [statement, params] = query.mock.calls[0];
+    expect(String(statement)).toContain("FROM cultural_sites");
+    expect(String(statement)).toContain("heritage_category");
+    expect(String(statement)).not.toContain("tour_cultural_sites");
+    expect(String(statement)).not.toContain("recurring_events");
+    expect(params).toBeUndefined();
   });
 });

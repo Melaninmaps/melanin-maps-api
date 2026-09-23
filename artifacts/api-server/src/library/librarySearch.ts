@@ -156,6 +156,18 @@ const LIBRARY_QUERY_RECOVERY_TERMS = [
 export function findLibrarySearchClarification(
   query: string,
 ): SafeSearchClarification | null {
+  const normalized = normalizeLibrarySearchQuery(query);
+  // A valid term inside a proper-name research question is not a typo. For
+  // example, "Alabama A&M University: history and sources" previously offered
+  // a spurious correction and stopped the member before research could begin.
+  // Recovery remains available for actual misspellings such as "universty".
+  if (
+    LIBRARY_QUERY_RECOVERY_TERMS.some((term) =>
+      new RegExp(`(?:^|[^a-z0-9])${term.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}(?:$|[^a-z0-9])`, "i").test(normalized),
+    )
+  ) {
+    return null;
+  }
   return findSafeSearchClarification({
     query,
     catalogTerms: [

@@ -84,6 +84,14 @@ describe("Library internal-first vocabulary", () => {
     expect(findLibrarySearchClarification("how does violin work")).toBeNull();
   });
 
+  it("does not interrupt an intentional institution research question", () => {
+    expect(
+      findLibrarySearchClarification(
+        "Alabama A&M University: history, context, and reputable sources",
+      ),
+    ).toBeNull();
+  });
+
   it("maps an HVAC query to durable topic aliases and escaped internal patterns", () => {
     const vocabulary = resolveLibrarySearchVocabulary("hvac");
 
