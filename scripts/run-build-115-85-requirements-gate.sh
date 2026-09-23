@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build 115/85 requirements-to-proof source/artifact gate.
+# Requirements-to-proof source/artifact gate. Defaults to the historical 115/85
+# release; the explicitly approved 116/86 release sets both EXPECTED_* values.
 #
 # Usage:
 #   bash scripts/run-build-115-85-requirements-gate.sh --prepare-static
@@ -25,8 +26,16 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-115}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-85}"
+if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ]; then
+  printf '%s\n' 'Unsupported release identifier pair' >&2
+  exit 64
+fi
+
 fail() {
-  printf 'BUILD_115_85_REQUIREMENTS_GATE_FAIL: %s\n' "$*" >&2
+  printf 'BUILD_%s_%s_REQUIREMENTS_GATE_FAIL: %s\n' "$EXPECTED_IOS_BUILD" "$EXPECTED_ANDROID_CODE" "$*" >&2
   exit 1
 }
 
@@ -58,14 +67,14 @@ if [ "$MODE" = "--verify-final" ]; then
   [ -z "$(git status --porcelain)" ] || fail "final verification requires a clean checkout"
 fi
 
-printf 'BUILD_115_85_REQUIREMENTS_GATE\n'
+printf 'BUILD_%s_%s_REQUIREMENTS_GATE\n' "$EXPECTED_IOS_BUILD" "$EXPECTED_ANDROID_CODE"
 printf 'mode=%s\nsha=%s\n' "$MODE" "$SHA"
 printf 'ios=1.1.9 (%s); android=1.1.7 (%s)\n' \
   "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" \
   "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)"
 
-[ "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" = "115" ] || fail "iOS build must be 115"
-[ "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)" = "85" ] || fail "Android versionCode must be 85"
+[ "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" = "$EXPECTED_IOS_BUILD" ] || fail "iOS build must be $EXPECTED_IOS_BUILD"
+[ "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)" = "$EXPECTED_ANDROID_CODE" ] || fail "Android versionCode must be $EXPECTED_ANDROID_CODE"
 [ "$(jq -r '.expo.ios.supportsTablet' artifacts/mobile/app.json)" = "true" ] || fail "iPad support must remain enabled"
 [ "$(jq -r '.expo.ios.infoPlist.UIRequiresFullScreen' artifacts/mobile/app.json)" = "false" ] || fail "iPad multitasking must remain enabled"
 
@@ -162,5 +171,5 @@ else
 fi
 check_authored_source_whitespace
 
-printf 'BUILD_115_85_REQUIREMENTS_GATE_PASS: sha=%s mode=%s\n' "$SHA" "$MODE"
+printf 'BUILD_%s_%s_REQUIREMENTS_GATE_PASS: sha=%s mode=%s\n' "$EXPECTED_IOS_BUILD" "$EXPECTED_ANDROID_CODE" "$SHA" "$MODE"
 printf '%s\n' 'NEXT: commit reviewed source/static assets, rerun --verify-final from clean final SHA, deploy API/web, then collect live and device evidence. No EAS build or directory publication is implied by this pass.'
