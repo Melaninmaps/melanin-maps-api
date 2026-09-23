@@ -22,7 +22,7 @@ describe("mobile Community feed recovery", () => {
     expect(feedList).toContain('justifyContent: "flex-start"');
     expect(feedList).toContain("ListHeaderComponentStyle={styles.feedHeader}");
     expect(source).toContain("feedHeader: { paddingTop: 0, marginTop: 0 }");
-    expect(source).toContain("list: { paddingHorizontal: 16, paddingTop: 8 }");
+    expect(source).toContain("list: { paddingHorizontal: 16, paddingTop: 0 }");
     expect(feedList.indexOf("ListHeaderComponent")).toBeLessThan(feedList.indexOf("ListEmptyComponent"));
     expect(feedList).toContain("What&apos;s on your mind?");
   });

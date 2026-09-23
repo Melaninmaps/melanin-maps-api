@@ -120,11 +120,18 @@ const bar = StyleSheet.create({
 
 type Props = { business: BusinessLike };
 
+const MINIMUM_COMMUNITY_REVIEWS = 5;
+
 export function CommunityConfidenceScore({ business }: Props) {
   const [expanded, setExpanded] = useState(true);
   const { lines, aggregate } = buildScores(business);
   const label = confidenceLabel(aggregate);
   const reviewCount = business.reviewCount ?? 0;
+
+  // Never manufacture a confidence score from a directory profile. The caller
+  // normally presents the compact waiting state; this guard keeps the rule true
+  // if this component is later used from another surface.
+  if (reviewCount < MINIMUM_COMMUNITY_REVIEWS) return null;
 
   return (
     <View style={styles.card}>

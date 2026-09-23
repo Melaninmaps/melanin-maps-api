@@ -54,11 +54,18 @@ const BUDGETS = [
 ];
 
 const INTERESTS = [
-  "Black History", "Live Music", "Natural Hair", "Black Art", "Soul Food", "Jazz & Blues",
-  "Community Events", "Black Bookstores", "Fitness & Wellness", "HBCU Culture", "Black Fashion", "Spiritual Spaces",
+  "Food & Restaurants", "Beauty & Self-Care", "Hair Care", "Health & Wellness", "Fitness",
+  "Family-Friendly Activities", "Date Night", "Nightlife & Social Spots", "Live Music", "Arts & Culture",
+  "History & Museums", "Books & Reading", "Shopping & Style", "Community Events", "Faith & Spiritual Spaces",
+  "Outdoors & Nature", "Travel & Weekend Plans", "Career & Networking", "Home & Relocation", "Pet-Friendly Places",
 ];
 
-const ACCESSIBILITY = [
+const CULTURE_AND_COMMUNITY = [
+  "Black History & Culture", "HBCU Culture", "African & Diaspora Culture", "Caribbean Culture",
+  "Afro-Latino Culture", "LGBTQ+ Community", "Minority-Owned Businesses", "Community-Led Events",
+];
+
+const COMFORT_OPTIONS = [
   "Wheelchair Accessible", "Service Animal Friendly", "Quiet Spaces", "Sensory-Friendly",
   "Large Print Available", "Sign Language", "Gender-Neutral Restrooms", "None needed",
 ];
@@ -269,8 +276,8 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
             </View>
           ) : (
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.foreground }]}>What matters to you?</Text>
-              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Pick your interests and any accessibility needs</Text>
+              <Text style={[styles.stepTitle, { color: colors.foreground }]}>What would you like more of?</Text>
+              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Choose what you want KinfolkAI™ to keep in mind when making suggestions.</Text>
               <Text style={[styles.groupLabel, { color: colors.foreground }]}>Interests</Text>
               <View style={styles.chipGrid}>
                 {INTERESTS.map((interest) => {
@@ -289,9 +296,31 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
                   );
                 })}
               </View>
-              <Text style={[styles.groupLabel, { color: colors.foreground, marginTop: 16 }]}>Accessibility needs</Text>
+              <Text style={[styles.groupLabel, { color: colors.foreground, marginTop: 16 }]}>Culture & community <Text style={[styles.optionalLabel, { color: colors.mutedForeground }]}>(optional)</Text></Text>
+              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Choose any cultural or community context you would like Kinfolk to consider. It never replaces your general preferences.</Text>
               <View style={styles.chipGrid}>
-                {ACCESSIBILITY.map((a) => {
+                {CULTURE_AND_COMMUNITY.map((interest) => {
+                  const sel = prefs.interests.includes(interest);
+                  return (
+                    <TouchableOpacity
+                      key={interest}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: sel }}
+                      style={[styles.chip, {
+                        backgroundColor: sel ? "#C4622D" : colors.card,
+                        borderColor: sel ? "#C4622D" : colors.border,
+                      }]}
+                      onPress={() => toggle("interests", interest)}
+                    >
+                      <Text style={[styles.chipText, { color: sel ? "#FBF7F0" : colors.foreground }]}>{interest}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <Text style={[styles.groupLabel, { color: colors.foreground, marginTop: 16 }]}>What helps you feel comfortable?</Text>
+              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Optional access and comfort preferences help us describe places more clearly.</Text>
+              <View style={styles.chipGrid}>
+                {COMFORT_OPTIONS.map((a) => {
                   const sel = prefs.accessibilityNeeds.includes(a);
                   return (
                     <TouchableOpacity
@@ -352,6 +381,7 @@ const styles = StyleSheet.create({
   stepTitle: { fontFamily: "Inter_700Bold", fontSize: 22 },
   stepSub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20 },
   groupLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 4 },
+  optionalLabel: { fontFamily: "Inter_400Regular", fontSize: 12 },
   styleGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   styleCard: {
     width: "47%",

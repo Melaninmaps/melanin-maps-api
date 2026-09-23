@@ -32,7 +32,15 @@ import { useAuth } from "@/lib/auth";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import * as SecureStore from "expo-secure-store";
-import * as Speech from "expo-speech";
+import * as FileSystem from "expo-file-system";
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  useAudioRecorder,
+} from "expo-audio";
 import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
@@ -88,6 +96,15 @@ const LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
   { emoji: "❤️", label: "Healthcare", prompt: "I need healthcare recommendations" },
   { emoji: "🎓", label: "Schools", prompt: "I need help finding good schools" },
 ];
+const WELCOME_CHIPS = [
+  "Where's good to eat in Atlanta?",
+  "Best minority-owned hotels in Houston",
+  "What's the vibe in New Orleans?",
+  "What should I know about Minneapolis?",
+  "Hidden gems in DC",
+  "Family spots in Chicago",
+  "Would my community like this city?",
+];
 const WELCOME_HEADLINES = [
   "What are you navigating today?",
   "Looking for your next favorite place?",
@@ -101,15 +118,6 @@ const WELCOME_HEADLINES = [
   "Ready for your next adventure?",
   "What's your next chapter?",
   "How can I help today?",
-];
-const WELCOME_CHIPS = [
-  "Where's good to eat in Atlanta?",
-  "Best minority-owned hotels in Houston",
-  "What's the vibe in New Orleans?",
-  "What should I know about Minneapolis?",
-  "Hidden gems in DC",
-  "Family spots in Chicago",
-  "Would my community like this city?",
 ];
 
 // ─── Kinfolk Voices™ constants ────────────────────────────────────────────────
@@ -1135,39 +1143,31 @@ const tyStyles = StyleSheet.create({
 
 // ─── Sub-component: Welcome Screen ───────────────────────────────────────────
 function WelcomeScreen({
-  colors, onChipPress, onCityPress,
+  colors, onChipPress,
 }: {
   colors: ReturnType<typeof useColors>;
   onChipPress: (t: string) => void;
-  onCityPress: (c: string) => void;
 }) {
   const [headline] = useState(() => WELCOME_HEADLINES[Math.floor(Math.random() * WELCOME_HEADLINES.length)]);
+  const [showMorePrompts, setShowMorePrompts] = useState(false);
+  const visiblePrompts = showMorePrompts ? WELCOME_CHIPS : WELCOME_CHIPS.slice(0, 3);
+
 
   return (
-    <View style={wsStyles.container}>
-      <View style={[wsStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
-        <Ionicons name="sparkles" size={36} color={colors.primary} />
-      </View>
-      <Text style={[wsStyles.title, { color: colors.text }]}>Welcome Home.</Text>
-      <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
-        {headline}
-      </Text>
-
-      {/* Trip Journals shortcut */}
-      <TouchableOpacity
-        style={[wsStyles.journalCard, { backgroundColor: "#1A3B2B" }]}
-        onPress={() => { router.push("/journals" as never); }}
-        activeOpacity={0.85}
-      >
-        <Text style={wsStyles.journalEmoji}>🗺️</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={wsStyles.journalTitle}>Trip Journals</Text>
-          <Text style={wsStyles.journalSub}>{getDailyQuoteText("diaspora", 2)}</Text>
+    <View testID="kinfolk-conversation-welcome" style={wsStyles.container}>
+      <View style={[wsStyles.introCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[wsStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
+          <Ionicons name="sparkles" size={22} color={colors.primary} />
         </View>
-        <Ionicons name="arrow-forward" size={16} color="#C9922B" />
-      </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[wsStyles.eyebrow, { color: colors.primary }]}>START A CONVERSATION</Text>
+          <Text style={[wsStyles.title, { color: colors.text }]}>{headline}</Text>
+          <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>Ask a question, weigh a decision, or find your next useful step.</Text>
+        </View>
+      </View>
 
-      <View style={wsStyles.lifeChipsWrap}>
+      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Start here</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={wsStyles.lifeChipsRail}>
         {LIFE_CHIPS.map((c) => (
           <TouchableOpacity
             key={c.label}
@@ -1179,41 +1179,68 @@ function WelcomeScreen({
             <Text style={[wsStyles.lifeChipText, { color: colors.text }]}>{c.label}</Text>
           </TouchableOpacity>
         ))}
-      </View>
-      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground, marginTop: 8 }]}>Or try asking:</Text>
-      {WELCOME_CHIPS.map((c) => (
-        <TouchableOpacity
-          key={c}
-          style={[wsStyles.promptChip, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => onChipPress(c)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chatbubble-outline" size={14} color={colors.primary} />
-          <Text style={[wsStyles.promptText, { color: colors.text }]}>{c}</Text>
-          <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
+      </ScrollView>
+
+      <View style={[wsStyles.promptSection, { borderTopColor: colors.border }]}>
+        <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Try a specific question</Text>
+        {visiblePrompts.map((c) => (
+          <TouchableOpacity
+            key={c}
+            style={[wsStyles.promptChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => onChipPress(c)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chatbubble-outline" size={14} color={colors.primary} />
+            <Text style={[wsStyles.promptText, { color: colors.text }]}>{c}</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity onPress={() => setShowMorePrompts((visible) => !visible)} activeOpacity={0.75} style={wsStyles.morePromptsBtn}>
+          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>{showMorePrompts ? "Show fewer prompts" : "More ways to start"}</Text>
+          <Ionicons name={showMorePrompts ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
         </TouchableOpacity>
-      ))}
+      </View>
+
+      {/* Existing journal path remains available as a secondary destination, not a competing primary task. */}
+      <TouchableOpacity
+        style={[wsStyles.journalCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "22" }]}
+        onPress={() => { router.push("/journals" as never); }}
+        activeOpacity={0.85}
+        accessibilityLabel="Open Trip Journals"
+      >
+        <Text style={wsStyles.journalEmoji}>🗺️</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[wsStyles.journalTitle, { color: colors.text }]}>Open Trip Journals</Text>
+          <Text style={[wsStyles.journalSub, { color: colors.mutedForeground }]}>{getDailyQuoteText("diaspora", 2)}</Text>
+        </View>
+        <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+      </TouchableOpacity>
     </View>
   );
 }
 const wsStyles = StyleSheet.create({
-  container: { alignItems: "center", paddingHorizontal: 24, paddingTop: 32, paddingBottom: 16 },
-  iconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 16 },
-  title: { fontFamily: "Inter_700Bold", fontSize: 24, marginBottom: 8, textAlign: "center" },
-  sub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22, textAlign: "center", marginBottom: 24 },
-  sectionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, alignSelf: "flex-start" },
+  container: { paddingHorizontal: 16, paddingTop: 22, paddingBottom: 18 },
+  introCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 22 },
+  iconWrap: { width: 44, height: 44, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  eyebrow: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 1, marginBottom: 5 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 21, lineHeight: 27, marginBottom: 5 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 },
   cityChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
   cityChipText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 8, width: "100%" },
+  promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 13, marginBottom: 8, width: "100%" },
   promptText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
-  journalCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, marginBottom: 20, width: "100%" },
-  journalEmoji: { fontSize: 26 },
-  journalTitle: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF", marginBottom: 2 },
-  journalSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)" },
-  lifeChipsWrap: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 20 },
-  lifeChip: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9 },
+  promptSection: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 18, paddingTop: 18 },
+  morePromptsBtn: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 5, paddingHorizontal: 2 },
+  morePromptsText: { fontFamily: "Inter_700Bold", fontSize: 12 },
+  journalCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1, padding: 13, marginTop: 18, width: "100%" },
+  journalEmoji: { fontSize: 21 },
+  journalTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 2 },
+  journalSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  lifeChipsRail: { gap: 8, paddingRight: 16 },
+  lifeChip: { alignItems: "flex-start", justifyContent: "space-between", width: 126, minHeight: 86, borderRadius: 16, borderWidth: 1, padding: 12 },
   lifeChipEmoji: { fontSize: 14 },
-  lifeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12.5 },
+  lifeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12.5, lineHeight: 17 },
 });
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────
@@ -1384,11 +1411,12 @@ function TasteProfileSheet({
           </View>
 
           <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>How do you travel?</Text>
+          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Choose every option that fits you — you can select more than one.</Text>
           <View style={tpStyles.optionRow}>
             {TRIP_STYLES.map((s) => {
               const sel = tripStyles.includes(s.id);
               return (
-                <TouchableOpacity activeOpacity={0.85} key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
+                <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: sel }} activeOpacity={0.85} key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
                   <Text style={[tpStyles.optionText, { color: sel ? "#fff" : colors.text }]}>{s.label}</Text>
                 </TouchableOpacity>
               );
@@ -1927,10 +1955,21 @@ export default function TravelScreen() {
   const appStateRef = useRef(AppState.currentState);
   const voiceOutputRef = useRef(false);
   const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
+  const queuedVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
+  const [voiceAudioUri, setVoiceAudioUri] = useState<string | undefined>(undefined);
+  const [playingVoice, setPlayingVoice] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
+  const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
+  const primaryRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const primaryRecordingStartedAtRef = useRef<number | null>(null);
+  const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
+  const serverVoicePlayerStatus = useAudioPlayerStatus(serverVoicePlayer);
   const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
-    // Factory stores this predicate and invokes it only from effects/events.
+    // The output toggle governs auto-play; manual Listen remains available.
+    // The factory invokes this predicate only from effects/events.
     // eslint-disable-next-line react-hooks/refs
-    () => appStateRef.current === "active" && voiceOutputRef.current,
+    () => appStateRef.current === "active",
   ));
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -1939,6 +1978,7 @@ export default function TravelScreen() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const [showFlights, setShowFlights] = useState(false);
+  const [showHeaderActions, setShowHeaderActions] = useState(false);
   const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
 
@@ -1979,6 +2019,115 @@ export default function TravelScreen() {
 
   // Scroll is managed entirely by useKinfolkChatScroll — no direct scrollToEnd here.
 
+  const stopServerVoice = useCallback((reason: string) => {
+    pendingAutoSpeechRef.current = null;
+    queuedVoicePlaybackRef.current = null;
+    autoSpeechGuardRef.current.invalidate(reason);
+    if (serverVoicePlayer.playing || serverVoicePlayer.isLoaded) serverVoicePlayer.pause();
+    setVoiceAudioUri(undefined);
+    setPlayingVoice(false);
+  }, [serverVoicePlayer]);
+
+  const playServerVoice = useCallback(async (content: string, source: "auto" | "manual") => {
+    if (!content.trim() || appStateRef.current !== "active") return;
+    const request = autoSpeechGuardRef.current.begin();
+    let queued = false;
+    setPlayingVoice(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/speak`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text: content, mode: voiceMode, requestId: `${source}-${Date.now()}` }),
+        signal: request.signal,
+      });
+      if (!autoSpeechGuardRef.current.canPlay(request)) return;
+      if (response.status === 401) {
+        Alert.alert("Sign in required", "Sign in to listen to Kinfolk's spoken replies.");
+        return;
+      }
+      if (response.status === 429) {
+        Alert.alert("Voice time used", "Your Kinfolk Voice allowance is used for this period. Text replies remain available.");
+        return;
+      }
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { message?: string };
+        throw new Error(payload.message ?? "Kinfolk could not create audio right now.");
+      }
+      const payload = await response.json() as { audio?: string; format?: string };
+      if (!payload.audio || !payload.format) throw new Error("Kinfolk did not return playable audio.");
+      if (!autoSpeechGuardRef.current.canPlay(request)) return;
+      const temporaryFile = new FileSystem.File(
+        FileSystem.Paths.cache,
+        `kinfolk-primary-${Date.now()}.${payload.format}`,
+      );
+      temporaryFile.write(payload.audio, { encoding: FileSystem.EncodingType.Base64 });
+      if (!autoSpeechGuardRef.current.canPlay(request)) return;
+      queuedVoicePlaybackRef.current = request;
+      setVoiceAudioUri(temporaryFile.uri);
+      queued = true;
+    } catch (cause) {
+      if (request.signal.aborted) return;
+      const message = cause instanceof Error ? cause.message : "Kinfolk audio could not start.";
+      Alert.alert("Voice playback unavailable", `${message} You can still read the reply and try Listen again.`);
+    } finally {
+      if (!queued) {
+        autoSpeechGuardRef.current.finish(request);
+        setPlayingVoice(false);
+      }
+    }
+  }, [voiceMode]);
+
+  // Do not call play() until the local server-owned WAV has fully loaded.
+  useEffect(() => {
+    const request = queuedVoicePlaybackRef.current;
+    if (!voiceAudioUri || !request || !serverVoicePlayerStatus.isLoaded) return;
+    if (!autoSpeechGuardRef.current.canPlay(request) || appStateRef.current !== "active") {
+      stopServerVoice("playback_not_allowed");
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          interruptionMode: "duckOthers",
+          shouldPlayInBackground: false,
+          shouldRouteThroughEarpiece: false,
+        });
+        if (cancelled || !autoSpeechGuardRef.current.canPlay(request)) return;
+        serverVoicePlayer.volume = 1;
+        serverVoicePlayer.play();
+        queuedVoicePlaybackRef.current = null;
+        autoSpeechGuardRef.current.finish(request);
+      } catch {
+        if (!cancelled) {
+          Alert.alert("Voice playback unavailable", "Kinfolk created audio but your device could not play it. Check volume and try Listen again.");
+          stopServerVoice("playback_start_failed");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [serverVoicePlayer, serverVoicePlayerStatus.isLoaded, stopServerVoice, voiceAudioUri]);
+
+  useEffect(() => {
+    if (serverVoicePlayerStatus.error && playingVoice) {
+      Alert.alert("Voice playback unavailable", "Kinfolk audio could not play on this device. Check volume and try again.");
+      stopServerVoice("playback_error");
+    }
+  }, [playingVoice, serverVoicePlayerStatus.error, stopServerVoice]);
+
+  useEffect(() => {
+    if (playingVoice && serverVoicePlayer.isLoaded && !serverVoicePlayer.playing && !queuedVoicePlaybackRef.current) {
+      const timer = setTimeout(() => setPlayingVoice(false), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [playingVoice, serverVoicePlayer, serverVoicePlayer.isLoaded, serverVoicePlayer.playing]);
+
   const armAutoSpeech = useCallback(() => {
     if (!voiceOutputRef.current || appStateRef.current !== "active") {
       pendingAutoSpeechRef.current = null;
@@ -1994,54 +2143,32 @@ export default function TravelScreen() {
     const last = messages[messages.length - 1];
     if (!request || !last || last.role !== "assistant" || !autoSpeechGuardRef.current.canPlay(request)) return;
     pendingAutoSpeechRef.current = null;
-    void (async () => {
-      await Speech.stop();
-      if (!autoSpeechGuardRef.current.canPlay(request) || appStateRef.current !== "active") return;
-      Speech.speak(last.content, {
-        language: "en-US",
-        rate: 0.95,
-        onError: () => {},
-      });
-      autoSpeechGuardRef.current.finish(request);
-    })();
-  }, [messages, isLoading, voiceOutput]);
+    void playServerVoice(last.content, "auto");
+  }, [messages, isLoading, playServerVoice, voiceOutput]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       appStateRef.current = state;
       if (state !== "active") {
         pendingAutoSpeechRef.current = null;
-        autoSpeechGuardRef.current.invalidate("app_background");
-        void Speech.stop();
+        stopServerVoice("app_background");
       }
     });
     return () => {
       subscription.remove();
       appStateRef.current = "background";
       pendingAutoSpeechRef.current = null;
-      autoSpeechGuardRef.current.invalidate("unmount");
-      void Speech.stop();
+      stopServerVoice("unmount");
     };
-  }, []);
+  }, [stopServerVoice]);
 
   const speakManually = useCallback((content: string) => {
-    if (!content.trim() || appStateRef.current !== "active") return;
-    pendingAutoSpeechRef.current = null;
-    autoSpeechGuardRef.current.invalidate("manual_speech");
-    void (async () => {
-      await Speech.stop();
-      if (appStateRef.current !== "active") return;
-      Speech.speak(content, {
-        language: "en-US",
-        rate: 0.95,
-        onError: () => {
-          if (appStateRef.current === "active") {
-            Alert.alert("Playback Unavailable", "Voice playback couldn't start. Make sure your device volume is on and try again.");
-          }
-        },
-      });
-    })();
-  }, []);
+    if (playingVoice) {
+      stopServerVoice("manual_stop");
+      return;
+    }
+    void playServerVoice(content, "manual");
+  }, [playServerVoice, playingVoice, stopServerVoice]);
 
   const pickKinfolkImage = useCallback(async () => {
     if (uploadingKinfolkImage || kinfolkImages.length >= 2) return;
@@ -2062,6 +2189,38 @@ export default function TravelScreen() {
     } catch (cause) { Alert.alert("Image upload failed", cause instanceof Error ? cause.message : "Please try again."); }
     finally { setUploadingKinfolkImage(false); }
   }, [kinfolkImages.length, uploadingKinfolkImage]);
+
+  const startPrimaryVoiceRecording = useCallback(async () => {
+    if (Platform.OS === "web" || primaryRecorder.isRecording || isTranscribingVoice) return;
+    if (!isAuthenticated) {
+      Alert.alert("Sign in to use Kinfolk Voice", "Create or sign in to a free account to record a question. You can still type your question.");
+      return;
+    }
+    try {
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Microphone access is off",
+          permission.canAskAgain
+            ? "Allow microphone access, then tap the microphone again."
+            : "Allow microphone access for Mapping With Melanin in your phone Settings, then try again.",
+        );
+        return;
+      }
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await primaryRecorder.prepareToRecordAsync();
+      primaryRecorder.record();
+      primaryRecordingStartedAtRef.current = Date.now();
+      setIsRecordingVoice(true);
+      setVoiceInputStatus("Listening… tap the microphone again when you’re finished.");
+    } catch (cause) {
+      primaryRecordingStartedAtRef.current = null;
+      setIsRecordingVoice(false);
+      setVoiceInputStatus(null);
+      Alert.alert("Kinfolk Voice could not start", cause instanceof Error ? cause.message : "Check microphone permission and try again, or type your question.");
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+  }, [isAuthenticated, isTranscribingVoice, primaryRecorder]);
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
@@ -2092,6 +2251,61 @@ export default function TravelScreen() {
     setRememberThis(false);
     setIncludeCommunityPerspective(false);
   }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech]);
+
+  const stopPrimaryVoiceRecording = useCallback(async () => {
+    if (!primaryRecorder.isRecording) return;
+    setIsRecordingVoice(false);
+    setIsTranscribingVoice(true);
+    setVoiceInputStatus("Turning your words into text…");
+    try {
+      const durationMs = primaryRecordingStartedAtRef.current === null
+        ? 0
+        : Math.max(0, Date.now() - primaryRecordingStartedAtRef.current);
+      primaryRecordingStartedAtRef.current = null;
+      await primaryRecorder.stop();
+      const uri = primaryRecorder.uri;
+      if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
+      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
+      const mimeType = ({
+        m4a: "audio/mp4",
+        mp4: "audio/mp4",
+        mp3: "audio/mpeg",
+        wav: "audio/wav",
+        webm: "audio/webm",
+      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
+      if (!mimeType) throw new Error("This recording format is not supported. Please try again or type your question.");
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const form = new FormData();
+      // Use Expo's Blob-compatible File rather than the legacy React Native
+      // multipart object. The latter produces "Unsupported FormDataPart" on
+      // current native runtimes before transcription is even requested.
+      form.append("audio", new FileSystem.File(uri));
+      form.append("durationMs", String(durationMs));
+      form.append("mimeType", mimeType);
+      const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      const payload = await response.json().catch(() => ({})) as { text?: string; message?: string };
+      if (!response.ok) throw new Error(payload.message ?? "Voice transcription failed. Please try again or type your question.");
+      if (!payload.text?.trim()) throw new Error("Kinfolk could not hear that clearly. Please try again or type your question.");
+      setVoiceInputStatus("Sending your question to Kinfolk…");
+      await handleSend(payload.text);
+      setVoiceInputStatus(null);
+    } catch (cause) {
+      setVoiceInputStatus(null);
+      Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
+    } finally {
+      primaryRecordingStartedAtRef.current = null;
+      setIsTranscribingVoice(false);
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+  }, [handleSend, primaryRecorder]);
+
+  useEffect(() => () => {
+    if (primaryRecorder.isRecording) void primaryRecorder.stop();
+  }, [primaryRecorder]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -2246,40 +2460,44 @@ export default function TravelScreen() {
             <Ionicons name="person-circle-outline" size={22} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85}
-            style={[styles.headerIconBtn, wishlistItems.length > 0 && { backgroundColor: "#ffffff25" }]}
-            onPress={() => router.push("/wishlist" as any)}
+            style={[styles.headerIconBtn, showHeaderActions && { backgroundColor: "#ffffff30" }]}
+            onPress={() => setShowHeaderActions((visible) => !visible)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showHeaderActions }}
+            accessibilityLabel="Open Kinfolk conversation actions"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={22} color="#fff" />
+            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={[styles.headerIconBtn, compareMode && { backgroundColor: "#ffffff40" }]}
-            onPress={() => { setCompareMode((v) => !v); setCompareSelected([]); }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="scale-outline" size={22} color="#fff" />
+        </View>
+      </View>
+
+      {showHeaderActions && (
+        <View style={[styles.headerActionRail, { backgroundColor: colors.primary, borderTopColor: "#ffffff22" }]}>
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); router.push("/wishlist" as any); }} accessibilityLabel="Open saved places">
+            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color="#fff" />
+            <Text style={styles.headerActionText}>Saved</Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={styles.headerIconBtn}
-            onPress={() => setShowFlights(true)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="airplane-outline" size={22} color="#fff" />
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setCompareMode((value) => !value); setCompareSelected([]); }} accessibilityLabel="Toggle comparison mode">
+            <Ionicons name="scale-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>{compareMode ? "Stop compare" : "Compare"}</Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={styles.headerIconBtn}
-            onPress={() => { void loadSessions(); setShowHistory(true); }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="time-outline" size={22} color="#fff" />
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowFlights(true); }} accessibilityLabel="Open flight tracker">
+            <Ionicons name="airplane-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>Flights</Text>
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); void loadSessions(); setShowHistory(true); }} accessibilityLabel="Open conversation history">
+            <Ionicons name="time-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>History</Text>
           </TouchableOpacity>
           {messages.length > 0 && (
-            <TouchableOpacity activeOpacity={0.85} style={styles.headerIconBtn} onPress={handleNewSession} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="add" size={22} color="#fff" />
+            <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); handleNewSession(); }} accessibilityLabel="Start a new Kinfolk conversation">
+              <Ionicons name="add" size={15} color="#fff" />
+              <Text style={styles.headerActionText}>New</Text>
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      )}
 
       {/* Personalization banner */}
       {hasProfile && messages.length === 0 && (
@@ -2338,7 +2556,6 @@ export default function TravelScreen() {
             <WelcomeScreen
               colors={colors}
               onChipPress={(t) => void handleSend(t)}
-              onCityPress={(c) => void handleSend(`What's good in ${c}?`)}
             />
           ) : null}
           ListFooterComponent={isLoading ? <TypingIndicator colors={colors} /> : null}
@@ -2462,6 +2679,13 @@ export default function TravelScreen() {
         </View>
         </>}
 
+        {voiceInputStatus ? (
+          <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+            {isRecordingVoice || isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="mic-outline" size={15} color={colors.primary} />}
+            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceInputStatus}</Text>
+          </View>
+        ) : null}
+
         {/* Input row */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
           <TouchableOpacity
@@ -2480,9 +2704,7 @@ export default function TravelScreen() {
               voiceOutputRef.current = nextVoiceOutput;
               setVoiceOutput(nextVoiceOutput);
               if (!nextVoiceOutput) {
-                pendingAutoSpeechRef.current = null;
-                autoSpeechGuardRef.current.invalidate("voice_output_disabled");
-                void Speech.stop();
+                stopServerVoice("voice_output_disabled");
               } else if (isLoading && appStateRef.current === "active") {
                 armAutoSpeech();
               }
@@ -2490,6 +2712,17 @@ export default function TravelScreen() {
             activeOpacity={0.75}
           >
             <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.voiceOutputBtn, { backgroundColor: isRecordingVoice ? "#B42318" : colors.background, borderColor: isRecordingVoice ? "#B42318" : colors.border, opacity: isTranscribingVoice || isLoading ? 0.55 : 1 }]}
+            onPress={() => void (isRecordingVoice ? stopPrimaryVoiceRecording() : startPrimaryVoiceRecording())}
+            disabled={isTranscribingVoice || isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={isRecordingVoice ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk"}
+            accessibilityState={{ busy: isTranscribingVoice, selected: isRecordingVoice }}
+            activeOpacity={0.75}
+          >
+            {isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={isRecordingVoice ? "stop" : "mic-outline"} size={18} color={isRecordingVoice ? "#fff" : colors.mutedForeground} />}
           </TouchableOpacity>
           <TextInput
             style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
@@ -2557,6 +2790,9 @@ const styles = StyleSheet.create({
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   headerIconBtn: { padding: 6, borderRadius: 20 },
+  headerActionRail: { flexDirection: "row", flexWrap: "wrap", gap: 7, paddingHorizontal: 16, paddingBottom: 11, paddingTop: 1, borderTopWidth: StyleSheet.hairlineWidth },
+  headerAction: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, backgroundColor: "#ffffff18", paddingHorizontal: 9, paddingVertical: 6 },
+  headerActionText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 11 },
   premiumBanner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#C9922B18", borderBottomWidth: 1, borderBottomColor: "#C9922B40" },
   premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
@@ -2580,6 +2816,8 @@ const styles = StyleSheet.create({
   voicePill: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
   voicePillIcon: { fontSize: 13 },
   voicePillLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 8 },
+  voiceInputStatusText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
   inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },
   input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
   voiceOutputBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },

@@ -33,12 +33,16 @@ router.get("/users/me/content-preferences", async (req: Request, res: Response) 
   }
   try {
     const [preferences] = await db
-      .select({ socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms })
+      .select({
+        socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms,
+        communityFeedDisplay: userPreferencesTable.communityFeedDisplay,
+      })
       .from(userPreferencesTable)
       .where(eq(userPreferencesTable.userId, req.user.id))
       .limit(1);
     res.json({
       socialVideoPlatforms: preferences?.socialVideoPlatforms ?? [...SOCIAL_VIDEO_PLATFORMS],
+      communityFeedDisplay: preferences?.communityFeedDisplay ?? "mixed",
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch content preferences");
@@ -51,21 +55,49 @@ router.patch("/users/me/content-preferences", async (req: Request, res: Response
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const socialVideoPlatforms = sanitizeSocialVideoPreferences(req.body?.socialVideoPlatforms);
-  if (socialVideoPlatforms === null) {
+  const requestedPlatforms = req.body?.socialVideoPlatforms;
+  const sanitizedPlatforms = requestedPlatforms === undefined
+    ? undefined
+    : sanitizeSocialVideoPreferences(requestedPlatforms);
+  if (sanitizedPlatforms === null) {
     res.status(400).json({ error: "socialVideoPlatforms must be an array of supported platform IDs" });
     return;
   }
+  const requestedFeedDisplay = req.body?.communityFeedDisplay;
+  if (requestedFeedDisplay !== undefined && !["text_first", "mixed", "video_first"].includes(requestedFeedDisplay)) {
+    res.status(400).json({ error: "communityFeedDisplay must be text_first, mixed, or video_first" });
+    return;
+  }
   try {
+    const [existing] = await db
+      .select({
+        socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms,
+        communityFeedDisplay: userPreferencesTable.communityFeedDisplay,
+      })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    const socialVideoPlatforms = sanitizedPlatforms
+      ?? existing?.socialVideoPlatforms
+      ?? [...SOCIAL_VIDEO_PLATFORMS];
+    const communityFeedDisplay = requestedFeedDisplay
+      ?? existing?.communityFeedDisplay
+      ?? "mixed";
     const [preferences] = await db
       .insert(userPreferencesTable)
-      .values({ userId: req.user.id, socialVideoPlatforms, updatedAt: new Date() })
+      .values({ userId: req.user.id, socialVideoPlatforms, communityFeedDisplay, updatedAt: new Date() })
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
-        set: { socialVideoPlatforms, updatedAt: new Date() },
+        set: { socialVideoPlatforms, communityFeedDisplay, updatedAt: new Date() },
       })
-      .returning({ socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms });
-    res.json({ socialVideoPlatforms: preferences?.socialVideoPlatforms ?? socialVideoPlatforms });
+      .returning({
+        socialVideoPlatforms: userPreferencesTable.socialVideoPlatforms,
+        communityFeedDisplay: userPreferencesTable.communityFeedDisplay,
+      });
+    res.json({
+      socialVideoPlatforms: preferences?.socialVideoPlatforms ?? socialVideoPlatforms,
+      communityFeedDisplay: preferences?.communityFeedDisplay ?? communityFeedDisplay,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to save content preferences");
     res.status(500).json({ error: "Failed to save content preferences" });

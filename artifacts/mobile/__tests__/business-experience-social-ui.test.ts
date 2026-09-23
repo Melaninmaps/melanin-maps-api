@@ -22,8 +22,11 @@ describe("Expo business experience", () => {
     expect(card).toContain("Choose up to two");
     expect(card).toContain("data.ownerChoices.price");
     expect(card).toContain("Owner-provided price");
-    expect(card).toContain("Community price estimate");
+    expect(card).toContain('group("price", "Price"');
     expect(card).toContain("Different wording is shown only when you select it");
+    expect(card).toContain('group("vibe", "Vibe"');
+    expect(card).toContain("These same tags support VIBES search");
+    expect(card).toContain("accessibilityState={{ expanded: isExpanded }}");
   });
 
   it("lets claimed owners select governed ownership labels and two relevant profile tags", () => {
@@ -72,22 +75,35 @@ describe("Expo social video choices", () => {
   it("shows approved place videos and lets members submit a public video for moderation", () => {
     const detail = source("../app/business/[id].tsx");
     expect(detail).toContain("/contributions");
-    expect(detail).toContain("Watch community posts");
+    expect(detail).toContain("Community posts");
     expect(detail).toContain("Add a public video");
     expect(detail).toContain("Submit for review");
     expect(detail).toContain("detectSocialVideoPlatform(sourceUrl)");
     expect(detail).toContain("after moderation confirms the public link and context");
     expect(detail).toContain("openApprovedContribution(item)");
-    expect(detail).toContain("Watch community posts");
+    expect(detail).toContain("View posts");
     expect(detail).toContain("Share your visit");
   });
 
-  it("keeps the official website and approved community media near the listing identity", () => {
+  it("keeps the official website near listing identity and consolidates community media actions", () => {
     const detail = source("../app/business/[id].tsx");
     expect(detail).toContain("safeOfficialWebsite");
     expect(detail).toContain("Official website");
-    expect(detail).toContain("Watch community posts (");
-    expect(detail).toContain("communityMediaYRef.current");
+    expect(detail).toContain("Community posts");
+    expect(detail).toContain("View posts");
+    expect(detail).toContain("Share a visit");
+    expect(detail).not.toContain("communityMediaYRef.current");
+    expect(detail).not.toContain("Show Me the Vibe");
+  });
+
+  it("withholds confidence scores until enough member feedback exists", () => {
+    const detail = source("../app/business/[id].tsx");
+    const snapshot = source("../components/CommunitySnapshot.tsx");
+    const score = source("../components/CommunityConfidenceScore.tsx");
+    expect(detail).toContain("MINIMUM_COMMUNITY_SIGNAL");
+    expect(snapshot).toContain("Community scores will appear after at least");
+    expect(snapshot).toContain("MINIMUM_COMMUNITY_SIGNAL = 5");
+    expect(score).toContain("MINIMUM_COMMUNITY_REVIEWS = 5");
   });
 
   it("filters business-profile public videos by the member's explicit Video Sources choices", () => {

@@ -146,13 +146,17 @@ export function useBusinesses(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const lastSuccessfulBusinessesRef = useRef<Business[]>([]);
 
   const fetchBusinesses = useCallback(async () => {
     // Advance first so disabling a map scope also invalidates an in-flight
     // unscoped response before it can paint stale pins.
     const requestId = ++requestIdRef.current;
     if (!enabled) {
-      setBusinesses([]);
+      // Location permission, a brief AppState transition, or an in-progress
+      // map scope calculation must not blank already-visible, valid pins. A
+      // deliberate business search still replaces its result when it resolves.
+      setBusinesses(lastSuccessfulBusinessesRef.current);
       setError(null);
       setIsLoading(false);
       return;
@@ -182,18 +186,22 @@ export function useBusinesses(
           throw new Error("Invalid businesses response");
         }
         if (requestId === requestIdRef.current) {
-          setBusinesses(
+          const mappedBusinesses =
             data.businesses.map((business) =>
               mapApiBusinessToLocal(business as Record<string, unknown>),
-            ),
-          );
+            );
+          // An empty successful response is meaningful and must be shown. Only
+          // failed/aborted refreshes retain visible pins so a temporary network
+          // or origin problem cannot make previously loaded businesses vanish.
+          lastSuccessfulBusinessesRef.current = mappedBusinesses;
+          setBusinesses(mappedBusinesses);
         }
       } finally {
         clearTimeout(timeout);
       }
     } catch {
       if (requestId === requestIdRef.current) {
-        setBusinesses([]);
+        setBusinesses(lastSuccessfulBusinessesRef.current);
         setError(BUSINESS_LOAD_ERROR);
       }
     } finally {

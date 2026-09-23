@@ -29,9 +29,11 @@ describe("business discovery data contract", () => {
     expect(hookSource).toContain("useState<Business[]>([])");
   });
 
-  it("reports loading failures while preserving an empty API result as empty", () => {
+  it("reports loading failures without clearing valid pins while preserving an empty API result as empty", () => {
     expect(hookSource).toContain("const BUSINESS_LOAD_ERROR");
-    expect(hookSource).toContain("setBusinesses([]);");
+    expect(hookSource).toContain("lastSuccessfulBusinessesRef.current = mappedBusinesses");
+    expect(hookSource).toContain("setBusinesses(lastSuccessfulBusinessesRef.current);");
+    expect(hookSource).toContain("An empty successful response is meaningful");
     expect(hookSource).toContain("if (!Array.isArray(data.businesses))");
     expect(hookSource).toContain("const requestId = ++requestIdRef.current");
     expect(hookSource).toContain("if (requestId === requestIdRef.current)");

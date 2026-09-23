@@ -45,6 +45,19 @@ import { detectSocialVideoPlatform } from "@workspace/constants";
 // their dedicated route, and Circles belong to a member's Profile.
 const TABS = ["Feed", "Groups", "Challenges 🏆", "Resources"];
 
+type CommunityFeedDisplay = "text_first" | "mixed" | "video_first";
+
+const COMMUNITY_FEED_DISPLAY_OPTIONS: ReadonlyArray<{
+  id: CommunityFeedDisplay;
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  accessibilityLabel: string;
+}> = [
+  { id: "text_first", label: "Conversation", icon: "message-circle", accessibilityLabel: "Show the Community feed as conversations" },
+  { id: "mixed", label: "Community Mix", icon: "grid", accessibilityLabel: "Show the Community feed in a balanced mix" },
+  { id: "video_first", label: "Watch", icon: "play-circle", accessibilityLabel: "Show the Community feed with video emphasized" },
+];
+
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
   { value: "recommendation", label: "Recommendation" },
@@ -235,6 +248,10 @@ export default function CommunityScreen() {
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
   const [newPostCommentPolicy, setNewPostCommentPolicy] = useState<"everyone" | "followers" | "off">("everyone");
   const [feedMode, setFeedMode] = useState<"foryou" | "everyone" | "following">(isAuthenticated ? "foryou" : "everyone");
+  // A private, explicit view choice. The server receives no display value on
+  // Community feed reads, so it cannot change which posts are eligible or how
+  // they rank the same permitted posts.
+  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
@@ -334,6 +351,48 @@ export default function CommunityScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/users/me/content-preferences`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const body = await response.json().catch(() => ({})) as { communityFeedDisplay?: unknown };
+        if (active && ["text_first", "mixed", "video_first"].includes(String(body.communityFeedDisplay))) {
+          setCommunityFeedDisplay(body.communityFeedDisplay as CommunityFeedDisplay);
+        }
+      } catch {
+        // The local balanced view remains available if the private preference
+        // cannot be fetched; existing Community posts are unaffected.
+      }
+    })();
+    return () => { active = false; };
+  }, [isAuthenticated]);
+
+  const selectCommunityFeedDisplay = useCallback(async (next: CommunityFeedDisplay) => {
+    const previous = communityFeedDisplay;
+    setCommunityFeedDisplay(next);
+    if (Platform.OS !== "web") void Haptics.selectionAsync();
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/users/me/content-preferences`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ communityFeedDisplay: next }),
+      });
+      if (!response.ok) throw new Error("preference update failed");
+    } catch {
+      setCommunityFeedDisplay(previous);
+      Alert.alert("Could not save view", "Your Community posts have not changed. Please try choosing a view again.");
+    }
+  }, [communityFeedDisplay]);
 
   const loadPosts = useCallback(async () => {
     setLoadError(false);
@@ -1318,10 +1377,43 @@ export default function CommunityScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListHeaderComponent={
               <>
-                {/* Always-visible compose bar — shown first to prompt engagement */}
+                {/* Presentation changes only the same allowed posts; it never
+                    changes feed eligibility, privacy, source opt-outs, or rank. */}
+                <View style={[styles.feedPresentation, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.feedPresentationLabel, { color: colors.mutedForeground }]}>View</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.feedPresentationChoices}>
+                    {COMMUNITY_FEED_DISPLAY_OPTIONS.map((option) => {
+                      const selected = communityFeedDisplay === option.id;
+                      return (
+                        <TouchableOpacity
+                          key={option.id}
+                          activeOpacity={0.82}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                          accessibilityLabel={option.accessibilityLabel}
+                          onPress={() => { void selectCommunityFeedDisplay(option.id); }}
+                          style={[
+                            styles.feedPresentationChoice,
+                            {
+                              backgroundColor: selected ? colors.primary : colors.card,
+                              borderColor: selected ? colors.primary : colors.border,
+                            },
+                          ]}
+                        >
+                          <Feather name={option.icon} size={14} color={selected ? "#FFFFFF" : colors.mutedForeground} />
+                          <Text style={[styles.feedPresentationChoiceText, { color: selected ? "#FFFFFF" : colors.foreground }]}>
+                            {option.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {/* Compact composer, immediately followed by the feed. */}
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 12 }]}
+                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 8 }]}
                   onPress={() => {
                     if (!isAuthenticated) {
                       setUpgradeFeature("Community Posts");
@@ -1480,6 +1572,7 @@ export default function CommunityScreen() {
             renderItem={({ item }) => (
               <CommunityPostCard
                 post={item}
+                presentation={communityFeedDisplay}
                 currentUserId={user?.id}
                 onCommentPress={() => setSelectedPost(item)}
                 onAuthorPress={(id) => { router.push(`/user/${id}` as any); }}
@@ -2447,8 +2540,29 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   joinChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
-  list: { paddingHorizontal: 16, paddingTop: 8 },
+  list: { paddingHorizontal: 16, paddingTop: 0 },
   feedHeader: { paddingTop: 0, marginTop: 0 },
+  feedPresentation: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+  },
+  feedPresentationLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  feedPresentationChoices: { gap: 7, paddingRight: 16 },
+  feedPresentationChoice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: 34,
+    paddingHorizontal: 11,
+    borderRadius: 18,
+    borderWidth: 1,
+  },
+  feedPresentationChoiceText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
   emptyTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingHorizontal: 40 },

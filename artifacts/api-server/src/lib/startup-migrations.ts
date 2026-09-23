@@ -149,6 +149,27 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS social_video_platforms JSONB DEFAULT '["youtube","tiktok","instagram","facebook","twitch","snapchat","vimeo"]'::jsonb`,
   },
   {
+    // An explicit member choice controls only how the same permitted Community
+    // posts are presented. It is deliberately not an inferred engagement profile.
+    name: "user_preferences_community_feed_display_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS community_feed_display VARCHAR(20) NOT NULL DEFAULT 'mixed';
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'user_preferences_community_feed_display_check'
+            AND conrelid = 'user_preferences'::regclass
+        ) THEN
+          ALTER TABLE user_preferences
+            ADD CONSTRAINT user_preferences_community_feed_display_check
+            CHECK (community_feed_display IN ('text_first','mixed','video_first'))
+            NOT VALID;
+        END IF;
+      END $$;
+      ALTER TABLE user_preferences
+        VALIDATE CONSTRAINT user_preferences_community_feed_display_check;`,
+  },
+  {
     name: "user_preferences_member_context_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS communities JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -15294,12 +15315,26 @@ async function ensureBusinessDeduplication(
         canonicalId: "d9b40522-5887-4475-b197-d5fc69aaf597",
         name: "NMAAHC (variant)",
       },
+      // AMINA Philadelphia — exact same storefront. The original canonical
+      // record carries the documented Black / African American-Owned and
+      // Woman-Owned designations; later source-directory variants must never
+      // replace, dilute, or outrank that evidence.
+      {
+        id: "dir-6554f513099d633eec4ec33a",
+        canonicalId: "3bdd9607-f940-4dbf-99cb-5b6631b6da1c",
+        name: "AMINA Philadelphia (directory mailing-address variant)",
+      },
+      {
+        id: "dir-fd12d09e0b1756f396512e52",
+        canonicalId: "3bdd9607-f940-4dbf-99cb-5b6631b6da1c",
+        name: "AMINA Philadelphia (directory source variant)",
+      },
     ];
 
     let marked = 0;
     let skipped = 0;
     const reason =
-      "Confirmed duplicate by full-DB audit (Manus, Aug 2026) — same normalized name and identical coordinates or exact address/city/state";
+      "Confirmed duplicate by governed catalog audit — same normalized name and identical coordinates or exact address/city/state; linked data retained";
 
     for (const { id, canonicalId } of CONFIRMED_DUPLICATES) {
       try {

@@ -78,6 +78,8 @@ export const OWNERSHIP_CHIPS: Chip[] = [
   { id: "woman-owned",       label: "Woman-owned" },
   { id: "lgbtq-owned",       label: "LGBTQ+-owned" },
   { id: "veteran-owned",     label: "Veteran-owned" },
+  { id: "disability-owned",  label: "Disability-owned" },
+  { id: "divine-nine-affiliated", label: "Divine Nine-affiliated" },
   { id: "family-owned",      label: "Family-owned" },
 ];
 

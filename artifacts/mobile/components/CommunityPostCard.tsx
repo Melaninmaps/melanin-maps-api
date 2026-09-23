@@ -18,6 +18,8 @@ import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
 interface Props {
   post: CommunityPost;
+  /** A private display preference: it never changes allowed posts or ranking. */
+  presentation?: "text_first" | "mixed" | "video_first";
   currentUserId?: string;
   onCommentPress?: () => void;
   onLikeChange?: (liked: boolean) => void;
@@ -102,10 +104,11 @@ function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () 
   );
 }
 
-function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
+function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasized = false }: {
   mediaUrls: string[];
   hasContentWarning: boolean;
   contentWarningType?: string;
+  emphasized?: boolean;
 }) {
   const [revealed, setRevealed] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
@@ -136,7 +139,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
       {activeVideoUrl ? (
         <NativeCommunityVideoModal url={activeVideoUrl} onClose={() => setActiveVideoUrl(null)} />
       ) : null}
-      <View style={s.mediaGrid}>
+      <View style={[s.mediaGrid, emphasized && s.mediaGridEmphasized]}>
       {hasContentWarning && revealed && (
         <TouchableOpacity
           style={s.warningBadge}
@@ -153,7 +156,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
         return socialPlatform ? (
           <TouchableOpacity
             key={i}
-            style={[s.mediaThumb, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
+            style={[s.mediaThumb, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
             onPress={() => { void openExternalUrl(url, { unavailableMessage: "This public social video is unavailable." }); }}
             activeOpacity={0.8}
             accessibilityRole="link"
@@ -167,7 +170,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
         ) : isVideo ? (
           <TouchableOpacity
             key={i}
-            style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
+            style={[s.mediaThumb, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
             onPress={() => setActiveVideoUrl(url)}
             activeOpacity={0.8}
           >
@@ -175,7 +178,7 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
             <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Play Video</Text>
           </TouchableOpacity>
         ) : (
-          <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
+          <Image key={i} source={{ uri: url }} style={[s.mediaThumb, emphasized && s.mediaThumbEmphasized]} resizeMode="cover" />
         );
       })}
       </View>
@@ -288,7 +291,7 @@ function BusinessMentionCard({ businessId, businessName, stanceTag, rating }: {
   );
 }
 
-export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress, onHashtagPress }: Props) {
+export function CommunityPostCard({ post, presentation = "mixed", currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress, onHashtagPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -342,6 +345,15 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
   const categoryConfig = CATEGORY_CONFIG[post.category] ?? CATEGORY_CONFIG.discussion;
   const accentColor = POST_TYPE_ACCENT[post.postType ?? "community"] ?? POST_TYPE_ACCENT.community;
   const isRepost = !!post.repostId;
+  const showMediaBeforeText = presentation === "video_first";
+  const postMedia = post.mediaUrls && post.mediaUrls.length > 0 ? (
+    <MediaGrid
+      mediaUrls={post.mediaUrls}
+      hasContentWarning={post.hasContentWarning ?? false}
+      contentWarningType={post.contentWarningType}
+      emphasized={presentation === "video_first"}
+    />
+  ) : null;
 
   const handleLike = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -480,6 +492,10 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
         )}
       </View>
 
+      {/* Watch emphasizes media while retaining the same permitted posts, order,
+          warning controls, and source choices as every other presentation. */}
+      {showMediaBeforeText ? postMedia : null}
+
       {/* Content — inline hashtag tapping */}
       <Text style={[s.content, { color: colors.foreground }]}>
         {post.content.split(/(#\w+)/g).map((part, i) => {
@@ -574,14 +590,8 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
         </View>
       )}
 
-      {/* Media grid */}
-      {post.mediaUrls && post.mediaUrls.length > 0 && (
-        <MediaGrid
-          mediaUrls={post.mediaUrls}
-          hasContentWarning={post.hasContentWarning ?? false}
-          contentWarningType={post.contentWarningType}
-        />
-      )}
+      {/* Conversation and Community Mix retain a text-first flow. */}
+      {!showMediaBeforeText ? postMedia : null}
 
       {/* Topic tag badge */}
       {post.topicTag && (
@@ -778,11 +788,20 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 10,
   },
+  mediaGridEmphasized: {
+    paddingHorizontal: 0,
+    gap: 0,
+  },
   mediaThumb: {
     width: "31%",
     aspectRatio: 1,
     borderRadius: 8,
     overflow: "hidden",
+  },
+  mediaThumbEmphasized: {
+    width: "100%",
+    aspectRatio: 9 / 12,
+    borderRadius: 0,
   },
   warningOverlay: {
     marginHorizontal: 14,

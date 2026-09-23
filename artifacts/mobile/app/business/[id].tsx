@@ -42,9 +42,8 @@ import { BusinessStoriesSection } from "@/components/BusinessStoriesSection";
 import { BusinessListingsSection } from "@/components/BusinessListingsSection";
 import { BusinessMilestonesSection } from "@/components/BusinessMilestonesSection";
 import { CircleTrustedSection } from "@/components/CircleTrustedSection";
-import { CommunityConfidenceScore } from "@/components/CommunityConfidenceScore";
+import { CommunitySnapshot, MINIMUM_COMMUNITY_SIGNAL } from "@/components/CommunitySnapshot";
 import { TrustBadge, InfluencerBadge, ReviewSourceBar, type TrustLevel } from "@/components/TrustBadge";
-import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useAuth } from "@/lib/auth";
@@ -156,7 +155,6 @@ export default function BusinessDetailScreen() {
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const mainScrollRef = useRef<ScrollView>(null);
   const experienceYRef = useRef(0);
-  const communityMediaYRef = useRef(0);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
@@ -822,6 +820,9 @@ export default function BusinessDetailScreen() {
               {business.ownershipClaim === "community_reported_minority_owned" && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported minority-owned · Not verified</Text>
               )}
+              {business.ownershipClaim === "community_reported_ownership_unverified" && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Community-reported designation(s) · Not verified</Text>
+              )}
               {(business as any).ownershipClaim === "source_reported_ownership_unverified" && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>Source-reported ownership · Not owner-verified</Text>
               )}
@@ -849,10 +850,20 @@ export default function BusinessDetailScreen() {
                 reviewCount={business.reviewCount}
               />
             </View>
-            <ConfidenceScoreBadge score={business.confidenceScore} size="lg" showLabel />
+            {(business.reviewCount ?? 0) >= MINIMUM_COMMUNITY_SIGNAL && business.confidenceScore > 0 ? (
+              <ConfidenceScoreBadge score={business.confidenceScore} size="lg" showLabel />
+            ) : null}
           </View>
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
+          {business.description ? (
+            <View style={styles.aboutPreview}>
+              <Text style={[styles.aboutPreviewTitle, { color: colors.foreground }]}>About</Text>
+              <Text style={[styles.aboutPreviewText, { color: colors.mutedForeground }]} numberOfLines={4}>
+                {business.description}
+              </Text>
+            </View>
+          ) : null}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
               {safeOfficialWebsite(business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)) && (
                 <TouchableOpacity
@@ -867,26 +878,6 @@ export default function BusinessDetailScreen() {
                   <Feather name="external-link" size={13} color={colors.primary} />
                 </TouchableOpacity>
               )}
-            <TouchableOpacity
-              onPress={() => mainScrollRef.current?.scrollTo({ y: Math.max(0, communityMediaYRef.current - 16), animated: true })}
-              activeOpacity={0.82}
-              accessibilityRole="button"
-              accessibilityLabel={`Watch ${visibleContributions.length} community videos for ${business.name}`}
-              style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
-            >
-              <Feather name="play-circle" size={15} color={colors.foreground} />
-              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.foreground }}>Watch community posts ({visibleContributions.length})</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setContributionModalOpen(true)}
-              activeOpacity={0.82}
-              accessibilityRole="button"
-              accessibilityLabel={`Share your visit to ${business.name}`}
-              style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.primary + "55", backgroundColor: colors.primary + "0D", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
-            >
-              <Feather name="video" size={15} color={colors.primary} />
-              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>Share your visit</Text>
-            </TouchableOpacity>
           </View>
           {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4, backgroundColor: "#16A34A0D", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: "#16A34A25" }}>
@@ -1283,12 +1274,12 @@ export default function BusinessDetailScreen() {
             })()}
           </View>
 
-          <View onLayout={(event) => { communityMediaYRef.current = event.nativeEvent.layout.y; }} style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.communityMediaHeader}>
                 <Feather name="play-circle" size={17} color={colors.primary} />
-                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Watch community posts</Text>
+                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community posts</Text>
               </View>
-              <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>Approved public links shared by community members. Your Video Sources choices decide which platforms appear here; links open on the original creator platform.</Text>
+              <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>View community creator videos and photos, or share a public visit post. Your Video Sources choices decide which platforms appear here; links open on the original creator platform.</Text>
               {visibleContributions.length > 0 ? visibleContributions.map((item) => {
                 const href = approvedContributionUrl(item.source_url, item.source_type);
                 if (!href) return null;
@@ -1325,20 +1316,29 @@ export default function BusinessDetailScreen() {
                   </TouchableOpacity>
                 </View>
               ) : <Text style={[styles.communityMediaIntro, { color: colors.mutedForeground }]}>No approved community videos yet. Be the first to share a public visit video.</Text>}
-              <TouchableOpacity
-                onPress={() => setContributionModalOpen(true)}
-                style={[styles.communityMediaAddButton, { borderColor: colors.primary + "55" }]}
-                accessibilityRole="button"
-                accessibilityLabel="Share your visit to this place"
-                activeOpacity={0.82}
-              >
-                <Feather name="plus" size={15} color={colors.primary} />
-                <Text style={[styles.communityMediaAddText, { color: colors.primary }]}>Share your visit</Text>
-              </TouchableOpacity>
+              <View style={styles.communityMediaActions}>
+                <TouchableOpacity
+                  onPress={() => router.push({ pathname: "/business-vibes", params: { businessId: id, businessName: business.name } } as never)}
+                  style={[styles.communityMediaAddButton, { flex: 1, borderColor: colors.border }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`View community posts for ${business.name}`}
+                  activeOpacity={0.82}
+                >
+                  <Feather name="play-circle" size={15} color={colors.foreground} />
+                  <Text style={[styles.communityMediaAddText, { color: colors.foreground }]}>View posts</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setContributionModalOpen(true)}
+                  style={[styles.communityMediaAddButton, { flex: 1, borderColor: colors.primary + "55" }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Share your visit to this place"
+                  activeOpacity={0.82}
+                >
+                  <Feather name="plus" size={15} color={colors.primary} />
+                  <Text style={[styles.communityMediaAddText, { color: colors.primary }]}>Share a visit</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About</Text>
-          <Text style={[styles.description, { color: colors.foreground }]}>{business.description}</Text>
 
           {((business as any).ownerName || (business as any).ownerBio || (business as any).ownerStory) && (
             <View style={[styles.ownerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1378,8 +1378,6 @@ export default function BusinessDetailScreen() {
             </View>
           )}
 
-          <CommunityConfidenceScore business={business} />
-
           <BusinessMilestonesSection business={business} />
 
           <FlashDealsSection deals={deals} />
@@ -1388,7 +1386,7 @@ export default function BusinessDetailScreen() {
 
           <CircleTrustedSection business={business} />
 
-          <KnowBeforeYouGoSection business={business} />
+          <CommunitySnapshot business={business} />
 
           {/* Pass the Plate */}
           <TouchableOpacity
@@ -1413,22 +1411,6 @@ export default function BusinessDetailScreen() {
             <View style={styles.plateArrowWrap}>
               <Feather name="chevron-right" size={18} color="#C9922B" />
             </View>
-          </TouchableOpacity>
-
-          {/* Show Me the Vibe */}
-          <TouchableOpacity
-            style={[styles.vibeCard, { backgroundColor: "#1A3B2B" }]}
-            activeOpacity={0.85}
-            onPress={() => router.push({ pathname: "/business-vibes", params: { businessId: id, businessName: business.name } } as never)}
-          >
-            <Text style={styles.vibeCardEmoji}>🎥</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.vibeCardTitle}>Show Me the Vibe</Text>
-              <Text style={styles.vibeCardSub}>
-                Watch community videos from real visitors — the food, the feel, the atmosphere.
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={18} color="#C9922B" />
           </TouchableOpacity>
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{isOnlineOnly ? "Availability" : "Location"}</Text>
@@ -2396,6 +2378,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   name: { fontFamily: "Inter_700Bold", fontSize: 22 },
+  aboutPreview: { marginTop: 10, gap: 3 },
+  aboutPreviewTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  aboutPreviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" },
   badgeRow: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
   foundingBadge: {
@@ -2516,6 +2501,7 @@ const styles = StyleSheet.create({
   communityMediaPlatform: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "capitalize", marginBottom: 2 },
   communityMediaCaption: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
   communityMediaAttribution: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 },
+  communityMediaActions: { flexDirection: "row", gap: 8 },
   communityMediaAddButton: { minHeight: 42, borderWidth: 1, borderRadius: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingHorizontal: 12 },
   communityMediaAddText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   contributionOverlay: { flex: 1, justifyContent: "flex-end" },
