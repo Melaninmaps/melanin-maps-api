@@ -170,6 +170,17 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         VALIDATE CONSTRAINT user_preferences_community_feed_display_check;`,
   },
   {
+    // Groups are larger member-run social spaces. Their posts reuse the
+    // Community post/media/comment system, but group_id is an explicit access
+    // boundary: a Group post must never appear in the public Community feed.
+    name: "community_posts_group_feed_v1",
+    sql: `ALTER TABLE community_posts
+      ADD COLUMN IF NOT EXISTS group_id INTEGER;
+      CREATE INDEX IF NOT EXISTS community_posts_group_created_idx
+        ON community_posts (group_id, created_at DESC)
+        WHERE group_id IS NOT NULL;`,
+  },
+  {
     name: "user_preferences_member_context_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS communities JSONB NOT NULL DEFAULT '[]'::jsonb,

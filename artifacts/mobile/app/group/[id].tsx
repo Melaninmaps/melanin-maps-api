@@ -398,6 +398,24 @@ export default function GroupDetailScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Group Actions</Text>
             <View style={styles.actionGrid}>
+              <TouchableOpacity
+                style={[styles.actionCard, { backgroundColor: catColor + "12", borderColor: catColor + "30" }]}
+                onPress={() => router.push({
+                  pathname: "/(tabs)/community",
+                  params: { groupId: String(group.id), groupName: group.name },
+                } as any)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: catColor + "20" }]}>
+                  <Feather name="message-circle" size={20} color={catColor} />
+                </View>
+                <View style={styles.actionContent}>
+                  <Text style={[styles.actionLabel, { color: catColor }]}>Group Posts</Text>
+                  <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>Share and discuss with this group</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={catColor} />
+              </TouchableOpacity>
+
               {/* Plan Trip */}
               <TouchableOpacity
                 style={[styles.actionCard, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F33" }]}

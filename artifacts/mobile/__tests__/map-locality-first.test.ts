@@ -109,7 +109,9 @@ describe("FullMapView locality-first contracts", () => {
 
   it("does not fit an ordinary map to a country-wide coordinate spread", () => {
     expect(fullMapSource).toContain("if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;");
-    expect(fullMapSource).toContain("const coordinates = focusedMappedBusinesses.map");
+    expect(fullMapSource).toContain("const pinsToFit = focusedMappedBusinesses.length > 0");
+    expect(fullMapSource).toContain(": nearbyCanonicalMapPins;");
+    expect(fullMapSource).toContain("const coordinates = pinsToFit.map");
   });
 
   it("keeps the business hook backward-compatible while allowing map views to stop unscoped fetches", () => {

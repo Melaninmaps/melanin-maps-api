@@ -301,6 +301,59 @@ router.patch("/groups/:id/settings", async (req: Request, res: Response) => {
   }
 });
 
+// A Group can have more than one moderator. The first moderator is the creator;
+// additional moderators must already be members and are appointed explicitly by
+// an existing moderator. This does not change Circle roles or private Circle
+// access in any way.
+router.post("/groups/:id/moderators", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    const targetUserId = typeof req.body?.userId === "string" ? req.body.userId : "";
+    if (isNaN(groupId) || !targetUserId) { res.status(400).json({ error: "A valid group and member are required" }); return; }
+    const [requester, target] = await Promise.all([
+      findGroupMembership(groupId, req.user!.id),
+      findGroupMembership(groupId, targetUserId),
+    ]);
+    if (requester?.role !== "admin") { res.status(403).json({ error: "Only group moderators can appoint another moderator" }); return; }
+    if (!target) { res.status(404).json({ error: "That person is not a member of this group" }); return; }
+    if (target.role === "admin") { res.json({ membership: target, alreadyModerator: true }); return; }
+    const [membership] = await db.update(groupMembers)
+      .set({ role: "admin" })
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+      .returning();
+    res.json({ membership, alreadyModerator: false });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/groups/:id/moderators error");
+    res.status(500).json({ error: "Unable to appoint moderator" });
+  }
+});
+
+router.delete("/groups/:id/moderators/:userId", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    const targetUserId = String(req.params.userId ?? "");
+    if (isNaN(groupId) || !targetUserId) { res.status(400).json({ error: "A valid group and moderator are required" }); return; }
+    const requester = await findGroupMembership(groupId, req.user!.id);
+    if (requester?.role !== "admin") { res.status(403).json({ error: "Only group moderators can update moderators" }); return; }
+    const target = await findGroupMembership(groupId, targetUserId);
+    if (!target || target.role !== "admin") { res.status(404).json({ error: "Moderator not found" }); return; }
+    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.role, "admin")));
+    if (count <= 1) { res.status(409).json({ error: "A Group must keep at least one moderator" }); return; }
+    const [membership] = await db.update(groupMembers)
+      .set({ role: "member" })
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+      .returning();
+    res.json({ membership });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/groups/:id/moderators/:userId error");
+    res.status(500).json({ error: "Unable to remove moderator role" });
+  }
+});
+
 router.post("/groups/:id/report", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {

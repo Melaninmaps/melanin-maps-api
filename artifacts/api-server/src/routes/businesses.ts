@@ -4595,18 +4595,30 @@ router.get(
   "/businesses/:id/contributions",
   async (req: Request, res: Response): Promise<void> => {
     const businessId = String(req.params.id);
+    // An anonymous visitor can only see approved public posts. A signed-in
+    // contributor may also see their own pending/rejected post on either app,
+    // so submitting on mobile never looks lost on the website (or vice versa)
+    // while moderation remains the gate for every other member.
+    const viewerId = typeof (req as any).user?.id === "string"
+      ? (req as any).user.id
+      : null;
     try {
       const rows = await pool.query<Record<string, unknown>>(
         `SELECT bc.id, bc.media_type, bc.source_type, bc.source_url, bc.caption,
-              bc.attribution, bc.created_at,
+              bc.attribution, bc.created_at, bc.status,
+              CASE WHEN bc.user_id = $2::varchar THEN TRUE ELSE FALSE END AS is_own,
               (u.first_name || ' ' || COALESCE(u.last_name, '')) AS contributor_name,
               u.profile_image_url AS contributor_avatar
        FROM business_contributions bc
        LEFT JOIN users u ON u.id = bc.user_id
-       WHERE bc.business_id = $1 AND bc.status = 'approved' AND bc.is_public = TRUE
+       WHERE bc.business_id = $1
+         AND (
+           (bc.status = 'approved' AND bc.is_public = TRUE)
+           OR (bc.user_id = $2::varchar)
+         )
        ORDER BY bc.created_at DESC
        LIMIT 50`,
-        [businessId],
+        [businessId, viewerId],
       );
       res.json({ contributions: rows.rows });
     } catch (err) {

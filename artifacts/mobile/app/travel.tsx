@@ -583,6 +583,10 @@ const laStyles = StyleSheet.create({
   label: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
 });
 
+function recommendationRationale(card: ConversationalBusinessResultView["cards"][number]) {
+  return `${card.title} surfaced because ${card.matchReason.replace(/^Matched by\s*/i, "").replace(/^Matched as\s*/i, "").replace(/\.$/, "")}. Open the business page to see its details and any community posts. Kinfolk only adds reasons such as community feedback, a Hidden Gem signal, your saved preferences, budget, dietary fit, or a new owner update when that information is actually present in the record.`;
+}
+
 function ConversationalResultCards({ view, colors }: { view: ConversationalBusinessResultView; colors: ReturnType<typeof useColors> }) {
   return (
     <View style={{ gap: 8, marginTop: 10 }}>
@@ -591,10 +595,26 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
         const hasDetails = card.actions.some((action) => action.label === "View details");
         return (
           <View key={card.id} style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 12 }}>
-            <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 14 }}>{card.title}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 14, flex: 1 }}>{card.title}</Text>
+              <TouchableOpacity
+                onPress={() => Alert.alert(`Why Kinfolk suggested ${card.title}`, recommendationRationale(card))}
+                accessibilityRole="button"
+                accessibilityLabel={`Why Kinfolk suggested ${card.title}`}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="ellipsis-horizontal" size={19} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
             <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 10, marginTop: 3 }}>{businessTrustLabel(card)}</Text>
             <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 6 }}>{card.supportingText}</Text>
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 5 }}>{card.matchReason}</Text>
+            <TouchableOpacity
+              onPress={() => Alert.alert(`Why Kinfolk suggested ${card.title}`, recommendationRationale(card))}
+              accessibilityRole="button"
+              accessibilityLabel={`Read why Kinfolk suggested ${card.title}`}
+            >
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 5 }}>Why Kinfolk suggested this: {card.matchReason}</Text>
+            </TouchableOpacity>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 9 }}>
               {hasDetails && (
                 <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: card.id } })} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
@@ -1946,7 +1966,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, sessions, queriesUsed, queriesLimit, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
+  const { messages, sessionId, isLoading, sessions, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2181,6 +2201,12 @@ export default function TravelScreen() {
     void playServerVoice(content, "manual");
   }, [playServerVoice, playingVoice, stopServerVoice]);
 
+  const interruptKinfolk = useCallback(() => {
+    const stoppedReply = interruptCurrentReply();
+    stopServerVoice("member_interrupt");
+    if (stoppedReply) setVoiceInputStatus("Kinfolk stopped. Finish your thought and send it when you’re ready.");
+  }, [interruptCurrentReply, stopServerVoice]);
+
   const pickKinfolkImage = useCallback(async () => {
     if (uploadingKinfolkImage || kinfolkImages.length >= 2) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -2249,6 +2275,9 @@ export default function TravelScreen() {
       );
       return;
     }
+    // A typed follow-up should never wait behind a speaking or loading turn.
+    // The hook cancels the old request; this stops any server-owned playback.
+    stopServerVoice("member_new_turn");
     const attachedImages = [...kinfolkImages];
     const shouldRemember = rememberThis;
     setInputText("");
@@ -2263,7 +2292,7 @@ export default function TravelScreen() {
     setKinfolkImages([]);
     setRememberThis(false);
     setIncludeCommunityPerspective(false);
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech, stopServerVoice]);
 
   const stopPrimaryVoiceRecording = useCallback(async () => {
     if (!primaryRecorder.isRecording) return;
@@ -2805,13 +2834,26 @@ export default function TravelScreen() {
             onChangeText={setInputText}
             multiline
             returnKeyType="send"
+            submitBehavior="submit"
             onSubmitEditing={() => void handleSend()}
-            editable={!isLoading && !uploadingKinfolkImage}
+            editable={!uploadingKinfolkImage}
           />
+          {(isLoading || playingVoice) ? (
+            <Pressable
+              style={[styles.interruptBtn, { borderColor: "#B42318", backgroundColor: "#B4231814" }]}
+              onPress={interruptKinfolk}
+              accessibilityRole="button"
+              accessibilityLabel="Stop Kinfolk so I can finish my thought"
+              hitSlop={8}
+            >
+              <Ionicons name="stop-circle-outline" size={21} color="#B42318" />
+            </Pressable>
+          ) : null}
           <Pressable
-            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !isLoading && !uploadingKinfolkImage ? colors.primary : colors.border }]}
+            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage ? colors.primary : colors.border }]}
             onPress={() => void handleSend()}
-            disabled={!inputText.trim() || isLoading || uploadingKinfolkImage}
+            disabled={!inputText.trim() || uploadingKinfolkImage}
+            accessibilityLabel="Send message to Kinfolk"
           >
             <Ionicons name="arrow-up" size={20} color="#fff" />
           </Pressable>
@@ -2896,6 +2938,7 @@ const styles = StyleSheet.create({
   inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },
   input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
   voiceOutputBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },
+  interruptBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 2 },
 });
 

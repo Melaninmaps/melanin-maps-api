@@ -5512,6 +5512,63 @@ async function persistDeterministicDiscoveryTurn(input: {
   }
 }
 
+function memberFacingDesignationLabel(id: string): string {
+  if (id === "black-african-american") return "Black-owned";
+  if (id === "foundational-black-american") return "Foundational Black American-owned";
+  const label = OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === id)?.label;
+  return label?.replace(/-Owned$/u, "-owned") ?? "community-owned";
+}
+
+function joinMemberFacingDesignations(ids: readonly string[]): string {
+  const labels = [...new Set(ids.map(memberFacingDesignationLabel))];
+  if (labels.length === 0) return "MWM-listed";
+  if (labels.length === 1) return labels[0]!;
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
+  return `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`;
+}
+
+type SessionMessageWithResultView = SessionMessage & {
+  resultView?: { cards?: unknown[] } | null;
+};
+
+/**
+ * Only inherit a business subject for an explicit conversational follow-up to
+ * the immediately preceding result cards. This preserves a continuous chat
+ * without guessing an identity or repurposing an unrelated older question.
+ */
+function resolveBusinessResultFollowUp(
+  messages: readonly SessionMessage[],
+  message: string,
+) {
+  const priorAssistant = [...messages]
+    .reverse()
+    .find((entry) => entry.role === "assistant") as SessionMessageWithResultView | undefined;
+  const hasPreviousBusinessCards = Array.isArray(priorAssistant?.resultView?.cards)
+    && priorAssistant.resultView.cards.length > 0;
+  const explicitlyReferencesPreviousResults = /\b(?:any|which|what|are)\b[\s\S]{0,48}\b(?:these|those|them|ones|options|places|businesses)\b/i.test(message)
+    || /\b(?:any|which)\s+(?:of\s+)?(?:them|these|those)\b/i.test(message);
+  const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(message);
+  if (!hasPreviousBusinessCards || !explicitlyReferencesPreviousResults || explicitDesignationIds.length === 0) {
+    return null;
+  }
+  const priorUserMessages = [...messages]
+    .reverse()
+    .filter((entry) => entry.role === "user");
+  const priorQuestion = priorUserMessages.find((entry) => deriveBusinessSubject(entry.content));
+  const subject = priorQuestion ? deriveBusinessSubject(priorQuestion.content) : null;
+  if (!subject) return null;
+  const inheritedDesignationIds = priorQuestion
+    ? extractExplicitOwnershipDesignationFilterIds(priorQuestion.content)
+    : [];
+  return {
+    subject,
+    designationIds: normalizeOwnershipDesignationFilterIds([
+      ...inheritedDesignationIds,
+      ...explicitDesignationIds,
+    ]),
+  };
+}
+
 async function tryAnswerDeterministicBusinessDiscovery(input: {
   req: Request;
   res: Response;
@@ -5547,12 +5604,16 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     input.message,
     input.cityHint ?? currentSession?.destination ?? null,
   );
-  const subject = deriveBusinessSubject(input.message);
+  const followUp = resolveBusinessResultFollowUp(
+    currentSession?.messages ?? [],
+    input.message,
+  );
+  const subject = deriveBusinessSubject(input.message) ?? followUp?.subject ?? null;
   const decision = classifyKinfolkRequest(
     input.message,
     location?.city ?? null,
   );
-  if (decision.route !== "business_discovery" || !location?.state || !subject)
+  if ((!followUp && decision.route !== "business_discovery") || !location?.state || !subject)
     return false;
 
   const scope = { city: location.city, stateCode: location.state };
@@ -5575,9 +5636,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     assuredAgeBand,
     temporaryBusinessAudienceBand(input.message),
   );
-  const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(
-    input.message,
-  );
+  const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(input.message);
   const savedDesignationIds = normalizeOwnershipDesignationFilterIds(
     Array.isArray(prefs?.preferredOwnershipTypes)
       ? prefs.preferredOwnershipTypes
@@ -5586,7 +5645,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // A current explicit request wins for this turn; otherwise a saved strict
   // Support Lens scopes governed MWM recommendations without changing itself.
   const requiredDesignationIds =
-    explicitDesignationIds.length > 0
+    followUp?.designationIds.length
+      ? followUp.designationIds
+      : explicitDesignationIds.length > 0
       ? explicitDesignationIds
       : prefs?.supportLensMode === "strict_documented_designations"
         ? savedDesignationIds
@@ -5708,22 +5769,22 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const platformCount = discoveryResult.discovery.platformBusinesses.length;
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
-  const supportScope =
-    discoveryDesignationIds.length > 0
-      ? " that match every owner-provided support designation you named"
-      : "";
+  const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
+  const supportScope = discoveryDesignationIds.length > 0
+    ? ` that match every ${designationSummary} designation you named`
+    : "";
   const conciseReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
-      ? `I couldn't find a documented Diaspora-owned match for every selected support designation in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
+      ? `I couldn't find a documented ${designationSummary} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
-        ? `You asked to expand beyond your saved support lens, so these are public listings—not Diaspora Promotion Catalog recommendations. Ownership and community-safety evidence are shown separately where documented.`
+        ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} documented Diaspora Promotion Catalog ${platformCount === 1 ? "listing" : "listings"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      ? `I found ${platformCount} ${designationSummary} ${platformCount === 1 ? "place" : "places"} for ${subject.label} in ${scope.city}${supportScope}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
           ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}${supportScope}. I did find current external sources below; they are not MWM-verified business listings.`
-          : `I didn't find a matching documented Diaspora Promotion Catalog listing for ${subject.label} in ${scope.city}${supportScope}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
+          : `I didn't find a matching ${designationSummary} place for ${subject.label} in ${scope.city}${supportScope}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,

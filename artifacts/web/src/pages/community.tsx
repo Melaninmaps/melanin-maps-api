@@ -6,7 +6,7 @@ import {
   MessageSquare, Heart, Users, Calendar, Globe, ChevronDown,
   X, Image as ImageIcon, Video, Hash, MapPin, Send, Loader2,
   Plus, AlertCircle, Smile, MoreHorizontal, Flag, Trash2,
-  TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2
+  TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2, ChevronLeft
 } from "lucide-react";
 import { CommentsDialog } from "@/components/community/CommentsDialog";
 import { CommunityMedia } from "@/components/community/CommunityMedia";
@@ -306,7 +306,7 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
 }
 
 // ── Compose Modal ──────────────────────────────────────────────────────────
-function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Post) => void }) {
+function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: number; groupName?: string; onClose: () => void; onPost: (p: Post) => void }) {
   const { data: auth } = useGetCurrentAuthUser();
   const { toast } = useToast();
   const [content, setContent] = useState("");
@@ -380,6 +380,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         content: content.trim(),
         postType: "community",
         category: "general",
+        groupId,
         visibility,
         commentPolicy,
         locationTag: locationTag.trim() || undefined,
@@ -430,7 +431,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#3A1F0E]/8">
-          <h2 className="font-serif font-bold text-[#2B1507] text-lg">Share with the Community</h2>
+          <h2 className="font-serif font-bold text-[#2B1507] text-lg">{groupId ? `Share with ${groupName ?? "your Group"}` : "Share with the Community"}</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#FAF6EF] flex items-center justify-center hover:bg-[#3A1F0E]/8 transition-colors">
             <X className="w-4 h-4 text-[#3A1F0E]/60" />
           </button>
@@ -664,6 +665,7 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -717,14 +719,23 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
               {g.city && <><span>·</span><span>{g.city}{g.state ? `, ${g.state}` : ""}</span></>}
             </div>
           </div>
-          <button
-            onClick={() => toggleJoin(g)}
-            disabled={joining === g.id}
-            className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-              g.isMember ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:bg-red-50 hover:text-red-600" : "bg-[#CA922B] text-white hover:bg-[#B38024]"
-            }`}>
-            {joining === g.id ? "..." : g.isMember ? "Leave" : "Join"}
-          </button>
+          <div className="shrink-0 flex flex-col items-end gap-2">
+            {g.isMember ? (
+              <button
+                onClick={() => navigate(`/community?groupId=${encodeURIComponent(String(g.id))}&groupName=${encodeURIComponent(g.name)}`)}
+                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#CA922B] text-white hover:bg-[#B38024]">
+                View posts
+              </button>
+            ) : null}
+            <button
+              onClick={() => toggleJoin(g)}
+              disabled={joining === g.id}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                g.isMember ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:bg-red-50 hover:text-red-600" : "bg-[#CA922B] text-white hover:bg-[#B38024]"
+              }`}>
+              {joining === g.id ? "..." : g.isMember ? "Leave" : "Join"}
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -775,9 +786,13 @@ type Tab = typeof TABS[number];
 
 export default function Community() {
   const { data: auth } = useGetCurrentAuthUser();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const isAuthenticated = !!(auth?.user);
+  const groupIdParam = new URLSearchParams(location.split("?")[1] ?? "").get("groupId");
+  const groupNameParam = new URLSearchParams(location.split("?")[1] ?? "").get("groupName");
+  const activeGroupId = groupIdParam && /^\d+$/.test(groupIdParam) ? Number(groupIdParam) : null;
+  const activeGroupName = groupNameParam || "This Group";
 
   // People search
   const [peopleQuery, setPeopleQuery] = useState("");
@@ -830,7 +845,7 @@ export default function Community() {
     setLoadErrorStatus(null);
     setLoadErrorRequestId(null);
     try {
-      const url = `${BASE}api/community/posts?feed=${feedMode}${hashtagFilter ? `&hashtag=${hashtagFilter}` : ""}`;
+      const url = `${BASE}api/community/posts?feed=${feedMode}${activeGroupId ? `&groupId=${encodeURIComponent(String(activeGroupId))}` : ""}${hashtagFilter ? `&hashtag=${hashtagFilter}` : ""}`;
       const res = await authenticatedFetch(url);
       if (res.ok) {
         const d = await res.json() as { posts: Record<string, unknown>[] };
@@ -868,7 +883,7 @@ export default function Community() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [feedMode, hashtagFilter]);
+  }, [activeGroupId, feedMode, hashtagFilter]);
 
   useEffect(() => { loadPosts(); }, [loadPosts]);
 
@@ -912,8 +927,11 @@ export default function Community() {
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="font-serif font-bold text-2xl text-white">The Feed</h1>
-              <p className="text-[#F5EBD8]/60 text-sm">Connect with the community</p>
+              <div className="flex items-center gap-2">
+                {activeGroupId ? <button onClick={() => navigate("/community")} className="text-[#F5EBD8]/70 hover:text-white" aria-label="Back to Community feed"><ChevronLeft className="w-5 h-5" /></button> : null}
+                <h1 className="font-serif font-bold text-2xl text-white">{activeGroupId ? activeGroupName : "The Feed"}</h1>
+              </div>
+              <p className="text-[#F5EBD8]/60 text-sm">{activeGroupId ? "Posts shared with this group" : "Connect with the community"}</p>
             </div>
             {isAuthenticated && (
               <button data-testid="community-compose-open" onClick={() => setShowCompose(true)}
@@ -946,7 +964,7 @@ export default function Community() {
           {/* Tabs — hidden while search is active */}
           {!searchActive && (
             <div className="flex gap-1 bg-white/8 rounded-2xl p-1">
-              {TABS.map(tab => (
+              {(activeGroupId ? ["Feed"] as const : TABS).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
                     activeTab === tab ? "bg-white text-[#2B1507] shadow-sm" : "text-white/70 hover:text-white"
@@ -1113,7 +1131,7 @@ export default function Community() {
       </div>
 
       {/* Compose modal */}
-      {showCompose && <ComposeModal onClose={() => setShowCompose(false)} onPost={p => setPosts(ps => [p, ...ps])} />}
+      {showCompose && <ComposeModal groupId={activeGroupId ?? undefined} groupName={activeGroupId ? activeGroupName : undefined} onClose={() => setShowCompose(false)} onPost={p => setPosts(ps => [p, ...ps])} />}
       {commentTarget && <CommentsDialog
         postId={commentTarget.postId}
         postLabel={commentTarget.label}

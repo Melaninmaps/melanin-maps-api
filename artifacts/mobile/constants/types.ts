@@ -110,6 +110,7 @@ export interface CommunityPost {
   timeAgo: string;
   category: PostCategory;
   postType: PostType;
+  groupId?: number;
   liked: boolean;
   businessId?: string;
   businessName?: string;

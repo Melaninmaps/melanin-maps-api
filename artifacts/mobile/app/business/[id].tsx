@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessTimeBadges } from "@/components/BusinessTimeBadges";
 import { OwnershipBadges } from "@/components/OwnershipBadges";
 import { BusinessMapView } from "@/components/BusinessMapView";
+import BusinessExperienceCard from "@/components/BusinessExperienceCard";
 import { ConfidenceScoreBadge } from "@/components/ConfidenceScoreBadge";
 import { RatingStars } from "@/components/RatingStars";
 import { ReportContentModal } from "@/components/ReportContentModal";
@@ -51,7 +52,6 @@ import { getApiBase } from "@/lib/api";
 import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
-import BusinessExperienceCard from "@/components/BusinessExperienceCard";
 import { detectSocialVideoPlatform } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
@@ -154,7 +154,6 @@ export default function BusinessDetailScreen() {
   const [platePassCount, setPlatePassCount] = useState(0);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const mainScrollRef = useRef<ScrollView>(null);
-  const experienceYRef = useRef(0);
   const communityMediaYRef = useRef(0);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
@@ -219,6 +218,8 @@ export default function BusinessDetailScreen() {
     caption: string | null;
     attribution: string | null;
     contributor_name: string | null;
+    status: "approved" | "pending" | "rejected";
+    is_own: boolean;
   }
   const [approvedContributions, setApprovedContributions] = useState<ApprovedContribution[]>([]);
   const [contributionModalOpen, setContributionModalOpen] = useState(false);
@@ -226,9 +227,14 @@ export default function BusinessDetailScreen() {
   const [contributionCaption, setContributionCaption] = useState("");
   const [contributionSubmitting, setContributionSubmitting] = useState(false);
   const [contributionError, setContributionError] = useState<string | null>(null);
+  const [showFullAbout, setShowFullAbout] = useState(false);
   const visibleContributions = approvedContributions.filter((item) => {
     const href = approvedContributionUrl(item.source_url, item.source_type);
-    return Boolean(href) && allows(detectSocialVideoPlatform(href!));
+    // The shared endpoint returns an unreviewed item only to its creator. Keep
+    // it visible across web and native even when their selected Video Sources
+    // do not include that provider; other members still receive approved posts.
+    const isOwnUnreviewedPost = item.is_own === true && item.status !== "approved";
+    return Boolean(href) && (isOwnUnreviewedPost || allows(detectSocialVideoPlatform(href!)));
   });
 
   const { business, isLoading } = useBusinessById(id ?? "");
@@ -275,24 +281,25 @@ export default function BusinessDetailScreen() {
       } catch {}
     })();
   }, [id]);
-  useEffect(() => {
+  const loadCommunityContributions = useCallback(async () => {
     if (!id) return;
-    void (async () => {
-      try {
-        const { getItemAsync } = await import("expo-secure-store");
-        const token = await getItemAsync("auth_session_token");
-        const base = getApiBase();
-        const res = await fetch(`${base}/api/businesses/${id}/contributions`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) return;
-        const data = await res.json() as { contributions?: ApprovedContribution[] };
-        setApprovedContributions(Array.isArray(data.contributions) ? data.contributions : []);
-      } catch {
-        setApprovedContributions([]);
-      }
-    })();
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      const base = getApiBase();
+      const res = await fetch(`${base}/api/businesses/${id}/contributions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { contributions?: ApprovedContribution[] };
+      setApprovedContributions(Array.isArray(data.contributions) ? data.contributions : []);
+    } catch {
+      // Keep an already loaded feed visible during a transient refresh failure.
+    }
   }, [id]);
+  useEffect(() => {
+    void loadCommunityContributions();
+  }, [loadCommunityContributions]);
   useEffect(() => {
     if (!id) return;
     fetch(`${getApiBase()}/api/plate-passes/${id}/count`)
@@ -561,8 +568,9 @@ export default function BusinessDetailScreen() {
         setContributionError(data.error ?? "Your video could not be submitted. Please try again.");
         return;
       }
+      await loadCommunityContributions();
       closeContributionModal(true);
-      Alert.alert("Video submitted", "Thanks. It will appear on this place page after moderation confirms the public link and context.");
+      Alert.alert("Video submitted", "Your post is now visible to you here and on the website as awaiting review. It becomes public to the community after moderation confirms the public link and context.");
     } catch {
       setContributionError("Could not reach the server. Please try again.");
     } finally {
@@ -837,9 +845,21 @@ export default function BusinessDetailScreen() {
           {business.description ? (
             <View style={styles.aboutPreview}>
               <Text style={[styles.aboutPreviewTitle, { color: colors.foreground }]}>About</Text>
-              <Text style={[styles.aboutPreviewText, { color: colors.mutedForeground }]} numberOfLines={4}>
+              <Text style={[styles.aboutPreviewText, { color: colors.mutedForeground }]} numberOfLines={showFullAbout ? undefined : 4}>
                 {business.description}
               </Text>
+              {business.description.length > 180 ? (
+                <TouchableOpacity
+                  onPress={() => setShowFullAbout((shown) => !shown)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showFullAbout ? "Show less of this business description" : "Read the full business description"}
+                  style={styles.aboutExpandButton}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.aboutExpandText, { color: colors.primary }]}>{showFullAbout ? "Show less" : "Read more"}</Text>
+                  <Feather name={showFullAbout ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
@@ -1033,9 +1053,9 @@ export default function BusinessDetailScreen() {
             </TouchableOpacity>
           ) : null}
 
-          <View onLayout={(event) => { experienceYRef.current = event.nativeEvent.layout.y; }}>
-            <BusinessExperienceCard businessId={id ?? ""} />
-          </View>
+          {/* The full category-aware experience form remains available. Only the
+              redundant green jump shortcut was removed above. */}
+          <BusinessExperienceCard businessId={id ?? ""} />
 
           {/* Safety stats */}
           {(business.wouldReturnAlone != null || business.safetyRating != null) && (
@@ -1086,25 +1106,6 @@ export default function BusinessDetailScreen() {
               </View>
             </View>
           )}
-
-          {/* Share Your Experience — welcoming-environment framing, not safety rating */}
-          <TouchableOpacity
-            style={[styles.rateSafetyBanner, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              mainScrollRef.current?.scrollTo({ y: Math.max(0, experienceYRef.current - 16), animated: true });
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={styles.rateSafetyIconWrap}>
-              <Feather name="shield" size={20} color="#2D7A4F" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.rateSafetyTitle, { color: colors.foreground }]}>🛡️ Share Your Experience</Text>
-              <Text style={[styles.rateSafetySub, { color: colors.mutedForeground }]}>Help the community know what to expect.</Text>
-            </View>
-            <Feather name="chevron-right" size={16} color="#2D7A4F" />
-          </TouchableOpacity>
 
           {/* Nominate as Hidden Gem */}
           {gemStatus && !gemStatus.isActive && (
@@ -1308,7 +1309,12 @@ export default function BusinessDetailScreen() {
                     onPress={() => void openApprovedContribution(item)}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.communityMediaPlatform, { color: colors.primary }]}>{platform}</Text>
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                        <Text style={[styles.communityMediaPlatform, { color: colors.primary }]}>{platform}</Text>
+                        {item.is_own && item.status !== "approved" ? (
+                          <Text style={[styles.communityMediaPending, { color: colors.mutedForeground }]}>Awaiting review · only you can see this</Text>
+                        ) : null}
+                      </View>
                       <Text style={[styles.communityMediaCaption, { color: colors.foreground }]} numberOfLines={2}>
                         {item.caption || `View this community-shared ${platform} post`}
                       </Text>
@@ -2395,6 +2401,8 @@ const styles = StyleSheet.create({
   aboutPreview: { marginTop: 10, gap: 3 },
   aboutPreviewTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
   aboutPreviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  aboutExpandButton: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 3, paddingTop: 4, paddingVertical: 3 },
+  aboutExpandText: { fontFamily: "Inter_700Bold", fontSize: 12 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" },
   badgeRow: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
   foundingBadge: {
@@ -2519,6 +2527,7 @@ const styles = StyleSheet.create({
   communityMediaIntro: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
   communityMediaLink: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
   communityMediaPlatform: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "capitalize", marginBottom: 2 },
+  communityMediaPending: { fontFamily: "Inter_600SemiBold", fontSize: 10, lineHeight: 14 },
   communityMediaCaption: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
   communityMediaAttribution: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 },
   communityMediaActions: { flexDirection: "row", gap: 8 },

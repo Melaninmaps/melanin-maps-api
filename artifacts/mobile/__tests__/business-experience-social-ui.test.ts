@@ -8,11 +8,11 @@ const source = (relativePath: string) => readFileSync(
 );
 
 describe("Expo business experience", () => {
-  it("routes Share Your Experience to one category-aware experience card", () => {
+  it("keeps one category-aware experience form while removing the redundant jump shortcut", () => {
     const detail = source("../app/business/[id].tsx");
     expect(detail).toContain("<BusinessExperienceCard");
-    expect(detail).toContain("experienceYRef.current");
-    expect(detail).toContain("scrollTo");
+    expect(detail).not.toContain("experienceYRef.current");
+    expect(detail).not.toContain("style={[styles.rateSafetyBanner");
     expect(detail).not.toContain("captionSheetOpen");
   });
 

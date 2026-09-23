@@ -57,6 +57,11 @@ export default function TourCulturalSiteDetail() {
     const query = [site.address, site.city, site.state].filter(Boolean).join(", ");
     return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
   }, [site]);
+  const mwmMapUrl = useMemo(() => {
+    if (!site) return "/map";
+    const area = [site.city, site.state].filter(Boolean).join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    return `/map?area=${encodeURIComponent(area)}&q=${encodeURIComponent(site.name)}`;
+  }, [site]);
 
   if (status === "loading") {
     return (
@@ -107,11 +112,10 @@ export default function TourCulturalSiteDetail() {
           <p className="mt-5 whitespace-pre-line text-lg leading-8 text-[#3A1F0E]/85">{site.description}</p>
 
           <div className="mt-8 flex flex-wrap gap-3 border-t border-[#3A1F0E]/10 pt-6">
-            {mapUrl ? (
-              <a href={mapUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#CA922B] px-5 py-3 text-sm font-semibold text-white hover:bg-[#B38024]">
-                Open in Maps ↗
-              </a>
-            ) : null}
+            <Link href={mwmMapUrl} className="rounded-full bg-[#CA922B] px-5 py-3 text-sm font-semibold text-white hover:bg-[#B38024]">
+              View on MWM Map
+            </Link>
+            {mapUrl ? <a href={mapUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#CA922B]/40 px-5 py-3 text-sm font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10">Get directions ↗</a> : null}
             <span className="rounded-full border border-[#CA922B]/30 bg-[#CA922B]/5 px-4 py-3 text-sm font-semibold text-[#8D5C17]">
               Community cultural record
             </span>

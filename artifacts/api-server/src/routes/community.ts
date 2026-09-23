@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, usersTable, threadReadsTable, communityPlacesTable, userBlocksTable, userFollowsTable, memberConnections, contentReportsTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, usersTable, threadReadsTable, communityPlacesTable, userBlocksTable, userFollowsTable, memberConnections, contentReportsTable, groupMembers } from "@workspace/db";
 import { extractHashtags, upsertHashtags } from "./hashtags";
 import { eq, sql, and, gte, or } from "drizzle-orm";
 import { storage } from "../storage";
@@ -15,6 +15,7 @@ import {
   fetchActiveCommunityComments,
   fetchCommentAccessPost,
   fetchCommunityFeedRows,
+  fetchGroupCommunityFeedRows,
   type CommunityFeedMode,
 } from "../community/communityFeed";
 import {
@@ -105,6 +106,7 @@ type CommentAccess = {
   post: {
     id: string;
     authorId: string | null;
+    groupId: number | null;
     visibility: string;
     commentPolicy: CommentPolicy;
   } | null;
@@ -126,6 +128,20 @@ async function resolveCommentAccess(postId: string, viewerId: string): Promise<C
 
   const policy = normalizeCommentPolicy(post.commentPolicy, post.visibility);
   const normalizedPost = { ...post, commentPolicy: policy };
+  if (post.groupId !== null) {
+    const [membership] = await db
+      .select({ groupId: groupMembers.groupId })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, post.groupId), eq(groupMembers.userId, viewerId)))
+      .limit(1);
+    if (!membership) return { post: normalizedPost, canView: false, canComment: false, reason: null };
+    return {
+      post: normalizedPost,
+      canView: true,
+      canComment: policy !== "off",
+      reason: policy === "off" ? "Comments are turned off for this post." : null,
+    };
+  }
   if (post.authorId === viewerId) {
     return {
       post: normalizedPost,
@@ -214,20 +230,47 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       : "everyone";
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const requestedGroupId = typeof req.query.groupId === "string" ? Number.parseInt(req.query.groupId, 10) : null;
 
-    const rows = await fetchCommunityFeedRows(pool, {
-      viewerId: req.user.id,
-      feedMode,
-      authorId,
-      limit,
-      offset,
-    });
+    if (requestedGroupId !== null && (!Number.isInteger(requestedGroupId) || requestedGroupId <= 0)) {
+      res.status(400).json({ error: "Invalid group id" });
+      return;
+    }
+
+    if (requestedGroupId !== null) {
+      const [membership] = await db
+        .select({ groupId: groupMembers.groupId })
+        .from(groupMembers)
+        .where(and(eq(groupMembers.groupId, requestedGroupId), eq(groupMembers.userId, req.user.id)))
+        .limit(1);
+      if (!membership) {
+        // Deliberately avoid confirming whether a private Group or its posts exist.
+        res.status(404).json({ error: "Group posts not found" });
+        return;
+      }
+    }
+
+    const rows = requestedGroupId !== null
+      ? await fetchGroupCommunityFeedRows(pool, {
+          viewerId: req.user.id,
+          groupId: requestedGroupId,
+          limit,
+          offset,
+        })
+      : await fetchCommunityFeedRows(pool, {
+          viewerId: req.user.id,
+          feedMode,
+          authorId,
+          limit,
+          offset,
+        });
 
     // Map snake_case → camelCase to match existing shape
     const posts = rows.map((r: any) => ({
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
       authorColor: r.author_color, authorImageUrl: r.author_image_url ?? null,
       content: r.content, category: r.category, postType: r.post_type,
+      groupId: r.group_id ?? null,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
       mediaUrls: normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
@@ -309,6 +352,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       content,
       category = "general",
       postType = "community",
+      groupId,
       businessId,
       businessName: providedBusinessName,
       businessLink,
@@ -346,6 +390,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       content?: string;
       category?: string;
       postType?: string;
+      groupId?: number;
       businessId?: string;
       businessName?: string;
       businessLink?: string;
@@ -384,6 +429,27 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     if (!content?.trim()) {
       res.status(400).json({ error: "content is required" });
       return;
+    }
+
+    // Group posts are allowed only for active Group members. The same post is
+    // rendered in both clients, but the explicit groupId keeps it out of every
+    // public, Following, and For You Community feed.
+    let resolvedGroupId: number | null = null;
+    if (groupId !== undefined) {
+      if (!Number.isInteger(groupId) || groupId <= 0) {
+        res.status(400).json({ error: "Invalid group id" });
+        return;
+      }
+      const [membership] = await db
+        .select({ groupId: groupMembers.groupId })
+        .from(groupMembers)
+        .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, req.user.id)))
+        .limit(1);
+      if (!membership) {
+        res.status(403).json({ error: "Join this group before posting." });
+        return;
+      }
+      resolvedGroupId = groupId;
     }
 
     const mediaValidation = await validateCommunityMediaUrls(mediaUrls, req.user.id);
@@ -557,6 +623,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       content: seg,
       category,
       postType,
+      groupId: resolvedGroupId,
       businessId: businessId ?? null,
       businessName: resolvedBusinessName,
       businessLink: businessLink?.trim() ?? null,

@@ -41,9 +41,10 @@ import { RecommendationNudge } from "@/components/RecommendationNudge";
 import { parseMediaUrls } from "@/lib/mediaUrls";
 import { detectSocialVideoPlatform } from "@workspace/constants";
 
-// Community is the social feed. Urgent updates live in Library, events retain
-// their dedicated route, and Circles belong to a member's Profile.
-const TABS = ["Feed", "Groups", "Challenges 🏆", "Resources"];
+// Community is the social surface: a feed and the member groups that shape it.
+// Events, Library material, safety resources, market, and profiles retain their
+// own existing routes; they no longer displace posts inside this feed tab.
+const TABS = ["Feed", "Groups"];
 
 type CommunityFeedDisplay = "text_first" | "mixed" | "video_first";
 
@@ -122,6 +123,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place" || (raw.postType as string) === "safety" || (raw.postType as string) === "travel"
       ? raw.postType as CommunityPost["postType"]
       : "community"),
+    groupId: typeof raw.groupId === "number" ? raw.groupId : undefined,
     liked: false,
     businessId: (raw.businessId as string) ?? undefined,
     businessName: (raw.businessName as string) ?? undefined,
@@ -221,7 +223,10 @@ export default function CommunityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ compose?: string; caption?: string }>();
+  const params = useLocalSearchParams<{ compose?: string; caption?: string; groupId?: string; groupName?: string }>();
+  const parsedGroupId = typeof params.groupId === "string" ? Number.parseInt(params.groupId, 10) : NaN;
+  const activeGroupId = Number.isInteger(parsedGroupId) && parsedGroupId > 0 ? parsedGroupId : null;
+  const activeGroupName = typeof params.groupName === "string" ? params.groupName : "This Group";
   const { isAuthenticated, user } = useAuth();
   const isPaidMember = !!user && ["navigator", "trailblazer", "community_builder", "legacy_member", "founding", "beta"].includes(user.memberType ?? "");
   const [activeTab, setActiveTab] = useState("Feed");
@@ -413,7 +418,8 @@ export default function CommunityScreen() {
     setFeedError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/community/posts?feed=${feedMode}`, {
+      const groupQuery = activeGroupId ? `&groupId=${encodeURIComponent(String(activeGroupId))}` : "";
+      const res = await fetch(`${getApiBase()}/api/community/posts?feed=${feedMode}${groupQuery}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -456,7 +462,7 @@ export default function CommunityScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [feedMode]);
+  }, [activeGroupId, feedMode]);
 
   useEffect(() => { queueMicrotask(() => { void loadPosts({ force: true }); }); }, [loadPosts]);
 
@@ -667,6 +673,7 @@ export default function CommunityScreen() {
           isPrivateTopic: newPostTopicTag.trim() ? newPostIsPrivateTopic : undefined,
           audienceRating: newPostAudienceRating,
           ratingReason: newPostRatingReason.trim() || undefined,
+          groupId: activeGroupId ?? undefined,
           mentionedBusinessId: taggedBusiness?.id && mentionedStanceTag ? taggedBusiness.id : undefined,
           mentionedBusinessTag: taggedBusiness?.id && mentionedStanceTag ? mentionedStanceTag : undefined,
           mentionedUserIds: mentionedUserIds.length > 0 ? mentionedUserIds : undefined,
@@ -791,7 +798,22 @@ export default function CommunityScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Community</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+          {activeGroupId ? (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Back to group"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="arrow-left" size={20} color={colors.foreground} />
+            </TouchableOpacity>
+          ) : null}
+          <View style={{ minWidth: 0, flexShrink: 1 }}>
+            <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>{activeGroupId ? activeGroupName : "Community"}</Text>
+            {activeGroupId ? <Text style={[styles.groupFeedLabel, { color: colors.mutedForeground }]}>Group posts</Text> : null}
+          </View>
+        </View>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <TouchableOpacity activeOpacity={0.85}
             style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
@@ -818,7 +840,7 @@ export default function CommunityScreen() {
         contentContainerStyle={{ flexDirection: "row" }}
         accessibilityRole="tablist"
       >
-        {TABS.map((tab) => (
+        {(activeGroupId ? ["Feed"] : TABS).map((tab) => (
           <TouchableOpacity activeOpacity={0.85}
             key={tab}
             onPress={() => setActiveTab(tab)}
@@ -1403,6 +1425,30 @@ export default function CommunityScreen() {
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+            ListHeaderComponent={
+              <TouchableOpacity
+                activeOpacity={0.82}
+                style={[styles.feedComposeBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    setUpgradeFeature("Community Posts");
+                    setShowUpgrade(true);
+                    return;
+                  }
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowCompose(true);
+                  setTimeout(() => inputRef.current?.focus(), 150);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Add a Community post, photo, or video"
+              >
+                <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
+                  <Text style={[styles.composeAvatarText, { color: colors.primary }]}>{(user?.firstName ?? "M").slice(0, 1).toUpperCase()}</Text>
+                </View>
+                <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>Share a thought, photo, or video</Text>
+                <Feather name="plus-circle" size={19} color={colors.primary} />
+              </TouchableOpacity>
+            }
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Feather
@@ -2464,6 +2510,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: { fontFamily: "Inter_700Bold", fontSize: 26 },
+  groupFeedLabel: { fontFamily: "Inter_500Medium", fontSize: 11, marginTop: 1 },
   searchBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   tabRow: { borderBottomWidth: 1, flexShrink: 0, height: 44 },
   tabBtn: { alignItems: "center", justifyContent: "center", paddingHorizontal: 16, height: 44, borderBottomWidth: 2, borderBottomColor: "transparent" },
@@ -2503,6 +2550,17 @@ const styles = StyleSheet.create({
   },
   joinChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   list: { paddingHorizontal: 16, paddingTop: 0 },
+  feedComposeBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 10,
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    minHeight: 52,
+  },
   feedHeader: { paddingTop: 0, marginTop: 0 },
   feedPresentation: {
     flexDirection: "row",
@@ -2632,6 +2690,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  composeAvatarText: { fontFamily: "Inter_700Bold", fontSize: 14 },
   composeBarPlaceholder: {
     flex: 1,
     fontFamily: "Inter_400Regular",

@@ -11,7 +11,8 @@ describe("Community experience contract", () => {
     const mobile = source("../../../mobile/app/(tabs)/community.tsx");
     const web = source("../../../web/src/pages/community.tsx");
     const profile = source("../../../mobile/app/(tabs)/profile.tsx");
-    expect(mobile).toContain('const TABS = ["Feed", "Groups", "Challenges 🏆", "Resources"]');
+    expect(mobile).toContain('const TABS = ["Feed", "Groups"]');
+    expect(mobile).not.toContain('"Challenges 🏆", "Resources"');
     expect(mobile).not.toContain('const TABS = ["Feed", "What\'s Happening", "Events", "Circles ⭐"');
     expect(web).toContain('const TABS = ["Feed", "Groups"] as const');
     expect(profile).toContain('label: "My Circles"');
