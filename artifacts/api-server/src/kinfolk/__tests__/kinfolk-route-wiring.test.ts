@@ -67,7 +67,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(travelRanking).toBeLessThan(itinerarySelection);
     expect(chatRoute).toContain("ageBand: effectiveAudienceBand");
     expect(chatRoute).toMatch(/audienceAllowsBusinessText\(\{\s*ageBand:\s*effectiveAudienceBand,\s*text:\s*message,?\s*\}\)/);
-    expect(chatRoute).toContain("businessCatalog.some((business) => business.id === namedBusiness.id)");
+    expect(chatRoute).toContain("const directNameCatalog = namedBusiness");
+    expect(chatRoute).toContain("safeCatalog.filter((business) => business.id !== namedBusiness.id)");
     expect(chatRoute).toContain("favoriteCategories: prefs?.favoriteCategories");
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
@@ -149,11 +150,25 @@ describe("Kinfolk chat static wiring", () => {
     expect(approvedLookup).toBeLessThan(providerCall);
     expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*!shouldResearchInLibrary\s*&&\s*!namedBusiness/);
     expect(routeSource).toContain("requiresCurrentResearch,");
-    expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*requiresCurrentResearch\(message\)/);
+    expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*requiresCurrentResearch\(researchContextMessage\)/);
     expect(chatRoute).toContain('answerMode: "approved_library"');
     expect(chatRoute).toContain("usedInternal: true");
     expect(chatRoute).toContain("usedLiveWeb: false");
     expect(chatRoute).toContain("await persistDeterministicDiscoveryTurn({");
+  });
+
+  it("routes a resolved before-you-go question through current news research even when semantic planning is off", () => {
+    const cityBriefingPlan = chatRoute.indexOf("const cityBriefingPlan = isCityBriefingRequest(message, destination)");
+    const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
+    const semanticPlanner = chatRoute.indexOf("if (contextualIntelligenceEnabled && !contextualPlan)");
+    const researchExecution = chatRoute.indexOf("if (contextualPlan) {");
+
+    expect(cityBriefingPlan).toBeGreaterThan(-1);
+    expect(contextualPlan).toBeGreaterThan(cityBriefingPlan);
+    expect(semanticPlanner).toBeGreaterThan(contextualPlan);
+    expect(researchExecution).toBeGreaterThan(semanticPlanner);
+    expect(chatRoute).toContain('contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000');
+    expect(chatRoute).toContain("I will not substitute a generic city description");
   });
 
   it("does not turn the platform mission or saved services into a member identity assumption", () => {

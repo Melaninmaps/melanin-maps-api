@@ -364,7 +364,10 @@ export async function orchestrateContextualResearch(
     throw deps.signal.reason instanceof Error ? deps.signal.reason : abortError();
   }
   const now = deps.now?.() ?? new Date().toISOString();
-  const timeoutMs = Math.min(8_000, Math.max(500, deps.timeoutMs ?? 8_000));
+  // Current city briefings need enough time for a source-backed news and public
+  // notice search. Other callers retain their existing eight-second request;
+  // the higher ceiling is used only when the caller explicitly opts into it.
+  const timeoutMs = Math.min(20_000, Math.max(500, deps.timeoutMs ?? 8_000));
   const controller = new AbortController();
   const abortFromParent = () => controller.abort(deps.signal?.reason);
   deps.signal?.addEventListener("abort", abortFromParent, { once: true });
