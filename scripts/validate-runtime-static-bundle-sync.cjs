@@ -13,6 +13,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const dockerfilePath = path.join(root, "artifacts", "api-server", "Dockerfile");
 const staticServerPath = path.join(root, "static-server.mjs");
+const apiAppPath = path.join(root, "artifacts", "api-server", "src", "app.ts");
 const rootStatic = path.join(root, "web-static");
 const apiStatic = path.join(root, "artifacts", "api-server", "web-static");
 
@@ -31,6 +32,7 @@ function read(file) {
 
 const dockerfile = read(dockerfilePath);
 const staticServer = read(staticServerPath);
+const apiApp = read(apiAppPath);
 const copyDist = dockerfile.indexOf("COPY dist/ ./dist/");
 const copyStatic = dockerfile.indexOf("COPY web-static/ ./web-static/");
 const syncRuntimeStatic = dockerfile.indexOf("RUN rm -rf ./dist/public && mkdir -p ./dist/public && cp -a ./web-static/. ./dist/public/");
@@ -50,6 +52,24 @@ if (!staticServer.includes(reviewedPublicStatic)) {
 }
 if (staticServer.includes('path.join(__dirname, "web-static")')) {
   fail("static-server.mjs must not serve the legacy root web-static directory");
+}
+
+if (!apiApp.includes('path.join(apiPackageDir, "web-static")')) {
+  fail("API SPA server must select the reviewed API-package web-static directory");
+}
+if (!apiApp.includes('path.join(cwd, "artifacts", "api-server", "web-static")')) {
+  fail("API SPA server must support the reviewed repository-root web-static directory");
+}
+for (const legacySearchPath of [
+  'path.join(_dirname, "public")',
+  'path.join(_dirname, "..", "dist", "public")',
+  'path.join(cwd, "dist", "public")',
+  'path.join(cwd, "web-static")',
+  'path.join(cwd, "artifacts", "api-server", "dist", "public")',
+]) {
+  if (apiApp.includes(legacySearchPath)) {
+    fail(`API SPA server must not select a legacy static snapshot: ${legacySearchPath}`);
+  }
 }
 
 const rootIndex = read(path.join(rootStatic, "index.html"));

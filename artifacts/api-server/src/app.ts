@@ -74,21 +74,17 @@ declare const __BUILT_FROM_SHA__: string;
 declare const __BUILD_AT__: string;
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
-const webPublicDir = path.join(_dirname, "public");
+const apiPackageDir = path.resolve(_dirname, "..");
+const webPublicDir = path.join(apiPackageDir, "web-static");
 
 // Read SPA html once at startup — avoids sendFile path-resolution issues.
-// Try every plausible path in order; the first one with index.html wins.
-// Covers: freshly-built dist/public/, committed web-static/, and all
-// cwd-relative equivalents for any Railway working-directory scenario.
+// Serve only the reviewed Vite output. dist/public is a legacy snapshot that
+// can survive in an image/cache after its index has become stale; choosing it
+// first pairs a current API with an older browser bundle.
 const cwd = process.cwd();
 const SPA_SEARCH_DIRS = [
-  path.join(_dirname, "public"),                                        // <apiServerDir>/dist/public
-  path.join(_dirname, "..", "web-static"),                              // <apiServerDir>/web-static
-  path.join(_dirname, "..", "dist", "public"),                          // edge case
-  path.join(cwd, "dist", "public"),                                     // cwd/dist/public
-  path.join(cwd, "web-static"),                                         // cwd/web-static (legacy root)
-  path.join(cwd, "artifacts", "api-server", "dist", "public"),         // cwd/artifacts/…/dist/public
-  path.join(cwd, "artifacts", "api-server", "web-static"),             // cwd/artifacts/…/web-static
+  path.join(apiPackageDir, "web-static"),                                // Docker or API package root
+  path.join(cwd, "artifacts", "api-server", "web-static"),              // repository-root Nixpacks build
 ];
 
 // Use bundled HTML (embedded at build time) as primary; file-system read as a
