@@ -592,6 +592,9 @@ export function FullMapView({
     [mapped, mapDiscoveryFocus],
   );
   const nearbyCanonicalMapPins = useMemo(() => {
+    // Canonical pins remain available during an empty local refresh, but they
+    // must still respect the member-selected radius so the map count and camera
+    // never claim that distant pins are nearby.
     const scopePins = memberLocation
       ? canonicalMapPins.filter((business) =>
           distanceMiles(memberLocation, business) <= mapDiscoveryRadius,

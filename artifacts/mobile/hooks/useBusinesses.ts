@@ -6,6 +6,7 @@ import {
   ownershipDesignationFilterId,
 } from "@workspace/constants";
 import { buildBusinessesRequestUrl } from "./support-lens-request";
+import { getApiBase } from "@/lib/api";
 export { buildBusinessesRequestUrl } from "./support-lens-request";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
@@ -41,13 +42,6 @@ interface UseBusinessByIdResult {
   business: Business | undefined;
   isLoading: boolean;
   error: string | null;
-}
-
-function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  return "";
 }
 
 function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
@@ -171,7 +165,11 @@ export function useBusinesses(
     setError(null);
 
     try {
-      const apiBase = getApiBaseUrl();
+      // Map discovery must use the same production API resolver as canonical
+      // marker loading and Kinfolk. Returning an empty relative origin in a
+      // native release made 50-mile searches fail locally even while the web
+      // map and the live pin endpoint had matching inventory.
+      const apiBase = getApiBase();
       const url = buildBusinessesRequestUrl(apiBase, {
         search,
         category,
@@ -249,7 +247,7 @@ export function useBusinessById(id: string): UseBusinessByIdResult {
       setError(null);
       setBusiness(undefined);
       try {
-        const apiBase = getApiBaseUrl();
+        const apiBase = getApiBase();
         const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);

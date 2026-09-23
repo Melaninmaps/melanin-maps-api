@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the complete 119/89
+# Requirements-to-proof source/artifact gate. Defaults to the complete 120/90
 # repair release while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
@@ -26,13 +26,14 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-119}"
-EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-89}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-120}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-90}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "117/87" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "118/88" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "119/89" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "119/89" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "120/90" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
@@ -93,6 +94,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/compiled-build-identity.test.ts \
   src/__tests__/community-feed.test.ts \
   src/__tests__/community-feed-schema-guard.test.ts \
+  src/__tests__/kinfolk-mobile-continuity-contract.test.ts \
   src/__tests__/directory-import-publication.test.ts \
   src/__tests__/directory-publication.test.ts \
   src/__tests__/founder-business-discoverability-contract.test.ts \
@@ -144,6 +146,7 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
   artifacts/mobile/__tests__/community-map-voice-regressions.test.ts \
+  artifacts/mobile/__tests__/community-content-first.test.ts \
   artifacts/mobile/__tests__/business-experience-social-ui.test.ts \
   artifacts/mobile/__tests__/kinfolk-audit-repairs.test.ts \
   artifacts/mobile/__tests__/cross-client-social-records.test.ts \
@@ -154,6 +157,7 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \
   artifacts/mobile/__tests__/business-discovery-contract.test.ts \
   artifacts/mobile/__tests__/map-locality-first.test.ts \
+  artifacts/mobile/__tests__/map-kinfolk-continuity.test.ts \
   artifacts/mobile/__tests__/essential-services-map.test.ts
 
 pnpm --dir artifacts/web run build

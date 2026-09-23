@@ -254,12 +254,12 @@ function webFinding(result: WebResult): BusinessDiscoveryWebFinding | null {
 
 function providerMessage(state: WebSearchState, count: number): string {
   if (state === "unavailable") {
-    return "Live web research is unavailable because no web-search provider is configured.";
+    return "Current external details are unavailable right now. MWM listings and official links shown here are still available.";
   }
   if (state === "degraded") {
     return count > 0
-      ? "Live web research was degraded by a provider error; partial external findings are shown."
-      : "Live web research was degraded by a timeout or provider error, so current external coverage could not be confirmed.";
+      ? "Some current external details could not be confirmed, so the available links are shown separately."
+      : "Current external details could not be confirmed right now. MWM listings and official links shown here are still available.";
   }
   return count > 0
     ? `Live web research completed with ${count} external finding${count === 1 ? "" : "s"}.`

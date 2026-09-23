@@ -9,6 +9,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -40,6 +41,7 @@ import {
   useAudioPlayer,
   useAudioPlayerStatus,
   useAudioRecorder,
+  useAudioRecorderState,
 } from "expo-audio";
 import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
@@ -1992,6 +1994,9 @@ export default function TravelScreen() {
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
   const [voiceRecordingElapsedSeconds, setVoiceRecordingElapsedSeconds] = useState(0);
   const primaryRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  // Native recorder state is authoritative. A pressed mic must not show a
+  // recording state unless the operating system actually began capturing.
+  const primaryRecorderState = useAudioRecorderState(primaryRecorder, 250);
   const primaryRecordingStartedAtRef = useRef<number | null>(null);
   const primaryRecordingDraftRef = useRef("");
   const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
@@ -2241,12 +2246,36 @@ export default function TravelScreen() {
           permission.canAskAgain
             ? "Allow microphone access, then tap the microphone again."
             : "Allow microphone access for Mapping With Melanin in your phone Settings, then try again.",
+          permission.canAskAgain
+            ? [{ text: "Not now", style: "cancel" }]
+            : [
+                { text: "Not now", style: "cancel" },
+                { text: "Open Settings", onPress: () => void Linking.openSettings() },
+              ],
         );
         return;
       }
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      // An active reply player can keep the audio session from handing the
+      // microphone to the recorder without surfacing a useful native error.
+      stopServerVoice("voice_input_start");
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+        interruptionMode: "doNotMix",
+        shouldPlayInBackground: false,
+        shouldRouteThroughEarpiece: false,
+      });
       await primaryRecorder.prepareToRecordAsync();
+      if (!primaryRecorder.getStatus().canRecord) {
+        throw new Error("Your phone could not prepare its microphone. Try again, or check microphone access in Settings.");
+      }
       primaryRecorder.record();
+      // Recorder startup is asynchronous on physical devices. Verify it before
+      // switching the control into its red Stop state.
+      await new Promise<void>((resolve) => setTimeout(resolve, 80));
+      if (!primaryRecorder.getStatus().isRecording) {
+        throw new Error("Your phone did not begin recording. Check microphone access and try again.");
+      }
       primaryRecordingStartedAtRef.current = Date.now();
       primaryRecordingDraftRef.current = inputText;
       setVoiceRecordingElapsedSeconds(0);
@@ -2259,7 +2288,7 @@ export default function TravelScreen() {
       Alert.alert("Kinfolk Voice could not start", cause instanceof Error ? cause.message : "Check microphone permission and try again, or type your question.");
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [inputText, isAuthenticated, isTranscribingVoice, primaryRecorder]);
+  }, [inputText, isAuthenticated, isTranscribingVoice, primaryRecorder, stopServerVoice]);
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
@@ -2295,7 +2324,8 @@ export default function TravelScreen() {
   }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech, stopServerVoice]);
 
   const stopPrimaryVoiceRecording = useCallback(async () => {
-    if (!primaryRecorder.isRecording) return;
+    const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
+    if (!recordingWasActive) return;
     setIsRecordingVoice(false);
     setIsTranscribingVoice(true);
     setVoiceInputStatus("Turning your words into text…");
@@ -2304,7 +2334,7 @@ export default function TravelScreen() {
         ? 0
         : Math.max(0, Date.now() - primaryRecordingStartedAtRef.current);
       primaryRecordingStartedAtRef.current = null;
-      await primaryRecorder.stop();
+      if (primaryRecorder.isRecording) await primaryRecorder.stop();
       const uri = primaryRecorder.uri;
       if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
       const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
@@ -2329,8 +2359,15 @@ export default function TravelScreen() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
       });
-      const payload = await response.json().catch(() => ({})) as { text?: string; message?: string };
-      if (!response.ok) throw new Error(payload.message ?? "Voice transcription failed. Please try again or type your question.");
+      const payload = await response.json().catch(() => ({})) as { text?: string; message?: string; error?: string };
+      if (!response.ok) {
+        const recovery = payload.error === "AUDIO_UNREADABLE" || payload.error === "AUDIO_MIME_MISMATCH"
+          ? "Kinfolk could not read that recording. Please try recording again; if it repeats, type your message and keep the conversation going."
+          : payload.error === "VOICE_INPUT_RATE_LIMITED"
+            ? "Voice input is taking a short break. You can type your message and try recording again after the displayed wait."
+            : payload.message ?? "Voice transcription failed. Please try again or type your question.";
+        throw new Error(recovery);
+      }
       if (!payload.text?.trim()) throw new Error("Kinfolk could not hear that clearly. Please try again or type your question.");
       setVoiceInputStatus("Sending your question to Kinfolk…");
       await handleSend(payload.text);
@@ -2344,7 +2381,7 @@ export default function TravelScreen() {
       setIsTranscribingVoice(false);
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [handleSend, primaryRecorder]);
+  }, [handleSend, isRecordingVoice, primaryRecorder]);
 
   const cancelPrimaryVoiceRecording = useCallback(async () => {
     if (!primaryRecorder.isRecording) return;
@@ -2386,6 +2423,20 @@ export default function TravelScreen() {
       clearTimeout(limit);
     };
   }, [isRecordingVoice, stopPrimaryVoiceRecording]);
+
+  // Calls, route changes, and media-service resets can stop native recording
+  // behind React's back. Recover to the same transcription/retry path instead
+  // of leaving the microphone control visually active but inert.
+  useEffect(() => {
+    if (!isRecordingVoice || primaryRecorderState.isRecording) return;
+    if (primaryRecordingStartedAtRef.current === null) return;
+    const timeout = setTimeout(() => {
+      if (!primaryRecorder.getStatus().isRecording) {
+        void stopPrimaryVoiceRecording();
+      }
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [isRecordingVoice, primaryRecorder, primaryRecorderState.isRecording, stopPrimaryVoiceRecording]);
 
   useEffect(() => () => {
     if (primaryRecorder.isRecording) void primaryRecorder.stop();

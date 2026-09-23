@@ -1588,6 +1588,14 @@ function TravelPage() {
 
     const attachedImages = [...imageUrls];
     const shouldRemember = rememberThis;
+    const conversationContext = messages.slice(-6).map((message) => ({
+      role: message.role,
+      content: message.content,
+      resultView: message.resultView ?? null,
+    }));
+    const recentLocation = [...messages]
+      .reverse()
+      .find((message) => message.location?.city)?.location?.city;
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString(), imageUrls: attachedImages };
     requestConversationScroll("send");
     setMessages(prev => [...prev, userMsg]);
@@ -1610,7 +1618,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective, cityHint: recentLocation, conversationContext }),
         signal: controller.signal,
       });
 
@@ -1767,7 +1775,7 @@ function TravelPage() {
       clearResponseStatusTimers();
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak]);
+  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.

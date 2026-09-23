@@ -3399,9 +3399,13 @@ export default function Admin() {
                             {biz.listingStatus !== "archived" ? (
                               <button
                                 onClick={async () => {
+                                  const reason = window.prompt(
+                                    `Why should "${biz.name}" be removed from public discovery? This immediately removes it from public search, map pins, and Kinfolk promotion. The record, reports, and linked data remain intact.`,
+                                  )?.trim();
+                                  if (!reason) return;
                                   if (
                                     !window.confirm(
-                                      `Archive "${biz.name}"? It will be removed from the live directory but not deleted.`,
+                                      `Remove "${biz.name}" from public discovery now? This is reversible and will be recorded with your reason.`,
                                     )
                                   )
                                     return;
@@ -3416,21 +3420,28 @@ export default function Admin() {
                                         },
                                         body: JSON.stringify({
                                           listingStatus: "archived",
+                                          reason,
                                         }),
                                       },
                                     );
+                                    const body = await r.json().catch(() => ({})) as { error?: string };
                                     if (r.ok) loadBusinesses();
+                                    else window.alert(body.error ?? "The listing could not be removed.");
                                   } catch {
-                                    /* ignore */
+                                    window.alert("The listing could not be removed. Please try again.");
                                   }
                                 }}
                                 className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
-                                📦 Archive
+                                📦 Remove from public discovery
                               </button>
                             ) : (
                               <button
                                 onClick={async () => {
+                                  const reason = window.prompt(
+                                    `Why should "${biz.name}" be restored to public discovery? This will be recorded with the restoration.`,
+                                  )?.trim();
+                                  if (!reason) return;
                                   try {
                                     const r = await fetch(
                                       `${BASE}api/admin/businesses/${biz.id}/listing-status`,
@@ -3442,17 +3453,20 @@ export default function Admin() {
                                         },
                                         body: JSON.stringify({
                                           listingStatus: "live_unclaimed",
+                                          reason,
                                         }),
                                       },
                                     );
+                                    const body = await r.json().catch(() => ({})) as { error?: string };
                                     if (r.ok) loadBusinesses();
+                                    else window.alert(body.error ?? "The listing could not be restored.");
                                   } catch {
-                                    /* ignore */
+                                    window.alert("The listing could not be restored. Please try again.");
                                   }
                                 }}
                                 className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 border border-green-200 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
-                                ♻️ Restore
+                                ♻️ Restore public listing
                               </button>
                             )}
                           </div>

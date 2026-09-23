@@ -6293,6 +6293,13 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // media_assets, entity_media_assets, business_claim_requests tables +
     // owner_claim_status / added_via / added_by_member_id columns on businesses.
     ["media and claims schema v1", () => ensureMediaAndClaimsSchema(log, warn)],
+    // ── Reversible public-discovery removal audit ─────────────────────────
+    // An administrator may remove a business from public discovery and restore
+    // it later. The business row and its linked evidence are never deleted.
+    [
+      "business public-discovery removal audit v1",
+      () => ensureBusinessListingStatusAuditSchema(log, warn),
+    ],
     // ── Universal non-business map entities ────────────────────────────────
     // One published source supplies the map pin, panel row, and canonical place URL.
     [
@@ -16875,6 +16882,39 @@ async function ensureMediaAndClaimsSchema(
   } catch (err: unknown) {
     warn(
       `ensureMediaAndClaimsSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+// ── Reversible public-discovery removal audit ──────────────────────────────────
+// A removal stops public search, map display, and Kinfolk promotion through the
+// existing archived/suspended state. The audit table records why an administrator
+// acted and the prior public state needed for a deliberate restoration.
+async function ensureBusinessListingStatusAuditSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_listing_status_audit_events (
+        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id   TEXT NOT NULL,
+        action        TEXT NOT NULL CHECK (action IN ('remove_public_discovery', 'restore_public_discovery')),
+        actor_user_id TEXT,
+        reason        TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+        before_state  JSONB NOT NULL,
+        after_state   JSONB NOT NULL,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS business_listing_status_audit_business_created_idx
+        ON business_listing_status_audit_events(business_id, created_at DESC)
+    `);
+    log("ensureBusinessListingStatusAuditSchema: table ready");
+  } catch (err: unknown) {
+    warn(
+      `ensureBusinessListingStatusAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }

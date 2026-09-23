@@ -59,6 +59,10 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     const travel = source("app/travel.tsx");
     expect(travel).toContain("useAudioRecorder(RecordingPresets.HIGH_QUALITY)");
     expect(travel).toContain("requestRecordingPermissionsAsync()");
+    expect(travel).toContain("useAudioRecorderState(primaryRecorder, 250)");
+    expect(travel).toContain("primaryRecorder.getStatus().canRecord");
+    expect(travel).toContain("primaryRecorder.getStatus().isRecording");
+    expect(travel).toContain("Linking.openSettings()");
     expect(travel).toContain("/api/kinfolk/transcribe");
     expect(travel).toContain('form.append("durationMs", String(durationMs))');
     expect(travel).toContain("Record a voice question for Kinfolk");
