@@ -22,18 +22,36 @@ interface SubmissionOutcome {
 
 const OWNERSHIP_OPTIONS = [
   { value: "black-owned", label: "Black-owned" },
+  { value: "hispanic-owned", label: "Hispanic/Latino-owned" },
+  { value: "ethiopian-owned", label: "Ethiopian-owned" },
+  { value: "caribbean-owned", label: "Caribbean-owned" },
+  { value: "brazilian-owned", label: "Brazilian-owned" },
   { value: "woman-owned", label: "Woman-owned" },
   { value: "lgbtq-owned", label: "LGBTQ+-owned" },
   { value: "minority-owned", label: "Minority-owned" },
   { value: "indigenous-owned", label: "Indigenous-owned" },
+  { value: "asian-owned", label: "Asian-owned" },
+  { value: "african-owned", label: "African-owned" },
+  { value: "immigrant-owned", label: "Immigrant-owned" },
+  { value: "veteran-owned", label: "Veteran-owned" },
+  { value: "family-owned", label: "Family-owned" },
 ];
 
 const OWNERSHIP_TO_FORM: Record<string, string> = {
   "Black / African American-Owned": "black-owned",
+  "Latino / Hispanic-Owned": "hispanic-owned",
+  "Ethiopian-Owned": "ethiopian-owned",
+  "Caribbean / West Indian-Owned": "caribbean-owned",
+  "Brazilian-Owned": "brazilian-owned",
   "Woman-Owned": "woman-owned",
   "LGBTQIA+-Owned": "lgbtq-owned",
   "Minority-Owned (general / legacy)": "minority-owned",
   "Indigenous / Native-Owned": "indigenous-owned",
+  "Asian American-Owned": "asian-owned",
+  "African-Owned": "african-owned",
+  "Immigrant-Owned": "immigrant-owned",
+  "Veteran-Owned": "veteran-owned",
+  "Family-Owned": "family-owned",
 };
 
 const CATEGORIES = [
