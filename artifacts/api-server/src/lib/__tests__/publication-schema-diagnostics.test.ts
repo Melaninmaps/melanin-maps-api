@@ -41,7 +41,8 @@ describe("required publication schema failure diagnostics", () => {
 
   it("accepts PostgreSQL's unqualified rendering of the same fail-closed view", () => {
     const canonicalView = `SELECT b.* FROM businesses b
-      WHERE business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)`;
+      WHERE business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)
+        AND NOT EXISTS (SELECT 1 FROM business_duplicate_resolutions d WHERE d.superseded_business_id = b.id)`;
 
     expect(communityPublicViewDefinitionIsSafe(canonicalView)).toBe(true);
     expect(
@@ -53,7 +54,8 @@ describe("required publication schema failure diagnostics", () => {
 
   it("accepts PostgreSQL's alias-free and text-cast view rendering only when the full predicate matches", () => {
     const postgresView = `SELECT b.* FROM businesses b
-      WHERE business_record_is_public(status::text, listing_status::text, is_duplicate, permanently_hidden, name, description, data_source::text, phone::text)`;
+      WHERE business_record_is_public(status::text, listing_status::text, is_duplicate, permanently_hidden, name, description, data_source::text, phone::text)
+        AND NOT EXISTS (SELECT 1 FROM business_duplicate_resolutions d WHERE d.superseded_business_id = id)`;
 
     expect(communityPublicViewDefinitionIsSafe(postgresView)).toBe(true);
     expect(

@@ -6034,7 +6034,7 @@ router.patch(
         await client.query(
           `UPDATE businesses
             SET is_duplicate        = true,
-                duplicate_of_id     = $1::uuid,
+                duplicate_of_id     = $1,
                 duplicate_reason    = 'manual_review_merge',
                 duplicate_marked_at = NOW(),
                 listing_status      = 'permanently_hidden',
@@ -6060,7 +6060,7 @@ router.patch(
              (id, review_item_id, action, duplicate_business_id,
               canonical_business_id, actor_user_id, confirmation_phrase,
               reason, detail, created_at)
-           VALUES ($1::uuid,$2::uuid,'merge',$3::uuid,$4::uuid,$5,$6,$7,$8::jsonb,$9)`,
+           VALUES ($1::uuid,$2::uuid,'merge',$3,$4,$5,$6,$7,$8::jsonb,$9)`,
           [
             mergeEventId,
             id,
@@ -6270,7 +6270,7 @@ router.post(
         `SELECT id, duplicate_of_id, is_duplicate, duplicate_reason,
                 duplicate_marked_at, status, listing_status
            FROM businesses
-          WHERE id = $1::uuid
+          WHERE id = $1
           FOR UPDATE`,
         [mergeEvent.duplicate_business_id],
       );
@@ -6290,13 +6290,13 @@ router.post(
       await client.query(
         `UPDATE businesses
             SET is_duplicate = $1,
-                duplicate_of_id = $2::uuid,
+                duplicate_of_id = $2,
                 duplicate_reason = $3,
                 duplicate_marked_at = $4,
                 listing_status = $5,
                 status = $6,
                 updated_at = NOW()
-          WHERE id = $7::uuid`,
+          WHERE id = $7`,
         [
           businessBefore.isDuplicate ?? false,
           businessBefore.duplicateOfId ?? null,
@@ -6330,7 +6330,7 @@ router.post(
            (id, review_item_id, action, duplicate_business_id,
             canonical_business_id, actor_user_id, confirmation_phrase,
             reason, related_event_id, detail)
-         VALUES ($1::uuid,$2::uuid,'restore',$3::uuid,$4::uuid,$5,$6,$7,$8::uuid,$9::jsonb)`,
+         VALUES ($1::uuid,$2::uuid,'restore',$3,$4,$5,$6,$7,$8::uuid,$9::jsonb)`,
         [
           restoreEventId,
           req.params.id,
