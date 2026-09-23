@@ -2064,17 +2064,17 @@ function TravelPage() {
           {/* Chat */}
           {isLoggedIn && (
             <>
-              <div ref={msgContainerRef} onScroll={handleConversationScroll} data-testid="kinfolk-conversation-scroll-region" className="min-h-0 flex-1 overflow-y-auto px-4 py-6 space-y-4">
+              <div ref={msgContainerRef} onScroll={handleConversationScroll} data-testid="kinfolk-conversation-scroll-region" className={`min-h-0 px-4 py-5 space-y-4 ${isEmpty ? "flex-none overflow-visible" : "flex-1 overflow-y-auto"}`}>
                 {isEmpty && (
-                  <section data-testid="kinfolk-conversation-welcome" aria-label="Start a Kinfolk conversation" className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col justify-center py-6 md:py-10">
-                    <div className="rounded-[1.75rem] border border-[#3A1F0E]/8 bg-white p-5 shadow-[0_18px_60px_rgba(58,31,14,0.06)] sm:p-8">
+                  <section data-testid="kinfolk-conversation-welcome" aria-label="Start a Kinfolk conversation" className="mx-auto w-full max-w-3xl py-1 sm:py-3">
+                    <div className="rounded-3xl border border-[#3A1F0E]/8 bg-white p-4 shadow-[0_12px_36px_rgba(58,31,14,0.05)] sm:p-5">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#CA922B]/10 ring-1 ring-[#CA922B]/15">
-                          <Sparkles className="h-5 w-5 text-[#CA922B]" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#CA922B]/10 ring-1 ring-[#CA922B]/15">
+                          <Sparkles className="h-[18px] w-[18px] text-[#CA922B]" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8D5C17]">Start a conversation</p>
-                          <h2 className="mt-1 font-serif text-2xl font-bold tracking-[-0.02em] text-[#2B1507] sm:text-3xl">
+                          <h2 className="mt-0.5 font-serif text-xl font-bold tracking-[-0.02em] text-[#2B1507] sm:text-2xl">
                             {sessions.length > 0 && (authData?.user as { firstName?: string })?.firstName
                               ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}.`
                               : sessions.length > 0
@@ -2083,7 +2083,7 @@ function TravelPage() {
                           </h2>
                         </div>
                       </div>
-                      <p className="mt-4 max-w-2xl text-sm leading-6 text-[#3A1F0E]/60">
+                      <p className="mt-3 max-w-2xl text-sm leading-6 text-[#3A1F0E]/60">
                         {sessions.length > 0 && sessions[0]?.title
                           ? `Last time we talked about “${sessions[0].title}.” Pick up where you left off, or bring something new.`
                           : sessions.length > 0
@@ -2091,27 +2091,27 @@ function TravelPage() {
                           : KINFOLK_DEFAULT_GREETING_BODY}
                       </p>
                       {prefsLoaded && !hasPrefs && (
-                        <button onClick={() => setShowPrefs(true)} className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-2 text-xs font-semibold text-[#8D5C17] transition-colors hover:bg-[#CA922B]/10">
+                        <button onClick={() => setShowPrefs(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-1.5 text-xs font-semibold text-[#8D5C17] transition-colors hover:bg-[#CA922B]/10">
                           <Settings size={12} /> Set a taste profile for personalized picks
                         </button>
                       )}
                       {prefsLoaded && hasPrefs && (
-                        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-2 text-xs font-semibold text-[#8D5C17]">
+                        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]">
                           <Check size={12} /> Your taste profile is active for recommendations
                         </p>
                       )}
 
-                      <div className="mt-7 border-t border-[#3A1F0E]/8 pt-5">
-                        <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="mt-4 border-t border-[#3A1F0E]/8 pt-4">
+                        <div className="mb-2 flex items-center justify-between gap-3">
                           <p className="text-xs font-bold text-[#2B1507]">Start here</p>
-                          <span className="text-[11px] text-[#3A1F0E]/45">Choose a direction or type anything below.</span>
+                          <span className="text-[11px] text-[#3A1F0E]/45">Or type anything below.</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <div className="flex flex-wrap gap-2">
                           {KINFOLK_LIFE_CHIPS.slice(0, 4).map(chip => (
                             <button key={chip.label} onClick={() => send(chip.prompt)}
-                              className="group flex min-h-20 flex-col items-start justify-between rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[#CA922B]/35 hover:bg-[#FFF8EC]">
-                              <chip.Icon size={17} color="#CA922B" aria-hidden />
-                              <span className="text-xs font-semibold leading-tight text-[#3A1F0E]/72 group-hover:text-[#8D5C17]">{chip.label}</span>
+                              className="group inline-flex items-center gap-2 rounded-xl border border-[#3A1F0E]/8 bg-[#FAF6EF] px-3 py-2 text-left text-xs font-semibold text-[#3A1F0E]/72 transition-colors hover:border-[#CA922B]/35 hover:bg-[#FFF8EC] hover:text-[#8D5C17]">
+                              <chip.Icon size={15} color="#CA922B" aria-hidden />
+                              <span>{chip.label}</span>
                             </button>
                           ))}
                         </div>
@@ -2119,20 +2119,22 @@ function TravelPage() {
                           <summary className="cursor-pointer list-none text-xs font-semibold text-[#8D5C17] marker:hidden">
                             <span className="inline-flex items-center gap-1.5">More ways Kinfolk can help <ChevronRight size={12} className="transition-transform group-open:rotate-90" /></span>
                           </summary>
-                          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          <div className="mt-2 flex flex-wrap gap-2">
                             {KINFOLK_LIFE_CHIPS.slice(4).map(chip => (
                               <button key={chip.label} onClick={() => send(chip.prompt)}
-                                className="group flex min-h-20 flex-col items-start justify-between rounded-2xl border border-[#3A1F0E]/8 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[#CA922B]/35 hover:bg-[#FFF8EC]">
-                                <chip.Icon size={17} color="#CA922B" aria-hidden />
-                                <span className="text-xs font-semibold leading-tight text-[#3A1F0E]/72 group-hover:text-[#8D5C17]">{chip.label}</span>
+                                className="group inline-flex items-center gap-2 rounded-xl border border-[#3A1F0E]/8 bg-white px-3 py-2 text-left text-xs font-semibold text-[#3A1F0E]/72 transition-colors hover:border-[#CA922B]/35 hover:bg-[#FFF8EC] hover:text-[#8D5C17]">
+                                <chip.Icon size={15} color="#CA922B" aria-hidden />
+                                <span>{chip.label}</span>
                               </button>
                             ))}
                           </div>
                         </details>
                       </div>
 
-                      <div className="mt-6 border-t border-[#3A1F0E]/8 pt-5">
-                        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#3A1F0E]/38">Try a specific question</p>
+                      <details className="group mt-3">
+                        <summary className="cursor-pointer list-none text-xs font-semibold text-[#8D5C17] marker:hidden">
+                          <span className="inline-flex items-center gap-1.5">See example questions <ChevronRight size={12} className="transition-transform group-open:rotate-90" /></span>
+                        </summary>
                         <div className="flex flex-wrap gap-2">
                           {KINFOLK_EXAMPLE_CHIPS.map(chip => (
                             <button key={chip} onClick={() => send(chip)}
@@ -2141,7 +2143,7 @@ function TravelPage() {
                             </button>
                           ))}
                         </div>
-                      </div>
+                      </details>
                     </div>
                   </section>
                 )}
