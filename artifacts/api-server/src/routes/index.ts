@@ -88,6 +88,7 @@ import passportRouter from "./passport";
 import safetyHeatmapRouter from "./safety-heatmap";
 import canonicalCulturalSitesRouter from "./canonical-cultural-sites";
 import culturalSitesRouter from "./cultural-sites";
+import culturalExplorerRouter from "./cultural-explorer";
 import sundownTownsRouter from "./sundown-towns";
 import externalClicksRouter from "./external-clicks";
 import monitorBuild97Router from "./monitor-build97";
@@ -235,6 +236,11 @@ router.get("/kinfolk/health", async (_req, res) => {
 router.use(requireAuth);
 
 // ── Everything below requires authentication ────────────────────────────────
+
+// Normalizes cultural sites, recurring markets/events, and curated resources
+// without changing the existing cultural-site route ordering or legacy detail
+// contracts. Native clients attach their established bearer header here.
+router.use(culturalExplorerRouter);
 
 // Tester direct-to-founder issue reports
 router.use(testerReportRouter);
