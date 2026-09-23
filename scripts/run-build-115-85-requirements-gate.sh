@@ -77,6 +77,7 @@ printf 'ios=1.1.9 (%s); android=1.1.7 (%s)\n' \
 [ "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)" = "$EXPECTED_ANDROID_CODE" ] || fail "Android versionCode must be $EXPECTED_ANDROID_CODE"
 [ "$(jq -r '.expo.ios.supportsTablet' artifacts/mobile/app.json)" = "true" ] || fail "iPad support must remain enabled"
 [ "$(jq -r '.expo.ios.infoPlist.UIRequiresFullScreen' artifacts/mobile/app.json)" = "false" ] || fail "iPad multitasking must remain enabled"
+node scripts/validate-android-eas-jdk17.cjs || fail "Android EAS Java 17 image configuration is invalid"
 
 check_authored_source_whitespace
 pnpm install --frozen-lockfile --prefer-offline

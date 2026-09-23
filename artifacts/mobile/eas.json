@@ -83,7 +83,8 @@
         "image": "sdk-57"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
