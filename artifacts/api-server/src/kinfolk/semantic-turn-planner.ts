@@ -23,6 +23,14 @@ export type SemanticPlannerInput = {
   classify?: (input: { message: string; history: Array<{ role: "user" | "assistant"; content: string }> }) => Promise<unknown>;
 };
 
+export type ConversationalResearchSubject = Readonly<{
+  /** The member's visible wording is never changed in the rendered chat. */
+  memberMessage: string;
+  /** A bounded, server-only retrieval instruction that keeps a short follow-up on topic. */
+  researchMessage: string;
+  inheritedSubject: string | null;
+}>;
+
 const cap = (value: unknown, max: number): string => typeof value === "string" ? value.trim().slice(0, max) : "";
 const current = (message: string) => requiresCurrentResearch(message);
 const recipe = (message: string) => /\b(recipe|cook|cooking|bake|baking|roast|braise|grill|fry|ingredients?|dish|meal|beef|chicken|pork|fish|rice|pasta|soup|stew|cake|bread)\b/i.test(message);
@@ -30,6 +38,42 @@ const culturalConflict = (message: string) => /\b(diss|feud|rap battle)\b/i.test
   || /\b(?:won|winner|between)\b.{0,40}\bbeef\b|\bbeef\b.{0,40}\b(?:between|winner)\b/i.test(message);
 const travelPlan = (message: string) => /\b(plan|build|create|suggest|help with)\b.{0,40}\b(trip|itinerary|vacation|visit|weekend|getaway)\b|\b(trip|itinerary|vacation|getaway)\b.{0,40}\b(to|in|for)\b/i.test(message);
 const high = (route: EvidenceRoute) => route.risk === "high";
+
+const ARTICLE_FOLLOW_UP_RE = /^\s*(?:(?:can|could|would)\s+you\s+)?(?:show|find|give|send|share|pull\s+up)\s+(?:me\s+)?(?:some\s+)?(?:articles?|links?|sources?|reports?|news)(?:\s+(?:about|on|for)\s+.+)?[.?!]*\s*$/i;
+
+function priorTopicalUserTurn(
+  history: SemanticPlannerInput["history"],
+): string | null {
+  const prior = [...(history ?? [])]
+    .reverse()
+    .find((turn) => turn.role === "user" && turn.content.trim().length >= 8);
+  return prior ? cap(prior.content, 360) : null;
+}
+
+/**
+ * A brief request such as “show me articles” inherits the immediately preceding
+ * user subject. The member should not have to repeat “the war in Iran” merely
+ * because they asked for a useful next step. This is retrieval-only context: it
+ * neither persists a memory nor infers identity, preferences, or intent.
+ */
+export function resolveConversationalResearchSubject(
+  message: string,
+  history?: SemanticPlannerInput["history"],
+): ConversationalResearchSubject {
+  const memberMessage = cap(message, 2_000);
+  if (!ARTICLE_FOLLOW_UP_RE.test(memberMessage)) {
+    return { memberMessage, researchMessage: memberMessage, inheritedSubject: null };
+  }
+  const inheritedSubject = priorTopicalUserTurn(history);
+  if (!inheritedSubject) {
+    return { memberMessage, researchMessage: memberMessage, inheritedSubject: null };
+  }
+  return {
+    memberMessage,
+    inheritedSubject,
+    researchMessage: `${inheritedSubject}\n\nFollow-up request: ${memberMessage}\nRetrieve only current, directly relevant, reputable articles about the preceding subject. Do not ask the member to repeat the subject.`,
+  };
+}
 
 /** Deliberately small grammar: arithmetic is answered locally, never retrieved. */
 export function deterministicArithmeticAnswer(message: string): string | null {
