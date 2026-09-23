@@ -18,6 +18,16 @@ describe("community business duplicate confirmation", () => {
     expect(route).toContain("candidates");
   });
 
+  it("never exposes unpublished rows through a name, address, fuzzy, or linked-profile match", () => {
+    const start = businessesRoute.indexOf('"/businesses/duplicate-check"');
+    const end = businessesRoute.indexOf("// Backward-compatible adapter", start);
+    const route = businessesRoute.slice(start, end);
+
+    expect(route).not.toMatch(/\bFROM\s+businesses\b/i);
+    expect([...route.matchAll(/FROM\s+public\.public_businesses\b/gi)]).toHaveLength(5);
+    expect(businessesRoute).toContain("It only returns already-public listings");
+  });
+
   it("requires the member to confirm candidates before mobile submission", () => {
     expect(mobileIntake).toContain("checkPotentialDuplicates");
     expect(mobileIntake).toContain("/api/businesses/duplicate-check?");

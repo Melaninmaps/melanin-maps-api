@@ -30,6 +30,18 @@ describe("mobile Kinfolk preference attainability", () => {
     expect(hook).toContain("personalizationContextCompleted");
   });
 
+  it("requires a separate opt-in before a selected community becomes a research default", () => {
+    const toggleStart = onboarding.indexOf("function toggleCommunityContext");
+    const toggleEnd = onboarding.indexOf("async function saveOptionalIdentityContext", toggleStart);
+    const toggle = onboarding.slice(toggleStart, toggleEnd);
+
+    expect(onboarding).toContain("const [useMemberContextByDefault, setUseMemberContextByDefault] = useState(false)");
+    expect(toggle).not.toContain("setUseMemberContextByDefault");
+    expect(onboarding).toContain("Use the context I selected as my private default");
+    expect(onboarding).toContain("onPress={() => setUseMemberContextByDefault((enabled) => !enabled)}");
+    expect(onboarding).toContain("useMemberContextByDefault,");
+  });
+
   it("uses one vertical, section-based setup instead of a carousel or stepper", () => {
     expect(onboarding).toContain('animationType="fade"');
     expect(onboarding).toContain("Optional Kinfolk setup");

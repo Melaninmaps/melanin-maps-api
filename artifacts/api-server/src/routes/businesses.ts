@@ -2670,21 +2670,21 @@ router.get(
         exactWhere += ` AND LOWER(address)=LOWER($4)`;
       }
       const exact = await pool.query(
-        `SELECT id, name, address, city, state, listing_status FROM businesses WHERE ${exactWhere} LIMIT 5`,
+        `SELECT id, name, address, city, state, listing_status FROM public.public_businesses WHERE ${exactWhere} LIMIT 5`,
         exactParams,
       );
 
       // Step 2: same address, any name (possible rename / new tenant)
       const sameAddr = address?.trim()
         ? await pool.query(
-            `SELECT id, name, address, city, state, listing_status FROM businesses WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
+            `SELECT id, name, address, city, state, listing_status FROM public.public_businesses WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
             [address.trim(), city.trim(), state.trim()],
           )
         : { rows: [] };
 
       // Step 3: same name, same city — could be separate legitimate locations
       const sameName = await pool.query(
-        `SELECT id, name, address, city, state, listing_status FROM businesses WHERE LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
+        `SELECT id, name, address, city, state, listing_status FROM public.public_businesses WHERE LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
         [name.trim(), city.trim(), state.trim()],
       );
 
@@ -2693,7 +2693,7 @@ router.get(
         ? await pool
             .query(
               `SELECT id, name, address, city, state, listing_status, similarity(LOWER(name), LOWER($1)) AS score
-           FROM businesses
+           FROM public.public_businesses
            WHERE LOWER(address)=LOWER($2) AND LOWER(city)=LOWER($3) AND LOWER(state)=LOWER($4)
              AND similarity(LOWER(name), LOWER($1)) > 0.5
            ORDER BY score DESC LIMIT 5`,

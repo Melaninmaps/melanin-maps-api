@@ -160,11 +160,9 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
   }
 
   function toggleCommunityContext(id: string) {
-    setCommunityContexts((p) => {
-      const next = p.includes(id) ? p.filter((item) => item !== id) : [...p, id];
-      if (next.length > 0) setUseMemberContextByDefault(true);
-      return next;
-    });
+    setCommunityContexts((current) => current.includes(id)
+      ? current.filter((item) => item !== id)
+      : [...current, id]);
   }
 
   async function saveOptionalIdentityContext(): Promise<boolean> {
