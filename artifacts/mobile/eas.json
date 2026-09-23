@@ -70,6 +70,21 @@
         "APP_RELEASE_CHANNEL": "testflight-staging"
       }
     },
+    "testflight-production": {
+      "extends": "production",
+      "channel": "production",
+      "environment": "production",
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
+        "EXPO_PUBLIC_API_ORIGIN": "https://api.melaninmaps.com",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "APP_ENV": "production",
+        "APP_RELEASE_CHANNEL": "production"
+      }
+    },
     "production": {
       "channel": "production",
       "distribution": "store",

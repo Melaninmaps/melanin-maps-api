@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
@@ -193,11 +193,29 @@ export function useKinfolk() {
   const [queriesLimit, setQueriesLimit] = useState<number>(3);
   /** Holds the original question text when KINFOLK_BUSY fires — lets the UI pre-fill the input for retry. */
   const [pendingRetryText, setPendingRetryText] = useState<string | null>(null);
+  const activeRequestRef = useRef<AbortController | null>(null);
+  const requestGenerationRef = useRef(0);
+
+  const interruptCurrentReply = useCallback(() => {
+    const request = activeRequestRef.current;
+    if (!request) return false;
+    request.abort();
+    activeRequestRef.current = null;
+    requestGenerationRef.current += 1;
+    setIsLoading(false);
+    return true;
+  }, []);
 
   const sendMessage = useCallback(async (
     text: string,
     opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; rememberThis?: boolean; includeCommunityPerspective?: boolean },
   ): Promise<void> => {
+    // A new member turn always wins. Abort the prior fetch without adding an
+    // artificial error bubble, so Kinfolk feels interruptible like a real chat.
+    activeRequestRef.current?.abort();
+    const requestGeneration = ++requestGenerationRef.current;
+    const controller = new AbortController();
+    activeRequestRef.current = controller;
     const token = await getToken();
     const apiBase = getApiBase();
 
@@ -210,13 +228,16 @@ export function useKinfolk() {
     };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
+    let timedOut = false;
 
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const controller = new AbortController();
-      const chatTimeout = setTimeout(() => controller.abort(), 30000);
+      const chatTimeout = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 30000);
       const res = await fetch(`${apiBase}/api/kinfolk/chat`, {
         method: "POST",
         headers,
@@ -231,6 +252,7 @@ export function useKinfolk() {
         signal: controller.signal,
       }).finally(() => clearTimeout(chatTimeout));
 
+      if (requestGeneration !== requestGenerationRef.current) return;
       if (res.ok) {
         const data = (await res.json()) as {
           sessionId?: string;
@@ -338,7 +360,9 @@ export function useKinfolk() {
         setMessages((prev) => [...prev, aiMsg]);
       }
     } catch (err: unknown) {
-      const isTimeout = err instanceof Error && err.name === "AbortError";
+      if (requestGeneration !== requestGenerationRef.current) return;
+      if (err instanceof Error && err.name === "AbortError" && !timedOut) return;
+      const isTimeout = timedOut;
       const aiMsg: ChatMessage = {
         id: makeId(),
         role: "assistant",
@@ -349,7 +373,10 @@ export function useKinfolk() {
       };
       setMessages((prev) => [...prev, aiMsg]);
     } finally {
-      setIsLoading(false);
+      if (requestGeneration === requestGenerationRef.current) {
+        activeRequestRef.current = null;
+        setIsLoading(false);
+      }
     }
   }, [sessionId]);
 
@@ -491,6 +518,7 @@ export function useKinfolk() {
     pendingRetryText,
     clearPendingRetryText,
     sendMessage,
+    interruptCurrentReply,
     submitFeedback,
     loadSessions,
     loadSession,

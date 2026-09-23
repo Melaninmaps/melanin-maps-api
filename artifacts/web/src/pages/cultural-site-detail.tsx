@@ -368,6 +368,8 @@ export default function CulturalSiteDetail() {
   const heritage = site.heritageCategory ?? "";
   const accentColor = HERITAGE_COLORS[heritage] ?? "#CA922B";
   const externalSiteUrl = normalizeExternalHttpUrl(site.externalUrl ?? site.learnMoreUrl);
+  const mapArea = [site.city, site.state].filter(Boolean).join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const mwmMapUrl = `/map?area=${encodeURIComponent(mapArea)}&q=${encodeURIComponent(site.name)}`;
 
   const relLabel = (rt: string) =>
     RELATIONSHIP_TYPES.find((r) => r.value === rt)?.label ?? rt.replace(/_/g, " ");
@@ -803,7 +805,7 @@ export default function CulturalSiteDetail() {
 
         {/* View on map */}
         <div className="text-center pb-8">
-          <Link href="/map">
+          <Link href={mwmMapUrl}>
             <Button variant="outline" className="gap-2">
               <MapPin className="w-4 h-4" />
               View on Map

@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, CheckCircle, Instagram, Award, Users, MessageCircle, Heart, UtensilsCrossed, Scissors, HeartPulse, BriefcaseBusiness, Palette, ShoppingBag, Landmark, GraduationCap, Wrench, Plane, Store, Sparkles, PlayCircle } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
@@ -373,10 +373,38 @@ export default function BusinessDetail() {
   const [contribSuccess, setContribSuccess] = useState(false);
   const [contribError, setContribError] = useState<string | null>(null);
   const [communityVibes, setCommunityVibes] = useState<any[]>([]);
+  const [showFullAbout, setShowFullAbout] = useState(false);
+  const [businessTab, setBusinessTab] = useState("overview");
+  const communityVideosRef = useRef<HTMLElement | null>(null);
   const visibleCommunityVibes = communityVibes.filter((contribution) => {
     const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
-    return platform !== null && allows(platform);
+    // A creator can always find their own submitted post after switching
+    // devices. Everyone else sees it only once the shared API marks it public.
+    const isOwnUnreviewedPost = contribution.is_own === true && contribution.status !== "approved";
+    return platform !== null && (isOwnUnreviewedPost || allows(platform));
   });
+
+  const loadCommunityVibes = useCallback(async () => {
+    if (!id) return;
+    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+    try {
+      const response = await fetch(`${apiBase}/api/businesses/${id}/contributions`, {
+        credentials: "include",
+      });
+      if (!response.ok) return;
+      const data = await response.json() as { contributions?: unknown };
+      setCommunityVibes(Array.isArray(data.contributions) ? data.contributions : []);
+    } catch {
+      // Preserve the last successful contribution feed while the page remains open.
+    }
+  }, [id]);
+
+  const openCommunityPosts = useCallback(() => {
+    setBusinessTab("overview");
+    requestAnimationFrame(() => {
+      communityVideosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
 
   function closeContributionModal() {
     setShowContribModal(false);
@@ -403,13 +431,8 @@ export default function BusinessDetail() {
   }, [search]);
 
   useEffect(() => {
-    if (!id) return;
-    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/businesses/${id}/contributions`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (Array.isArray(d?.contributions)) setCommunityVibes(d.contributions); })
-      .catch(() => {});
-  }, [id]);
+    void loadCommunityVibes();
+  }, [loadCommunityVibes]);
 
   function detectPlatformFromUrl(url: string): string {
     try {
@@ -446,6 +469,7 @@ export default function BusinessDetail() {
       });
       if (res.ok) {
         setContribSuccess(true);
+        await loadCommunityVibes();
       } else {
         const body = await res.json().catch(() => ({})) as { error?: string };
         setContribError(body.error ?? "Something went wrong. Try again.");
@@ -915,9 +939,15 @@ export default function BusinessDetail() {
                 <span className="flex items-center gap-2"><MapPin size={18} /><span>{business.city}, {business.state}</span></span>
               </div>
               {business.description ? (
-                <div className="mt-5 max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#CA922B]">About</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[#F5EBD8]/90 line-clamp-3">{business.description.replace(/^\[DEMO\]\s*/i, "")}</p>
+                <div className="mt-5 max-w-3xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#CA922B]">About</p>
+                  <p className={`mt-1 text-sm leading-relaxed text-[#F5EBD8]/90 ${showFullAbout ? "" : "line-clamp-3"}`}>{business.description.replace(/^\[DEMO\]\s*/i, "")}</p>
+                  {business.description.length > 180 ? (
+                    <button onClick={() => setShowFullAbout((expanded) => !expanded)} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#F5EBD8]">
+                      {showFullAbout ? "Show less" : "Read more"}
+                      {showFullAbout ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
               <div className="mt-5 flex flex-wrap gap-2">
@@ -926,7 +956,7 @@ export default function BusinessDetail() {
                     <Globe className="h-4 w-4" /> Official website <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 ) : null}
-                <button onClick={() => document.getElementById("community-videos")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/25 px-4 py-2 text-sm font-bold text-white transition hover:border-[#CA922B] hover:bg-black/40">
+                <button onClick={openCommunityPosts} className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/25 px-4 py-2 text-sm font-bold text-white transition hover:border-[#CA922B] hover:bg-black/40">
                   <PlayCircle className="h-4 w-4" /> Watch community posts {visibleCommunityVibes.length > 0 ? `(${visibleCommunityVibes.length})` : ""}
                 </button>
                 <button onClick={() => setShowContribModal(true)} className="inline-flex items-center gap-2 rounded-full bg-[#CA922B] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#B38024]">
@@ -958,13 +988,6 @@ export default function BusinessDetail() {
                 className={`rounded-full h-12 px-6 border-white/20 backdrop-blur-md ${isSaved ? "bg-white text-[#2B1507]" : "bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"}`}
               >
                 {isSaved ? <><BookmarkCheck className="mr-2 w-5 h-5" /> Saved</> : <><Bookmark className="mr-2 w-5 h-5" /> Save</>}
-              </Button>
-              <Button
-                onClick={() => document.getElementById("community-videos")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                variant="outline"
-                className="rounded-full h-12 px-6 border-white/20 backdrop-blur-md bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"
-              >
-                <PlayCircle className="mr-2 w-5 h-5" /> Watch community posts
               </Button>
               <Button
                 onClick={handleCheckIn}
@@ -1083,24 +1106,6 @@ export default function BusinessDetail() {
           </div>
         )}
 
-        {/* Share Your Experience — matches mobile label exactly. NOT "Rate Your Safety Experience" */}
-        <button
-          onClick={() => document.getElementById("community-experience")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border mb-8 transition-colors group"
-          style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#2D7A4F20" }}>
-              <Shield className="w-4 h-4" style={{ color: "#2D7A4F" }} />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-sm" style={{ color: "#2D7A4F" }}>🛡️ Share Your Experience</p>
-              <p className="text-xs" style={{ color: "#2D7A4F99" }}>Help the community know what to expect</p>
-            </div>
-          </div>
-          <ChevronDown className="w-4 h-4 -rotate-90" style={{ color: "#2D7A4F" }} />
-        </button>
-
       </div>
 
       {/* Main Content */}
@@ -1109,7 +1114,7 @@ export default function BusinessDetail() {
           
           {/* Left Column - Details */}
           <div className="flex-1">
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs value={businessTab} onValueChange={setBusinessTab} className="w-full">
               <TabsList className="w-full justify-start bg-[#1A1209] border-b border-white/10 rounded-none h-14 p-0 space-x-8 mb-8">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-white/50 data-[state=active]:text-white">Overview</TabsTrigger>
                 <TabsTrigger value="reviews" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-white/50 data-[state=active]:text-white">Reviews</TabsTrigger>
@@ -1169,10 +1174,10 @@ export default function BusinessDetail() {
                   );
                 })()}
 
-                {/* Approved community links belong in the Overview, independent
-                    of whether an owner supplied social handles. Pending and
-                    rejected contributions never reach communityVibes. */}
-                <section id="community-videos" className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3 scroll-mt-8" aria-labelledby="community-experiences-heading">
+                {/* Approved public posts are shared across web and native. A
+                    contributor can also see their own moderation status without
+                    exposing an unreviewed post to anyone else. */}
+                <section ref={communityVideosRef} id="community-videos" className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3 scroll-mt-8" aria-labelledby="community-experiences-heading">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Watch community posts</h3>
@@ -1192,6 +1197,7 @@ export default function BusinessDetail() {
                           <a key={contribution.id} href={href} target="_blank" rel="noopener noreferrer" className="group rounded-xl border border-white/10 bg-[#241810] p-3 hover:border-[#CA922B]/45 transition-colors">
                             <div className="flex items-start gap-2">
                               <span className="rounded-full bg-[#CA922B]/10 px-2 py-0.5 text-[10px] font-bold text-[#CA922B]">{platform}</span>
+                              {contribution.is_own === true && contribution.status !== "approved" ? <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/65">Awaiting review · only you can see this</span> : null}
                               <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-white/35 group-hover:text-[#CA922B]" />
                             </div>
                             <p className="mt-2 text-sm leading-relaxed text-white/80 line-clamp-2">{contribution.caption || `View this community-shared ${platform} post`}</p>

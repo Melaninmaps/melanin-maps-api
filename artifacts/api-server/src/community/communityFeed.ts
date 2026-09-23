@@ -12,6 +12,7 @@ export type CommunityPostRow = {
   content: string;
   category: string;
   post_type: string;
+  group_id: number | null;
   business_id: string | null;
   business_name: string | null;
   business_link: string | null;
@@ -70,6 +71,7 @@ export type ActiveCommunityComment = {
 export type CommunityCommentAccessPost = {
   id: string;
   authorId: string | null;
+  groupId: number | null;
   visibility: string;
   commentPolicy: string;
 };
@@ -110,6 +112,9 @@ type CommunityFeedQueryOptions = {
 const POST_VISIBILITY = `COALESCE(NULLIF(to_jsonb(cp)->>'visibility', ''), 'public')`;
 const POST_REQUIRES_MODERATION = `COALESCE((to_jsonb(cp)->>'requires_moderation')::boolean, false)`;
 const AUTHOR_IS_PRIVATE = `COALESCE((to_jsonb(u)->>'is_private')::boolean, false)`;
+// group_id is additive. Reading it through row JSON keeps the public feed safe
+// during rolling deployment and prevents Group-only posts from leaking into it.
+const POST_IS_NOT_GROUP_ONLY = `COALESCE(NULLIF(to_jsonb(cp)->>'group_id', ''), '') = ''`;
 
 function communityPostProjection(capabilities: CommunityFeedCapabilities): string {
   const commentsCount = capabilities.communityPostComments
@@ -131,6 +136,11 @@ function communityPostProjection(capabilities: CommunityFeedCapabilities): strin
   cp.content,
   cp.category,
   COALESCE(NULLIF(to_jsonb(cp)->>'post_type', ''), 'community') AS post_type,
+  CASE
+    WHEN COALESCE(to_jsonb(cp)->>'group_id', '') ~ '^[0-9]+$'
+      THEN (to_jsonb(cp)->>'group_id')::integer
+    ELSE NULL
+  END AS group_id,
   to_jsonb(cp)->>'business_id' AS business_id,
   to_jsonb(cp)->>'business_name' AS business_name,
   to_jsonb(cp)->>'business_link' AS business_link,
@@ -257,6 +267,7 @@ export function buildCommunityFeedQuery(
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.author_id = $1
+          AND ${POST_IS_NOT_GROUP_ONLY}
           AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $2)
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$2")}
@@ -278,6 +289,7 @@ export function buildCommunityFeedQuery(
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE (cp.author_id = $1 OR ${relation})
+          AND ${POST_IS_NOT_GROUP_ONLY}
           AND ${POST_VISIBILITY} IN ('public', 'followers_only')
           AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $1)
           AND ${INTERNAL_CONTENT_EXCLUSION}
@@ -297,6 +309,7 @@ export function buildCommunityFeedQuery(
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE ${POST_VISIBILITY} = 'public'
+          AND ${POST_IS_NOT_GROUP_ONLY}
           AND ${POST_REQUIRES_MODERATION} = false
           AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL)
           AND ${INTERNAL_CONTENT_EXCLUSION}
@@ -311,9 +324,10 @@ export function buildCommunityFeedQuery(
   const relation = acceptedRelationship("$1");
   return {
     text: `SELECT ${projection}
-      FROM community_posts cp
+    FROM community_posts cp
       LEFT JOIN users u ON u.id = cp.author_id
       WHERE ${POST_VISIBILITY} = 'public'
+        AND ${POST_IS_NOT_GROUP_ONLY}
         AND ${POST_REQUIRES_MODERATION} = false
         AND ${INTERNAL_CONTENT_EXCLUSION}
         AND ${notBlocked("$1")}
@@ -461,6 +475,34 @@ export async function fetchCommunityFeedRows(
     .map(({ row }) => row);
 }
 
+/**
+ * A Group post has the same media, comment, and moderation contract as a
+ * Community post, but it is visible only to a current member of that Group.
+ * The membership predicate lives in the query so a guessed post or group ID
+ * cannot disclose Group content.
+ */
+export async function fetchGroupCommunityFeedRows(
+  queryable: Queryable,
+  input: { viewerId: string; groupId: number; limit: number; offset: number },
+): Promise<CommunityPostRow[]> {
+  const projection = communityPostProjection(ALL_COMMUNITY_FEED_CAPABILITIES);
+  const { rows } = await queryable.query<CommunityPostRow>(`
+    SELECT ${projection}
+    FROM community_posts cp
+    LEFT JOIN users u ON u.id = cp.author_id
+    WHERE COALESCE(to_jsonb(cp)->>'group_id', '') = $1::text
+      AND EXISTS (
+        SELECT 1 FROM group_members gm
+        WHERE gm.group_id = $1::integer AND gm.user_id = $2
+      )
+      AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $2)
+      AND ${INTERNAL_CONTENT_EXCLUSION}
+      AND ${notBlocked("$2")}
+    ORDER BY cp.created_at DESC
+    LIMIT $3 OFFSET $4`, [input.groupId, input.viewerId, input.limit, input.offset]);
+  return rows;
+}
+
 export async function fetchCommentAccessPost(
   queryable: Queryable,
   postId: string,
@@ -469,12 +511,18 @@ export async function fetchCommentAccessPost(
   const { rows } = await queryable.query<{
     id: string;
     author_id: string | null;
+    group_id: number | null;
     visibility: string;
     comment_policy: string;
   }>(`
     SELECT
       cp.id,
       cp.author_id,
+      CASE
+        WHEN COALESCE(to_jsonb(cp)->>'group_id', '') ~ '^[0-9]+$'
+          THEN (to_jsonb(cp)->>'group_id')::integer
+        ELSE NULL
+      END AS group_id,
       cp.visibility,
       CASE
         WHEN to_jsonb(cp)->>'comment_policy' IN ('everyone', 'followers', 'off')
@@ -495,6 +543,7 @@ export async function fetchCommentAccessPost(
   return {
     id: row.id,
     authorId: row.author_id,
+    groupId: row.group_id,
     visibility: row.visibility,
     commentPolicy: row.comment_policy,
   };

@@ -153,6 +153,23 @@ export declare const communityPostsTable: import("drizzle-orm/pg-core").PgTableW
         }, {}, {
             length: 30;
         }>;
+        groupId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "group_id";
+            tableName: "community_posts";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         businessId: import("drizzle-orm/pg-core").PgColumn<{
             name: "business_id";
             tableName: "community_posts";
@@ -1187,17 +1204,15 @@ export declare const communityPostCommentsTable: import("drizzle-orm/pg-core").P
     dialect: "pg";
 }>;
 export declare const insertCommunityPostSchema: z.ZodObject<{
-    content: z.ZodString;
-    businessId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    upvotes: z.ZodOptional<z.ZodInt>;
-    category: z.ZodOptional<z.ZodString>;
     authorId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     authorName: z.ZodString;
-    audienceRating: z.ZodOptional<z.ZodString>;
-    ratingReason: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     authorInitials: z.ZodString;
     authorColor: z.ZodOptional<z.ZodString>;
+    content: z.ZodString;
+    category: z.ZodOptional<z.ZodString>;
     postType: z.ZodOptional<z.ZodString>;
+    groupId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
+    businessId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     businessName: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     businessLink: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     mediaUrls: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -1217,6 +1232,8 @@ export declare const insertCommunityPostSchema: z.ZodObject<{
     commentPolicy: z.ZodOptional<z.ZodString>;
     hasContentWarning: z.ZodOptional<z.ZodBoolean>;
     contentWarningType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    audienceRating: z.ZodOptional<z.ZodString>;
+    ratingReason: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     linkUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     linkTitle: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     linkDescription: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -1232,6 +1249,7 @@ export declare const insertCommunityPostSchema: z.ZodObject<{
     mentionedBusinessRating: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
     requiresModeration: z.ZodOptional<z.ZodBoolean>;
     isTrustedAuthor: z.ZodOptional<z.ZodBoolean>;
+    upvotes: z.ZodOptional<z.ZodInt>;
     downvotes: z.ZodOptional<z.ZodInt>;
     commentsCount: z.ZodOptional<z.ZodInt>;
     threadId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -1392,6 +1410,23 @@ export declare const selectCommunityPostSchema: import("drizzle-zod").BuildSchem
     }, {}, {
         length: 30;
     }>;
+    groupId: import("drizzle-orm/pg-core").PgColumn<{
+        name: "group_id";
+        tableName: "community_posts";
+        dataType: "number";
+        columnType: "PgInteger";
+        data: number;
+        driverParam: string | number;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     businessId: import("drizzle-orm/pg-core").PgColumn<{
         name: "business_id";
         tableName: "community_posts";
@@ -2216,13 +2251,13 @@ export declare const selectCommunityPostSchema: import("drizzle-zod").BuildSchem
     }, {}, {}>;
 }, undefined, undefined>;
 export declare const insertCommunityPostCommentSchema: z.ZodObject<{
-    status: z.ZodOptional<z.ZodString>;
-    content: z.ZodString;
     authorId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     authorName: z.ZodString;
     authorInitials: z.ZodString;
     authorColor: z.ZodOptional<z.ZodString>;
+    content: z.ZodString;
     postId: z.ZodString;
+    status: z.ZodOptional<z.ZodString>;
     editedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     deletedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
 }, {

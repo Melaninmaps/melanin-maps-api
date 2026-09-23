@@ -37,6 +37,27 @@ function aliasMatchSql(
   return `(${foldedSql(categoryColumn)} = ANY($${parameter}::text[]) OR ${foldedSql(subcategoryColumn)} = ANY($${parameter}::text[]))`;
 }
 
+// Explore is intentionally broader than the business directory: selected lenses
+// must filter cultural sites, events, and community organizations as well as
+// business categories. Without this mapping the button state changed but its
+// result set did not.
+const EXPLORE_LENS_TERMS: Record<string, readonly string[]> = {
+  "heritage & history": ["heritage", "history", "historic", "landmark", "museum", "archive"],
+  "arts & culture": ["arts", "art", "culture", "gallery", "theater", "music", "festival"],
+  neighborhoods: ["neighborhood", "district", "corridor", "community"],
+  hbcus: ["hbcu", "historically black college", "historically black university", "college", "university"],
+  "living culture": ["culture", "community", "market", "festival", "music", "food"],
+  family: ["family", "children", "youth", "kids", "education"],
+  nightlife: ["nightlife", "night", "music", "club", "jazz", "performance"],
+  "faith & community": ["faith", "church", "mosque", "temple", "community", "spiritual"],
+};
+
+function exploreLensTerms(category: string | null): string[] {
+  if (!category) return [];
+  const normalized = category.normalize("NFKC").trim().toLocaleLowerCase("en-US");
+  return [...(EXPLORE_LENS_TERMS[normalized] ?? [normalized])];
+}
+
 // ── Haversine distance (miles) helper injected as SQL expression ──────────────
 function haversineMiles(
   latCol: string,
@@ -186,6 +207,15 @@ export async function findExactRecords(
       params.push(`%${searchText}%`);
       searchClause = `AND tc.name ILIKE $${params.length}`;
     }
+    const lensTerms = exploreLensTerms(category);
+    let lensClause = "";
+    if (lensTerms.length > 0) {
+      params.push(lensTerms.map((term) => `%${term}%`));
+      lensClause = `AND (
+        COALESCE(tc.site_type, '') ILIKE ANY($${params.length}::text[])
+        OR COALESCE(tc.name, '') ILIKE ANY($${params.length}::text[])
+      )`;
+    }
 
     const { rows } = await pool.query<{
       id: string;
@@ -204,7 +234,7 @@ export async function findExactRecords(
       JOIN canonical_record_locations l
         ON l.record_type = 'cultural_site' AND l.record_id = tc.id::uuid
       WHERE tc.is_active = TRUE AND LOWER(l.city_name) = $1
-        ${stateClause} ${searchClause}
+        ${stateClause} ${searchClause} ${lensClause}
       LIMIT 50
     `,
       params,
@@ -252,6 +282,15 @@ export async function findExactRecords(
     else
       dateClause =
         "AND (re.active_until IS NULL OR re.active_until >= CURRENT_DATE)";
+    const lensTerms = exploreLensTerms(category);
+    let lensClause = "";
+    if (lensTerms.length > 0) {
+      params.push(lensTerms.map((term) => `%${term}%`));
+      lensClause = `AND (
+        COALESCE(re.category, '') ILIKE ANY($${params.length}::text[])
+        OR COALESCE(re.name, '') ILIKE ANY($${params.length}::text[])
+      )`;
+    }
 
     const { rows } = await pool.query<{
       id: string;
@@ -270,7 +309,7 @@ export async function findExactRecords(
       JOIN canonical_record_locations l
         ON l.record_type = 'event' AND l.record_id = re.id::uuid
       WHERE re.is_active = TRUE AND LOWER(l.city_name) = $1
-        ${stateClause} ${dateClause}
+        ${stateClause} ${dateClause} ${lensClause}
       LIMIT 50
     `,
       params,
@@ -304,6 +343,15 @@ export async function findExactRecords(
       params.push(state);
       stateClause = `AND UPPER(l.state_code) = $${params.length}`;
     }
+    const lensTerms = exploreLensTerms(category);
+    let lensClause = "";
+    if (lensTerms.length > 0) {
+      params.push(lensTerms.map((term) => `%${term}%`));
+      lensClause = `AND (
+        COALESCE(co.name, '') ILIKE ANY($${params.length}::text[])
+        OR COALESCE(co.mission, '') ILIKE ANY($${params.length}::text[])
+      )`;
+    }
 
     const { rows } = await pool.query<{
       id: string;
@@ -321,7 +369,7 @@ export async function findExactRecords(
       FROM community_organizations co
       JOIN canonical_record_locations l
         ON l.record_type = 'community_place' AND l.record_id = co.id::uuid
-      WHERE co.is_active = TRUE AND LOWER(l.city_name) = $1 ${stateClause}
+      WHERE co.is_active = TRUE AND LOWER(l.city_name) = $1 ${stateClause} ${lensClause}
       LIMIT 30
     `,
       params,

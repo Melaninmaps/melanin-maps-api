@@ -24,44 +24,38 @@ function getApiBase() {
 
 const EMOJIS = ["✨", "🌟", "🏡", "🍽️", "🎉", "🌿", "🎨", "💕", "🏖️", "🎵", "☕", "🍹", "🧳", "🌍", "👑", "🤎", "💪🏾", "🌸", "🎭", "🏆"];
 
-const PRIVACY_OPTIONS = [
-  { id: "invite_only", label: "Invite Only", icon: "lock" as const, desc: "Only people you invite can join" },
-  { id: "approval", label: "Approval Required", icon: "user-check" as const, desc: "Anyone can request, you approve" },
-  { id: "public", label: "Open to All", icon: "globe" as const, desc: "Anyone can join immediately" },
-];
-
 // Tier limits displayed to the user
 const CIRCLE_TIERS = [
   {
     name: "Free",
     color: "#6B7280",
     circles: "1 circle",
-    privateMembers: "4 private members",
-    communityMembers: "No community circles",
+    privateMembers: "Up to 8 people in each Circle",
+    communityMembers: "Groups are for larger communities",
     canCreate: false,
   },
   {
     name: "Explorer+",
     color: "#3A6BB5",
     circles: "1 circle",
-    privateMembers: "4 private members",
-    communityMembers: "No community circles",
+    privateMembers: "Up to 8 people in each Circle",
+    communityMembers: "Groups are for larger communities",
     canCreate: true,
   },
   {
     name: "Navigator",
     color: "#C9922B",
     circles: "3 circles",
-    privateMembers: "10 private members",
-    communityMembers: "25 community members",
+    privateMembers: "Up to 8 people in each Circle",
+    communityMembers: "Groups are for larger communities",
     canCreate: true,
   },
   {
     name: "Trailblazer",
     color: "#2D7A4F",
     circles: "Unlimited circles",
-    privateMembers: "20 private members",
-    communityMembers: "100 community members",
+    privateMembers: "Up to 8 people in each Circle",
+    communityMembers: "Groups are for larger communities",
     canCreate: true,
   },
 ];
@@ -72,12 +66,9 @@ export default function CreateCircleScreen() {
   const router = useRouter();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [type, setType] = useState<"private" | "community" | null>(null);
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("✨");
   const [description, setDescription] = useState("");
-  const [city, setCity] = useState("");
-  const [privacy, setPrivacy] = useState("invite_only");
   const [saving, setSaving] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -91,7 +82,7 @@ export default function CreateCircleScreen() {
       const res = await fetch(`${getApiBase()}/api/circles`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ name: name.trim(), type, privacy, description: description.trim() || undefined, emoji, city: city.trim() || undefined, maxMembers: type === "community" ? 50 : 8 }),
+        body: JSON.stringify({ name: name.trim(), type: "private", privacy: "invite_only", description: description.trim() || undefined, emoji, maxMembers: 8 }),
       });
       const data = await res.json() as { circle?: { id: number }; error?: string; code?: string; upgradeRequired?: boolean };
       if (!res.ok) {
@@ -131,41 +122,22 @@ export default function CreateCircleScreen() {
 
       <ScrollView keyboardDismissMode="on-drag" contentContainerStyle={[s.content, { paddingBottom: bottomPad + 40 }]} keyboardShouldPersistTaps="handled">
 
-        {/* ── STEP 1: Circle Type + Tier Breakdown ── */}
+        {/* ── STEP 1: Private Circle model + tier breakdown ── */}
         {step === 1 && (
           <View style={s.stepWrap}>
-            <Text style={[s.stepTitle, { color: colors.foreground }]}>What kind of Circle?</Text>
-            <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Choose the type that best fits your group.</Text>
+            <Text style={[s.stepTitle, { color: colors.foreground }]}>Your private Circle</Text>
+            <Text style={[s.stepSub, { color: colors.mutedForeground }]}>A Circle is for the people closest to you: family, a couple, friends, or a travel crew. It holds only the hints, places, plans, and dates that members choose to share.</Text>
 
-            <TouchableOpacity
-              style={[s.typeCard, { backgroundColor: colors.card, borderColor: type === "private" ? colors.primary : colors.border, borderWidth: type === "private" ? 2 : 1 }]}
-              onPress={() => { setType("private"); setPrivacy("invite_only"); }}
-              activeOpacity={0.8}
-            >
-              <View style={[s.typeIcon, { backgroundColor: type === "private" ? colors.primary + "18" : colors.secondary }]}>
-                <Feather name="home" size={26} color={type === "private" ? colors.primary : colors.mutedForeground} />
+            <View style={[s.typeCard, { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }]}>
+              <View style={[s.typeIcon, { backgroundColor: colors.primary + "18" }]}>
+                <Feather name="home" size={26} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.typeName, { color: colors.foreground }]}>Private Circle</Text>
-                <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>Family, close friends, or coworkers. Invite only — up to 20 members (Navigator+).</Text>
+                <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>Invite only · up to 8 people · members can add places, ideas, shared plans, and important dates.</Text>
               </View>
-              {type === "private" && <Feather name="check-circle" size={22} color={colors.primary} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[s.typeCard, { backgroundColor: colors.card, borderColor: type === "community" ? colors.primary : colors.border, borderWidth: type === "community" ? 2 : 1 }]}
-              onPress={() => { setType("community"); setPrivacy("public"); }}
-              activeOpacity={0.8}
-            >
-              <View style={[s.typeIcon, { backgroundColor: type === "community" ? colors.primary + "18" : colors.secondary }]}>
-                <Feather name="globe" size={26} color={type === "community" ? colors.primary : colors.mutedForeground} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.typeName, { color: colors.foreground }]}>Community Circle</Text>
-                <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>Philly Foodies, Black Moms in ATL, Solo Travelers. Up to 100 members (Trailblazer).</Text>
-              </View>
-              {type === "community" && <Feather name="check-circle" size={22} color={colors.primary} />}
-            </TouchableOpacity>
+              <Feather name="check-circle" size={22} color={colors.primary} />
+            </View>
 
             {/* Tier breakdown card */}
             <View style={[s.tierCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -204,8 +176,8 @@ export default function CreateCircleScreen() {
             </View>
 
             <TouchableOpacity activeOpacity={0.85}
-              style={[s.nextBtn, { backgroundColor: type ? colors.primary : colors.muted, opacity: type ? 1 : 0.5 }]}
-              disabled={!type}
+              style={[s.nextBtn, { backgroundColor: colors.primary }]}
+              disabled={false}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setStep(2); }}
             >
               <Text style={s.nextBtnText}>Continue</Text>
@@ -237,7 +209,7 @@ export default function CreateCircleScreen() {
             <TextInput
               style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
               value={name} onChangeText={setName}
-              placeholder={type === "private" ? "The Fam, Squad Goals, Work Crew…" : "Philadelphia Foodies, Black Moms in ATL…"}
+              placeholder="The Fam, Birthday Crew, Us Two…"
               placeholderTextColor={colors.mutedForeground}
               maxLength={50}
             />
@@ -251,18 +223,6 @@ export default function CreateCircleScreen() {
               multiline maxLength={200}
             />
 
-            {type === "community" && (
-              <>
-                <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>City <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
-                <TextInput
-                  style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                  value={city} onChangeText={setCity}
-                  placeholder="Philadelphia, Atlanta, Houston…"
-                  placeholderTextColor={colors.mutedForeground}
-                />
-              </>
-            )}
-
             <TouchableOpacity activeOpacity={0.85}
               style={[s.nextBtn, { backgroundColor: name.trim().length >= 2 ? colors.primary : colors.muted, opacity: name.trim().length >= 2 ? 1 : 0.5 }]}
               disabled={name.trim().length < 2}
@@ -274,36 +234,29 @@ export default function CreateCircleScreen() {
           </View>
         )}
 
-        {/* ── STEP 3: Privacy ── */}
+        {/* ── STEP 3: Private sharing confirmation ── */}
         {step === 3 && (
           <View style={s.stepWrap}>
-            <Text style={[s.stepTitle, { color: colors.foreground }]}>Privacy Settings</Text>
-            <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Who can join your Circle?</Text>
+            <Text style={[s.stepTitle, { color: colors.foreground }]}>Keep it close</Text>
+            <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Only people you invite can join. What members add to a Circle stays in that Circle and is never published to the Community feed.</Text>
 
-            {PRIVACY_OPTIONS.map((v) => (
-              <TouchableOpacity
-                key={v.id}
-                style={[s.privacyCard, { backgroundColor: colors.card, borderColor: privacy === v.id ? colors.primary : colors.border, borderWidth: privacy === v.id ? 2 : 1 }]}
-                onPress={() => setPrivacy(v.id)}
-                activeOpacity={0.8}
-              >
-                <View style={[s.privacyIcon, { backgroundColor: privacy === v.id ? colors.primary + "18" : colors.secondary }]}>
-                  <Feather name={v.icon} size={20} color={privacy === v.id ? colors.primary : colors.mutedForeground} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.typeName, { color: colors.foreground }]}>{v.label}</Text>
-                  <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>{v.desc}</Text>
-                </View>
-                {privacy === v.id && <Feather name="check-circle" size={20} color={colors.primary} />}
-              </TouchableOpacity>
-            ))}
+            <View style={[s.privacyCard, { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }]}>
+              <View style={[s.privacyIcon, { backgroundColor: colors.primary + "18" }]}>
+                <Feather name="lock" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.typeName, { color: colors.foreground }]}>Invite only</Text>
+                <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>Up to eight members can share plans, places, preferences, and milestones.</Text>
+              </View>
+              <Feather name="check-circle" size={20} color={colors.primary} />
+            </View>
 
             <View style={[s.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={{ fontSize: 28 }}>{emoji}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={[s.typeName, { color: colors.foreground }]}>{name || "Your Circle"}</Text>
                 <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>
-                  {type === "private" ? "Private Circle" : "Community Circle"} · {privacy === "invite_only" ? "Invite only" : privacy === "approval" ? "Approval required" : "Open to all"}
+                  Private Circle · Invite only · Up to 8 members
                 </Text>
               </View>
             </View>

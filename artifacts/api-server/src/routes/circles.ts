@@ -130,28 +130,15 @@ router.get("/circles", async (req: Request, res: Response) => {
 
 router.get("/circles/community", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
-  try {
-    const circles = await db.select().from(kinfolkCircles)
-      .where(and(eq(kinfolkCircles.type, "community"), eq(kinfolkCircles.privacy, "public")))
-      .orderBy(desc(kinfolkCircles.createdAt)).limit(30);
-    res.json({ circles: circles.map((circle) => ({
-      id: circle.id,
-      name: circle.name,
-      description: circle.description,
-      emoji: circle.emoji,
-      city: circle.city,
-      state: circle.state,
-      maxMembers: Math.min(circle.maxMembers, 8),
-    })) });
-  } catch (err) {
-    (req as any).log.error({ err }, "GET /circles/community error");
-    res.status(500).json({ error: "Failed to load community circles" });
-  }
+  // Circles are intentionally private, invite-only spaces of two to eight
+  // people. Larger discoverable communities are Groups. Legacy Circle rows
+  // remain in storage for their members, but are no longer published here.
+  res.json({ circles: [] });
 });
 
 router.post("/circles", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
-  const { name, type, privacy, description, emoji, maxMembers, city, state, planningMode } =
+  const { name, description, emoji, city, state, planningMode } =
     req.body as Record<string, unknown>;
   if (!name || typeof name !== "string" || name.trim().length < 2) {
     res.status(400).json({ error: "Circle name is required (min 2 chars)" }); return;
@@ -161,22 +148,16 @@ router.post("/circles", async (req: Request, res: Response) => {
     const user = await storage.getUser(uid(req)).catch(() => null);
     const tierKey = getTierKey(user?.memberType);
     const limits = CIRCLE_LIMITS[tierKey];
-    const circleType = String(type ?? "private");
+    // A Circle is the small, private decision space for the people closest to
+    // a member. Public, moderator-run spaces belong in Groups. Retain legacy
+    // Circle records without changing them, but make every new Circle private
+    // and cap it at eight members regardless of client input.
+    const circleType = "private";
 
     // Free users cannot create any type of circle
     if (tierKey === "free") {
       res.status(403).json({
         error: "Creating Kinfolk Circles requires an Explorer+ or higher membership.",
-        code: "TIER_LIMIT_REACHED",
-        upgradeRequired: true,
-        tier: tierKey,
-      });
-      return;
-    }
-
-    if (circleType === "community" && limits.maxCommunityMembers === 0) {
-      res.status(403).json({
-        error: "Community circles require a Navigator or Trailblazer membership.",
         code: "TIER_LIMIT_REACHED",
         upgradeRequired: true,
         tier: tierKey,
@@ -201,16 +182,14 @@ router.post("/circles", async (req: Request, res: Response) => {
       }
     }
 
-    const defaultMax = circleType === "community" ? limits.maxCommunityMembers : limits.maxPrivateMembers;
-
     const [circle] = await db.insert(kinfolkCircles).values({
       name: String(name).trim(),
       type: circleType,
-      privacy: String(privacy ?? "invite_only"),
+      privacy: "invite_only",
       hostUserId: uid(req),
       description: description ? String(description).trim() : null,
       emoji: emoji ? String(emoji) : "✨",
-      maxMembers: typeof maxMembers === "number" ? Math.max(1, Math.min(Math.floor(maxMembers), defaultMax, 8)) : Math.min(defaultMax, 8),
+      maxMembers: 8,
       city: city ? String(city) : null,
       state: state ? String(state) : null,
       planningMode: String(planningMode ?? "open"),
@@ -282,14 +261,15 @@ router.patch("/circles/:id", async (req: Request, res: Response) => {
     const [circle] = await db.select().from(kinfolkCircles).where(eq(kinfolkCircles.id, circleId)).limit(1);
     if (!circle) { res.status(404).json({ error: "Circle not found" }); return; }
     if (circle.hostUserId !== uid(req)) { res.status(403).json({ error: "Only the Circle Host can edit settings" }); return; }
-    const { name, description, emoji, privacy, planningMode, maxMembers, city, state } = req.body as Record<string, unknown>;
+    const { name, description, emoji, planningMode, city, state } = req.body as Record<string, unknown>;
     const updates: Partial<typeof kinfolkCircles.$inferInsert> = { updatedAt: new Date() };
     if (typeof name === "string") updates.name = name.trim();
     if (typeof description === "string") updates.description = description.trim() || null;
     if (typeof emoji === "string") updates.emoji = emoji;
-    if (typeof privacy === "string") updates.privacy = privacy;
+    updates.privacy = "invite_only";
+    updates.type = "private";
     if (typeof planningMode === "string") updates.planningMode = planningMode;
-    if (typeof maxMembers === "number") updates.maxMembers = Math.max(1, Math.min(Math.floor(maxMembers), 8));
+    updates.maxMembers = 8;
     if (typeof city === "string") updates.city = city || null;
     if (typeof state === "string") updates.state = state || null;
     const [updated] = await db.update(kinfolkCircles).set(updates).where(eq(kinfolkCircles.id, circleId)).returning();
@@ -323,12 +303,10 @@ router.post("/circles/:id/join", async (req: Request, res: Response) => {
   try {
     const [circle] = await db.select().from(kinfolkCircles).where(eq(kinfolkCircles.id, circleId)).limit(1);
     if (!circle) { res.status(404).json({ error: "Circle not found" }); return; }
-    if (circle.privacy === "invite_only") { res.status(403).json({ error: "This circle is invite-only" }); return; }
-    const joinResult = await addCircleMemberWithinCap(circleId, uid(req));
-    if (joinResult.status === "missing") { res.status(404).json({ error: "Circle not found" }); return; }
-    if (joinResult.status === "already_member") { res.status(409).json({ error: "Already a member" }); return; }
-    if (joinResult.status === "full") { res.status(409).json({ error: "Circle is full" }); return; }
-    res.json({ ok: true, member: joinResult.member });
+    res.status(403).json({
+      error: "Circles are invite-only. Ask the Circle host to add you.",
+      code: "CIRCLE_INVITE_REQUIRED",
+    });
   } catch (err) {
     (req as any).log.error({ err }, "POST /circles/:id/join error");
     res.status(500).json({ error: "Failed to join circle" });

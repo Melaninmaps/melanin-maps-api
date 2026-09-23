@@ -12,6 +12,11 @@ export const communityPostsTable = pgTable("community_posts", {
   content: text("content").notNull(),
   category: varchar("category", { length: 50 }).notNull().default("general"),
   postType: varchar("post_type", { length: 30 }).notNull().default("community"),
+  // Group posts use the same durable post, media, comment, moderation, and
+  // profile model as the main Community feed. A non-null groupId makes the
+  // post visible only to current members of that Group; it is never a public
+  // feed filter or an inferred audience label.
+  groupId: integer("group_id"),
   businessId: varchar("business_id"),
   businessName: varchar("business_name", { length: 150 }),
   businessLink: text("business_link"),

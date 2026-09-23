@@ -19,6 +19,8 @@ import {
   Alert,
   Animated,
   AppState,
+  BackHandler,
+  Keyboard,
   type AppStateStatus,
   Platform,
   StyleSheet,
@@ -241,6 +243,35 @@ function BiometricEnrollmentPrompt() {
     })();
   }, [isAuthenticated]);
 
+  return null;
+}
+
+/**
+ * A keyboard must never turn a tab or form into a dead end. Android back first
+ * dismisses a visible keyboard; only a subsequent press reaches Expo Router's
+ * normal navigation handling. iOS retains its native keyboard controls while
+ * every card/modal route remains swipe-back enabled in RootLayoutNav.
+ */
+function KeyboardEscapeGuard() {
+  useEffect(() => {
+    let keyboardVisible = false;
+    const shown = Keyboard.addListener("keyboardDidShow", () => {
+      keyboardVisible = true;
+    });
+    const hidden = Keyboard.addListener("keyboardDidHide", () => {
+      keyboardVisible = false;
+    });
+    const back = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (!keyboardVisible) return false;
+      Keyboard.dismiss();
+      return true;
+    });
+    return () => {
+      shown.remove();
+      hidden.remove();
+      back.remove();
+    };
+  }, []);
   return null;
 }
 
@@ -1151,6 +1182,7 @@ function RootLayout() {
                     <BiometricEnrollmentPrompt />
                     <PushNotificationRegistrar />
                     <CrashLoggerSetup />
+                    <KeyboardEscapeGuard />
                     <RootLayoutNav />
                     <AIChatWidget />
                     <OfflineBanner />

@@ -12,6 +12,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Platform,
   ScrollView,
   StyleSheet,
@@ -34,6 +35,7 @@ import {
   type AlertType,
 } from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { useCanonicalMapPins } from "@/hooks/useCanonicalMapPins";
 import { isDeliberateMapBusinessNameSearch } from "@/hooks/support-lens-request";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
@@ -83,6 +85,21 @@ const MAX_TRAVEL_DESTINATION_MARKERS = 600;
 // Do not open to a country-wide overview. The map moves to a confirmed device
 // location or fits a profile/search locality once that scoped data arrives.
 const DEFAULT_REGION: Region = NEUTRAL_LOCAL_REGION;
+
+function distanceMiles(
+  from: { latitude: number; longitude: number },
+  to: { latitude: number; longitude: number },
+) {
+  const earthRadiusMiles = 3958.8;
+  const latitudeDelta = ((to.latitude - from.latitude) * Math.PI) / 180;
+  const longitudeDelta = ((to.longitude - from.longitude) * Math.PI) / 180;
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos((from.latitude * Math.PI) / 180) *
+      Math.cos((to.latitude * Math.PI) / 180) *
+      Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 interface HeatmapPoint {
   city: string;
@@ -510,6 +527,11 @@ export function FullMapView({
     directName: deliberateMapNameSearch,
     enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null,
   });
+  // This is the same small, canonical MWM marker feed that keeps the website
+  // populated. It is intentionally separate from locality search: a location
+  // permission change or an empty 50-mile local response must not clear a pin
+  // layer the member was already able to use.
+  const { pins: canonicalMapPins } = useCanonicalMapPins({ enabled: isFocused });
 
   const {
     alerts: activityAlerts,
@@ -569,6 +591,27 @@ export function FullMapView({
     () => mapped.filter((business) => matchesMapDiscoveryFocus(business, mapDiscoveryFocus)),
     [mapped, mapDiscoveryFocus],
   );
+  const nearbyCanonicalMapPins = useMemo(() => {
+    const scopePins = memberLocation
+      ? canonicalMapPins.filter((business) =>
+          distanceMiles(memberLocation, business) <= mapDiscoveryRadius,
+        )
+      : canonicalMapPins;
+    return scopePins.filter((business) =>
+      matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
+    );
+  }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, memberLocation]);
+  const displayBusinessPins = useMemo(() => {
+    // Local/direct results have richer card data and therefore win when the
+    // same business exists in both layers. Canonical pins remain underneath as
+    // a stable fallback so valid markers do not disappear during a scope change.
+    const localById = new Map(focusedMappedBusinesses.map((business) => [business.id, business]));
+    nearbyCanonicalMapPins.forEach((business) => {
+      if (!localById.has(business.id)) localById.set(business.id, business);
+    });
+    return [...localById.values()];
+  }, [focusedMappedBusinesses, nearbyCanonicalMapPins]);
+  const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
     : mapDiscoveryCounts.find((focus) => focus.id === mapDiscoveryFocus)?.label ?? "Your selection";
@@ -786,12 +829,18 @@ export function FullMapView({
   // fit a country- or world-sized result set; only explicit exploration may.
   useEffect(() => {
     hasFitToBusinessesRef.current = false;
-  }, [localityScopeKey, mapDiscoveryFocus]);
+  }, [localityScopeKey, mapDiscoveryFocus, mapDiscoveryRadius]);
 
   useEffect(() => {
-    if (!mapReady || focusedMappedBusinesses.length === 0 || hasFitToBusinessesRef.current)
+    // Local search results stay first. When a location/radius refresh returns
+    // no local rows, fit the stable website-equivalent pins instead of leaving
+    // a 50-mile choice on a blank map.
+    const pinsToFit = focusedMappedBusinesses.length > 0
+      ? focusedMappedBusinesses
+      : nearbyCanonicalMapPins;
+    if (!mapReady || pinsToFit.length === 0 || hasFitToBusinessesRef.current)
       return;
-    const coordinates = focusedMappedBusinesses.map((b) => ({
+    const coordinates = pinsToFit.map((b) => ({
       latitude: b.latitude,
       longitude: b.longitude,
     }));
@@ -802,8 +851,8 @@ export function FullMapView({
         edgePadding: { top: 80, right: 40, bottom: 100, left: 40 },
         animated: true,
       });
-    }, 600);
-  }, [mapReady, focusedMappedBusinesses, exploringAllAreas, localityScopeKey]);
+      }, 600);
+  }, [mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1271,6 +1320,7 @@ export function FullMapView({
             }
           : {})}
         onPress={() => {
+          Keyboard.dismiss();
           if (markerPressInFlightRef.current) {
             markerPressInFlightRef.current = false;
             return;
@@ -1284,8 +1334,10 @@ export function FullMapView({
           setSelectedEssentialService(null);
         }}
       >
-        {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
-        {focusedMappedBusinesses.map((biz) => (
+        {/* Business pins — the canonical MWM layer remains mounted beneath
+            locality/direct-search results, matching the website and preventing
+            location permission or an empty radius refresh from blanking pins. */}
+        {displayBusinessPins.map((biz) => (
           <Marker
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
@@ -1665,7 +1717,8 @@ export function FullMapView({
           <TextInput
             value={businessSearchInput}
             onChangeText={setBusinessSearchInput}
-            onSubmitEditing={() => {
+          onSubmitEditing={() => {
+              Keyboard.dismiss();
               clearEssentialServices();
               const query = businessSearchInput.trim();
               const locality = parseMapSearchLocality(query);
@@ -1681,8 +1734,18 @@ export function FullMapView({
             placeholderTextColor="rgba(255,255,255,0.72)"
             style={s.businessSearchInput}
             returnKeyType="search"
+            blurOnSubmit
             accessibilityLabel="Search the map by business, service, item, or city"
           />
+          <TouchableOpacity
+            onPress={() => Keyboard.dismiss()}
+            accessibilityRole="button"
+            accessibilityLabel="Close keyboard and continue exploring the map"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={s.dismissKeyboardButton}
+          >
+            <Feather name="chevron-down" size={18} color="#F5EBD8" />
+          </TouchableOpacity>
           {(businessSearchInput.length > 0 || searchedLocality || routeSearchLocality) && (
             <TouchableOpacity
               onPress={() => {
@@ -1738,7 +1801,7 @@ export function FullMapView({
               <View style={{ flex: 1 }}>
                 <Text style={s.mapDiscoveryTitle}>Around you</Text>
                 <Text style={s.mapDiscoverySubtitle}>
-                  {mapped.length} mapped {mapped.length === 1 ? "place" : "places"} {localScopeDescription}.
+                  {visibleMapPinCount} MWM map {visibleMapPinCount === 1 ? "pin" : "pins"} {localScopeDescription}.
                 </Text>
               </View>
               {mapDiscoveryFocus !== "all" && (
@@ -2778,16 +2841,18 @@ export function FullMapView({
           </Text>
 
           <View style={s.cardRow}>
-            <View style={s.cardMeta}>
-              <Feather name="star" size={13} color={GOLD} />
-              <Text style={[s.cardMetaTxt, { color: colors.foreground }]}>
-                {selectedBusiness.rating.toFixed(1)}
-                <Text style={{ color: colors.mutedForeground }}>
-                  {" "}
-                  ({selectedBusiness.reviewCount})
+            {selectedBusiness.reviewCount > 0 ? (
+              <View style={s.cardMeta}>
+                <Feather name="star" size={13} color={GOLD} />
+                <Text style={[s.cardMetaTxt, { color: colors.foreground }]}>
+                  {selectedBusiness.rating.toFixed(1)}
+                  <Text style={{ color: colors.mutedForeground }}>
+                    {" "}
+                    ({selectedBusiness.reviewCount})
+                  </Text>
                 </Text>
-              </Text>
-            </View>
+              </View>
+            ) : null}
             {selectedBusiness.priceRange ? (
               <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>
                 {selectedBusiness.priceRange}
@@ -2914,6 +2979,12 @@ const s = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 14,
     paddingVertical: 9,
+  },
+  dismissKeyboardButton: {
+    minWidth: 30,
+    minHeight: 34,
+    alignItems: "center",
+    justifyContent: "center",
   },
   businessSearchStatus: {
     marginHorizontal: 12,
