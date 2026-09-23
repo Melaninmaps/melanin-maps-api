@@ -1142,32 +1142,26 @@ function WelcomeScreen({
   onCityPress: (c: string) => void;
 }) {
   const [headline] = useState(() => WELCOME_HEADLINES[Math.floor(Math.random() * WELCOME_HEADLINES.length)]);
+  const [showMorePrompts, setShowMorePrompts] = useState(false);
+  const visiblePrompts = showMorePrompts ? WELCOME_CHIPS : WELCOME_CHIPS.slice(0, 3);
+
+  void onCityPress;
 
   return (
-    <View style={wsStyles.container}>
-      <View style={[wsStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
-        <Ionicons name="sparkles" size={36} color={colors.primary} />
-      </View>
-      <Text style={[wsStyles.title, { color: colors.text }]}>Welcome Home.</Text>
-      <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
-        {headline}
-      </Text>
-
-      {/* Trip Journals shortcut */}
-      <TouchableOpacity
-        style={[wsStyles.journalCard, { backgroundColor: "#1A3B2B" }]}
-        onPress={() => { router.push("/journals" as never); }}
-        activeOpacity={0.85}
-      >
-        <Text style={wsStyles.journalEmoji}>🗺️</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={wsStyles.journalTitle}>Trip Journals</Text>
-          <Text style={wsStyles.journalSub}>{getDailyQuoteText("diaspora", 2)}</Text>
+    <View testID="kinfolk-conversation-welcome" style={wsStyles.container}>
+      <View style={[wsStyles.introCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[wsStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
+          <Ionicons name="sparkles" size={22} color={colors.primary} />
         </View>
-        <Ionicons name="arrow-forward" size={16} color="#C9922B" />
-      </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[wsStyles.eyebrow, { color: colors.primary }]}>START A CONVERSATION</Text>
+          <Text style={[wsStyles.title, { color: colors.text }]}>{headline}</Text>
+          <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>Ask a question, weigh a decision, or find your next useful step.</Text>
+        </View>
+      </View>
 
-      <View style={wsStyles.lifeChipsWrap}>
+      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Start here</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={wsStyles.lifeChipsRail}>
         {LIFE_CHIPS.map((c) => (
           <TouchableOpacity
             key={c.label}
@@ -1179,41 +1173,67 @@ function WelcomeScreen({
             <Text style={[wsStyles.lifeChipText, { color: colors.text }]}>{c.label}</Text>
           </TouchableOpacity>
         ))}
-      </View>
-      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground, marginTop: 8 }]}>Or try asking:</Text>
-      {WELCOME_CHIPS.map((c) => (
-        <TouchableOpacity
-          key={c}
-          style={[wsStyles.promptChip, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => onChipPress(c)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chatbubble-outline" size={14} color={colors.primary} />
-          <Text style={[wsStyles.promptText, { color: colors.text }]}>{c}</Text>
-          <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
+      </ScrollView>
+
+      <View style={[wsStyles.promptSection, { borderTopColor: colors.border }]}>
+        <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Try a specific question</Text>
+        {visiblePrompts.map((c) => (
+          <TouchableOpacity
+            key={c}
+            style={[wsStyles.promptChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => onChipPress(c)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chatbubble-outline" size={14} color={colors.primary} />
+            <Text style={[wsStyles.promptText, { color: colors.text }]}>{c}</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity onPress={() => setShowMorePrompts((visible) => !visible)} activeOpacity={0.75} style={wsStyles.morePromptsBtn}>
+          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>{showMorePrompts ? "Show fewer prompts" : "More ways to start"}</Text>
+          <Ionicons name={showMorePrompts ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
         </TouchableOpacity>
-      ))}
+      </View>
+
+      {/* Existing journal path remains available as a secondary destination, not a competing primary task. */}
+      <TouchableOpacity
+        style={[wsStyles.journalCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "22" }]}
+        onPress={() => { router.push("/journals" as never); }}
+        activeOpacity={0.85}
+      >
+        <Text style={wsStyles.journalEmoji}>🗺️</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[wsStyles.journalTitle, { color: colors.text }]}>Open Trip Journals</Text>
+          <Text style={[wsStyles.journalSub, { color: colors.mutedForeground }]}>{getDailyQuoteText("diaspora", 2)}</Text>
+        </View>
+        <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+      </TouchableOpacity>
     </View>
   );
 }
 const wsStyles = StyleSheet.create({
-  container: { alignItems: "center", paddingHorizontal: 24, paddingTop: 32, paddingBottom: 16 },
-  iconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 16 },
-  title: { fontFamily: "Inter_700Bold", fontSize: 24, marginBottom: 8, textAlign: "center" },
-  sub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22, textAlign: "center", marginBottom: 24 },
-  sectionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, alignSelf: "flex-start" },
+  container: { paddingHorizontal: 16, paddingTop: 22, paddingBottom: 18 },
+  introCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 22 },
+  iconWrap: { width: 44, height: 44, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  eyebrow: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 1, marginBottom: 5 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 21, lineHeight: 27, marginBottom: 5 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 },
   cityChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
   cityChipText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 8, width: "100%" },
+  promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 13, marginBottom: 8, width: "100%" },
   promptText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
-  journalCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, marginBottom: 20, width: "100%" },
-  journalEmoji: { fontSize: 26 },
-  journalTitle: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF", marginBottom: 2 },
-  journalSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)" },
-  lifeChipsWrap: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 20 },
-  lifeChip: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9 },
+  promptSection: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 18, paddingTop: 18 },
+  morePromptsBtn: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 5, paddingHorizontal: 2 },
+  morePromptsText: { fontFamily: "Inter_700Bold", fontSize: 12 },
+  journalCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1, padding: 13, marginTop: 18, width: "100%" },
+  journalEmoji: { fontSize: 21 },
+  journalTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 2 },
+  journalSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  lifeChipsRail: { gap: 8, paddingRight: 16 },
+  lifeChip: { alignItems: "flex-start", justifyContent: "space-between", width: 126, minHeight: 86, borderRadius: 16, borderWidth: 1, padding: 12 },
   lifeChipEmoji: { fontSize: 14 },
-  lifeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12.5 },
+  lifeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12.5, lineHeight: 17 },
 });
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────
@@ -1939,6 +1959,7 @@ export default function TravelScreen() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const [showFlights, setShowFlights] = useState(false);
+  const [showHeaderActions, setShowHeaderActions] = useState(false);
   const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
 
@@ -2246,40 +2267,44 @@ export default function TravelScreen() {
             <Ionicons name="person-circle-outline" size={22} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85}
-            style={[styles.headerIconBtn, wishlistItems.length > 0 && { backgroundColor: "#ffffff25" }]}
-            onPress={() => router.push("/wishlist" as any)}
+            style={[styles.headerIconBtn, showHeaderActions && { backgroundColor: "#ffffff30" }]}
+            onPress={() => setShowHeaderActions((visible) => !visible)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showHeaderActions }}
+            accessibilityLabel="Open Kinfolk conversation actions"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={22} color="#fff" />
+            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={[styles.headerIconBtn, compareMode && { backgroundColor: "#ffffff40" }]}
-            onPress={() => { setCompareMode((v) => !v); setCompareSelected([]); }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="scale-outline" size={22} color="#fff" />
+        </View>
+      </View>
+
+      {showHeaderActions && (
+        <View style={[styles.headerActionRail, { backgroundColor: colors.primary, borderTopColor: "#ffffff22" }]}>
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); router.push("/wishlist" as any); }} accessibilityLabel="Open saved places">
+            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color="#fff" />
+            <Text style={styles.headerActionText}>Saved</Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={styles.headerIconBtn}
-            onPress={() => setShowFlights(true)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="airplane-outline" size={22} color="#fff" />
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setCompareMode((value) => !value); setCompareSelected([]); }} accessibilityLabel="Toggle comparison mode">
+            <Ionicons name="scale-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>{compareMode ? "Stop compare" : "Compare"}</Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85}
-            style={styles.headerIconBtn}
-            onPress={() => { void loadSessions(); setShowHistory(true); }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="time-outline" size={22} color="#fff" />
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowFlights(true); }} accessibilityLabel="Open flight tracker">
+            <Ionicons name="airplane-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>Flights</Text>
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); void loadSessions(); setShowHistory(true); }} accessibilityLabel="Open conversation history">
+            <Ionicons name="time-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>History</Text>
           </TouchableOpacity>
           {messages.length > 0 && (
-            <TouchableOpacity activeOpacity={0.85} style={styles.headerIconBtn} onPress={handleNewSession} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="add" size={22} color="#fff" />
+            <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); handleNewSession(); }} accessibilityLabel="Start a new Kinfolk conversation">
+              <Ionicons name="add" size={15} color="#fff" />
+              <Text style={styles.headerActionText}>New</Text>
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      )}
 
       {/* Personalization banner */}
       {hasProfile && messages.length === 0 && (
@@ -2557,6 +2582,9 @@ const styles = StyleSheet.create({
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   headerIconBtn: { padding: 6, borderRadius: 20 },
+  headerActionRail: { flexDirection: "row", flexWrap: "wrap", gap: 7, paddingHorizontal: 16, paddingBottom: 11, paddingTop: 1, borderTopWidth: StyleSheet.hairlineWidth },
+  headerAction: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, backgroundColor: "#ffffff18", paddingHorizontal: 9, paddingVertical: 6 },
+  headerActionText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 11 },
   premiumBanner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#C9922B18", borderBottomWidth: 1, borderBottomColor: "#C9922B40" },
   premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },

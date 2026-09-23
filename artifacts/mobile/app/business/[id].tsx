@@ -875,7 +875,7 @@ export default function BusinessDetailScreen() {
               style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
             >
               <Feather name="play-circle" size={15} color={colors.foreground} />
-              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.foreground }}>Watch community posts ({visibleContributions.length})</Text>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.foreground }}>Community creator videos ({visibleContributions.length})</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setContributionModalOpen(true)}
@@ -885,7 +885,7 @@ export default function BusinessDetailScreen() {
               style={{ flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: colors.primary + "55", backgroundColor: colors.primary + "0D", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}
             >
               <Feather name="video" size={15} color={colors.primary} />
-              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>Share your visit</Text>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>Add your visit video</Text>
             </TouchableOpacity>
           </View>
           {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (

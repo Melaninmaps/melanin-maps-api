@@ -24,6 +24,7 @@ const entry = path.join(apiRoot, "dist", "index.mjs");
 const identityPath = path.join(apiRoot, "dist", "BUILD_IDENTITY");
 const rootStatic = path.join(root, "web-static", "index.html");
 const builtStatic = path.join(apiRoot, "web-static", "index.html");
+const generatedSpa = path.join(apiRoot, "src", "generated", "spaHtml.ts");
 
 function die(message) {
   console.error(`RELEASE_VERIFY_FAIL: ${message}`);
@@ -34,7 +35,7 @@ function hash(file) {
   return createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
-for (const file of [entry, identityPath, rootStatic, builtStatic]) {
+for (const file of [entry, identityPath, rootStatic, builtStatic, generatedSpa]) {
   if (!fs.existsSync(file)) die(`missing ${path.relative(root, file)}`);
 }
 
@@ -47,6 +48,18 @@ if (identity.bundle_sha256 !== entryHash) {
 
 if (fs.readFileSync(rootStatic, "utf8") !== fs.readFileSync(builtStatic, "utf8")) {
   die("root web-static/index.html differs from artifacts/api-server/web-static/index.html — run sync-web-static first");
+}
+
+// The API embeds this file as an intentional fallback for the SPA shell. It
+// must name the same content-addressed JS and CSS assets as the served shell;
+// otherwise a successful deployment can still render a stale website.
+const staticHtml = fs.readFileSync(rootStatic, "utf8");
+const spaHtmlSource = fs.readFileSync(generatedSpa, "utf8");
+const assetPaths = [...staticHtml.matchAll(/(?:src|href)="(\/assets\/[^"?]+)"/g)].map((match) => match[1]);
+for (const assetPath of assetPaths) {
+  if (!spaHtmlSource.includes(assetPath)) {
+    die(`generated SPA fallback is missing current asset ${assetPath} — rebuild API after synchronizing web-static`);
+  }
 }
 
 console.log(JSON.stringify({
