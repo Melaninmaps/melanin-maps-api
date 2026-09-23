@@ -61,26 +61,47 @@ export async function answerWithLivingLibrary(input: {
   researchProvider: ExternalResearchProvider;
   writer: LibrarySynthesisWriter;
 }) {
-  const { entry, reused } = await answerAndArchiveResearchQuestion({
+  const result = await answerAndArchiveResearchQuestion({
     question: input.memberQuestion,
     locationLabel: input.locationLabel,
     repository: input.repository,
     researchProvider: input.researchProvider,
     writer: input.writer,
   });
+  const foundation = result.foundation;
+  const communityContext = result.communityContext;
+  const communityMessage = communityContext?.status === "available" && communityContext.answer
+    ? `\n\nCommunity context (${communityContext.researchLenses.join(" ")}): ${communityContext.answer.summary}`
+    : communityContext
+      ? `\n\nCommunity context (${communityContext.researchLenses.join(" ")}): ${communityContext.message}`
+      : "";
 
   return {
     type: "library_research",
-    message: entry.summary,
-    disclaimer: entry.disclaimer,
-    sources: entry.sources.map((source) => ({ title: source.title, url: source.url })),
-    sourceCount: entry.sourceCount,
-    isReliable: entry.sourceCount > 0 && entry.sources.length > 0,
-    reused,
-    libraryEntry: entry.publicationStatus === "published" ? {
-      id: entry.id,
-      topicSlug: entry.domain,
-      url: `/library/topics/${encodeURIComponent(entry.domain)}#entry-${entry.id}`,
+    // The general foundation is always first. A community packet is an
+    // explicitly requested, separately sourced add-on—not a filter that can
+    // hide general current information or imply the member's identity.
+    message: `${foundation.summary}${communityMessage}`,
+    disclaimer: foundation.disclaimer,
+    sources: foundation.sources.map((source) => ({ title: source.title, url: source.url })),
+    sourceCount: foundation.sourceCount,
+    communityContext: communityContext
+      ? {
+          status: communityContext.status,
+          researchLenses: communityContext.researchLenses,
+          message: communityContext.message,
+          sources: communityContext.answer?.sources.map((source) => ({
+            title: source.title,
+            url: source.url,
+          })) ?? [],
+        }
+      : null,
+    isReliable: foundation.sourceCount > 0 && foundation.sources.length > 0,
+    reused: result.reused,
+    libraryEntry: foundation.publicationStatus === "published" ? {
+      id: foundation.id,
+      topicSlug: foundation.domain,
+      url: `/library/topics/${encodeURIComponent(foundation.domain)}#entry-${foundation.id}`,
       readMoreLabel: "Read the full source-cited entry",
     } : null,
   };

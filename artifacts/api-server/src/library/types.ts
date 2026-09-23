@@ -52,6 +52,19 @@ export type LibraryEntry = {
   refreshedAt: Date;
 };
 
+/**
+ * A separately researched, explicitly requested community packet. It is never
+ * derived from a member profile and never changes the general foundation's
+ * sources, cache key, or eligibility for reuse.
+ */
+export type CommunityResearchContext = {
+  status: "available" | "insufficient";
+  researchLenses: string[];
+  answer?: LibraryEntry;
+  message: string;
+  providerStatus: ResearchProviderStatus;
+};
+
 export type LibraryTopicSearchResult = {
   kind: "topic";
   id: string;

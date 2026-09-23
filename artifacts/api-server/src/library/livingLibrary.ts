@@ -1,18 +1,23 @@
 import { createHash } from "node:crypto";
 import {
-  buildCommunityResearchQuery,
+  buildCommunitySupplementResearchQuery,
+  buildFoundationResearchQuery,
   getResearchPolicy,
   isTrustedResearchUrl,
   type ResearchDomain,
   type SourceTier,
 } from "./researchPolicy";
 import {
+  defaultCommunityResearchLenses,
   hasDirectEvidenceForExplicitResearchLenses,
   researchLensCommunityLabel,
   researchLensFacetKeys,
   resolveCommunityResearchLenses,
+  resolveCommunityResearchSupplementLenses,
+  stripCommunityResearchScope,
 } from "./communityResearchLens";
 import type {
+  CommunityResearchContext,
   ExternalResearchProvider,
   KnowledgeSource,
   LibraryEntry,
@@ -137,17 +142,169 @@ export function validResearchDocuments(
 }
 
 export type LivingLibraryAnswer = {
+  /** Compatibility field: the general authoritative foundation. */
+  entry: LibraryEntry;
+  foundation: LibraryEntry;
+  communityContext?: CommunityResearchContext;
+  reused: boolean;
+  origin: "internal" | "researched";
+  providerStatus: ResearchProviderStatus;
+};
+
+type PacketInput = {
+  question: string;
+  normalizedQuestion: string;
+  communityLens: string;
+  researchLenses: string[];
+  researchLensFacetKeys: string[];
+  directEvidenceLenses: ReturnType<typeof resolveCommunityResearchLenses>;
+  query: string;
+  domain: ResearchDomain;
+  policy: ReturnType<typeof getResearchPolicy>;
+  topicSlug: string;
+  locationLabel: string | null;
+  isReusableQuestion: boolean;
+  repository: LibraryRepository;
+  researchProvider: ExternalResearchProvider;
+  writer: LibrarySynthesisWriter;
+  /** Foundation only records aggregate search coverage. */
+  recordCoverage?: (outcome: Parameters<LibraryRepository["recordCoverageSignal"]>[0]["outcome"], usedLiveResearch: boolean) => Promise<void>;
+};
+
+type PacketResult = {
   entry: LibraryEntry;
   reused: boolean;
   origin: "internal" | "researched";
   providerStatus: ResearchProviderStatus;
 };
 
+async function answerResearchPacket(input: PacketInput): Promise<PacketResult> {
+  const currentAfter = new Date(Date.now() - input.policy.archiveTtlHours * 60 * 60 * 1_000);
+  const reusable = await input.repository.findReusableEntry({
+    normalizedQuestion: input.normalizedQuestion,
+    domain: input.domain,
+    communityLens: input.communityLens,
+    researchLensFacetKeys: input.researchLensFacetKeys,
+    locationLabel: input.locationLabel,
+    currentAfter,
+  });
+  if (reusable) {
+    if (reusable.publicationStatus !== "published") {
+      throw new Error("Library repository returned non-published reusable content.");
+    }
+    await input.recordCoverage?.("internal", false);
+    return {
+      entry: reusable,
+      reused: true,
+      origin: "internal",
+      providerStatus: "available",
+    };
+  }
+
+  let providerResult;
+  try {
+    providerResult = await input.researchProvider.search({
+      query: input.query,
+      allowedDomains: input.policy.allowDomains,
+      maxResults: MAX_RESEARCH_RESULTS,
+    });
+  } catch (error) {
+    await input.recordCoverage?.("provider_unavailable", true);
+    throw error;
+  }
+
+  const documents = validResearchDocuments(providerResult.documents, input.policy.allowDomains);
+  if (documents.length < MINIMUM_SOURCE_COUNT) {
+    await input.recordCoverage?.("insufficient", true);
+    throw new LibraryEvidenceInsufficientError();
+  }
+  if (!hasDirectEvidenceForExplicitResearchLenses(documents, input.directEvidenceLenses)) {
+    await input.recordCoverage?.("insufficient", true);
+    throw new LibraryEvidenceInsufficientError();
+  }
+
+  const draft = await input.writer.writeStructured({
+    question: input.question,
+    domain: input.domain,
+    communityLens: input.communityLens,
+    locationLabel: input.locationLabel,
+    disclaimer: input.policy.disclaimer,
+    sources: documents,
+  });
+  const citedIndexes = [...new Set(draft.citedSourceIndexes)]
+    .filter((index) => Number.isInteger(index) && index >= 0 && index < documents.length)
+    .slice(0, documents.length);
+  const citedDocuments = citedIndexes.map((index) => documents[index]);
+  const sourceNotes = new Map(
+    draft.sourceNotes
+      .filter((note) => citedIndexes.includes(note.sourceIndex))
+      .map((note) => [note.sourceIndex, note.whyItMatters.trim().slice(0, 420)] as const)
+      .filter(([, note]) => Boolean(note)),
+  );
+  if (citedDocuments.length < MINIMUM_SOURCE_COUNT) {
+    await input.recordCoverage?.("insufficient", true);
+    throw new LibraryEvidenceInsufficientError();
+  }
+
+  const publicationStatus = qualifiesForReusablePublication({
+    providerStatus: providerResult.status,
+    citedDocuments,
+    sourceNotes,
+    citedIndexes,
+    generalQuestion: input.isReusableQuestion,
+  }) ? "published" : "pending";
+
+  const entry = await input.repository.saveEntry({
+    topicSlug: input.topicSlug,
+    // A public-safe question may be reused by the next member. Anything with
+    // member-specific wording is stored as a one-way pending candidate instead.
+    question: publicationStatus === "published" ? input.question.trim() : "Governed live-research candidate",
+    normalizedQuestion: publicationStatus === "published"
+      ? input.normalizedQuestion
+      : `sha256:${createHash("sha256").update(input.normalizedQuestion).digest("hex")}`,
+    title: draft.title.trim(),
+    summary: draft.summary.trim().slice(0, 800),
+    body: draft.body.trim(),
+    domain: input.domain,
+    communityLens: input.communityLens,
+    researchLenses: input.researchLenses,
+    locationLabel: input.locationLabel,
+    disclaimer: input.policy.disclaimer,
+    sourceCount: citedDocuments.length,
+    sources: citedIndexes.map((index) => ({
+      ...toKnowledgeSource(documents[index]),
+      whyItMatters: sourceNotes.get(index) ?? null,
+    })),
+    relatedQuestions: [...new Set(draft.relatedQuestions.map((value) => value.trim()).filter(Boolean))].slice(0, 5),
+    provider: providerResult.provider,
+    publicationStatus,
+  });
+  await input.recordCoverage?.("researched", true);
+  return {
+    entry,
+    reused: false,
+    origin: "researched",
+    providerStatus: providerResult.status,
+  };
+}
+
+function insufficientCommunityContext(
+  tags: string[],
+): CommunityResearchContext {
+  return {
+    status: "insufficient",
+    researchLenses: tags,
+    providerStatus: "degraded",
+    message: `The current foundation above is still available. The Library could not verify enough direct evidence for a separate ${tags.join(" ")} community-context packet right now, so it has not made a group-specific claim.`,
+  };
+}
+
 /**
- * Reuses approved Library knowledge first and otherwise performs live,
- * source-cited research. A general question that clears the strict publication
- * gate becomes a reusable Library brief; member-specific questions stay private
- * and pending. No profile or inferred identity context crosses this boundary.
+ * Returns a current foundation for every topic, then independently adds an
+ * explicitly selected, directly evidenced community packet. A group packet
+ * cannot replace, narrow, or relabel the foundation. A missing group packet is
+ * nonfatal; only the foundation's normal safety and evidence requirements can
+ * fail the request.
  */
 export async function answerAndArchiveResearchQuestion(input: {
   question: string;
@@ -163,17 +320,19 @@ export async function answerAndArchiveResearchQuestion(input: {
   // reusable-key or pending-candidate attribute at this boundary.
   const libraryLocationLabel = null;
   const policy = getResearchPolicy(question);
-  const researchLenses = resolveCommunityResearchLenses(question);
-  const communityLens = researchLensCommunityLabel(researchLenses);
-  const lensFacetKeys = researchLensFacetKeys(researchLenses);
-  const normalizedQuestion = normalizeResearchQuestion(question);
-  const generalReusableQuestion = isGeneralReusableQuestion(question);
-  const currentAfter = new Date(Date.now() - policy.archiveTtlHours * 60 * 60 * 1_000);
-  const topicSlug = researchTopicSlug(question, policy.domain);
-  const queryFingerprint = createHash("sha256").update(normalizedQuestion).digest("hex");
-  const recordSignal = (outcome: Parameters<LibraryRepository["recordCoverageSignal"]>[0]["outcome"], usedLiveResearch: boolean) =>
+  const selectedLenses = resolveCommunityResearchLenses(question);
+  const supplementLenses = resolveCommunityResearchSupplementLenses(question, selectedLenses);
+  const foundationQuestion = stripCommunityResearchScope(question, supplementLenses)
+    || question.normalize("NFKC").trim();
+  const foundationLenses = defaultCommunityResearchLenses();
+  const topicSlug = researchTopicSlug(foundationQuestion, policy.domain);
+  const foundationNormalizedQuestion = normalizeResearchQuestion(foundationQuestion);
+  const foundationFingerprint = createHash("sha256")
+    .update(foundationNormalizedQuestion)
+    .digest("hex");
+  const recordFoundationCoverage = (outcome: Parameters<LibraryRepository["recordCoverageSignal"]>[0]["outcome"], usedLiveResearch: boolean) =>
     repository.recordCoverageSignal({
-      queryFingerprint,
+      queryFingerprint: foundationFingerprint,
       domain: policy.domain,
       topicSlug,
       internalResultCount: Math.max(0, input.internalResultCount ?? 0),
@@ -181,102 +340,69 @@ export async function answerAndArchiveResearchQuestion(input: {
       outcome,
     });
 
-  const reusable = await repository.findReusableEntry({
-    normalizedQuestion,
+  const foundation = await answerResearchPacket({
+    question: foundationQuestion,
+    normalizedQuestion: foundationNormalizedQuestion,
+    communityLens: researchLensCommunityLabel(foundationLenses),
+    researchLenses: foundationLenses.map((lens) => lens.tag),
+    researchLensFacetKeys: researchLensFacetKeys(foundationLenses),
+    // The foundation deliberately has no group-specific direct-evidence test.
+    directEvidenceLenses: foundationLenses,
+    query: buildFoundationResearchQuery(foundationQuestion, policy.domain),
     domain: policy.domain,
-    communityLens,
-    researchLensFacetKeys: lensFacetKeys,
-    locationLabel: libraryLocationLabel,
-    currentAfter,
-  });
-  if (reusable) {
-    if (reusable.publicationStatus !== "published") {
-      throw new Error("Library repository returned non-published reusable content.");
-    }
-    await recordSignal("internal", false);
-    return { entry: reusable, reused: true, origin: "internal", providerStatus: "available" };
-  }
-
-  let providerResult;
-  try {
-    providerResult = await researchProvider.search({
-      query: buildCommunityResearchQuery(question, policy.domain),
-      allowedDomains: policy.allowDomains,
-      maxResults: MAX_RESEARCH_RESULTS,
-    });
-  } catch (error) {
-    await recordSignal("provider_unavailable", true);
-    throw error;
-  }
-  const documents = validResearchDocuments(providerResult.documents, policy.allowDomains);
-  if (documents.length < MINIMUM_SOURCE_COUNT) {
-    await recordSignal("insufficient", true);
-    throw new LibraryEvidenceInsufficientError();
-  }
-  if (!hasDirectEvidenceForExplicitResearchLenses(documents, researchLenses)) {
-    await recordSignal("insufficient", true);
-    throw new LibraryEvidenceInsufficientError();
-  }
-
-  const draft = await writer.writeStructured({
-    question,
-    domain: policy.domain,
-    communityLens,
-    locationLabel: libraryLocationLabel,
-    disclaimer: policy.disclaimer,
-    sources: documents,
-  });
-  const citedIndexes = [...new Set(draft.citedSourceIndexes)]
-    .filter((index) => Number.isInteger(index) && index >= 0 && index < documents.length)
-    .slice(0, documents.length);
-  const citedDocuments = citedIndexes.map((index) => documents[index]);
-  const sourceNotes = new Map(
-    draft.sourceNotes
-      .filter((note) => citedIndexes.includes(note.sourceIndex))
-      .map((note) => [note.sourceIndex, note.whyItMatters.trim().slice(0, 420)] as const)
-      .filter(([, note]) => Boolean(note)),
-  );
-  if (citedDocuments.length < MINIMUM_SOURCE_COUNT) {
-    await recordSignal("insufficient", true);
-    throw new LibraryEvidenceInsufficientError();
-  }
-
-  const publicationStatus = qualifiesForReusablePublication({
-    providerStatus: providerResult.status,
-    citedDocuments,
-    sourceNotes,
-    citedIndexes,
-    generalQuestion: generalReusableQuestion,
-  }) ? "published" : "pending";
-
-  const entry = await repository.saveEntry({
+    policy,
     topicSlug,
-    // A public-safe question may be reused by the next member. Anything with
-    // member-specific wording is stored as a one-way pending candidate instead.
-    question: publicationStatus === "published" ? question.trim() : "Governed live-research candidate",
-    normalizedQuestion: publicationStatus === "published" ? normalizedQuestion : `sha256:${queryFingerprint}`,
-    title: draft.title.trim(),
-    summary: draft.summary.trim().slice(0, 800),
-    body: draft.body.trim(),
-    domain: policy.domain,
-    communityLens,
-    researchLenses: researchLenses.map((lens) => lens.tag),
     locationLabel: libraryLocationLabel,
-    disclaimer: policy.disclaimer,
-    sourceCount: citedDocuments.length,
-    sources: citedIndexes.map((index) => ({
-      ...toKnowledgeSource(documents[index]),
-      whyItMatters: sourceNotes.get(index) ?? null,
-    })),
-    relatedQuestions: [...new Set(draft.relatedQuestions.map((value) => value.trim()).filter(Boolean))].slice(0, 5),
-    provider: providerResult.provider,
-    publicationStatus,
+    isReusableQuestion: isGeneralReusableQuestion(foundationQuestion),
+    repository,
+    researchProvider,
+    writer,
+    recordCoverage: recordFoundationCoverage,
   });
-  await recordSignal("researched", true);
+
+  let communityContext: CommunityResearchContext | undefined;
+  if (supplementLenses.length > 0) {
+    const tags = supplementLenses.map((lens) => lens.tag);
+    try {
+      const supplementQuestion = stripCommunityResearchScope(question, supplementLenses)
+        || foundationQuestion;
+      const supplement = await answerResearchPacket({
+        question: question.trim(),
+        normalizedQuestion: normalizeResearchQuestion(question),
+        communityLens: researchLensCommunityLabel(supplementLenses),
+        researchLenses: tags,
+        researchLensFacetKeys: researchLensFacetKeys(supplementLenses),
+        directEvidenceLenses: supplementLenses,
+        query: buildCommunitySupplementResearchQuery(question, policy.domain, supplementLenses),
+        domain: policy.domain,
+        policy,
+        topicSlug: researchTopicSlug(supplementQuestion, policy.domain),
+        locationLabel: libraryLocationLabel,
+        isReusableQuestion: isGeneralReusableQuestion(question),
+        repository,
+        researchProvider,
+        writer,
+      });
+      communityContext = {
+        status: "available",
+        researchLenses: tags,
+        answer: supplement.entry,
+        providerStatus: supplement.providerStatus,
+        message: `Directly sourced community context for ${tags.join(" ")} is shown separately from the current foundation.`,
+      };
+    } catch {
+      // Community evidence has a stricter direct-evidence bar. Its absence must
+      // never erase, degrade, or silently relabel the foundation answer.
+      communityContext = insufficientCommunityContext(tags);
+    }
+  }
+
   return {
-    entry,
-    reused: false,
-    origin: "researched",
-    providerStatus: providerResult.status,
+    entry: foundation.entry,
+    foundation: foundation.entry,
+    communityContext,
+    reused: foundation.reused,
+    origin: foundation.origin,
+    providerStatus: foundation.providerStatus,
   };
 }

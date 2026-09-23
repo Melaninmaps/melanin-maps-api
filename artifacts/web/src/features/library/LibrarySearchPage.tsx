@@ -84,6 +84,15 @@ type LibraryResearchScope = {
 
 type LibraryResearchResponse = {
   answer: ResearchAnswer;
+  /** General current information for any reader; mirrors answer for compatibility. */
+  foundation?: ResearchAnswer;
+  communityContext?: {
+    status: "available" | "insufficient";
+    researchLenses: string[];
+    answer?: ResearchAnswer;
+    message: string;
+    providerStatus: "available" | "degraded";
+  };
   origin: "internal" | "researched";
   reused: boolean;
   persisted: boolean;
@@ -175,6 +184,7 @@ function ExpandableAnswer({
   relatedQuestions = [],
   onRelated,
   researchScope,
+  researchTrack = "foundation",
 }: {
   title: string;
   summary: string;
@@ -187,6 +197,7 @@ function ExpandableAnswer({
   relatedQuestions?: string[];
   onRelated?: (question: string) => void;
   researchScope?: LibraryResearchScope;
+  researchTrack?: "foundation" | "community";
 }) {
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
@@ -210,8 +221,12 @@ function ExpandableAnswer({
       </button>
       {researchScope ? (
         <aside className="library-research-scope" aria-label="Research scope">
-          <h3>How this was researched</h3>
-          <p><strong>Research lens:</strong> {researchScope.researchLenses.map((lens) => lens.tag).join(" ")}</p>
+          <h3>{researchTrack === "foundation" ? "How the current foundation was researched" : "How this was researched"}</h3>
+          {researchTrack === "foundation" ? (
+            <p><strong>Current foundation:</strong> Current, authoritative information for any reader. An explicit community lens is researched and shown separately, never substituted for this answer.</p>
+          ) : (
+            <p><strong>Research lens:</strong> {researchScope.researchLenses.map((lens) => lens.tag).join(" ")}</p>
+          )}
           <p><strong>Source standard:</strong> {researchScope.sourceStandard}</p>
           <p>{researchScope.groupGuidance}</p>
           {researchScope.connectedTopics.length > 0 ? (
@@ -383,7 +398,7 @@ export function LibrarySearchPage() {
         <p className="living-library-eyebrow">Diaspora-centered knowledge</p>
         <h1>Begin with what the Library knows. Research the next right question.</h1>
         <p className="living-library-introduction">
-          Search approved Library knowledge first. When coverage is sparse, request a source-governed research brief with the evidence, why it matters, next steps, and related questions.
+          Search approved Library knowledge first. When coverage is sparse, request a source-governed brief with a current foundation for everyone and, when selected, a separately labeled community-evidence packet.
         </p>
           <form className="living-library-search" onSubmit={submit}>
           <label className="sr-only" htmlFor="library-result-search">Search the Library</label>
@@ -391,7 +406,7 @@ export function LibrarySearchPage() {
             <button type="submit">Search</button>
           </form>
           <div className="library-research-lens-filter" aria-label="Library research lens">
-            <p>Choose the community evidence that should lead this search. A lens is not saved as your identity.</p>
+            <p>Choose community evidence to add alongside the current foundation. A lens is not saved as your identity.</p>
             <div role="group" aria-label="Research lens choices">
               {RESEARCH_LENS_OPTIONS.map((lens) => {
                 const selected = activeResearchLensTags.includes(lens.tag);
@@ -465,18 +480,45 @@ export function LibrarySearchPage() {
           <>
             <p className={`library-provider-status library-provider-status--${research.provider.status}`} role="status">{research.provider.message}</p>
             <ExpandableAnswer
-              body={research.answer.body}
-              disclaimer={research.answer.disclaimer}
-              eyebrow={research.origin === "internal" || research.published ? "Source-governed Library entry" : "Current research · Private response"}
+              body={(research.foundation ?? research.answer).body}
+              disclaimer={(research.foundation ?? research.answer).disclaimer}
+              eyebrow={research.origin === "internal" || research.published ? "Current foundation · Source-governed Library entry" : "Current foundation · Private response"}
               onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(`${research.researchScope.researchLenses.map((lens) => lens.tag).join(" ")} ${question}`.trim())}`)}
-              refreshedAt={research.answer.refreshedAt}
-              relatedQuestions={research.answer.relatedQuestions}
+              refreshedAt={(research.foundation ?? research.answer).refreshedAt}
+              relatedQuestions={(research.foundation ?? research.answer).relatedQuestions}
               researchScope={research.researchScope}
-              sourceCount={research.answer.sourceCount}
-              sources={research.answer.sources}
-              summary={research.answer.summary}
-              title={research.answer.title}
+              researchTrack="foundation"
+              sourceCount={(research.foundation ?? research.answer).sourceCount}
+              sources={(research.foundation ?? research.answer).sources}
+              summary={(research.foundation ?? research.answer).summary}
+              title={(research.foundation ?? research.answer).title}
             />
+            {research.communityContext?.status === "available" && research.communityContext.answer ? (
+              <section className="library-search-results" aria-label="Community-specific research context">
+                <p className="living-library-eyebrow">Community context: {research.communityContext.researchLenses.join(" ")}</p>
+                <p className="library-search-provider-note">{research.communityContext.message}</p>
+                <ExpandableAnswer
+                  body={research.communityContext.answer.body}
+                  disclaimer={research.communityContext.answer.disclaimer}
+                  eyebrow="Directly evidenced community packet"
+                  onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(`${research.communityContext!.researchLenses.join(" ")} ${question}`.trim())}`)}
+                  refreshedAt={research.communityContext.answer.refreshedAt}
+                  relatedQuestions={research.communityContext.answer.relatedQuestions}
+                  researchScope={research.researchScope}
+                  researchTrack="community"
+                  sourceCount={research.communityContext.answer.sourceCount}
+                  sources={research.communityContext.answer.sources}
+                  summary={research.communityContext.answer.summary}
+                  title={research.communityContext.answer.title}
+                />
+              </section>
+            ) : research.communityContext ? (
+              <section className="library-provider-error" aria-live="polite">
+                <h2>Community context is limited for now</h2>
+                <p>{research.communityContext.message}</p>
+                <p>The current foundation remains complete and separately sourced above.</p>
+              </section>
+            ) : null}
           </>
         ) : null}
 

@@ -53,4 +53,12 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("not claims about the reader or a report of other members");
     expect(researchScreen).toContain("Sign in to request a new source-governed Library brief");
   });
+
+  it("renders current foundation and community context in separate cards", () => {
+    expect(researchScreen).toContain("CURRENT FOUNDATION · SOURCE-GOVERNED");
+    expect(researchScreen).toContain("DIRECTLY EVIDENCED COMMUNITY PACKET");
+    expect(researchScreen).toContain("Community context is limited for now");
+    expect(researchScreen).toContain('researchTrack="foundation"');
+    expect(researchScreen).toContain('researchTrack="community"');
+  });
 });
