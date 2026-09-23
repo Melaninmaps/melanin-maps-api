@@ -6,6 +6,8 @@
  * Confirms that:
  *   1. dist/index.mjs exists and matches its recorded BUILD_IDENTITY hash.
  *   2. root web-static/index.html matches artifacts/api-server/web-static/index.html.
+ *   3. Docker runtime static synchronization is verified separately by
+ *      validate-runtime-static-bundle-sync.cjs before this script runs.
  *
  * Usage:
  *   node scripts/verify-release-artifacts.mjs

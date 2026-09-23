@@ -166,6 +166,7 @@ if [ "$MODE" = "--prepare-static" ]; then
   cp -a artifacts/web/dist/public/. artifacts/api-server/web-static/
 fi
 
+node scripts/validate-runtime-static-bundle-sync.cjs
 node scripts/verify-release-artifacts.mjs
 
 # API bundles and their generated identity source are build products. Validate
