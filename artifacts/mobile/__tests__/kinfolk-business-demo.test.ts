@@ -127,20 +127,21 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(spoke).toBe(false);
   });
 
-  it("gates travel Speech.speak on active AppState and an armed response", () => {
+  it("gates primary Kinfolk server-owned audio on active AppState and an armed response", () => {
     expect(travelSource).toContain("const appStateRef = useRef(AppState.currentState)");
     expect(travelSource).toContain("pendingAutoSpeechRef.current = autoSpeechGuardRef.current.begin()");
-    expect(travelSource).toContain('autoSpeechGuardRef.current.invalidate("app_background")');
+    expect(travelSource).toContain('stopServerVoice("app_background")');
     expect(travelSource).toContain('appStateRef.current !== "active"');
     expect(travelSource).toContain("if (!autoSpeechGuardRef.current.canPlay(request)");
-    expect(travelSource).toContain("Speech.speak(last.content");
-    expect(travelSource).toContain("Speech.speak(content");
-    expect(travelSource).toContain("void Speech.stop()");
+    expect(travelSource).toContain('`${getApiBase()}/api/kinfolk/speak`');
+    expect(travelSource).toContain("useAudioPlayer(voiceAudioUri)");
+    expect(travelSource).toContain("serverVoicePlayer.play()");
+    expect(travelSource).toContain('stopServerVoice("app_background")');
   });
 
   it("shows only approved public creator links and opens them on the original platform", () => {
     expect(detailSource).toContain("/api/businesses/${id}/contributions");
-    expect(detailSource).toContain("Community creator videos");
+    expect(detailSource).toContain("Community posts");
     expect(detailSource).toContain("approvedContributionUrl");
     expect(detailSource).toContain("const openApprovedContribution");
     expect(detailSource).toContain("WebBrowser.openBrowserAsync(url)");

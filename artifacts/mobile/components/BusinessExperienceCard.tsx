@@ -47,6 +47,7 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
   const [error, setError] = useState<string | null>(null);
   const [wordingOpen, setWordingOpen] = useState(false);
   const [communityCode, setCommunityCode] = useState<CommunityCode>("default");
+  const [expandedGroup, setExpandedGroup] = useState<BusinessExperienceKind | null>(null);
 
   const selected = useMemo(
     () => new Set((data?.viewerSelections ?? []).map((item) => `${item.kind}:${item.key}`)),
@@ -128,12 +129,32 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
     if (!data || choices.length === 0) return null;
     const ownerVibes = new Set(data.ownerChoices.vibes);
     const selectedPrice = data.viewerSelections.find((item) => item.kind === "price")?.key;
+    const isExpanded = expandedGroup === kind;
+    const selectedCount = choices.filter((choice) => {
+      if (kind === "price") return selectedPrice === choice.key;
+      return selected.has(`${kind}:${choice.key}`);
+    }).length;
 
     return (
       <View style={styles.group}>
-        <Text style={[styles.groupTitle, { color: colors.foreground }]}>{title}</Text>
-        <Text style={[styles.groupDescription, { color: colors.mutedForeground }]}>{description}</Text>
-        <View style={styles.choiceWrap}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isExpanded }}
+          accessibilityLabel={`${isExpanded ? "Hide" : "Show"} ${title} choices`}
+          onPress={() => setExpandedGroup((current) => current === kind ? null : kind)}
+          style={[styles.groupToggle, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+          activeOpacity={0.8}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.groupTitle, { color: colors.foreground }]}>{title}</Text>
+            <Text style={[styles.groupDescription, { color: colors.mutedForeground }]} numberOfLines={isExpanded ? undefined : 1}>{description}</Text>
+          </View>
+          <View style={styles.groupToggleEnd}>
+            {selectedCount > 0 ? <Text style={[styles.selectedCount, { color: colors.primary }]}>{selectedCount} chosen</Text> : null}
+            <Feather name={isExpanded ? "chevron-up" : "chevron-down"} size={18} color={colors.primary} />
+          </View>
+        </TouchableOpacity>
+        {isExpanded ? <View style={styles.choiceWrap}>
           {choices.map((choice) => {
             const identity = `${kind}:${choice.key}`;
             const isSelected = kind === "price" ? selectedPrice === choice.key : selected.has(identity);
@@ -177,7 +198,7 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
               </TouchableOpacity>
             );
           })}
-        </View>
+        </View> : null}
       </View>
     );
   }
@@ -212,8 +233,8 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
         </TouchableOpacity>
       </View>
 
-      {group("vibe", data.policy.atmosphereLabel, "Atmosphere, occasion, and energy — only when it fits this business type.", data.policy.vibeChoices)}
-      {group("reaction", data.policy.reactionLabel, "Fast positive feedback tailored to what this kind of business does.", data.policy.reactionChoices)}
+      {group("vibe", "Vibe", "Atmosphere, occasion, and energy. These same tags support VIBES search.", data.policy.vibeChoices)}
+      {group("reaction", "Community Says", "Quick community feedback tailored to what this business does.", data.policy.reactionChoices)}
       {ownerPrice && (
         <View style={[styles.ownerPrice, { borderColor: `${colors.primary}55`, backgroundColor: `${colors.primary}16` }]}>
           <View style={styles.ownerPriceHeading}>
@@ -224,7 +245,7 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
           <Text style={[styles.ownerPriceHelper, { color: colors.mutedForeground }]}>Provided by the claimed owner; community estimates are separate.</Text>
         </View>
       )}
-      {group("price", "Community price estimate", "Community estimates help people plan and may differ from the owner-provided price.", data.policy.priceChoices)}
+      {group("price", "Price", "Community estimates help people plan and may differ from the owner-provided price.", data.policy.priceChoices)}
 
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       <Text style={[styles.disclosure, { color: colors.mutedForeground }]}>Different wording is shown only when you select it. The underlying tag stays the same across communities.</Text>
@@ -273,6 +294,9 @@ const styles = StyleSheet.create({
   ownerPriceValue: { fontFamily: "Inter_700Bold", fontSize: 14 },
   ownerPriceHelper: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
   group: { gap: 8 },
+  groupToggle: { minHeight: 62, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 8 },
+  groupToggleEnd: { flexDirection: "row", alignItems: "center", gap: 5 },
+  selectedCount: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   groupTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
   groupDescription: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
   choiceWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

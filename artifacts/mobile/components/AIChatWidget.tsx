@@ -467,7 +467,10 @@ export function AIChatWidget() {
         return;
       }
       const form = new FormData();
-      form.append("audio", { uri, name: `kinfolk-recording.${ext}`, type: mimeType } as unknown as Blob);
+      // Expo's native FormData does not support React Native's legacy
+      // `{ uri, name, type }` part shape in every runtime. `File` is a real
+      // Blob, so this reaches the server as a normal multipart attachment.
+      form.append("audio", new FileSystem.File(uri));
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
 

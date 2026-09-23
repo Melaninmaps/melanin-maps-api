@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the historical 115/85
-# release; the explicitly approved 116/86 release sets both EXPECTED_* values.
+# Requirements-to-proof source/artifact gate. Defaults to the complete 117/87
+# repair release while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
 #   bash scripts/run-build-115-85-requirements-gate.sh --prepare-static
@@ -26,10 +26,11 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-115}"
-EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-85}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-117}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-87}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "117/87" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi

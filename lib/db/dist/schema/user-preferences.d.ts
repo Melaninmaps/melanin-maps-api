@@ -396,6 +396,25 @@ export declare const userPreferencesTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             $type: string[];
         }>;
+        communityFeedDisplay: import("drizzle-orm/pg-core").PgColumn<{
+            name: "community_feed_display";
+            tableName: "user_preferences";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 20;
+        }>;
         diasporaCountries: import("drizzle-orm/pg-core").PgColumn<{
             name: "diaspora_countries";
             tableName: "user_preferences";
@@ -985,6 +1004,25 @@ export declare const insertUserPreferencesSchema: import("drizzle-zod").BuildSch
     }, {}, {
         $type: string[];
     }>;
+    communityFeedDisplay: import("drizzle-orm/pg-core").PgColumn<{
+        name: "community_feed_display";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
+    }>;
     diasporaCountries: import("drizzle-orm/pg-core").PgColumn<{
         name: "diaspora_countries";
         tableName: "user_preferences";
@@ -1571,6 +1609,25 @@ export declare const selectUserPreferencesSchema: import("drizzle-zod").BuildSch
         generated: undefined;
     }, {}, {
         $type: string[];
+    }>;
+    communityFeedDisplay: import("drizzle-orm/pg-core").PgColumn<{
+        name: "community_feed_display";
+        tableName: "user_preferences";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
     }>;
     diasporaCountries: import("drizzle-orm/pg-core").PgColumn<{
         name: "diaspora_countries";

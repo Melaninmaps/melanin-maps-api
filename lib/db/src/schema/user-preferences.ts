@@ -56,6 +56,11 @@ export const userPreferencesTable = pgTable("user_preferences", {
       "snapchat",
       "vimeo",
     ]),
+  // Chosen directly by the member. This changes only Community presentation,
+  // never post eligibility, privacy rules, source choices, or feed ranking.
+  communityFeedDisplay: varchar("community_feed_display", { length: 20 })
+    .notNull()
+    .default("mixed"),
   diasporaCountries: jsonb("diaspora_countries").$type<string[]>().default([]),
   // All context is voluntary, member-written, and private. It ranks results; it
   // is never used to infer identity or silently exclude otherwise relevant care,
