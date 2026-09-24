@@ -104,6 +104,139 @@ router.get("/admin/check", (req: Request, res: Response) => {
   res.json({ isAdmin: isAdmin(req) });
 });
 
+// ── Admin retained-access reconciliation ─────────────────────────────────────
+// A controlled-rollout account is effectively admitted only when its user
+// record AND a retained approval source agree. Earlier releases could leave an
+// existing approved waitlist row or active tester entitlement out of sync with
+// users.approved. This repair is deliberately narrow: it restores only the
+// missing users.approved flag for a record that already has an approved
+// waitlist, active tester entitlement, or administrator role. It never creates
+// accounts, grants new tester access, changes a role, changes credentials,
+// modifies profiles/community content, or approves a pending-only account.
+async function ensureAccessReconciliationAuditSchema(client: ListingAuditQueryClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS admin_access_reconciliation_audit_events (
+      id UUID PRIMARY KEY,
+      actor_user_id TEXT,
+      candidate_count INTEGER NOT NULL,
+      restored_count INTEGER NOT NULL,
+      source_counts JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
+const RETAINED_ACCESS_CANDIDATES_SQL = `
+  SELECT u.id,
+         LOWER(TRIM(u.email)) AS email,
+         CASE
+           WHEN u.role = 'admin' THEN 'administrator_role'
+           WHEN u.tester_status = 'active'
+             AND (u.testing_entitlement_ends_at IS NULL OR u.testing_entitlement_ends_at > NOW())
+             THEN 'active_tester_entitlement'
+           WHEN EXISTS (
+             SELECT 1
+             FROM waitlist_signups w
+             WHERE LOWER(TRIM(w.email)) = LOWER(TRIM(u.email))
+               AND w.status = 'approved'
+           ) THEN 'approved_waitlist'
+           ELSE NULL
+         END AS source
+    FROM users u
+   WHERE COALESCE(u.approved, FALSE) = FALSE
+     AND u.email IS NOT NULL
+     AND (
+       u.role = 'admin'
+       OR (
+         u.tester_status = 'active'
+         AND (u.testing_entitlement_ends_at IS NULL OR u.testing_entitlement_ends_at > NOW())
+       )
+       OR EXISTS (
+         SELECT 1
+         FROM waitlist_signups w
+         WHERE LOWER(TRIM(w.email)) = LOWER(TRIM(u.email))
+           AND w.status = 'approved'
+       )
+     )
+`;
+
+function summarizeRetainedAccessCandidates(
+  rows: Array<{ source: string | null }>,
+): Record<string, number> {
+  return rows.reduce<Record<string, number>>((summary, row) => {
+    const source = row.source ?? "unknown";
+    summary[source] = (summary[source] ?? 0) + 1;
+    return summary;
+  }, {});
+}
+
+router.post("/admin/access/reconcile-retained", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const apply = req.body?.apply === true;
+  try {
+    if (!apply) {
+      const candidates = await pool.query<{ id: string; source: string | null }>(RETAINED_ACCESS_CANDIDATES_SQL);
+      const sourceCounts = summarizeRetainedAccessCandidates(candidates.rows);
+      res.json({
+        dryRun: true,
+        requiresExplicitApply: true,
+        candidateCount: candidates.rows.length,
+        sourceCounts,
+        guarantee: "Only restores users.approved for accounts with an existing approved waitlist, active tester entitlement, or administrator role. No pending-only account is approved.",
+      });
+      return;
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await ensureAccessReconciliationAuditSchema(client);
+      const candidates = await client.query<{ id: string; source: string | null }>(
+        `${RETAINED_ACCESS_CANDIDATES_SQL} FOR UPDATE`,
+      );
+      const sourceCounts = summarizeRetainedAccessCandidates(candidates.rows);
+      const ids = candidates.rows.map((row) => row.id);
+      if (ids.length > 0) {
+        await client.query(
+          `UPDATE users
+              SET approved = TRUE, updated_at = NOW()
+            WHERE id = ANY($1::varchar[])
+              AND COALESCE(approved, FALSE) = FALSE`,
+          [ids],
+        );
+      }
+      await client.query(
+        `INSERT INTO admin_access_reconciliation_audit_events
+           (id, actor_user_id, candidate_count, restored_count, source_counts)
+         VALUES ($1, $2, $3, $4, $5::jsonb)`,
+        [randomUUID(), req.user?.id ?? null, ids.length, ids.length, JSON.stringify(sourceCounts)],
+      );
+      await client.query("COMMIT");
+      req.log?.info(
+        { event: "ADMIN_RETAINED_ACCESS_RECONCILED", restoredCount: ids.length, sourceCounts, by: req.user?.id },
+        "restored only retained approved access records",
+      );
+      res.json({
+        dryRun: false,
+        restoredCount: ids.length,
+        sourceCounts,
+        guarantee: "No account, password, role, tester entitlement, profile, community page, media, post, or waitlist record was deleted or changed.",
+      });
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    req.log?.error({ err }, "Failed to reconcile retained account access");
+    res.status(500).json({ error: "Retained access reconciliation failed." });
+  }
+});
+
 router.get("/admin/invites", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
