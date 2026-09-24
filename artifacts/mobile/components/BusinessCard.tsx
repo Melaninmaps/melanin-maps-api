@@ -12,6 +12,7 @@ import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
 import { SafetyExperienceSurvey } from "./SafetyExperienceSurvey";
 import { BusinessPreviewModal } from "./BusinessPreviewModal";
+import { getBusinessExperiencePolicy } from "@workspace/constants";
 
 function getOpenStatus(hours?: string | null): { open: boolean; label: string } | null {
   if (!hours) return null;
@@ -67,6 +68,14 @@ function getVibeMatch(category?: string): { label: string; emoji: string } | nul
   const cat = category.toLowerCase();
   const match = VIBES.find((v) => v.categories.some((c) => cat.includes(c) || c.includes(cat)));
   return match ?? null;
+}
+
+function getExperienceLabel(
+  business: Pick<Business, "category" | "subcategory">,
+): { label: string; emoji: string } | null {
+  const policy = getBusinessExperiencePolicy(business.category, business.subcategory);
+  if (policy.experienceLayer === "real") return { label: "The Real", emoji: "✓" };
+  return getVibeMatch(business.category);
 }
 
 const CATEGORY_IMAGES: Record<string, any> = {
@@ -188,7 +197,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             </View>
             <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} showLabel />
             {(() => {
-              const vibe = getVibeMatch(business.category);
+              const vibe = getExperienceLabel(business);
               if (!vibe) return null;
               return (
                 <View style={styles.vibePill}>
@@ -337,7 +346,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           </View>
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} showLabel />
           {(() => {
-            const vibe = getVibeMatch(business.category);
+            const vibe = getExperienceLabel(business);
             if (!vibe) return null;
             return (
               <View style={styles.vibePill}>

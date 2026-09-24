@@ -47,6 +47,10 @@ describe("category-aware business experience contract", () => {
   it("uses The Real for education and actual care settings, while retaining Vibes for play spaces", () => {
     const school = getBusinessExperiencePolicy("Education & Learning", "Preschools");
     const daycare = getBusinessExperiencePolicy("Children & Family", "Childcare");
+    const importedPreschool = getBusinessExperiencePolicy(
+      "Family & Community",
+      "Spanish Immersion Preschool / Hispanic Culture",
+    );
     const playSpace = getBusinessExperiencePolicy("Children & Family", "Indoor Play");
 
     expect(school.experienceLayer).toBe("real");
@@ -55,6 +59,9 @@ describe("category-aware business experience contract", () => {
     expect(daycare.experienceLayer).toBe("real");
     expect(daycare.reactionLabel).toBe("The Real");
     expect(daycare.vibeChoices).toEqual([]);
+    expect(importedPreschool.experienceLayer).toBe("real");
+    expect(importedPreschool.reactionLabel).toBe("The Real");
+    expect(importedPreschool.vibeChoices).toEqual([]);
     expect(playSpace.experienceLayer).toBe("vibe");
     expect(playSpace.atmosphereLabel).toBe("The Vibe");
     expect(playSpace.vibeChoices.map((choice) => choice.label)).toContain("Rainy Day Rescue");

@@ -117,6 +117,19 @@ const CHILDCARE_AND_EARLY_EDUCATION_SUBCATEGORIES = new Set([
   "after_school_care",
 ]);
 
+/**
+ * Imported directory records occasionally carry a useful, descriptive service
+ * label rather than one of the short controlled subcategory values above — for
+ * example, "Spanish Immersion Preschool / Hispanic Culture". Match only the
+ * explicit school, teacher, and care terms approved for The Real; this does
+ * not sweep play spaces, camps, parties, or general family activities into a
+ * practical-service feedback layer.
+ */
+function isCareOrEducationSubcategory(subcategoryKey: string): boolean {
+  if (CHILDCARE_AND_EARLY_EDUCATION_SUBCATEGORIES.has(subcategoryKey)) return true;
+  return /(?:^|_)(?:teacher|teachers|school|schools|daycare|childcare|preschool|preschools|pre_k|prekindergarten|kindergarten|early_childhood|early_education|after_school|aftercare)(?:_|$)/.test(subcategoryKey);
+}
+
 export function usesTheRealExperienceLayer(
   category: string | null | undefined,
   subcategory?: string | null,
@@ -125,8 +138,7 @@ export function usesTheRealExperienceLayer(
   const subcategoryKey = normalizeSubcategory(subcategory);
   return usesTheReal(categoryName, subcategory ?? undefined)
     || categoryName === "Education & Learning"
-    || (categoryName === "Children & Family"
-      && CHILDCARE_AND_EARLY_EDUCATION_SUBCATEGORIES.has(subcategoryKey));
+    || isCareOrEducationSubcategory(subcategoryKey);
 }
 
 function resolveCanonicalCategory(category: string | null | undefined): string {
