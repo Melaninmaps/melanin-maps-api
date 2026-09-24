@@ -1,6 +1,6 @@
 import * as oidc from "openid-client";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { eq, ilike } from "drizzle-orm";
+import { eq, ilike, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import {
@@ -240,6 +240,10 @@ async function upsertUser(claims: Record<string, unknown>) {
       target: usersTable.id,
       set: {
         ...userData,
+        // An identity provider frequently omits picture/profile_image_url on a
+        // later login. Preserve an existing MWM-uploaded photo rather than
+        // replacing it with a missing (or provider-owned) value.
+        profileImageUrl: sql`COALESCE(${usersTable.profileImageUrl}, EXCLUDED.profile_image_url)`,
         updatedAt: new Date(),
       },
     })
