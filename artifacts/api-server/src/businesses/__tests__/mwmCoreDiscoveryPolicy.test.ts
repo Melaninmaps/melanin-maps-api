@@ -5,6 +5,7 @@ import {
   MWM_CORE_SOURCE_BACKED_COHORT,
   isMwmCoreDiscoveryEligible,
   isMwmCoreDiscoveryEnabled,
+  completedCohortDirectoryDiscoverySqlPredicate,
   mwmCoreDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
 } from "../mwmCoreDiscoveryPolicy";
@@ -62,6 +63,16 @@ describe("MWM Core discovery evidence policy", () => {
     const predicate = mwmDiasporaPromotionSqlPredicate('"businesses"."id"');
     expect(predicate).toContain('"businesses"."ownership_designations"');
     expect(predicate).not.toContain('"businesses".."ownership_designations"');
+  });
+
+  it("uses completed-cohort provenance for directory discovery without assigning a map location", () => {
+    const predicate = completedCohortDirectoryDiscoverySqlPredicate('"businesses"."id"');
+    expect(predicate).toContain("directory_publication_provenance");
+    expect(predicate).toContain("completed_cohort_directory_discovery_receipts");
+    expect(predicate).toContain("source_sha256 = 'ca576aeb92b6cd0e73a7b967bf510f7e26b6a3ceb909c5511a222c25d862469a'");
+    expect(predicate).toContain("outcome IN ('created', 'linked_existing')");
+    expect(predicate).not.toContain("latitude");
+    expect(predicate).not.toContain("longitude");
   });
 
   it("does not infer Diaspora promotion from a role-only label, name, cuisine, or location", () => {

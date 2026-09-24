@@ -1,5 +1,8 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
-import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import {
+  completedCohortDirectoryDiscoverySqlPredicate,
+  mwmDiasporaPromotionSqlPredicate,
+} from "../businesses/mwmCoreDiscoveryPolicy";
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
@@ -143,6 +146,16 @@ type MapPlaceRow = {
 const DEFAULT_CATALOG_LIMIT = 25;
 const MAX_CATALOG_LIMIT = 50;
 const MAX_RADIUS_MILES = 100;
+
+function governedDirectoryDiscoveryPredicate(allowAllPublicPlaces = false): string {
+  const promotion = mwmDiasporaPromotionSqlPredicate(
+    "b.id",
+    allowAllPublicPlaces ? "all_public" : undefined,
+  );
+  if (promotion === "TRUE") return promotion;
+  return `(${promotion} OR ${completedCohortDirectoryDiscoverySqlPredicate("b.id")})`;
+}
+
 const PREFERENCE_STOP_WORDS = new Set([
   "and",
   "the",
@@ -499,7 +512,7 @@ async function queryCityCatalog(
     WHERE LOWER(BTRIM(b.city)) = LOWER($1)
       AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
       AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-      AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
+      AND ${governedDirectoryDiscoveryPredicate()}
     ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
     LIMIT $3
   `,
@@ -552,7 +565,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmDiasporaPromotionSqlPredicate("b.id", allowAllPublicPlaces ? "all_public" : undefined)}
+          AND ${governedDirectoryDiscoveryPredicate(allowAllPublicPlaces)}
           -- Service matching intentionally uses governed classification,
           -- business name, or a governed specialty. General tags and
           -- descriptions/stories are not service taxonomies: e.g. a city
@@ -682,7 +695,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         WHERE LOWER(BTRIM(b.city)) = LOWER($1)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmDiasporaPromotionSqlPredicate("b.id", allowAllPublicPlaces ? "all_public" : undefined)}
+          AND ${governedDirectoryDiscoveryPredicate(allowAllPublicPlaces)}
           AND preference_match.hit_count > 0
           ${designationClauses}
         ORDER BY preference_match.hit_count DESC,
@@ -782,7 +795,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           AND LOWER(BTRIM(b.city)) = LOWER($2)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $3
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
+          AND ${governedDirectoryDiscoveryPredicate()}
         ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT 1
       `,

@@ -21,6 +21,13 @@ import {
   type CohortDiscoveryState,
   type CohortPublicationProvenance,
 } from "./cohortReconciliation";
+import {
+  COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY,
+  activationReceiptHash,
+  buildDirectoryOnlyBusinessProfile,
+  isDirectoryOnlyDiscoveryCandidate,
+  type CompletedCohortHeldCandidate,
+} from "./completedCohortDirectoryDiscovery";
 
 // The signed, immutable 4,183-record source-receipted cohort is a 14.673 MiB
 // JSON envelope. Keep this ceiling scoped to its protected service ingress;
@@ -292,6 +299,219 @@ export function registerAutomatedDirectoryRoutes(
       res.status(500).json({
         error: "Completed cohort reconciliation failed.",
         code: "COMPLETED_COHORT_RECONCILIATION_FAILED",
+      });
+    }
+  });
+
+  /**
+   * Makes receipt-backed, geocode-held business rows searchable without making
+   * a map pin. This route never invokes the historical worker, outbox, or
+   * publisher. `dryRun` is the default; `apply: true` is admin-only and
+   * idempotently writes only directory-only public profiles/audit receipts.
+   */
+  app.post("/api/founder/directory-import/completed-cohort/activate-directory-discovery", async (req, res) => {
+    const actor = admin(req, res);
+    if (!actor) return;
+    const requestedRoot = typeof req.body?.receiptRoot === "string"
+      ? req.body.receiptRoot.trim().toLowerCase()
+      : "";
+    if (requestedRoot !== COMPLETED_COHORT_RECEIPT_ROOT) {
+      res.status(400).json({
+        error: "This activation is restricted to the completed immutable cohort receipt root.",
+        code: "COMPLETED_COHORT_RECEIPT_ROOT_REQUIRED",
+      });
+      return;
+    }
+    const apply = req.body?.apply === true;
+
+    try {
+      const batch = await reviewPool.query<{ id: string; source_row_count: number; manifest_count: number }>(
+        `SELECT id, source_row_count, manifest_count
+           FROM directory_import_batches
+          WHERE source_sha256=$1
+          LIMIT 1`,
+        [COMPLETED_COHORT_MANIFEST_CHECKSUM],
+      );
+      const batchRow = batch.rows[0];
+      if (!batchRow || batchRow.source_row_count !== 4183 || batchRow.manifest_count !== 4183) {
+        res.status(409).json({
+          error: "The completed cohort receipt is missing or inconsistent; activation is blocked.",
+          code: "COMPLETED_COHORT_RECEIPT_INTEGRITY_REQUIRED",
+        });
+        return;
+      }
+      const candidates = await reviewPool.query<CompletedCohortHeldCandidate>(
+        `SELECT c.source_row AS "sourceRow", c.source_row_id AS "sourceRowId",
+                c.dedupe_key AS "dedupeKey", c.target_kind AS "targetKind", c.name, c.city, c.state, c.country,
+                c.status, c.raw_record AS "rawRecord", o.last_error AS "outboxError"
+           FROM directory_import_candidates c
+      LEFT JOIN directory_review_outbox o ON o.candidate_id=c.id
+          WHERE c.batch_id=$1
+          ORDER BY c.source_row ASC`,
+        [batchRow.id],
+      );
+      if (candidates.rows.length !== 4183) {
+        res.status(409).json({
+          error: "The retained cohort candidate count is inconsistent; activation is blocked.",
+          code: "COMPLETED_COHORT_CANDIDATE_COUNT_MISMATCH",
+        });
+        return;
+      }
+      const eligible = candidates.rows.filter(isDirectoryOnlyDiscoveryCandidate);
+      const client = apply ? await productionPool.connect() : null;
+      const read = client ?? productionPool;
+      const summary = {
+        eligible: eligible.length,
+        created: 0,
+        linkedExistingPublic: 0,
+        skippedExistingNonpublic: 0,
+        alreadyActivated: 0,
+      };
+      try {
+        if (client) await client.query("BEGIN");
+        for (const candidate of eligible) {
+          const profile = buildDirectoryOnlyBusinessProfile(candidate);
+          const receiptHash = activationReceiptHash(candidate);
+          const prior = await read.query<{ business_id: string | null; outcome: string }>(
+            `SELECT business_id, outcome
+               FROM completed_cohort_directory_discovery_receipts
+              WHERE receipt_root=$1 AND source_row=$2
+              LIMIT 1${client ? " FOR UPDATE" : ""}`,
+            [COMPLETED_COHORT_RECEIPT_ROOT, candidate.sourceRow],
+          );
+          if (prior.rows[0]) {
+            summary.alreadyActivated++;
+            continue;
+          }
+          const existing = await read.query<{
+            id: string;
+            is_public: boolean;
+          }>(
+            `SELECT id,
+                    (COALESCE(is_duplicate,false)=false
+                     AND COALESCE(permanently_hidden,false)=false
+                     AND listing_status IN ('live_unclaimed','live_claimed')
+                     AND COALESCE(status,'') NOT IN ('duplicate','permanently_hidden','removed','deleted')) AS is_public
+               FROM businesses
+              WHERE dedupe_key=$1
+              LIMIT 1${client ? " FOR UPDATE" : ""}`,
+            [profile.dedupeKey],
+          );
+          const existingRow = existing.rows[0];
+          if (!existingRow) {
+            if (!apply) {
+              summary.created++;
+              continue;
+            }
+            const inserted = await client!.query<{ id: string }>(
+              `INSERT INTO businesses
+                (id,name,category,subcategory,address,city,state,country,is_online_only,
+                 listing_status,owner_claim_status,verified,ownership_designations,verified_designations,
+                 ownership_claim,black_owned,description,latitude,longitude,website,source_url,
+                 dedupe_key,status,profile_status,data_source,is_duplicate,permanently_hidden)
+               VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,
+                      'live_unclaimed','unclaimed',false,$10::jsonb,'[]'::jsonb,
+                      $11,$12,$13,NULL,NULL,$14,$15,
+                      $16,'active','community_listed','completed_cohort_directory_discovery',false,false)
+               RETURNING id`,
+              [profile.id, profile.name, profile.category, profile.subcategory, profile.address,
+                profile.city, profile.state, profile.country, profile.isOnlineOnly,
+                JSON.stringify(profile.ownershipDesignations), profile.ownershipClaim, profile.blackOwned,
+                profile.description, profile.website, profile.sourceUrl, profile.dedupeKey],
+            );
+            await client!.query(
+              `INSERT INTO business_inventory_cohort_receipts
+                (business_id,cohort,source_receipt_hash,source_manifest,source_row,reason_codes,receipt_hash,policy_version)
+               VALUES($1,'source_backed_held_live',$2,$3,$4,$5::jsonb,$6,$7)
+               ON CONFLICT (business_id) DO NOTHING`,
+              [inserted.rows[0]!.id, receiptHash, COMPLETED_COHORT_MANIFEST_CHECKSUM,
+                candidate.sourceRow, JSON.stringify(["directory_only_unpinned", "geocode_hold"]), receiptHash,
+                COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY],
+            );
+            await client!.query(
+              `INSERT INTO completed_cohort_directory_discovery_receipts
+                (receipt_root,manifest_sha256,source_row,source_row_id,business_id,activation_hash,outcome,reason_code,policy_version,activated_by)
+               VALUES($1,$2,$3,$4,$5,$6,'created','geocode_hold',$7,$8)`,
+              [COMPLETED_COHORT_RECEIPT_ROOT, COMPLETED_COHORT_MANIFEST_CHECKSUM,
+                candidate.sourceRow, candidate.sourceRowId, inserted.rows[0]!.id, receiptHash,
+                COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY, actor.id],
+            );
+            summary.created++;
+            continue;
+          }
+          if (!existingRow.is_public) {
+            if (apply) {
+              await client!.query(
+                `INSERT INTO completed_cohort_directory_discovery_receipts
+                  (receipt_root,manifest_sha256,source_row,source_row_id,business_id,activation_hash,outcome,reason_code,policy_version,activated_by)
+                 VALUES($1,$2,$3,$4,$5,$6,'skipped_nonpublic_existing','existing_listing_not_public',$7,$8)`,
+                [COMPLETED_COHORT_RECEIPT_ROOT, COMPLETED_COHORT_MANIFEST_CHECKSUM,
+                  candidate.sourceRow, candidate.sourceRowId, existingRow.id, receiptHash,
+                  COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY, actor.id],
+              );
+            }
+            summary.skippedExistingNonpublic++;
+            continue;
+          }
+          if (apply) {
+            // Source designations are additive and never replace verified claims.
+            await client!.query(
+              `UPDATE businesses
+                  SET ownership_designations = (
+                        SELECT COALESCE(jsonb_agg(DISTINCT value), '[]'::jsonb)
+                          FROM jsonb_array_elements_text(
+                            COALESCE(ownership_designations,'[]'::jsonb) || $2::jsonb
+                          ) AS designation(value)
+                      ),
+                      black_owned = COALESCE(black_owned,false) OR $3,
+                      ownership_claim = CASE
+                        WHEN ownership_claim IS NULL OR ownership_claim = ''
+                          OR ownership_claim = 'source_reputable_listing_unverified'
+                        THEN $4 ELSE ownership_claim END,
+                      updated_at = NOW()
+                WHERE id=$1`,
+              [existingRow.id, JSON.stringify(profile.ownershipDesignations), profile.blackOwned, profile.ownershipClaim],
+            );
+            await client!.query(
+              `INSERT INTO business_inventory_cohort_receipts
+                (business_id,cohort,source_receipt_hash,source_manifest,source_row,reason_codes,receipt_hash,policy_version)
+               VALUES($1,'source_backed_held_live',$2,$3,$4,$5::jsonb,$6,$7)
+               ON CONFLICT (business_id) DO NOTHING`,
+              [existingRow.id, receiptHash, COMPLETED_COHORT_MANIFEST_CHECKSUM,
+                candidate.sourceRow, JSON.stringify(["directory_only_link_existing", "geocode_hold"]), receiptHash,
+                COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY],
+            );
+            await client!.query(
+              `INSERT INTO completed_cohort_directory_discovery_receipts
+                (receipt_root,manifest_sha256,source_row,source_row_id,business_id,activation_hash,outcome,reason_code,policy_version,activated_by)
+               VALUES($1,$2,$3,$4,$5,$6,'linked_existing','geocode_hold',$7,$8)`,
+              [COMPLETED_COHORT_RECEIPT_ROOT, COMPLETED_COHORT_MANIFEST_CHECKSUM,
+                candidate.sourceRow, candidate.sourceRowId, existingRow.id, receiptHash,
+                COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY, actor.id],
+            );
+          }
+          summary.linkedExistingPublic++;
+        }
+        if (client) await client.query("COMMIT");
+      } catch (error) {
+        if (client) await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client?.release();
+      }
+      res.json({
+        receiptRoot: COMPLETED_COHORT_RECEIPT_ROOT,
+        manifestChecksum: COMPLETED_COHORT_MANIFEST_CHECKSUM,
+        dryRun: !apply,
+        directoryOnly: true,
+        mapPinsCreated: 0,
+        workerUsed: false,
+        summary,
+      });
+    } catch {
+      res.status(500).json({
+        error: "Completed cohort directory-discovery activation failed.",
+        code: "COMPLETED_COHORT_DIRECTORY_DISCOVERY_FAILED",
       });
     }
   });
