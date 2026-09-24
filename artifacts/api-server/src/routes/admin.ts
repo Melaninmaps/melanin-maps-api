@@ -98,14 +98,76 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
   }
   try {
     // This is an administrator-only inventory view, not an approval queue.
-    // Use a deliberately high bounded page so the city/service/date filters can
-    // review the current full operating inventory without silently omitting the
-    // older records that are most likely to be duplicate candidates.
-    const INVENTORY_PAGE_LIMIT = 50_000;
+    // Do not send the full directory to a browser: rendering tens of thousands
+    // of rows freezes ordinary computers. Each server-filtered page remains a
+    // reviewable slice of the complete inventory, including older records.
+    const DEFAULT_INVENTORY_PAGE_SIZE = 50;
+    const MAX_INVENTORY_PAGE_SIZE = 100;
+    const requestedPage = Number.parseInt(String(req.query.page ?? "1"), 10);
+    const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    const requestedPageSize = Number.parseInt(
+      String(req.query.pageSize ?? DEFAULT_INVENTORY_PAGE_SIZE),
+      10,
+    );
+    const pageSize = Number.isFinite(requestedPageSize)
+      ? Math.min(Math.max(requestedPageSize, 1), MAX_INVENTORY_PAGE_SIZE)
+      : DEFAULT_INVENTORY_PAGE_SIZE;
+    const search = String(req.query.search ?? "").trim();
+    const city = String(req.query.city ?? "").trim();
+    const category = String(req.query.category ?? "").trim();
+    const subcategory = String(req.query.subcategory ?? "").trim();
+    const status = String(req.query.status ?? "all");
+    const link = String(req.query.link ?? "all");
+    const addedFrom = String(req.query.addedFrom ?? "").trim();
+    const addedTo = String(req.query.addedTo ?? "").trim();
+    const filters: string[] = [];
+    const filterParams: string[] = [];
+    const addFilter = (clause: string, value: string) => {
+      filterParams.push(value);
+      filters.push(clause.replace("?", `$${filterParams.length}`));
+    };
+
+    if (search) {
+      addFilter(
+        "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ?)",
+        `%${search}%`,
+      );
+      // The same value is intentionally used for the four search fields.
+      const parameter = `$${filterParams.length}`;
+      filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter})`;
+    }
+    if (city) addFilter("LOWER(city) = LOWER(?)", city);
+    if (category) addFilter("category = ?", category);
+    if (subcategory) addFilter("subcategory = ?", subcategory);
+    if (status === "permanently_closed") {
+      filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
+    } else if (status === "needs_review") {
+      filters.push("needs_verification = true");
+    } else if (status === "archived") {
+      filters.push("listing_status = 'archived'");
+    }
+    if (link === "website_present") {
+      filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NOT NULL");
+    } else if (link === "website_missing") {
+      filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL");
+    } else if (link === "social_present") {
+      filters.push("NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL");
+    } else if (link === "no_public_link") {
+      filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL");
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(addedFrom)) {
+      addFilter("created_at >= ?::date", addedFrom);
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(addedTo)) {
+      addFilter("created_at < (?::date + INTERVAL '1 day')", addedTo);
+    }
+    const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+    const pageParams = [...filterParams, String(pageSize), String((page - 1) * pageSize)];
+
     // Use to_jsonb for the optional, additive intake fields. The older records
     // predate those fields, and an incomplete startup-migration retry must not
     // make the entire administrator inventory unavailable.
-    const [businesses, inventoryCount] = await Promise.all([
+    const [businesses, inventoryCount, filteredCount, cities, services] = await Promise.all([
       pool.query<{
       id: string;
       name: string;
@@ -143,15 +205,27 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
               to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference
        FROM businesses
+       ${where}
        ORDER BY created_at DESC
-       LIMIT ${INVENTORY_PAGE_LIMIT + 1}`,
+       LIMIT $${filterParams.length + 1}
+       OFFSET $${filterParams.length + 2}`,
+        pageParams,
       ),
       pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM businesses"),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM businesses ${where}`,
+        filterParams,
+      ),
+      pool.query<{ city: string }>(
+        "SELECT DISTINCT city FROM businesses WHERE NULLIF(BTRIM(city), '') IS NOT NULL ORDER BY city ASC",
+      ),
+      pool.query<{ category: string; subcategory: string | null }>(
+        "SELECT DISTINCT category, subcategory FROM businesses WHERE NULLIF(BTRIM(category), '') IS NOT NULL ORDER BY category ASC, subcategory ASC NULLS FIRST",
+      ),
     ]);
     const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
-    const inventoryIsTruncated = businesses.rows.length > INVENTORY_PAGE_LIMIT;
-    const inventoryRows = businesses.rows.slice(0, INVENTORY_PAGE_LIMIT);
-    const bizRows = inventoryRows.map((b) => ({
+    const filteredTotal = Number(filteredCount.rows[0]?.total ?? 0);
+    const bizRows = businesses.rows.map((b) => ({
       id: b.id,
       name: b.name,
       category: b.category,
@@ -212,8 +286,19 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     res.json({
       businesses: result,
       inventoryTotal,
-      inventoryLimit: INVENTORY_PAGE_LIMIT,
-      inventoryIsTruncated: inventoryIsTruncated || result.length < inventoryTotal,
+      filteredTotal,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
+      inventoryLimit: MAX_INVENTORY_PAGE_SIZE,
+      inventoryIsTruncated: filteredTotal > result.length,
+      cityOptions: cities.rows.map((row) => row.city),
+      serviceOptions: services.rows.flatMap((row) => [
+        { value: `category:${row.category}`, label: `${row.category} — category` },
+        ...(row.subcategory
+          ? [{ value: `subcategory:${row.subcategory}`, label: `${row.subcategory} — service` }]
+          : []),
+      ]),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch admin businesses");

@@ -14,8 +14,14 @@ const adminScreen = source("../../../web/src/pages/admin.tsx");
 const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.tsx");
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
-  it("returns a bounded full admin inventory instead of the former 500-row newest-record cap", () => {
-    expect(adminRoute).toContain("const INVENTORY_PAGE_LIMIT = 50_000");
+  it("returns one server-filtered page instead of sending the full inventory to the browser", () => {
+    expect(adminRoute).toContain("const DEFAULT_INVENTORY_PAGE_SIZE = 50");
+    expect(adminRoute).toContain("const MAX_INVENTORY_PAGE_SIZE = 100");
+    expect(adminRoute).toContain("LIMIT $${filterParams.length + 1}");
+    expect(adminRoute).toContain("OFFSET $${filterParams.length + 2}");
+    expect(adminRoute).toContain("filteredTotal");
+    expect(adminRoute).toContain("cityOptions");
+    expect(adminRoute).toContain("serviceOptions");
     expect(adminRoute).toContain("inventoryIsTruncated");
     expect(adminRoute).toContain("inventoryLimit");
     expect(adminRoute).toContain("inventoryTotal");
@@ -28,12 +34,16 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("to_jsonb(businesses)->>'kinfolk_recommendation_reason'");
     expect(adminScreen).toContain("businessInventoryTotal");
     expect(adminScreen).toContain("All businesses ({businessInventoryTotal.toLocaleString()})");
+    expect(adminScreen).toContain("businessInventoryTotalPages");
+    expect(adminScreen).toContain("changeBusinessInventoryPage");
+    expect(adminScreen).toContain("Loading business inventory");
   });
 
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {
     expect(adminScreen).toContain("All cities");
     expect(adminScreen).toContain("All business types and services");
-    expect(adminScreen).toContain("business.subcategory");
+    expect(adminScreen).toContain("businessServiceOptions");
+    expect(adminScreen).toContain("applyBusinessInventoryFilters");
     expect(adminScreen).toContain("Added on or after");
     expect(adminScreen).toContain("Added on or before");
     expect(adminScreen).toContain("Archive selected");

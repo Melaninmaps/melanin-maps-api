@@ -770,6 +770,27 @@ export default function Admin() {
   const [businessInventoryIsTruncated, setBusinessInventoryIsTruncated] =
     useState(false);
   const [businessInventoryTotal, setBusinessInventoryTotal] = useState(0);
+  const [businessInventoryFilteredTotal, setBusinessInventoryFilteredTotal] =
+    useState(0);
+  const [businessInventoryPage, setBusinessInventoryPage] = useState(1);
+  const [businessInventoryTotalPages, setBusinessInventoryTotalPages] =
+    useState(1);
+  const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
+  const [businessCityOptions, setBusinessCityOptions] = useState<string[]>([]);
+  const [businessServiceOptions, setBusinessServiceOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const businessInventoryQueryRef = useRef({
+    page: 1,
+    search: "",
+    status: "all" as typeof bizStatusFilter,
+    city: "all",
+    category: "all",
+    link: "all" as typeof bizLinkFilter,
+    addedFrom: "",
+    addedTo: "",
+  });
+  const businessInventoryRequestId = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -890,6 +911,28 @@ export default function Admin() {
       .catch(() => setIsAdmin(false));
   }, []);
 
+  useEffect(() => {
+    businessInventoryQueryRef.current = {
+      page: businessInventoryPage,
+      search: bizSearch,
+      status: bizStatusFilter,
+      city: bizCityFilter,
+      category: bizCategoryFilter,
+      link: bizLinkFilter,
+      addedFrom: bizAddedFrom,
+      addedTo: bizAddedTo,
+    };
+  }, [
+    bizAddedFrom,
+    bizAddedTo,
+    bizCategoryFilter,
+    bizCityFilter,
+    bizLinkFilter,
+    bizSearch,
+    bizStatusFilter,
+    businessInventoryPage,
+  ]);
+
   const loadWaitlist = useCallback(
     (
       page = 1,
@@ -956,20 +999,73 @@ export default function Admin() {
       .finally(() => setMetricsLoading(false));
   }, []);
 
-  const loadBusinesses = useCallback(() => {
-    return fetch(`${BASE}api/admin/businesses`, { credentials: "include" })
+  const loadBusinesses = useCallback((next: {
+    page?: number;
+    search?: string;
+    status?: typeof bizStatusFilter;
+    city?: string;
+    category?: string;
+    link?: typeof bizLinkFilter;
+    addedFrom?: string;
+    addedTo?: string;
+  } = {}) => {
+    const current = businessInventoryQueryRef.current;
+    const page = next.page ?? current.page;
+    const searchValue = next.search ?? current.search;
+    const statusValue = next.status ?? current.status;
+    const cityValue = next.city ?? current.city;
+    const categoryValue = next.category ?? current.category;
+    const linkValue = next.link ?? current.link;
+    const addedFromValue = next.addedFrom ?? current.addedFrom;
+    const addedToValue = next.addedTo ?? current.addedTo;
+    const params = new URLSearchParams({ page: String(page), pageSize: "50" });
+    if (searchValue.trim()) params.set("search", searchValue.trim());
+    if (statusValue !== "all") params.set("status", statusValue);
+    if (cityValue !== "all") params.set("city", cityValue);
+    if (categoryValue !== "all") {
+      const [scope, ...rawValue] = categoryValue.split(":");
+      const value = rawValue.join(":");
+      if (scope === "category") params.set("category", value);
+      if (scope === "subcategory") params.set("subcategory", value);
+    }
+    if (linkValue !== "all") params.set("link", linkValue);
+    if (addedFromValue) params.set("addedFrom", addedFromValue);
+    if (addedToValue) params.set("addedTo", addedToValue);
+
+    const requestId = ++businessInventoryRequestId.current;
+    setBusinessInventoryLoading(true);
+    return fetch(`${BASE}api/admin/businesses?${params}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
+        if (requestId !== businessInventoryRequestId.current) return;
         setBusinesses(data.businesses ?? []);
         setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
         setBusinessInventoryTotal(
-          typeof data.inventoryTotal === "number"
-            ? data.inventoryTotal
+          typeof data.inventoryTotal === "number" ? data.inventoryTotal : 0,
+        );
+        setBusinessInventoryFilteredTotal(
+          typeof data.filteredTotal === "number"
+            ? data.filteredTotal
             : Array.isArray(data.businesses)
               ? data.businesses.length
               : 0,
         );
+        setBusinessInventoryPage(typeof data.page === "number" ? data.page : page);
+        setBusinessInventoryTotalPages(
+          typeof data.totalPages === "number" ? data.totalPages : 1,
+        );
+        setBusinessCityOptions(
+          Array.isArray(data.cityOptions) ? data.cityOptions : [],
+        );
+        setBusinessServiceOptions(
+          Array.isArray(data.serviceOptions) ? data.serviceOptions : [],
+        );
         setLastRefreshed(new Date());
+      })
+      .finally(() => {
+        if (requestId === businessInventoryRequestId.current) {
+          setBusinessInventoryLoading(false);
+        }
       });
   }, []);
 
@@ -1646,38 +1742,9 @@ export default function Admin() {
   const pendingUsers = users.filter((u) => !u.approved).length;
   const contactedCount = businesses.filter((b) => b.outreach !== null).length;
 
-  const filteredBiz = businesses.filter((b) => {
-    if (bizStatusFilter === "permanently_closed" && !b.permanentlyClosed)
-      return false;
-    if (bizStatusFilter === "needs_review" && !b.needsVerification)
-      return false;
-    if (bizStatusFilter === "archived" && b.listingStatus !== "archived")
-      return false;
-    if (bizCityFilter !== "all" && b.city !== bizCityFilter) return false;
-    if (bizCategoryFilter !== "all") {
-      const [scope, ...rawValue] = bizCategoryFilter.split(":");
-      const value = rawValue.join(":");
-      if (scope === "category" && b.category !== value) return false;
-      if (scope === "subcategory" && b.subcategory !== value) return false;
-    }
-    const hasWebsite = Boolean(b.website?.trim());
-    const hasSocial = Boolean(b.instagram?.trim() || b.tiktok?.trim() || b.facebook?.trim());
-    if (bizLinkFilter === "website_present" && !hasWebsite) return false;
-    if (bizLinkFilter === "website_missing" && hasWebsite) return false;
-    if (bizLinkFilter === "social_present" && !hasSocial) return false;
-    if (bizLinkFilter === "no_public_link" && (hasWebsite || hasSocial)) return false;
-    const addedOn = b.createdAt ? new Date(b.createdAt).toISOString().slice(0, 10) : "";
-    if (bizAddedFrom && (!addedOn || addedOn < bizAddedFrom)) return false;
-    if (bizAddedTo && (!addedOn || addedOn > bizAddedTo)) return false;
-    if (!bizSearch) return true;
-    const q = bizSearch.toLowerCase();
-    return (
-      b.name.toLowerCase().includes(q) ||
-      b.city.toLowerCase().includes(q) ||
-      b.category.toLowerCase().includes(q) ||
-      (b.subcategory ?? "").toLowerCase().includes(q)
-    );
-  });
+  // The API applies every business filter before returning this small page. This
+  // keeps the full directory manageable without rendering thousands of rows.
+  const filteredBiz = businesses;
   const permanentlyClosedCount = businesses.filter(
     (b) => b.permanentlyClosed,
   ).length;
@@ -1685,45 +1752,62 @@ export default function Admin() {
   const archivedCount = businesses.filter(
     (b) => b.listingStatus === "archived",
   ).length;
-  const inventoryCities = Array.from(
-    new Set(businesses.map((b) => b.city).filter(Boolean)),
-  ).sort((a, b) => a.localeCompare(b));
-  const inventoryServices = (() => {
-    const services = new Map<string, string>();
-    for (const business of businesses) {
-      if (business.category) {
-        services.set(
-          `category:${business.category}`,
-          `${business.category} — category`,
-        );
-      }
-      if (business.subcategory) {
-        services.set(
-          `subcategory:${business.subcategory}`,
-          `${business.subcategory} — service`,
-        );
-      }
-    }
-    return Array.from(services, ([value, label]) => ({ value, label })).sort(
-      (a, b) => a.label.localeCompare(b.label),
-    );
-  })();
+  const inventoryCities = businessCityOptions;
+  const inventoryServices = Array.from(
+    new Map(businessServiceOptions.map((service) => [service.value, service])).values(),
+  ).sort((a, b) => a.label.localeCompare(b.label));
   const archivableFilteredBiz = filteredBiz.filter(
     (b) => b.listingStatus !== "archived",
   );
-  const selectedVisibleBusinessCount = filteredBiz.filter((b) =>
-    selectedBusinessIds.has(b.id),
-  ).length;
+  const selectedVisibleBusinessCount = selectedBusinessIds.size;
+
+  const applyBusinessInventoryFilters = (next: {
+    search?: string;
+    status?: typeof bizStatusFilter;
+    city?: string;
+    category?: string;
+    link?: typeof bizLinkFilter;
+    addedFrom?: string;
+    addedTo?: string;
+  }) => {
+    const query = {
+      page: 1,
+      search: next.search ?? bizSearch,
+      status: next.status ?? bizStatusFilter,
+      city: next.city ?? bizCityFilter,
+      category: next.category ?? bizCategoryFilter,
+      link: next.link ?? bizLinkFilter,
+      addedFrom: next.addedFrom ?? bizAddedFrom,
+      addedTo: next.addedTo ?? bizAddedTo,
+    };
+    setBizSearch(query.search);
+    setBizStatusFilter(query.status);
+    setBizCityFilter(query.city);
+    setBizCategoryFilter(query.category);
+    setBizLinkFilter(query.link);
+    setBizAddedFrom(query.addedFrom);
+    setBizAddedTo(query.addedTo);
+    setBusinessInventoryPage(1);
+    setSelectedBusinessIds(new Set());
+    void loadBusinesses(query);
+  };
 
   const clearBusinessFilters = () => {
-    setBizSearch("");
-    setBizStatusFilter("all");
-    setBizCityFilter("all");
-    setBizCategoryFilter("all");
-    setBizLinkFilter("all");
-    setBizAddedFrom("");
-    setBizAddedTo("");
+    applyBusinessInventoryFilters({
+      search: "",
+      status: "all",
+      city: "all",
+      category: "all",
+      link: "all",
+      addedFrom: "",
+      addedTo: "",
+    });
+  };
+
+  const changeBusinessInventoryPage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > businessInventoryTotalPages) return;
     setSelectedBusinessIds(new Set());
+    void loadBusinesses({ page: nextPage });
   };
 
   const toggleBusinessSelection = (id: string) => {
@@ -1740,9 +1824,7 @@ export default function Admin() {
   };
 
   const archiveSelectedBusinesses = async () => {
-    const ids = [...selectedBusinessIds].filter((id) =>
-      archivableFilteredBiz.some((business) => business.id === id),
-    );
+    const ids = [...selectedBusinessIds];
     if (ids.length === 0) return;
     const reason = window.prompt(
       `Why should these ${ids.length} business profile${ids.length === 1 ? "" : "s"} be removed from public discovery? This is reversible. Their profiles, research, source links, Kinfolk context, media, and audit history remain preserved.`,
@@ -3525,7 +3607,7 @@ export default function Admin() {
                 <input
                   type="text"
                   value={bizSearch}
-                  onChange={(e) => setBizSearch(e.target.value)}
+                  onChange={(e) => applyBusinessInventoryFilters({ search: e.target.value })}
                   placeholder="Search name, city, or service"
                   className="w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] sm:w-72"
                 />
@@ -3541,7 +3623,7 @@ export default function Admin() {
 
             {businessInventoryIsTruncated && (
               <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Showing the newest {businesses.length.toLocaleString()} of {businessInventoryTotal.toLocaleString()} businesses. Narrow a city or service filter before making a bulk decision.
+                Showing {businesses.length.toLocaleString()} records on this page. Use filters and page controls to review all matching inventory without freezing the browser.
               </div>
             )}
 
@@ -3551,7 +3633,7 @@ export default function Admin() {
                 [
                   {
                     key: "all",
-                    label: `All (${businesses.length})`,
+                    label: `All (${businessInventoryTotal.toLocaleString()})`,
                     warn: false,
                   },
                   {
@@ -3573,7 +3655,7 @@ export default function Admin() {
               ).map(({ key, label, warn }) => (
                 <button
                   key={key}
-                  onClick={() => setBizStatusFilter(key)}
+                  onClick={() => applyBusinessInventoryFilters({ status: key })}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                     bizStatusFilter === key
                       ? "bg-[#2B1507] text-white"
@@ -3592,7 +3674,7 @@ export default function Admin() {
                 City
                 <select
                   value={bizCityFilter}
-                  onChange={(event) => setBizCityFilter(event.target.value)}
+                  onChange={(event) => applyBusinessInventoryFilters({ city: event.target.value })}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 >
                   <option value="all">All cities</option>
@@ -3605,7 +3687,7 @@ export default function Admin() {
                 Business type / service
                 <select
                   value={bizCategoryFilter}
-                  onChange={(event) => setBizCategoryFilter(event.target.value)}
+                  onChange={(event) => applyBusinessInventoryFilters({ category: event.target.value })}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 >
                   <option value="all">All business types and services</option>
@@ -3618,7 +3700,7 @@ export default function Admin() {
                 Website / social
                 <select
                   value={bizLinkFilter}
-                  onChange={(event) => setBizLinkFilter(event.target.value as typeof bizLinkFilter)}
+                  onChange={(event) => applyBusinessInventoryFilters({ link: event.target.value as typeof bizLinkFilter })}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 >
                   <option value="all">All contact-link records</option>
@@ -3633,7 +3715,7 @@ export default function Admin() {
                 <input
                   type="date"
                   value={bizAddedFrom}
-                  onChange={(event) => setBizAddedFrom(event.target.value)}
+                  onChange={(event) => applyBusinessInventoryFilters({ addedFrom: event.target.value })}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 />
               </label>
@@ -3642,7 +3724,7 @@ export default function Admin() {
                 <input
                   type="date"
                   value={bizAddedTo}
-                  onChange={(event) => setBizAddedTo(event.target.value)}
+                  onChange={(event) => applyBusinessInventoryFilters({ addedTo: event.target.value })}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 />
               </label>
@@ -3667,7 +3749,7 @@ export default function Admin() {
 
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[#2B1507]/10 bg-[#2B1507]/5 px-4 py-3 text-sm text-[#3A1F0E]/70 md:flex-row md:items-center md:justify-between">
               <div>
-                <strong className="text-[#3A1F0E]">{filteredBiz.length.toLocaleString()} filtered results.</strong>{" "}
+                <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
                 Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration.
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
@@ -3677,7 +3759,7 @@ export default function Admin() {
                   disabled={archivableFilteredBiz.length === 0}
                   className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Select filtered ({archivableFilteredBiz.length.toLocaleString()})
+                  Select this page ({archivableFilteredBiz.length.toLocaleString()})
                 </button>
                 <button
                   type="button"
@@ -3693,7 +3775,12 @@ export default function Admin() {
               </div>
             </div>
 
-            {filteredBiz.length === 0 ? (
+            {businessInventoryLoading ? (
+              <div className="flex items-center justify-center py-20" aria-live="polite">
+                <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#CA922B] border-t-transparent" />
+                <span className="ml-3 text-sm text-[#3A1F0E]/60">Loading business inventory…</span>
+              </div>
+            ) : filteredBiz.length === 0 ? (
               <div className="text-center py-20 text-[#3A1F0E]/40">
                 <Store className="w-12 h-12 mx-auto mb-4 opacity-30" />
                 <p>
@@ -3703,6 +3790,7 @@ export default function Admin() {
                 </p>
               </div>
             ) : (
+              <>
               <div className="overflow-x-auto rounded-2xl border border-[#3A1F0E]/10 bg-white">
                 <table className="min-w-[1160px] w-full text-sm">
                   <thead>
@@ -3965,6 +4053,32 @@ export default function Admin() {
                   </tbody>
                 </table>
               </div>
+              {businessInventoryTotalPages > 1 && (
+                <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-[#3A1F0E]/55">
+                    Page {businessInventoryPage.toLocaleString()} of {businessInventoryTotalPages.toLocaleString()} · {businessInventoryFilteredTotal.toLocaleString()} matching businesses
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => changeBusinessInventoryPage(businessInventoryPage - 1)}
+                      disabled={businessInventoryPage <= 1}
+                      className="rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2 text-sm font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      ← Previous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => changeBusinessInventoryPage(businessInventoryPage + 1)}
+                      disabled={businessInventoryPage >= businessInventoryTotalPages}
+                      className="rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2 text-sm font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
+              </>
             )}
           </div>
         ) : tab === "reviews" ? (
