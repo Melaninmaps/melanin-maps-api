@@ -29,7 +29,14 @@ echo "✓  api-server built"
 
 # ── 3. Sync dist to root (mirrors nixpacks steps 4 & 5) ──────────────────────
 cp artifacts/api-server/dist/index.mjs      dist/index.mjs
-cp artifacts/api-server/dist/index.mjs.map  dist/index.mjs.map
+if [[ -f artifacts/api-server/dist/index.mjs.map ]]; then
+  cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
+else
+  # Current esbuild production output omits an index source map. Do not fail a
+  # release solely because a non-runtime debugging artifact is absent, and do
+  # not retain a stale map from an earlier bundle.
+  rm -f dist/index.mjs.map
+fi
 cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
 mkdir -p dist/public
 cp -r artifacts/api-server/dist/public/. dist/public/
@@ -39,9 +46,19 @@ echo "✓  dist/ synced to root"
 COMMIT_MSG="ship: ${TOKEN}${MSG_SUFFIX:+ — ${MSG_SUFFIX}}"
 # dist/ is in .gitignore but must be tracked — use -f to force-add
 git add nixpacks.toml
-git add -f dist/index.mjs dist/index.mjs.map dist/BUILD_IDENTITY
+git add -f dist/index.mjs dist/BUILD_IDENTITY
+if [[ -f dist/index.mjs.map ]]; then
+  git add -f dist/index.mjs.map
+else
+  git rm -f --ignore-unmatch dist/index.mjs.map
+fi
 git add -f dist/public/
-git add -f artifacts/api-server/dist/index.mjs artifacts/api-server/dist/index.mjs.map artifacts/api-server/dist/BUILD_IDENTITY
+git add -f artifacts/api-server/dist/index.mjs artifacts/api-server/dist/BUILD_IDENTITY
+if [[ -f artifacts/api-server/dist/index.mjs.map ]]; then
+  git add -f artifacts/api-server/dist/index.mjs.map
+else
+  git rm -f --ignore-unmatch artifacts/api-server/dist/index.mjs.map
+fi
 git add -f artifacts/api-server/dist/public/
 git commit -m "$COMMIT_MSG"
 echo "✓  committed: $COMMIT_MSG"
