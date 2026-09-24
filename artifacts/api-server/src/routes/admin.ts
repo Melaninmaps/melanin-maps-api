@@ -3710,6 +3710,13 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  // Accounts are retained for administrator review and audit. Use the
+  // reversible /admin/users/:id/lifecycle control instead of deletion.
+  res.status(405).json({
+    error: "Account deletion is disabled. Hide or suspend the account instead; its records remain available for review and restoration.",
+    code: "REVERSIBLE_LIFECYCLE_REQUIRED",
+  });
+  return;
   const userId = String(req.params.id);
   const client = await pool.connect();
   try {
@@ -3743,7 +3750,7 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
            (email, user_id, event_type, access_source, granted_by, metadata)
          VALUES ($1, $2, 'revoked', $3, $4, $5::jsonb)`,
         [
-          targetUser.email.toLowerCase().trim(),
+          (targetUser.email ?? "").toLowerCase().trim(),
           targetUser.id,
           targetUser.tester_access_source,
           (req as any).user?.id ?? null,

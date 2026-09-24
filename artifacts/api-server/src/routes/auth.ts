@@ -113,6 +113,45 @@ async function applyPendingTesterEntitlement(
   }
 }
 
+// An iOS Apple registration is a real waitlist origin even when the member
+// never completed the public web form. Keep one email-keyed record and append
+// the source rather than creating a parallel App Store list.
+async function ensureIosWaitlistRecord(input: {
+  email: string | null | undefined;
+  firstName: string | null | undefined;
+  lastName: string | null | undefined;
+}): Promise<void> {
+  const email = String(input.email ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.endsWith("@melaninmaps.internal")) return;
+  const [existing] = await db
+    .select({ id: waitlistTable.id, signupSources: waitlistTable.signupSources })
+    .from(waitlistTable)
+    .where(eq(waitlistTable.email, email))
+    .limit(1);
+  const appendSource = (value: string | null) => {
+    const sources = String(value ?? "")
+      .split(",")
+      .map((source) => source.trim().toLowerCase())
+      .filter((source) => ["web", "ios", "android"].includes(source));
+    return [...new Set([...sources, "ios"])].join(",");
+  };
+  if (existing) {
+    const signupSources = appendSource(existing.signupSources);
+    if (signupSources !== existing.signupSources) {
+      await db.update(waitlistTable).set({ signupSources }).where(eq(waitlistTable.id, existing.id));
+    }
+    return;
+  }
+  await db.insert(waitlistTable).values({
+    email,
+    firstName: input.firstName?.trim() || null,
+    lastName: input.lastName?.trim() || null,
+    status: "approved",
+    approvedAt: new Date(),
+    signupSources: "ios",
+  });
+}
+
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
 // ─── Temporary diagnostic helpers — remove after auth investigation ───────────
@@ -1615,6 +1654,16 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
             })
             .returning();
           user = created;
+
+          // Keep the public waitlist and App Store registration history in one
+          // email-keyed record. A reconciliation control covers older accounts.
+          ensureIosWaitlistRecord({
+            email: created.email,
+            firstName: created.firstName,
+            lastName: created.lastName,
+          }).catch((err: unknown) => {
+            req.log.error({ err }, "Failed to create iOS waitlist record for Apple registration");
+          });
 
           // Create server-authoritative Community Agreement record for every new member.
           // Non-blocking — a failure here must never interrupt the Apple auth flow.

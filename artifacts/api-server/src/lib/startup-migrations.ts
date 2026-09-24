@@ -86,6 +86,41 @@ const PUBLIC_BUSINESSES_VIEW_FILTER =
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    // Retain every member and waitlist record while allowing an administrator
+    // to suspend access or remove test accounts from the normal presentation
+    // view. This intentionally contains no DELETE statement.
+    name: "admin_reversible_lifecycle_controls_v1",
+    sql: `ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) NOT NULL DEFAULT 'active',
+      ADD COLUMN IF NOT EXISTS lifecycle_updated_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS lifecycle_updated_by VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS lifecycle_reason VARCHAR(500);
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+           WHERE conname = 'users_account_status_check'
+             AND conrelid = 'users'::regclass
+        ) THEN
+          ALTER TABLE users ADD CONSTRAINT users_account_status_check
+            CHECK (account_status IN ('active', 'hidden', 'suspended')) NOT VALID;
+        END IF;
+      END $$;
+      ALTER TABLE users VALIDATE CONSTRAINT users_account_status_check;
+      CREATE INDEX IF NOT EXISTS users_account_status_created_idx
+        ON users (account_status, created_at DESC);
+      CREATE TABLE IF NOT EXISTS admin_account_lifecycle_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR(255) NOT NULL REFERENCES users(id),
+        actor_user_id VARCHAR(255),
+        prior_status VARCHAR(20) NOT NULL,
+        next_status VARCHAR(20) NOT NULL,
+        reason VARCHAR(500),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS admin_account_lifecycle_events_user_created_idx
+        ON admin_account_lifecycle_events (user_id, created_at DESC);`,
+  },
+  {
     name: "community_language_proposals_v1",
     sql: `CREATE TABLE IF NOT EXISTS community_language_proposals (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -122,6 +122,9 @@ type AdminUser = {
   lastName: string | null;
   profileImageUrl: string | null;
   approved: boolean;
+  accountStatus: "active" | "hidden" | "suspended";
+  lifecycleUpdatedAt: string | null;
+  lifecycleReason: string | null;
   role: "user" | "tester" | "admin";
   createdAt: string;
 };
@@ -706,6 +709,7 @@ export default function Admin() {
   const PAGE_SIZE = 50;
 
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [showHiddenUsers, setShowHiddenUsers] = useState(false);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
@@ -978,13 +982,14 @@ export default function Admin() {
   );
 
   const loadUsers = useCallback(() => {
-    return fetch(`${BASE}api/admin/users`, { credentials: "include" })
+    const visibility = showHiddenUsers ? "?visibility=all" : "";
+    return fetch(`${BASE}api/admin/users${visibility}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
         setUsers(data.users ?? []);
         setLastRefreshed(new Date());
       });
-  }, []);
+  }, [showHiddenUsers]);
 
   const loadLeaderboard = useCallback(() => {
     setLeaderboardLoading(true);
@@ -1340,7 +1345,7 @@ export default function Admin() {
   const removeStandaloneWaitlistEntry = async (entry: WaitlistEntry) => {
     if (
       !window.confirm(
-        `Remove waitlist signup "${entry.email}"? This only removes an unregistered entry with no saved contributions. It will not delete a member account.`,
+        `Hide waitlist signup "${entry.email}" from the active list? This is reversible and retains the signup, source history, and any related account.`,
       )
     )
       return;
@@ -1361,6 +1366,26 @@ export default function Admin() {
         showSyntheticWaitlist,
         waitlistCityFilter,
       );
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const reconcileIosWaitlistRegistrations = async () => {
+    if (!window.confirm("Add earlier iOS Apple registrations to the same cumulative waitlist? Existing email records will be kept and labelled iOS; no duplicate people will be created.")) return;
+    setUpdating("ios-waitlist-reconciliation");
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/reconcile-ios-registrations`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = (await response.json().catch(() => ({}))) as { created?: number; annotated?: number; scanned?: number; error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "iOS waitlist reconciliation failed.");
+        return;
+      }
+      window.alert(`Checked ${body.scanned ?? 0} iOS Apple registration(s). Added ${body.created ?? 0} new waitlist record(s) and labelled ${body.annotated ?? 0} existing record(s) with iOS.`);
+      await loadWaitlist(1, statusFilter, showSyntheticWaitlist, waitlistCityFilter);
     } finally {
       setUpdating(null);
     }
@@ -1437,20 +1462,37 @@ export default function Admin() {
     setUpdating(null);
   };
 
-  const deleteUser = async (id: string, email: string | null) => {
-    if (
-      !window.confirm(
-        `Are you sure? Permanently delete user${email ? ` "${email}"` : ""} and revoke their access? This removes the account and sessions, cannot be undone. The separate waitlist history is retained.`,
-      )
-    )
-      return;
-    setUpdating(id + "-del");
-    await fetch(`${BASE}api/admin/users/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    await loadUsers();
-    setUpdating(null);
+  const updateUserLifecycle = async (
+    user: AdminUser,
+    action: "hide" | "suspend" | "restore",
+  ) => {
+    const labels = {
+      hide: "hide from the default Admin presentation view",
+      suspend: "suspend and revoke access",
+      restore: "restore to the active Admin presentation view",
+    } as const;
+    const reason = window.prompt(
+      `Why should this account be ${labels[action]}? This is reversible and preserves the account and its records.`,
+    )?.trim();
+    if (!reason) return;
+    if (!window.confirm(`Confirm: ${labels[action]} for this account?`)) return;
+    setUpdating(`${user.id}-lifecycle`);
+    try {
+      const response = await fetch(`${BASE}api/admin/users/${user.id}/lifecycle`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, reason }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The account lifecycle change could not be saved.");
+        return;
+      }
+      await loadUsers();
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const deleteReview = async (id: string) => {
@@ -2513,6 +2555,15 @@ export default function Admin() {
               </Button>
               <Button
                 size="sm"
+                onClick={() => bulkUpdate("archived")}
+                disabled={bulkUpdating}
+                variant="outline"
+                className="h-7 px-4 rounded-full border-amber-300/60 text-amber-100 hover:bg-white/10 text-xs"
+              >
+                Archive from view
+              </Button>
+              <Button
+                size="sm"
                 onClick={() => bulkUpdate("pending")}
                 disabled={bulkUpdating}
                 variant="outline"
@@ -2970,6 +3021,18 @@ export default function Admin() {
                   >
                     Synthetic tests ({syntheticTestCount})
                   </button>
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => handleStatusFilter(event.target.value)}
+                    aria-label="Filter waitlist by status"
+                    className="rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="archived">Hidden / archived</option>
+                  </select>
                   <label className="flex items-center gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]/70">
                     City
                     <select
@@ -2984,6 +3047,15 @@ export default function Admin() {
                       ))}
                     </select>
                   </label>
+                  {!showSyntheticWaitlist && (
+                    <button
+                      onClick={reconcileIosWaitlistRegistrations}
+                      disabled={updating === "ios-waitlist-reconciliation"}
+                      className="rounded-lg border border-[#CA922B]/40 bg-white px-3 py-1.5 text-xs font-bold text-[#8A5B13] hover:bg-[#CA922B]/10 disabled:opacity-50"
+                    >
+                      {updating === "ios-waitlist-reconciliation" ? "Reconciling iOS…" : "Add App Store signups"}
+                    </button>
+                  )}
                   {showSyntheticWaitlist && syntheticTestCount > 0 && (
                     <button
                       onClick={removeSafeSyntheticWaitlistEntries}
@@ -3199,7 +3271,7 @@ export default function Admin() {
                                   disabled={updating === entry.id + "-remove"}
                                   className="h-7 px-3 rounded-full border-[#3A1F0E]/15 text-[#3A1F0E]/55 hover:bg-red-50 hover:text-red-700 text-xs"
                                 >
-                                  <Trash2 className="w-3 h-3 mr-1" /> Remove
+                                  <Trash2 className="w-3 h-3 mr-1" /> Archive
                                 </Button>
                               </div>
                             </td>
@@ -3221,9 +3293,23 @@ export default function Admin() {
           <MetricsTab metrics={metrics} loading={metricsLoading} />
         ) : tab === "users" ? (
           <div>
-            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">
-              Registered Users ({users.length})
-            </h2>
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+              <div>
+                <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
+                  Registered Users ({users.length})
+                </h2>
+                <p className="text-xs text-[#3A1F0E]/55 mt-1">
+                  Hide keeps the account and activity for records; suspend also revokes access. Neither action deletes data.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHiddenUsers((visible) => !visible)}
+                className="text-xs font-bold px-3 py-2 rounded-xl border border-[#3A1F0E]/15 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
+              >
+                {showHiddenUsers ? "Hide archived accounts" : "View hidden accounts"}
+              </button>
+            </div>
             {users.length === 0 ? (
               <div className="text-center py-20 text-[#3A1F0E]/40">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -3294,7 +3380,15 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          {user.approved ? (
+                          {user.accountStatus === "hidden" ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                              Hidden
+                            </span>
+                          ) : user.accountStatus === "suspended" ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                              Suspended
+                            </span>
+                          ) : user.approved ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
                               <Check className="w-3 h-3" /> Approved
                             </span>
@@ -3328,30 +3422,26 @@ export default function Admin() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                user.approved
-                                  ? deleteUser(user.id, user.email)
-                                  : updateUser(user.id, true)
-                              }
-                              disabled={
-                                updating === user.id ||
-                                updating === user.id + "-del"
-                              }
-                              className={`h-7 px-3 rounded-full text-xs ${user.approved ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" : "bg-green-600 hover:bg-green-700 text-white"}`}
-                              variant="outline"
-                            >
-                              {user.approved ? (
-                                <>
-                                  <Trash2 className="w-3 h-3 mr-1" /> Delete
-                                </>
-                              ) : (
-                                <>
-                                  <Check className="w-3 h-3 mr-1" /> Approve
-                                </>
-                              )}
-                            </Button>
+                            {user.accountStatus === "active" && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "hide")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs">
+                                  Hide
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "suspend")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs border-red-200 text-red-700 hover:bg-red-50">
+                                  Suspend
+                                </Button>
+                              </>
+                            )}
+                            {user.accountStatus !== "active" && (
+                              <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "restore")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs border-green-200 text-green-700 hover:bg-green-50">
+                                Restore
+                              </Button>
+                            )}
+                            {!user.approved && user.accountStatus !== "suspended" && (
+                              <Button size="sm" onClick={() => updateUser(user.id, true)} disabled={updating === user.id} className="h-7 px-3 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white">
+                                <Check className="w-3 h-3 mr-1" /> Approve
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

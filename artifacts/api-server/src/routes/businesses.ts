@@ -263,6 +263,33 @@ function publicBusinessVisibilityCondition() {
   )`;
 }
 
+// Administratively archived businesses are deliberately excluded from browse,
+// map, category, and Kinfolk discovery. The owner requested that a legitimate
+// archived record remain reachable only when a member expressly looks up its
+// name; duplicate, permanently hidden, demo, and resolved-superseded rows are
+// never eligible for that narrow fallback.
+function directNameLookupVisibilityCondition() {
+  return sql<boolean>`(
+    ${publicBusinessVisibilityCondition()}
+    OR (
+      COALESCE(${businessesTable.status}, '') = 'suspended'
+      AND COALESCE(${businessesTable.listingStatus}, '') = 'archived'
+      AND COALESCE(${sql.raw('"businesses"."is_duplicate"')}, false) = false
+      AND COALESCE(${sql.raw('"businesses"."permanently_hidden"')}, false) = false
+      AND NOT (
+        COALESCE(${businessesTable.name}, '') ILIKE '%[DEMO]%'
+        OR COALESCE(${businessesTable.description}, '') ILIKE '%[DEMO]%'
+        OR LOWER(BTRIM(COALESCE(${sql.raw('"businesses"."data_source"')}, ''))) IN ('demo', 'demo_seed')
+        OR REGEXP_REPLACE(COALESCE(${businessesTable.phone}, ''), '[^0-9]', '', 'g') IN ('15555550100', '5555550100')
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM public.business_duplicate_resolutions directory_resolution
+        WHERE directory_resolution.superseded_business_id = ${businessesTable.id}
+      )
+    )
+  )`;
+}
+
 /**
  * This applies only to public directory discovery. Detail, claim, moderation,
  * contribution, and account paths remain available and are never filtered by
@@ -535,7 +562,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
-        conditions.push(publicBusinessVisibilityCondition());
+        const publicVisibilityCondition = publicBusinessVisibilityCondition();
+        conditions.push(publicVisibilityCondition);
         if (!hasExplicitAllPlacesConsent) conditions.push(defaultDiscoveryCondition);
 
         if (category && typeof category === "string" && category !== "All") {
@@ -821,8 +849,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
           const directConditions = conditions.filter(
             (condition) =>
               condition !== defaultDiscoveryCondition &&
+              condition !== publicVisibilityCondition &&
               !designationConditions.includes(condition),
           );
+          directConditions.push(directNameLookupVisibilityCondition());
           directConditions.push(
             or(
               ilike(businessesTable.name, directSearchText),
@@ -2349,12 +2379,22 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
 
     // The canonical public view applies every shared visibility rule: active status,
     // live listing lifecycle, permanent-hidden flag, duplicate suppression, and
-    // proven-demo containment. A known base-table ID must not bypass those rules.
+    // proven-demo containment. An administrator may intentionally archive a
+    // legitimate record from promotion, map, category, and Kinfolk discovery
+    // while retaining its stable direct-name profile for record review.
     const { rows: visRows } = await pool.query<{ id: string }>(
       `SELECT id FROM public.public_businesses WHERE id = $1 LIMIT 1`,
       [id],
     );
-    if (!visRows[0]) {
+    const archivedDirectProfile =
+      business.status === "suspended" &&
+      business.listingStatus === "archived" &&
+      !business.isDuplicate &&
+      !business.permanentlyHidden &&
+      !String(business.dataSource ?? "").trim().toLowerCase().match(/^(demo|demo_seed)$/) &&
+      String(business.phone ?? "").replace(/\D/g, "") !== "15555550100" &&
+      String(business.phone ?? "").replace(/\D/g, "") !== "5555550100";
+    if (!visRows[0] && !archivedDirectProfile) {
       res.status(404).json({ error: "Business not found" });
       return;
     }
