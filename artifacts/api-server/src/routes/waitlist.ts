@@ -37,6 +37,32 @@ function appendWaitlistSignupSource(
   return [...new Set([...prior, source])].join(",");
 }
 
+function normalizeWaitlistCity(raw: unknown): string | null {
+  const value = typeof raw === "string" ? raw.replace(/\s+/g, " ").trim() : "";
+  return value.length >= 2 && value.length <= 100 ? value : null;
+}
+
+function normalizeWaitlistState(raw: unknown): string | null {
+  const value = typeof raw === "string" ? raw.trim().toUpperCase() : "";
+  return /^[A-Z]{2}$/.test(value) ? value : null;
+}
+
+function parseStoredCityNomination(raw: unknown): { city: string; state: string | null } | null {
+  const nomination = normalizeWaitlistCity(raw);
+  if (!nomination) return null;
+
+  // Backfill only plainly structured values such as "Albuquerque, NM" or a
+  // standalone city. Ambiguous free text stays intact in city_nomination for
+  // an administrator to review; it is never guessed into a rollout location.
+  const stateMatch = nomination.match(/^([A-Za-z][A-Za-z .'-]{0,97}?)(?:\s*,\s*|\s+)([A-Za-z]{2})$/);
+  if (stateMatch) {
+    return { city: stateMatch[1].trim(), state: stateMatch[2].toUpperCase() };
+  }
+  return /^[A-Za-z][A-Za-z .'-]{1,99}$/.test(nomination)
+    ? { city: nomination, state: null }
+    : null;
+}
+
 // ── Public: join waitlist ────────────────────────────────────────────────────
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
@@ -74,6 +100,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       return;
     }
 
+    const normalizedCity = normalizeWaitlistCity(city);
+    const normalizedState = normalizeWaitlistState(state);
     const namePrefix = firstName?.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 8)
       || email.split("@")[0].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
     const digits = Math.floor(1000 + Math.random() * 9000);
@@ -99,6 +127,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       .select({
         id: waitlistTable.id,
         signupSources: waitlistTable.signupSources,
+        city: waitlistTable.city,
+        state: waitlistTable.state,
       })
       .from(waitlistTable)
       .where(eq(waitlistTable.email, primaryEmail))
@@ -113,6 +143,10 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
             priorEntry.signupSources,
             source,
           ),
+          // Keep the person's original entry intact while allowing a later
+          // app/web join to fill a previously omitted rollout location.
+          city: priorEntry.city?.trim() ? priorEntry.city : normalizedCity,
+          state: priorEntry.state?.trim() ? priorEntry.state : normalizedState,
         })
         .where(eq(waitlistTable.id, priorEntry.id));
     } else {
@@ -122,8 +156,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
           email: primaryEmail,
           firstName: firstName?.trim() || null,
           lastName: lastName?.trim() || null,
-          city: city?.trim() || null,
-          state: state?.trim().toUpperCase() || null,
+          city: normalizedCity,
+          state: normalizedState,
           isBusinessOwner: Boolean(isBusinessOwner),
           websiteUrl: websiteUrl?.trim() || null,
           referralCode: code,
@@ -146,7 +180,12 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       // confirmation email.
       if (!created) {
         const [concurrentEntry] = await db
-          .select({ id: waitlistTable.id, signupSources: waitlistTable.signupSources })
+          .select({
+            id: waitlistTable.id,
+            signupSources: waitlistTable.signupSources,
+            city: waitlistTable.city,
+            state: waitlistTable.state,
+          })
           .from(waitlistTable)
           .where(eq(waitlistTable.email, primaryEmail))
           .limit(1);
@@ -158,6 +197,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
                 concurrentEntry.signupSources,
                 source,
               ),
+              city: concurrentEntry.city?.trim() ? concurrentEntry.city : normalizedCity,
+              state: concurrentEntry.state?.trim() ? concurrentEntry.state : normalizedState,
             })
             .where(eq(waitlistTable.id, concurrentEntry.id));
         }
@@ -760,6 +801,75 @@ router.post("/admin/waitlist/reconcile-ios-registrations", async (req: Request, 
   } catch (err) {
     req.log.error({ err }, "Failed to reconcile iOS registrations into waitlist");
     res.status(500).json({ error: "Failed to reconcile iOS registrations." });
+  }
+});
+
+// ── Admin: recover structured city answers from earlier app waitlists ─────────
+// Earlier mobile builds stored an answer such as "Albuquerque, NM" in the
+// city-nomination field rather than the operational city/state fields used by
+// the Admin city filter. This is a no-loss conversion: only blank locations are
+// filled, only clearly structured city answers qualify, and the original text
+// remains in city_nomination for audit and restoration.
+router.post("/admin/waitlist/recover-city-answers", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    const candidates = await db
+      .select({
+        id: waitlistTable.id,
+        city: waitlistTable.city,
+        state: waitlistTable.state,
+        cityNomination: waitlistTable.cityNomination,
+      })
+      .from(waitlistTable)
+      .where(
+        and(
+          eq(waitlistTable.isSyntheticTest, false),
+          isNotNull(waitlistTable.cityNomination),
+          sql`NULLIF(trim(${waitlistTable.city}), '') IS NULL`,
+        ),
+      );
+
+    let recovered = 0;
+    let heldForReview = 0;
+    for (const candidate of candidates) {
+      const location = parseStoredCityNomination(candidate.cityNomination);
+      if (!location) {
+        heldForReview++;
+        continue;
+      }
+      const updated = await db
+        .update(waitlistTable)
+        .set({
+          city: location.city,
+          state: candidate.state?.trim() ? candidate.state : location.state,
+        })
+        .where(
+          and(
+            eq(waitlistTable.id, candidate.id),
+            sql`NULLIF(trim(${waitlistTable.city}), '') IS NULL`,
+          ),
+        )
+        .returning({ id: waitlistTable.id });
+      if (updated.length > 0) recovered++;
+    }
+
+    req.log.info(
+      {
+        event: "ADMIN_WAITLIST_CITY_ANSWERS_RECOVERED",
+        recovered,
+        heldForReview,
+        scanned: candidates.length,
+        by: req.user?.id,
+      },
+      "recovered structured city answers into waitlist city fields",
+    );
+    res.json({ scanned: candidates.length, recovered, heldForReview });
+  } catch (err) {
+    req.log.error({ err }, "Failed to recover waitlist city answers");
+    res.status(500).json({ error: "Failed to recover saved city answers." });
   }
 });
 

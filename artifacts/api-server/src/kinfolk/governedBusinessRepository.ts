@@ -1,8 +1,6 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 import {
-  completedCohortDirectoryDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
-  nationalMasterDirectoryDiscoverySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
@@ -152,12 +150,16 @@ const MAX_CATALOG_LIMIT = 50;
 const MAX_RADIUS_MILES = 100;
 
 function governedDirectoryDiscoveryPredicate(allowAllPublicPlaces = false): string {
-  const promotion = mwmDiasporaPromotionSqlPredicate(
+  // Receipt provenance makes a business traceable and directly searchable; it
+  // is not ownership evidence. Kinfolk recommendations and "find me a"
+  // results therefore require an explicit source/owner/community designation
+  // unless an intentional all-places request has already been approved by the
+  // caller. This prevents an ordinary directory row from becoming a minority-
+  // owned recommendation merely because it came through a cohort import.
+  return mwmDiasporaPromotionSqlPredicate(
     "b.id",
     allowAllPublicPlaces ? "all_public" : undefined,
   );
-  if (promotion === "TRUE") return promotion;
-  return `(${promotion} OR ${completedCohortDirectoryDiscoverySqlPredicate("b.id")} OR ${nationalMasterDirectoryDiscoverySqlPredicate("b.id")})`;
 }
 
 const PREFERENCE_STOP_WORDS = new Set([

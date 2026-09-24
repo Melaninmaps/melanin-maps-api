@@ -169,6 +169,21 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
+  it("does not treat cohort or master-import provenance as ownership evidence for Kinfolk", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    await createGovernedKinfolkBusinessRepository(pool).findDestinationCatalog({
+      city: "Allentown",
+      stateCode: "PA",
+    });
+
+    const sql = pool.query.mock.calls[0]?.[0] as string;
+    expect(sql).toContain("b.ownership_designations");
+    expect(sql).toContain("jsonb_array_elements_text");
+    expect(sql).not.toContain("completed_cohort_directory_discovery_receipts");
+    expect(sql).not.toContain("national_diaspora_master_18294");
+    expect(sql).not.toContain("source_backed_held_live");
+  });
+
   it("searches explicit preference evidence only inside the governed Philadelphia catalog", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [AMINA_ROW] }) };
     const repository = createGovernedKinfolkBusinessRepository(pool);

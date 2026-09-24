@@ -23,6 +23,16 @@ describe("unified waitlist and recovery contract", () => {
     expect(waitlistRoute).toContain("signupSource?: string");
   });
 
+  it("keeps a member rollout city across repeat joins and recovers only clear earlier city answers", () => {
+    expect(waitlistRoute).toContain("function normalizeWaitlistCity");
+    expect(waitlistRoute).toContain("function parseStoredCityNomination");
+    expect(waitlistRoute).toContain("city: priorEntry.city?.trim() ? priorEntry.city : normalizedCity");
+    expect(waitlistRoute).toContain('"/admin/waitlist/recover-city-answers"');
+    expect(waitlistRoute).toContain("ADMIN_WAITLIST_CITY_ANSWERS_RECOVERED");
+    expect(waitlistRoute).toContain("heldForReview");
+    expect(waitlistRoute).toContain("city_nomination for audit and restoration");
+  });
+
   it("hides marked synthetic fixtures from the default people list", () => {
     const migrations = source("../../lib/startup-migrations.ts");
     expect(schema).toContain('isSyntheticTest: boolean("is_synthetic_test")');

@@ -82,4 +82,15 @@ describe("admin dashboard section selector", () => {
     }
     expect(admin).not.toContain("Permanently delete user");
   });
+
+  it("lets an administrator recover saved city answers without inventing locations", () => {
+    for (const marker of [
+      "const recoverWaitlistCityAnswers",
+      "api/admin/waitlist/recover-city-answers",
+      "Recover saved cities",
+      "leaves unclear answers for review",
+    ]) {
+      expect(admin).toContain(marker);
+    }
+  });
 });

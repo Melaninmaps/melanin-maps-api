@@ -1428,6 +1428,31 @@ export default function Admin() {
     }
   };
 
+  const recoverWaitlistCityAnswers = async () => {
+    if (!window.confirm("Recover only clearly formatted saved city answers (for example, Albuquerque, NM) into the City filter? This keeps the original answer, does not create people, and leaves unclear answers for review.")) return;
+    setUpdating("waitlist-city-recovery");
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/recover-city-answers`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        scanned?: number;
+        recovered?: number;
+        heldForReview?: number;
+        error?: string;
+      };
+      if (!response.ok) {
+        window.alert(body.error ?? "Saved city recovery failed.");
+        return;
+      }
+      window.alert(`Checked ${body.scanned ?? 0} saved city answer(s). Recovered ${body.recovered ?? 0} City filter value(s); held ${body.heldForReview ?? 0} unclear answer(s) for review.`);
+      await loadWaitlist(1, statusFilter, showSyntheticWaitlist, waitlistCityFilter);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const removeSafeSyntheticWaitlistEntries = async () => {
     const confirmation = window.prompt(
       `This will remove only synthetic test waitlist rows without accounts or contributions. Type REMOVE SYNTHETIC TEST WAITLIST ENTRIES to continue. Registered accounts and contributed records will be held, not deleted.`,
@@ -3091,6 +3116,15 @@ export default function Admin() {
                       ))}
                     </select>
                   </label>
+                  {!showSyntheticWaitlist && (
+                    <button
+                      onClick={recoverWaitlistCityAnswers}
+                      disabled={updating === "waitlist-city-recovery"}
+                      className="rounded-lg border border-[#CA922B]/40 bg-white px-3 py-1.5 text-xs font-bold text-[#8A5B13] hover:bg-[#CA922B]/10 disabled:opacity-50"
+                    >
+                      {updating === "waitlist-city-recovery" ? "Recovering cities…" : "Recover saved cities"}
+                    </button>
+                  )}
                   {!showSyntheticWaitlist && (
                     <button
                       onClick={reconcileIosWaitlistRegistrations}
