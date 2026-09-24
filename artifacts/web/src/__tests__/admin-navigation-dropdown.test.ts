@@ -8,11 +8,11 @@ const admin = readFileSync(
 );
 
 describe("admin dashboard section selector", () => {
-  it("replaces the horizontal scrolling tab strip with one accessible dropdown", () => {
+  it("retains the accessible dropdown without restoring the horizontal scrolling tab strip", () => {
     expect(admin).toContain('from "@/components/ui/select"');
     expect(admin).toContain('id="admin-dashboard-section"');
     expect(admin).toContain('aria-label="Choose an admin dashboard section"');
-    expect(admin).toContain('<Select value={tab} onValueChange={(value) => setTab(value as Tab)}>');
+    expect(admin).toContain('<Select value={tab} onValueChange={(value) => selectDashboardSection(value as Tab)}>');
     expect(admin).toContain('tabs.map((t) => (');
     expect(admin).toContain('<SelectItem');
     expect(admin).not.toContain('max-w-[1500px] mx-auto px-6 flex gap-0 items-center justify-between overflow-x-auto');
@@ -30,6 +30,37 @@ describe("admin dashboard section selector", () => {
       'tab === "businesses"',
       'Export CSV',
       'Add Business',
+    ]) {
+      expect(admin).toContain(marker);
+    }
+  });
+
+  it("provides direct keyboard-accessible list controls without relying on the dropdown", () => {
+    for (const marker of [
+      "const openWaitlistSection",
+      "const selectDashboardSection",
+      'onClick={() => openWaitlistSection()}',
+      'onClick={() => openWaitlistSection("pending")}',
+      'onClick={() => selectDashboardSection("businesses")}',
+      'onClick={() => selectDashboardSection("users")}',
+      'aria-label="Quick dashboard sections"',
+      'aria-pressed={tab === item.id}',
+      "focus-visible:ring-2",
+      "Open list",
+    ]) {
+      expect(admin).toContain(marker);
+    }
+  });
+
+  it("makes the unified waitlist join surface readable for each person", () => {
+    for (const marker of [
+      "WAITLIST_SOURCE_LABELS",
+      'web: "Website"',
+      'ios: "iOS app"',
+      'android: "Android app"',
+      "formatWaitlistSignupSources(entry.signupSources)",
+      "Joined from more than one surface",
+      "Website, iOS, and Android joins are one email-keyed list",
     ]) {
       expect(admin).toContain(marker);
     }

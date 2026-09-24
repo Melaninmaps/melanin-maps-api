@@ -80,6 +80,23 @@ function publicSocialHref(value: string | null, platform: "instagram" | "tiktok"
   return `https://www.facebook.com/${handle}`;
 }
 
+const WAITLIST_SOURCE_LABELS: Record<string, string> = {
+  web: "Website",
+  ios: "iOS app",
+  android: "Android app",
+};
+
+function formatWaitlistSignupSources(value: string | null | undefined): string {
+  const labels = String(value ?? "")
+    .split(",")
+    .map((source) => WAITLIST_SOURCE_LABELS[source.trim().toLowerCase()])
+    .filter((label): label is string => Boolean(label));
+
+  return labels.length > 0
+    ? labels.join(" + ")
+    : "Earlier signup — source not recorded";
+}
+
 type WaitlistEntry = {
   id: string;
   firstName: string | null;
@@ -1094,6 +1111,32 @@ export default function Admin() {
     loadCityLaunches,
   ]);
 
+  const openWaitlistSection = (
+    nextStatus = "all",
+    syntheticOnly = false,
+  ) => {
+    setTab("waitlist");
+    setStatusFilter(nextStatus);
+    setShowSyntheticWaitlist(syntheticOnly);
+    setWaitlistPage(1);
+    setSelected(new Set());
+    setSelectAllFiltered(false);
+    void loadWaitlist(1, nextStatus, syntheticOnly, waitlistCityFilter);
+  };
+
+  const selectDashboardSection = (nextTab: Tab) => {
+    if (nextTab === "waitlist") {
+      openWaitlistSection();
+      return;
+    }
+
+    setTab(nextTab);
+    setSelected(new Set());
+    setSelectAllFiltered(false);
+
+    if (nextTab === "businesses") void loadBusinesses();
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
     setLoading(true);
@@ -1125,15 +1168,11 @@ export default function Admin() {
   }, [isAdmin, refreshAll]);
 
   const handleStatusFilter = (newStatus: string) => {
-    setStatusFilter(newStatus);
-    setWaitlistPage(1);
-    loadWaitlist(1, newStatus, showSyntheticWaitlist, waitlistCityFilter);
+    openWaitlistSection(newStatus, showSyntheticWaitlist);
   };
 
   const handleSyntheticWaitlistFilter = (syntheticOnly: boolean) => {
-    setShowSyntheticWaitlist(syntheticOnly);
-    setWaitlistPage(1);
-    loadWaitlist(1, statusFilter, syntheticOnly, waitlistCityFilter);
+    openWaitlistSection(statusFilter, syntheticOnly);
   };
 
   const handleWaitlistCityFilter = (city: string) => {
@@ -1914,6 +1953,9 @@ export default function Admin() {
       icon: <BookOpen className="w-4 h-4" />,
     });
   }
+  const quickDashboardTabs = tabs.filter((item) =>
+    ["waitlist", "businesses", "users", "members", "reviews", "reports"].includes(item.id),
+  );
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -1947,39 +1989,63 @@ export default function Admin() {
                 View Community Site
               </a>
             </div>
-            <div className="flex gap-4 text-sm flex-wrap">
-              <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-[#CA922B]">
+            <div className="flex gap-4 text-sm flex-wrap" aria-label="Open a dashboard list">
+              <button
+                type="button"
+                onClick={() => openWaitlistSection()}
+                aria-pressed={tab === "waitlist" && statusFilter === "all"}
+                className="min-w-24 rounded-2xl bg-white/10 px-4 py-3 text-center transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#2B1507]"
+              >
+                <span className="block text-2xl font-bold text-[#CA922B]">
                   {waitlistTotal}
-                </div>
-                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">
+                </span>
+                <span className="block text-[#F5EBD8]/70 text-xs uppercase tracking-wider">
                   Waitlist
-                </div>
-              </div>
-              <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-amber-400">
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold text-[#F5EBD8]/50">Open list</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openWaitlistSection("pending")}
+                aria-pressed={tab === "waitlist" && statusFilter === "pending"}
+                className="min-w-24 rounded-2xl bg-white/10 px-4 py-3 text-center transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#2B1507]"
+              >
+                <span className="block text-2xl font-bold text-amber-400">
                   {pendingWaitlistCount}
-                </div>
-                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">
+                </span>
+                <span className="block text-[#F5EBD8]/70 text-xs uppercase tracking-wider">
                   Pending
-                </div>
-              </div>
-              <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-[#CA922B]">
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold text-[#F5EBD8]/50">Open list</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectDashboardSection("users")}
+                aria-pressed={tab === "users"}
+                className="min-w-24 rounded-2xl bg-white/10 px-4 py-3 text-center transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#2B1507]"
+              >
+                <span className="block text-2xl font-bold text-[#CA922B]">
                   {users.length}
-                </div>
-                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">
+                </span>
+                <span className="block text-[#F5EBD8]/70 text-xs uppercase tracking-wider">
                   Users
-                </div>
-              </div>
-              <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-[#CA922B]">
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold text-[#F5EBD8]/50">Open list</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectDashboardSection("businesses")}
+                aria-pressed={tab === "businesses"}
+                className="min-w-24 rounded-2xl bg-white/10 px-4 py-3 text-center transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#2B1507]"
+              >
+                <span className="block text-2xl font-bold text-[#CA922B]">
                   {businessInventoryTotal.toLocaleString()}
-                </div>
-                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">
+                </span>
+                <span className="block text-[#F5EBD8]/70 text-xs uppercase tracking-wider">
                   Businesses
-                </div>
-              </div>
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold text-[#F5EBD8]/50">Open list</span>
+              </button>
             </div>
           </div>
 
@@ -2174,7 +2240,7 @@ export default function Admin() {
             >
               Dashboard section
             </label>
-            <Select value={tab} onValueChange={(value) => setTab(value as Tab)}>
+            <Select value={tab} onValueChange={(value) => selectDashboardSection(value as Tab)}>
               <SelectTrigger
                 id="admin-dashboard-section"
                 aria-label="Choose an admin dashboard section"
@@ -2202,6 +2268,27 @@ export default function Admin() {
                 ))}
               </SelectContent>
             </Select>
+            <nav
+              aria-label="Quick dashboard sections"
+              className="flex flex-wrap gap-2 pt-1 sm:pt-0"
+            >
+              {quickDashboardTabs.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => selectDashboardSection(item.id)}
+                  aria-pressed={tab === item.id}
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2 ${
+                    tab === item.id
+                      ? "border-[#2B1507] bg-[#2B1507] text-white"
+                      : "border-[#3A1F0E]/15 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/50 hover:bg-[#FAF6EF]"
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </nav>
           </div>
           <div className="flex flex-wrap items-center gap-3 xl:justify-end">
             <span className="text-[#3A1F0E]/30 text-xs">
@@ -2888,10 +2975,15 @@ export default function Admin() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-xs text-[#3A1F0E]/60 capitalize">
-                              {entry.signupSources
-                                ? entry.signupSources.split(",").join(" · ")
-                                : "Earlier signup"}
+                            <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
+                              <div className="font-semibold text-[#3A1F0E]/75">
+                                {formatWaitlistSignupSources(entry.signupSources)}
+                              </div>
+                              {entry.signupSources?.includes(",") && (
+                                <div className="mt-0.5 text-[10px] text-[#3A1F0E]/40">
+                                  Joined from more than one surface
+                                </div>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-[#3A1F0E]/70">
                               {entry.city || entry.state ? (
