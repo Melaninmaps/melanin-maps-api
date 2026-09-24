@@ -730,7 +730,7 @@ export default function Admin() {
   const [bulkBusinessUpdating, setBulkBusinessUpdating] = useState(false);
   const [businessInventoryIsTruncated, setBusinessInventoryIsTruncated] =
     useState(false);
-  const [businessInventoryLimit, setBusinessInventoryLimit] = useState(10_000);
+  const [businessInventoryTotal, setBusinessInventoryTotal] = useState(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -914,8 +914,12 @@ export default function Admin() {
       .then((data) => {
         setBusinesses(data.businesses ?? []);
         setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
-        setBusinessInventoryLimit(
-          typeof data.inventoryLimit === "number" ? data.inventoryLimit : 10_000,
+        setBusinessInventoryTotal(
+          typeof data.inventoryTotal === "number"
+            ? data.inventoryTotal
+            : Array.isArray(data.businesses)
+              ? data.businesses.length
+              : 0,
         );
         setLastRefreshed(new Date());
       });
@@ -1871,7 +1875,7 @@ export default function Admin() {
               </div>
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-[#CA922B]">
-                  {businesses.length}
+                  {businessInventoryTotal.toLocaleString()}
                 </div>
                 <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">
                   Businesses
@@ -3301,7 +3305,7 @@ export default function Admin() {
                   Business inventory
                 </p>
                 <h2 className="mt-1 text-2xl font-serif font-bold text-[#3A1F0E]">
-                  All businesses ({businesses.length.toLocaleString()})
+                  All businesses ({businessInventoryTotal.toLocaleString()})
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-[#3A1F0E]/60">
                   Filter the full inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context.
@@ -3332,7 +3336,7 @@ export default function Admin() {
 
             {businessInventoryIsTruncated && (
               <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                This inventory has more than {businessInventoryLimit.toLocaleString()} businesses. Narrow a city or service filter before making a bulk decision.
+                Showing the newest {businesses.length.toLocaleString()} of {businessInventoryTotal.toLocaleString()} businesses. Narrow a city or service filter before making a bulk decision.
               </div>
             )}
 

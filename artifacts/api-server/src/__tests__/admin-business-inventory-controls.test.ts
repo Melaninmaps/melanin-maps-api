@@ -15,10 +15,19 @@ const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.ts
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns a bounded full admin inventory instead of the former 500-row newest-record cap", () => {
-    expect(adminRoute).toContain("const INVENTORY_PAGE_LIMIT = 10_000");
+    expect(adminRoute).toContain("const INVENTORY_PAGE_LIMIT = 20_000");
     expect(adminRoute).toContain("inventoryIsTruncated");
     expect(adminRoute).toContain("inventoryLimit");
+    expect(adminRoute).toContain("inventoryTotal");
+    expect(adminRoute).toContain("SELECT COUNT(*)::text AS total FROM businesses");
     expect(adminRoute).not.toContain("ORDER BY created_at DESC\n       LIMIT 500");
+  });
+
+  it("keeps an incomplete additive metadata migration from hiding the full inventory", () => {
+    expect(adminRoute).toContain("to_jsonb(businesses)->>'research_source_label'");
+    expect(adminRoute).toContain("to_jsonb(businesses)->>'kinfolk_recommendation_reason'");
+    expect(adminScreen).toContain("businessInventoryTotal");
+    expect(adminScreen).toContain("All businesses ({businessInventoryTotal.toLocaleString()})");
   });
 
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {

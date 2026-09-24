@@ -101,8 +101,12 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     // Use a deliberately high bounded page so the city/service/date filters can
     // review the current full operating inventory without silently omitting the
     // older records that are most likely to be duplicate candidates.
-    const INVENTORY_PAGE_LIMIT = 10_000;
-    const businesses = await pool.query<{
+    const INVENTORY_PAGE_LIMIT = 20_000;
+    // Use to_jsonb for the optional, additive intake fields. The older records
+    // predate those fields, and an incomplete startup-migration retry must not
+    // make the entire administrator inventory unavailable.
+    const [businesses, inventoryCount] = await Promise.all([
+      pool.query<{
       id: string;
       name: string;
       category: string;
@@ -125,16 +129,22 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       research_source_url: string | null;
       kinfolk_recommendation_reason: string | null;
       intake_batch_reference: string | null;
-    }>(
+      }>(
       `SELECT id, name, category, city, state, verified, black_owned, status,
               listing_status, phone, website, created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
-              data_source, research_source_label, research_source_url,
-              kinfolk_recommendation_reason, intake_batch_reference
+              to_jsonb(businesses)->>'data_source' AS data_source,
+              to_jsonb(businesses)->>'research_source_label' AS research_source_label,
+              to_jsonb(businesses)->>'research_source_url' AS research_source_url,
+              to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
+              to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference
        FROM businesses
        ORDER BY created_at DESC
        LIMIT ${INVENTORY_PAGE_LIMIT + 1}`,
-    );
+      ),
+      pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM businesses"),
+    ]);
+    const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
     const inventoryIsTruncated = businesses.rows.length > INVENTORY_PAGE_LIMIT;
     const inventoryRows = businesses.rows.slice(0, INVENTORY_PAGE_LIMIT);
     const bizRows = inventoryRows.map((b) => ({
@@ -193,8 +203,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
 
     res.json({
       businesses: result,
+      inventoryTotal,
       inventoryLimit: INVENTORY_PAGE_LIMIT,
-      inventoryIsTruncated,
+      inventoryIsTruncated: inventoryIsTruncated || result.length < inventoryTotal,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch admin businesses");
