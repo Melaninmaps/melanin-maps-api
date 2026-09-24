@@ -25,6 +25,53 @@ function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
 }
 
+const VALID_TESTER_ACCESS_SOURCES = [
+  "testflight",
+  "android_test",
+  "admin_invite",
+  "website_test",
+] as const;
+
+function waitlistSourceForTesterAccess(
+  accessSource: (typeof VALID_TESTER_ACCESS_SOURCES)[number],
+): "web" | "ios" | "android" {
+  if (accessSource === "testflight") return "ios";
+  if (accessSource === "android_test") return "android";
+  return "web";
+}
+
+async function upsertApprovedTesterWaitlistRecord(input: {
+  email: string;
+  accessSource: (typeof VALID_TESTER_ACCESS_SOURCES)[number];
+}): Promise<void> {
+  const signupSource = waitlistSourceForTesterAccess(input.accessSource);
+  await pool.query(
+    `INSERT INTO waitlist_signups (email, status, approved_at, signup_sources)
+       VALUES ($1, 'approved', NOW(), $2)
+     ON CONFLICT (email) DO UPDATE
+       SET status = CASE
+             WHEN waitlist_signups.status IN ('rejected', 'archived') THEN waitlist_signups.status
+             ELSE 'approved'
+           END,
+           approved_at = CASE
+             WHEN waitlist_signups.status IN ('rejected', 'archived') THEN waitlist_signups.approved_at
+             ELSE COALESCE(waitlist_signups.approved_at, NOW())
+           END,
+           signup_sources = (
+             SELECT array_to_string(
+               ARRAY(
+               SELECT DISTINCT source
+                FROM unnest(string_to_array(COALESCE(waitlist_signups.signup_sources, ''), ',')) AS source
+                 WHERE source IN ('web', 'ios', 'android')
+                 UNION SELECT $2
+               ),
+               ','
+             )
+           )`,
+    [input.email, signupSource],
+  );
+}
+
 async function recordAccessEvent(input: {
   email: string;
   userId?: string | null;
@@ -228,21 +275,20 @@ router.post("/admin/testers/dry-run", async (req: Request, res: Response) => {
     return void res.status(400).json({ error: "emails array is required" });
   }
 
-  const validSources = [
-    "testflight",
-    "android_test",
-    "admin_invite",
-    "website_test",
-  ];
-  if (!validSources.includes(accessSource)) {
+  if (!(VALID_TESTER_ACCESS_SOURCES as readonly string[]).includes(accessSource)) {
     return void res.status(400).json({
-      error: `accessSource must be one of: ${validSources.join(", ")}`,
+      error: `accessSource must be one of: ${VALID_TESTER_ACCESS_SOURCES.join(", ")}`,
     });
   }
 
   try {
     const normalized = emails.map(normalizeEmail).filter(Boolean);
     const unique = [...new Set(normalized)];
+    if (unique.length > 500) {
+      return void res.status(400).json({
+        error: "A bulk tester import may contain at most 500 emails.",
+      });
+    }
     const invalid = emails.filter((e) => !e.includes("@") || !e.includes("."));
 
     // Look up existing users by email
@@ -356,15 +402,9 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
     return void res.status(400).json({ error: "emails array is required" });
   }
 
-  const validSources = [
-    "testflight",
-    "android_test",
-    "admin_invite",
-    "website_test",
-  ];
-  if (!validSources.includes(accessSource)) {
+  if (!(VALID_TESTER_ACCESS_SOURCES as readonly string[]).includes(accessSource)) {
     return void res.status(400).json({
-      error: `accessSource must be one of: ${validSources.join(", ")}`,
+      error: `accessSource must be one of: ${VALID_TESTER_ACCESS_SOURCES.join(", ")}`,
     });
   }
 
@@ -376,6 +416,11 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
       .map(normalizeEmail)
       .filter((e) => e.includes("@") && e.includes("."));
     const unique = [...new Set(normalized)];
+    if (unique.length > 500) {
+      return void res.status(400).json({
+        error: "A bulk tester import may contain at most 500 emails.",
+      });
+    }
 
     // Find existing users
     const existingUsers = await pool.query<{ id: string; email: string }>(
@@ -397,6 +442,7 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
         await pool.query(
           `UPDATE users
            SET tester_status = 'active',
+               approved = TRUE,
                tester_access_source = $1,
                tester_granted_at = NOW(),
                tester_granted_by = $2,
@@ -406,6 +452,10 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
            WHERE id = $4`,
           [accessSource, adminId ?? null, endsAt, user.id],
         );
+        await upsertApprovedTesterWaitlistRecord({
+          email,
+          accessSource: accessSource as (typeof VALID_TESTER_ACCESS_SOURCES)[number],
+        });
         // Also upsert into pending_tester_emails (mark as already applied)
         await pool.query(
           `INSERT INTO pending_tester_emails (email, tester_access_source, granted_by, granted_at, entitlement_ends_at, applied_at, applied_to_user_id)
@@ -427,6 +477,10 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
       } else {
         // No account yet — add to pending list for auto-attach on registration
         try {
+          await upsertApprovedTesterWaitlistRecord({
+            email,
+            accessSource: accessSource as (typeof VALID_TESTER_ACCESS_SOURCES)[number],
+          });
           await pool.query(
             `INSERT INTO pending_tester_emails (email, tester_access_source, granted_by, granted_at, entitlement_ends_at)
              VALUES ($1, $2, $3, NOW(), $4)
@@ -543,6 +597,10 @@ router.post(
       let alreadyActive = 0;
       for (const row of result.rows) {
         const email = normalizeEmail(row.email);
+        await upsertApprovedTesterWaitlistRecord({
+          email,
+          accessSource: accessSource as (typeof VALID_TESTER_ACCESS_SOURCES)[number],
+        });
         if (row.tester_status === "active") {
           alreadyActive++;
           continue;
@@ -551,6 +609,7 @@ router.post(
           await pool.query(
             `UPDATE users
            SET tester_status = 'active', tester_access_source = $1,
+               approved = TRUE,
                tester_granted_at = NOW(), tester_granted_by = $2,
                testing_entitlement_ends_at = $3,
                role = CASE WHEN role = 'user' THEN 'tester' ELSE role END,

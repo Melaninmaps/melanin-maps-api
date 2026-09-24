@@ -1,6 +1,7 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { isApprovalRequired } from "../lib/approvalGate";
 
 /**
  * Member wall middleware — ALL MWM platform-data endpoints require an
@@ -11,17 +12,21 @@ import { eq } from "drizzle-orm";
  *
  * Unauthenticated requests receive 401 — never an empty result set.
  *
- * Does NOT check approval status or membership tier; use requireTrust /
- * requireMembership for those higher-privilege gates.
+ * During the controlled rollout, a signed-in person also needs an explicit
+ * administrator approval. Store enrollment alone is not MWM access.
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  // Suspensions remove all persisted sessions at the lifecycle change. Keeping
-  // this member wall synchronous preserves public-route validation semantics
-  // and prevents a database availability fault from changing request errors.
+  if (isApprovalRequired() && !req.user?.approved) {
+    res.status(403).json({
+      error: "Your account is pending administrator approval.",
+      code: "ACCOUNT_APPROVAL_REQUIRED",
+    });
+    return;
+  }
   next();
 }
 
@@ -53,7 +58,11 @@ export async function requireApprovedMember(
       .where(eq(usersTable.id, userId))
       .limit(1);
 
-    if (!user?.approved || user.accountStatus === "suspended") {
+    if (
+      (isApprovalRequired() && !req.user?.approved) ||
+      !user?.approved ||
+      user.accountStatus === "suspended"
+    ) {
       res.status(403).json({
         error: "An approved community account is required to submit a business.",
         code: "ACCOUNT_APPROVAL_REQUIRED",

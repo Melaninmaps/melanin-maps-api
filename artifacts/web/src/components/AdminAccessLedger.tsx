@@ -54,6 +54,17 @@ function accessState(row: CurrentAccess): { label: string; className: string } {
   };
 }
 
+function parseTesterEmails(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split(/[\s,;]+/)
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export function AdminAccessLedger() {
   const [ledger, setLedger] = useState<AccessLedger | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +78,18 @@ export function AdminAccessLedger() {
   } | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [granting, setGranting] = useState(false);
+  const [bulkEmails, setBulkEmails] = useState("");
+  const [bulkSource, setBulkSource] = useState<
+    "testflight" | "android_test" | "admin_invite" | "website_test"
+  >("admin_invite");
+  const [bulkPreview, setBulkPreview] = useState<{
+    totalEmails: number;
+    willGrant: number;
+    willPend: number;
+    willSkip: number;
+  } | null>(null);
+  const [bulkPreviewing, setBulkPreviewing] = useState(false);
+  const [bulkApplying, setBulkApplying] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -193,6 +216,85 @@ export function AdminAccessLedger() {
     }
   };
 
+  const previewBulkEmails = async () => {
+    const emails = parseTesterEmails(bulkEmails);
+    if (emails.length === 0) {
+      setMessage("Paste or upload at least one tester email address first.");
+      return;
+    }
+    if (emails.length > 500) {
+      setMessage("Import at most 500 email addresses at a time.");
+      return;
+    }
+    setBulkPreviewing(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${BASE}api/admin/testers/dry-run`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails, accessSource: bulkSource }),
+      });
+      const payload = (await response.json()) as {
+        totalEmails?: number;
+        willGrant?: number;
+        willPend?: number;
+        willSkip?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error ?? "Could not preview tester import.");
+      setBulkPreview({
+        totalEmails: payload.totalEmails ?? emails.length,
+        willGrant: payload.willGrant ?? 0,
+        willPend: payload.willPend ?? 0,
+        willSkip: payload.willSkip ?? 0,
+      });
+    } catch (error) {
+      setBulkPreview(null);
+      setMessage(error instanceof Error ? error.message : "Could not preview tester import.");
+    } finally {
+      setBulkPreviewing(false);
+    }
+  };
+
+  const applyBulkEmails = async () => {
+    const emails = parseTesterEmails(bulkEmails);
+    if (!bulkPreview || emails.length === 0) return;
+    if (
+      !window.confirm(
+        `Grant full tester access to ${bulkPreview.totalEmails} email address${bulkPreview.totalEmails === 1 ? "" : "es"}? Existing accounts are approved now; people without accounts are pre-approved for their first registration. Each imported address is also recorded in the unified waitlist.`,
+      )
+    )
+      return;
+    setBulkApplying(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${BASE}api/admin/testers/apply`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails, accessSource: bulkSource }),
+      });
+      const payload = (await response.json()) as {
+        updated?: number;
+        pendingAdded?: number;
+        skipped?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error ?? "Could not grant tester access.");
+      setMessage(
+        `Tester access granted: ${payload.updated ?? 0} existing account${payload.updated === 1 ? "" : "s"} and ${payload.pendingAdded ?? 0} pre-approved email${payload.pendingAdded === 1 ? "" : "s"}. ${payload.skipped ?? 0} skipped.`,
+      );
+      setBulkPreview(null);
+      setBulkEmails("");
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not grant tester access.");
+    } finally {
+      setBulkApplying(false);
+    }
+  };
+
   return (
     <section>
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -287,6 +389,95 @@ export function AdminAccessLedger() {
               {granting
                 ? "Granting…"
                 : `Are you sure? Grant access to ${preview.eligible}`}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-[#3A1F0E]/15 bg-white p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#8D5C17]" />
+          <div>
+            <h3 className="font-semibold text-[#3A1F0E]">
+              Bulk tester access — paste or upload emails
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">
+              Import up to 500 addresses at once. Each is explicitly granted
+              full tester access without membership-tier limits, and is added to
+              the one unified waitlist with its source. Store enrollment does
+              not grant MWM access until you take this action.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_190px]">
+          <textarea
+            value={bulkEmails}
+            onChange={(event) => {
+              setBulkEmails(event.target.value);
+              setBulkPreview(null);
+            }}
+            placeholder="tester.one@example.com&#10;tester.two@example.com"
+            rows={6}
+            className="w-full rounded-xl border border-[#3A1F0E]/15 bg-[#FFFCF7] px-3 py-2 text-sm text-[#3A1F0E] outline-none focus:border-[#CA922B]"
+            aria-label="Tester emails to import"
+          />
+          <div className="space-y-3">
+            <label className="block text-xs font-bold uppercase tracking-wide text-[#3A1F0E]/60">
+              Access source
+              <select
+                value={bulkSource}
+                onChange={(event) => {
+                  setBulkSource(event.target.value as typeof bulkSource);
+                  setBulkPreview(null);
+                }}
+                className="mt-1 w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-medium text-[#3A1F0E] outline-none focus:border-[#CA922B]"
+              >
+                <option value="testflight">Apple TestFlight</option>
+                <option value="android_test">Google Play test</option>
+                <option value="admin_invite">Admin invite</option>
+                <option value="website_test">Website test</option>
+              </select>
+            </label>
+            <label className="block cursor-pointer rounded-xl border border-dashed border-[#CA922B]/60 px-3 py-2 text-center text-sm font-semibold text-[#8D5C17] hover:bg-[#CA922B]/[0.06]">
+              Upload .txt or .csv
+              <input
+                type="file"
+                accept=".txt,.csv,text/plain,text/csv"
+                className="sr-only"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setBulkEmails(await file.text());
+                  setBulkPreview(null);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => void previewBulkEmails()}
+              disabled={bulkPreviewing || parseTesterEmails(bulkEmails).length === 0}
+              className="w-full rounded-xl bg-[#2B1507] px-4 py-2 text-sm font-bold text-white hover:bg-[#3A1F0E] disabled:opacity-50"
+            >
+              {bulkPreviewing ? "Previewing…" : "Preview import"}
+            </button>
+          </div>
+        </div>
+        {bulkPreview && (
+          <div className="mt-4 rounded-xl border border-[#CA922B]/25 bg-[#CA922B]/[0.06] p-4">
+            <p className="font-semibold text-[#3A1F0E]">
+              {bulkPreview.totalEmails} unique email{bulkPreview.totalEmails === 1 ? "" : "s"} · {bulkPreview.willGrant} existing account{bulkPreview.willGrant === 1 ? "" : "s"} to grant · {bulkPreview.willPend} pre-approval{bulkPreview.willPend === 1 ? "" : "s"} to save · {bulkPreview.willSkip} skipped
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">
+              Preview is read-only. The next button is the one deliberate grant.
+            </p>
+            <button
+              type="button"
+              onClick={() => void applyBulkEmails()}
+              disabled={bulkApplying}
+              className="mt-3 rounded-xl bg-[#CA922B] px-4 py-2 text-sm font-bold text-white hover:bg-[#B77E1D] disabled:opacity-50"
+            >
+              {bulkApplying ? "Granting…" : "Grant full tester access"}
             </button>
           </div>
         )}

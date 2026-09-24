@@ -9,6 +9,10 @@ function source(relativePath: string): string {
 describe("unified waitlist and recovery contract", () => {
   const waitlistRoute = source("../waitlist.ts");
   const phoneAuthRoute = source("../phone-auth.ts");
+  const authRoute = source("../auth.ts");
+  const testerRoute = source("../admin-testers.ts");
+  const approvalGate = source("../../lib/approvalGate.ts");
+  const accessLedger = source("../../../../web/src/components/AdminAccessLedger.tsx");
   const schema = source("../../../../../lib/db/src/schema/waitlist.ts");
 
   it("keeps one email-keyed waitlist record and records only allowed join surfaces", () => {
@@ -43,6 +47,7 @@ describe("unified waitlist and recovery contract", () => {
     expect(waitlistRoute).toContain('"/admin/waitlist/reconcile-ios-registrations"');
     expect(waitlistRoute).toContain('signupSources: "ios"');
     expect(waitlistRoute).toContain("ADMIN_WAITLIST_IOS_RECONCILED");
+    expect(waitlistRoute).toContain('status: "pending"');
     expect(waitlistRoute).toContain("status = 'archived'");
     expect(waitlistRoute).toContain('"archived"');
     expect(waitlistRoute).not.toContain("DELETE FROM waitlist_signups WHERE id = $1");
@@ -54,5 +59,17 @@ describe("unified waitlist and recovery contract", () => {
     expect(phoneAuthRoute).toContain("!user || !user.phoneVerified");
     expect(phoneAuthRoute).toContain("verificationChecks.create");
     expect(phoneAuthRoute).toContain("passwordHash");
+  });
+
+  it("defaults to closed access and preserves a deliberate tester bypass ledger", () => {
+    expect(approvalGate).toContain('process.env.REQUIRE_APPROVAL !== "false"');
+    expect(authRoute).toContain("ensureAuthenticatedWaitlistRecord");
+    expect(authRoute).toContain('source: "ios"');
+    expect(authRoute).toContain("approved: false");
+    expect(phoneAuthRoute).toContain("APPROVED_EMAIL_REQUIRED");
+    expect(testerRoute).toContain("upsertApprovedTesterWaitlistRecord");
+    expect(testerRoute).toContain("approved = TRUE");
+    expect(accessLedger).toContain("Bulk tester access — paste or upload emails");
+    expect(accessLedger).toContain("Upload .txt or .csv");
   });
 });

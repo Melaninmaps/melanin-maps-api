@@ -17,20 +17,23 @@ import {
 // when many concurrent requests arrive from the same session (e.g. app startup burst).
 const renewalThrottle = new Map<string, number>();
 
-// In-memory role+isLoadTest cache: userId → { role, isLoadTest, cachedAt }.
-// Reduces pool pressure during coordinated arrival bursts (e.g. 30 simultaneous
-// logins) by serving the per-request DB lookup from memory for 60 s per user.
-// Cache is bypassed when a role change is detected so promotions take effect
-// within at most 60 s rather than immediately — acceptable for role changes,
-// which are rare and never happen mid-session for normal users.
-const ROLE_CACHE_TTL_MS = 60_000;
-interface RoleCache { role: string; isLoadTest: boolean; cachedAt: number }
+// The cache is intentionally short. A founder approval, tester grant, archive,
+// or suspension must take effect on an existing session promptly rather than
+// requiring a re-login or a long polling interval.
+const ROLE_CACHE_TTL_MS = 5_000;
+interface RoleCache {
+  role: string;
+  isLoadTest: boolean;
+  approved: boolean;
+  cachedAt: number;
+}
 const roleCache = new Map<string, RoleCache>();
 
 declare global {
   namespace Express {
     interface User extends AuthUser {
       role: "user" | "tester" | "admin";
+      approved: boolean;
     }
 
     interface Request {
@@ -133,10 +136,11 @@ export async function authMiddleware(
     return;
   }
 
-  // Re-read role + is_load_test from DB so role promotions take effect without
-  // requiring re-login. Results are cached per userId for 60 s to reduce pool
-  // pressure during burst arrivals (e.g. 30 simultaneous logins). Role changes
-  // invalidate the cache entry immediately; load-test flag is stable.
+  // Re-read effective access from the source of truth so a waitlist approval,
+  // tester grant, archival, or suspension takes effect for existing sessions.
+  // An account is admitted only when the founder has approved it AND it has an
+  // approved waitlist record, an active tester entitlement, or administrator
+  // role. This keeps App Store/Play enrollment separate from MWM access.
   try {
     const userId = refreshed.user.id;
     const cached = roleCache.get(userId);
@@ -144,34 +148,75 @@ export async function authMiddleware(
 
     let freshRole: string | undefined;
     let freshIsLoadTest: boolean | undefined;
+    let freshApproved: boolean | undefined;
 
     if (cacheHit) {
       freshRole = cached.role;
       freshIsLoadTest = cached.isLoadTest;
+      freshApproved = cached.approved;
     } else {
-      const freshRes = await pool.query<{ role: string; is_load_test: boolean }>(
-        "SELECT role, is_load_test FROM users WHERE id = $1 LIMIT 1",
+      const freshRes = await pool.query<{
+        role: string;
+        is_load_test: boolean;
+        approved: boolean;
+      }>(
+        `SELECT u.role,
+                u.is_load_test,
+                (
+                  COALESCE(u.approved, false)
+                  AND (
+                    u.role = 'admin'
+                    OR (
+                      u.tester_status = 'active'
+                      AND (u.testing_entitlement_ends_at IS NULL OR u.testing_entitlement_ends_at > NOW())
+                    )
+                    OR EXISTS (
+                      SELECT 1
+                      FROM waitlist_signups w
+                      WHERE LOWER(TRIM(w.email)) = LOWER(TRIM(u.email))
+                        AND w.status = 'approved'
+                    )
+                  )
+                ) AS approved
+           FROM users u
+          WHERE u.id = $1
+          LIMIT 1`,
         [userId],
       );
       const row = freshRes.rows[0];
       if (row) {
         freshRole = row.role;
         freshIsLoadTest = row.is_load_test ?? false;
-        roleCache.set(userId, { role: freshRole, isLoadTest: freshIsLoadTest, cachedAt: Date.now() });
+        freshApproved = row.approved === true;
+        roleCache.set(userId, {
+          role: freshRole,
+          isLoadTest: freshIsLoadTest,
+          approved: freshApproved,
+          cachedAt: Date.now(),
+        });
       }
     }
 
     if (freshRole) {
       const roleChanged = freshRole !== refreshed.user.role;
+      const approvalChanged =
+        freshApproved !== undefined && freshApproved !== refreshed.user.approved;
       if (roleChanged) {
         refreshed.user.role = freshRole as "user" | "tester" | "admin";
-        roleCache.set(userId, { role: freshRole, isLoadTest: freshIsLoadTest ?? false, cachedAt: Date.now() });
+      }
+      if (freshApproved !== undefined) {
+        refreshed.user.approved = freshApproved;
       }
       refreshed.user.isLoadTest = freshIsLoadTest ?? false;
-      if (roleChanged || refreshed.user.isLoadTest) await updateSession(sid, refreshed);
+      if (roleChanged || approvalChanged || refreshed.user.isLoadTest) {
+        await updateSession(sid, refreshed);
+      }
     }
   } catch {
-    // If DB lookup fails, serve the existing session role rather than blocking the request
+    // Closed rollout policy: a database failure must never turn a stale session
+    // into access. Keep the stored session intact for recovery, but deny this
+    // request until the authoritative waitlist/tester check succeeds.
+    refreshed.user.approved = false;
   }
 
   req.user = refreshed.user;

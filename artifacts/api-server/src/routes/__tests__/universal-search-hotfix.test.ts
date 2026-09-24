@@ -29,7 +29,7 @@ function createApp(options: { authenticated?: boolean; isTester?: boolean; log?:
   const app = express();
   app.use((request: Request, _response: Response, next: NextFunction) => {
     request.isAuthenticated = (() => authenticated) as any;
-    if (authenticated) request.user = { id: "member-1", isTester } as any;
+    if (authenticated) request.user = { id: "member-1", isTester, approved: true } as any;
     request.log = log as any;
     next();
   });
