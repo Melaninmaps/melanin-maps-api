@@ -41,6 +41,9 @@ import {
   BookOpen,
   AlertCircle,
   Eye,
+  Archive,
+  RotateCcw,
+  MapPinned,
 } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
@@ -108,6 +111,13 @@ type AdminBusiness = {
   phone: string | null;
   website: string | null;
   createdAt: string;
+  hasMapPin: boolean;
+  hasStreetAddress: boolean;
+  dataSource: string | null;
+  researchSourceLabel: string | null;
+  researchSourceUrl: string | null;
+  kinfolkRecommendationReason: string | null;
+  intakeBatchReference: string | null;
   outreach: {
     businessId: string;
     status: string;
@@ -710,6 +720,17 @@ export default function Admin() {
   const [bizStatusFilter, setBizStatusFilter] = useState<
     "all" | "permanently_closed" | "needs_review" | "archived"
   >("all");
+  const [bizCityFilter, setBizCityFilter] = useState("all");
+  const [bizCategoryFilter, setBizCategoryFilter] = useState("all");
+  const [bizAddedFrom, setBizAddedFrom] = useState("");
+  const [bizAddedTo, setBizAddedTo] = useState("");
+  const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [bulkBusinessUpdating, setBulkBusinessUpdating] = useState(false);
+  const [businessInventoryIsTruncated, setBusinessInventoryIsTruncated] =
+    useState(false);
+  const [businessInventoryLimit, setBusinessInventoryLimit] = useState(10_000);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -892,6 +913,10 @@ export default function Admin() {
       .then((r) => r.json())
       .then((data) => {
         setBusinesses(data.businesses ?? []);
+        setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
+        setBusinessInventoryLimit(
+          typeof data.inventoryLimit === "number" ? data.inventoryLimit : 10_000,
+        );
         setLastRefreshed(new Date());
       });
   }, []);
@@ -1515,6 +1540,12 @@ export default function Admin() {
       return false;
     if (bizStatusFilter === "archived" && b.listingStatus !== "archived")
       return false;
+    if (bizCityFilter !== "all" && b.city !== bizCityFilter) return false;
+    if (bizCategoryFilter !== "all" && b.category !== bizCategoryFilter)
+      return false;
+    const addedOn = b.createdAt ? new Date(b.createdAt).toISOString().slice(0, 10) : "";
+    if (bizAddedFrom && (!addedOn || addedOn < bizAddedFrom)) return false;
+    if (bizAddedTo && (!addedOn || addedOn > bizAddedTo)) return false;
     if (!bizSearch) return true;
     const q = bizSearch.toLowerCase();
     return (
@@ -1530,6 +1561,78 @@ export default function Admin() {
   const archivedCount = businesses.filter(
     (b) => b.listingStatus === "archived",
   ).length;
+  const inventoryCities = Array.from(
+    new Set(businesses.map((b) => b.city).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b));
+  const inventoryCategories = Array.from(
+    new Set(businesses.map((b) => b.category).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b));
+  const archivableFilteredBiz = filteredBiz.filter(
+    (b) => b.listingStatus !== "archived",
+  );
+  const selectedVisibleBusinessCount = filteredBiz.filter((b) =>
+    selectedBusinessIds.has(b.id),
+  ).length;
+
+  const clearBusinessFilters = () => {
+    setBizSearch("");
+    setBizStatusFilter("all");
+    setBizCityFilter("all");
+    setBizCategoryFilter("all");
+    setBizAddedFrom("");
+    setBizAddedTo("");
+    setSelectedBusinessIds(new Set());
+  };
+
+  const toggleBusinessSelection = (id: string) => {
+    setSelectedBusinessIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllArchivableFilteredBusinesses = () => {
+    setSelectedBusinessIds(new Set(archivableFilteredBiz.map((business) => business.id)));
+  };
+
+  const archiveSelectedBusinesses = async () => {
+    const ids = [...selectedBusinessIds].filter((id) =>
+      archivableFilteredBiz.some((business) => business.id === id),
+    );
+    if (ids.length === 0) return;
+    const reason = window.prompt(
+      `Why should these ${ids.length} business profile${ids.length === 1 ? "" : "s"} be removed from public discovery? This is reversible. Their profiles, research, source links, Kinfolk context, media, and audit history remain preserved.`,
+    )?.trim();
+    if (!reason) return;
+    if (
+      !window.confirm(
+        `Remove ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} from public search, Kinfolk, and the map? This archives—not deletes—them.`,
+      )
+    )
+      return;
+    setBulkBusinessUpdating(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/businesses/listing-status`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, listingStatus: "archived", reason }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The selected listings could not be archived.");
+        return;
+      }
+      setSelectedBusinessIds(new Set());
+      await loadBusinesses();
+    } catch {
+      window.alert("The selected listings could not be archived. Please try again.");
+    } finally {
+      setBulkBusinessUpdating(false);
+    }
+  };
 
   // ── Waitlist analytics (all computed client-side) ─────────────────────────
   const referralCounts: Record<string, number> = {};
@@ -3192,23 +3295,46 @@ export default function Admin() {
           </div>
         ) : tab !== "reviews" ? (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
-                Businesses ({businesses.length})
+            <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#CA922B]">
+                  Business inventory
+                </p>
+                <h2 className="mt-1 text-2xl font-serif font-bold text-[#3A1F0E]">
+                  All businesses ({businesses.length.toLocaleString()})
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm text-[#3A1F0E]/60">
+                  Filter the full inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context.
+                </p>
                 {contactedCount > 0 && (
-                  <span className="ml-3 text-sm font-sans font-normal text-[#3A1F0E]/50">
-                    {contactedCount} outreach sent
-                  </span>
+                  <p className="mt-1 text-xs text-[#3A1F0E]/45">
+                    {contactedCount.toLocaleString()} businesses have outreach history.
+                  </p>
                 )}
-              </h2>
-              <input
-                type="text"
-                value={bizSearch}
-                onChange={(e) => setBizSearch(e.target.value)}
-                placeholder="Search by name, city, category…"
-                className="border border-[#3A1F0E]/15 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#CA922B] w-64 bg-white"
-              />
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  value={bizSearch}
+                  onChange={(e) => setBizSearch(e.target.value)}
+                  placeholder="Search name, city, or service"
+                  className="w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] sm:w-72"
+                />
+                <button
+                  type="button"
+                  onClick={clearBusinessFilters}
+                  className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2.5 text-sm font-semibold text-[#3A1F0E]/65 transition-colors hover:border-[#CA922B]/50 hover:text-[#3A1F0E]"
+                >
+                  Clear filters
+                </button>
+              </div>
             </div>
+
+            {businessInventoryIsTruncated && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                This inventory has more than {businessInventoryLimit.toLocaleString()} businesses. Narrow a city or service filter before making a bulk decision.
+              </div>
+            )}
 
             {/* Status filter tabs */}
             <div className="flex flex-wrap gap-2 mb-4">
@@ -3252,6 +3378,53 @@ export default function Admin() {
               ))}
             </div>
 
+            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-4">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                City
+                <select
+                  value={bizCityFilter}
+                  onChange={(event) => setBizCityFilter(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                >
+                  <option value="all">All cities</option>
+                  {inventoryCities.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Service / category
+                <select
+                  value={bizCategoryFilter}
+                  onChange={(event) => setBizCategoryFilter(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                >
+                  <option value="all">All services</option>
+                  {inventoryCategories.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Added on or after
+                <input
+                  type="date"
+                  value={bizAddedFrom}
+                  onChange={(event) => setBizAddedFrom(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                />
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Added on or before
+                <input
+                  type="date"
+                  value={bizAddedTo}
+                  onChange={(event) => setBizAddedTo(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                />
+              </label>
+            </div>
+
             {bizStatusFilter === "permanently_closed" && (
               <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
                 <strong>Action needed:</strong> These businesses were marked
@@ -3269,11 +3442,32 @@ export default function Admin() {
               </div>
             )}
 
-            <div className="mb-4 bg-[#2B1507]/5 border border-[#2B1507]/10 rounded-xl px-4 py-3 text-sm text-[#3A1F0E]/70">
-              <strong className="text-[#3A1F0E]">How to use:</strong> Find a
-              business, click <strong>Send Outreach</strong>, enter their email
-              address, and they'll receive an invitation to claim their profile.
-              Each outreach is logged so you can track who's been contacted.
+            <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[#2B1507]/10 bg-[#2B1507]/5 px-4 py-3 text-sm text-[#3A1F0E]/70 md:flex-row md:items-center md:justify-between">
+              <div>
+                <strong className="text-[#3A1F0E]">{filteredBiz.length.toLocaleString()} filtered results.</strong>{" "}
+                Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration.
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={selectAllArchivableFilteredBusinesses}
+                  disabled={archivableFilteredBiz.length === 0}
+                  className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Select filtered ({archivableFilteredBiz.length.toLocaleString()})
+                </button>
+                <button
+                  type="button"
+                  onClick={archiveSelectedBusinesses}
+                  disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#7A2637] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#641E2E] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  {bulkBusinessUpdating
+                    ? "Archiving…"
+                    : `Archive selected (${selectedVisibleBusinessCount})`}
+                </button>
+              </div>
             </div>
 
             {filteredBiz.length === 0 ? (
@@ -3286,10 +3480,25 @@ export default function Admin() {
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-[#3A1F0E]/10 bg-white">
+                <table className="min-w-[1160px] w-full text-sm">
                   <thead>
                     <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="w-10 px-3 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all visible public listings"
+                          checked={
+                            archivableFilteredBiz.length > 0 &&
+                            archivableFilteredBiz.every((business) => selectedBusinessIds.has(business.id))
+                          }
+                          onChange={(event) => {
+                            if (event.target.checked) selectAllArchivableFilteredBusinesses();
+                            else setSelectedBusinessIds(new Set());
+                          }}
+                          className="h-4 w-4 accent-[#CA922B]"
+                        />
+                      </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Business
                       </th>
@@ -3298,6 +3507,9 @@ export default function Admin() {
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Tags
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                        Added &amp; research
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Contact
@@ -3314,8 +3526,18 @@ export default function Admin() {
                     {filteredBiz.map((biz, i) => (
                       <tr
                         key={biz.id}
-                        className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
+                        className={`border-b border-[#3A1F0E]/5 transition-colors hover:bg-[#FAF6EF]/50 ${selectedBusinessIds.has(biz.id) ? "bg-[#CA922B]/10" : i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
                       >
+                        <td className="px-3 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${biz.name}`}
+                            checked={selectedBusinessIds.has(biz.id)}
+                            disabled={biz.listingStatus === "archived"}
+                            onChange={() => toggleBusinessSelection(biz.id)}
+                            className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-30"
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <div className="font-semibold text-[#3A1F0E]">
                             {biz.name}
@@ -3328,6 +3550,15 @@ export default function Admin() {
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 text-[#CA922B] shrink-0" />
                             {biz.city}, {biz.state}
+                          </div>
+                          <div className="mt-1 flex items-center gap-1 text-[11px] text-[#3A1F0E]/45">
+                            {biz.hasMapPin ? (
+                              <><MapPinned className="h-3 w-3 text-green-600" /> Address-backed pin</>
+                            ) : biz.hasStreetAddress ? (
+                              "Address saved — pin unavailable"
+                            ) : (
+                              "Directory profile — no pin"
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -3359,6 +3590,22 @@ export default function Admin() {
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td className="max-w-[220px] px-4 py-3 text-xs text-[#3A1F0E]/60">
+                          <div className="font-medium text-[#3A1F0E]">
+                            {new Date(biz.createdAt).toLocaleDateString()}
+                          </div>
+                          {(biz.intakeBatchReference || biz.researchSourceLabel || biz.dataSource) && (
+                            <div className="mt-1 line-clamp-2">
+                              {biz.intakeBatchReference && <span>{biz.intakeBatchReference} · </span>}
+                              {biz.researchSourceLabel ?? biz.dataSource}
+                            </div>
+                          )}
+                          {biz.kinfolkRecommendationReason && (
+                            <div className="mt-1 line-clamp-2 text-[#3A1F0E]/45" title={biz.kinfolkRecommendationReason}>
+                              Kinfolk context: {biz.kinfolkRecommendationReason}
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
                           {biz.phone && (
@@ -3394,7 +3641,7 @@ export default function Admin() {
                               }
                               className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                             >
-                              ✏️ Edit
+                              Edit profile
                             </button>
                             {biz.listingStatus !== "archived" ? (
                               <button
@@ -3433,7 +3680,8 @@ export default function Admin() {
                                 }}
                                 className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
-                                📦 Remove from public discovery
+                                <Archive className="h-3.5 w-3.5" />
+                                Archive from public discovery
                               </button>
                             ) : (
                               <button
@@ -3466,7 +3714,8 @@ export default function Admin() {
                                 }}
                                 className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 border border-green-200 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
-                                ♻️ Restore public listing
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                Restore public listing
                               </button>
                             )}
                           </div>

@@ -130,6 +130,13 @@ export const businessesTable = pgTable("businesses", {
   duplicateOfId: varchar("duplicate_of_id"),
   permanentlyHidden: boolean("permanently_hidden").notNull().default(false),
   dataSource: varchar("data_source", { length: 100 }),
+  // Internal intake provenance. These values remain available to administrators
+  // after an entry is archived, so a reversible duplicate cleanup never loses
+  // the research context used to add or recommend the business.
+  researchSourceLabel: varchar("research_source_label", { length: 255 }),
+  researchSourceUrl: text("research_source_url"),
+  kinfolkRecommendationReason: text("kinfolk_recommendation_reason"),
+  intakeBatchReference: varchar("intake_batch_reference", { length: 255 }),
   // Community-provided audience type (limited options, set during submission or community edit)
   // Values: all_ages | family_friendly | adults_18plus | adults_21plus | unknown
   communityAudienceType: varchar("community_audience_type", { length: 30 }).notNull().default("unknown"),

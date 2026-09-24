@@ -6300,6 +6300,13 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "business public-discovery removal audit v1",
       () => ensureBusinessListingStatusAuditSchema(log, warn),
     ],
+    // ── Admin intake provenance and full-inventory filters ─────────────────
+    // A source/batch/rationale survives an archive so duplicate cleanup is
+    // reversible without re-researching a business.
+    [
+      "business intake provenance v1",
+      () => ensureBusinessIntakeMetadataSchema(log, warn),
+    ],
     // ── Completed cohort directory-only discovery audit ────────────────────
     // Allows receipt-backed records without verified coordinates to be searched
     // as public listings. The table records every idempotent activation without
@@ -16923,6 +16930,36 @@ async function ensureBusinessListingStatusAuditSchema(
   } catch (err: unknown) {
     warn(
       `ensureBusinessListingStatusAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+// ── Administrator intake provenance ──────────────────────────────────────────
+// Records the source and the supplied Kinfolk recommendation context on the
+// business itself. Archive operations intentionally leave these fields intact,
+// allowing administrators to restore the correct researched listing instead of
+// recreating it after a duplicate review.
+async function ensureBusinessIntakeMetadataSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    for (const statement of [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS research_source_label VARCHAR(255)`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS research_source_url TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS kinfolk_recommendation_reason TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS intake_batch_reference VARCHAR(255)`,
+    ]) {
+      await pool.query(statement);
+    }
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_admin_inventory_filter_idx
+        ON businesses (city, category, created_at DESC)
+    `);
+    log("ensureBusinessIntakeMetadataSchema: provenance and inventory filters ready");
+  } catch (err: unknown) {
+    warn(
+      `ensureBusinessIntakeMetadataSchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }

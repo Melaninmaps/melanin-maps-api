@@ -97,6 +97,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     return;
   }
   try {
+    // This is an administrator-only inventory view, not an approval queue.
+    // Use a deliberately high bounded page so the city/service/date filters can
+    // review the current full operating inventory without silently omitting the
+    // older records that are most likely to be duplicate candidates.
+    const INVENTORY_PAGE_LIMIT = 10_000;
     const businesses = await pool.query<{
       id: string;
       name: string;
@@ -112,15 +117,27 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       created_at: string;
       needs_verification: boolean;
       enrichment_note: string | null;
+      address: string | null;
+      latitude: string | null;
+      longitude: string | null;
+      data_source: string | null;
+      research_source_label: string | null;
+      research_source_url: string | null;
+      kinfolk_recommendation_reason: string | null;
+      intake_batch_reference: string | null;
     }>(
       `SELECT id, name, category, city, state, verified, black_owned, status,
               listing_status, phone, website, created_at,
-              needs_verification, enrichment_note
+              needs_verification, enrichment_note, address, latitude, longitude,
+              data_source, research_source_label, research_source_url,
+              kinfolk_recommendation_reason, intake_batch_reference
        FROM businesses
        ORDER BY created_at DESC
-       LIMIT 500`,
+       LIMIT ${INVENTORY_PAGE_LIMIT + 1}`,
     );
-    const bizRows = businesses.rows.map((b) => ({
+    const inventoryIsTruncated = businesses.rows.length > INVENTORY_PAGE_LIMIT;
+    const inventoryRows = businesses.rows.slice(0, INVENTORY_PAGE_LIMIT);
+    const bizRows = inventoryRows.map((b) => ({
       id: b.id,
       name: b.name,
       category: b.category,
@@ -134,6 +151,19 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       website: b.website,
       createdAt: b.created_at,
       needsVerification: b.needs_verification,
+      hasMapPin:
+        b.latitude !== null &&
+        b.longitude !== null &&
+        Number.isFinite(Number(b.latitude)) &&
+        Number.isFinite(Number(b.longitude)) &&
+        Number(b.latitude) !== 0 &&
+        Number(b.longitude) !== 0,
+      hasStreetAddress: Boolean(b.address?.trim()),
+      dataSource: b.data_source,
+      researchSourceLabel: b.research_source_label,
+      researchSourceUrl: b.research_source_url,
+      kinfolkRecommendationReason: b.kinfolk_recommendation_reason,
+      intakeBatchReference: b.intake_batch_reference,
       permanentlyClosed:
         b.enrichment_note?.toLowerCase().includes("permanently closed") ??
         false,
@@ -161,10 +191,155 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       outreach: outreachByBusiness.get(b.id) ?? null,
     }));
 
-    res.json({ businesses: result });
+    res.json({
+      businesses: result,
+      inventoryLimit: INVENTORY_PAGE_LIMIT,
+      inventoryIsTruncated,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch admin businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
+  }
+});
+
+// PATCH /admin/businesses/listing-status — archive or restore an explicit set
+// of selected rows. This is the same audited, reversible public-discovery state
+// change as the single-record route below; it intentionally never deletes rows,
+// source evidence, recommendation context, media, or contributor data.
+router.patch("/admin/businesses/listing-status", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { ids, listingStatus, reason } = req.body as {
+    ids?: unknown;
+    listingStatus?: unknown;
+    reason?: unknown;
+  };
+  const uniqueIds = Array.isArray(ids)
+    ? [...new Set(ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  if (uniqueIds.length === 0 || uniqueIds.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 businesses." });
+    return;
+  }
+  const ALLOWED = ["live_unclaimed", "live_claimed", "archived", "staged"];
+  if (typeof listingStatus !== "string" || !ALLOWED.includes(listingStatus)) {
+    res.status(400).json({ error: `listingStatus must be one of: ${ALLOWED.join(", ")}` });
+    return;
+  }
+  const normalizedReason = typeof reason === "string" ? reason.trim() : "";
+  if (normalizedReason.length < 3 || normalizedReason.length > 1_000) {
+    res.status(400).json({
+      error: "A 3–1,000 character administrator reason is required to remove or restore listings.",
+    });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const currentResult = await client.query<{
+      id: string;
+      name: string;
+      listing_status: string | null;
+      status: string;
+      promotion_eligible: boolean;
+      featured: boolean;
+      promoted_until: string | null;
+    }>(
+      `SELECT id, name, listing_status, status, promotion_eligible, featured, promoted_until
+         FROM businesses
+        WHERE id = ANY($1::text[])
+        FOR UPDATE`,
+      [uniqueIds],
+    );
+    if (currentResult.rows.length !== uniqueIds.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected businesses were not found." });
+      return;
+    }
+
+    const removing = listingStatus === "archived";
+    for (const current of currentResult.rows) {
+      const beforeState = {
+        listingStatus: current.listing_status,
+        status: current.status,
+        promotionEligible: current.promotion_eligible,
+        featured: current.featured,
+        promotedUntil: current.promoted_until,
+      };
+      let restoredFrom: typeof beforeState | null = null;
+      if (!removing) {
+        const removalAudit = await client.query<{ before_state: typeof beforeState }>(
+          `SELECT before_state
+             FROM business_listing_status_audit_events
+            WHERE business_id = $1 AND action = 'remove_public_discovery'
+            ORDER BY created_at DESC
+            LIMIT 1`,
+          [current.id],
+        );
+        restoredFrom = removalAudit.rows[0]?.before_state ?? null;
+      }
+      const nextState = removing
+        ? {
+            listingStatus: "archived",
+            status: "suspended",
+            promotionEligible: false,
+            featured: false,
+            promotedUntil: null,
+          }
+        : {
+            listingStatus,
+            status: restoredFrom?.status ?? "active",
+            promotionEligible: restoredFrom?.promotionEligible ?? current.promotion_eligible,
+            featured: restoredFrom?.featured ?? false,
+            promotedUntil: restoredFrom?.promotedUntil ?? null,
+          };
+      await client.query(
+        `UPDATE businesses
+            SET listing_status = $1,
+                status = $2,
+                promotion_eligible = $3,
+                featured = $4,
+                promoted_until = $5,
+                updated_at = NOW()
+          WHERE id = $6`,
+        [
+          nextState.listingStatus,
+          nextState.status,
+          nextState.promotionEligible,
+          nextState.featured,
+          nextState.promotedUntil,
+          current.id,
+        ],
+      );
+      await client.query(
+        `INSERT INTO business_listing_status_audit_events
+           (id, business_id, action, actor_user_id, reason, before_state, after_state)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
+        [
+          current.id,
+          removing ? "remove_public_discovery" : "restore_public_discovery",
+          req.user?.id ?? null,
+          normalizedReason,
+          JSON.stringify(beforeState),
+          JSON.stringify(nextState),
+        ],
+      );
+    }
+    await client.query("COMMIT");
+    req.log?.info(
+      { selectedCount: uniqueIds.length, listingStatus, action: removing ? "remove" : "restore" },
+      "Admin completed audited bulk business public-discovery status change",
+    );
+    res.json({ ok: true, selectedCount: uniqueIds.length, listingStatus, action: removing ? "removed" : "restored" });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log?.error({ err }, "Failed to bulk update business listing_status");
+    res.status(500).json({ error: "Failed to update selected businesses." });
+  } finally {
+    client.release();
   }
 });
 

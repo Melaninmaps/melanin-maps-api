@@ -4,6 +4,11 @@
 dist
 !dist/
 !dist/**
+# Railway compiles this API entry point during deployment. It must never be
+# committed, or a stale generated bundle can overwrite the fresh build.
+artifacts/api-server/dist/index.mjs
+artifacts/api-server/dist/index.mjs.map
+artifacts/api-server/dist/BUILD_IDENTITY
 tmp
 out-tsc
 *.tsbuildinfo

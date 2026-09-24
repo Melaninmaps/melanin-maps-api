@@ -75,6 +75,8 @@ export type GovernedKinfolkBusiness = Readonly<{
   amenityTags: string[];
   /** Server-derived evidence for why this record matched the requested service. */
   matchReasons: string[];
+  /** Administrator-supplied, source-backed context for a future recommendation. */
+  recommendationContext?: string | null;
   /** Non-destructive identity evidence retained when likely duplicates are suppressed. */
   identityReasons: string[];
 }>;
@@ -129,6 +131,7 @@ type BusinessRow = {
   audience_type: unknown;
   environment_tags: unknown;
   amenity_tags: unknown;
+  kinfolk_recommendation_reason: unknown;
 };
 
 type MapPlaceRow = {
@@ -215,7 +218,8 @@ const CANONICAL_SELECT = `
   COALESCE(bi.growth_goals, '[]'::jsonb) AS growth_goals,
   bi.audience_type,
   COALESCE(bi.environment_tags, '[]'::jsonb) AS environment_tags,
-  COALESCE(bi.amenity_tags, '[]'::jsonb) AS amenity_tags`;
+  COALESCE(bi.amenity_tags, '[]'::jsonb) AS amenity_tags,
+  b.kinfolk_recommendation_reason`;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
@@ -289,6 +293,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     environmentTags: stringArray(row.environment_tags),
     amenityTags: stringArray(row.amenity_tags),
     matchReasons: [],
+    recommendationContext: nullableText(row.kinfolk_recommendation_reason),
     identityReasons: [],
   };
 }
