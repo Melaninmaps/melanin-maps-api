@@ -39,6 +39,15 @@ describe("unified waitlist and recovery contract", () => {
     expect(waitlistRoute).toContain("filterCity");
   });
 
+  it("keeps App Store registrations in the same source-labelled waitlist and archives rather than deletes entries", () => {
+    expect(waitlistRoute).toContain('"/admin/waitlist/reconcile-ios-registrations"');
+    expect(waitlistRoute).toContain('signupSources: "ios"');
+    expect(waitlistRoute).toContain("ADMIN_WAITLIST_IOS_RECONCILED");
+    expect(waitlistRoute).toContain("status = 'archived'");
+    expect(waitlistRoute).toContain('"archived"');
+    expect(waitlistRoute).not.toContain("DELETE FROM waitlist_signups WHERE id = $1");
+  });
+
   it("permits phone password recovery only for an already verified phone", () => {
     expect(phoneAuthRoute).toContain('"/auth/phone/forgot-password/send"');
     expect(phoneAuthRoute).toContain('"/auth/phone/reset-password"');

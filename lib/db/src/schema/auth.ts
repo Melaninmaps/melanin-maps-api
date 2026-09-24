@@ -35,6 +35,17 @@ export const usersTable = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   pushToken: varchar("push_token"),
   approved: boolean("approved").notNull().default(false),
+  // Administrators may hide or suspend an account without deleting its record,
+  // contributions, or consent history. Hidden accounts are omitted from the
+  // normal Admin presentation view; suspended accounts are also denied access.
+  accountStatus: varchar("account_status", {
+    enum: ["active", "hidden", "suspended"],
+  })
+    .notNull()
+    .default("active"),
+  lifecycleUpdatedAt: timestamp("lifecycle_updated_at", { withTimezone: true }),
+  lifecycleUpdatedBy: varchar("lifecycle_updated_by"),
+  lifecycleReason: varchar("lifecycle_reason", { length: 500 }),
   role: varchar("role", { enum: ["user", "tester", "admin"] })
     .notNull()
     .default("user"),

@@ -508,7 +508,7 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10) || 1);
     const pageSize = Math.min(200, Math.max(1, parseInt(String(req.query.pageSize ?? "50"), 10) || 50));
     const statusFilter = String(req.query.status ?? "");
-    const allowed = ["pending", "approved", "rejected"];
+    const allowed = ["pending", "approved", "rejected", "archived"];
     const filterByStatus = allowed.includes(statusFilter) ? statusFilter : null;
     const syntheticFilter = String(req.query.synthetic ?? "people");
     const showingSynthetic = syntheticFilter === "only";
@@ -587,7 +587,7 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
   }
   const id = String(req.params.id);
   const { status, notes } = req.body as { status?: string; notes?: string };
-  const allowed = ["pending", "approved", "rejected"];
+  const allowed = ["pending", "approved", "rejected", "archived"];
   if (status && !allowed.includes(status)) {
     res.status(400).json({ error: "Invalid status" });
     return;
@@ -639,10 +639,10 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
   }
 });
 
-// ── Admin: remove an unconverted test/signup record ───────────────────────────
-// This intentionally refuses to delete an account, sessions, or pre-launch
-// submissions. Member-account deletion remains an explicit action in the
-// Registered Users tab, where the administrator sees the separate warning.
+// ── Admin: archive an unconverted test/signup record ──────────────────────────
+// This preserves the complete record and its provenance while removing it from
+// the normal active view. It intentionally never deletes an account, session,
+// or contribution.
 router.delete("/admin/waitlist/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -689,12 +689,75 @@ router.delete("/admin/waitlist/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    await pool.query(`DELETE FROM waitlist_signups WHERE id = $1`, [entry.id]);
-    req.log.info({ event: "ADMIN_WAITLIST_ENTRY_REMOVED", waitlistEntryId: entry.id, by: req.user?.id }, "standalone waitlist entry removed");
-    res.json({ deleted: true, id: entry.id });
+    await pool.query(
+      `UPDATE waitlist_signups
+          SET status = 'archived', approved_at = NULL,
+              notes = CONCAT_WS(E'\n', notes, $2)
+        WHERE id = $1`,
+      [entry.id, `Archived by administrator on ${new Date().toISOString()}`],
+    );
+    req.log.info({ event: "ADMIN_WAITLIST_ENTRY_ARCHIVED", waitlistEntryId: entry.id, by: req.user?.id }, "standalone waitlist entry archived");
+    res.json({ archived: true, id: entry.id });
   } catch (err) {
     req.log.error({ err }, "Failed to remove standalone waitlist entry");
     res.status(500).json({ error: "Failed to remove waitlist entry." });
+  }
+});
+
+// ── Admin: reconcile earlier iOS App Store registrations ─────────────────────
+// Apple Sign-In accounts created before source-aware waitlist joining existed
+// never received an entry. This creates or annotates one email-keyed record per
+// real iOS account; it does not delete, duplicate, or revive archived records.
+router.post("/admin/waitlist/reconcile-ios-registrations", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    const accounts = await pool.query<{
+      email: string;
+      first_name: string | null;
+      last_name: string | null;
+    }>(
+      `SELECT email, first_name, last_name
+         FROM users
+        WHERE apple_id IS NOT NULL
+          AND email IS NOT NULL
+          AND email NOT LIKE '%@melaninmaps.internal'
+          AND COALESCE(account_status, 'active') <> 'suspended'`,
+    );
+    let created = 0;
+    let annotated = 0;
+    for (const account of accounts.rows) {
+      const email = account.email.toLowerCase().trim();
+      const [existing] = await db
+        .select({ id: waitlistTable.id, signupSources: waitlistTable.signupSources })
+        .from(waitlistTable)
+        .where(eq(waitlistTable.email, email))
+        .limit(1);
+      if (existing) {
+        const nextSources = appendWaitlistSignupSource(existing.signupSources, "ios");
+        if (nextSources !== existing.signupSources) {
+          await db.update(waitlistTable).set({ signupSources: nextSources }).where(eq(waitlistTable.id, existing.id));
+          annotated++;
+        }
+      } else {
+        await db.insert(waitlistTable).values({
+          email,
+          firstName: account.first_name,
+          lastName: account.last_name,
+          status: "approved",
+          approvedAt: new Date(),
+          signupSources: "ios",
+        });
+        created++;
+      }
+    }
+    req.log.info({ event: "ADMIN_WAITLIST_IOS_RECONCILED", created, annotated, by: req.user?.id }, "reconciled iOS registrations into unified waitlist");
+    res.json({ created, annotated, scanned: accounts.rows.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to reconcile iOS registrations into waitlist");
+    res.status(500).json({ error: "Failed to reconcile iOS registrations." });
   }
 });
 
@@ -764,7 +827,7 @@ router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
     const searchParam = String(req.query.search ?? "").trim().toLowerCase();
     const cityParam = String(req.query.city ?? "").trim().toLowerCase();
     const showingSynthetic = String(req.query.synthetic ?? "people") === "only";
-    const allowedStatuses = ["pending", "approved", "rejected"];
+    const allowedStatuses = ["pending", "approved", "rejected", "archived"];
     const filterByStatus = allowedStatuses.includes(statusParam) ? statusParam : null;
 
     // Fetch all entries ordered by signup date so position = chronological rank
@@ -837,7 +900,7 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
     status?: string;
     filter?: { status?: string; city?: string; synthetic?: "people" | "only" };
   };
-  const allowed = ["pending", "approved", "rejected"];
+  const allowed = ["pending", "approved", "rejected", "archived"];
   if (!status || !allowed.includes(status)) {
     res.status(400).json({ error: "Invalid status" }); return;
   }
@@ -858,7 +921,7 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
     if (hasFilter) {
       // Filter-based: update all entries matching the given filter (cross-page bulk)
       const filterStatus = filter!.status;
-      const filterAllowed = ["pending", "approved", "rejected"];
+      const filterAllowed = ["pending", "approved", "rejected", "archived"];
       const filterCity = String(filter!.city ?? "").trim().slice(0, 120);
       const showingSynthetic = filter!.synthetic === "only";
       const whereClause = and(

@@ -34,6 +34,68 @@ import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscovery
 
 const router: IRouter = Router();
 
+type ListingAuditQueryClient = {
+  query: (statement: string, values?: readonly unknown[]) => Promise<unknown>;
+};
+
+type ListingAuditState = {
+  listingStatus: string | null;
+  status: string;
+  promotionEligible: boolean;
+  featured: boolean;
+  promotedUntil: string | null;
+};
+
+// Archive is deliberately a reversible public-discovery change, never a delete.
+// Keep its audit schema available at the point of use as well as during startup:
+// a pre-existing deployment that missed the additive startup migration must not
+// turn an otherwise valid archive request into an opaque server failure.
+async function ensureListingStatusAuditSchema(client: ListingAuditQueryClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS business_listing_status_audit_events (
+      id            UUID PRIMARY KEY,
+      business_id   TEXT NOT NULL,
+      action        TEXT NOT NULL CHECK (action IN ('remove_public_discovery', 'restore_public_discovery')),
+      actor_user_id TEXT,
+      reason        TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      before_state  JSONB NOT NULL,
+      after_state   JSONB NOT NULL,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS business_listing_status_audit_business_created_idx
+      ON business_listing_status_audit_events(business_id, created_at DESC)
+  `);
+}
+
+async function recordListingStatusAudit(
+  client: ListingAuditQueryClient,
+  input: {
+    businessId: string;
+    action: "remove_public_discovery" | "restore_public_discovery";
+    actorUserId: string | null;
+    reason: string;
+    beforeState: ListingAuditState;
+    afterState: ListingAuditState;
+  },
+): Promise<void> {
+  await client.query(
+    `INSERT INTO business_listing_status_audit_events
+       (id, business_id, action, actor_user_id, reason, before_state, after_state)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)`,
+    [
+      randomUUID(),
+      input.businessId,
+      input.action,
+      input.actorUserId,
+      input.reason,
+      JSON.stringify(input.beforeState),
+      JSON.stringify(input.afterState),
+    ],
+  );
+}
+
 // ── GET /admin/check — capability probe (always returns 200) ─────────────────
 // Returns { isAdmin: true/false } for all callers so the client can decide
 // whether to render admin UI without exposing auth details in the HTTP status.
@@ -120,6 +182,13 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const link = String(req.query.link ?? "all");
     const addedFrom = String(req.query.addedFrom ?? "").trim();
     const addedTo = String(req.query.addedTo ?? "").trim();
+    const sort = String(req.query.sort ?? "added_desc");
+    // Use a fixed, server-owned order expression rather than interpolating an
+    // arbitrary query parameter. Name A–Z keeps all similarly named listings
+    // together across inventory pages for duplicate review.
+    const orderBy = sort === "name_asc"
+      ? "LOWER(name) ASC NULLS LAST, id ASC"
+      : "created_at DESC, id ASC";
     const filters: string[] = [];
     const filterParams: string[] = [];
     const addFilter = (clause: string, value: string) => {
@@ -129,12 +198,14 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
 
     if (search) {
       addFilter(
-        "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ?)",
+        "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ? OR COALESCE(description, '') ILIKE ? OR COALESCE(tags::text, '') ILIKE ? OR COALESCE(vibes::text, '') ILIKE ? OR COALESCE(website, '') ILIKE ? OR COALESCE(instagram, '') ILIKE ? OR COALESCE(tiktok, '') ILIKE ? OR COALESCE(facebook, '') ILIKE ? OR COALESCE(twitter, '') ILIKE ? OR COALESCE(youtube, '') ILIKE ? OR COALESCE(pinterest, '') ILIKE ?)",
         `%${search}%`,
       );
-      // The same value is intentionally used for the four search fields.
+      // The same value is intentionally used for every searchable public
+      // profile field, so an administrator can recover a listing by its exact
+      // name, an identifying phrase, tag, or social/website handle.
       const parameter = `$${filterParams.length}`;
-      filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter})`;
+      filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter} OR COALESCE(description, '') ILIKE ${parameter} OR COALESCE(tags::text, '') ILIKE ${parameter} OR COALESCE(vibes::text, '') ILIKE ${parameter} OR COALESCE(website, '') ILIKE ${parameter} OR COALESCE(instagram, '') ILIKE ${parameter} OR COALESCE(tiktok, '') ILIKE ${parameter} OR COALESCE(facebook, '') ILIKE ${parameter} OR COALESCE(twitter, '') ILIKE ${parameter} OR COALESCE(youtube, '') ILIKE ${parameter} OR COALESCE(pinterest, '') ILIKE ${parameter})`;
     }
     if (city) addFilter("LOWER(city) = LOWER(?)", city);
     if (category) addFilter("category = ?", category);
@@ -206,7 +277,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference
        FROM businesses
        ${where}
-       ORDER BY created_at DESC
+       ORDER BY ${orderBy}
        LIMIT $${filterParams.length + 1}
        OFFSET $${filterParams.length + 2}`,
         pageParams,
@@ -289,6 +360,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       filteredTotal,
       page,
       pageSize,
+      sort: sort === "name_asc" ? "name_asc" : "added_desc",
       totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
       inventoryLimit: MAX_INVENTORY_PAGE_SIZE,
       inventoryIsTruncated: filteredTotal > result.length,
@@ -342,6 +414,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
 
   const client = await pool.connect();
   try {
+    await ensureListingStatusAuditSchema(client);
     await client.query("BEGIN");
     const currentResult = await client.query<{
       id: string;
@@ -418,19 +491,14 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
           current.id,
         ],
       );
-      await client.query(
-        `INSERT INTO business_listing_status_audit_events
-           (id, business_id, action, actor_user_id, reason, before_state, after_state)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
-        [
-          current.id,
-          removing ? "remove_public_discovery" : "restore_public_discovery",
-          req.user?.id ?? null,
-          normalizedReason,
-          JSON.stringify(beforeState),
-          JSON.stringify(nextState),
-        ],
-      );
+      await recordListingStatusAudit(client, {
+        businessId: current.id,
+        action: removing ? "remove_public_discovery" : "restore_public_discovery",
+        actorUserId: req.user?.id ?? null,
+        reason: normalizedReason,
+        beforeState,
+        afterState: nextState,
+      });
     }
     await client.query("COMMIT");
     req.log?.info(
@@ -458,7 +526,7 @@ router.patch(
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] ?? "" : req.params.id;
     const { listingStatus, reason } = req.body as {
       listingStatus?: string;
       reason?: string;
@@ -481,6 +549,7 @@ router.patch(
 
     const client = await pool.connect();
     try {
+      await ensureListingStatusAuditSchema(client);
       await client.query("BEGIN");
       const currentResult = await client.query<{
         id: string;
@@ -558,19 +627,14 @@ router.patch(
           id,
         ],
       );
-      await client.query(
-        `INSERT INTO business_listing_status_audit_events
-           (id, business_id, action, actor_user_id, reason, before_state, after_state)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
-        [
-          id,
-          removing ? "remove_public_discovery" : "restore_public_discovery",
-          req.user?.id ?? null,
-          normalizedReason,
-          JSON.stringify(beforeState),
-          JSON.stringify(nextState),
-        ],
-      );
+      await recordListingStatusAudit(client, {
+        businessId: id,
+        action: removing ? "remove_public_discovery" : "restore_public_discovery",
+        actorUserId: req.user?.id ?? null,
+        reason: normalizedReason,
+        beforeState,
+        afterState: nextState,
+      });
       await client.query("COMMIT");
       req.log?.info(
         { id, listingStatus: nextState.listingStatus, action: removing ? "remove" : "restore" },
@@ -3646,6 +3710,13 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  // Accounts are retained for administrator review and audit. Use the
+  // reversible /admin/users/:id/lifecycle control instead of deletion.
+  res.status(405).json({
+    error: "Account deletion is disabled. Hide or suspend the account instead; its records remain available for review and restoration.",
+    code: "REVERSIBLE_LIFECYCLE_REQUIRED",
+  });
+  return;
   const userId = String(req.params.id);
   const client = await pool.connect();
   try {
@@ -3679,7 +3750,7 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
            (email, user_id, event_type, access_source, granted_by, metadata)
          VALUES ($1, $2, 'revoked', $3, $4, $5::jsonb)`,
         [
-          targetUser.email.toLowerCase().trim(),
+          (targetUser.email ?? "").toLowerCase().trim(),
           targetUser.id,
           targetUser.tester_access_source,
           (req as any).user?.id ?? null,

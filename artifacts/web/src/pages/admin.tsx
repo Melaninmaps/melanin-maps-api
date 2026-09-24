@@ -122,6 +122,9 @@ type AdminUser = {
   lastName: string | null;
   profileImageUrl: string | null;
   approved: boolean;
+  accountStatus: "active" | "hidden" | "suspended";
+  lifecycleUpdatedAt: string | null;
+  lifecycleReason: string | null;
   role: "user" | "tester" | "admin";
   createdAt: string;
 };
@@ -706,6 +709,7 @@ export default function Admin() {
   const PAGE_SIZE = 50;
 
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [showHiddenUsers, setShowHiddenUsers] = useState(false);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
@@ -753,6 +757,7 @@ export default function Admin() {
   const [welcomeSending, setWelcomeSending] = useState(false);
   const [welcomeResult, setWelcomeResult] = useState<string | null>(null);
   const [bizSearch, setBizSearch] = useState("");
+  const [bizSearchInput, setBizSearchInput] = useState("");
   const [bizStatusFilter, setBizStatusFilter] = useState<
     "all" | "permanently_closed" | "needs_review" | "archived"
   >("all");
@@ -763,6 +768,7 @@ export default function Admin() {
   >("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
+  const [bizSort, setBizSort] = useState<"added_desc" | "name_asc">("added_desc");
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(
     new Set(),
   );
@@ -773,6 +779,7 @@ export default function Admin() {
   const [businessInventoryFilteredTotal, setBusinessInventoryFilteredTotal] =
     useState(0);
   const [businessInventoryPage, setBusinessInventoryPage] = useState(1);
+  const [businessInventoryPageSize, setBusinessInventoryPageSize] = useState<50 | 100>(50);
   const [businessInventoryTotalPages, setBusinessInventoryTotalPages] =
     useState(1);
   const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
@@ -782,6 +789,7 @@ export default function Admin() {
   >([]);
   const businessInventoryQueryRef = useRef({
     page: 1,
+    pageSize: 50 as 50 | 100,
     search: "",
     status: "all" as typeof bizStatusFilter,
     city: "all",
@@ -789,6 +797,7 @@ export default function Admin() {
     link: "all" as typeof bizLinkFilter,
     addedFrom: "",
     addedTo: "",
+    sort: "added_desc" as typeof bizSort,
   });
   const businessInventoryRequestId = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -914,6 +923,7 @@ export default function Admin() {
   useEffect(() => {
     businessInventoryQueryRef.current = {
       page: businessInventoryPage,
+      pageSize: businessInventoryPageSize,
       search: bizSearch,
       status: bizStatusFilter,
       city: bizCityFilter,
@@ -921,6 +931,7 @@ export default function Admin() {
       link: bizLinkFilter,
       addedFrom: bizAddedFrom,
       addedTo: bizAddedTo,
+      sort: bizSort,
     };
   }, [
     bizAddedFrom,
@@ -929,8 +940,10 @@ export default function Admin() {
     bizCityFilter,
     bizLinkFilter,
     bizSearch,
+    bizSort,
     bizStatusFilter,
     businessInventoryPage,
+    businessInventoryPageSize,
   ]);
 
   const loadWaitlist = useCallback(
@@ -969,13 +982,14 @@ export default function Admin() {
   );
 
   const loadUsers = useCallback(() => {
-    return fetch(`${BASE}api/admin/users`, { credentials: "include" })
+    const visibility = showHiddenUsers ? "?visibility=all" : "";
+    return fetch(`${BASE}api/admin/users${visibility}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
         setUsers(data.users ?? []);
         setLastRefreshed(new Date());
       });
-  }, []);
+  }, [showHiddenUsers]);
 
   const loadLeaderboard = useCallback(() => {
     setLeaderboardLoading(true);
@@ -1001,6 +1015,7 @@ export default function Admin() {
 
   const loadBusinesses = useCallback((next: {
     page?: number;
+    pageSize?: 50 | 100;
     search?: string;
     status?: typeof bizStatusFilter;
     city?: string;
@@ -1008,9 +1023,11 @@ export default function Admin() {
     link?: typeof bizLinkFilter;
     addedFrom?: string;
     addedTo?: string;
+    sort?: typeof bizSort;
   } = {}) => {
     const current = businessInventoryQueryRef.current;
     const page = next.page ?? current.page;
+    const pageSize = next.pageSize ?? current.pageSize;
     const searchValue = next.search ?? current.search;
     const statusValue = next.status ?? current.status;
     const cityValue = next.city ?? current.city;
@@ -1018,7 +1035,8 @@ export default function Admin() {
     const linkValue = next.link ?? current.link;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
     const addedToValue = next.addedTo ?? current.addedTo;
-    const params = new URLSearchParams({ page: String(page), pageSize: "50" });
+    const sortValue = next.sort ?? current.sort;
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (searchValue.trim()) params.set("search", searchValue.trim());
     if (statusValue !== "all") params.set("status", statusValue);
     if (cityValue !== "all") params.set("city", cityValue);
@@ -1031,6 +1049,7 @@ export default function Admin() {
     if (linkValue !== "all") params.set("link", linkValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
     if (addedToValue) params.set("addedTo", addedToValue);
+    if (sortValue !== "added_desc") params.set("sort", sortValue);
 
     const requestId = ++businessInventoryRequestId.current;
     setBusinessInventoryLoading(true);
@@ -1051,6 +1070,7 @@ export default function Admin() {
               : 0,
         );
         setBusinessInventoryPage(typeof data.page === "number" ? data.page : page);
+        setBusinessInventoryPageSize(data.pageSize === 100 ? 100 : 50);
         setBusinessInventoryTotalPages(
           typeof data.totalPages === "number" ? data.totalPages : 1,
         );
@@ -1325,7 +1345,7 @@ export default function Admin() {
   const removeStandaloneWaitlistEntry = async (entry: WaitlistEntry) => {
     if (
       !window.confirm(
-        `Remove waitlist signup "${entry.email}"? This only removes an unregistered entry with no saved contributions. It will not delete a member account.`,
+        `Hide waitlist signup "${entry.email}" from the active list? This is reversible and retains the signup, source history, and any related account.`,
       )
     )
       return;
@@ -1346,6 +1366,26 @@ export default function Admin() {
         showSyntheticWaitlist,
         waitlistCityFilter,
       );
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const reconcileIosWaitlistRegistrations = async () => {
+    if (!window.confirm("Add earlier iOS Apple registrations to the same cumulative waitlist? Existing email records will be kept and labelled iOS; no duplicate people will be created.")) return;
+    setUpdating("ios-waitlist-reconciliation");
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/reconcile-ios-registrations`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = (await response.json().catch(() => ({}))) as { created?: number; annotated?: number; scanned?: number; error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "iOS waitlist reconciliation failed.");
+        return;
+      }
+      window.alert(`Checked ${body.scanned ?? 0} iOS Apple registration(s). Added ${body.created ?? 0} new waitlist record(s) and labelled ${body.annotated ?? 0} existing record(s) with iOS.`);
+      await loadWaitlist(1, statusFilter, showSyntheticWaitlist, waitlistCityFilter);
     } finally {
       setUpdating(null);
     }
@@ -1422,20 +1462,37 @@ export default function Admin() {
     setUpdating(null);
   };
 
-  const deleteUser = async (id: string, email: string | null) => {
-    if (
-      !window.confirm(
-        `Are you sure? Permanently delete user${email ? ` "${email}"` : ""} and revoke their access? This removes the account and sessions, cannot be undone. The separate waitlist history is retained.`,
-      )
-    )
-      return;
-    setUpdating(id + "-del");
-    await fetch(`${BASE}api/admin/users/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    await loadUsers();
-    setUpdating(null);
+  const updateUserLifecycle = async (
+    user: AdminUser,
+    action: "hide" | "suspend" | "restore",
+  ) => {
+    const labels = {
+      hide: "hide from the default Admin presentation view",
+      suspend: "suspend and revoke access",
+      restore: "restore to the active Admin presentation view",
+    } as const;
+    const reason = window.prompt(
+      `Why should this account be ${labels[action]}? This is reversible and preserves the account and its records.`,
+    )?.trim();
+    if (!reason) return;
+    if (!window.confirm(`Confirm: ${labels[action]} for this account?`)) return;
+    setUpdating(`${user.id}-lifecycle`);
+    try {
+      const response = await fetch(`${BASE}api/admin/users/${user.id}/lifecycle`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, reason }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The account lifecycle change could not be saved.");
+        return;
+      }
+      await loadUsers();
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const deleteReview = async (id: string) => {
@@ -1762,6 +1819,7 @@ export default function Admin() {
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
 
   const applyBusinessInventoryFilters = (next: {
+    pageSize?: 50 | 100;
     search?: string;
     status?: typeof bizStatusFilter;
     city?: string;
@@ -1769,9 +1827,11 @@ export default function Admin() {
     link?: typeof bizLinkFilter;
     addedFrom?: string;
     addedTo?: string;
+    sort?: typeof bizSort;
   }) => {
     const query = {
       page: 1,
+      pageSize: next.pageSize ?? businessInventoryPageSize,
       search: next.search ?? bizSearch,
       status: next.status ?? bizStatusFilter,
       city: next.city ?? bizCityFilter,
@@ -1779,14 +1839,18 @@ export default function Admin() {
       link: next.link ?? bizLinkFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
+      sort: next.sort ?? bizSort,
     };
     setBizSearch(query.search);
+    setBizSearchInput(query.search);
     setBizStatusFilter(query.status);
     setBizCityFilter(query.city);
     setBizCategoryFilter(query.category);
     setBizLinkFilter(query.link);
     setBizAddedFrom(query.addedFrom);
     setBizAddedTo(query.addedTo);
+    setBizSort(query.sort);
+    setBusinessInventoryPageSize(query.pageSize);
     setBusinessInventoryPage(1);
     setSelectedBusinessIds(new Set());
     void loadBusinesses(query);
@@ -1801,6 +1865,7 @@ export default function Admin() {
       link: "all",
       addedFrom: "",
       addedTo: "",
+      sort: "added_desc",
     });
   };
 
@@ -2490,6 +2555,15 @@ export default function Admin() {
               </Button>
               <Button
                 size="sm"
+                onClick={() => bulkUpdate("archived")}
+                disabled={bulkUpdating}
+                variant="outline"
+                className="h-7 px-4 rounded-full border-amber-300/60 text-amber-100 hover:bg-white/10 text-xs"
+              >
+                Archive from view
+              </Button>
+              <Button
+                size="sm"
                 onClick={() => bulkUpdate("pending")}
                 disabled={bulkUpdating}
                 variant="outline"
@@ -2947,6 +3021,18 @@ export default function Admin() {
                   >
                     Synthetic tests ({syntheticTestCount})
                   </button>
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => handleStatusFilter(event.target.value)}
+                    aria-label="Filter waitlist by status"
+                    className="rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="archived">Hidden / archived</option>
+                  </select>
                   <label className="flex items-center gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]/70">
                     City
                     <select
@@ -2961,6 +3047,15 @@ export default function Admin() {
                       ))}
                     </select>
                   </label>
+                  {!showSyntheticWaitlist && (
+                    <button
+                      onClick={reconcileIosWaitlistRegistrations}
+                      disabled={updating === "ios-waitlist-reconciliation"}
+                      className="rounded-lg border border-[#CA922B]/40 bg-white px-3 py-1.5 text-xs font-bold text-[#8A5B13] hover:bg-[#CA922B]/10 disabled:opacity-50"
+                    >
+                      {updating === "ios-waitlist-reconciliation" ? "Reconciling iOS…" : "Add App Store signups"}
+                    </button>
+                  )}
                   {showSyntheticWaitlist && syntheticTestCount > 0 && (
                     <button
                       onClick={removeSafeSyntheticWaitlistEntries}
@@ -3176,7 +3271,7 @@ export default function Admin() {
                                   disabled={updating === entry.id + "-remove"}
                                   className="h-7 px-3 rounded-full border-[#3A1F0E]/15 text-[#3A1F0E]/55 hover:bg-red-50 hover:text-red-700 text-xs"
                                 >
-                                  <Trash2 className="w-3 h-3 mr-1" /> Remove
+                                  <Trash2 className="w-3 h-3 mr-1" /> Archive
                                 </Button>
                               </div>
                             </td>
@@ -3198,9 +3293,23 @@ export default function Admin() {
           <MetricsTab metrics={metrics} loading={metricsLoading} />
         ) : tab === "users" ? (
           <div>
-            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">
-              Registered Users ({users.length})
-            </h2>
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+              <div>
+                <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
+                  Registered Users ({users.length})
+                </h2>
+                <p className="text-xs text-[#3A1F0E]/55 mt-1">
+                  Hide keeps the account and activity for records; suspend also revokes access. Neither action deletes data.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHiddenUsers((visible) => !visible)}
+                className="text-xs font-bold px-3 py-2 rounded-xl border border-[#3A1F0E]/15 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
+              >
+                {showHiddenUsers ? "Hide archived accounts" : "View hidden accounts"}
+              </button>
+            </div>
             {users.length === 0 ? (
               <div className="text-center py-20 text-[#3A1F0E]/40">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -3271,7 +3380,15 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          {user.approved ? (
+                          {user.accountStatus === "hidden" ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                              Hidden
+                            </span>
+                          ) : user.accountStatus === "suspended" ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                              Suspended
+                            </span>
+                          ) : user.approved ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
                               <Check className="w-3 h-3" /> Approved
                             </span>
@@ -3305,30 +3422,26 @@ export default function Admin() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                user.approved
-                                  ? deleteUser(user.id, user.email)
-                                  : updateUser(user.id, true)
-                              }
-                              disabled={
-                                updating === user.id ||
-                                updating === user.id + "-del"
-                              }
-                              className={`h-7 px-3 rounded-full text-xs ${user.approved ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" : "bg-green-600 hover:bg-green-700 text-white"}`}
-                              variant="outline"
-                            >
-                              {user.approved ? (
-                                <>
-                                  <Trash2 className="w-3 h-3 mr-1" /> Delete
-                                </>
-                              ) : (
-                                <>
-                                  <Check className="w-3 h-3 mr-1" /> Approve
-                                </>
-                              )}
-                            </Button>
+                            {user.accountStatus === "active" && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "hide")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs">
+                                  Hide
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "suspend")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs border-red-200 text-red-700 hover:bg-red-50">
+                                  Suspend
+                                </Button>
+                              </>
+                            )}
+                            {user.accountStatus !== "active" && (
+                              <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "restore")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs border-green-200 text-green-700 hover:bg-green-50">
+                                Restore
+                              </Button>
+                            )}
+                            {!user.approved && user.accountStatus !== "suspended" && (
+                              <Button size="sm" onClick={() => updateUser(user.id, true)} disabled={updating === user.id} className="h-7 px-3 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white">
+                                <Check className="w-3 h-3 mr-1" /> Approve
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -3606,11 +3719,25 @@ export default function Admin() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   type="text"
-                  value={bizSearch}
-                  onChange={(e) => applyBusinessInventoryFilters({ search: e.target.value })}
-                  placeholder="Search name, city, or service"
+                  value={bizSearchInput}
+                  onChange={(e) => setBizSearchInput(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      applyBusinessInventoryFilters({ search: bizSearchInput });
+                    }
+                  }}
+                  placeholder="Search a business name or key phrase"
+                  aria-label="Search business names and key phrases"
                   className="w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] sm:w-72"
                 />
+                <button
+                  type="button"
+                  onClick={() => applyBusinessInventoryFilters({ search: bizSearchInput })}
+                  className="rounded-xl bg-[#2B1507] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A1F0E]"
+                >
+                  Search
+                </button>
                 <button
                   type="button"
                   onClick={clearBusinessFilters}
@@ -3620,6 +3747,9 @@ export default function Admin() {
                 </button>
               </div>
             </div>
+            <p className="-mt-3 mb-4 text-xs text-[#3A1F0E]/50">
+              Search checks business names, descriptions, categories, tags, vibes, website addresses, and social handles. Press Enter or select Search.
+            </p>
 
             {businessInventoryIsTruncated && (
               <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -3669,7 +3799,7 @@ export default function Admin() {
               ))}
             </div>
 
-            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-6">
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 City
                 <select
@@ -3708,6 +3838,17 @@ export default function Admin() {
                   <option value="website_missing">Missing a website</option>
                   <option value="social_present">Has social media</option>
                   <option value="no_public_link">No website or social media</option>
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Order results
+                <select
+                  value={bizSort}
+                  onChange={(event) => applyBusinessInventoryFilters({ sort: event.target.value as typeof bizSort })}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                >
+                  <option value="added_desc">Newest added first</option>
+                  <option value="name_asc">Business name A–Z</option>
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -3753,6 +3894,18 @@ export default function Admin() {
                 Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration.
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
+                <label className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A1F0E]/15 bg-white px-2.5 py-1 text-xs font-bold text-[#3A1F0E]/70">
+                  Rows
+                  <select
+                    value={businessInventoryPageSize}
+                    onChange={(event) => applyBusinessInventoryFilters({ pageSize: Number(event.target.value) === 100 ? 100 : 50 })}
+                    className="bg-transparent text-xs font-bold text-[#3A1F0E] focus:outline-none"
+                    aria-label="Business inventory rows per page"
+                  >
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </label>
                 <button
                   type="button"
                   onClick={selectAllArchivableFilteredBusinesses}

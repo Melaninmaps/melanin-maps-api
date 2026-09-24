@@ -19,6 +19,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     res.status(401).json({ error: "Authentication required" });
     return;
   }
+  // Suspensions remove all persisted sessions at the lifecycle change. Keeping
+  // this member wall synchronous preserves public-route validation semantics
+  // and prevents a database availability fault from changing request errors.
   next();
 }
 
@@ -45,12 +48,12 @@ export async function requireApprovedMember(
 
   try {
     const [user] = await db
-      .select({ approved: usersTable.approved })
+      .select({ approved: usersTable.approved, accountStatus: usersTable.accountStatus })
       .from(usersTable)
       .where(eq(usersTable.id, userId))
       .limit(1);
 
-    if (!user?.approved) {
+    if (!user?.approved || user.accountStatus === "suspended") {
       res.status(403).json({
         error: "An approved community account is required to submit a business.",
         code: "ACCOUNT_APPROVAL_REQUIRED",

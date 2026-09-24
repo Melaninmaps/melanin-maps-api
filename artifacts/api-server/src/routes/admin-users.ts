@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, getPoolStats, usersTable, waitlistTable } from "@workspace/db";
-import { eq, desc, count, gte, isNotNull, sql } from "drizzle-orm";
+import { eq, ne, desc, count, gte, isNotNull, sql } from "drizzle-orm";
 import { sendApprovalNotification } from "../lib/email";
 import { sendPushToUser } from "../lib/pushNotifications";
 import { isAdmin } from "../lib/adminAuth";
@@ -13,6 +13,7 @@ router.get("/admin/users", async (req: Request, res: Response) => {
     return;
   }
   try {
+    const includeHidden = String(req.query.visibility ?? "active") === "all";
     const users = await db
       .select({
         id: usersTable.id,
@@ -21,15 +22,95 @@ router.get("/admin/users", async (req: Request, res: Response) => {
         lastName: usersTable.lastName,
         profileImageUrl: usersTable.profileImageUrl,
         approved: usersTable.approved,
+        accountStatus: usersTable.accountStatus,
+        lifecycleUpdatedAt: usersTable.lifecycleUpdatedAt,
+        lifecycleReason: usersTable.lifecycleReason,
         role: usersTable.role,
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)
+      .where(includeHidden ? undefined : ne(usersTable.accountStatus, "hidden"))
       .orderBy(desc(usersTable.createdAt));
     res.json({ users });
   } catch (err) {
     req.log.error({ err }, "Failed to list users");
     res.status(500).json({ error: "Failed to list users" });
+  }
+});
+
+// Reversible lifecycle control: Hide removes an account from the default Admin
+// presentation list. Suspend additionally revokes access and active sessions.
+router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const id = String(req.params.id);
+  const action = String(req.body?.action ?? "");
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "";
+  const actionToStatus = { hide: "hidden", suspend: "suspended", restore: "active" } as const;
+  if (!(action in actionToStatus)) {
+    res.status(400).json({ error: "action must be hide, suspend, or restore" });
+    return;
+  }
+  if (id === req.user?.id) {
+    res.status(400).json({ error: "Administrators cannot change their own lifecycle status here." });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const target = await client.query<{
+      id: string;
+      role: string;
+      account_status: "active" | "hidden" | "suspended";
+      approved: boolean;
+    }>(
+      `SELECT id, role, account_status, approved FROM users WHERE id = $1 FOR UPDATE`,
+      [id],
+    );
+    const user = target.rows[0];
+    if (!user) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    if (user.role === "admin") {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Administrator accounts cannot be hidden or suspended from this screen." });
+      return;
+    }
+
+    const nextStatus = actionToStatus[action as keyof typeof actionToStatus];
+    await client.query(
+      `UPDATE users
+          SET account_status = $2,
+              approved = CASE WHEN $2 = 'suspended' THEN FALSE ELSE approved END,
+              lifecycle_updated_at = NOW(),
+              lifecycle_updated_by = $3,
+              lifecycle_reason = $4,
+              updated_at = NOW()
+        WHERE id = $1`,
+      [id, nextStatus, req.user?.id ?? null, reason || null],
+    );
+    await client.query(
+      `INSERT INTO admin_account_lifecycle_events
+         (user_id, actor_user_id, prior_status, next_status, reason)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id, req.user?.id ?? null, user.account_status, nextStatus, reason || null],
+    );
+    if (nextStatus === "suspended") {
+      await client.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [id]);
+    }
+    await client.query("COMMIT");
+    res.json({ user: { id, accountStatus: nextStatus, approved: nextStatus === "suspended" ? false : user.approved } });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ err }, "Failed to update account lifecycle");
+    res.status(500).json({ error: "Failed to update account lifecycle" });
+  } finally {
+    client.release();
   }
 });
 
@@ -134,6 +215,11 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  res.status(405).json({
+    error: "Account deletion is disabled. Use the reversible lifecycle controls to hide or suspend this account.",
+    code: "REVERSIBLE_LIFECYCLE_REQUIRED",
+  });
+  return;
   const id = String(req.params.id);
   const selfId = (req as any).user?.id;
   if (id === selfId) {

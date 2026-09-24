@@ -65,4 +65,20 @@ describe("admin dashboard section selector", () => {
       expect(admin).toContain(marker);
     }
   });
+
+  it("retains reversible administrator lifecycle and App Store reconciliation controls", () => {
+    for (const marker of [
+      "const reconcileIosWaitlistRegistrations",
+      "Add App Store signups",
+      "Hidden / archived",
+      "updateUserLifecycle",
+      '"hide" | "suspend" | "restore"',
+      "View hidden accounts",
+      "Hide keeps the account and activity for records",
+      "Archive from view",
+    ]) {
+      expect(admin).toContain(marker);
+    }
+    expect(admin).not.toContain("Permanently delete user");
+  });
 });

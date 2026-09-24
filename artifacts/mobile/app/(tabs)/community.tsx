@@ -1432,8 +1432,12 @@ export default function CommunityScreen() {
             // people, topics, and composing stay reachable without a promo or
             // discovery block displacing the content-first feed.
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
-            keyboardDismissMode="on-drag"
+            // The screen already accounts for its own safe area in the header.
+            // Do not let iOS add a second automatic inset before the first post.
+            contentInsetAdjustmentBehavior="never"
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
             keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={dismissCommunityKeyboard}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListEmptyComponent={
               <View style={styles.empty}>

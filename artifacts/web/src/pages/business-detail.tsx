@@ -291,7 +291,14 @@ export default function BusinessDetail() {
   const prevMetaRef = useRef<{ title: string; ogTitle: string | null; ogDesc: string | null; ogImage: string | null }>({ title: "", ogTitle: null, ogDesc: null, ogImage: null });
 
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: businessData, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
+  const { data: businessData, isLoading: isLoadingBusiness } = useGetBusiness(id, {
+    query: {
+      queryKey: ['getBusiness', id],
+      enabled: !!id,
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+    },
+  });
   const business = businessData?.business;
   const officialWebsite = safePublicReferenceUrl(
     business?.website ?? ((business as { isReferenceOnly?: boolean; sourceUrl?: string | null } | undefined)?.isReferenceOnly
