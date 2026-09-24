@@ -231,6 +231,7 @@ import {
   buildPrivateMemoryPromptBlock,
   isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
+  resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
@@ -5447,20 +5448,11 @@ async function resolveOwnerKinfolkMemoryAccess(userId: string) {
  * retained conversation history in production.
  */
 async function resolveOwnerExplicitMemberMemoryAccess(userId: string) {
-  return resolveKinfolkMemoryAccess({
-    runtimeEnabled: isExplicitMemberMemoryEnabled(),
-    authenticatedUserId: userId,
-    readOwnerSetting: async () => {
-      const [settings] = await db
-        .select({
-          kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled,
-        })
-        .from(userSettingsTable)
-        .where(eq(userSettingsTable.userId, userId))
-        .limit(1);
-      return settings?.kinfolkMemoryEnabled ?? null;
-    },
-  });
+  // The authenticated member's direct `remember …` instruction is the
+  // item-level opt-in; do not require the separate session-history setting.
+  // Keep the userId parameter so the call site remains explicit about ownership.
+  void userId;
+  return resolveExplicitMemberMemoryAccess();
 }
 
 async function persistExplicitMemberMemory(input: {
@@ -5476,7 +5468,7 @@ async function persistExplicitMemberMemory(input: {
     return {
       remembered: false,
       reply:
-        "I heard you, but private memory is currently off in your Kinfolk settings. Turn it on whenever you want me to keep a detail for future conversations.",
+        "I heard you, but Kinfolk's direct-memory feature is temporarily unavailable. I have not saved that detail.",
     };
   }
 
