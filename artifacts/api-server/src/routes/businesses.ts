@@ -3906,16 +3906,20 @@ router.patch(
         .returning({
           id: businessesTable.id,
           name: businessesTable.name,
+          website: businessesTable.website,
           instagram: businessesTable.instagram,
           tiktok: businessesTable.tiktok,
           facebook: businessesTable.facebook,
           twitter: businessesTable.twitter,
           youtube: businessesTable.youtube,
           pinterest: businessesTable.pinterest,
+          category: businessesTable.category,
+          subcategory: businessesTable.subcategory,
           ownershipDesignations: businessesTable.ownershipDesignations,
           blackOwned: businessesTable.blackOwned,
           vibes: businessesTable.vibes,
           status: businessesTable.status,
+          updatedAt: businessesTable.updatedAt,
         });
 
       if (!biz) {

@@ -763,6 +763,7 @@ export default function Admin() {
   >("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
+  const [bizSort, setBizSort] = useState<"added_desc" | "name_asc">("added_desc");
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(
     new Set(),
   );
@@ -773,6 +774,7 @@ export default function Admin() {
   const [businessInventoryFilteredTotal, setBusinessInventoryFilteredTotal] =
     useState(0);
   const [businessInventoryPage, setBusinessInventoryPage] = useState(1);
+  const [businessInventoryPageSize, setBusinessInventoryPageSize] = useState<50 | 100>(50);
   const [businessInventoryTotalPages, setBusinessInventoryTotalPages] =
     useState(1);
   const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
@@ -782,6 +784,7 @@ export default function Admin() {
   >([]);
   const businessInventoryQueryRef = useRef({
     page: 1,
+    pageSize: 50 as 50 | 100,
     search: "",
     status: "all" as typeof bizStatusFilter,
     city: "all",
@@ -789,6 +792,7 @@ export default function Admin() {
     link: "all" as typeof bizLinkFilter,
     addedFrom: "",
     addedTo: "",
+    sort: "added_desc" as typeof bizSort,
   });
   const businessInventoryRequestId = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -914,6 +918,7 @@ export default function Admin() {
   useEffect(() => {
     businessInventoryQueryRef.current = {
       page: businessInventoryPage,
+      pageSize: businessInventoryPageSize,
       search: bizSearch,
       status: bizStatusFilter,
       city: bizCityFilter,
@@ -921,6 +926,7 @@ export default function Admin() {
       link: bizLinkFilter,
       addedFrom: bizAddedFrom,
       addedTo: bizAddedTo,
+      sort: bizSort,
     };
   }, [
     bizAddedFrom,
@@ -929,8 +935,10 @@ export default function Admin() {
     bizCityFilter,
     bizLinkFilter,
     bizSearch,
+    bizSort,
     bizStatusFilter,
     businessInventoryPage,
+    businessInventoryPageSize,
   ]);
 
   const loadWaitlist = useCallback(
@@ -1001,6 +1009,7 @@ export default function Admin() {
 
   const loadBusinesses = useCallback((next: {
     page?: number;
+    pageSize?: 50 | 100;
     search?: string;
     status?: typeof bizStatusFilter;
     city?: string;
@@ -1008,9 +1017,11 @@ export default function Admin() {
     link?: typeof bizLinkFilter;
     addedFrom?: string;
     addedTo?: string;
+    sort?: typeof bizSort;
   } = {}) => {
     const current = businessInventoryQueryRef.current;
     const page = next.page ?? current.page;
+    const pageSize = next.pageSize ?? current.pageSize;
     const searchValue = next.search ?? current.search;
     const statusValue = next.status ?? current.status;
     const cityValue = next.city ?? current.city;
@@ -1018,7 +1029,8 @@ export default function Admin() {
     const linkValue = next.link ?? current.link;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
     const addedToValue = next.addedTo ?? current.addedTo;
-    const params = new URLSearchParams({ page: String(page), pageSize: "50" });
+    const sortValue = next.sort ?? current.sort;
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (searchValue.trim()) params.set("search", searchValue.trim());
     if (statusValue !== "all") params.set("status", statusValue);
     if (cityValue !== "all") params.set("city", cityValue);
@@ -1031,6 +1043,7 @@ export default function Admin() {
     if (linkValue !== "all") params.set("link", linkValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
     if (addedToValue) params.set("addedTo", addedToValue);
+    if (sortValue !== "added_desc") params.set("sort", sortValue);
 
     const requestId = ++businessInventoryRequestId.current;
     setBusinessInventoryLoading(true);
@@ -1051,6 +1064,7 @@ export default function Admin() {
               : 0,
         );
         setBusinessInventoryPage(typeof data.page === "number" ? data.page : page);
+        setBusinessInventoryPageSize(data.pageSize === 100 ? 100 : 50);
         setBusinessInventoryTotalPages(
           typeof data.totalPages === "number" ? data.totalPages : 1,
         );
@@ -1762,6 +1776,7 @@ export default function Admin() {
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
 
   const applyBusinessInventoryFilters = (next: {
+    pageSize?: 50 | 100;
     search?: string;
     status?: typeof bizStatusFilter;
     city?: string;
@@ -1769,9 +1784,11 @@ export default function Admin() {
     link?: typeof bizLinkFilter;
     addedFrom?: string;
     addedTo?: string;
+    sort?: typeof bizSort;
   }) => {
     const query = {
       page: 1,
+      pageSize: next.pageSize ?? businessInventoryPageSize,
       search: next.search ?? bizSearch,
       status: next.status ?? bizStatusFilter,
       city: next.city ?? bizCityFilter,
@@ -1779,6 +1796,7 @@ export default function Admin() {
       link: next.link ?? bizLinkFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
+      sort: next.sort ?? bizSort,
     };
     setBizSearch(query.search);
     setBizStatusFilter(query.status);
@@ -1787,6 +1805,8 @@ export default function Admin() {
     setBizLinkFilter(query.link);
     setBizAddedFrom(query.addedFrom);
     setBizAddedTo(query.addedTo);
+    setBizSort(query.sort);
+    setBusinessInventoryPageSize(query.pageSize);
     setBusinessInventoryPage(1);
     setSelectedBusinessIds(new Set());
     void loadBusinesses(query);
@@ -1801,6 +1821,7 @@ export default function Admin() {
       link: "all",
       addedFrom: "",
       addedTo: "",
+      sort: "added_desc",
     });
   };
 
@@ -3669,7 +3690,7 @@ export default function Admin() {
               ))}
             </div>
 
-            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-6">
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 City
                 <select
@@ -3708,6 +3729,17 @@ export default function Admin() {
                   <option value="website_missing">Missing a website</option>
                   <option value="social_present">Has social media</option>
                   <option value="no_public_link">No website or social media</option>
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Order results
+                <select
+                  value={bizSort}
+                  onChange={(event) => applyBusinessInventoryFilters({ sort: event.target.value as typeof bizSort })}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                >
+                  <option value="added_desc">Newest added first</option>
+                  <option value="name_asc">Business name A–Z</option>
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -3753,6 +3785,18 @@ export default function Admin() {
                 Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration.
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
+                <label className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A1F0E]/15 bg-white px-2.5 py-1 text-xs font-bold text-[#3A1F0E]/70">
+                  Rows
+                  <select
+                    value={businessInventoryPageSize}
+                    onChange={(event) => applyBusinessInventoryFilters({ pageSize: Number(event.target.value) === 100 ? 100 : 50 })}
+                    className="bg-transparent text-xs font-bold text-[#3A1F0E] focus:outline-none"
+                    aria-label="Business inventory rows per page"
+                  >
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </label>
                 <button
                   type="button"
                   onClick={selectAllArchivableFilteredBusinesses}

@@ -503,7 +503,7 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
               )}
               {savedOk && (
                 <p className="text-xs text-green-700 flex items-center justify-center gap-1">
-                  <Check className="w-3.5 h-3.5" /> Saved
+                  <Check className="w-3.5 h-3.5" /> Saved — public profile links are live now
                 </p>
               )}
             </div>

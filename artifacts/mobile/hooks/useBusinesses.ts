@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
+import { useFocusEffect } from "expo-router";
 import type { Business } from "@/constants/types";
 import {
   normalizeOwnershipDesignationFilterIds,
@@ -239,7 +240,10 @@ export function useBusinessById(id: string): UseBusinessByIdResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // The profile is dynamic admin-controlled directory data. Re-fetch it when a
+  // member opens or returns to the screen so a newly saved website, social
+  // profile, category, or designation does not require closing the app.
+  useFocusEffect(useCallback(() => {
     let isCurrent = true;
 
     async function fetch_() {
@@ -281,7 +285,7 @@ export function useBusinessById(id: string): UseBusinessByIdResult {
     return () => {
       isCurrent = false;
     };
-  }, [id]);
+  }, [id]));
 
   return { business, isLoading, error };
 }

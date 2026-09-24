@@ -182,6 +182,13 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const link = String(req.query.link ?? "all");
     const addedFrom = String(req.query.addedFrom ?? "").trim();
     const addedTo = String(req.query.addedTo ?? "").trim();
+    const sort = String(req.query.sort ?? "added_desc");
+    // Use a fixed, server-owned order expression rather than interpolating an
+    // arbitrary query parameter. Name A–Z keeps all similarly named listings
+    // together across inventory pages for duplicate review.
+    const orderBy = sort === "name_asc"
+      ? "LOWER(name) ASC NULLS LAST, id ASC"
+      : "created_at DESC, id ASC";
     const filters: string[] = [];
     const filterParams: string[] = [];
     const addFilter = (clause: string, value: string) => {
@@ -268,7 +275,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference
        FROM businesses
        ${where}
-       ORDER BY created_at DESC
+       ORDER BY ${orderBy}
        LIMIT $${filterParams.length + 1}
        OFFSET $${filterParams.length + 2}`,
         pageParams,
@@ -351,6 +358,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       filteredTotal,
       page,
       pageSize,
+      sort: sort === "name_asc" ? "name_asc" : "added_desc",
       totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
       inventoryLimit: MAX_INVENTORY_PAGE_SIZE,
       inventoryIsTruncated: filteredTotal > result.length,

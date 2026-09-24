@@ -7,11 +7,15 @@ function source(relativePath: string): string {
 }
 
 const adminRoute = source("../routes/admin.ts");
+const businessRoutes = source("../routes/businesses.ts");
 const adminPublisher = source("../businesses/registerAdminPublishAndClaimRoutes.ts");
 const migrations = source("../lib/startup-migrations.ts");
 const businessSchema = source("../../../../lib/db/src/schema/businesses.ts");
 const adminScreen = source("../../../web/src/pages/admin.tsx");
 const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.tsx");
+const adminEditBusiness = source("../../../web/src/components/AdminEditBusiness.tsx");
+const publicBusinessDetail = source("../../../web/src/pages/business-detail.tsx");
+const mobileBusinessHook = source("../../../mobile/hooks/useBusinesses.ts");
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns one server-filtered page instead of sending the full inventory to the browser", () => {
@@ -37,6 +41,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("businessInventoryTotalPages");
     expect(adminScreen).toContain("changeBusinessInventoryPage");
     expect(adminScreen).toContain("Loading business inventory");
+    expect(adminScreen).toContain("Business inventory rows per page");
+    expect(adminScreen).toContain("<option value={100}>100</option>");
   });
 
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {
@@ -50,6 +56,14 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("api/admin/businesses/listing-status");
   });
 
+  it("keeps same-name duplicate review together with a safe server-side A–Z order", () => {
+    expect(adminRoute).toContain('sort === "name_asc"');
+    expect(adminRoute).toContain("LOWER(name) ASC NULLS LAST, id ASC");
+    expect(adminRoute).toContain("created_at DESC, id ASC");
+    expect(adminScreen).toContain("Business name A–Z");
+    expect(adminScreen).toContain('params.set("sort", sortValue)');
+  });
+
   it("shows administrators website and social links and can isolate missing websites", () => {
     for (const field of ["website", "instagram", "tiktok", "facebook"]) {
       expect(adminRoute).toContain(field);
@@ -59,6 +73,19 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("No website or social media");
     expect(adminScreen).toContain("Website &amp; social");
     expect(adminScreen).toContain("publicSocialHref");
+  });
+
+  it("publishes saved Admin links and profile categories to fresh web and mobile profile reads", () => {
+    expect(businessRoutes).toContain('"/admin/businesses/:id/profile"');
+    for (const field of ["website", "instagram", "tiktok", "facebook", "category", "subcategory", "updatedAt"]) {
+      expect(businessRoutes).toContain(`businessesTable.${field}`);
+    }
+    expect(businessRoutes).toContain("sendDynamicJson(res, {");
+    expect(businessRoutes).toContain("...toPublicBusinessRecord(business)");
+    expect(adminEditBusiness).toContain("public profile links are live now");
+    expect(publicBusinessDetail).toContain("refetchOnWindowFocus: true");
+    expect(mobileBusinessHook).toContain("useFocusEffect");
+    expect(mobileBusinessHook).toContain("/api/businesses/${id}");
   });
 
   it("keeps a bulk removal reversible and auditable rather than deleting businesses", () => {
