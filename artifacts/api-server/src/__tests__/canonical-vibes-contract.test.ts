@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { findVibeKeysForSearch, getBusinessExperiencePolicy } from "@workspace/constants";
+import {
+  findBusinessExperienceKeysForSearch,
+  findVibeKeysForSearch,
+  getBusinessExperiencePolicy,
+  THE_REAL_TAGS,
+} from "@workspace/constants";
 import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { describe, expect, it } from "vitest";
 
@@ -15,6 +20,16 @@ describe("canonical VIBES discovery", () => {
     expect(findVibeKeysForSearch("a romantic dinner tonight")).toContain("romantic_escape");
     expect(findVibeKeysForSearch("a place for kids")).toContain("kid_chaos_friendly");
     expect(findVibeKeysForSearch("late nightlife")).toContain("late_night_vibes");
+  });
+
+  it("keeps The Real search keys separate from atmosphere Vibes", () => {
+    const childcareTag = THE_REAL_TAGS.find((tag) =>
+      tag.category.toLowerCase().includes("childcare"),
+    );
+    expect(childcareTag).toBeDefined();
+    const result = findBusinessExperienceKeysForSearch(childcareTag!.label);
+    expect(result.realKeys).toContain(childcareTag!.tag_key);
+    expect(result.vibeKeys).not.toContain(childcareTag!.tag_key);
   });
 
   it("carries a current-turn VIBE preference into Kinfolk subject discovery", () => {
@@ -42,6 +57,8 @@ describe("canonical VIBES discovery", () => {
     expect(identity).toContain("getBusinessExperiencePolicy(category, subcategory)");
     expect(identity).toContain(".set({ vibes: data.vibes");
     expect(businessSearch).toContain("findVibeKeysForSearch(q)");
+    expect(businessSearch).toContain("findBusinessExperienceKeysForSearch(q)");
+    expect(businessSearch).toContain("FROM business_member_feedback feedback");
     expect(governed).toContain("const vibeKeys = subject.vibeKeys ?? []");
   });
 

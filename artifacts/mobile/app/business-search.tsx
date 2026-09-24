@@ -22,6 +22,7 @@ import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORIES } from "@/constants/data";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { getBusinessExperiencePolicy } from "@workspace/constants";
 
 const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c !== "All");
 
@@ -29,6 +30,7 @@ interface Business {
   id: string;
   name: string;
   category: string;
+  subcategory?: string | null;
   city: string;
   state: string;
   imageUrl?: string | null;
@@ -194,7 +196,10 @@ export default function BusinessSearchScreen() {
   const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category;
   const primaryGold = "#CA922B";
 
-  const renderBusiness = ({ item }: { item: Business }) => (
+  const renderBusiness = ({ item }: { item: Business }) => {
+    const experiencePolicy = getBusinessExperiencePolicy(item.category, item.subcategory ?? null);
+    const experienceLabel = experiencePolicy.experienceLayer === "real" ? "The Real" : "The Vibe";
+    return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
       activeOpacity={0.8}
@@ -219,7 +224,12 @@ export default function BusinessSearchScreen() {
             </View>
           )}
         </View>
-        <Text style={[styles.cardCategory, { color: colors.mutedForeground }]}>{item.category}</Text>
+        <View style={styles.cardCategoryRow}>
+          <Text style={[styles.cardCategory, { color: colors.mutedForeground }]}>{item.category}</Text>
+          <View style={[styles.experiencePill, { backgroundColor: primaryGold + "16" }]}>
+            <Text style={[styles.experiencePillText, { color: primaryGold }]}>{experienceLabel}</Text>
+          </View>
+        </View>
         <Text style={[styles.cardLocation, { color: colors.mutedForeground }]}>
           <Feather name="map-pin" size={11} /> {item.city}, {item.state}
         </Text>
@@ -240,7 +250,8 @@ export default function BusinessSearchScreen() {
       </View>
       <Feather name="chevron-right" size={18} color={colors.muted} />
     </TouchableOpacity>
-  );
+    );
+  };
 
   return (
     <KeyboardAvoidingView
@@ -749,7 +760,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   verifiedText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
-  cardCategory: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+  cardCategoryRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" },
+  cardCategory: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  experiencePill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 },
+  experiencePillText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
   cardLocation: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
   socialRow: { flexDirection: "row", gap: 6, marginTop: 4 },
   socialTag: { fontFamily: "Inter_400Regular", fontSize: 11 },

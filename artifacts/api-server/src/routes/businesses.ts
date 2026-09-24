@@ -61,6 +61,7 @@ import {
   ownershipDesignationFilterId,
   ownershipDesignationStorageValues,
   normalizeOwnershipDesignationFilterIds,
+  findBusinessExperienceKeysForSearch,
   findVibeKeysForSearch,
   findSafeSearchClarification,
 } from "@workspace/constants";
@@ -613,9 +614,25 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
         if (search && typeof search === "string") {
           const q = search.trim();
+          const experienceSearch = findBusinessExperienceKeysForSearch(q);
+          // Retain the canonical Vibe helper in this public search route for
+          // compatibility with its established search contract. The combined
+          // resolver adds The Real / approved community-feedback keys without
+          // relabeling practical services as atmosphere.
           const matchingVibeKeys = findVibeKeysForSearch(q);
           const matchesApprovedVibe = matchingVibeKeys.length
             ? sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(matchingVibeKeys.map((key) => sql`${key}`), sql`, `)}]`
+            : null;
+          const matchesApprovedCommunityFeedback = experienceSearch.realKeys.length
+            ? sql<boolean>`EXISTS (
+                SELECT 1
+                  FROM business_member_feedback feedback
+                 WHERE feedback.business_id = ${businessesTable.id}
+                   AND feedback.status = 'active'
+                   AND feedback.is_load_test = FALSE
+                   AND feedback.kind = 'caption'
+                   AND feedback.key IN (${sql.join(experienceSearch.realKeys.map((key) => sql`${key}`), sql`, `)})
+              )`
             : null;
           const STOP = new Set([
             "a",
@@ -653,6 +670,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 ilike(businessesTable.description, `%${q}%`),
                 sql<boolean>`COALESCE(${businessesTable.tags}, '[]'::jsonb)::text ILIKE ${`%${q}%`}`,
                 ...(matchesApprovedVibe ? [matchesApprovedVibe] : []),
+                ...(matchesApprovedCommunityFeedback ? [matchesApprovedCommunityFeedback] : []),
               ),
             );
           } else {
@@ -692,6 +710,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 ilike(businessesTable.category, `%${q}%`), // full phrase in category
                 ilike(businessesTable.subcategory, `%${q}%`), // full phrase in subcategory
                 ...(matchesApprovedVibe ? [matchesApprovedVibe] : []),
+                ...(matchesApprovedCommunityFeedback ? [matchesApprovedCommunityFeedback] : []),
               ),
             );
           }
