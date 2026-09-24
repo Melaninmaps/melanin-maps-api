@@ -14,6 +14,8 @@ export const COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY =
   "completed_cohort_directory_discovery_v1" as const;
 export const COMPLETED_COHORT_MANIFEST_CHECKSUM =
   "ca576aeb92b6cd0e73a7b967bf510f7e26b6a3ceb909c5511a222c25d862469a" as const;
+export const NATIONAL_MASTER_DIRECTORY_SOURCE =
+  "national_diaspora_master_18294" as const;
 
 const DIASPORA_OWNERSHIP_VALUE_SQL = DIASPORA_OWNERSHIP_DESIGNATIONS
   // The database expression below normalizes a stored source designation to
@@ -98,6 +100,23 @@ export function completedCohortDirectoryDiscoverySqlPredicate(
        AND cohort_directory_receipt.policy_version = '${COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY}'
        AND cohort_directory_receipt.outcome IN ('created', 'linked_existing')
   )`;
+}
+
+/**
+ * The national master uses its own checksum-locked activation route and
+ * importer-only source marker. These are public directory profiles, not
+ * inferred ownership badges and not a map-coordinate substitute.
+ */
+export function nationalMasterDirectoryDiscoverySqlPredicate(
+  businessIdExpression: string,
+): string {
+  if (businessIdExpression.endsWith('."id"')) {
+    return `COALESCE(${businessIdExpression.slice(0, -5)}."data_source", '') = '${NATIONAL_MASTER_DIRECTORY_SOURCE}'`;
+  }
+  if (businessIdExpression.endsWith(".id")) {
+    return `COALESCE(${businessIdExpression.slice(0, -3)}.data_source, '') = '${NATIONAL_MASTER_DIRECTORY_SOURCE}'`;
+  }
+  throw new Error("NATIONAL_MASTER_BUSINESS_IDENTIFIER_REQUIRED");
 }
 
 /**

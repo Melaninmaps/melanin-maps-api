@@ -15,7 +15,7 @@ const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.ts
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns a bounded full admin inventory instead of the former 500-row newest-record cap", () => {
-    expect(adminRoute).toContain("const INVENTORY_PAGE_LIMIT = 20_000");
+    expect(adminRoute).toContain("const INVENTORY_PAGE_LIMIT = 50_000");
     expect(adminRoute).toContain("inventoryIsTruncated");
     expect(adminRoute).toContain("inventoryLimit");
     expect(adminRoute).toContain("inventoryTotal");
@@ -32,11 +32,23 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
 
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {
     expect(adminScreen).toContain("All cities");
-    expect(adminScreen).toContain("All services");
+    expect(adminScreen).toContain("All business types and services");
+    expect(adminScreen).toContain("business.subcategory");
     expect(adminScreen).toContain("Added on or after");
     expect(adminScreen).toContain("Added on or before");
     expect(adminScreen).toContain("Archive selected");
     expect(adminScreen).toContain("api/admin/businesses/listing-status");
+  });
+
+  it("shows administrators website and social links and can isolate missing websites", () => {
+    for (const field of ["website", "instagram", "tiktok", "facebook"]) {
+      expect(adminRoute).toContain(field);
+      expect(adminScreen).toContain(field);
+    }
+    expect(adminScreen).toContain("Missing a website");
+    expect(adminScreen).toContain("No website or social media");
+    expect(adminScreen).toContain("Website &amp; social");
+    expect(adminScreen).toContain("publicSocialHref");
   });
 
   it("keeps a bulk removal reversible and auditable rather than deleting businesses", () => {

@@ -2,6 +2,7 @@ import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoCo
 import {
   completedCohortDirectoryDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
+  nationalMasterDirectoryDiscoverySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
@@ -156,7 +157,7 @@ function governedDirectoryDiscoveryPredicate(allowAllPublicPlaces = false): stri
     allowAllPublicPlaces ? "all_public" : undefined,
   );
   if (promotion === "TRUE") return promotion;
-  return `(${promotion} OR ${completedCohortDirectoryDiscoverySqlPredicate("b.id")})`;
+  return `(${promotion} OR ${completedCohortDirectoryDiscoverySqlPredicate("b.id")} OR ${nationalMasterDirectoryDiscoverySqlPredicate("b.id")})`;
 }
 
 const PREFERENCE_STOP_WORDS = new Set([

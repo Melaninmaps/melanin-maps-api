@@ -1682,6 +1682,169 @@ export declare const businessesTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             length: 30;
         }>;
+        dedupeKey: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dedupe_key";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 500;
+        }>;
+        isDuplicate: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_duplicate";
+            tableName: "businesses";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        duplicateOfId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "duplicate_of_id";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        permanentlyHidden: import("drizzle-orm/pg-core").PgColumn<{
+            name: "permanently_hidden";
+            tableName: "businesses";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        dataSource: import("drizzle-orm/pg-core").PgColumn<{
+            name: "data_source";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        researchSourceLabel: import("drizzle-orm/pg-core").PgColumn<{
+            name: "research_source_label";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 255;
+        }>;
+        researchSourceUrl: import("drizzle-orm/pg-core").PgColumn<{
+            name: "research_source_url";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        kinfolkRecommendationReason: import("drizzle-orm/pg-core").PgColumn<{
+            name: "kinfolk_recommendation_reason";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        intakeBatchReference: import("drizzle-orm/pg-core").PgColumn<{
+            name: "intake_batch_reference";
+            tableName: "businesses";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 255;
+        }>;
         communityAudienceType: import("drizzle-orm/pg-core").PgColumn<{
             name: "community_audience_type";
             tableName: "businesses";
@@ -1975,6 +2138,15 @@ export declare const insertBusinessSchema: z.ZodObject<{
         description?: string;
     }>>>>;
     profileStatus: z.ZodOptional<z.ZodString>;
+    dedupeKey: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    isDuplicate: z.ZodOptional<z.ZodBoolean>;
+    duplicateOfId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    permanentlyHidden: z.ZodOptional<z.ZodBoolean>;
+    dataSource: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    researchSourceLabel: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    researchSourceUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    kinfolkRecommendationReason: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    intakeBatchReference: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     communityAudienceType: z.ZodOptional<z.ZodString>;
     isReferenceOnly: z.ZodOptional<z.ZodBoolean>;
     referenceCategory: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -3664,6 +3836,169 @@ export declare const selectBusinessSchema: import("drizzle-zod").BuildSchema<"se
         generated: undefined;
     }, {}, {
         length: 30;
+    }>;
+    dedupeKey: import("drizzle-orm/pg-core").PgColumn<{
+        name: "dedupe_key";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 500;
+    }>;
+    isDuplicate: import("drizzle-orm/pg-core").PgColumn<{
+        name: "is_duplicate";
+        tableName: "businesses";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    duplicateOfId: import("drizzle-orm/pg-core").PgColumn<{
+        name: "duplicate_of_id";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
+    permanentlyHidden: import("drizzle-orm/pg-core").PgColumn<{
+        name: "permanently_hidden";
+        tableName: "businesses";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    dataSource: import("drizzle-orm/pg-core").PgColumn<{
+        name: "data_source";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    researchSourceLabel: import("drizzle-orm/pg-core").PgColumn<{
+        name: "research_source_label";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 255;
+    }>;
+    researchSourceUrl: import("drizzle-orm/pg-core").PgColumn<{
+        name: "research_source_url";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    kinfolkRecommendationReason: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_recommendation_reason";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    intakeBatchReference: import("drizzle-orm/pg-core").PgColumn<{
+        name: "intake_batch_reference";
+        tableName: "businesses";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 255;
     }>;
     communityAudienceType: import("drizzle-orm/pg-core").PgColumn<{
         name: "community_audience_type";

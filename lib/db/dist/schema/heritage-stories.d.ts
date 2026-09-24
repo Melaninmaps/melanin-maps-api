@@ -97,6 +97,25 @@ export declare const heritageStoriesTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             length: 100;
         }>;
+        contentCategory: import("drizzle-orm/pg-core").PgColumn<{
+            name: "content_category";
+            tableName: "heritage_stories";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
+        }>;
         content: import("drizzle-orm/pg-core").PgColumn<{
             name: "content";
             tableName: "heritage_stories";
@@ -217,6 +236,7 @@ export declare const insertHeritageStorySchema: import("zod/v4").ZodObject<{
     videoUrl: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     siteId: import("zod/v4").ZodString;
     relationshipType: import("zod/v4").ZodString;
+    contentCategory: import("zod/v4").ZodOptional<import("zod/v4").ZodString>;
     isAmbassador: import("zod/v4").ZodOptional<import("zod/v4").ZodBoolean>;
 }, {
     out: {};
@@ -317,6 +337,25 @@ export declare const selectHeritageStorySchema: import("drizzle-zod").BuildSchem
         generated: undefined;
     }, {}, {
         length: 100;
+    }>;
+    contentCategory: import("drizzle-orm/pg-core").PgColumn<{
+        name: "content_category";
+        tableName: "heritage_stories";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 64;
     }>;
     content: import("drizzle-orm/pg-core").PgColumn<{
         name: "content";
