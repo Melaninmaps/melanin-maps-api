@@ -31,6 +31,7 @@ import {
   normalizeText as _normalizeText,
 } from "../lib/business-dedup.js";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortReconciliation";
 
 const router: IRouter = Router();
 
@@ -178,6 +179,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const city = String(req.query.city ?? "").trim();
     const category = String(req.query.category ?? "").trim();
     const subcategory = String(req.query.subcategory ?? "").trim();
+    // Controlled provenance scopes change only this administrator review list.
+    // They do not infer ownership and do not change any public listing state.
+    const intakeCohort = String(req.query.intakeCohort ?? "all").trim();
     // The normal administrator review screen is deliberately a live-inventory
     // view. Archived records live in the separate Archive vault instead of
     // resurfacing each time an administrator filters a city or a business name.
@@ -194,6 +198,43 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const orderBy = sort === "name_asc"
       ? "LOWER(name) ASC NULLS LAST, id ASC"
       : "created_at DESC, id ASC";
+    // The historical 4,183-row cohort must be identified by its immutable
+    // receipt evidence. Some linked rows predate the data_source marker, so
+    // source text alone is deliberately insufficient. The table probes keep a
+    // partially migrated older deployment from taking down Admin inventory.
+    const receiptTableProbe = await pool.query<{ table_name: string | null }>(
+      `SELECT to_regclass(value) AS table_name
+         FROM unnest($1::text[]) AS value`,
+      [[
+        "public.directory_publication_provenance",
+        "public.completed_cohort_directory_discovery_receipts",
+      ]],
+    );
+    const hasReceiptTable = (name: string) => receiptTableProbe.rows.some(
+      (row) => String(row.table_name ?? "").includes(name),
+    );
+    const completedCohortPredicateParts = [
+      "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'completed_cohort_directory_discovery'",
+    ];
+    if (hasReceiptTable("directory_publication_provenance")) {
+      completedCohortPredicateParts.push(`EXISTS (
+        SELECT 1
+          FROM directory_publication_provenance completed_provenance
+         WHERE completed_provenance.record_id = businesses.id
+           AND completed_provenance.source_sha256 = '${COMPLETED_COHORT_MANIFEST_CHECKSUM}'
+           AND completed_provenance.outcome IN ('created', 'linked_existing')
+      )`);
+    }
+    if (hasReceiptTable("completed_cohort_directory_discovery_receipts")) {
+      completedCohortPredicateParts.push(`EXISTS (
+        SELECT 1
+          FROM completed_cohort_directory_discovery_receipts completed_discovery_receipt
+         WHERE completed_discovery_receipt.business_id = businesses.id
+      )`);
+    }
+    const completedCohortPredicate = `(${completedCohortPredicateParts.join(" OR ")})`;
+    const nationalMasterPredicate =
+      "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'national_diaspora_master_18294'";
     const filters: string[] = [];
     const filterParams: string[] = [];
     const addFilter = (clause: string, value: string) => {
@@ -215,6 +256,13 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     if (city) addFilter("LOWER(city) = LOWER(?)", city);
     if (category) addFilter("category = ?", category);
     if (subcategory) addFilter("subcategory = ?", subcategory);
+    if (intakeCohort === "protected_historical_cohort") {
+      filters.push(completedCohortPredicate);
+    } else if (intakeCohort === "user_national_master") {
+      filters.push(nationalMasterPredicate);
+    } else if (intakeCohort === "other_inventory") {
+      filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
+    }
     if (status === "archived") {
       filters.push("listing_status = 'archived'");
     } else {
@@ -263,6 +311,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       filteredCount,
       cities,
       services,
+      cohortCounts,
     ] = await Promise.all([
       pool.query<{
       id: string;
@@ -291,6 +340,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       research_source_url: string | null;
       kinfolk_recommendation_reason: string | null;
       intake_batch_reference: string | null;
+      intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
       }>(
       `SELECT id, name, category, subcategory, city, state, verified, black_owned, status,
               listing_status, phone, website, instagram, tiktok, facebook, created_at,
@@ -299,7 +349,12 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               to_jsonb(businesses)->>'research_source_label' AS research_source_label,
               to_jsonb(businesses)->>'research_source_url' AS research_source_url,
               to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
-              to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference
+              to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference,
+              CASE
+                WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
+                WHEN ${nationalMasterPredicate} THEN 'user_national_master'
+                ELSE 'other_inventory'
+              END AS intake_cohort
        FROM businesses
        ${where}
        ORDER BY ${orderBy}
@@ -357,6 +412,21 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
             AND NULLIF(BTRIM(category), '') IS NOT NULL
           ORDER BY category ASC, subcategory ASC NULLS FIRST`,
       ),
+      pool.query<{
+        protected_historical_cohort: string;
+        user_national_master: string;
+        other_inventory: string;
+      }>(
+        `SELECT
+           COUNT(*) FILTER (WHERE ${completedCohortPredicate})::text
+             AS protected_historical_cohort,
+           COUNT(*) FILTER (WHERE ${nationalMasterPredicate})::text
+             AS user_national_master,
+           COUNT(*) FILTER (WHERE NOT (${completedCohortPredicate} OR ${nationalMasterPredicate}))::text
+             AS other_inventory
+           FROM businesses
+          WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}`,
+      ),
     ]);
     const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
     const liveInventoryTotal = Number(liveInventoryCount.rows[0]?.total ?? 0);
@@ -366,6 +436,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
     const needsReviewTotal = Number(needsReviewCount.rows[0]?.total ?? 0);
     const filteredTotal = Number(filteredCount.rows[0]?.total ?? 0);
+    const intakeCohortCounts = cohortCounts.rows[0] ?? {
+      protected_historical_cohort: "0",
+      user_national_master: "0",
+      other_inventory: "0",
+    };
     const bizRows = businesses.rows.map((b) => ({
       id: b.id,
       name: b.name,
@@ -392,6 +467,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
         Number(b.latitude) !== 0 &&
         Number(b.longitude) !== 0,
       hasStreetAddress: Boolean(b.address?.trim()),
+      intakeCohort: b.intake_cohort,
       dataSource: b.data_source,
       researchSourceLabel: b.research_source_label,
       researchSourceUrl: b.research_source_url,
@@ -450,6 +526,23 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
           ? [{ value: `subcategory:${row.subcategory}`, label: `${row.subcategory} — service` }]
           : []),
       ]),
+      intakeCohortOptions: [
+        {
+          value: "protected_historical_cohort",
+          label: "Protected historical cohort (receipt-backed)",
+          count: Number(intakeCohortCounts.protected_historical_cohort ?? 0),
+        },
+        {
+          value: "user_national_master",
+          label: "User-supplied national master (18,294 source rows)",
+          count: Number(intakeCohortCounts.user_national_master ?? 0),
+        },
+        {
+          value: "other_inventory",
+          label: "Other existing, manual, or community inventory",
+          count: Number(intakeCohortCounts.other_inventory ?? 0),
+        },
+      ],
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch admin businesses");

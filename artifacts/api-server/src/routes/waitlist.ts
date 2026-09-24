@@ -566,7 +566,7 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     );
     const offset = (page - 1) * pageSize;
 
-    const [entriesResult, totalResult, pendingResult, testCountResult, cityResult] = await Promise.all([
+    const [entriesResult, totalResult, pendingResult, testCountResult, cityResult, cityRollupResult] = await Promise.all([
       db.select().from(waitlistTable).where(whereClause).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset),
       db.select({ total: count() }).from(waitlistTable).where(whereClause),
       db.select({ pending: count() }).from(waitlistTable).where(and(eq(waitlistTable.status, "pending"), eq(waitlistTable.isSyntheticTest, false))),
@@ -584,6 +584,29 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
         )
         .groupBy(waitlistTable.city)
         .orderBy(asc(waitlistTable.city)),
+      // This compact rollup gives launch planning the city and source history
+      // counts without returning another set of names or emails. Source totals
+      // are intentionally non-exclusive: one email-keyed member can have both
+      // Website and iOS history after joining from more than one surface.
+      db
+        .select({
+          city: sql<string>`COALESCE(NULLIF(BTRIM(${waitlistTable.city}), ''), '[city not recorded]')`,
+          state: sql<string>`COALESCE(NULLIF(BTRIM(${waitlistTable.state}), ''), '')`,
+          total: count(),
+          pending: sql<number>`COUNT(*) FILTER (WHERE ${waitlistTable.status} = 'pending')`,
+          web: sql<number>`COUNT(*) FILTER (WHERE COALESCE(${waitlistTable.signupSources}, '') ~ '(^|,)web(,|$)')`,
+          ios: sql<number>`COUNT(*) FILTER (WHERE COALESCE(${waitlistTable.signupSources}, '') ~ '(^|,)ios(,|$)')`,
+          android: sql<number>`COUNT(*) FILTER (WHERE COALESCE(${waitlistTable.signupSources}, '') ~ '(^|,)android(,|$)')`,
+          sourceNotRecorded: sql<number>`COUNT(*) FILTER (WHERE NULLIF(BTRIM(COALESCE(${waitlistTable.signupSources}, '')), '') IS NULL)`,
+        })
+        .from(waitlistTable)
+        .where(showingSynthetic ? eq(waitlistTable.isSyntheticTest, true) : eq(waitlistTable.isSyntheticTest, false))
+        .groupBy(
+          sql`COALESCE(NULLIF(BTRIM(${waitlistTable.city}), ''), '[city not recorded]')`,
+          sql`COALESCE(NULLIF(BTRIM(${waitlistTable.state}), ''), '')`,
+        )
+        .orderBy(desc(count()))
+        .limit(200),
     ]);
 
     const total = Number(totalResult[0]?.total ?? 0);
@@ -613,6 +636,16 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
       cityOptions: cityResult
         .map((row) => row.city?.trim())
         .filter((city): city is string => Boolean(city)),
+      cityRollup: cityRollupResult.map((row) => ({
+        city: row.city,
+        state: row.state || null,
+        total: Number(row.total),
+        pending: Number(row.pending),
+        web: Number(row.web),
+        ios: Number(row.ios),
+        android: Number(row.android),
+        sourceNotRecorded: Number(row.sourceNotRecorded),
+      })),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch waitlist");
