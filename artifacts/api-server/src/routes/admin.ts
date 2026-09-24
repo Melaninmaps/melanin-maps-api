@@ -119,6 +119,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       listing_status: string;
       phone: string | null;
       website: string | null;
+      instagram: string | null;
+      tiktok: string | null;
+      facebook: string | null;
       created_at: string;
       needs_verification: boolean;
       enrichment_note: string | null;
@@ -132,7 +135,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       intake_batch_reference: string | null;
       }>(
       `SELECT id, name, category, subcategory, city, state, verified, black_owned, status,
-              listing_status, phone, website, created_at,
+              listing_status, phone, website, instagram, tiktok, facebook, created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
               to_jsonb(businesses)->>'research_source_label' AS research_source_label,
@@ -161,6 +164,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       listingStatus: b.listing_status,
       phone: b.phone,
       website: b.website,
+      instagram: b.instagram,
+      tiktok: b.tiktok,
+      facebook: b.facebook,
       createdAt: b.created_at,
       needsVerification: b.needs_verification,
       hasMapPin:

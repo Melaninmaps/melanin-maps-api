@@ -40,6 +40,17 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("api/admin/businesses/listing-status");
   });
 
+  it("shows administrators website and social links and can isolate missing websites", () => {
+    for (const field of ["website", "instagram", "tiktok", "facebook"]) {
+      expect(adminRoute).toContain(field);
+      expect(adminScreen).toContain(field);
+    }
+    expect(adminScreen).toContain("Missing a website");
+    expect(adminScreen).toContain("No website or social media");
+    expect(adminScreen).toContain("Website &amp; social");
+    expect(adminScreen).toContain("publicSocialHref");
+  });
+
   it("keeps a bulk removal reversible and auditable rather than deleting businesses", () => {
     expect(adminRoute).toContain("Select between 1 and 500 businesses.");
     expect(adminRoute).toContain("business_listing_status_audit_events");

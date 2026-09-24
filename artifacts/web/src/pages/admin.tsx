@@ -67,6 +67,19 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
+function publicSocialHref(value: string | null, platform: "instagram" | "tiktok" | "facebook"): string | null {
+  if (!value?.trim()) return null;
+  const raw = value.trim();
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return null;
+
+  const handle = raw.replace(/^@/, "").replace(/^\/+/, "");
+  if (!handle) return null;
+  if (platform === "instagram") return `https://www.instagram.com/${handle}`;
+  if (platform === "tiktok") return `https://www.tiktok.com/@${handle}`;
+  return `https://www.facebook.com/${handle}`;
+}
+
 type WaitlistEntry = {
   id: string;
   firstName: string | null;
@@ -111,6 +124,9 @@ type AdminBusiness = {
   permanentlyClosed: boolean;
   phone: string | null;
   website: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
   createdAt: string;
   hasMapPin: boolean;
   hasStreetAddress: boolean;
@@ -723,6 +739,9 @@ export default function Admin() {
   >("all");
   const [bizCityFilter, setBizCityFilter] = useState("all");
   const [bizCategoryFilter, setBizCategoryFilter] = useState("all");
+  const [bizLinkFilter, setBizLinkFilter] = useState<
+    "all" | "website_present" | "website_missing" | "social_present" | "no_public_link"
+  >("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(
@@ -1552,6 +1571,12 @@ export default function Admin() {
       if (scope === "category" && b.category !== value) return false;
       if (scope === "subcategory" && b.subcategory !== value) return false;
     }
+    const hasWebsite = Boolean(b.website?.trim());
+    const hasSocial = Boolean(b.instagram?.trim() || b.tiktok?.trim() || b.facebook?.trim());
+    if (bizLinkFilter === "website_present" && !hasWebsite) return false;
+    if (bizLinkFilter === "website_missing" && hasWebsite) return false;
+    if (bizLinkFilter === "social_present" && !hasSocial) return false;
+    if (bizLinkFilter === "no_public_link" && (hasWebsite || hasSocial)) return false;
     const addedOn = b.createdAt ? new Date(b.createdAt).toISOString().slice(0, 10) : "";
     if (bizAddedFrom && (!addedOn || addedOn < bizAddedFrom)) return false;
     if (bizAddedTo && (!addedOn || addedOn > bizAddedTo)) return false;
@@ -1606,6 +1631,7 @@ export default function Admin() {
     setBizStatusFilter("all");
     setBizCityFilter("all");
     setBizCategoryFilter("all");
+    setBizLinkFilter("all");
     setBizAddedFrom("");
     setBizAddedTo("");
     setSelectedBusinessIds(new Set());
@@ -3405,7 +3431,7 @@ export default function Admin() {
               ))}
             </div>
 
-            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-5">
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 City
                 <select
@@ -3430,6 +3456,20 @@ export default function Admin() {
                   {inventoryServices.map((service) => (
                     <option key={service.value} value={service.value}>{service.label}</option>
                   ))}
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Website / social
+                <select
+                  value={bizLinkFilter}
+                  onChange={(event) => setBizLinkFilter(event.target.value as typeof bizLinkFilter)}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                >
+                  <option value="all">All contact-link records</option>
+                  <option value="website_present">Has a website</option>
+                  <option value="website_missing">Missing a website</option>
+                  <option value="social_present">Has social media</option>
+                  <option value="no_public_link">No website or social media</option>
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -3539,7 +3579,7 @@ export default function Admin() {
                         Added &amp; research
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
-                        Contact
+                        Website &amp; social
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Outreach
@@ -3652,7 +3692,22 @@ export default function Admin() {
                               <ExternalLink className="w-3 h-3" /> Website
                             </a>
                           )}
-                          {!biz.phone && !biz.website && (
+                          {([
+                            ["Instagram", publicSocialHref(biz.instagram, "instagram")],
+                            ["TikTok", publicSocialHref(biz.tiktok, "tiktok")],
+                            ["Facebook", publicSocialHref(biz.facebook, "facebook")],
+                          ] as const).map(([label, href]) => href ? (
+                            <a
+                              key={label}
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-[#CA922B] hover:underline"
+                            >
+                              <ExternalLink className="w-3 h-3" /> {label}
+                            </a>
+                          ) : null)}
+                          {!biz.phone && !biz.website && !biz.instagram && !biz.tiktok && !biz.facebook && (
                             <span className="text-[#3A1F0E]/30">—</span>
                           )}
                         </td>
