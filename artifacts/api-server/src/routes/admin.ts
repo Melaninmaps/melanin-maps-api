@@ -198,12 +198,14 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
 
     if (search) {
       addFilter(
-        "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ?)",
+        "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ? OR COALESCE(description, '') ILIKE ? OR COALESCE(tags::text, '') ILIKE ? OR COALESCE(vibes::text, '') ILIKE ? OR COALESCE(website, '') ILIKE ? OR COALESCE(instagram, '') ILIKE ? OR COALESCE(tiktok, '') ILIKE ? OR COALESCE(facebook, '') ILIKE ? OR COALESCE(twitter, '') ILIKE ? OR COALESCE(youtube, '') ILIKE ? OR COALESCE(pinterest, '') ILIKE ?)",
         `%${search}%`,
       );
-      // The same value is intentionally used for the four search fields.
+      // The same value is intentionally used for every searchable public
+      // profile field, so an administrator can recover a listing by its exact
+      // name, an identifying phrase, tag, or social/website handle.
       const parameter = `$${filterParams.length}`;
-      filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter})`;
+      filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter} OR COALESCE(description, '') ILIKE ${parameter} OR COALESCE(tags::text, '') ILIKE ${parameter} OR COALESCE(vibes::text, '') ILIKE ${parameter} OR COALESCE(website, '') ILIKE ${parameter} OR COALESCE(instagram, '') ILIKE ${parameter} OR COALESCE(tiktok, '') ILIKE ${parameter} OR COALESCE(facebook, '') ILIKE ${parameter} OR COALESCE(twitter, '') ILIKE ${parameter} OR COALESCE(youtube, '') ILIKE ${parameter} OR COALESCE(pinterest, '') ILIKE ${parameter})`;
     }
     if (city) addFilter("LOWER(city) = LOWER(?)", city);
     if (category) addFilter("category = ?", category);

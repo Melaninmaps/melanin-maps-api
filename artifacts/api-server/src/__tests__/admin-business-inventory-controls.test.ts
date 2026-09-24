@@ -72,7 +72,24 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Missing a website");
     expect(adminScreen).toContain("No website or social media");
     expect(adminScreen).toContain("Website &amp; social");
-    expect(adminScreen).toContain("publicSocialHref");
+    expect(adminScreen).toContain("Select this page");
+  });
+
+  it("finds a listing by name, key phrase, tag, or public contact handle", () => {
+    expect(adminScreen).toContain("Search a business name or key phrase");
+    expect(adminScreen).toContain("Search business names and key phrases");
+    expect(adminScreen).toContain("Press Enter or select Search");
+    for (const field of [
+      "COALESCE(description, '') ILIKE",
+      "COALESCE(tags::text, '') ILIKE",
+      "COALESCE(vibes::text, '') ILIKE",
+      "COALESCE(website, '') ILIKE",
+      "COALESCE(instagram, '') ILIKE",
+      "COALESCE(tiktok, '') ILIKE",
+      "COALESCE(facebook, '') ILIKE",
+    ]) {
+      expect(adminRoute).toContain(field);
+    }
   });
 
   it("publishes saved Admin links and profile categories to fresh web and mobile profile reads", () => {

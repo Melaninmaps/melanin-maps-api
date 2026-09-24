@@ -753,6 +753,7 @@ export default function Admin() {
   const [welcomeSending, setWelcomeSending] = useState(false);
   const [welcomeResult, setWelcomeResult] = useState<string | null>(null);
   const [bizSearch, setBizSearch] = useState("");
+  const [bizSearchInput, setBizSearchInput] = useState("");
   const [bizStatusFilter, setBizStatusFilter] = useState<
     "all" | "permanently_closed" | "needs_review" | "archived"
   >("all");
@@ -1799,6 +1800,7 @@ export default function Admin() {
       sort: next.sort ?? bizSort,
     };
     setBizSearch(query.search);
+    setBizSearchInput(query.search);
     setBizStatusFilter(query.status);
     setBizCityFilter(query.city);
     setBizCategoryFilter(query.category);
@@ -3627,11 +3629,25 @@ export default function Admin() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   type="text"
-                  value={bizSearch}
-                  onChange={(e) => applyBusinessInventoryFilters({ search: e.target.value })}
-                  placeholder="Search name, city, or service"
+                  value={bizSearchInput}
+                  onChange={(e) => setBizSearchInput(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      applyBusinessInventoryFilters({ search: bizSearchInput });
+                    }
+                  }}
+                  placeholder="Search a business name or key phrase"
+                  aria-label="Search business names and key phrases"
                   className="w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] sm:w-72"
                 />
+                <button
+                  type="button"
+                  onClick={() => applyBusinessInventoryFilters({ search: bizSearchInput })}
+                  className="rounded-xl bg-[#2B1507] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A1F0E]"
+                >
+                  Search
+                </button>
                 <button
                   type="button"
                   onClick={clearBusinessFilters}
@@ -3641,6 +3657,9 @@ export default function Admin() {
                 </button>
               </div>
             </div>
+            <p className="-mt-3 mb-4 text-xs text-[#3A1F0E]/50">
+              Search checks business names, descriptions, categories, tags, vibes, website addresses, and social handles. Press Enter or select Search.
+            </p>
 
             {businessInventoryIsTruncated && (
               <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
