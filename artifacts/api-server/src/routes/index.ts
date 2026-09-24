@@ -211,6 +211,12 @@ router.use(trustedSafetyShareRouter);
 // remain behind the global wall below.
 router.use(businessesRouter);
 
+// The public calendar may be browsed without a session. The events router
+// authenticates writes itself, and RSVP routes remain behind the member wall.
+// Mounting it here prevents the mobile app from treating authorization errors
+// as a reason to show retired sample event cards.
+router.use(eventsRouter);
+
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
 // checks) and the mobile app before showing the KinfolkAI chat UI.
@@ -265,8 +271,8 @@ router.use(eventRsvpsRouter);
 router.use(pushTokenRouter);
 router.use(communityRouter);
 router.use(conversationsRouter);
-router.use(eventsRouter);
 // /community/events compat — canonical path is /api/events; audit found /api/community/events 404
+// The compatibility path stays public for the same read-only calendar reason.
 router.use("/community", eventsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);

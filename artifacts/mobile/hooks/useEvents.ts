@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import type { Event } from "@/constants/types";
-import { EVENTS } from "@/constants/data";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -49,7 +48,7 @@ interface UseEventsOptions {
 
 export function useEvents(options: UseEventsOptions = {}) {
   const { category, search } = options;
-  const [events, setEvents] = useState<Event[]>(EVENTS);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +58,8 @@ export function useEvents(options: UseEventsOptions = {}) {
     try {
       const apiBase = getApiBase();
       if (!apiBase) {
-        setEvents(EVENTS);
+        setEvents([]);
+        setError("Live events are unavailable in this build. Pull to refresh after connecting to MWM.");
         setIsLoading(false);
         return;
       }
@@ -81,10 +81,10 @@ export function useEvents(options: UseEventsOptions = {}) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { events: Record<string, unknown>[] };
       const mapped = data.events.map(mapApiEvent);
-      setEvents(mapped.length > 0 ? mapped : EVENTS);
+      setEvents(mapped);
     } catch {
-      setEvents(EVENTS);
-      setError("Showing cached events — tap to refresh");
+      setEvents([]);
+      setError("Live events could not be loaded. Pull to refresh.");
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +98,7 @@ export function useEvents(options: UseEventsOptions = {}) {
 }
 
 export function useEventById(id: string) {
-  const staticEvent = EVENTS.find((e) => e.id === id);
-  const [event, setEvent] = useState<Event | undefined>(staticEvent);
+  const [event, setEvent] = useState<Event | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -108,7 +107,7 @@ export function useEventById(id: string) {
       try {
         const apiBase = getApiBase();
         if (!apiBase) {
-          setEvent(staticEvent);
+          setEvent(undefined);
           setIsLoading(false);
           return;
         }
@@ -122,7 +121,7 @@ export function useEventById(id: string) {
         const data = await res.json() as { event: Record<string, unknown> };
         setEvent(mapApiEvent(data.event));
       } catch {
-        setEvent(staticEvent);
+        setEvent(undefined);
       } finally {
         setIsLoading(false);
       }
