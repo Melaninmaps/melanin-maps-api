@@ -198,8 +198,10 @@ export default function Home() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [isBusinessOwner, setIsBusinessOwner] = useState(false);
+  const [businessWebsite, setBusinessWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [position, setPosition] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referredBy, setReferredBy] = useState("");
@@ -255,21 +257,30 @@ export default function Home() {
   const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || submitting) return;
+    if (isBusinessOwner && !businessWebsite.trim()) {
+      setSubmitError("Please add an official website or social-media link for your business.");
+      return;
+    }
     setSubmitting(true);
+    setSubmitError("");
     try {
       const res = await fetch(`${BASE}api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined, cityNomination: cityNomination.trim() || undefined, familyEmails: showFamilySection ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase()) : undefined }),
+        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, websiteUrl: isBusinessOwner ? businessWebsite.trim() : undefined, referredBy: referredBy.trim() || undefined, cityNomination: cityNomination.trim() || undefined, familyEmails: showFamilySection ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase()) : undefined }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({})) as { position?: number; referralCode?: string; error?: string };
+      if (!res.ok) {
+        setSubmitError(data.error ?? "We could not join the waitlist. Please try again.");
+        return;
+      }
       setPosition(data.position ?? null);
       const code = data.referralCode ?? null;
       setReferralCode(code);
       if (code) setMyCode(code);
       setSubmitted(true);
     } catch {
-      setSubmitted(true);
+      setSubmitError("We could not join the waitlist. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -611,9 +622,29 @@ export default function Home() {
                       </div>
                       <span className="text-sm font-semibold text-[#F5EBD8]/80">I own or operate a minority-owned business</span>
                     </label>
+                    {isBusinessOwner && (
+                      <div className="flex flex-col gap-1.5">
+                        <input
+                          data-testid="waitlist-business-link"
+                          type="url"
+                          placeholder="Business website or social-media link"
+                          value={businessWebsite}
+                          onChange={e => setBusinessWebsite(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm"
+                        />
+                        <p className="text-xs text-[#F5EBD8]/45 font-medium">Required for a business-owner waitlist request. You can submit the complete business profile after joining.</p>
+                      </div>
+                    )}
                     <input type="text" placeholder="REFERRAL CODE (OPTIONAL)" value={referredBy} onChange={e => setReferredBy(e.target.value.toUpperCase())}
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase tracking-widest" />
                     <p className="text-xs text-[#F5EBD8]/40 font-medium -mt-1">Have a friend's referral code? Enter it above to move up the list.</p>
+
+                    {submitError && (
+                      <div role="alert" className="rounded-xl border border-red-300/40 bg-red-950/35 px-3.5 py-2.5 text-sm font-medium text-red-100">
+                        {submitError}
+                      </div>
+                    )}
 
                     {/* Family Circle */}
                     <button

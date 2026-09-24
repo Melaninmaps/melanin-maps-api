@@ -9,9 +9,14 @@ function source(relativePath: string): string {
 describe("web waitlist and password recovery contract", () => {
   it("identifies website waitlist joins and reports submission failures", () => {
     const waitlist = source("../pages/waitlist.tsx");
+    const home = source("../pages/home.tsx");
     const admin = source("../pages/admin.tsx");
     expect(waitlist).toContain('signupSource: "web"');
     expect(waitlist).toContain("setSubmitError");
+    expect(home).toContain('data-testid="waitlist-business-link"');
+    expect(home).toContain("websiteUrl: isBusinessOwner ? businessWebsite.trim() : undefined");
+    expect(home).toContain("if (!res.ok)");
+    expect(home).toContain("setSubmitError");
     expect(admin).toContain("People on the Waitlist");
     expect(admin).toContain("Synthetic Audit Signups");
     expect(admin).toContain("Remove safe synthetic entries");

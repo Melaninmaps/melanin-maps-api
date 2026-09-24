@@ -371,6 +371,10 @@ export function FullMapView({
   const markerPressInFlightRef = useRef(false);
   const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once per scope
   const hasRequestedInitialLocationRef = useRef(false);
+  // Native location may resolve before MapView finishes initializing. Queue its
+  // first camera update rather than calling into an unready native map surface.
+  const mapReadyRef = useRef(false);
+  const pendingLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
   const { user } = useAuth();
   const { preferences: memberPreferences } = useUserPreferences();
 
@@ -1243,15 +1247,18 @@ export function FullMapView({
       } catch {
         // Coordinates still provide a valid nearby-business scope.
       }
-      mapRef.current?.animateToRegion(
-        {
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-          latitudeDelta: 0.12,
-          longitudeDelta: 0.12,
-        },
-        600,
-      );
+      const location = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
+      if (!mapReadyRef.current) {
+        pendingLocationRef.current = location;
+      } else {
+        mapRef.current?.animateToRegion(
+          { ...location, latitudeDelta: 0.12, longitudeDelta: 0.12 },
+          600,
+        );
+      }
     } catch {} finally {
       setLocating(false);
     }
@@ -1293,7 +1300,16 @@ export function FullMapView({
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
         onMapReady={() => {
+          mapReadyRef.current = true;
           setMapReady(true);
+          const pending = pendingLocationRef.current;
+          if (pending) {
+            pendingLocationRef.current = null;
+            mapRef.current?.animateToRegion(
+              { ...pending, latitudeDelta: 0.12, longitudeDelta: 0.12 },
+              600,
+            );
+          }
         }}
         {...(Platform.OS === "ios"
           ? {
