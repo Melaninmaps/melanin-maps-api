@@ -31,6 +31,14 @@ describe("unified waitlist and recovery contract", () => {
     expect(migrations).not.toContain("test|smoke|regression|synthetic");
   });
 
+  it("filters, exports, and bulk-approves the same selected city", () => {
+    expect(waitlistRoute).toContain('const cityFilter = String(req.query.city ?? "").trim().slice(0, 120)');
+    expect(waitlistRoute).toContain("cityOptions:");
+    expect(waitlistRoute).toContain("cityParam = String(req.query.city ?? \"\").trim().toLowerCase()");
+    expect(waitlistRoute).toContain("filter?: { status?: string; city?: string; synthetic?: \"people\" | \"only\" }");
+    expect(waitlistRoute).toContain("filterCity");
+  });
+
   it("permits phone password recovery only for an already verified phone", () => {
     expect(phoneAuthRoute).toContain('"/auth/phone/forgot-password/send"');
     expect(phoneAuthRoute).toContain('"/auth/phone/reset-password"');

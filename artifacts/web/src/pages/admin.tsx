@@ -684,6 +684,8 @@ export default function Admin() {
   const [pendingWaitlistCount, setPendingWaitlistCount] = useState(0);
   const [syntheticTestCount, setSyntheticTestCount] = useState(0);
   const [showSyntheticWaitlist, setShowSyntheticWaitlist] = useState(false);
+  const [waitlistCityFilter, setWaitlistCityFilter] = useState("all");
+  const [waitlistCityOptions, setWaitlistCityOptions] = useState<string[]>([]);
   const PAGE_SIZE = 50;
 
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -872,7 +874,12 @@ export default function Admin() {
   }, []);
 
   const loadWaitlist = useCallback(
-    (page = 1, status = "all", syntheticOnly = showSyntheticWaitlist) => {
+    (
+      page = 1,
+      status = "all",
+      syntheticOnly = showSyntheticWaitlist,
+      city = waitlistCityFilter,
+    ) => {
       setWaitlistLoading(true);
       const params = new URLSearchParams({
         page: String(page),
@@ -880,6 +887,7 @@ export default function Admin() {
       });
       if (status !== "all") params.set("status", status);
       if (syntheticOnly) params.set("synthetic", "only");
+      if (city !== "all") params.set("city", city);
       return fetch(`${BASE}api/admin/waitlist?${params}`, {
         credentials: "include",
       })
@@ -891,10 +899,13 @@ export default function Admin() {
           setWaitlistTotalPages(data.totalPages ?? 1);
           setPendingWaitlistCount(data.pendingCount ?? 0);
           setSyntheticTestCount(data.syntheticTestCount ?? 0);
+          setWaitlistCityOptions(
+            Array.isArray(data.cityOptions) ? data.cityOptions : [],
+          );
         })
         .finally(() => setWaitlistLoading(false));
     },
-    [PAGE_SIZE, showSyntheticWaitlist],
+    [PAGE_SIZE, showSyntheticWaitlist, waitlistCityFilter],
   );
 
   const loadUsers = useCallback(() => {
@@ -1116,17 +1127,30 @@ export default function Admin() {
   const handleStatusFilter = (newStatus: string) => {
     setStatusFilter(newStatus);
     setWaitlistPage(1);
-    loadWaitlist(1, newStatus, showSyntheticWaitlist);
+    loadWaitlist(1, newStatus, showSyntheticWaitlist, waitlistCityFilter);
   };
 
   const handleSyntheticWaitlistFilter = (syntheticOnly: boolean) => {
     setShowSyntheticWaitlist(syntheticOnly);
     setWaitlistPage(1);
-    loadWaitlist(1, statusFilter, syntheticOnly);
+    loadWaitlist(1, statusFilter, syntheticOnly, waitlistCityFilter);
+  };
+
+  const handleWaitlistCityFilter = (city: string) => {
+    setWaitlistCityFilter(city);
+    setWaitlistPage(1);
+    setSelected(new Set());
+    setSelectAllFiltered(false);
+    loadWaitlist(1, statusFilter, showSyntheticWaitlist, city);
   };
 
   const handlePageChange = (newPage: number) => {
-    loadWaitlist(newPage, statusFilter);
+    loadWaitlist(
+      newPage,
+      statusFilter,
+      showSyntheticWaitlist,
+      waitlistCityFilter,
+    );
   };
 
   useEffect(() => {
@@ -1154,7 +1178,12 @@ export default function Admin() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    await loadWaitlist(waitlistPage, statusFilter);
+    await loadWaitlist(
+      waitlistPage,
+      statusFilter,
+      showSyntheticWaitlist,
+      waitlistCityFilter,
+    );
     setUpdating(null);
   };
 
@@ -1176,7 +1205,12 @@ export default function Admin() {
         window.alert(body.error ?? "This waitlist entry could not be removed.");
         return;
       }
-      await loadWaitlist(waitlistPage, statusFilter);
+      await loadWaitlist(
+        waitlistPage,
+        statusFilter,
+        showSyntheticWaitlist,
+        waitlistCityFilter,
+      );
     } finally {
       setUpdating(null);
     }
@@ -1206,7 +1240,12 @@ export default function Admin() {
         return;
       }
       window.alert(`Removed ${body.deleted ?? 0} synthetic waitlist entries. Held: ${body.heldAccounts ?? 0} registered account(s), ${body.heldContributions ?? 0} contributed record(s).`);
-      await loadWaitlist(1, statusFilter, showSyntheticWaitlist);
+      await loadWaitlist(
+        1,
+        statusFilter,
+        showSyntheticWaitlist,
+        waitlistCityFilter,
+      );
     } finally {
       setUpdating(null);
     }
@@ -1309,7 +1348,11 @@ export default function Admin() {
     setBulkUpdating(true);
     const body = selectAllFiltered
       ? {
-          filter: { status: statusFilter !== "all" ? statusFilter : undefined },
+          filter: {
+            status: statusFilter !== "all" ? statusFilter : undefined,
+            city: waitlistCityFilter !== "all" ? waitlistCityFilter : undefined,
+            synthetic: showSyntheticWaitlist ? "only" : "people",
+          },
           status,
         }
       : { ids: Array.from(selected), status };
@@ -1321,7 +1364,12 @@ export default function Admin() {
     });
     setSelected(new Set());
     setSelectAllFiltered(false);
-    await loadWaitlist(waitlistPage, statusFilter);
+    await loadWaitlist(
+      waitlistPage,
+      statusFilter,
+      showSyntheticWaitlist,
+      waitlistCityFilter,
+    );
     setBulkUpdating(false);
   };
 
@@ -1346,6 +1394,8 @@ export default function Admin() {
   const exportCsv = () => {
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
+    if (waitlistCityFilter !== "all") params.set("city", waitlistCityFilter);
+    if (showSyntheticWaitlist) params.set("synthetic", "only");
     if (search.trim()) params.set("search", search.trim());
     const qs = params.toString();
     window.open(
@@ -2728,6 +2778,20 @@ export default function Admin() {
                   >
                     Synthetic tests ({syntheticTestCount})
                   </button>
+                  <label className="flex items-center gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]/70">
+                    City
+                    <select
+                      value={waitlistCityFilter}
+                      onChange={(event) => handleWaitlistCityFilter(event.target.value)}
+                      className="max-w-40 bg-transparent text-xs font-semibold text-[#3A1F0E] outline-none"
+                      aria-label="Filter waitlist by city"
+                    >
+                      <option value="all">All cities</option>
+                      {waitlistCityOptions.map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </label>
                   {showSyntheticWaitlist && syntheticTestCount > 0 && (
                     <button
                       onClick={removeSafeSyntheticWaitlistEntries}

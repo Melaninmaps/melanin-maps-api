@@ -512,19 +512,36 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const filterByStatus = allowed.includes(statusFilter) ? statusFilter : null;
     const syntheticFilter = String(req.query.synthetic ?? "people");
     const showingSynthetic = syntheticFilter === "only";
+    const cityFilter = String(req.query.city ?? "").trim().slice(0, 120);
     const whereClause = and(
       filterByStatus ? eq(waitlistTable.status, filterByStatus) : undefined,
       showingSynthetic
         ? eq(waitlistTable.isSyntheticTest, true)
         : eq(waitlistTable.isSyntheticTest, false),
+      cityFilter
+        ? sql`lower(trim(${waitlistTable.city})) = lower(trim(${cityFilter}))`
+        : undefined,
     );
     const offset = (page - 1) * pageSize;
 
-    const [entriesResult, totalResult, pendingResult, testCountResult] = await Promise.all([
+    const [entriesResult, totalResult, pendingResult, testCountResult, cityResult] = await Promise.all([
       db.select().from(waitlistTable).where(whereClause).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset),
       db.select({ total: count() }).from(waitlistTable).where(whereClause),
       db.select({ pending: count() }).from(waitlistTable).where(and(eq(waitlistTable.status, "pending"), eq(waitlistTable.isSyntheticTest, false))),
       db.select({ total: count() }).from(waitlistTable).where(eq(waitlistTable.isSyntheticTest, true)),
+      db
+        .select({ city: waitlistTable.city })
+        .from(waitlistTable)
+        .where(
+          and(
+            showingSynthetic
+              ? eq(waitlistTable.isSyntheticTest, true)
+              : eq(waitlistTable.isSyntheticTest, false),
+            isNotNull(waitlistTable.city),
+          ),
+        )
+        .groupBy(waitlistTable.city)
+        .orderBy(asc(waitlistTable.city)),
     ]);
 
     const total = Number(totalResult[0]?.total ?? 0);
@@ -551,6 +568,9 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
       pendingCount: Number(pendingResult[0]?.pending ?? 0),
       syntheticTestCount: Number(testCountResult[0]?.total ?? 0),
       showingSynthetic,
+      cityOptions: cityResult
+        .map((row) => row.city?.trim())
+        .filter((city): city is string => Boolean(city)),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch waitlist");
@@ -742,6 +762,8 @@ router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
   try {
     const statusParam = String(req.query.status ?? "");
     const searchParam = String(req.query.search ?? "").trim().toLowerCase();
+    const cityParam = String(req.query.city ?? "").trim().toLowerCase();
+    const showingSynthetic = String(req.query.synthetic ?? "people") === "only";
     const allowedStatuses = ["pending", "approved", "rejected"];
     const filterByStatus = allowedStatuses.includes(statusParam) ? statusParam : null;
 
@@ -754,9 +776,11 @@ router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
     // Build position map (1-based, signup order across entire list)
     const positionMap = new Map(allEntries.map((e, i) => [e.id, i + 1]));
 
-    // Apply status + search filters
+    // Apply the exact dashboard filters before exporting.
     const filtered = allEntries.filter(e => {
+      if (Boolean(e.isSyntheticTest) !== showingSynthetic) return false;
       if (filterByStatus && e.status !== filterByStatus) return false;
+      if (cityParam && String(e.city ?? "").trim().toLowerCase() !== cityParam) return false;
       if (searchParam) {
         const haystack = [e.email, e.city, e.referralCode, e.referredBy, e.firstName]
           .filter(Boolean)
@@ -787,7 +811,13 @@ router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
     const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
     const csv = [header.map(esc).join(","), ...rows.map(r => r.map(esc).join(","))].join("\n");
     const datePart = new Date().toISOString().slice(0, 10);
-    const suffix = filterByStatus ? `-${filterByStatus}` : searchParam ? `-filtered` : "";
+    const suffix = filterByStatus
+      ? `-${filterByStatus}`
+      : cityParam
+        ? "-city-filtered"
+        : searchParam
+          ? "-filtered"
+          : "";
     const filename = `waitlist${suffix}-${datePart}.csv`;
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
@@ -805,7 +835,7 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
   const { ids, status, filter } = req.body as {
     ids?: string[];
     status?: string;
-    filter?: { status?: string };
+    filter?: { status?: string; city?: string; synthetic?: "people" | "only" };
   };
   const allowed = ["pending", "approved", "rejected"];
   if (!status || !allowed.includes(status)) {
@@ -829,13 +859,23 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
       // Filter-based: update all entries matching the given filter (cross-page bulk)
       const filterStatus = filter!.status;
       const filterAllowed = ["pending", "approved", "rejected"];
-      const whereClause = filterStatus && filterAllowed.includes(filterStatus)
-        ? eq(waitlistTable.status, filterStatus)
-        : undefined;
+      const filterCity = String(filter!.city ?? "").trim().slice(0, 120);
+      const showingSynthetic = filter!.synthetic === "only";
+      const whereClause = and(
+        filterStatus && filterAllowed.includes(filterStatus)
+          ? eq(waitlistTable.status, filterStatus)
+          : undefined,
+        eq(waitlistTable.isSyntheticTest, showingSynthetic),
+        filterCity
+          ? sql`lower(trim(${waitlistTable.city})) = lower(trim(${filterCity}))`
+          : undefined,
+      );
 
-      const result = whereClause
-        ? await db.update(waitlistTable).set(updates).where(whereClause).returning({ id: waitlistTable.id })
-        : await db.update(waitlistTable).set(updates).returning({ id: waitlistTable.id });
+      const result = await db
+        .update(waitlistTable)
+        .set(updates)
+        .where(whereClause)
+        .returning({ id: waitlistTable.id });
 
       updatedCount = result.length;
     } else {
