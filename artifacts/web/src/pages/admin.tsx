@@ -759,8 +759,8 @@ export default function Admin() {
   const [bizSearch, setBizSearch] = useState("");
   const [bizSearchInput, setBizSearchInput] = useState("");
   const [bizStatusFilter, setBizStatusFilter] = useState<
-    "all" | "permanently_closed" | "needs_review" | "archived"
-  >("all");
+    "active" | "permanently_closed" | "needs_review" | "archived"
+  >("active");
   const [bizCityFilter, setBizCityFilter] = useState("all");
   const [bizCategoryFilter, setBizCategoryFilter] = useState("all");
   const [bizLinkFilter, setBizLinkFilter] = useState<
@@ -776,6 +776,16 @@ export default function Admin() {
   const [businessInventoryIsTruncated, setBusinessInventoryIsTruncated] =
     useState(false);
   const [businessInventoryTotal, setBusinessInventoryTotal] = useState(0);
+  const [businessLiveInventoryTotal, setBusinessLiveInventoryTotal] = useState(0);
+  const [businessArchivedInventoryTotal, setBusinessArchivedInventoryTotal] =
+    useState(0);
+  const [businessPublicDirectoryTotal, setBusinessPublicDirectoryTotal] =
+    useState(0);
+  const [businessKinfolkRecommendableTotal, setBusinessKinfolkRecommendableTotal] =
+    useState(0);
+  const [businessPermanentlyClosedTotal, setBusinessPermanentlyClosedTotal] =
+    useState(0);
+  const [businessNeedsReviewTotal, setBusinessNeedsReviewTotal] = useState(0);
   const [businessInventoryFilteredTotal, setBusinessInventoryFilteredTotal] =
     useState(0);
   const [businessInventoryPage, setBusinessInventoryPage] = useState(1);
@@ -791,7 +801,7 @@ export default function Admin() {
     page: 1,
     pageSize: 50 as 50 | 100,
     search: "",
-    status: "all" as typeof bizStatusFilter,
+    status: "active" as typeof bizStatusFilter,
     city: "all",
     category: "all",
     link: "all" as typeof bizLinkFilter,
@@ -1038,7 +1048,10 @@ export default function Admin() {
     const sortValue = next.sort ?? current.sort;
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (searchValue.trim()) params.set("search", searchValue.trim());
-    if (statusValue !== "all") params.set("status", statusValue);
+    // Explicitly send the requested inventory scope so a browser back/forward
+    // navigation cannot fall back to an older API default that included the
+    // archive in ordinary city or name review.
+    params.set("status", statusValue);
     if (cityValue !== "all") params.set("city", cityValue);
     if (categoryValue !== "all") {
       const [scope, ...rawValue] = categoryValue.split(":");
@@ -1061,6 +1074,30 @@ export default function Admin() {
         setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
         setBusinessInventoryTotal(
           typeof data.inventoryTotal === "number" ? data.inventoryTotal : 0,
+        );
+        setBusinessLiveInventoryTotal(
+          typeof data.liveInventoryTotal === "number" ? data.liveInventoryTotal : 0,
+        );
+        setBusinessArchivedInventoryTotal(
+          typeof data.archivedInventoryTotal === "number"
+            ? data.archivedInventoryTotal
+            : 0,
+        );
+        setBusinessPublicDirectoryTotal(
+          typeof data.publicDirectoryTotal === "number" ? data.publicDirectoryTotal : 0,
+        );
+        setBusinessKinfolkRecommendableTotal(
+          typeof data.kinfolkRecommendableTotal === "number"
+            ? data.kinfolkRecommendableTotal
+            : 0,
+        );
+        setBusinessPermanentlyClosedTotal(
+          typeof data.permanentlyClosedTotal === "number"
+            ? data.permanentlyClosedTotal
+            : 0,
+        );
+        setBusinessNeedsReviewTotal(
+          typeof data.needsReviewTotal === "number" ? data.needsReviewTotal : 0,
         );
         setBusinessInventoryFilteredTotal(
           typeof data.filteredTotal === "number"
@@ -1471,8 +1508,14 @@ export default function Admin() {
       suspend: "suspend and revoke access",
       restore: "restore to the active Admin presentation view",
     } as const;
+    const defaultReasons = {
+      hide: "Administrator presentation cleanup",
+      suspend: "Administrator suspended account during controlled rollout",
+      restore: "Administrator restored account during controlled rollout",
+    } as const;
     const reason = window.prompt(
-      `Why should this account be ${labels[action]}? This is reversible and preserves the account and its records.`,
+      `Why should this account be ${labels[action]}? This is reversible and preserves the account and its records. You can keep the recorded default reason or replace it.`,
+      defaultReasons[action],
     )?.trim();
     if (!reason) return;
     if (!window.confirm(`Confirm: ${labels[action]} for this account?`)) return;
@@ -1802,13 +1845,11 @@ export default function Admin() {
   // The API applies every business filter before returning this small page. This
   // keeps the full directory manageable without rendering thousands of rows.
   const filteredBiz = businesses;
-  const permanentlyClosedCount = businesses.filter(
-    (b) => b.permanentlyClosed,
-  ).length;
-  const needsReviewCount = businesses.filter((b) => b.needsVerification).length;
-  const archivedCount = businesses.filter(
-    (b) => b.listingStatus === "archived",
-  ).length;
+  // These totals are calculated over the full directory by the API, rather
+  // than only over the current 50/100-row page.
+  const permanentlyClosedCount = businessPermanentlyClosedTotal;
+  const needsReviewCount = businessNeedsReviewTotal;
+  const archivedCount = businessArchivedInventoryTotal;
   const inventoryCities = businessCityOptions;
   const inventoryServices = Array.from(
     new Map(businessServiceOptions.map((service) => [service.value, service])).values(),
@@ -1859,7 +1900,10 @@ export default function Admin() {
   const clearBusinessFilters = () => {
     applyBusinessInventoryFilters({
       search: "",
-      status: "all",
+      // Clearing filters returns to the normal live inventory, never to the
+      // Archive vault. Archived duplicate records therefore stay out of a
+      // repeated city/name cleanup unless an administrator opens the vault.
+      status: "active",
       city: "all",
       category: "all",
       link: "all",
@@ -3702,13 +3746,17 @@ export default function Admin() {
             <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#CA922B]">
-                  Business inventory
+                  {bizStatusFilter === "archived" ? "Archive vault" : "Live business inventory"}
                 </p>
                 <h2 className="mt-1 text-2xl font-serif font-bold text-[#3A1F0E]">
-                  All businesses ({businessInventoryTotal.toLocaleString()})
+                  {bizStatusFilter === "archived"
+                    ? `Archived business records (${businessArchivedInventoryTotal.toLocaleString()})`
+                    : `Live business inventory (${businessLiveInventoryTotal.toLocaleString()})`}
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-[#3A1F0E]/60">
-                  Filter the full inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context.
+                  {bizStatusFilter === "archived"
+                    ? "This separate vault retains archived profiles, research, source links, and audit history. Restore only a record you have re-confirmed."
+                    : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
                 </p>
                 {contactedCount > 0 && (
                   <p className="mt-1 text-xs text-[#3A1F0E]/45">
@@ -3757,13 +3805,51 @@ export default function Admin() {
               </div>
             )}
 
-            {/* Status filter tabs */}
+            <div className="mb-4 grid gap-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF9EF] p-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <div className="text-2xl font-serif font-bold text-[#3A1F0E]">
+                  {businessLiveInventoryTotal.toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#3A1F0E]/55">
+                  Live inventory records
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-serif font-bold text-[#3A1F0E]">
+                  {businessPublicDirectoryTotal.toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#3A1F0E]/55">
+                  Public Directory searchable
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-serif font-bold text-[#3A1F0E]">
+                  {businessKinfolkRecommendableTotal.toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#3A1F0E]/55">
+                  Kinfolk recommendable
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-serif font-bold text-[#3A1F0E]">
+                  {businessArchivedInventoryTotal.toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#3A1F0E]/55">
+                  Archived in separate vault
+                </div>
+              </div>
+              <p className="sm:col-span-2 xl:col-span-4 text-xs leading-5 text-[#3A1F0E]/55">
+                Total retained MWM records: {businessInventoryTotal.toLocaleString()}. Archived records remain deliberately name-reachable and restorable, but are excluded from map, category/city discovery, and Kinfolk recommendation counts.
+              </p>
+            </div>
+
+            {/* Inventory scope tabs */}
             <div className="flex flex-wrap gap-2 mb-4">
               {(
                 [
                   {
-                    key: "all",
-                    label: `All (${businessInventoryTotal.toLocaleString()})`,
+                    key: "active",
+                    label: `Live inventory (${businessLiveInventoryTotal.toLocaleString()})`,
                     warn: false,
                   },
                   {
@@ -3778,7 +3864,7 @@ export default function Admin() {
                   },
                   {
                     key: "archived",
-                    label: `📦 Archived (${archivedCount})`,
+                    label: `📦 Archive vault (${archivedCount.toLocaleString()})`,
                     warn: false,
                   },
                 ] as const
@@ -3891,7 +3977,9 @@ export default function Admin() {
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[#2B1507]/10 bg-[#2B1507]/5 px-4 py-3 text-sm text-[#3A1F0E]/70 md:flex-row md:items-center md:justify-between">
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
-                Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration.
+                {bizStatusFilter === "archived"
+                  ? "These are separated from routine city and business-name review. Use Restore public listing only after confirming the record should return to normal discovery."
+                  : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration."}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 <label className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A1F0E]/15 bg-white px-2.5 py-1 text-xs font-bold text-[#3A1F0E]/70">
@@ -3906,25 +3994,29 @@ export default function Admin() {
                     <option value={100}>100</option>
                   </select>
                 </label>
-                <button
-                  type="button"
-                  onClick={selectAllArchivableFilteredBusinesses}
-                  disabled={archivableFilteredBiz.length === 0}
-                  className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Select this page ({archivableFilteredBiz.length.toLocaleString()})
-                </button>
-                <button
-                  type="button"
-                  onClick={archiveSelectedBusinesses}
-                  disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#7A2637] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#641E2E] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Archive className="h-3.5 w-3.5" />
-                  {bulkBusinessUpdating
-                    ? "Archiving…"
-                    : `Archive selected (${selectedVisibleBusinessCount})`}
-                </button>
+                {bizStatusFilter !== "archived" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={selectAllArchivableFilteredBusinesses}
+                      disabled={archivableFilteredBiz.length === 0}
+                      className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Select this page ({archivableFilteredBiz.length.toLocaleString()})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={archiveSelectedBusinesses}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#7A2637] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#641E2E] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Archive className="h-3.5 w-3.5" />
+                      {bulkBusinessUpdating
+                        ? "Archiving…"
+                        : `Archive selected (${selectedVisibleBusinessCount})`}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -3949,19 +4041,25 @@ export default function Admin() {
                   <thead>
                     <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
                       <th className="w-10 px-3 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          aria-label="Select all visible public listings"
-                          checked={
-                            archivableFilteredBiz.length > 0 &&
-                            archivableFilteredBiz.every((business) => selectedBusinessIds.has(business.id))
-                          }
-                          onChange={(event) => {
-                            if (event.target.checked) selectAllArchivableFilteredBusinesses();
-                            else setSelectedBusinessIds(new Set());
-                          }}
-                          className="h-4 w-4 accent-[#CA922B]"
-                        />
+                        {bizStatusFilter === "archived" ? (
+                          <span className="text-xs font-bold text-[#3A1F0E]/35" title="Archive vault rows are restored one at a time">
+                            Vault
+                          </span>
+                        ) : (
+                          <input
+                            type="checkbox"
+                            aria-label="Select all visible live listings"
+                            checked={
+                              archivableFilteredBiz.length > 0 &&
+                              archivableFilteredBiz.every((business) => selectedBusinessIds.has(business.id))
+                            }
+                            onChange={(event) => {
+                              if (event.target.checked) selectAllArchivableFilteredBusinesses();
+                              else setSelectedBusinessIds(new Set());
+                            }}
+                            className="h-4 w-4 accent-[#CA922B]"
+                          />
+                        )}
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Business
@@ -3993,14 +4091,18 @@ export default function Admin() {
                         className={`border-b border-[#3A1F0E]/5 transition-colors hover:bg-[#FAF6EF]/50 ${selectedBusinessIds.has(biz.id) ? "bg-[#CA922B]/10" : i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
                       >
                         <td className="px-3 py-3 text-center">
-                          <input
-                            type="checkbox"
-                            aria-label={`Select ${biz.name}`}
-                            checked={selectedBusinessIds.has(biz.id)}
-                            disabled={biz.listingStatus === "archived"}
-                            onChange={() => toggleBusinessSelection(biz.id)}
-                            className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-30"
-                          />
+                          {bizStatusFilter === "archived" ? (
+                            <span className="text-xs text-[#3A1F0E]/35">—</span>
+                          ) : (
+                            <input
+                              type="checkbox"
+                              aria-label={`Select ${biz.name}`}
+                              checked={selectedBusinessIds.has(biz.id)}
+                              disabled={biz.listingStatus === "archived"}
+                              onChange={() => toggleBusinessSelection(biz.id)}
+                              className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-30"
+                            />
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="font-semibold text-[#3A1F0E]">

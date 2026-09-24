@@ -178,7 +178,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const city = String(req.query.city ?? "").trim();
     const category = String(req.query.category ?? "").trim();
     const subcategory = String(req.query.subcategory ?? "").trim();
-    const status = String(req.query.status ?? "all");
+    // The normal administrator review screen is deliberately a live-inventory
+    // view. Archived records live in the separate Archive vault instead of
+    // resurfacing each time an administrator filters a city or a business name.
+    const status = String(req.query.status ?? "active");
     const link = String(req.query.link ?? "all");
     const addedFrom = String(req.query.addedFrom ?? "").trim();
     const addedTo = String(req.query.addedTo ?? "").trim();
@@ -210,12 +213,18 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     if (city) addFilter("LOWER(city) = LOWER(?)", city);
     if (category) addFilter("category = ?", category);
     if (subcategory) addFilter("subcategory = ?", subcategory);
+    if (status === "archived") {
+      filters.push("listing_status = 'archived'");
+    } else {
+      // All ordinary review modes exclude the reversible archive. This keeps a
+      // completed duplicate cleanup out of the next city/name review while
+      // retaining its record and audit evidence in the Archive vault.
+      filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
+    }
     if (status === "permanently_closed") {
       filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
     } else if (status === "needs_review") {
       filters.push("needs_verification = true");
-    } else if (status === "archived") {
-      filters.push("listing_status = 'archived'");
     }
     if (link === "website_present") {
       filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NOT NULL");
@@ -238,7 +247,21 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     // Use to_jsonb for the optional, additive intake fields. The older records
     // predate those fields, and an incomplete startup-migration retry must not
     // make the entire administrator inventory unavailable.
-    const [businesses, inventoryCount, filteredCount, cities, services] = await Promise.all([
+    const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived'";
+    const archivedInventoryWhere = "listing_status = 'archived'";
+    const [
+      businesses,
+      inventoryCount,
+      liveInventoryCount,
+      archivedInventoryCount,
+      publicDirectoryCount,
+      kinfolkRecommendableCount,
+      permanentlyClosedCount,
+      needsReviewCount,
+      filteredCount,
+      cities,
+      services,
+    ] = await Promise.all([
       pool.query<{
       id: string;
       name: string;
@@ -284,17 +307,60 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       ),
       pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM businesses"),
       pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM businesses WHERE ${liveInventoryWhere}`,
+      ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM businesses WHERE ${archivedInventoryWhere}`,
+      ),
+      // The public view is the canonical answer to "how many can members find
+      // through normal Directory/category/city search?" It excludes archived,
+      // duplicate, hidden, suspended, and demonstration records.
+      pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM public.public_businesses"),
+      // Kinfolk's ordinary recommendation catalog adds the documented Diaspora
+      // designation predicate to that same public directory surface.
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total
+           FROM public.public_businesses
+          WHERE ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}`,
+      ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total
+           FROM businesses
+          WHERE ${liveInventoryWhere}
+            AND COALESCE(enrichment_note, '') ILIKE '%permanently closed%'`,
+      ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total
+           FROM businesses
+          WHERE ${liveInventoryWhere}
+            AND needs_verification = true`,
+      ),
+      pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total FROM businesses ${where}`,
         filterParams,
       ),
       pool.query<{ city: string }>(
-        "SELECT DISTINCT city FROM businesses WHERE NULLIF(BTRIM(city), '') IS NOT NULL ORDER BY city ASC",
+        `SELECT DISTINCT city
+           FROM businesses
+          WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}
+            AND NULLIF(BTRIM(city), '') IS NOT NULL
+          ORDER BY city ASC`,
       ),
       pool.query<{ category: string; subcategory: string | null }>(
-        "SELECT DISTINCT category, subcategory FROM businesses WHERE NULLIF(BTRIM(category), '') IS NOT NULL ORDER BY category ASC, subcategory ASC NULLS FIRST",
+        `SELECT DISTINCT category, subcategory
+           FROM businesses
+          WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}
+            AND NULLIF(BTRIM(category), '') IS NOT NULL
+          ORDER BY category ASC, subcategory ASC NULLS FIRST`,
       ),
     ]);
     const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
+    const liveInventoryTotal = Number(liveInventoryCount.rows[0]?.total ?? 0);
+    const archivedInventoryTotal = Number(archivedInventoryCount.rows[0]?.total ?? 0);
+    const publicDirectoryTotal = Number(publicDirectoryCount.rows[0]?.total ?? 0);
+    const kinfolkRecommendableTotal = Number(kinfolkRecommendableCount.rows[0]?.total ?? 0);
+    const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
+    const needsReviewTotal = Number(needsReviewCount.rows[0]?.total ?? 0);
     const filteredTotal = Number(filteredCount.rows[0]?.total ?? 0);
     const bizRows = businesses.rows.map((b) => ({
       id: b.id,
@@ -356,7 +422,16 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
 
     res.json({
       businesses: result,
+      // Keep the full record count distinct from live review, public Directory,
+      // and Kinfolk recommendation counts. These answer different operator
+      // questions and prevent an archived duplicate from looking active.
       inventoryTotal,
+      liveInventoryTotal,
+      archivedInventoryTotal,
+      publicDirectoryTotal,
+      kinfolkRecommendableTotal,
+      permanentlyClosedTotal,
+      needsReviewTotal,
       filteredTotal,
       page,
       pageSize,

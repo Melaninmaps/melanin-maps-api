@@ -37,7 +37,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("to_jsonb(businesses)->>'research_source_label'");
     expect(adminRoute).toContain("to_jsonb(businesses)->>'kinfolk_recommendation_reason'");
     expect(adminScreen).toContain("businessInventoryTotal");
-    expect(adminScreen).toContain("All businesses ({businessInventoryTotal.toLocaleString()})");
+    expect(adminScreen).toContain("businessLiveInventoryTotal");
+    expect(adminScreen).toContain("Live business inventory");
     expect(adminScreen).toContain("businessInventoryTotalPages");
     expect(adminScreen).toContain("changeBusinessInventoryPage");
     expect(adminScreen).toContain("Loading business inventory");
@@ -62,6 +63,24 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("created_at DESC, id ASC");
     expect(adminScreen).toContain("Business name A–Z");
     expect(adminScreen).toContain('params.set("sort", sortValue)');
+  });
+
+  it("keeps archived duplicate records in a separate vault and counts each discovery surface", () => {
+    expect(adminRoute).toContain('const status = String(req.query.status ?? "active")');
+    expect(adminRoute).toContain("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
+    expect(adminRoute).toContain("const liveInventoryWhere");
+    expect(adminRoute).toContain("const archivedInventoryWhere");
+    expect(adminRoute).toContain("liveInventoryTotal");
+    expect(adminRoute).toContain("archivedInventoryTotal");
+    expect(adminRoute).toContain("publicDirectoryTotal");
+    expect(adminRoute).toContain("kinfolkRecommendableTotal");
+    expect(adminRoute).toContain("FROM public.public_businesses");
+    expect(adminScreen).toContain("Archive vault");
+    expect(adminScreen).toContain("Public Directory searchable");
+    expect(adminScreen).toContain("Kinfolk recommendable");
+    expect(adminScreen).toContain("Archived in separate vault");
+    expect(adminScreen).toContain("status: \"active\"");
+    expect(adminScreen).toContain("Restore public listing");
   });
 
   it("shows administrators website and social links and can isolate missing websites", () => {

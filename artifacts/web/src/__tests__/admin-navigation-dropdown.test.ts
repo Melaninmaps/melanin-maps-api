@@ -75,6 +75,7 @@ describe("admin dashboard section selector", () => {
       '"hide" | "suspend" | "restore"',
       "View hidden accounts",
       "Hide keeps the account and activity for records",
+      "Administrator suspended account during controlled rollout",
       "Archive from view",
     ]) {
       expect(admin).toContain(marker);
