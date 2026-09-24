@@ -169,7 +169,7 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
-  it("does not treat cohort or master-import provenance as ownership evidence for Kinfolk", async () => {
+  it("keeps every public listing in the temporary Kinfolk catalog without treating provenance as ownership evidence", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     await createGovernedKinfolkBusinessRepository(pool).findDestinationCatalog({
       city: "Allentown",
@@ -177,11 +177,12 @@ describe("governed Kinfolk business repository", () => {
     });
 
     const sql = pool.query.mock.calls[0]?.[0] as string;
-    expect(sql).toContain("b.ownership_designations");
-    expect(sql).toContain("jsonb_array_elements_text");
+    expect(sql).toContain("public.public_businesses");
     expect(sql).not.toContain("completed_cohort_directory_discovery_receipts");
     expect(sql).not.toContain("national_diaspora_master_18294");
     expect(sql).not.toContain("source_backed_held_live");
+    expect(sql).toContain("AND TRUE");
+    expect(sql).not.toContain("jsonb_array_elements_text");
   });
 
   it("searches explicit preference evidence only inside the governed Philadelphia catalog", async () => {
@@ -382,7 +383,7 @@ describe("governed Kinfolk business repository", () => {
     expect(params[4]).toBe("hvac");
   });
 
-  it("suppresses probable duplicates non-destructively with identity evidence", () => {
+  it("keeps probable duplicates visible during founder-led cleanup until an administrator archives one", () => {
     const base = {
       ...AMINA_ROW,
       city: "Philadelphia",
@@ -406,12 +407,11 @@ describe("governed Kinfolk business repository", () => {
       toBusiness(base, "canonical", true),
       toBusiness(base, "probable-duplicate", false),
     ]);
-    expect(outcome.businesses).toHaveLength(1);
-    expect(outcome.businesses[0]).toMatchObject({ id: "canonical" });
-    expect(outcome.suppressed).toEqual([expect.objectContaining({
-      suppressedId: "probable-duplicate", canonicalId: "canonical",
-      reasons: expect.arrayContaining(["same normalized name and city/state", "same phone"]),
-    })]);
+    expect(outcome.businesses.map(({ id }) => id)).toEqual([
+      "canonical",
+      "probable-duplicate",
+    ]);
+    expect(outcome.suppressed).toEqual([]);
   });
 
   it("searches matching published map records in the same exact city and state", async () => {
@@ -475,7 +475,7 @@ describe("governed Kinfolk business repository", () => {
     expect(pool.query).not.toHaveBeenCalled();
   });
 
-  it("fixture integration returns only canonical AMINA, excluding demo and visibility failures", () => {
+  it("fixture integration retains live duplicate candidates while excluding demo and hidden records", () => {
     const fixtures = [
       {
         name: "AMINA",
@@ -566,7 +566,7 @@ describe("governed Kinfolk business repository", () => {
             record.state === "PA",
         )
         .map((record) => record.name),
-    ).toEqual(["AMINA"]);
+    ).toEqual(["AMINA", "AMINA"]);
   });
 });
 

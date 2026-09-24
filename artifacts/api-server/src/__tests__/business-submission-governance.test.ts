@@ -970,9 +970,8 @@ describe("source contracts", () => {
     ])).toContain("idx_community_business_submissions_owner_request");
   });
 
-  it("rejects a public view that omits any lifecycle, hiding, or demo-containment clause", () => {
-    const safeFunction = `SELECT COALESCE(p_status, '') = 'active'
-      AND COALESCE(p_is_duplicate, false) = false
+  it("rejects a public view that omits lifecycle, hiding, or demo-containment clauses while retaining duplicate candidates for review", () => {
+    const safeFunction = `SELECT COALESCE(p_status, 'active') NOT IN ('suspended', 'removed', 'deleted', 'permanently_hidden')
       AND COALESCE(p_listing_status, '') IN ('live_unclaimed', 'live_claimed')
       AND COALESCE(p_permanently_hidden, false) = false
       AND NOT (
@@ -984,11 +983,10 @@ describe("source contracts", () => {
         OR REGEXP_REPLACE(COALESCE(p_phone, ''), '[^0-9]', '', 'g') IN ('15555550100', '5555550100')
       );`;
     const safeView = `SELECT b.* FROM public.businesses b
-      WHERE public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)
-      AND NOT EXISTS (SELECT 1 FROM public.business_duplicate_resolutions d WHERE d.superseded_business_id = b.id)`;
+      WHERE public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)`;
     expect(communityBusinessIsPublicFunctionIsSafe(safeFunction)).toBe(true);
     for (const unsafeFunction of [
-      safeFunction.replace("= false", "= true"),
+      safeFunction.replace("'suspended', 'removed'", "'suspended'"),
       safeFunction.replace("'live_claimed')", "'live_claimed', 'draft')"),
       safeFunction.replace("'demo', 'demo_seed'", "'demo', 'ordinary'"),
       safeFunction.replace("OR COALESCE(p_description", "AND COALESCE(p_description"),
@@ -1001,7 +999,7 @@ describe("source contracts", () => {
       "SELECT b.* FROM public.businesses b",
       safeView.replace("WHERE public.business_record_is_public", "WHERE NOT public.business_record_is_public"),
       `${safeView} OR true`,
-      safeView.replace("b.id)", "b.id) AND true"),
+      safeView.replace("b.phone)", "b.phone) AND true"),
     ]) expect(communityPublicViewDefinitionIsSafe(unsafeView)).toBe(false);
   });
 

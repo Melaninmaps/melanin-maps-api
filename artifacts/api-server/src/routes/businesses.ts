@@ -256,35 +256,26 @@ function publicBusinessVisibilityCondition() {
     ${businessesTable.description},
     ${sql.raw('"businesses"."data_source"')},
     ${businessesTable.phone}
-  ) AND NOT EXISTS (
-    SELECT 1
-      FROM public.business_duplicate_resolutions directory_resolution
-     WHERE directory_resolution.superseded_business_id = ${businessesTable.id}
   )`;
 }
 
 // Administratively archived businesses are deliberately excluded from browse,
 // map, category, and Kinfolk discovery. The owner requested that a legitimate
 // archived record remain reachable only when a member expressly looks up its
-// name; duplicate, permanently hidden, demo, and resolved-superseded rows are
-// never eligible for that narrow fallback.
+// name. Potential duplicate markers remain reviewable until the administrator
+// explicitly archives a record; permanent-hidden and demo rows stay excluded.
 function directNameLookupVisibilityCondition() {
   return sql<boolean>`(
     ${publicBusinessVisibilityCondition()}
     OR (
       COALESCE(${businessesTable.status}, '') = 'suspended'
       AND COALESCE(${businessesTable.listingStatus}, '') = 'archived'
-      AND COALESCE(${sql.raw('"businesses"."is_duplicate"')}, false) = false
       AND COALESCE(${sql.raw('"businesses"."permanently_hidden"')}, false) = false
       AND NOT (
         COALESCE(${businessesTable.name}, '') ILIKE '%[DEMO]%'
         OR COALESCE(${businessesTable.description}, '') ILIKE '%[DEMO]%'
         OR LOWER(BTRIM(COALESCE(${sql.raw('"businesses"."data_source"')}, ''))) IN ('demo', 'demo_seed')
         OR REGEXP_REPLACE(COALESCE(${businessesTable.phone}, ''), '[^0-9]', '', 'g') IN ('15555550100', '5555550100')
-      )
-      AND NOT EXISTS (
-        SELECT 1 FROM public.business_duplicate_resolutions directory_resolution
-        WHERE directory_resolution.superseded_business_id = ${businessesTable.id}
       )
     )
   )`;
@@ -2389,7 +2380,6 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
     const archivedDirectProfile =
       business.status === "suspended" &&
       business.listingStatus === "archived" &&
-      !business.isDuplicate &&
       !business.permanentlyHidden &&
       !String(business.dataSource ?? "").trim().toLowerCase().match(/^(demo|demo_seed)$/) &&
       String(business.phone ?? "").replace(/\D/g, "") !== "15555550100" &&

@@ -768,7 +768,7 @@ export default function Admin() {
   >("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
-  const [bizSort, setBizSort] = useState<"added_desc" | "name_asc">("added_desc");
+  const [bizSort, setBizSort] = useState<"added_desc" | "name_asc">("name_asc");
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<Set<string>>(
     new Set(),
   );
@@ -807,7 +807,7 @@ export default function Admin() {
     link: "all" as typeof bizLinkFilter,
     addedFrom: "",
     addedTo: "",
-    sort: "added_desc" as typeof bizSort,
+    sort: "name_asc" as typeof bizSort,
   });
   const businessInventoryRequestId = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1934,7 +1934,7 @@ export default function Admin() {
       link: "all",
       addedFrom: "",
       addedTo: "",
-      sort: "added_desc",
+      sort: "name_asc",
     });
   };
 
@@ -3861,7 +3861,7 @@ export default function Admin() {
                   {businessKinfolkRecommendableTotal.toLocaleString()}
                 </div>
                 <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#3A1F0E]/55">
-                  Kinfolk recommendable
+                  Current Kinfolk catalog
                 </div>
               </div>
               <div>
@@ -3873,7 +3873,7 @@ export default function Admin() {
                 </div>
               </div>
               <p className="sm:col-span-2 xl:col-span-4 text-xs leading-5 text-[#3A1F0E]/55">
-                Total retained MWM records: {businessInventoryTotal.toLocaleString()}. Archived records remain deliberately name-reachable and restorable, but are excluded from map, category/city discovery, and Kinfolk recommendation counts.
+                All current live public listings remain in the Kinfolk, map, and category/city catalog while you review. Archive a listing to remove it from those default surfaces; it remains deliberately name-reachable, restorable, and retained in the separate vault.
               </p>
             </div>
 
@@ -3967,8 +3967,8 @@ export default function Admin() {
                   onChange={(event) => applyBusinessInventoryFilters({ sort: event.target.value as typeof bizSort })}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 >
+                  <option value="name_asc">Business name A–Z (default)</option>
                   <option value="added_desc">Newest added first</option>
-                  <option value="name_asc">Business name A–Z</option>
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
