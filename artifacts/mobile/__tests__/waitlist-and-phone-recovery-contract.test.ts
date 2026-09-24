@@ -15,6 +15,17 @@ describe("mobile waitlist and password recovery contract", () => {
     expect(mobileWaitlist).toContain("setSubmitted(true);");
   });
 
+  it("requires a member rollout city and submits it separately from a city nomination", () => {
+    expect(mobileWaitlist).toContain('const [city, setCity] = useState("");');
+    expect(mobileWaitlist).toContain('const [state, setState] = useState("");');
+    expect(mobileWaitlist).toContain("const cityValid = city.trim().length >= 2;");
+    expect(mobileWaitlist).toContain("const valid = emailValid && cityValid && websiteValid;");
+    expect(mobileWaitlist).toContain("city: city.trim(),");
+    expect(mobileWaitlist).toContain("state: state.trim().toUpperCase() || undefined,");
+    expect(mobileWaitlist).toContain("Your City");
+    expect(mobileWaitlist).toContain("cityNomination: cityNomination.trim() || undefined,");
+  });
+
   it("keeps email recovery and adds verified-phone recovery rather than phone login", () => {
     expect(mobileRecovery).toContain('useState<"email" | "phone">("email")');
     expect(mobileRecovery).toContain('"/api/auth/phone/forgot-password/send"');

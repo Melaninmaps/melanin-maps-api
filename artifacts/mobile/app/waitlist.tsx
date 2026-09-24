@@ -272,6 +272,8 @@ export default function WaitlistScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [isBusinessOwner, setIsBusinessOwner] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -291,8 +293,9 @@ export default function WaitlistScreen() {
   const referralLink = REFERRAL_URL + referralCode;
 
   const emailValid = email.includes("@") && email.includes(".");
+  const cityValid = city.trim().length >= 2;
   const websiteValid = !isBusinessOwner || websiteUrl.trim().length > 0;
-  const valid = emailValid && websiteValid;
+  const valid = emailValid && cityValid && websiteValid;
 
   const handleJoin = async () => {
     if (!valid) return;
@@ -309,6 +312,8 @@ export default function WaitlistScreen() {
           email,
           firstName: firstName.trim() || undefined,
           lastName: lastName.trim() || undefined,
+          city: city.trim(),
+          state: state.trim().toUpperCase() || undefined,
           isBusinessOwner,
           websiteUrl: isBusinessOwner ? websiteUrl.trim() : undefined,
           referralCode: code,
@@ -438,6 +443,36 @@ export default function WaitlistScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
+
+              <View style={styles.cityRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.formLabel, { color: colors.foreground }]}>Your City <Text style={{ color: colors.destructive }}>*</Text></Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.card, borderColor: cityValid || !city ? colors.border : colors.destructive, color: colors.foreground }]}
+                    placeholder="e.g. Albuquerque"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={city}
+                    onChangeText={setCity}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                </View>
+                <View style={styles.stateField}>
+                  <Text style={[styles.formLabel, { color: colors.foreground }]}>State</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="NM"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={state}
+                    onChangeText={(value) => setState(value.toUpperCase())}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    maxLength={2}
+                    returnKeyType="next"
+                  />
+                </View>
+              </View>
+              <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>This helps us build community city by city. It is used for rollout planning, not public location sharing.</Text>
 
               <TouchableOpacity
                 style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: isBusinessOwner ? colors.primary + "60" : colors.border }]}
@@ -1125,6 +1160,8 @@ const styles = StyleSheet.create({
   toggleThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: "#FFF", position: "absolute" },
   fieldHint: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: -4 },
   nameRow: { flexDirection: "row", gap: 10 },
+  cityRow: { flexDirection: "row", gap: 10, alignItems: "flex-end" },
+  stateField: { width: 86 },
   nameInput: { flex: 1 },
   formLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   input: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
