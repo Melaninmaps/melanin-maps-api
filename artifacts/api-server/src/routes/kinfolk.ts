@@ -229,14 +229,21 @@ import { eligibleForDefaultLearning } from "../kinfolk/adaptive-delivery";
 import { getMemberAgeBand } from "../lib/audience-policy";
 import {
   buildPrivateMemoryPromptBlock,
+  isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
+  resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import {
+  buildPlanningDiscoveryFollowUp,
   buildConsentedPlanningContextPrompt,
   isConsentedPlanningMemoryRelevant,
 } from "../kinfolk/consented-planning-context";
+import {
+  isExplicitProfileMemoryRelevant,
+  parseExplicitMemberMemory,
+} from "../kinfolk/explicit-member-memory";
 import { filterMemberFacingSources } from "../kinfolk/source-relevance";
 import {
   buildCompanionMemoryOffer,
@@ -5251,7 +5258,7 @@ function isSensitiveMemoryRelevant(
 }
 
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
-  if (!isKinfolkPrivateMemoryEnabled()) {
+  if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
       error: "Kinfolk private memory is disabled.",
       code: "PRIVATE_MEMORY_DISABLED",
@@ -5294,7 +5301,7 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
 });
 
 router.post("/kinfolk/memories", async (req: Request, res: Response) => {
-  if (!isKinfolkPrivateMemoryEnabled()) {
+  if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
       error: "Kinfolk private memory is disabled.",
       code: "PRIVATE_MEMORY_DISABLED",
@@ -5303,7 +5310,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
   try {
-    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    const memoryEnabled = await resolveOwnerExplicitMemberMemoryAccess(req.user.id);
     if (!memoryEnabled) {
       return void res.status(403).json({
         error: "Kinfolk memory is disabled.",
@@ -5325,6 +5332,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       "goal",
       "ongoing_context",
       "planning_context",
+      "profile_context",
       "companion_context",
     ];
     const requestedPurpose = String(body.purpose ?? "personalization");
@@ -5384,7 +5392,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
 });
 
 router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
-  if (!isKinfolkPrivateMemoryEnabled()) {
+  if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
       error: "Kinfolk private memory is disabled.",
       code: "PRIVATE_MEMORY_DISABLED",
@@ -5432,6 +5440,66 @@ async function resolveOwnerKinfolkMemoryAccess(userId: string) {
       return settings?.kinfolkMemoryEnabled ?? null;
     },
   });
+}
+
+/**
+ * Direct "remember …" statements have their own narrow runtime control. They
+ * still honor the member's existing memory switch, but do not silently enable
+ * retained conversation history in production.
+ */
+async function resolveOwnerExplicitMemberMemoryAccess(userId: string) {
+  // The authenticated member's direct `remember …` instruction is the
+  // item-level opt-in; do not require the separate session-history setting.
+  // Keep the userId parameter so the call site remains explicit about ownership.
+  void userId;
+  return resolveExplicitMemberMemoryAccess();
+}
+
+async function persistExplicitMemberMemory(input: {
+  userId: string;
+  sessionId?: string;
+  message: string;
+}): Promise<{ remembered: boolean; reply: string } | null> {
+  const parsed = parseExplicitMemberMemory(input.message);
+  if (!parsed) return null;
+
+  const enabled = await resolveOwnerExplicitMemberMemoryAccess(input.userId);
+  if (!enabled) {
+    return {
+      remembered: false,
+      reply:
+        "I heard you, but Kinfolk's direct-memory feature is temporarily unavailable. I have not saved that detail.",
+    };
+  }
+
+  const existing = await db
+    .select({ id: kinfolkPrivateMemoriesTable.id })
+    .from(kinfolkPrivateMemoriesTable)
+    .where(
+      and(
+        eq(kinfolkPrivateMemoriesTable.userId, input.userId),
+        eq(kinfolkPrivateMemoriesTable.content, parsed.content),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+      ),
+    )
+    .limit(1)
+    .catch(() => []);
+
+  if (!existing.length) {
+    await db.insert(kinfolkPrivateMemoriesTable).values({
+      userId: input.userId,
+      content: parsed.content,
+      purpose: parsed.purpose,
+      sourceSessionId: input.sessionId ?? null,
+      isSensitive: parsed.isSensitive,
+    });
+  }
+
+  return {
+    remembered: true,
+    reply:
+      "I’ll remember that and use it only when it is genuinely relevant to a future question. You can review or forget it any time in Kinfolk settings.",
+  };
 }
 
 async function persistDeterministicDiscoveryTurn(input: {
@@ -5662,6 +5730,43 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   } catch {
     return false;
   }
+  // Deterministic business search has no model prompt. Load only member-approved
+  // planning notes that directly match this practical request so its follow-up
+  // can surface timing or budget tradeoffs without inventing facts.
+  const explicitMemberMemoryEnabled =
+    await resolveOwnerExplicitMemberMemoryAccess(input.req.user!.id);
+  const relevantPlanningMemories = explicitMemberMemoryEnabled
+    ? await db
+        .select({
+          content: kinfolkPrivateMemoriesTable.content,
+          purpose: kinfolkPrivateMemoriesTable.purpose,
+          isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        })
+        .from(kinfolkPrivateMemoriesTable)
+        .where(
+          and(
+            eq(kinfolkPrivateMemoriesTable.userId, input.req.user!.id),
+            eq(kinfolkPrivateMemoriesTable.purpose, "planning_context"),
+            isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            or(
+              isNull(kinfolkPrivateMemoriesTable.expiresAt),
+              gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
+            ),
+          ),
+        )
+        .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+        .limit(8)
+        .then((memories) =>
+          memories.filter((memory) =>
+            isConsentedPlanningMemoryRelevant(memory, input.message),
+          ),
+        )
+        .catch(() => [])
+    : [];
+  const planningFollowUp = buildPlanningDiscoveryFollowUp(
+    relevantPlanningMemories,
+    input.message,
+  );
   const [prefs, assuredAgeBand] = await Promise.all([
     getCachedPrefs(input.req.user!.id),
     getMemberAgeBand(input.req.user!.id),
@@ -5753,6 +5858,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         : externalCount > 0
           ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
           : `I didn't find a matching ${designationSummary} place for ${subject.label} in ${scope.city}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
+  const deterministicFollowUps = [
+    resultView.followUp,
+    ...(planningFollowUp ? [planningFollowUp] : []),
+  ];
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
@@ -5764,7 +5873,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       unknown
     > | null,
     resultView: resultView as unknown as Record<string, unknown>,
-    followUpSuggestions: [resultView.followUp],
+    followUpSuggestions: deterministicFollowUps,
     sources: discoveryResult.sources.map(({ title, url }) => ({ title, url })),
     destination: location.city,
     vibes: input.vibes,
@@ -5775,7 +5884,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     reply: conciseReply,
     recommendations: discoveryResult.recommendations,
     itinerary: null,
-    followUpSuggestions: [resultView.followUp],
+    followUpSuggestions: deterministicFollowUps,
     resultView,
     smartPromotion: null,
     taskAction: null,
@@ -5867,6 +5976,49 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // any session/history lookup. A settings-read failure disables memory for this
   // request rather than risking reinjection or persistence after an opt-out.
   const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+
+  // A clear "remember …" statement is a first-party consent command, not an
+  // ordinary chat turn. Save exactly the member's own words, acknowledge it,
+  // and avoid sending their profile detail to a model unnecessarily.
+  const explicitMemory = await persistExplicitMemberMemory({
+    userId: req.user.id,
+    sessionId,
+    message,
+  });
+  if (explicitMemory) {
+    return void res.json({
+      sessionId,
+      reply: explicitMemory.reply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "personalization",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "memory_confirmation",
+      remembered: explicitMemory.remembered,
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
 
   // Arithmetic is deterministic and must not trigger Library, web, or model work.
   // Subsequent conversational turns still load normal session history below.
@@ -8197,7 +8349,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
     const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
-    const activePrivateMemories = memoryEnabled && req.user?.id
+    // A member's direct remember command may be used even when production does
+    // not retain ordinary chat sessions. Both paths still honor the same owner
+    // opt-out, and only relevant selected facts reach the response prompt.
+    const explicitMemberMemoryEnabled = await resolveOwnerExplicitMemberMemoryAccess(
+      req.user.id,
+    );
+    const memberMemoryEnabled = memoryEnabled || explicitMemberMemoryEnabled;
+    const activePrivateMemories = memberMemoryEnabled && req.user?.id
         ? await db
             .select({
               content: kinfolkPrivateMemoriesTable.content,
@@ -8223,13 +8382,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (memory) =>
         (memory.purpose === "planning_context"
           ? isConsentedPlanningMemoryRelevant(memory, message)
-          : (!memory.isSensitive ||
-            isSensitiveMemoryRelevant(memory.content, message))) &&
+          : memory.purpose === "profile_context"
+            ? isExplicitProfileMemoryRelevant(memory, message)
+            : (!memory.isSensitive ||
+              isSensitiveMemoryRelevant(memory.content, message))) &&
         (memory.purpose !== "companion_context" ||
           isCompanionMemoryRelevant(memory.content, message)),
     );
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
-      memoryEnabled && !contextualEvidence,
+      memberMemoryEnabled && !contextualEvidence,
       contextualEvidence ? [] : relevantPrivateMemories,
     );
 
@@ -8280,7 +8441,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (lifeGuidance ? `\n\n${lifeGuidance.responseInstruction}` : "") +
       ownerBusinessContext +
       privateMemoryBlock +
-      buildConsentedPlanningContextPrompt(relevantPrivateMemories) +
+      buildConsentedPlanningContextPrompt(
+        relevantPrivateMemories.filter(
+          (memory) => memory.purpose === "planning_context",
+        ),
+      ) +
       (contextualPlan
         ? [
             "\nCONTEXTUAL ANSWER CONTRACT — SERVER CONTROLLED:",

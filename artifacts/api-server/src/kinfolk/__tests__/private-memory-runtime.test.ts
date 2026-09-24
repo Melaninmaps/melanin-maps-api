@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildPrivateMemoryPromptBlock,
+  isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
+  resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
 } from "../private-memory";
@@ -27,6 +29,22 @@ describe("Kinfolk private-memory production control", () => {
   it("preserves private-memory behavior outside production", () => {
     expect(isKinfolkPrivateMemoryEnabled({ NODE_ENV: "development" })).toBe(true);
     expect(isKinfolkPrivateMemoryEnabled({ NODE_ENV: "test" })).toBe(true);
+  });
+
+  it("allows an explicit member command unless an operator disables that narrow feature", () => {
+    expect(isExplicitMemberMemoryEnabled({ NODE_ENV: "production" })).toBe(true);
+    expect(isExplicitMemberMemoryEnabled({
+      NODE_ENV: "production",
+      KINFOLK_EXPLICIT_MEMBER_MEMORY_ENABLED: "false",
+    })).toBe(false);
+  });
+
+  it("treats a direct remember statement as its own item-level opt-in", () => {
+    expect(resolveExplicitMemberMemoryAccess({ NODE_ENV: "production" })).toBe(true);
+    expect(resolveExplicitMemberMemoryAccess({
+      NODE_ENV: "production",
+      KINFOLK_EXPLICIT_MEMBER_MEMORY_ENABLED: "false",
+    })).toBe(false);
   });
 
   it("cannot inject private content into a prompt when disabled", () => {
@@ -119,7 +137,10 @@ describe("Kinfolk private-memory production control", () => {
     expect((source.match(/code: "PRIVATE_MEMORY_DISABLED"/g) ?? []).length).toBeGreaterThanOrEqual(3);
     expect(source).toContain("if (memoryEnabled && sessionId && req.user?.id)");
     expect(source).toContain("if (req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
-    expect(source).toContain("const activePrivateMemories = memoryEnabled && req.user?.id");
+    expect(source).toContain("const memberMemoryEnabled = memoryEnabled || explicitMemberMemoryEnabled");
+    expect(source).toContain("const activePrivateMemories = memberMemoryEnabled && req.user?.id");
+    expect(source).toContain("persistExplicitMemberMemory({");
+    expect(source).toContain("return resolveExplicitMemberMemoryAccess()");
     expect(source).toContain("if (!input.memoryEnabled) return undefined");
 
     const chatRoute = source.slice(source.indexOf('router.post("/kinfolk/chat"'));

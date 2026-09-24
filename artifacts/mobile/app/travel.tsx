@@ -2792,7 +2792,7 @@ export default function TravelScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }} accessibilityLabel="Save this to my private Kinfolk memory">
               <Ionicons name={rememberThis ? "checkbox" : "square-outline"} size={18} color={rememberThis ? colors.primary : colors.mutedForeground} />
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Save this to my private Kinfolk memory</Text>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Save this — or simply say “remember…”</Text>
             </TouchableOpacity>
             <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>

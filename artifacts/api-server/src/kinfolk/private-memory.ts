@@ -10,6 +10,31 @@ export function isKinfolkPrivateMemoryEnabled(
     || environment.KINFOLK_PRIVATE_MEMORY_ENABLED === "true";
 }
 
+/**
+ * Direct member instructions such as "remember my work hours" are narrower
+ * than automatic chat-history retention. The command itself is the member's
+ * affirmative consent for that one fact. It is available unless an operator
+ * explicitly turns it off; it never silently enables retained chat history.
+ */
+export function isExplicitMemberMemoryEnabled(
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return environment.KINFOLK_EXPLICIT_MEMBER_MEMORY_ENABLED !== "false";
+}
+
+/**
+ * A successful explicit `remember …` command is an item-level opt-in. This is
+ * intentionally separate from the optional setting that controls retained
+ * conversation history, so a member can use direct memory without seeing a
+ * contradictory "memory is off" response. Operators retain a global kill
+ * switch through KINFOLK_EXPLICIT_MEMBER_MEMORY_ENABLED=false.
+ */
+export function resolveExplicitMemberMemoryAccess(
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return isExplicitMemberMemoryEnabled(environment);
+}
+
 export type KinfolkMemoryConsentReader = (userId: string) => Promise<boolean | null | undefined>;
 
 /** Resolve this authenticated owner's opt-out before any retained session read. */

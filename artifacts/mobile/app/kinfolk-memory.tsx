@@ -233,7 +233,7 @@ export default function KinfolkMemoryScreen() {
 
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 4 }]}>MEMORIES YOU APPROVED</Text>
           {privateMemories.length === 0 ? (
-            <View style={[styles.emptyMemory, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="lock" size={18} color={colors.primary} /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Nothing saved from chat</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>Choose “Save this to my private Kinfolk memory” before sending a message when you want Kinfolk to keep it.</Text></View></View>
+            <View style={[styles.emptyMemory, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="lock" size={18} color={colors.primary} /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Nothing saved from chat</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>Say “remember…” when you want Kinfolk to keep a detail, or use the save control beside the composer.</Text></View></View>
           ) : (
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {privateMemories.map((memory, index) => {
