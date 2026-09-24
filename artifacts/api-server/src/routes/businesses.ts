@@ -52,6 +52,7 @@ import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
 import {
   completedCohortDirectoryDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
+  NATIONAL_MASTER_DIRECTORY_SOURCE,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
@@ -518,9 +519,11 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const designationConditions: any[] = [];
         const promotionCondition = mwmDiasporaPromotionCondition();
         const cohortDirectoryCondition = completedCohortDirectoryDiscoveryCondition();
+        const nationalMasterDirectoryCondition = sql<boolean>`COALESCE(${businessesTable.dataSource}, '') = ${NATIONAL_MASTER_DIRECTORY_SOURCE}`;
         const defaultDiscoveryCondition = or(
           promotionCondition,
           cohortDirectoryCondition,
+          nationalMasterDirectoryCondition,
         )!;
         // The default is the documented Diaspora Promotion Catalog. A signed-in
         // member may explicitly choose the all-places mode. Receipt-backed,
@@ -742,14 +745,15 @@ router.get("/businesses", async (req: Request, res: Response) => {
             )`
           : null;
         if (distanceMilesSql) {
-          // A completed-cohort profile without verified coordinates is still a
-          // local directory result when its recorded city/state is the chosen
-          // locality. It remains coordinate-free, so map rendering and turn-by-
-          // turn directions cannot mistake a city label for a street location.
+          // A receipt-backed directory profile without verified coordinates is
+          // still a local directory result when its recorded city/state is the
+          // chosen locality. It remains coordinate-free, so map rendering and
+          // turn-by-turn directions cannot mistake a city label for a street
+          // location.
           const localDirectoryOnlyCondition =
             city && typeof city === "string" && city.trim()
               ? and(
-                  cohortDirectoryCondition,
+                  or(cohortDirectoryCondition, nationalMasterDirectoryCondition),
                   sql`(${businessesTable.latitude} IS NULL OR ${businessesTable.longitude} IS NULL)`,
                   sql`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`,
                   state && typeof state === "string" && state.trim()

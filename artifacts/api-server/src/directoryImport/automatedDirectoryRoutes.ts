@@ -28,6 +28,15 @@ import {
   isDirectoryOnlyDiscoveryCandidate,
   type CompletedCohortHeldCandidate,
 } from "./completedCohortDirectoryDiscovery";
+import {
+  NATIONAL_MASTER_DIRECTORY_EXPECTED_ROWS,
+  NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256,
+  NATIONAL_MASTER_DIRECTORY_POLICY,
+  NATIONAL_MASTER_DIRECTORY_SOURCE,
+  assertNationalMasterDirectoryDataset,
+  buildNationalMasterDirectoryProfile,
+  nationalMasterActivationReceiptHash,
+} from "./nationalMasterDirectory";
 
 // The signed, immutable 4,183-record source-receipted cohort is a 14.673 MiB
 // JSON envelope. Keep this ceiling scoped to its protected service ingress;
@@ -80,6 +89,30 @@ async function ensureCompletedCohortDirectoryDiscoveryAudit(
   await productionPool.query(`
     CREATE INDEX IF NOT EXISTS completed_cohort_directory_discovery_business_idx
       ON completed_cohort_directory_discovery_receipts (business_id, activated_at DESC)
+  `);
+}
+
+async function ensureNationalMasterDirectoryAudit(
+  productionPool: Pool,
+): Promise<void> {
+  await productionPool.query(`
+    CREATE TABLE IF NOT EXISTS national_master_directory_import_receipts (
+      source_sha256 TEXT NOT NULL,
+      source_row INTEGER NOT NULL,
+      source_row_id TEXT NOT NULL,
+      business_id VARCHAR NOT NULL,
+      activation_hash TEXT NOT NULL CHECK (char_length(activation_hash) = 64),
+      outcome TEXT NOT NULL CHECK (outcome IN ('created', 'existing_same_source_id')),
+      policy_version TEXT NOT NULL,
+      activated_by TEXT,
+      activated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (source_sha256, source_row),
+      UNIQUE (source_sha256, source_row_id)
+    )
+  `);
+  await productionPool.query(`
+    CREATE INDEX IF NOT EXISTS national_master_directory_import_business_idx
+      ON national_master_directory_import_receipts (business_id, activated_at DESC)
   `);
 }
 
@@ -545,6 +578,147 @@ export function registerAutomatedDirectoryRoutes(
       res.status(500).json({
         error: "Completed cohort directory-discovery activation failed.",
         code: "COMPLETED_COHORT_DIRECTORY_DISCOVERY_FAILED",
+      });
+    }
+  });
+
+  /**
+   * Publishes the supplied national master as ordinary MWM directory profiles.
+   * This is intentionally separate from the completed 4,183-row cohort: it
+   * reads a checksum-locked embedded dataset, never touches the historical
+   * review worker/outbox, does not geocode, and retains an idempotent receipt
+   * for every source row. Records are discoverable by name and category with
+   * an MWM profile; their absent address does not create a map pin.
+   */
+  app.post("/api/founder/directory-import/national-master-18294/activate-directory", async (req, res) => {
+    const actor = admin(req, res);
+    if (!actor) return;
+    const apply = req.body?.apply === true;
+    try {
+      await ensureNationalMasterDirectoryAudit(productionPool);
+      const records = assertNationalMasterDirectoryDataset();
+      if (records.length !== NATIONAL_MASTER_DIRECTORY_EXPECTED_ROWS) {
+        res.status(409).json({
+          error: "National master row count is inconsistent; activation is blocked.",
+          code: "NATIONAL_MASTER_ROW_COUNT_MISMATCH",
+        });
+        return;
+      }
+      const profiles = records.map(buildNationalMasterDirectoryProfile);
+      const existingReceipts = await productionPool.query<{ source_row: number }>(
+        `SELECT source_row
+           FROM national_master_directory_import_receipts
+          WHERE source_sha256=$1`,
+        [NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256],
+      );
+      const priorSourceRows = new Set(existingReceipts.rows.map((row) => row.source_row));
+      const pending = profiles.filter((profile) => !priorSourceRows.has(profile.sourceRow));
+      const summary = {
+        sourceRows: profiles.length,
+        alreadyActivated: profiles.length - pending.length,
+        pending: pending.length,
+        created: 0,
+        existingSameSourceId: 0,
+        mapPinsCreated: 0,
+      };
+
+      if (!apply) {
+        res.json({
+          sourceSha256: NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256,
+          policyVersion: NATIONAL_MASTER_DIRECTORY_POLICY,
+          dryRun: true,
+          directoryOnly: true,
+          workerUsed: false,
+          summary,
+        });
+        return;
+      }
+
+      const client = await productionPool.connect();
+      try {
+        await client.query("BEGIN");
+        // Keep batches well inside Postgres's parameter limit while avoiding a
+        // slow one-query-per-business import. The source rows retain their own
+        // permanent IDs, so duplicates are intentionally not collapsed here.
+        for (let offset = 0; offset < pending.length; offset += 200) {
+          const batch = pending.slice(offset, offset + 200);
+          const insertValues: unknown[] = [];
+          const tuples = batch.map((profile, index) => {
+            const base = index * 21;
+            insertValues.push(
+              profile.id, profile.name, profile.category, profile.subcategory,
+              profile.address, profile.city, profile.state, profile.country,
+              false, JSON.stringify(profile.ownershipDesignations), profile.ownershipClaim,
+              profile.blackOwned, profile.description, profile.website, profile.sourceUrl,
+              profile.sourceRowId, profile.sourceLabel, profile.sourceUrl,
+              profile.recommendationReason,
+              `${NATIONAL_MASTER_DIRECTORY_SOURCE}:${NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256}`,
+              JSON.stringify(profile.tags),
+            );
+            return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},
+              'live_unclaimed','unclaimed',false,$${base + 10}::jsonb,'[]'::jsonb,$${base + 11},$${base + 12},$${base + 13},NULL,NULL,
+              $${base + 14},$${base + 15},$${base + 16},'active','community_listed','${NATIONAL_MASTER_DIRECTORY_SOURCE}',false,false,
+              $${base + 17},$${base + 18},$${base + 19},$${base + 20},$${base + 21}::jsonb)`;
+          });
+          const inserted = await client.query<{ id: string }>(
+            `INSERT INTO businesses
+              (id,name,category,subcategory,address,city,state,country,is_online_only,
+               listing_status,owner_claim_status,verified,ownership_designations,verified_designations,
+               ownership_claim,black_owned,description,latitude,longitude,website,source_url,
+               dedupe_key,status,profile_status,data_source,is_duplicate,permanently_hidden,
+               research_source_label,research_source_url,kinfolk_recommendation_reason,intake_batch_reference,tags)
+             VALUES ${tuples.join(",")}
+             ON CONFLICT (id) DO NOTHING
+             RETURNING id`,
+            insertValues,
+          );
+          const createdIds = new Set(inserted.rows.map((row) => row.id));
+          summary.created += createdIds.size;
+          summary.existingSameSourceId += batch.length - createdIds.size;
+
+          const receiptValues: unknown[] = [];
+          const receiptTuples = batch.map((profile, index) => {
+            const base = index * 8;
+            receiptValues.push(
+              NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256,
+              profile.sourceRow,
+              profile.sourceRowId,
+              profile.id,
+              nationalMasterActivationReceiptHash(profile),
+              createdIds.has(profile.id) ? "created" : "existing_same_source_id",
+              NATIONAL_MASTER_DIRECTORY_POLICY,
+              actor.id,
+            );
+            return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8})`;
+          });
+          await client.query(
+            `INSERT INTO national_master_directory_import_receipts
+              (source_sha256,source_row,source_row_id,business_id,activation_hash,outcome,policy_version,activated_by)
+             VALUES ${receiptTuples.join(",")}
+             ON CONFLICT (source_sha256,source_row) DO NOTHING`,
+            receiptValues,
+          );
+        }
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+
+      res.json({
+        sourceSha256: NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256,
+        policyVersion: NATIONAL_MASTER_DIRECTORY_POLICY,
+        dryRun: false,
+        directoryOnly: true,
+        workerUsed: false,
+        summary,
+      });
+    } catch {
+      res.status(500).json({
+        error: "National master directory activation failed.",
+        code: "NATIONAL_MASTER_DIRECTORY_ACTIVATION_FAILED",
       });
     }
   });

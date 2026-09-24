@@ -100,6 +100,7 @@ type AdminBusiness = {
   id: string;
   name: string;
   category: string;
+  subcategory: string | null;
   city: string;
   state: string;
   verified: boolean;
@@ -1545,8 +1546,12 @@ export default function Admin() {
     if (bizStatusFilter === "archived" && b.listingStatus !== "archived")
       return false;
     if (bizCityFilter !== "all" && b.city !== bizCityFilter) return false;
-    if (bizCategoryFilter !== "all" && b.category !== bizCategoryFilter)
-      return false;
+    if (bizCategoryFilter !== "all") {
+      const [scope, ...rawValue] = bizCategoryFilter.split(":");
+      const value = rawValue.join(":");
+      if (scope === "category" && b.category !== value) return false;
+      if (scope === "subcategory" && b.subcategory !== value) return false;
+    }
     const addedOn = b.createdAt ? new Date(b.createdAt).toISOString().slice(0, 10) : "";
     if (bizAddedFrom && (!addedOn || addedOn < bizAddedFrom)) return false;
     if (bizAddedTo && (!addedOn || addedOn > bizAddedTo)) return false;
@@ -1555,7 +1560,8 @@ export default function Admin() {
     return (
       b.name.toLowerCase().includes(q) ||
       b.city.toLowerCase().includes(q) ||
-      b.category.toLowerCase().includes(q)
+      b.category.toLowerCase().includes(q) ||
+      (b.subcategory ?? "").toLowerCase().includes(q)
     );
   });
   const permanentlyClosedCount = businesses.filter(
@@ -1568,9 +1574,26 @@ export default function Admin() {
   const inventoryCities = Array.from(
     new Set(businesses.map((b) => b.city).filter(Boolean)),
   ).sort((a, b) => a.localeCompare(b));
-  const inventoryCategories = Array.from(
-    new Set(businesses.map((b) => b.category).filter(Boolean)),
-  ).sort((a, b) => a.localeCompare(b));
+  const inventoryServices = (() => {
+    const services = new Map<string, string>();
+    for (const business of businesses) {
+      if (business.category) {
+        services.set(
+          `category:${business.category}`,
+          `${business.category} — category`,
+        );
+      }
+      if (business.subcategory) {
+        services.set(
+          `subcategory:${business.subcategory}`,
+          `${business.subcategory} — service`,
+        );
+      }
+    }
+    return Array.from(services, ([value, label]) => ({ value, label })).sort(
+      (a, b) => a.label.localeCompare(b.label),
+    );
+  })();
   const archivableFilteredBiz = filteredBiz.filter(
     (b) => b.listingStatus !== "archived",
   );
@@ -3397,15 +3420,15 @@ export default function Admin() {
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
-                Service / category
+                Business type / service
                 <select
                   value={bizCategoryFilter}
                   onChange={(event) => setBizCategoryFilter(event.target.value)}
                   className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 >
-                  <option value="all">All services</option>
-                  {inventoryCategories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
+                  <option value="all">All business types and services</option>
+                  {inventoryServices.map((service) => (
+                    <option key={service.value} value={service.value}>{service.label}</option>
                   ))}
                 </select>
               </label>
@@ -3547,7 +3570,9 @@ export default function Admin() {
                             {biz.name}
                           </div>
                           <div className="text-xs text-[#3A1F0E]/50 mt-0.5">
-                            {biz.category}
+                            {biz.subcategory
+                              ? `${biz.category} · ${biz.subcategory}`
+                              : biz.category}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-[#3A1F0E]/70">

@@ -101,7 +101,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     // Use a deliberately high bounded page so the city/service/date filters can
     // review the current full operating inventory without silently omitting the
     // older records that are most likely to be duplicate candidates.
-    const INVENTORY_PAGE_LIMIT = 20_000;
+    const INVENTORY_PAGE_LIMIT = 50_000;
     // Use to_jsonb for the optional, additive intake fields. The older records
     // predate those fields, and an incomplete startup-migration retry must not
     // make the entire administrator inventory unavailable.
@@ -110,6 +110,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       id: string;
       name: string;
       category: string;
+      subcategory: string | null;
       city: string;
       state: string;
       verified: boolean;
@@ -130,7 +131,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       kinfolk_recommendation_reason: string | null;
       intake_batch_reference: string | null;
       }>(
-      `SELECT id, name, category, city, state, verified, black_owned, status,
+      `SELECT id, name, category, subcategory, city, state, verified, black_owned, status,
               listing_status, phone, website, created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
@@ -151,6 +152,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       id: b.id,
       name: b.name,
       category: b.category,
+      subcategory: b.subcategory,
       city: b.city,
       state: b.state,
       verified: b.verified,
