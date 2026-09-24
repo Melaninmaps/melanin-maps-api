@@ -26,8 +26,17 @@ try {
   if (head !== remoteMain) fail(`HEAD ${head} does not equal origin/main ${remoteMain}; update the checkout first`);
 
   const app = require(path.join(root, "artifacts/mobile/app.json")).expo;
-  if (app.ios?.buildNumber !== "120" || app.android?.versionCode !== 90) {
-    fail(`expected release identifiers iOS 120 / Android 90, found iOS ${app.ios?.buildNumber ?? "missing"} / Android ${app.android?.versionCode ?? "missing"}`);
+  // Build identifiers change for every artifact. Their exact next values are
+  // checked by the release gate; this provenance guard only ensures that a
+  // release has valid, explicit iOS and Android identifiers on GitHub main so
+  // a previously correct source checkout is not rejected after an increment.
+  const iosBuildNumber = String(app.ios?.buildNumber ?? "");
+  const androidVersionCode = app.android?.versionCode;
+  if (!/^\d+$/.test(iosBuildNumber) || Number(iosBuildNumber) < 1) {
+    fail(`invalid iOS buildNumber ${iosBuildNumber || "missing"}`);
+  }
+  if (!Number.isInteger(androidVersionCode) || androidVersionCode < 1) {
+    fail(`invalid Android versionCode ${String(androidVersionCode ?? "missing")}`);
   }
 
   process.stdout.write(`NATIVE_RELEASE_SOURCE_PASS: sha=${head} ios=${app.ios.buildNumber} android=${app.android.versionCode}\n`);
