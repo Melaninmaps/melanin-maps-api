@@ -14,9 +14,11 @@
  * without touching saves, history, profile, or Kinfolk context.
  */
 
+import { createHash } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
+import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
 
 const router: IRouter = Router();
 
@@ -31,6 +33,66 @@ const VALID_TESTER_ACCESS_SOURCES = [
   "admin_invite",
   "website_test",
 ] as const;
+
+// This is a bcrypt hash of the founder-authorized, one-time tester invitation
+// password. The plaintext is intentionally never stored in source, sent in an
+// API response, logged, or displayed in the Admin UI. Only accounts which do
+// not already exist receive this hash, and the platform forces a replacement
+// password immediately after the first successful sign-in.
+const FOUNDER_TESTER_INVITE_PASSWORD_HASH =
+  "$2b$10$E3FOTtxTun0sJXa5.tknZ.oIUt.IRpDx7fAMjysb5evjT1sqcRCoq";
+
+type FounderRosterAccountRow = {
+  email: string;
+  user_id: string | null;
+  tester_status: string | null;
+  role: string | null;
+  has_password: boolean;
+  must_change_password: boolean | null;
+};
+
+function founderRosterUsername(email: string): string {
+  // Email is the sign-in identifier. This internal, deterministic username
+  // exists solely because the legacy profile schema retains a unique username.
+  return `invite_${createHash("sha256").update(email).digest("hex").slice(0, 20)}`;
+}
+
+function founderRosterReferralCode(email: string): string {
+  return `INV${createHash("sha256").update(`referral:${email}`).digest("hex").slice(0, 12).toUpperCase()}`;
+}
+
+async function readFounderTesterRoster(
+  client: typeof pool,
+): Promise<FounderRosterAccountRow[]> {
+  const result = await client.query<FounderRosterAccountRow>(
+    `SELECT roster.email,
+            u.id AS user_id,
+            u.tester_status,
+            u.role,
+            (u.password_hash IS NOT NULL) AS has_password,
+            u.must_change_password
+       FROM unnest($1::text[]) AS roster(email)
+       LEFT JOIN users u ON LOWER(TRIM(u.email)) = roster.email
+      ORDER BY roster.email ASC`,
+    [FOUNDER_APPROVED_TESTER_EMAILS],
+  );
+  return result.rows;
+}
+
+function summarizeFounderRoster(rows: FounderRosterAccountRow[]) {
+  return {
+    rosterCount: rows.length,
+    existingAccounts: rows.filter((row) => row.user_id !== null).length,
+    activeTesters: rows.filter((row) => row.tester_status === "active").length,
+    retainedPasswordAccounts: rows.filter(
+      (row) => row.user_id !== null && row.has_password,
+    ).length,
+    missingAccounts: rows.filter((row) => row.user_id === null).length,
+    existingAccountsNeedingEntitlement: rows.filter(
+      (row) => row.user_id !== null && row.tester_status !== "active",
+    ).length,
+  };
+}
 
 function waitlistSourceForTesterAccess(
   accessSource: (typeof VALID_TESTER_ACCESS_SOURCES)[number],
@@ -254,6 +316,195 @@ router.get(
     }
   },
 );
+
+// ─── POST /admin/testers/founder-roster-preview ───────────────────────────────
+// Read-only confirmation for the founder-maintained tester roster. It returns
+// aggregate state only: no private roster addresses, credentials, or profile
+// data are sent to the browser.
+router.post("/admin/testers/founder-roster-preview", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  try {
+    const rows = await readFounderTesterRoster(pool);
+    res.setHeader("Cache-Control", "private, no-store, max-age=0");
+    res.json({
+      dryRun: true,
+      ...summarizeFounderRoster(rows),
+      guarantee:
+        "The founder roster is fixed. Existing accounts are inspected only; no profile, password, session, community record, or entitlement is changed by this preview.",
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/testers/founder-roster-preview failed");
+    res.status(500).json({ error: "Could not inspect the founder tester roster." });
+  }
+});
+
+// ─── POST /admin/testers/provision-founder-roster ─────────────────────────────
+// Founder-approved tester recovery is deliberately explicit and idempotent.
+// Existing accounts retain their password, profile, posts, media, community
+// membership, saved records, and identity. The only entitlement changes are
+// active tester access, controlled-rollout approval, and the corresponding
+// approved waitlist/access-ledger records. A one-time password account is
+// created only for a roster address with no user row at all.
+router.post("/admin/testers/provision-founder-roster", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  if (req.body?.confirmed !== true) {
+    return void res.status(400).json({
+      error: "Explicit confirmation is required before provisioning the founder tester roster.",
+    });
+  }
+
+  const adminId = (req as any).user?.id as string | undefined;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    // Lock existing roster accounts before comparing them to the fixed roster.
+    // A LEFT JOIN cannot be locked directly because its unmatched side is
+    // nullable in PostgreSQL.
+    await client.query(
+      `SELECT id
+         FROM users
+        WHERE LOWER(TRIM(email)) = ANY($1::text[])
+        FOR UPDATE`,
+      [FOUNDER_APPROVED_TESTER_EMAILS],
+    );
+    const existing = await client.query<FounderRosterAccountRow>(
+      `SELECT roster.email,
+              u.id AS user_id,
+              u.tester_status,
+              u.role,
+              (u.password_hash IS NOT NULL) AS has_password,
+              u.must_change_password
+         FROM unnest($1::text[]) AS roster(email)
+         LEFT JOIN users u ON LOWER(TRIM(u.email)) = roster.email
+        ORDER BY roster.email ASC`,
+      [FOUNDER_APPROVED_TESTER_EMAILS],
+    );
+    const before = summarizeFounderRoster(existing.rows);
+    let existingAccountsGranted = 0;
+    let missingAccountsCreated = 0;
+    let alreadyActive = 0;
+
+    for (const entry of existing.rows) {
+      const email = normalizeEmail(entry.email);
+      let userId = entry.user_id;
+
+      if (userId) {
+        if (entry.tester_status === "active") alreadyActive++;
+        await client.query(
+          `UPDATE users
+              SET approved = TRUE,
+                  tester_status = 'active',
+                  tester_access_source = 'admin_invite',
+                  tester_granted_at = NOW(),
+                  tester_granted_by = $1,
+                  testing_entitlement_ends_at = NULL,
+                  role = CASE WHEN role = 'user' THEN 'tester' ELSE role END,
+                  updated_at = NOW()
+            WHERE id = $2`,
+          [adminId ?? null, userId],
+        );
+        if (entry.tester_status !== "active") existingAccountsGranted++;
+      } else {
+        const created = await client.query<{ id: string }>(
+          `INSERT INTO users
+             (email, username, first_name, last_name, password_hash,
+              must_change_password, email_verified, approved, account_status,
+              role, member_type, tester_status, tester_access_source,
+              tester_granted_at, tester_granted_by,
+              testing_entitlement_ends_at, referral_code,
+              profile_setup_complete, agree_to_terms, created_at, updated_at)
+           VALUES
+             ($1, $2, 'MWM', 'Tester', $3,
+              TRUE, TRUE, TRUE, 'active',
+              'tester', 'beta', 'active', 'admin_invite',
+              NOW(), $4,
+              NULL, $5,
+              FALSE, FALSE, NOW(), NOW())
+           RETURNING id`,
+          [
+            email,
+            founderRosterUsername(email),
+            FOUNDER_TESTER_INVITE_PASSWORD_HASH,
+            adminId ?? null,
+            founderRosterReferralCode(email),
+          ],
+        );
+        userId = created.rows[0]?.id ?? null;
+        if (!userId) throw new Error("Tester account insert did not return an ID.");
+        missingAccountsCreated++;
+      }
+
+      await client.query(
+        `INSERT INTO waitlist_signups (email, status, approved_at, signup_sources)
+         VALUES ($1, 'approved', NOW(), 'web')
+         ON CONFLICT (email) DO UPDATE
+           SET status = 'approved',
+               approved_at = COALESCE(waitlist_signups.approved_at, NOW()),
+               signup_sources = (
+                 SELECT array_to_string(
+                   ARRAY(
+                     SELECT DISTINCT source
+                     FROM unnest(string_to_array(COALESCE(waitlist_signups.signup_sources, ''), ',')) AS source
+                     WHERE source IN ('web', 'ios', 'android')
+                     UNION SELECT 'web'
+                   ),
+                   ','
+                 )
+               )`,
+        [email],
+      );
+      await client.query(
+        `INSERT INTO pending_tester_emails
+           (email, tester_access_source, granted_by, granted_at,
+            entitlement_ends_at, applied_at, applied_to_user_id)
+         VALUES ($1, 'admin_invite', $2, NOW(), NULL, NOW(), $3)
+         ON CONFLICT (email) DO UPDATE
+           SET tester_access_source = 'admin_invite',
+               granted_by = EXCLUDED.granted_by,
+               granted_at = NOW(),
+               entitlement_ends_at = NULL,
+               applied_at = NOW(),
+               applied_to_user_id = EXCLUDED.applied_to_user_id`,
+        [email, adminId ?? null, userId],
+      );
+      await client.query(
+        `INSERT INTO access_entitlement_events
+           (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
+         VALUES ($1, $2, 'granted', 'admin_invite', $3, NULL,
+                 jsonb_build_object('workflow', 'founder_roster_provision_v1', 'createdAccount', $4::boolean))`,
+        [email, userId, adminId ?? null, entry.user_id === null],
+      );
+    }
+
+    await client.query("COMMIT");
+    req.log.info(
+      {
+        event: "FOUNDER_TESTER_ROSTER_PROVISIONED",
+        rosterCount: FOUNDER_APPROVED_TESTER_EMAILS.length,
+        existingAccountsGranted,
+        missingAccountsCreated,
+        alreadyActive,
+        by: adminId,
+      },
+      "founder tester roster provisioned without replacing existing account data",
+    );
+    res.json({
+      ok: true,
+      ...before,
+      existingAccountsGranted,
+      missingAccountsCreated,
+      alreadyActive,
+      guarantee:
+        "Existing accounts kept their password, profile, community data, posts, media, saved records, sessions, and member history. Only missing roster accounts received a one-time password and forced password-change flag.",
+    });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log.error({ err }, "POST /admin/testers/provision-founder-roster failed");
+    res.status(500).json({ error: "Founder tester roster provisioning failed; no partial changes were committed." });
+  } finally {
+    client.release();
+  }
+});
 
 // ─── POST /admin/testers/dry-run ──────────────────────────────────────────────
 // Preview what applying a tester email list would change. No data is modified.

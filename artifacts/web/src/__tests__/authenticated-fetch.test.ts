@@ -20,6 +20,11 @@ const adminSource = readFileSync(
   "utf8",
 );
 
+const accessLedgerSource = readFileSync(
+  fileURLToPath(new URL("../components/AdminAccessLedger.tsx", import.meta.url)),
+  "utf8",
+);
+
 describe("authenticatedFetch", () => {
   const fetchMock = vi.fn<typeof fetch>();
 
@@ -86,5 +91,14 @@ describe("authenticatedFetch", () => {
     expect(adminSource).toContain("const fetch = authenticatedFetch;");
     expect(adminSource).toContain("api/admin/businesses/listing-status");
     expect(adminSource).toContain("api/admin/access/reconcile-retained");
+  });
+
+  it("keeps founder tester roster provisioning authenticated and explicitly confirmed", () => {
+    expect(accessLedgerSource).toContain('import { authenticatedFetch } from "@/lib/authenticatedFetch"');
+    expect(accessLedgerSource).toContain("const fetch = authenticatedFetch;");
+    expect(accessLedgerSource).toContain("api/admin/testers/founder-roster-preview");
+    expect(accessLedgerSource).toContain("api/admin/testers/provision-founder-roster");
+    expect(accessLedgerSource).toContain("Confirm approved tester access");
+    expect(accessLedgerSource).toContain("will keep every password, profile, post, media item, community record, and saved item");
   });
 });
