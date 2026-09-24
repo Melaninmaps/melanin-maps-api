@@ -231,4 +231,58 @@ describe("automated directory MWM Core ingress admission", () => {
     expect(invalidFilter.status).toBe(400);
     expect(invalidFilter.body.code).toBe("COMPLETED_COHORT_DISCOVERY_STATE_INVALID");
   });
+
+  it("defaults completed-cohort directory activation to a no-write preview", async () => {
+    const reviewQuery = vi.fn(async (statement: string) => {
+      if (statement.includes("FROM directory_import_batches")) {
+        return { rows: [{ id: "completed-batch", source_row_count: 4183, manifest_count: 4183 }] };
+      }
+      if (statement.includes("FROM directory_import_candidates")) {
+        return {
+          rows: Array.from({ length: 4183 }, (_, index) => ({
+            sourceRow: index + 1,
+            sourceRowId: `completed-${index + 1}`,
+            dedupeKey: `physical|directory-only-${index + 1}|philadelphia|pa|united-states|${index + 1}-main-street`,
+            targetKind: "business",
+            name: `Directory-only business ${index + 1}`,
+            city: "Philadelphia",
+            state: "PA",
+            country: "United States",
+            status: "needs_research",
+            rawRecord: { category: "Restaurant", ownership_designations: ["Black-owned"] },
+            outboxError: "geocode_unverified: no strict street match",
+          })),
+        };
+      }
+      throw new Error(`Unexpected review query: ${statement}`);
+    });
+    const productionQuery = vi.fn(async (statement: string) => {
+      if (statement.includes("completed_cohort_directory_discovery_receipts")) return { rows: [] };
+      if (statement.includes("FROM businesses")) return { rows: [] };
+      throw new Error(`Unexpected production query: ${statement}`);
+    });
+    const reviewPool = { connect: vi.fn(), query: reviewQuery };
+    const productionPool = { connect: vi.fn(), query: productionQuery };
+
+    const response = await request(routeApp(reviewPool, productionPool))
+      .post("/api/founder/directory-import/completed-cohort/activate-directory-discovery")
+      .send({
+        receiptRoot: "948c818563f36f7cd6da67e003b3d6c8eb3e220e6561d898c4e94a7c31371653",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      dryRun: true,
+      directoryOnly: true,
+      mapPinsCreated: 0,
+      workerUsed: false,
+      summary: { eligible: 4183, created: 4183 },
+    });
+    expect(productionPool.connect).not.toHaveBeenCalled();
+    const statements = [
+      ...reviewQuery.mock.calls.map(([statement]) => String(statement)),
+      ...productionQuery.mock.calls.map(([statement]) => String(statement)),
+    ];
+    expect(statements.every((statement) => !/\b(INSERT|UPDATE|DELETE|CALL)\b/i.test(statement))).toBe(true);
+  });
 });

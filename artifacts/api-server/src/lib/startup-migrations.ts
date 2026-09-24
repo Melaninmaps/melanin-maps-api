@@ -6300,6 +6300,14 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "business public-discovery removal audit v1",
       () => ensureBusinessListingStatusAuditSchema(log, warn),
     ],
+    // ── Completed cohort directory-only discovery audit ────────────────────
+    // Allows receipt-backed records without verified coordinates to be searched
+    // as public listings. The table records every idempotent activation without
+    // changing the historical staging/publication worker or fabricating a pin.
+    [
+      "completed cohort directory discovery audit v1",
+      () => ensureCompletedCohortDirectoryDiscoverySchema(log, warn),
+    ],
     // ── Universal non-business map entities ────────────────────────────────
     // One published source supplies the map pin, panel row, and canonical place URL.
     [
@@ -16915,6 +16923,45 @@ async function ensureBusinessListingStatusAuditSchema(
   } catch (err: unknown) {
     warn(
       `ensureBusinessListingStatusAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+// ── Completed historical cohort: directory-only search activation ─────────────
+// This audit is deliberately distinct from directory_publication_provenance. It
+// records an additive public-search activation for a source row that was held
+// only because it lacked verified coordinates. It is not a retry of the old
+// publisher and does not create a map location.
+async function ensureCompletedCohortDirectoryDiscoverySchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS completed_cohort_directory_discovery_receipts (
+        receipt_root    TEXT NOT NULL,
+        manifest_sha256 TEXT NOT NULL,
+        source_row      INTEGER NOT NULL,
+        source_row_id   TEXT NOT NULL,
+        business_id     VARCHAR,
+        activation_hash TEXT NOT NULL CHECK (char_length(activation_hash) = 64),
+        outcome         TEXT NOT NULL CHECK (outcome IN ('created', 'linked_existing', 'skipped_nonpublic_existing')),
+        reason_code     TEXT,
+        policy_version  TEXT NOT NULL,
+        activated_by    TEXT,
+        activated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (receipt_root, source_row),
+        UNIQUE (receipt_root, source_row_id)
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS completed_cohort_directory_discovery_business_idx
+        ON completed_cohort_directory_discovery_receipts (business_id, activated_at DESC)
+    `);
+    log("ensureCompletedCohortDirectoryDiscoverySchema: receipt-scoped directory activation audit ready");
+  } catch (err: unknown) {
+    warn(
+      `ensureCompletedCohortDirectoryDiscoverySchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }

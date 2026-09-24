@@ -49,7 +49,10 @@ import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
 import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
-import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import {
+  completedCohortDirectoryDiscoverySqlPredicate,
+  mwmDiasporaPromotionSqlPredicate,
+} from "../businesses/mwmCoreDiscoveryPolicy";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -262,6 +265,12 @@ function publicBusinessVisibilityCondition() {
 function mwmDiasporaPromotionCondition() {
   return sql<boolean>`${sql.raw(
     mwmDiasporaPromotionSqlPredicate('"businesses"."id"'),
+  )}`;
+}
+
+function completedCohortDirectoryDiscoveryCondition() {
+  return sql<boolean>`${sql.raw(
+    completedCohortDirectoryDiscoverySqlPredicate('"businesses"."id"'),
   )}`;
 }
 
@@ -504,16 +513,22 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const conditions = [];
         const designationConditions: any[] = [];
         const promotionCondition = mwmDiasporaPromotionCondition();
+        const cohortDirectoryCondition = completedCohortDirectoryDiscoveryCondition();
+        const defaultDiscoveryCondition = or(
+          promotionCondition,
+          cohortDirectoryCondition,
+        )!;
         // The default is the documented Diaspora Promotion Catalog. A signed-in
-        // member may explicitly choose the all-places mode; direct-name lookup
-        // below is a separate, narrower consent path.
+        // member may explicitly choose the all-places mode. Receipt-backed,
+        // directory-only cohort profiles join ordinary name/category discovery
+        // without receiving fabricated map coordinates or an inferred badge.
         const hasExplicitAllPlacesConsent =
           req.user?.id != null && supportScope === "all_businesses";
 
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
         conditions.push(publicBusinessVisibilityCondition());
-        if (!hasExplicitAllPlacesConsent) conditions.push(promotionCondition);
+        if (!hasExplicitAllPlacesConsent) conditions.push(defaultDiscoveryCondition);
 
         if (category && typeof category === "string" && category !== "All") {
           const categoryValues = categoryFilterStorageValues(category);
@@ -723,7 +738,26 @@ router.get("/businesses", async (req: Request, res: Response) => {
             )`
           : null;
         if (distanceMilesSql) {
-          conditions.push(sql`${distanceMilesSql} <= ${geoRadiusMi}`);
+          // A completed-cohort profile without verified coordinates is still a
+          // local directory result when its recorded city/state is the chosen
+          // locality. It remains coordinate-free, so map rendering and turn-by-
+          // turn directions cannot mistake a city label for a street location.
+          const localDirectoryOnlyCondition =
+            city && typeof city === "string" && city.trim()
+              ? and(
+                  cohortDirectoryCondition,
+                  sql`(${businessesTable.latitude} IS NULL OR ${businessesTable.longitude} IS NULL)`,
+                  sql`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`,
+                  state && typeof state === "string" && state.trim()
+                    ? sql`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state.trim()}))`
+                    : sql<boolean>`TRUE`,
+                )
+              : null;
+          conditions.push(
+            localDirectoryOnlyCondition
+              ? or(sql`${distanceMilesSql} <= ${geoRadiusMi}`, localDirectoryOnlyCondition)!
+              : sql`${distanceMilesSql} <= ${geoRadiusMi}`,
+          );
         }
 
         // True total count for pagination UI
@@ -759,7 +793,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
         ) {
           const directConditions = conditions.filter(
             (condition) =>
-              condition !== promotionCondition &&
+              condition !== defaultDiscoveryCondition &&
               !designationConditions.includes(condition),
           );
           directConditions.push(
@@ -1009,7 +1043,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
               publicBusinessVisibilityCondition(),
               hasExplicitAllPlacesConsent
                 ? sql<boolean>`TRUE`
-                : mwmDiasporaPromotionCondition(),
+                : or(
+                    mwmDiasporaPromotionCondition(),
+                    completedCohortDirectoryDiscoveryCondition(),
+                  )!,
             ];
             if (city && typeof city === "string" && city.trim()) {
               fuzzyConditions.push(
