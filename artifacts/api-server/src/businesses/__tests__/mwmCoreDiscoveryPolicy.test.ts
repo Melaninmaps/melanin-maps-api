@@ -44,25 +44,18 @@ describe("MWM Core discovery evidence policy", () => {
     } as unknown as { mwmCoreCohort?: string }, "source_backed")).toBe(false);
   });
 
-  it("uses explicit Diaspora ownership designations for default promotion", () => {
-    expect(isMwmDiasporaPromotionEnabled(undefined)).toBe(true);
+  it("keeps every current public listing in the default cleanup catalog", () => {
+    expect(isMwmDiasporaPromotionEnabled(undefined)).toBe(false);
+    expect(isMwmDiasporaPromotionEnabled("documented_diaspora")).toBe(false);
     expect(isMwmDiasporaPromotionEnabled("all_public")).toBe(false);
     const predicate = mwmDiasporaPromotionSqlPredicate("b.id");
-    expect(predicate).toContain("b.ownership_designations");
-    expect(predicate).toContain("jsonb_array_elements_text");
-    // Both sides of the SQL comparison are lower-cased. Keeping the approved
-    // values normalized is essential: a case-sensitive IN set would silently
-    // empty the default map and recommendation catalog.
-    expect(predicate).toContain("black / african american-owned");
-    expect(predicate).toContain("asian american-owned");
-    expect(predicate).not.toContain("woman-owned");
-    expect(predicate).not.toContain("lgbtqia-owned");
+    expect(predicate).toBe("TRUE");
+    expect(predicate).not.toContain("ownership_designations");
   });
 
-  it("builds a valid ownership column reference for quoted Drizzle identifiers", () => {
+  it("does not add an ownership predicate to the default catalog for quoted identifiers", () => {
     const predicate = mwmDiasporaPromotionSqlPredicate('"businesses"."id"');
-    expect(predicate).toContain('"businesses"."ownership_designations"');
-    expect(predicate).not.toContain('"businesses".."ownership_designations"');
+    expect(predicate).toBe("TRUE");
   });
 
   it("uses completed-cohort provenance for directory discovery without assigning a map location", () => {
@@ -75,15 +68,15 @@ describe("MWM Core discovery evidence policy", () => {
     expect(predicate).not.toContain("longitude");
   });
 
-  it("does not infer Diaspora promotion from a role-only label, name, cuisine, or location", () => {
-    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Woman-Owned"] })).toBe(false);
-    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["LGBTQIA+-Owned"] })).toBe(false);
+  it("keeps all unarchived public profiles eligible while exact ownership filters remain separate", () => {
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Woman-Owned"] })).toBe(true);
+    expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["LGBTQIA+-Owned"] })).toBe(true);
     expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Black / African American-Owned"] })).toBe(true);
     expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Vietnamese-Owned"] })).toBe(true);
     expect(isMwmDiasporaPromotionEligible({ ownershipDesignations: ["Guatemalan-Owned"] })).toBe(true);
   });
 
-  it("keeps all public records available only after explicit all-places expansion", () => {
+  it("keeps all public records available for explicit all-places expansion too", () => {
     expect(mwmDiasporaPromotionSqlPredicate("b.id", "all_public")).toBe("TRUE");
     expect(isMwmDiasporaPromotionEligible({}, "all_public")).toBe(true);
   });

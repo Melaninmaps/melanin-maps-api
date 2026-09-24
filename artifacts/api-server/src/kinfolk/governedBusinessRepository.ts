@@ -150,12 +150,12 @@ const MAX_CATALOG_LIMIT = 50;
 const MAX_RADIUS_MILES = 100;
 
 function governedDirectoryDiscoveryPredicate(allowAllPublicPlaces = false): string {
-  // Receipt provenance makes a business traceable and directly searchable; it
-  // is not ownership evidence. Kinfolk recommendations and "find me a"
-  // results therefore require an explicit source/owner/community designation
-  // unless an intentional all-places request has already been approved by the
-  // caller. This prevents an ordinary directory row from becoming a minority-
-  // owned recommendation merely because it came through a cohort import.
+  // During the founder-led cleanup, every public, non-archived listing is in
+  // the ordinary Kinfolk catalog. Receipt provenance never creates an identity
+  // label: a Black-owned, Black woman-owned, or other ownership request still
+  // adds its own explicit designation predicate in the query that follows.
+  // Archiving remains the sole, reversible way to remove a listing from the
+  // default catalog, map, and category/city discovery.
   return mwmDiasporaPromotionSqlPredicate(
     "b.id",
     allowAllPublicPlaces ? "all_public" : undefined,
@@ -340,18 +340,6 @@ function preferenceSearchTokens(values: readonly string[]): string[] {
   ].slice(0, 32);
 }
 
-function normalizedIdentityText(value: string | null | undefined): string {
-  return text(value)
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function normalizedPhone(value: string | null): string {
-  return text(value).replace(/\D/g, "");
-}
-
 function subjectMatchReasons(
   business: GovernedKinfolkBusiness,
   subject: NormalizedBusinessSubject,
@@ -400,10 +388,10 @@ export type GovernedDuplicateSuppression = Readonly<{
 }>;
 
 /**
- * Groups probable duplicates without modifying either database record. A
- * normalized name plus the same city/state is the minimum evidence; a shared
- * phone or website is recorded as stronger identity evidence. The canonical
- * row is selected deterministically so responses and audit trails are stable.
+ * The historical function name is retained for compatibility. During the
+ * founder-led cleanup, probable duplicate candidates stay visible to Kinfolk
+ * and map discovery until an administrator explicitly archives one. There is
+ * no automated identity inference or invisible selection of a canonical row.
  */
 export function suppressProbableDuplicateBusinesses(
   businesses: readonly GovernedKinfolkBusiness[],
@@ -411,51 +399,7 @@ export function suppressProbableDuplicateBusinesses(
   businesses: GovernedKinfolkBusiness[];
   suppressed: GovernedDuplicateSuppression[];
 } {
-  const groups = new Map<string, GovernedKinfolkBusiness[]>();
-  for (const business of businesses) {
-    const key = [
-      normalizedIdentityText(business.name),
-      normalizedIdentityText(business.city),
-      normalizedIdentityText(business.stateCode),
-    ].join("|");
-    if (!key.replace(/\|/g, "")) continue;
-    groups.set(key, [...(groups.get(key) ?? []), business]);
-  }
-  const canonical: GovernedKinfolkBusiness[] = [];
-  const suppressed: GovernedDuplicateSuppression[] = [];
-  for (const group of groups.values()) {
-    const ordered = [...group].sort(
-      (left, right) =>
-        Number(right.verified) - Number(left.verified) ||
-        Number(right.claimed) - Number(left.claimed) ||
-        left.id.localeCompare(right.id),
-    );
-    const winner = ordered[0]!;
-    canonical.push({
-      ...winner,
-      identityReasons:
-        group.length > 1
-          ? [
-              "same normalized name and city/state",
-              "deterministic canonical selection",
-            ]
-          : winner.identityReasons,
-    });
-    for (const duplicate of ordered.slice(1)) {
-      const reasons = ["same normalized name and city/state"];
-      const phone = normalizedPhone(winner.phone);
-      if (phone && phone === normalizedPhone(duplicate.phone))
-        reasons.push("same phone");
-      if (winner.website && winner.website === duplicate.website)
-        reasons.push("same approved website");
-      suppressed.push({
-        suppressedId: duplicate.id,
-        canonicalId: winner.id,
-        reasons,
-      });
-    }
-  }
-  return { businesses: canonical, suppressed };
+  return { businesses: [...businesses], suppressed: [] };
 }
 
 export function normalizeExactBusinessName(name: string): string {

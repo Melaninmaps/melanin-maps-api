@@ -58,10 +58,12 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("keeps same-name duplicate review together with a safe server-side A–Z order", () => {
+    expect(adminRoute).toContain('const sort = String(req.query.sort ?? "name_asc")');
     expect(adminRoute).toContain('sort === "name_asc"');
     expect(adminRoute).toContain("LOWER(name) ASC NULLS LAST, id ASC");
     expect(adminRoute).toContain("created_at DESC, id ASC");
-    expect(adminScreen).toContain("Business name A–Z");
+    expect(adminScreen).toContain("Business name A–Z (default)");
+    expect(adminScreen).toContain('useState<"added_desc" | "name_asc">("name_asc")');
     expect(adminScreen).toContain('params.set("sort", sortValue)');
   });
 
@@ -77,7 +79,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("FROM public.public_businesses");
     expect(adminScreen).toContain("Archive vault");
     expect(adminScreen).toContain("Public Directory searchable");
-    expect(adminScreen).toContain("Kinfolk recommendable");
+    expect(adminScreen).toContain("Current Kinfolk catalog");
     expect(adminScreen).toContain("Archived in separate vault");
     expect(adminScreen).toContain("status: \"active\"");
     expect(adminScreen).toContain("Restore public listing");

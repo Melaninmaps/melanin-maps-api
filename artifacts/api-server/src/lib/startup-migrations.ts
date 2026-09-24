@@ -67,8 +67,7 @@ import {
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 
 const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
-  SELECT COALESCE(p_status, '') = 'active'
-     AND COALESCE(p_is_duplicate, false) = false
+  SELECT COALESCE(p_status, 'active') NOT IN ('suspended', 'removed', 'deleted', 'permanently_hidden')
      AND COALESCE(p_listing_status, '') IN ('live_unclaimed', 'live_claimed')
      AND COALESCE(p_permanently_hidden, false) = false
      AND NOT (
@@ -82,7 +81,7 @@ const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
 `;
 
 const PUBLIC_BUSINESSES_VIEW_FILTER =
-  "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone) AND NOT EXISTS (SELECT 1 FROM public.business_duplicate_resolutions d WHERE d.superseded_business_id = b.id)";
+  "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {

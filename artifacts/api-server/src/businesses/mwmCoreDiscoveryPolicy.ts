@@ -10,6 +10,8 @@ export const MWM_PROMOTION_CATALOG_MODE_ENV =
   "MWM_PROMOTION_CATALOG_MODE" as const;
 export const MWM_DOCUMENTED_DIASPORA_PROMOTION_MODE =
   "documented_diaspora" as const;
+export const MWM_ALL_CURRENT_LIVE_PROMOTION_MODE =
+  "all_current_live" as const;
 export const COMPLETED_COHORT_DIRECTORY_DISCOVERY_POLICY =
   "completed_cohort_directory_discovery_v1" as const;
 export const COMPLETED_COHORT_MANIFEST_CHECKSUM =
@@ -42,13 +44,17 @@ export function isMwmCoreDiscoveryEnabled(
 }
 
 /**
- * The product defaults to documented Diaspora promotion. `all_public` is an
- * operator-only emergency rollback, never a member-supplied query parameter.
+ * During founder-led inventory cleanup, every current public listing remains
+ * available to Kinfolk, map, city/category, and "Find me a business" results
+ * until an administrator archives it. This is a source-controlled temporary
+ * catalog rule, never a member-supplied query parameter. Exact ownership
+ * preference filters still require explicit designations downstream.
  */
 export function isMwmDiasporaPromotionEnabled(
   configuredValue: string | undefined = process.env[MWM_PROMOTION_CATALOG_MODE_ENV],
 ): boolean {
-  return configuredValue?.trim().toLowerCase() !== "all_public";
+  void configuredValue;
+  return false;
 }
 
 function ownershipDesignationExpressionFor(businessIdExpression: string): string {
@@ -62,9 +68,10 @@ function ownershipDesignationExpressionFor(businessIdExpression: string): string
 }
 
 /**
- * Static, source-controlled predicate for default promotion surfaces. A member
- * can search an explicitly named public business through the separate direct
- * lookup path, but it is not promoted by default unless this predicate passes.
+ * Static, source-controlled predicate for default recommendation surfaces. The
+ * active founder-directed cleanup catalog includes every public, non-archived
+ * listing. A request for a specific ownership designation adds a separate,
+ * explicit designation predicate at the Kinfolk query layer.
  */
 export function mwmDiasporaPromotionSqlPredicate(
   businessIdExpression: string,
@@ -156,7 +163,7 @@ export function isMwmCoreDiscoveryEligible(
   ) === MWM_CORE_SOURCE_BACKED_COHORT;
 }
 
-/** Pure counterpart for recommendation and default discovery surfaces. */
+/** Pure counterpart for the current all-live recommendation catalog. */
 export function isMwmDiasporaPromotionEligible(
   record: MwmCoreReceiptCandidate,
   configuredValue: string | undefined = process.env[MWM_PROMOTION_CATALOG_MODE_ENV],
@@ -173,7 +180,7 @@ export function isMwmDiasporaPromotionEligible(
 
 /** Visible copy used only where the promotion policy needs operator explanation. */
 export const MWM_CORE_EVIDENCE_RULE =
-  "Only a business with an explicit documented Diaspora ownership designation is promoted by default. A member can still deliberately search an otherwise public listing or explicitly broaden to all places. Identity is never inferred from a name, cuisine, language, image, or neighborhood.";
+  "During founder-led cleanup, every public, non-archived listing remains eligible for Kinfolk, map, city/category, and Find Me a Business results until an administrator archives it. Exact ownership filters require an explicit designation; identity is never inferred from a name, cuisine, language, image, or neighborhood.";
 
 export const MWM_CORE_ACTIVATION_CONTRACT =
-  "Use source-backed receipts for publication provenance. Keep default promotion in documented_diaspora mode and use a separate explicit all-places action for broad public lookup.";
+  "Use source-backed receipts for publication provenance. Keep the active catalog on all current public listings during duplicate and ownership review; archive a record to remove it from default recommendation, map, and category/city discovery.";

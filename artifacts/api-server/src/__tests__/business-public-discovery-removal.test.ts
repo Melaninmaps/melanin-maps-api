@@ -43,7 +43,7 @@ describe("administrator public-discovery removal governance", () => {
     expect(adminRoute).not.toContain("VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)");
   });
 
-  it("keeps an archived, non-duplicate record reachable only through deliberate name lookup", () => {
+  it("keeps an archived record reachable only through deliberate name lookup", () => {
     expect(businessesRoute).toContain("function directNameLookupVisibilityCondition");
     expect(businessesRoute).toContain("isDeliberateNamedBusinessLookup(directSearchText)");
     expect(businessesRoute).toContain("directConditions.push(directNameLookupVisibilityCondition())");

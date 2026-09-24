@@ -185,7 +185,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const link = String(req.query.link ?? "all");
     const addedFrom = String(req.query.addedFrom ?? "").trim();
     const addedTo = String(req.query.addedTo ?? "").trim();
-    const sort = String(req.query.sort ?? "added_desc");
+    // City-by-city duplicate review defaults to A–Z so every similarly named
+    // listing is adjacent even after a browser reload or a filter reset.
+    const sort = String(req.query.sort ?? "name_asc");
     // Use a fixed, server-owned order expression rather than interpolating an
     // arbitrary query parameter. Name A–Z keeps all similarly named listings
     // together across inventory pages for duplicate review.
@@ -316,8 +318,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       // through normal Directory/category/city search?" It excludes archived,
       // duplicate, hidden, suspended, and demonstration records.
       pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM public.public_businesses"),
-      // Kinfolk's ordinary recommendation catalog adds the documented Diaspora
-      // designation predicate to that same public directory surface.
+      // The founder-directed cleanup catalog includes every current public
+      // listing. Exact ownership requests add an explicit designation filter
+      // at the Kinfolk query layer; the catalog itself is removed only by the
+      // reversible archive action.
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total
            FROM public.public_businesses
@@ -435,7 +439,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       filteredTotal,
       page,
       pageSize,
-      sort: sort === "name_asc" ? "name_asc" : "added_desc",
+      sort: sort === "added_desc" ? "added_desc" : "name_asc",
       totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
       inventoryLimit: MAX_INVENTORY_PAGE_SIZE,
       inventoryIsTruncated: filteredTotal > result.length,

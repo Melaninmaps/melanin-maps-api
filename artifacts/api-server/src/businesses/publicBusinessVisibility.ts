@@ -18,13 +18,14 @@ type PublicBusinessCandidate = {
 /** Pure equivalent of the established public.public_businesses view for fixtures. */
 export function isPublicBusinessRecord(record: PublicBusinessCandidate): boolean {
   const listingStatus = record.listingStatus ?? record.listing_status ?? "live_unclaimed";
-  const isDuplicate = record.isDuplicate ?? record.is_duplicate ?? false;
-  const superseded = record.duplicateOfId ?? record.duplicate_of_id;
+  const status = record.status ?? "active";
   const permanentlyHidden = record.permanentlyHidden ?? record.permanently_hidden ?? false;
-  return !isDuplicate
-    && !superseded
-    && !permanentlyHidden
-    && record.status === "active"
+  // Potential duplicates remain in the live catalog while the administrator
+  // performs city-by-city review. The reversible archive action, not an older
+  // automated duplicate marker, is the control that removes a listing from
+  // default search, map, and Kinfolk surfaces.
+  return !permanentlyHidden
+    && !["suspended", "removed", "deleted", "permanently_hidden"].includes(status)
     && PUBLIC_BUSINESS_LISTING_STATUSES.includes(
       listingStatus as (typeof PUBLIC_BUSINESS_LISTING_STATUSES)[number],
     );
