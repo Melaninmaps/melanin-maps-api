@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   NATIONAL_MASTER_DIRECTORY_EXPECTED_ROWS,
@@ -88,5 +90,15 @@ describe("national master directory activation", () => {
   it("uses the importer-only source marker for ordinary directory discovery", () => {
     expect(nationalMasterDirectorySqlPredicate("b.id")).toContain(NATIONAL_MASTER_DIRECTORY_SOURCE);
     expect(NATIONAL_MASTER_DIRECTORY_EXPECTED_SHA256).toHaveLength(64);
+  });
+
+  it("ensures additive intake metadata exists before the activation transaction", () => {
+    const routes = readFileSync(
+      fileURLToPath(new URL("../automatedDirectoryRoutes.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(routes).toContain("ensureNationalMasterDirectoryBusinessMetadata(productionPool)");
+    expect(routes).toContain("ADD COLUMN IF NOT EXISTS research_source_label");
+    expect(routes).toContain("ADD COLUMN IF NOT EXISTS kinfolk_recommendation_reason");
   });
 });
