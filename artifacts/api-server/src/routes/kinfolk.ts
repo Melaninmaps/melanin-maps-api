@@ -6675,11 +6675,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentPolicy,
     });
 
+    // A resolved “what should I know before I go?” request is a current city
+    // briefing, not a generic chat turn. This route must remain active even when
+    // the optional semantic-ambiguity planner is disabled: otherwise Kinfolk can
+    // fall through to a model-only description instead of checking current news,
+    // public notices, and local reporting.
+    const cityBriefingPlan = isCityBriefingRequest(message, destination)
+      ? buildCityBriefingPlan({
+          message,
+          city: destination!,
+          stateCode: destinationState,
+        })
+      : null;
+
     // The contextual planner is intentionally downstream of deterministic safety
     // routing and governed business handling. It receives the locked route and no
     // member profile, so it cannot weaken consequence policy or infer identity.
-    let contextualPlan: SemanticTurnPlan | null = null;
-    if (contextualIntelligenceEnabled) {
+    let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan;
+    if (contextualIntelligenceEnabled && !contextualPlan) {
       contextualPlan = await planSemanticTurn({
         message: researchContextMessage,
         evidenceRoute,
@@ -6743,17 +6756,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             ),
           ].slice(0, 3),
         };
-      }
-      // A resolved city plus an explicit update request is not an ambiguous
-      // business search or travel itinerary. Route it to the current-affairs
-      // briefing contract before generic ambiguity handling so the member gets
-      // a sourced overview instead of a needless clarification.
-      if (isCityBriefingRequest(message, destination)) {
-        contextualPlan = buildCityBriefingPlan({
-          message,
-          city: destination!,
-          stateCode: destinationState,
-        });
       }
       if (
         contextualPlan.needsClarification &&
@@ -6956,7 +6958,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // ordinary topic research. The orchestrator only admits an exact URL
         // match, never a same-publisher or related-story substitute.
         requestedArticleUrl: requestedArticleSummaryUrl(message),
-        timeoutMs: 8_000,
+        timeoutMs:
+          contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000,
         signal: contextualRequestAbort.signal,
       });
       const attempted =
@@ -7068,7 +7071,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       res.status(200).json({
         sessionId,
         reply:
-          "I found some background information, but I could not verify the claim or consensus with enough independent, reliable sources. I would rather tell you that clearly than guess. Try again shortly or ask for the stable background instead.",
+          contextualPlan.taskMode === "city_briefing"
+            ? "I could not complete a current briefing from enough independent official and news-reporting sources. I will not substitute a generic city description for current safety, civic, or travel information. Try the current search again shortly, or ask me for stable background separately."
+            : "I found some background information, but I could not verify the claim or consensus with enough independent, reliable sources. I would rather tell you that clearly than guess. Try again shortly or ask for the stable background instead.",
         recommendations: null,
         itinerary: null,
         followUpSuggestions: [

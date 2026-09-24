@@ -57,9 +57,9 @@ export function buildCityBriefingPlan(input: {
     freshness: "current",
     evidenceNeeds: ["official_current", "reputable_reporting", "platform_records"],
     retrievalQueries: [
-      `${location} latest local news public policy community`,
-      `${location} city government public notices current`,
-      `${location} local reporting culture business community`,
+      `${location} latest local news public safety travel advisories`,
+      `${location} official city public notices transit weather current`,
+      `${location} Black community culture current local reporting`,
     ],
     answerPerspective: "mixed",
     identityContextUsed: [],
@@ -86,7 +86,7 @@ export function buildCityBriefingPromptBlock(input: {
   const knowBeforeYouGo = input.preferences?.knowBeforeYouGo !== false;
   const lines = [
     `CITY BRIEFING — ${place}:`,
-    "Give a current, source-cited overview with clearly labeled sections: What is happening; Civic and practical updates; Culture and community; and What to watch next.",
+    "Give a current, source-cited overview with clearly labeled sections: What is happening in current news and reporting; Civic and practical updates; Culture and community; and What to watch next.",
     "Start with material verified facts. Separate reporting from analysis and never present a rumor, post, or unverified community submission as fact.",
     "Do not invent local events, crime/safety claims, political positions, statistics, businesses, or community sentiment. If evidence is incomplete, say so plainly.",
     "Do not make a restaurant, nightlife, or business list unless the member separately asks for one. A direct request always overrides any optional interest lens.",
