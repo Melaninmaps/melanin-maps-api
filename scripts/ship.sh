@@ -64,7 +64,10 @@ git commit -m "$COMMIT_MSG"
 echo "✓  committed: $COMMIT_MSG"
 
 # ── 5. Push (triggers Railway deploy) ────────────────────────────────────────
-git push github main
+# Worktrees in this release environment use `origin`; retain an override for a
+# checkout that deliberately names its deployment remote differently.
+PUSH_REMOTE="${SHIP_PUSH_REMOTE:-origin}"
+git push "$PUSH_REMOTE" main
 HEAD=$(git rev-parse HEAD)
 
 echo ""
