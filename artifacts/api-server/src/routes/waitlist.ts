@@ -5,6 +5,7 @@ import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation } from "../lib/email";
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
 import { isAdmin } from "../lib/adminAuth";
+import { isApprovalRequired } from "../lib/approvalGate";
 
 const router: IRouter = Router();
 
@@ -707,7 +708,8 @@ router.delete("/admin/waitlist/:id", async (req: Request, res: Response) => {
 // ── Admin: reconcile earlier iOS App Store registrations ─────────────────────
 // Apple Sign-In accounts created before source-aware waitlist joining existed
 // never received an entry. This creates or annotates one email-keyed record per
-// real iOS account; it does not delete, duplicate, or revive archived records.
+// real iOS account as pending administrator review; it does not delete,
+// duplicate, auto-approve, or revive archived records.
 router.post("/admin/waitlist/reconcile-ios-registrations", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -746,8 +748,8 @@ router.post("/admin/waitlist/reconcile-ios-registrations", async (req: Request, 
           email,
           firstName: account.first_name,
           lastName: account.last_name,
-          status: "approved",
-          approvedAt: new Date(),
+          status: "pending",
+          approvedAt: null,
           signupSources: "ios",
         });
         created++;
@@ -1683,7 +1685,7 @@ router.post("/waitlist/social-refer", waitlistLimiter, async (req: Request, res:
 router.get("/admin/check", (req: Request, res: Response) => {
   res.json({
     isAdmin: isAdmin(req),
-    requireApproval: process.env.REQUIRE_APPROVAL === "true",
+    requireApproval: isApprovalRequired(),
   });
 });
 

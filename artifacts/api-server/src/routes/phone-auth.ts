@@ -146,25 +146,14 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
         user = { ...user, phoneVerified: true };
       }
     } else {
-
-      const [created] = await db
-        .insert(usersTable)
-        .values({
-          firstName: firstName!.trim(),
-          lastName: lastName?.trim() || null,
-          username: cleanUsername,
-          phoneNumber: normalized,
-          phoneVerified: true,
-          approved: true,
-          agreeToTerms: true,
-          email: null,
-        })
-        .returning();
-      user = created;
-    }
-
-    if (!user.approved) {
-      res.status(403).json({ error: "Your account is pending approval." });
+      // Phone-only registrations cannot be reconciled to the email-keyed
+      // waitlist or a TestFlight/Play tester grant. Refuse a bypass account
+      // while the rollout is controlled; an approved email may link a phone.
+      res.status(403).json({
+        error:
+          "Phone-only registration is unavailable during the invitation-only rollout. Use the email address approved for MWM access.",
+        code: "APPROVED_EMAIL_REQUIRED",
+      });
       return;
     }
 

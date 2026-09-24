@@ -157,6 +157,30 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
     }
 
     if (approved && updated.email) {
+      // The waitlist is the single authorization ledger. A direct Registered
+      // Users approval must therefore approve the matching record too, rather
+      // than leaving an account looking approved while the platform gate still
+      // correctly denies it.
+      const email = updated.email.toLowerCase().trim();
+      const [existingWaitlist] = await db
+        .select({ id: waitlistTable.id })
+        .from(waitlistTable)
+        .where(eq(waitlistTable.email, email))
+        .limit(1);
+      if (existingWaitlist) {
+        await db
+          .update(waitlistTable)
+          .set({ status: "approved", approvedAt: new Date() })
+          .where(eq(waitlistTable.id, existingWaitlist.id));
+      } else {
+        await db.insert(waitlistTable).values({
+          email,
+          firstName: updated.firstName,
+          status: "approved",
+          approvedAt: new Date(),
+          signupSources: "web",
+        });
+      }
       sendApprovalNotification(updated.email, updated.firstName).catch(() => {});
       sendPushToUser(updated.id, {
         title: "You're approved! 🎉",

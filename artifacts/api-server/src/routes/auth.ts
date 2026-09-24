@@ -77,7 +77,7 @@ import { getUserTier, TESTING_MODE } from "../middleware/requireMembership";
 async function applyPendingTesterEntitlement(
   userId: string,
   email: string,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const normalizedEmail = email.toLowerCase().trim();
     // Atomically mark the pending record as applied and read its entitlement fields
@@ -98,6 +98,7 @@ async function applyPendingTesterEntitlement(
       await pool.query(
         `UPDATE users
          SET tester_status = 'active',
+             approved = TRUE,
              tester_access_source = $1,
              tester_granted_at = NOW(),
              tester_granted_by = $2,
@@ -107,19 +108,23 @@ async function applyPendingTesterEntitlement(
          WHERE id = $4`,
         [tester_access_source, granted_by, entitlement_ends_at, userId],
       );
+      return true;
     }
+    return false;
   } catch {
     // Non-fatal — registration continues unaffected
+    return false;
   }
 }
 
-// An iOS Apple registration is a real waitlist origin even when the member
-// never completed the public web form. Keep one email-keyed record and append
-// the source rather than creating a parallel App Store list.
-async function ensureIosWaitlistRecord(input: {
+// Authentication origins join one email-keyed waitlist. Store enrollment and
+// account creation never imply platform approval; an administrator does that.
+async function ensureAuthenticatedWaitlistRecord(input: {
   email: string | null | undefined;
   firstName: string | null | undefined;
   lastName: string | null | undefined;
+  source: "web" | "ios" | "android";
+  approved?: boolean;
 }): Promise<void> {
   const email = String(input.email ?? "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.endsWith("@melaninmaps.internal")) return;
@@ -133,7 +138,7 @@ async function ensureIosWaitlistRecord(input: {
       .split(",")
       .map((source) => source.trim().toLowerCase())
       .filter((source) => ["web", "ios", "android"].includes(source));
-    return [...new Set([...sources, "ios"])].join(",");
+    return [...new Set([...sources, input.source])].join(",");
   };
   if (existing) {
     const signupSources = appendSource(existing.signupSources);
@@ -146,9 +151,9 @@ async function ensureIosWaitlistRecord(input: {
     email,
     firstName: input.firstName?.trim() || null,
     lastName: input.lastName?.trim() || null,
-    status: "approved",
-    approvedAt: new Date(),
-    signupSources: "ios",
+    status: input.approved ? "approved" : "pending",
+    approvedAt: input.approved ? new Date() : null,
+    signupSources: input.source,
   });
 }
 
@@ -228,9 +233,9 @@ async function upsertUser(claims: Record<string, unknown>) {
 
   const isNew = !existing;
 
-  const [user] = await db
+  let [user] = await db
     .insert(usersTable)
-    .values({ ...userData, approved: true })
+    .values({ ...userData, approved: false })
     .onConflictDoUpdate({
       target: usersTable.id,
       set: {
@@ -241,9 +246,23 @@ async function upsertUser(claims: Record<string, unknown>) {
     .returning();
 
   if (isNew && user.email) {
+    await ensureAuthenticatedWaitlistRecord({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      source: "web",
+    });
     sendWelcomeEmail(user.email, user.firstName).catch(() => {});
     // Auto-attach any pre-approved tester entitlement for this email
-    applyPendingTesterEntitlement(user.id, user.email).catch(() => {});
+    const testerAttached = await applyPendingTesterEntitlement(user.id, user.email);
+    if (testerAttached) {
+      const [refreshed] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, user.id))
+        .limit(1);
+      if (refreshed) user = refreshed;
+    }
   }
 
   return user;
@@ -294,7 +313,11 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         ...req.user,
         dateOfBirth: dbRow?.dateOfBirth ?? null,
         role: resolvedRole,
-        approved: dbRow?.approved ?? req.user!.approved,
+        // req.user is refreshed by authMiddleware against the unified
+        // waitlist/tester ledger. Do not expose the raw account flag here,
+        // because that could briefly route an unapproved store enrollee into
+        // the app before the member wall correctly denies later requests.
+        approved: req.user!.approved,
         username: dbRow?.username ?? null,
         memberType: dbRow?.memberType ?? "individual",
         emailVerified: dbRow?.emailVerified ?? false,
@@ -911,7 +934,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
         sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
         // Auto-attach any pre-approved tester entitlement for this email
-        applyPendingTesterEntitlement(user.id, user.email!).catch(() => {});
+        await applyPendingTesterEntitlement(user.id, user.email!);
 
         const sessionData: SessionData = {
           user: {
@@ -1646,7 +1669,7 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
               email: verifiedEmail ?? `apple_${sub}@melaninmaps.internal`,
               username: uniqueUsername,
               appleId: sub,
-              approved: true,
+              approved: false,
               agreeToTerms: true,
               ...(encryptedRefreshToken
                 ? { appleRefreshToken: encryptedRefreshToken }
@@ -1657,12 +1680,11 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
 
           // Keep the public waitlist and App Store registration history in one
           // email-keyed record. A reconciliation control covers older accounts.
-          ensureIosWaitlistRecord({
+          await ensureAuthenticatedWaitlistRecord({
             email: created.email,
             firstName: created.firstName,
             lastName: created.lastName,
-          }).catch((err: unknown) => {
-            req.log.error({ err }, "Failed to create iOS waitlist record for Apple registration");
+            source: "ios",
           });
 
           // Create server-authoritative Community Agreement record for every new member.
@@ -1679,20 +1701,21 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
 
           // Auto-attach any pre-approved tester entitlement for this Apple email
           if (verifiedEmail) {
-            applyPendingTesterEntitlement(created.id, verifiedEmail).catch(
-              () => {},
-            );
+            const testerAttached = await applyPendingTesterEntitlement(created.id, verifiedEmail);
+            if (testerAttached) {
+              const [refreshed] = await db
+                .select()
+                .from(usersTable)
+                .where(eq(usersTable.id, created.id))
+                .limit(1);
+              if (refreshed) user = refreshed;
+            }
           }
         } else if (encryptedRefreshToken) {
           await db
             .update(usersTable)
             .set({ appleRefreshToken: encryptedRefreshToken })
             .where(eq(usersTable.id, user.id));
-        }
-
-        if (!user.approved) {
-          res.status(403).json({ error: "Your account is pending approval." });
-          return;
         }
 
         // Clear any lockout state on successful Apple Sign-In
