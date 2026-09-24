@@ -19,7 +19,7 @@ afterEach(() => {
   delete process.env.DIRECTORY_REVIEW_SIGNING_SECRET;
 });
 
-function routeApp(pool: { connect: ReturnType<typeof vi.fn> }) {
+function routeApp(pool: { connect: ReturnType<typeof vi.fn>; query?: ReturnType<typeof vi.fn> }, productionPool: any = pool) {
   const app = express();
   app.use(express.json({ limit: DIRECTORY_REVIEW_INGRESS_JSON_LIMIT }));
   app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -27,7 +27,7 @@ function routeApp(pool: { connect: ReturnType<typeof vi.fn> }) {
     req.log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as any;
     next();
   });
-  registerAutomatedDirectoryRoutes(app, pool as any);
+  registerAutomatedDirectoryRoutes(app, pool as any, productionPool as any);
   return app;
 }
 
@@ -166,5 +166,69 @@ describe("automated directory MWM Core ingress admission", () => {
     expect(response.body.counts).toEqual(expect.any(Object));
     expect(pool.connect).toHaveBeenCalledOnce();
     expect(release).toHaveBeenCalledOnce();
+  });
+
+  it("reports the completed cohort without publishing, retrying, or changing a business", async () => {
+    const reviewQuery = vi.fn(async (statement: string) => {
+      if (statement.includes("FROM directory_import_batches")) {
+        return { rows: [{ id: "completed-batch", source_row_count: 4183, manifest_count: 4183 }] };
+      }
+      if (statement.includes("FROM directory_import_candidates")) {
+        return {
+          rows: Array.from({ length: 4183 }, (_, index) => ({
+            sourceRow: index + 1,
+            sourceRowId: `completed-${index + 1}`,
+            dedupeKey: `physical|unpinned-source-business-${index + 1}|philadelphia|pa|united-states|100-main-street`,
+            targetKind: "business",
+            name: "Unpinned source business",
+            city: "Philadelphia",
+            state: "PA",
+            country: "United States",
+            status: "needs_research",
+            rawRecord: { ownership_designations: ["Black-owned"] },
+            outboxStatus: "failed",
+            outboxError: "geocode_unverified: no strict street match",
+          })),
+        };
+      }
+      throw new Error(`Unexpected review query: ${statement}`);
+    });
+    const productionQuery = vi.fn(async (statement: string) => {
+      if (statement.includes("FROM directory_publication_provenance")) return { rows: [] };
+      throw new Error(`Unexpected production query: ${statement}`);
+    });
+    const reviewPool = { connect: vi.fn(), query: reviewQuery };
+    const productionPool = { query: productionQuery };
+
+    const response = await request(routeApp(reviewPool, productionPool))
+      .get("/api/founder/directory-import/completed-cohort/reconciliation")
+      .query({
+        receiptRoot: "948c818563f36f7cd6da67e003b3d6c8eb3e220e6561d898c4e94a7c31371653",
+        discoveryState: "location_hold",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      readonly: true,
+      sourceRowCount: 4183,
+      summary: { location_hold: 4183 },
+      rows: expect.arrayContaining([
+        expect.objectContaining({ discoveryState: "location_hold" }),
+      ]),
+    });
+    const statements = [
+      ...reviewQuery.mock.calls.map(([statement]) => String(statement)),
+      ...productionQuery.mock.calls.map(([statement]) => String(statement)),
+    ];
+    expect(statements.every((statement) => !/\b(INSERT|UPDATE|DELETE|CALL)\b/i.test(statement))).toBe(true);
+
+    const invalidFilter = await request(routeApp(reviewPool, productionPool))
+      .get("/api/founder/directory-import/completed-cohort/reconciliation")
+      .query({
+        receiptRoot: "948c818563f36f7cd6da67e003b3d6c8eb3e220e6561d898c4e94a7c31371653",
+        discoveryState: "not-a-real-state",
+      });
+    expect(invalidFilter.status).toBe(400);
+    expect(invalidFilter.body.code).toBe("COMPLETED_COHORT_DISCOVERY_STATE_INVALID");
   });
 });

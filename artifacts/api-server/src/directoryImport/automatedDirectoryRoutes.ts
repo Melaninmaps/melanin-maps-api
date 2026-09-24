@@ -11,6 +11,16 @@ import {
   validateMwmCorePublicationBatch,
 } from "./mwmCorePublicationPolicy";
 import { createHash } from "node:crypto";
+import {
+  COMPLETED_COHORT_MANIFEST_CHECKSUM,
+  COMPLETED_COHORT_RECEIPT_ROOT,
+  cohortRowsToCsv,
+  reconcileCompletedCohortRow,
+  summarizeCohortReconciliation,
+  type CohortCandidateForReconciliation,
+  type CohortDiscoveryState,
+  type CohortPublicationProvenance,
+} from "./cohortReconciliation";
 
 // The signed, immutable 4,183-record source-receipted cohort is a 14.673 MiB
 // JSON envelope. Keep this ceiling scoped to its protected service ingress;
@@ -34,7 +44,11 @@ function admin(req: Request, res: Response): { id: string } | null {
   return null;
 }
 
-export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool): void {
+export function registerAutomatedDirectoryRoutes(
+  app: Express,
+  reviewPool: Pool,
+  productionPool: Pool = reviewPool,
+): void {
   app.get("/api/founder/directory-import/batches", async (req, res) => {
     if (!admin(req, res)) return;
     const result = await reviewPool.query(
@@ -119,6 +133,167 @@ export function registerAutomatedDirectoryRoutes(app: Express, reviewPool: Pool)
       GROUP BY status, error_category
       ORDER BY status, error_category`);
     res.json({ diagnostics: diagnostics.rows });
+  });
+
+  /**
+   * Read-only reconciliation for the one already-completed protected cohort.
+   * This endpoint intentionally cannot stage, enqueue, publish, retry, or edit
+   * any source row. It joins the preserved review receipt, outbox state, and
+   * production provenance so an administrator can see why each row is public,
+   * a duplicate alias, or still held. The receipt root is fixed in code so a
+   * caller cannot use this endpoint as a generic backfill/export mechanism.
+   */
+  app.get("/api/founder/directory-import/completed-cohort/reconciliation", async (req, res) => {
+    if (!admin(req, res)) return;
+    const requestedRoot = typeof req.query.receiptRoot === "string"
+      ? req.query.receiptRoot.trim().toLowerCase()
+      : "";
+    if (requestedRoot !== COMPLETED_COHORT_RECEIPT_ROOT) {
+      res.status(400).json({
+        error: "This read-only reconciliation is restricted to the completed immutable cohort receipt root.",
+        code: "COMPLETED_COHORT_RECEIPT_ROOT_REQUIRED",
+      });
+      return;
+    }
+
+    try {
+      const batch = await reviewPool.query<{ id: string; source_row_count: number; manifest_count: number }>(
+        `SELECT id, source_row_count, manifest_count
+           FROM directory_import_batches
+          WHERE source_sha256=$1
+          LIMIT 1`,
+        [COMPLETED_COHORT_MANIFEST_CHECKSUM],
+      );
+      const batchRow = batch.rows[0];
+      if (!batchRow) {
+        res.status(404).json({
+          error: "The completed cohort review receipt is not available in this environment.",
+          code: "COMPLETED_COHORT_RECEIPT_NOT_AVAILABLE",
+        });
+        return;
+      }
+      if (
+        batchRow.source_row_count !== 4183 ||
+        batchRow.manifest_count !== 4183
+      ) {
+        res.status(409).json({
+          error: "The retained cohort receipt count is inconsistent; reconciliation is blocked.",
+          code: "COMPLETED_COHORT_RECEIPT_COUNT_MISMATCH",
+        });
+        return;
+      }
+
+      const candidates = await reviewPool.query<CohortCandidateForReconciliation>(
+        `SELECT c.source_row AS "sourceRow", c.source_row_id AS "sourceRowId",
+                c.dedupe_key AS "dedupeKey", c.target_kind AS "targetKind", c.name, c.city, c.state, c.country,
+                c.status, c.raw_record AS "rawRecord",
+                o.status AS "outboxStatus", o.last_error AS "outboxError"
+           FROM directory_import_candidates c
+      LEFT JOIN directory_review_outbox o ON o.candidate_id=c.id
+          WHERE c.batch_id=$1
+          ORDER BY c.source_row ASC`,
+        [batchRow.id],
+      );
+      if (candidates.rows.length !== 4183) {
+        res.status(409).json({
+          error: "The retained cohort candidate count is inconsistent; reconciliation is blocked.",
+          code: "COMPLETED_COHORT_CANDIDATE_COUNT_MISMATCH",
+        });
+        return;
+      }
+
+      const provenance = await productionPool.query<CohortPublicationProvenance>(
+        `SELECT source_row AS "sourceRow", record_id AS "recordId", outcome
+           FROM directory_publication_provenance
+          WHERE source_sha256=$1
+            AND outcome IN ('created', 'linked_existing')`,
+        [COMPLETED_COHORT_MANIFEST_CHECKSUM],
+      );
+      const provenanceByRow = new Map(
+        provenance.rows.map((row) => [row.sourceRow, row]),
+      );
+      // `dedupe_key` is the strict batch identity established at protected
+      // ingress. A declined row with that key is a source alias. The CSV links
+      // it to its earliest non-declined source row, without creating a second
+      // business profile or inferring a cross-batch match.
+      const canonicalSourceRowByDedupeKey = new Map<string, number>();
+      for (const candidate of candidates.rows) {
+        if (!candidate.dedupeKey || candidate.status === "declined") continue;
+        if (!canonicalSourceRowByDedupeKey.has(candidate.dedupeKey)) {
+          canonicalSourceRowByDedupeKey.set(candidate.dedupeKey, candidate.sourceRow);
+        }
+      }
+      const rows = candidates.rows.map((candidate) =>
+        reconcileCompletedCohortRow(
+          candidate,
+          provenanceByRow.get(candidate.sourceRow),
+          candidate.dedupeKey
+            ? canonicalSourceRowByDedupeKey.get(candidate.dedupeKey) ?? null
+            : null,
+          candidate.dedupeKey
+            ? provenanceByRow.get(canonicalSourceRowByDedupeKey.get(candidate.dedupeKey) ?? -1)
+            : undefined,
+        ),
+      );
+      const summary = summarizeCohortReconciliation(rows);
+      const requestedState = typeof req.query.state === "string"
+        ? req.query.state.trim().toUpperCase()
+        : "";
+      const rowsForState = requestedState
+        ? rows.filter((row) => String(row.state ?? "").toUpperCase() === requestedState)
+        : rows;
+      const validDiscoveryStates: readonly CohortDiscoveryState[] = [
+        "public_listing",
+        "duplicate_source_alias",
+        "location_hold",
+        "publication_error_hold",
+        "review_hold",
+      ];
+      const requestedDiscoveryStates = typeof req.query.discoveryState === "string"
+        ? req.query.discoveryState.split(",").map((value) => value.trim()).filter(Boolean)
+        : [];
+      if (requestedDiscoveryStates.some(
+        (value) => !validDiscoveryStates.includes(value as CohortDiscoveryState),
+      )) {
+        res.status(400).json({
+          error: "An unsupported discoveryState filter was requested.",
+          code: "COMPLETED_COHORT_DISCOVERY_STATE_INVALID",
+        });
+        return;
+      }
+      const filteredRows = requestedDiscoveryStates.length > 0
+        ? rowsForState.filter((row) => requestedDiscoveryStates.includes(row.discoveryState))
+        : rowsForState;
+
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          "attachment; filename=completed-cohort-reconciliation.csv",
+        );
+        res.send(cohortRowsToCsv(filteredRows));
+        return;
+      }
+
+      const limitValue = Number(req.query.limit ?? 100);
+      const offsetValue = Number(req.query.offset ?? 0);
+      const limit = Number.isInteger(limitValue) ? Math.min(Math.max(limitValue, 1), 500) : 100;
+      const offset = Number.isInteger(offsetValue) ? Math.max(offsetValue, 0) : 0;
+      res.json({
+        readonly: true,
+        receiptRoot: COMPLETED_COHORT_RECEIPT_ROOT,
+        manifestChecksum: COMPLETED_COHORT_MANIFEST_CHECKSUM,
+        sourceRowCount: rows.length,
+        summary,
+        page: { offset, limit, total: filteredRows.length },
+        rows: filteredRows.slice(offset, offset + limit),
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: "Completed cohort reconciliation failed.",
+        code: "COMPLETED_COHORT_RECONCILIATION_FAILED",
+      });
+    }
   });
 
   app.post("/api/founder/directory-import/ingress", async (req, res) => {

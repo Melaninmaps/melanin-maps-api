@@ -394,7 +394,7 @@ if (assertDirectoryReviewLocalStaging(process.env)) {
   registerDirectoryImportRoutes(app);
 }
 if (process.env.DIRECTORY_REVIEW_ENABLED === "1" && directoryReviewPool) {
-  registerAutomatedDirectoryRoutes(app, directoryReviewPool);
+  registerAutomatedDirectoryRoutes(app, directoryReviewPool, pool);
 }
 
 // ── Living Library public read routes ──────────────────────────────────────
