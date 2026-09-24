@@ -4,6 +4,10 @@ import {
   type EndorsementTagDef,
 } from "./endorsement-tags";
 import {
+  OFFICIAL_QUICK_REVIEW_TAGS,
+  type OfficialQuickReviewTag,
+} from "./official-feedback-catalog";
+import {
   COMMUNITY_CODES,
   ENDORSEMENT_TAG_VARIANTS,
   type CommunityCode,
@@ -13,6 +17,7 @@ import {
   isVibeEligible,
   type VibeLabel,
 } from "./vibe-labels";
+import { usesTheReal } from "./the-real-tags";
 import { foldBusinessSearchLabel } from "./business-search-normalization";
 
 export type BusinessExperienceKind = "vibe" | "reaction" | "price";
@@ -34,6 +39,7 @@ export interface BusinessExperienceChoice {
 export interface BusinessExperiencePolicy {
   category: string;
   subcategory: string | null;
+  experienceLayer: "vibe" | "real";
   atmosphereLabel: string;
   reactionLabel: string;
   vibeChoices: BusinessExperienceChoice[];
@@ -95,6 +101,34 @@ function normalizeSubcategory(value: string | null | undefined): string {
   return toSnakeKey(value ?? "");
 }
 
+/**
+ * The approved founder boundary: Education & Learning is evaluated with
+ * practical community feedback, and only actual care/early-learning entries
+ * in Children & Family use that same The Real layer. Play spaces, camps,
+ * parties, and other family activities retain atmosphere-oriented Vibes.
+ */
+const CHILDCARE_AND_EARLY_EDUCATION_SUBCATEGORIES = new Set([
+  "childcare",
+  "childcare_daycare",
+  "daycare_childcare",
+  "preschool",
+  "preschools",
+  "early_childhood_education",
+  "after_school_care",
+]);
+
+export function usesTheRealExperienceLayer(
+  category: string | null | undefined,
+  subcategory?: string | null,
+): boolean {
+  const categoryName = resolveCanonicalCategory(category);
+  const subcategoryKey = normalizeSubcategory(subcategory);
+  return usesTheReal(categoryName, subcategory ?? undefined)
+    || categoryName === "Education & Learning"
+    || (categoryName === "Children & Family"
+      && CHILDCARE_AND_EARLY_EDUCATION_SUBCATEGORIES.has(subcategoryKey));
+}
+
 function resolveCanonicalCategory(category: string | null | undefined): string {
   const folded = foldBusinessSearchLabel(category ?? "");
   if ([
@@ -124,7 +158,7 @@ function resolveCanonicalCategory(category: string | null | undefined): string {
     "family childcare",
   ].includes(folded)) return "Children & Family";
   if ([
-    "education workforce", "education training", "education trades",
+    "education workforce", "education training", "education trades", "education childcare",
   ].includes(folded)) return "Education & Learning";
   if ([
     "retail", "retail culture", "retail fashion", "retail everyday life", "retail experience",
@@ -191,7 +225,48 @@ function reactionChoice(tag: EndorsementTagDef): BusinessExperienceChoice {
   };
 }
 
+function officialReactionChoice(tag: OfficialQuickReviewTag): BusinessExperienceChoice {
+  const compatibleLegacy = ENDORSEMENT_TAGS.find((candidate) => (
+    candidate.default_label.trim().toLocaleLowerCase() === tag.label.trim().toLocaleLowerCase()
+    && candidate.tag_family
+  ));
+  return {
+    key: tag.key,
+    label: tag.label,
+    helperText: tag.helperText,
+    kind: "reaction",
+    // Rendering variants remains an explicit member preference. The catalog
+    // never derives a community label from a member profile or location.
+    variants: variantsForFamily(compatibleLegacy?.tag_family),
+  };
+}
+
+function isOfficialQuickReviewInScope(tag: OfficialQuickReviewTag, subcategory: string): boolean {
+  if (tag.subcategoryScope.trim().toLowerCase() === "all") return true;
+  if (!subcategory) return false;
+  return tag.subcategoryScope
+    .split(";")
+    .map((entry) => normalizeSubcategory(entry))
+    .includes(subcategory);
+}
+
+/**
+ * The founder-approved workbook is the source for new one-tap feedback.
+ * The prior endorsement catalog remains in the project for historic display
+ * compatibility, but it does not replace the approved labels for new choices.
+ */
+function officialCategoryReactionChoices(categoryName: string, subcategory: string): BusinessExperienceChoice[] {
+  const approved = OFFICIAL_QUICK_REVIEW_TAGS.filter((tag) => tag.category === categoryName);
+  if (approved.length === 0) return [];
+  const inScope = approved.filter((tag) => isOfficialQuickReviewInScope(tag, subcategory));
+  const ordered = [...inScope, ...approved.filter((tag) => !inScope.includes(tag))];
+  return ordered.slice(0, 16).map(officialReactionChoice);
+}
+
 function categoryReactionChoices(categoryName: string, subcategory: string): BusinessExperienceChoice[] {
+  const officialChoices = officialCategoryReactionChoices(categoryName, subcategory);
+  if (officialChoices.length > 0) return officialChoices;
+
   const categoryId = CATEGORY_ID_BY_NAME.get(categoryName);
   if (!categoryId) return LEGACY_REACTIONS.slice(0, 4);
 
@@ -228,15 +303,17 @@ export function getBusinessExperiencePolicy(
 ): BusinessExperiencePolicy {
   const categoryName = resolveCanonicalCategory(category);
   const subcategoryKey = normalizeSubcategory(subcategory);
-  const vibeChoices = isVibeEligible(categoryName)
+  const experienceLayer = usesTheRealExperienceLayer(categoryName, subcategoryKey) ? "real" : "vibe";
+  const vibeChoices = experienceLayer === "vibe" && isVibeEligible(categoryName)
     ? (VIBES_BY_CATEGORY[categoryName] ?? []).map(vibeChoice).slice(0, 20)
     : [];
 
   return {
     category: categoryName,
     subcategory: subcategoryKey || null,
-    atmosphereLabel: vibeChoices.length > 0 ? "What it feels like here" : "About the experience",
-    reactionLabel: categoryName === "Food & Drink" ? "Community Says" : "Community Intelligence",
+    experienceLayer,
+    atmosphereLabel: "The Vibe",
+    reactionLabel: experienceLayer === "real" ? "The Real" : "Community Feedback",
     vibeChoices,
     reactionChoices: categoryReactionChoices(categoryName, subcategoryKey),
     priceChoices: PRICE_CHOICES,

@@ -1,0 +1,863 @@
+[
+  {
+    "category": "Food & Drink",
+    "label": "Date Night",
+    "helperText": "Worth getting cute for",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Hood Classic",
+    "helperText": "Been here forever, still hits",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Bougie Treat",
+    "helperText": "Payday / splurge spot",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Family Reunion Energy",
+    "helperText": "Loud, warm, everybody's welcome",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Sunday Best",
+    "helperText": "After-church energy",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Late Night Vibes",
+    "helperText": "Open when you need it",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Turn Up",
+    "helperText": "Music up, energy high",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Cookout Approved",
+    "helperText": "Passes the family test",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Like Home",
+    "helperText": "Familiar, comfortable, somebody's-kitchen energy",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Auntie Energy",
+    "helperText": "Warm service; somebody is making sure you're good",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Tía Energy",
+    "helperText": "Warm, familiar, lovingly involved",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Abuela Approved Energy",
+    "helperText": "Traditional, comforting, multigenerational",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Soft Life",
+    "helperText": "Relaxed, comfortable, treat-yourself energy",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Take Somebody From Out of Town",
+    "helperText": "A place you would proudly show visitors",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Locals Know",
+    "helperText": "Community favorite without needing the hype",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Food & Drink",
+    "label": "Passport Energy",
+    "helperText": "Feels culturally transporting",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Soft Life",
+    "helperText": "Pampering, ease, recharge",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Auntie Energy",
+    "helperText": "Warm, attentive, you will be taken care of",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Tía Energy",
+    "helperText": "Familiar care and loving honesty",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Main Character Energy",
+    "helperText": "You leave feeling seen and photo-ready",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Sunday Best",
+    "helperText": "Polished, occasion-ready",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Chill & Restore",
+    "helperText": "Low-stress self-care",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Come As You Are",
+    "helperText": "Welcoming without judgment",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "For The Culture",
+    "helperText": "Culture is understood, not performed",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Neighborhood Love",
+    "helperText": "Deep local connection",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Beauty & Personal Care",
+    "label": "Luxury Without The Attitude",
+    "helperText": "Elevated service that still feels welcoming",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Health & Wellness",
+    "label": "Chill & Restore",
+    "helperText": "You leave more grounded than you arrived",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Health & Wellness",
+    "label": "Peaceful Energy",
+    "helperText": "Quiet, calm, restorative",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Health & Wellness",
+    "label": "Come As You Are",
+    "helperText": "Low judgment; meet-you-where-you-are energy",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Health & Wellness",
+    "label": "Auntie Energy",
+    "helperText": "Warm, caring, attentive",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Health & Wellness",
+    "label": "Family Care",
+    "helperText": "Feels safe to recommend across generations",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Health & Wellness",
+    "label": "Wellness Reset",
+    "helperText": "Balance, healing, recharge",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Hood Classic",
+    "helperText": "Neighborhood institution status",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Locals Know",
+    "helperText": "A real local favorite",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Hidden Gem",
+    "helperText": "Underrated and worth discovering",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Bougie Treat",
+    "helperText": "Special purchase / elevated browsing",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Chill & Create",
+    "helperText": "Slow browsing, creative energy",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Bring The Cousins",
+    "helperText": "Fun to shop together",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "For The Culture",
+    "helperText": "Culture is visible in product and experience",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Shopping & Retail",
+    "label": "Take Somebody From Out of Town",
+    "helperText": "A store you would proudly show visitors",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Romantic Escape",
+    "helperText": "Just the two of you",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Family Reunion Energy",
+    "helperText": "Bring everybody",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Solo Traveler Comfortable",
+    "helperText": "Community-reported ease traveling alone",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Bougie Treat",
+    "helperText": "Splurge stay",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Chill & Restore",
+    "helperText": "You came back rested",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Girls Trip Ready",
+    "helperText": "Built for the group chat",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Grand Rising",
+    "helperText": "Mornings here are beautiful",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Bring The Cousins",
+    "helperText": "Room for the whole crew",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Passport Energy",
+    "helperText": "The stay itself feels culturally transporting",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Take Somebody From Out of Town",
+    "helperText": "A proud recommendation for visitors",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Luxury Without The Attitude",
+    "helperText": "Elevated but warm",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Travel & Hospitality",
+    "label": "Locals Know",
+    "helperText": "Not the tourist-trap version of the city",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Date Night",
+    "helperText": "Romance-friendly",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Turn Up",
+    "helperText": "High energy",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Grown & Sexy",
+    "helperText": "Adults, no chaos",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Hood Classic",
+    "helperText": "Institution status",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Chill & Create",
+    "helperText": "You can think and make here",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Late Night Vibes",
+    "helperText": "The night keeps going",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Family Reunion Energy",
+    "helperText": "All ages welcome",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Sunday Best",
+    "helperText": "Dress-up occasion",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "History Lives Here",
+    "helperText": "Heritage feels tangible",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Culture On The Walls",
+    "helperText": "Visual environment celebrates culture/history",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Teach The Kids",
+    "helperText": "Worth bringing young people for the learning",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Arts, Culture & Entertainment",
+    "label": "Creative Scene",
+    "helperText": "Art, music, culture, expression",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Family Reunion Energy",
+    "helperText": "Built for big families",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Sunday Best",
+    "helperText": "Formal-ready",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Turn Up",
+    "helperText": "The party can go",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Grown & Sexy",
+    "helperText": "Adult celebration",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Bougie Treat",
+    "helperText": "Upscale feel",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Kid Chaos Friendly",
+    "helperText": "Children can be children",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Late Night Vibes",
+    "helperText": "No hard early cutoff",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Cookout Approved",
+    "helperText": "Comfortable, familiar, ours",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Made For Memories",
+    "helperText": "Milestones, photos and celebrations",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Bring The Cousins",
+    "helperText": "Room for everybody",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Events & Celebrations",
+    "label": "Luxury Without The Attitude",
+    "helperText": "Elevated without stiffness",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Education & Learning",
+    "label": "Teach The Kids",
+    "helperText": "Learning feels alive and culturally relevant",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Education & Learning",
+    "label": "Come As You Are",
+    "helperText": "Students feel welcomed as themselves",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Education & Learning",
+    "label": "Creative Energy",
+    "helperText": "Curious, expressive, hands-on",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Education & Learning",
+    "label": "Community Classroom",
+    "helperText": "Learning connected to people and place",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Kid Chaos Friendly",
+    "helperText": "Nobody side-eyes a loud toddler",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Family Reunion Energy",
+    "helperText": "Big groups work here",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Rainy Day Rescue",
+    "helperText": "Saves the whole afternoon",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Toddler Safe",
+    "helperText": "Soft, gated, watched",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Big Kid Approved",
+    "helperText": "Tweens actually enjoy it",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Parents Can Breathe",
+    "helperText": "You get to sit down",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Birthday Party Ready",
+    "helperText": "Celebration-friendly",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Bring The Cousins",
+    "helperText": "Room for everybody's kids",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Teach The Kids",
+    "helperText": "Fun with something meaningful to learn",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Children & Family",
+    "label": "Like Home",
+    "helperText": "Comfortable for the whole family",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Community & Nonprofit",
+    "label": "Neighborhood Love",
+    "helperText": "Deeply rooted in the neighborhood",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Community & Nonprofit",
+    "label": "For The Culture",
+    "helperText": "Community purpose is visible",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Community & Nonprofit",
+    "label": "Come As You Are",
+    "helperText": "Welcoming without hoops or judgment",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Community & Nonprofit",
+    "label": "Everybody Knows Somebody",
+    "helperText": "Connected, relational, familiar",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Community & Nonprofit",
+    "label": "Family Reunion Energy",
+    "helperText": "Multigenerational community gathering",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Community & Nonprofit",
+    "label": "History Lives Here",
+    "helperText": "Legacy and community memory matter here",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Sunday Best",
+    "helperText": "Dress-up tradition here",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Come As You Are",
+    "helperText": "Jeans are fine",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Quiet & Prayerful",
+    "helperText": "Stillness is kept",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Praise Break Energy",
+    "helperText": "Expressive worship",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Family Worship",
+    "helperText": "Children in the room, welcomed",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Young Adult Friendly",
+    "helperText": "Twenties and thirties are present",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Auntie Energy",
+    "helperText": "Warm, watchful, caring community",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Faith & Spirituality",
+    "label": "Everybody Knows Somebody",
+    "helperText": "Relational congregation/community",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Media & Creative Services",
+    "label": "Creative Scene",
+    "helperText": "Art, music, culture, expression",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Media & Creative Services",
+    "label": "Chill & Create",
+    "helperText": "You can think and make here",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Media & Creative Services",
+    "label": "Main Character Energy",
+    "helperText": "Strong visual / personal-brand energy",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Media & Creative Services",
+    "label": "For The Culture",
+    "helperText": "Cultural storytelling is understood",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Media & Creative Services",
+    "label": "Grown & Sexy",
+    "helperText": "Polished adult creative atmosphere",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Turn Up",
+    "helperText": "Crowd brings energy",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Family Reunion Energy",
+    "helperText": "Families in the stands",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Chill & Move",
+    "helperText": "Low-pressure movement",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Early Bird Energy",
+    "helperText": "Morning crowd is right",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Kid Chaos Friendly",
+    "helperText": "Kids can run",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Adventure Ready",
+    "helperText": "Active, explorative, outdoors",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Sports & Recreation",
+    "label": "Bring The Cousins",
+    "helperText": "Group-friendly activity",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Grand Rising",
+    "helperText": "Beautiful early morning",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Family Reunion Energy",
+    "helperText": "Neighbors everywhere",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Chill & Create",
+    "helperText": "Slow, pleasant browsing",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Bring The Cousins",
+    "helperText": "Make it an outing",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Hood Classic",
+    "helperText": "The market everybody knows",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Cookout Approved",
+    "helperText": "Where you shop before the cookout",
+    "source": "Existing specification",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Locals Know",
+    "helperText": "Community-grown favorite",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  },
+  {
+    "category": "Agriculture & Specialty Producers",
+    "label": "Teach The Kids",
+    "helperText": "Great for learning where food comes from",
+    "source": "Added",
+    "rule": "Show only when category/subcategory is vibe-eligible"
+  }
+]

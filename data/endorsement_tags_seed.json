@@ -1,0 +1,3352 @@
+[
+  {
+    "key": "official_food_drink_worth_the_drive",
+    "category": "Food & Drink",
+    "label": "Worth The Drive",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You'd cross town for this",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_portions_with_love",
+    "category": "Food & Drink",
+    "label": "Portions With Love",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "They didn't skimp",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_clean_cared_for",
+    "category": "Food & Drink",
+    "label": "Clean & Cared For",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The space is kept right",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_grandma_approved",
+    "category": "Food & Drink",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "She would approve of this food",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_cooks_like_home",
+    "category": "Food & Drink",
+    "label": "Cooks Like Home",
+    "type": "adaptive",
+    "subcategoryScope": "Restaurants; Catering; Private Chefs; Meal Prep; Specialty Foods",
+    "helperText": "Tastes like somebody's kitchen",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_they_speak_my_language",
+    "category": "Food & Drink",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "You can order comfortably",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_seasoned_right",
+    "category": "Food & Drink",
+    "label": "Seasoned Right",
+    "type": "specific",
+    "subcategoryScope": "Restaurants; Food Trucks & Mobile Food; Catering; Meal Prep; Private Chefs",
+    "helperText": "No bland plates here",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_plate_came_correct",
+    "category": "Food & Drink",
+    "label": "Plate Came Correct",
+    "type": "specific",
+    "subcategoryScope": "Restaurants; Food Trucks & Mobile Food",
+    "helperText": "Looked and tasted like the picture",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_they_don_t_rush_the_recipe",
+    "category": "Food & Drink",
+    "label": "They Don't Rush The Recipe",
+    "type": "specific",
+    "subcategoryScope": "Restaurants; Bakeries; Specialty Foods",
+    "helperText": "Slow-cooked, done properly",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_ask_for_the_special",
+    "category": "Food & Drink",
+    "label": "Ask For The Special",
+    "type": "specific",
+    "subcategoryScope": "Restaurants; Food Trucks & Mobile Food; Bars & Lounges",
+    "helperText": "The off-menu move is the move",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_recipe_from_the_motherland",
+    "category": "Food & Drink",
+    "label": "Recipe From The Motherland",
+    "type": "specific",
+    "subcategoryScope": "Restaurants; Bakeries; Specialty Foods; Grocery & Markets",
+    "helperText": "Traditional, not watered down",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_fresh_not_frozen",
+    "category": "Food & Drink",
+    "label": "Fresh, Not Frozen",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Made today, not reheated",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_sweet_not_too_sweet",
+    "category": "Food & Drink",
+    "label": "Sweet, Not Too Sweet",
+    "type": "specific",
+    "subcategoryScope": "Bakeries; Desserts & Sweets; Juice & Smoothies",
+    "helperText": "Balanced, grown-folks sweet",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_book_this_table",
+    "category": "Food & Drink",
+    "label": "Book This Table",
+    "type": "recommendation",
+    "subcategoryScope": "Restaurants; Private Chefs",
+    "helperText": "Strong enough recommendation to reserve now",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_don_t_sleep_on_this_one",
+    "category": "Food & Drink",
+    "label": "Don't Sleep On This One",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Put this on somebody's list",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_food_drink_i_sent_the_group_chat",
+    "category": "Food & Drink",
+    "label": "I Sent The Group Chat",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Good enough to immediately tell your people",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_on_time_every_time",
+    "category": "Beauty & Personal Care",
+    "label": "On Time, Every Time",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Your appointment means something",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_clean_station",
+    "category": "Beauty & Personal Care",
+    "label": "Clean Station",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Tools and space are sanitary",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_worth_the_price",
+    "category": "Beauty & Personal Care",
+    "label": "Worth The Price",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You got what you paid for",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_blessed_hands",
+    "category": "Beauty & Personal Care",
+    "label": "Blessed Hands",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "This is a gift, not just a skill",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_they_know_our_hair",
+    "category": "Beauty & Personal Care",
+    "label": "They Know Our Hair",
+    "type": "adaptive",
+    "subcategoryScope": "Hair Salons; Barbershops; Braiders & Natural Hair; Mobile Beauty Services",
+    "helperText": "They understand your texture",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_grandma_approved",
+    "category": "Beauty & Personal Care",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "She'd send you here",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_sharpest_lineup",
+    "category": "Beauty & Personal Care",
+    "label": "Sharpest Lineup",
+    "type": "specific",
+    "subcategoryScope": "Barbershops",
+    "helperText": "The edge-up is crisp",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_braids_didn_t_hurt",
+    "category": "Beauty & Personal Care",
+    "label": "Braids Didn't Hurt",
+    "type": "specific",
+    "subcategoryScope": "Braiders & Natural Hair; Hair Salons",
+    "helperText": "No tension, no headache",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_edges_respected",
+    "category": "Beauty & Personal Care",
+    "label": "Edges Respected",
+    "type": "specific",
+    "subcategoryScope": "Braiders & Natural Hair; Hair Salons; Lashes & Brows",
+    "helperText": "They protected your hairline",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_style_lasted",
+    "category": "Beauty & Personal Care",
+    "label": "Style Lasted",
+    "type": "specific",
+    "subcategoryScope": "Hair Salons; Braiders & Natural Hair; Nail Salons & Nail Artists; Lashes & Brows",
+    "helperText": "Still looked good weeks later",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "bs_my_shade_was_there",
+    "category": "Beauty & Personal Care",
+    "label": "My Shade Was There",
+    "type": "specific",
+    "subcategoryScope": "Makeup Artists; Cosmetics & Beauty Brands; Beauty Supply",
+    "helperText": "Deep shades actually stocked",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_skin_cleared_up",
+    "category": "Beauty & Personal Care",
+    "label": "Skin Cleared Up",
+    "type": "specific",
+    "subcategoryScope": "Estheticians & Skincare; Spas",
+    "helperText": "Real results, no irritation",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_didn_t_overbook_me",
+    "category": "Beauty & Personal Care",
+    "label": "Didn't Overbook Me",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "You weren't waiting three hours",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_patient_with_kids",
+    "category": "Beauty & Personal Care",
+    "label": "Patient With Kids",
+    "type": "specific",
+    "subcategoryScope": "Barbershops; Hair Salons; Braiders & Natural Hair",
+    "helperText": "First haircuts handled gently",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_book_now",
+    "category": "Beauty & Personal Care",
+    "label": "Book Now",
+    "type": "recommendation",
+    "subcategoryScope": "Hair Salons; Barbershops; Braiders & Natural Hair; Nail Salons & Nail Artists; Makeup Artists; Estheticians & Skincare; Spas; Massage; Lashes & Brows; Mobile Beauty Services",
+    "helperText": "Worth securing the appointment",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_beauty_personal_care_ask_for_them_by_name",
+    "category": "Beauty & Personal Care",
+    "label": "Ask For Them By Name",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "The individual provider is worth requesting",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_didn_t_rush_me",
+    "category": "Health & Wellness",
+    "label": "Didn't Rush Me",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You got real time in the room",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_took_time_to_explain",
+    "category": "Health & Wellness",
+    "label": "Took Time To Explain",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You left understanding your care",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_made_me_feel_heard",
+    "category": "Health & Wellness",
+    "label": "Made Me Feel Heard",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You weren't dismissed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_treated_me_like_family",
+    "category": "Health & Wellness",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Warmth, not just service",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_they_speak_my_language",
+    "category": "Health & Wellness",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Care in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_grandma_trusts_them",
+    "category": "Health & Wellness",
+    "label": "Grandma Trusts Them",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Safe enough for your elders",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_this_doctor_listens",
+    "category": "Health & Wellness",
+    "label": "This Doctor Listens",
+    "type": "specific",
+    "subcategoryScope": "Primary Care & Medical Practices; Dental; Physical Therapy; Chiropractic; Holistic Wellness",
+    "helperText": "They asked and waited for the answer",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_believed_my_pain",
+    "category": "Health & Wellness",
+    "label": "Believed My Pain",
+    "type": "specific",
+    "subcategoryScope": "Primary Care & Medical Practices; Dental; Physical Therapy; Chiropractic; Doula & Birth Services",
+    "helperText": "No minimizing, no doubting",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_culturally_competent_care",
+    "category": "Health & Wellness",
+    "label": "Culturally Competent Care",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "They understand where you come from",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_understands_my_skin",
+    "category": "Health & Wellness",
+    "label": "Understands My Skin",
+    "type": "specific",
+    "subcategoryScope": "Primary Care & Medical Practices; Wellness Centers",
+    "helperText": "Trained on melanated skin",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_understands_my_hair",
+    "category": "Health & Wellness",
+    "label": "Understands My Hair",
+    "type": "specific",
+    "subcategoryScope": "Primary Care & Medical Practices; Wellness Centers",
+    "helperText": "Knows textured hair and scalp",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_fought_for_my_coverage",
+    "category": "Health & Wellness",
+    "label": "Fought For My Coverage",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "They pushed insurance for you",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_front_desk_was_kind",
+    "category": "Health & Wellness",
+    "label": "Front Desk Was Kind",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "The welcome starts at the window",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_therapist_gets_the_culture",
+    "category": "Health & Wellness",
+    "label": "Therapist Gets The Culture",
+    "type": "specific",
+    "subcategoryScope": "Mental Wellness & Therapy",
+    "helperText": "No explaining your whole life first",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_doula_held_me_down",
+    "category": "Health & Wellness",
+    "label": "Doula Held Me Down",
+    "type": "specific",
+    "subcategoryScope": "Doula & Birth Services",
+    "helperText": "Advocated for you when it counted",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_prices_were_clear_up_front",
+    "category": "Health & Wellness",
+    "label": "Prices Were Clear Up Front",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "No surprise bill later",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_health_wellness_no_judgment_about_my_body",
+    "category": "Health & Wellness",
+    "label": "No Judgment About My Body",
+    "type": "specific",
+    "subcategoryScope": "Fitness & Gyms; Personal Trainers; Yoga & Pilates; Nutrition & Dietitians",
+    "helperText": "You were met where you are",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_quality_held_up",
+    "category": "Shopping & Retail",
+    "label": "Quality Held Up",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "It lasted past the first wear",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_fair_prices",
+    "category": "Shopping & Retail",
+    "label": "Fair Prices",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Priced honestly",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_no_follow_around",
+    "category": "Shopping & Retail",
+    "label": "No Follow-Around",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You shopped in peace, not under watch",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_grandma_approved",
+    "category": "Shopping & Retail",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "She'd shop here too",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_for_the_culture",
+    "category": "Shopping & Retail",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "They invest back in us",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_treated_me_like_family",
+    "category": "Shopping & Retail",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Warm from hello to checkout",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_found_my_size",
+    "category": "Shopping & Retail",
+    "label": "Found My Size",
+    "type": "specific",
+    "subcategoryScope": "Clothing & Fashion; Shoes & Accessories; Children's Retail",
+    "helperText": "Real sizes actually in stock",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_found_my_shade",
+    "category": "Shopping & Retail",
+    "label": "Found My Shade",
+    "type": "specific",
+    "subcategoryScope": "Clothing & Fashion; Specialty Retail; Gifts",
+    "helperText": "Made for our skin tones",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_owner_remembers_me",
+    "category": "Shopping & Retail",
+    "label": "Owner Remembers Me",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "You're a name, not a transaction",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_shelves_reflect_us",
+    "category": "Shopping & Retail",
+    "label": "Shelves Reflect Us",
+    "type": "specific",
+    "subcategoryScope": "Books & Bookstores; Art & Collectibles; Gifts; Home Décor; Children's Retail",
+    "helperText": "Our stories and faces stocked",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_wrapped_with_care",
+    "category": "Shopping & Retail",
+    "label": "Wrapped With Care",
+    "type": "specific",
+    "subcategoryScope": "Gifts; Jewelry; Online Shops",
+    "helperText": "Packaging showed pride",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_supports_local_makers",
+    "category": "Shopping & Retail",
+    "label": "Supports Local Makers",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Shelf space goes to our people",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_shipped_fast_right",
+    "category": "Shopping & Retail",
+    "label": "Shipped Fast & Right",
+    "type": "specific",
+    "subcategoryScope": "Online Shops",
+    "helperText": "Arrived quick and correct",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_take_my_money",
+    "category": "Shopping & Retail",
+    "label": "Take My Money",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong purchase recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_shopping_retail_don_t_leave_without_it",
+    "category": "Shopping & Retail",
+    "label": "Don't Leave Without It",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "There is something here worth buying",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_exactly_as_pictured",
+    "category": "Travel & Hospitality",
+    "label": "Exactly As Pictured",
+    "type": "universal",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts; Vacation Rentals; Travel Experiences",
+    "helperText": "No bait-and-switch",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_spotless",
+    "category": "Travel & Hospitality",
+    "label": "Spotless",
+    "type": "universal",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts; Vacation Rentals",
+    "helperText": "Clean top to bottom",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_worth_the_stay",
+    "category": "Travel & Hospitality",
+    "label": "Worth The Stay",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You'd book it again",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_treated_me_like_family",
+    "category": "Travel & Hospitality",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Host warmth, not front-desk script",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_they_speak_my_language",
+    "category": "Travel & Hospitality",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Communication was easy",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_for_the_culture",
+    "category": "Travel & Hospitality",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "Tour Operators; Tour Guides; Travel Experiences; Travel Agencies & Advisors",
+    "helperText": "They center our history and people",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_felt_safe_the_whole_time",
+    "category": "Travel & Hospitality",
+    "label": "Felt Safe The Whole Time",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Community-reported comfort and welcome",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_host_checked_on_me",
+    "category": "Travel & Hospitality",
+    "label": "Host Checked On Me",
+    "type": "specific",
+    "subcategoryScope": "Bed & Breakfasts; Vacation Rentals; Hotels & Resorts",
+    "helperText": "Someone actually cared how it was going",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_real_local_recommendations",
+    "category": "Travel & Hospitality",
+    "label": "Real Local Recommendations",
+    "type": "specific",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts; Tour Guides; Travel Agencies & Advisors",
+    "helperText": "Not the tourist-trap list",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_hair_friendly_water_towels",
+    "category": "Travel & Hospitality",
+    "label": "Hair-Friendly Water & Towels",
+    "type": "specific",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts; Vacation Rentals",
+    "helperText": "Soft water, dark towels, satin available",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_breakfast_hit",
+    "category": "Travel & Hospitality",
+    "label": "Breakfast Hit",
+    "type": "specific",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts",
+    "helperText": "Worth waking up for",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_no_side_eye_at_check_in",
+    "category": "Travel & Hospitality",
+    "label": "No Side-Eye At Check-In",
+    "type": "specific",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts; Vacation Rentals",
+    "helperText": "Respect from the first minute",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_took_us_to_the_real_places",
+    "category": "Travel & Hospitality",
+    "label": "Took Us To The Real Places",
+    "type": "specific",
+    "subcategoryScope": "Tour Operators; Tour Guides; Travel Experiences",
+    "helperText": "Beyond the postcard route",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_driver_was_solid",
+    "category": "Travel & Hospitality",
+    "label": "Driver Was Solid",
+    "type": "specific",
+    "subcategoryScope": "Transportation Services",
+    "helperText": "On time, safe, respectful",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_book_this_stay",
+    "category": "Travel & Hospitality",
+    "label": "Book This Stay",
+    "type": "recommendation",
+    "subcategoryScope": "Hotels & Resorts; Bed & Breakfasts; Vacation Rentals",
+    "helperText": "Strong enough to reserve",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_travel_hospitality_add_it_to_the_trip",
+    "category": "Travel & Hospitality",
+    "label": "Add It To The Trip",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Belongs on the itinerary",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_worth_the_ticket",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Worth The Ticket",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The price matched the experience",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_staff_was_welcoming",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Staff Was Welcoming",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Greeted, not surveilled",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_bring_a_friend",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Bring A Friend",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Better with somebody you love",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_for_the_culture",
+    "category": "Arts, Culture & Entertainment",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "This exists for us",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_grandma_approved",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "Museums; Cultural Centers; Performing Arts; Theaters; Festivals",
+    "helperText": "Multi-generation friendly",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_sunday_best_ready",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Sunday Best Ready",
+    "type": "adaptive",
+    "subcategoryScope": "Theaters; Performing Arts; Nightlife; Entertainment Venues",
+    "helperText": "Worth getting dressed for",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_our_story_told_right",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Our Story Told Right",
+    "type": "specific",
+    "subcategoryScope": "Museums; Galleries; Cultural Centers; Performing Arts; Theaters",
+    "helperText": "Accurate, respectful, ours",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_dj_read_the_room",
+    "category": "Arts, Culture & Entertainment",
+    "label": "DJ Read The Room",
+    "type": "specific",
+    "subcategoryScope": "DJs; Nightlife; Entertainment Venues; Music & Live Entertainment",
+    "helperText": "Kept the floor moving",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_artists_paid_fairly",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Artists Paid Fairly",
+    "type": "specific",
+    "subcategoryScope": "Galleries; Entertainment Venues; Festivals; Music & Live Entertainment",
+    "helperText": "Creators got their money",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_kids_left_inspired",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Kids Left Inspired",
+    "type": "specific",
+    "subcategoryScope": "Museums; Cultural Centers; Attractions; Galleries",
+    "helperText": "Your child saw a future",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_free_day_is_real",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Free Day Is Real",
+    "type": "specific",
+    "subcategoryScope": "Museums; Galleries; Cultural Centers; Attractions",
+    "helperText": "Community access isn't a gimmick",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_no_bag_check_attitude",
+    "category": "Arts, Culture & Entertainment",
+    "label": "No Bag Check Attitude",
+    "type": "specific",
+    "subcategoryScope": "Museums; Entertainment Venues; Nightlife; Attractions; Theaters",
+    "helperText": "Security treated you like a guest",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_sound_was_clean",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Sound Was Clean",
+    "type": "specific",
+    "subcategoryScope": "Entertainment Venues; Music & Live Entertainment; Theaters; Performing Arts",
+    "helperText": "You could actually hear it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_got_my_angles",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Got My Angles",
+    "type": "specific",
+    "subcategoryScope": "Photography; Videography",
+    "helperText": "Lit and framed you beautifully",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_arts_culture_entertainment_put_this_on_the_calendar",
+    "category": "Arts, Culture & Entertainment",
+    "label": "Put This On The Calendar",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Worth planning around",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_straight_with_me",
+    "category": "Professional Services",
+    "label": "Straight With Me",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Honest, even when it wasn't easy",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_delivered_on_time",
+    "category": "Professional Services",
+    "label": "Delivered On Time",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Deadlines respected",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_answered_the_phone",
+    "category": "Professional Services",
+    "label": "Answered The Phone",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You could actually reach them",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_treated_me_like_family",
+    "category": "Professional Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Personal, not transactional",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_they_speak_my_language",
+    "category": "Professional Services",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Served in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_for_the_culture",
+    "category": "Professional Services",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "They lift our businesses up",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_explained_it_plain",
+    "category": "Professional Services",
+    "label": "Explained It Plain",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "No jargon, no confusion",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_no_surprise_fees",
+    "category": "Professional Services",
+    "label": "No Surprise Fees",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "The invoice matched the quote",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_fought_for_me",
+    "category": "Professional Services",
+    "label": "Fought For Me",
+    "type": "specific",
+    "subcategoryScope": "Accounting & Tax; Legal Services; Insurance; Staffing & Recruiting",
+    "helperText": "Went to bat on your behalf",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_saved_me_money",
+    "category": "Professional Services",
+    "label": "Saved Me Money",
+    "type": "specific",
+    "subcategoryScope": "Accounting & Tax; Insurance; Financial Services; Business Consulting",
+    "helperText": "Found what you were owed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_took_my_small_business_seriously",
+    "category": "Professional Services",
+    "label": "Took My Small Business Seriously",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "No minimum to be respected",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_taught_me_while_they_worked",
+    "category": "Professional Services",
+    "label": "Taught Me While They Worked",
+    "type": "specific",
+    "subcategoryScope": "Business Consulting; Marketing & Advertising; Graphic Design & Branding; Web & App Development; IT & Technology Services",
+    "helperText": "You learned, not just received",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_kept_me_in_the_loop",
+    "category": "Professional Services",
+    "label": "Kept Me In The Loop",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Updates without you chasing",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_didn_t_talk_down_to_me",
+    "category": "Professional Services",
+    "label": "Didn't Talk Down To Me",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Respect regardless of what you knew",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_professional_services_hire_them",
+    "category": "Professional Services",
+    "label": "Hire Them",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong enough to recommend the service provider",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_showed_up_when_they_said",
+    "category": "Home & Property Services",
+    "label": "Showed Up When They Said",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The window was honored",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_cleaned_up_after",
+    "category": "Home & Property Services",
+    "label": "Cleaned Up After",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Left it better than they found it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_quote_matched_the_bill",
+    "category": "Home & Property Services",
+    "label": "Quote Matched The Bill",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "No creeping charges",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_treated_me_like_family",
+    "category": "Home & Property Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Care like it was their own house",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_grandma_approved",
+    "category": "Home & Property Services",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Trustworthy in your mother's home",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_they_speak_my_language",
+    "category": "Home & Property Services",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Clear communication throughout",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_didn_t_talk_down_to_me",
+    "category": "Home & Property Services",
+    "label": "Didn't Talk Down To Me",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Explained without condescension",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_fixed_it_right_the_first_time",
+    "category": "Home & Property Services",
+    "label": "Fixed It Right The First Time",
+    "type": "specific",
+    "subcategoryScope": "Contractors; Electricians; Plumbing; HVAC; Roofing; Handyman Services; Pest Control",
+    "helperText": "No second call needed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_respected_my_home",
+    "category": "Home & Property Services",
+    "label": "Respected My Home",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Shoes off, drop cloths, care taken",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_honest_about_what_i_didn_t_need",
+    "category": "Home & Property Services",
+    "label": "Honest About What I Didn't Need",
+    "type": "specific",
+    "subcategoryScope": "Contractors; Electricians; Plumbing; HVAC; Roofing; Home Inspection; Pest Control",
+    "helperText": "Talked you out of spending",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_warranty_was_real",
+    "category": "Home & Property Services",
+    "label": "Warranty Was Real",
+    "type": "specific",
+    "subcategoryScope": "Contractors; Construction; Roofing; HVAC; Pest Control",
+    "helperText": "They came back and honored it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_good_with_my_elders",
+    "category": "Home & Property Services",
+    "label": "Good With My Elders",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Patient and safe with seniors",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_emergency_and_they_came",
+    "category": "Home & Property Services",
+    "label": "Emergency And They Came",
+    "type": "specific",
+    "subcategoryScope": "Plumbing; Electricians; HVAC; Roofing; Handyman Services; Property Management",
+    "helperText": "Middle of the night, they showed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_helped_me_buy_my_first_home",
+    "category": "Home & Property Services",
+    "label": "Helped Me Buy My First Home",
+    "type": "specific",
+    "subcategoryScope": "Real Estate Agents & Brokers",
+    "helperText": "Guided you through the whole thing",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_actually_fixes_things",
+    "category": "Home & Property Services",
+    "label": "Actually Fixes Things",
+    "type": "specific",
+    "subcategoryScope": "Property Management",
+    "helperText": "Repairs happen without a fight",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_home_property_services_save_their_number",
+    "category": "Home & Property Services",
+    "label": "Save Their Number",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "The kind of provider you keep in your phone",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_fair_price",
+    "category": "Automotive & Transportation",
+    "label": "Fair Price",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Priced like they wanted you back",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_fast_turnaround",
+    "category": "Automotive & Transportation",
+    "label": "Fast Turnaround",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Got you rolling quickly",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_explained_the_repair",
+    "category": "Automotive & Transportation",
+    "label": "Explained The Repair",
+    "type": "universal",
+    "subcategoryScope": "Auto Repair; Auto Body & Collision; Tire Services; Auto Dealers",
+    "helperText": "You understood the work",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_unc_trusts_this_shop",
+    "category": "Automotive & Transportation",
+    "label": "Unc Trusts This Shop",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "The family mechanic standard",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_treated_me_like_family",
+    "category": "Automotive & Transportation",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Looked out for you",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_they_speak_my_language",
+    "category": "Automotive & Transportation",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Served in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_didn_t_upsell_me",
+    "category": "Automotive & Transportation",
+    "label": "Didn't Upsell Me",
+    "type": "specific",
+    "subcategoryScope": "Auto Repair; Tire Services; Auto Dealers; Auto Body & Collision",
+    "helperText": "Only what the car needed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_showed_me_the_old_part",
+    "category": "Automotive & Transportation",
+    "label": "Showed Me The Old Part",
+    "type": "specific",
+    "subcategoryScope": "Auto Repair; Tire Services; Auto Body & Collision",
+    "helperText": "Proof the work was done",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_safe_for_women_coming_alone",
+    "category": "Automotive & Transportation",
+    "label": "Safe For Women Coming Alone",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Respectful, no pressure, no creeping",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_loaner_or_ride_home_offered",
+    "category": "Automotive & Transportation",
+    "label": "Loaner Or Ride Home Offered",
+    "type": "specific",
+    "subcategoryScope": "Auto Repair; Auto Body & Collision; Auto Dealers",
+    "helperText": "They thought about how you'd get back",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_detail_was_immaculate",
+    "category": "Automotive & Transportation",
+    "label": "Detail Was Immaculate",
+    "type": "specific",
+    "subcategoryScope": "Auto Detailing; Car Wash",
+    "helperText": "Interior and exterior flawless",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_towed_me_with_care",
+    "category": "Automotive & Transportation",
+    "label": "Towed Me With Care",
+    "type": "specific",
+    "subcategoryScope": "Towing & Roadside Assistance",
+    "helperText": "No damage, no attitude",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_financing_was_honest",
+    "category": "Automotive & Transportation",
+    "label": "Financing Was Honest",
+    "type": "specific",
+    "subcategoryScope": "Auto Dealers",
+    "helperText": "No predatory paperwork",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_driver_was_professional",
+    "category": "Automotive & Transportation",
+    "label": "Driver Was Professional",
+    "type": "specific",
+    "subcategoryScope": "Chauffeur & Private Driver; Transportation Companies",
+    "helperText": "On time, clean car, respectful",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_automotive_transportation_save_this_shop",
+    "category": "Automotive & Transportation",
+    "label": "Save This Shop",
+    "type": "recommendation",
+    "subcategoryScope": "Auto Repair; Tire Services; Auto Body & Collision",
+    "helperText": "Keep this one in the phone",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_delivered_exactly_what_i_asked",
+    "category": "Events & Celebrations",
+    "label": "Delivered Exactly What I Asked",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The vision came to life",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_on_time_setup",
+    "category": "Events & Celebrations",
+    "label": "On Time Setup",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Ready before guests arrived",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_worth_every_dollar",
+    "category": "Events & Celebrations",
+    "label": "Worth Every Dollar",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The budget was respected",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_sunday_best_ready",
+    "category": "Events & Celebrations",
+    "label": "Sunday Best Ready",
+    "type": "adaptive",
+    "subcategoryScope": "Event Venues; Event Planning; Wedding Planning; Decorators; Photographers",
+    "helperText": "Built for the big occasion",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_treated_me_like_family",
+    "category": "Events & Celebrations",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Your day mattered to them",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_for_the_culture",
+    "category": "Events & Celebrations",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "They know our celebrations",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_handled_my_whole_day",
+    "category": "Events & Celebrations",
+    "label": "Handled My Whole Day",
+    "type": "specific",
+    "subcategoryScope": "Event Planning; Wedding Planning; Event Venues",
+    "helperText": "You got to be a guest at your own event",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_vendor_team_was_smooth",
+    "category": "Events & Celebrations",
+    "label": "Vendor Team Was Smooth",
+    "type": "specific",
+    "subcategoryScope": "Event Planning; Wedding Planning; Event Venues",
+    "helperText": "Everybody worked together",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_florals_were_fresh",
+    "category": "Events & Celebrations",
+    "label": "Florals Were Fresh",
+    "type": "specific",
+    "subcategoryScope": "Florists; Decorators",
+    "helperText": "Still beautiful at the end of the night",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_cake_tasted_as_good_as_it_looked",
+    "category": "Events & Celebrations",
+    "label": "Cake Tasted As Good As It Looked",
+    "type": "specific",
+    "subcategoryScope": "Cakes & Desserts; Caterers",
+    "helperText": "Beautiful and delicious",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_captured_the_real_moments",
+    "category": "Events & Celebrations",
+    "label": "Captured The Real Moments",
+    "type": "specific",
+    "subcategoryScope": "Photographers; Videographers; Photo Booths",
+    "helperText": "Not just posed shots",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_grandma_had_a_seat_shade",
+    "category": "Events & Celebrations",
+    "label": "Grandma Had A Seat & Shade",
+    "type": "specific",
+    "subcategoryScope": "Event Venues; Event Planning; Party Rentals",
+    "helperText": "Elders were considered",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "ep_honored_traditions",
+    "category": "Events & Celebrations",
+    "label": "Honored Our Traditions",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Cultural traditions were handled respectfully",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_events_celebrations_no_day_of_drama",
+    "category": "Events & Celebrations",
+    "label": "No Day-Of Drama",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Calm, professional, handled",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "ep_book_them",
+    "category": "Events & Celebrations",
+    "label": "Book Them",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong enough to reserve the vendor",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_my_child_improved",
+    "category": "Education & Learning",
+    "label": "My Child Improved",
+    "type": "universal",
+    "subcategoryScope": "Childcare & Daycare; Preschools; Tutoring; Test Preparation; Music Lessons; Dance Schools; Art Classes; Educational Programs",
+    "helperText": "Real, measurable progress",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_teachers_actually_care",
+    "category": "Education & Learning",
+    "label": "Teachers Actually Care",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "They know your student",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_communication_was_clear",
+    "category": "Education & Learning",
+    "label": "Communication Was Clear",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You always knew what was happening",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_grandma_approved",
+    "category": "Education & Learning",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "She'd send her grandbaby here",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_for_the_culture",
+    "category": "Education & Learning",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Our history and future are centered",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_they_speak_my_language",
+    "category": "Education & Learning",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Family communication in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_my_kids_see_themselves",
+    "category": "Education & Learning",
+    "label": "My Kids See Themselves",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Staff, books, and walls reflect them",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_taught_our_history_right",
+    "category": "Education & Learning",
+    "label": "Taught Our History Right",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Full truth, not a footnote",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_didn_t_give_up_on_my_child",
+    "category": "Education & Learning",
+    "label": "Didn't Give Up On My Child",
+    "type": "specific",
+    "subcategoryScope": "Tutoring; Test Preparation; Preschools; Educational Programs; Trade & Vocational Schools",
+    "helperText": "Stayed with them through the hard part",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_discipline_without_disrespect",
+    "category": "Education & Learning",
+    "label": "Discipline Without Disrespect",
+    "type": "specific",
+    "subcategoryScope": "Childcare & Daycare; Preschools; Dance Schools; Educational Programs",
+    "helperText": "Corrected with dignity, never criminalized",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_financial_aid_help_was_real",
+    "category": "Education & Learning",
+    "label": "Financial Aid Help Was Real",
+    "type": "specific",
+    "subcategoryScope": "Colleges & Universities; HBCUs; Trade & Vocational Schools; Professional Training",
+    "helperText": "Someone actually walked you through it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_job_ready_after",
+    "category": "Education & Learning",
+    "label": "Job Ready After",
+    "type": "specific",
+    "subcategoryScope": "Trade & Vocational Schools; Professional Training; Test Preparation",
+    "helperText": "The credential led to work",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_small_enough_to_be_seen",
+    "category": "Education & Learning",
+    "label": "Small Enough To Be Seen",
+    "type": "specific",
+    "subcategoryScope": "Colleges & Universities; HBCUs; Tutoring; Art Classes",
+    "helperText": "Not lost in the crowd",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_culturally_affirming_curriculum",
+    "category": "Education & Learning",
+    "label": "Culturally Affirming Curriculum",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "The material honors who your child is",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_education_learning_send_your_people_here",
+    "category": "Education & Learning",
+    "label": "Send Your People Here",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong education recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_clean_safe",
+    "category": "Children & Family",
+    "label": "Clean & Safe",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You could relax about the space",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_staff_was_patient",
+    "category": "Children & Family",
+    "label": "Staff Was Patient",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Gentle with little ones",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_fair_price_for_families",
+    "category": "Children & Family",
+    "label": "Fair Price For Families",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Affordable for more than one child",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_grandma_approved",
+    "category": "Children & Family",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Good enough for the whole family",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_for_the_culture",
+    "category": "Children & Family",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Built with our children in mind",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_they_get_our_hair",
+    "category": "Children & Family",
+    "label": "They Get Our Hair",
+    "type": "adaptive",
+    "subcategoryScope": "Childcare; Camps; Indoor Play; Children's Retail",
+    "helperText": "Won't ruin or mishandle your child's hair",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_my_kids_see_themselves",
+    "category": "Children & Family",
+    "label": "My Kids See Themselves",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Faces, books, toys, and staff look like them",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_culturally_affirming",
+    "category": "Children & Family",
+    "label": "Culturally Affirming",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Their identity is celebrated here",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_safe_for_my_baby",
+    "category": "Children & Family",
+    "label": "Safe For My Baby",
+    "type": "specific",
+    "subcategoryScope": "Childcare; Maternity & Baby Services; Indoor Play",
+    "helperText": "Infant care done right",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_diverse_staff",
+    "category": "Children & Family",
+    "label": "Diverse Staff",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "The team reflects the community",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_my_child_wants_to_go_back",
+    "category": "Children & Family",
+    "label": "My Child Wants To Go Back",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "The real review is the child's excitement",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_meals_were_real_food",
+    "category": "Children & Family",
+    "label": "Meals Were Real Food",
+    "type": "specific",
+    "subcategoryScope": "Childcare; Camps; Youth Programs",
+    "helperText": "Nutritious, not just cheap",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_they_told_me_the_truth_about_my_kid",
+    "category": "Children & Family",
+    "label": "They Told Me The Truth About My Kid",
+    "type": "specific",
+    "subcategoryScope": "Childcare; Youth Programs; Parenting Services",
+    "helperText": "Honest partnership with parents",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_never_pushed_my_child_out",
+    "category": "Children & Family",
+    "label": "Never Pushed My Child Out",
+    "type": "specific",
+    "subcategoryScope": "Childcare; Youth Programs; Camps",
+    "helperText": "No suspensions over being a kid",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_children_family_parents_put_this_on_the_list",
+    "category": "Children & Family",
+    "label": "Parents Put This On The List",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong family recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_help_was_real",
+    "category": "Community & Nonprofit",
+    "label": "Help Was Real",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You actually received something",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_no_judgment",
+    "category": "Community & Nonprofit",
+    "label": "No Judgment",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Dignity intact from start to finish",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_answered_when_i_called",
+    "category": "Community & Nonprofit",
+    "label": "Answered When I Called",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "A human picked up",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_treated_me_like_family",
+    "category": "Community & Nonprofit",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Welcomed, not processed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_for_the_culture",
+    "category": "Community & Nonprofit",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Rooted in our community",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_elders_are_honored",
+    "category": "Community & Nonprofit",
+    "label": "Elders Are Honored",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Seniors are respected here",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_showed_up_for_the_block",
+    "category": "Community & Nonprofit",
+    "label": "Showed Up For The Block",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Present before the cameras came",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_hires_from_the_neighborhood",
+    "category": "Community & Nonprofit",
+    "label": "Hires From The Neighborhood",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Jobs go to the people served",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_no_hoops_to_jump_through",
+    "category": "Community & Nonprofit",
+    "label": "No Hoops To Jump Through",
+    "type": "specific",
+    "subcategoryScope": "Mutual Aid; Nonprofits; Senior Services; Community Centers",
+    "helperText": "Help without humiliation",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_youth_are_valued",
+    "category": "Community & Nonprofit",
+    "label": "Youth Are Valued",
+    "type": "specific",
+    "subcategoryScope": "Youth Organizations; Community Centers; Cultural Organizations; Nonprofits",
+    "helperText": "Young people lead, not just attend",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_money_reached_the_people",
+    "category": "Community & Nonprofit",
+    "label": "Money Reached The People",
+    "type": "specific",
+    "subcategoryScope": "Nonprofits; Foundations; Mutual Aid; Advocacy Organizations",
+    "helperText": "Funds landed where promised",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_volunteers_treated_well",
+    "category": "Community & Nonprofit",
+    "label": "Volunteers Treated Well",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Time was respected",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_doors_actually_open",
+    "category": "Community & Nonprofit",
+    "label": "Doors Actually Open",
+    "type": "specific",
+    "subcategoryScope": "Community Centers; Senior Services; Cultural Organizations",
+    "helperText": "The posted hours are real",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_advocated_at_city_hall",
+    "category": "Community & Nonprofit",
+    "label": "Advocated At City Hall",
+    "type": "specific",
+    "subcategoryScope": "Advocacy Organizations; Chambers & Business Organizations; Professional Associations",
+    "helperText": "Fought where decisions get made",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_community_nonprofit_share_this_resource",
+    "category": "Community & Nonprofit",
+    "label": "Share This Resource",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Worth passing to somebody who needs it",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_all_are_welcome_and_mean_it",
+    "category": "Faith & Spirituality",
+    "label": "All Are Welcome (And Mean It)",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Welcome that holds up in practice",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_visitors_feel_at_home",
+    "category": "Faith & Spirituality",
+    "label": "Visitors Feel At Home",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "First time and you weren't a stranger",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_no_pressure_just_peace",
+    "category": "Faith & Spirituality",
+    "label": "No Pressure, Just Peace",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "No guilt, no hustle for your wallet",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_mothers_of_the_church_approve",
+    "category": "Faith & Spirituality",
+    "label": "Mothers Of The Church Approve",
+    "type": "adaptive",
+    "subcategoryScope": "Churches; Spiritual Centers",
+    "helperText": "The elders vouch for this house",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_they_speak_my_language",
+    "category": "Faith & Spirituality",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Worship or study in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_for_the_culture",
+    "category": "Faith & Spirituality",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Faith that honors who we are",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_the_spirit_lives_here",
+    "category": "Faith & Spirituality",
+    "label": "The Spirit Lives Here",
+    "type": "specific",
+    "subcategoryScope": "Churches; Spiritual Centers; Temples; Faith-Based Organizations",
+    "helperText": "You felt it in the room",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_felt_the_ancestors",
+    "category": "Faith & Spirituality",
+    "label": "Felt The Ancestors",
+    "type": "specific",
+    "subcategoryScope": "Churches; Spiritual Centers; Temples",
+    "helperText": "Lineage present in the worship",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_community_not_just_congregation",
+    "category": "Faith & Spirituality",
+    "label": "Community Not Just Congregation",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "They know each other beyond service",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_leadership_knows_your_name",
+    "category": "Faith & Spirituality",
+    "label": "Leadership Knows Your Name",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Leadership sees you as a person",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_youth_are_valued",
+    "category": "Faith & Spirituality",
+    "label": "Youth Are Valued",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Young people have a real place",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_fed_the_neighborhood",
+    "category": "Faith & Spirituality",
+    "label": "Fed The Neighborhood",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Service beyond the sanctuary",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_sermon_met_me_where_i_was",
+    "category": "Faith & Spirituality",
+    "label": "Sermon Met Me Where I Was",
+    "type": "specific",
+    "subcategoryScope": "Churches; Spiritual Centers",
+    "helperText": "The word landed on your life",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_choir_sent_me",
+    "category": "Faith & Spirituality",
+    "label": "Choir Sent Me",
+    "type": "specific",
+    "subcategoryScope": "Churches",
+    "helperText": "The music carried you",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_leader_made_time_for_me",
+    "category": "Faith & Spirituality",
+    "label": "Leader Made Time For Me",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Counsel was available when needed",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_faith_spirituality_bring_somebody_with_you",
+    "category": "Faith & Spirituality",
+    "label": "Bring Somebody With You",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "A place you'd invite someone to experience",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_delivered_on_deadline",
+    "category": "Media & Creative Services",
+    "label": "Delivered On Deadline",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Files arrived when promised",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_easy_to_work_with",
+    "category": "Media & Creative Services",
+    "label": "Easy To Work With",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Smooth from booking to delivery",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_worth_the_investment",
+    "category": "Media & Creative Services",
+    "label": "Worth The Investment",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The work paid for itself",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_for_the_culture",
+    "category": "Media & Creative Services",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Storytelling that serves us",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_blessed_hands",
+    "category": "Media & Creative Services",
+    "label": "Blessed Hands",
+    "type": "adaptive",
+    "subcategoryScope": "Photography; Videography; Music Production; Recording Studios; Creative Studios",
+    "helperText": "Real talent, God-given",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_treated_me_like_family",
+    "category": "Media & Creative Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Comfortable and cared for",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_told_my_story_right",
+    "category": "Media & Creative Services",
+    "label": "Told My Story Right",
+    "type": "specific",
+    "subcategoryScope": "Content Creators; Podcasts; Radio; Publications & Magazines; Writers & Authors; Production Companies",
+    "helperText": "Accurate and dignified",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "photo_lit_skin_correctly",
+    "category": "Media & Creative Services",
+    "label": "Lit My Skin Correctly",
+    "type": "specific",
+    "subcategoryScope": "Photography; Videography; Production Companies; Creative Studios",
+    "helperText": "Melanated skin lit properly",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_sound_was_crisp",
+    "category": "Media & Creative Services",
+    "label": "Sound Was Crisp",
+    "type": "specific",
+    "subcategoryScope": "Podcasts; Radio; Recording Studios; Music Production; Videography",
+    "helperText": "Clean audio, no muddiness",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_didn_t_steal_my_vision",
+    "category": "Media & Creative Services",
+    "label": "Didn't Steal My Vision",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Your ideas stayed yours",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_paid_their_team",
+    "category": "Media & Creative Services",
+    "label": "Paid Their Team",
+    "type": "specific",
+    "subcategoryScope": "Production Companies; Creative Studios; Music Production",
+    "helperText": "Crew and collaborators compensated",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_gave_me_the_raw_files",
+    "category": "Media & Creative Services",
+    "label": "Gave Me The Raw Files",
+    "type": "specific",
+    "subcategoryScope": "Photography; Videography; Recording Studios; Music Production",
+    "helperText": "Ownership handed over",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_media_creative_services_booth_time_was_respected",
+    "category": "Media & Creative Services",
+    "label": "Booth Time Was Respected",
+    "type": "specific",
+    "subcategoryScope": "Recording Studios; Music Production; Podcasts",
+    "helperText": "You got the hours you paid for",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "photo_made_look_like_me",
+    "category": "Media & Creative Services",
+    "label": "Made Me Look Like Me",
+    "type": "specific",
+    "subcategoryScope": "Photography; Videography; Content Creators; Creative Studios",
+    "helperText": "No filtering away your features",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "media_book_them",
+    "category": "Media & Creative Services",
+    "label": "Book Them",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong creative-service recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_well_kept_facility",
+    "category": "Sports & Recreation",
+    "label": "Well Kept Facility",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Clean, maintained, functional",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_coaches_show_up",
+    "category": "Sports & Recreation",
+    "label": "Coaches Show Up",
+    "type": "universal",
+    "subcategoryScope": "Coaches & Training; Youth Sports; Sports Clubs; Martial Arts; Dance & Movement",
+    "helperText": "Consistent and present",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_fair_fees",
+    "category": "Sports & Recreation",
+    "label": "Fair Fees",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Families can actually afford it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_for_the_culture",
+    "category": "Sports & Recreation",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Built for our young people",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_grandma_approved",
+    "category": "Sports & Recreation",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Trusted with your child",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_treated_me_like_family",
+    "category": "Sports & Recreation",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "A team, not a customer list",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_coach_builds_character",
+    "category": "Sports & Recreation",
+    "label": "Coach Builds Character",
+    "type": "specific",
+    "subcategoryScope": "Coaches & Training; Youth Sports; Martial Arts; Sports Clubs",
+    "helperText": "More than wins",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_every_kid_plays",
+    "category": "Sports & Recreation",
+    "label": "Every Kid Plays",
+    "type": "specific",
+    "subcategoryScope": "Youth Sports; Sports Clubs; Recreational Centers",
+    "helperText": "No child benched all season",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_safe_space_for_girls",
+    "category": "Sports & Recreation",
+    "label": "Safe Space For Girls",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Community-reported comfort and respect for girls and women",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_beginners_welcome",
+    "category": "Sports & Recreation",
+    "label": "Beginners Welcome",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "No shame in starting late",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_no_ego_in_here",
+    "category": "Sports & Recreation",
+    "label": "No Ego In Here",
+    "type": "specific",
+    "subcategoryScope": "Martial Arts; Dance & Movement; Recreational Centers; Golf; Swimming",
+    "helperText": "Humble room, real instruction",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_scholarships_are_real",
+    "category": "Sports & Recreation",
+    "label": "Scholarships Are Real",
+    "type": "specific",
+    "subcategoryScope": "Youth Sports; Sports Clubs; Coaches & Training; Swimming",
+    "helperText": "Money is available if you ask",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_water_shade_provided",
+    "category": "Sports & Recreation",
+    "label": "Water & Shade Provided",
+    "type": "specific",
+    "subcategoryScope": "Youth Sports; Outdoor Recreation; Adventure Experiences; Golf",
+    "helperText": "Basic care for bodies in the heat",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_discipline_with_love",
+    "category": "Sports & Recreation",
+    "label": "Discipline With Love",
+    "type": "specific",
+    "subcategoryScope": "Youth Sports; Martial Arts; Coaches & Training; Dance & Movement",
+    "helperText": "Firm but never degrading",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_taught_me_to_swim_at_any_age",
+    "category": "Sports & Recreation",
+    "label": "Taught Me To Swim At Any Age",
+    "type": "specific",
+    "subcategoryScope": "Swimming",
+    "helperText": "Adults welcome, no judgment",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_sports_recreation_sign_up",
+    "category": "Sports & Recreation",
+    "label": "Sign Up",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong enough to join or register",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_gentle_hands",
+    "category": "Pets & Animal Services",
+    "label": "Gentle Hands",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Kind with animals",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_fair_price",
+    "category": "Pets & Animal Services",
+    "label": "Fair Price",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Honest cost of care",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_clean_facility",
+    "category": "Pets & Animal Services",
+    "label": "Clean Facility",
+    "type": "universal",
+    "subcategoryScope": "Veterinarians; Pet Grooming; Pet Boarding; Pet Daycare; Pet Stores & Supplies",
+    "helperText": "Well kept and safe",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_treated_me_like_family",
+    "category": "Pets & Animal Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "You and your pet both cared for",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_blessed_hands",
+    "category": "Pets & Animal Services",
+    "label": "Blessed Hands",
+    "type": "adaptive",
+    "subcategoryScope": "Veterinarians; Pet Grooming; Pet Training",
+    "helperText": "A gift with animals",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_they_speak_my_language",
+    "category": "Pets & Animal Services",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Clear communication about care",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_my_dog_wasn_t_scared",
+    "category": "Pets & Animal Services",
+    "label": "My Dog Wasn't Scared",
+    "type": "specific",
+    "subcategoryScope": "Veterinarians; Pet Grooming; Pet Boarding; Pet Daycare; Pet Training",
+    "helperText": "Calm, not traumatized",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_honest_about_treatment_cost",
+    "category": "Pets & Animal Services",
+    "label": "Honest About Treatment Cost",
+    "type": "specific",
+    "subcategoryScope": "Veterinarians; Pet Training",
+    "helperText": "No fear-based upselling",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_payment_plan_offered",
+    "category": "Pets & Animal Services",
+    "label": "Payment Plan Offered",
+    "type": "specific",
+    "subcategoryScope": "Veterinarians",
+    "helperText": "Care wasn't held hostage by cash",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_groom_was_exactly_right",
+    "category": "Pets & Animal Services",
+    "label": "Groom Was Exactly Right",
+    "type": "specific",
+    "subcategoryScope": "Pet Grooming",
+    "helperText": "The cut matched the request",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_sent_photos_while_i_was_gone",
+    "category": "Pets & Animal Services",
+    "label": "Sent Photos While I Was Gone",
+    "type": "specific",
+    "subcategoryScope": "Pet Boarding; Dog Walking & Pet Sitting; Pet Daycare",
+    "helperText": "Peace of mind, unprompted",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_emergency_and_they_stayed",
+    "category": "Pets & Animal Services",
+    "label": "Emergency And They Stayed",
+    "type": "specific",
+    "subcategoryScope": "Veterinarians",
+    "helperText": "They didn't close the door on you",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_no_breed_judgment",
+    "category": "Pets & Animal Services",
+    "label": "No Breed Judgment",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Pit bulls and big dogs treated fairly",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_pets_animal_services_save_this_vet_groomer",
+    "category": "Pets & Animal Services",
+    "label": "Save This Vet / Groomer",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong enough to keep and recommend",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_delivered_what_was_promised",
+    "category": "Technology & Digital Services",
+    "label": "Delivered What Was Promised",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "The build matched the scope",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_responsive",
+    "category": "Technology & Digital Services",
+    "label": "Responsive",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Replies came fast",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_fair_scope_price",
+    "category": "Technology & Digital Services",
+    "label": "Fair Scope & Price",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "No scope games, no padding",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_for_the_culture",
+    "category": "Technology & Digital Services",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "They build for our community",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_treated_me_like_family",
+    "category": "Technology & Digital Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Patient partnership",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_they_speak_my_language",
+    "category": "Technology & Digital Services",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Support in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_explained_it_without_the_jargon",
+    "category": "Technology & Digital Services",
+    "label": "Explained It Without The Jargon",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Plain English throughout",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_didn_t_talk_down_to_me",
+    "category": "Technology & Digital Services",
+    "label": "Didn't Talk Down To Me",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Respect regardless of tech level",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_handed_over_the_passwords",
+    "category": "Technology & Digital Services",
+    "label": "Handed Over The Passwords",
+    "type": "specific",
+    "subcategoryScope": "Web Developers; App Developers; IT Support; SaaS",
+    "helperText": "You own your accounts and domains",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_site_actually_loads_fast",
+    "category": "Technology & Digital Services",
+    "label": "Site Actually Loads Fast",
+    "type": "specific",
+    "subcategoryScope": "Web Developers; App Developers; Digital Products",
+    "helperText": "Performance done right",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_fixed_it_same_day",
+    "category": "Technology & Digital Services",
+    "label": "Fixed It Same Day",
+    "type": "specific",
+    "subcategoryScope": "IT Support; Cybersecurity; Web Developers; SaaS",
+    "helperText": "Urgent meant urgent",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_taught_my_team",
+    "category": "Technology & Digital Services",
+    "label": "Taught My Team",
+    "type": "specific",
+    "subcategoryScope": "Technology Consulting; IT Support; SaaS; AI & Automation",
+    "helperText": "You weren't left dependent",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_built_for_our_community",
+    "category": "Technology & Digital Services",
+    "label": "Built For Our Community",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Designed with us in mind, not retrofitted",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_technology_digital_services_hire_them",
+    "category": "Technology & Digital Services",
+    "label": "Hire Them",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong technical-service recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_straight_with_me",
+    "category": "Financial & Business Services",
+    "label": "Straight With Me",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Honest numbers, honest odds",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_no_hidden_fees",
+    "category": "Financial & Business Services",
+    "label": "No Hidden Fees",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Everything disclosed up front",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_answered_the_phone",
+    "category": "Financial & Business Services",
+    "label": "Answered The Phone",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "A real person, not a portal",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_grandma_trusts_them",
+    "category": "Financial & Business Services",
+    "label": "Grandma Trusts Them",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Safe with your family's money",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_treated_me_like_family",
+    "category": "Financial & Business Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Personal, patient service",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_they_speak_my_language",
+    "category": "Financial & Business Services",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Financial guidance in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_said_yes_when_others_said_no",
+    "category": "Financial & Business Services",
+    "label": "Said Yes When Others Said No",
+    "type": "specific",
+    "subcategoryScope": "Lending & Financing; Mortgage Services; Credit Services; Business Funding",
+    "helperText": "Looked past the algorithm",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_explained_my_credit_plain",
+    "category": "Financial & Business Services",
+    "label": "Explained My Credit Plain",
+    "type": "specific",
+    "subcategoryScope": "Credit Services; Lending & Financing; Mortgage Services; Financial Advisors; Banks & Credit Unions",
+    "helperText": "You finally understood your report",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_no_predatory_terms",
+    "category": "Financial & Business Services",
+    "label": "No Predatory Terms",
+    "type": "specific",
+    "subcategoryScope": "Lending & Financing; Credit Services; Business Funding; Mortgage Services",
+    "helperText": "Fair rates, no traps",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_got_me_funded",
+    "category": "Financial & Business Services",
+    "label": "Got Me Funded",
+    "type": "specific",
+    "subcategoryScope": "Business Funding; Lending & Financing; Mortgage Services",
+    "helperText": "The capital actually came through",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_taught_me_to_build_wealth",
+    "category": "Financial & Business Services",
+    "label": "Taught Me To Build Wealth",
+    "type": "specific",
+    "subcategoryScope": "Financial Advisors; Investment Services; Banks & Credit Unions",
+    "helperText": "Education, not just transactions",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_respected_my_small_numbers",
+    "category": "Financial & Business Services",
+    "label": "Respected My Small Numbers",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "No minimum balance to be treated well",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_walked_me_through_the_paperwork",
+    "category": "Financial & Business Services",
+    "label": "Walked Me Through The Paperwork",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Nobody left you guessing",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_free_consult_was_actually_free",
+    "category": "Financial & Business Services",
+    "label": "Free Consult Was Actually Free",
+    "type": "specific",
+    "subcategoryScope": "Financial Advisors; Tax Preparation; Bookkeeping; Business Funding",
+    "helperText": "No bait, no surprise invoice",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_financial_business_services_send_your_people_here",
+    "category": "Financial & Business Services",
+    "label": "Send Your People Here",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "Strong trust-based financial recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_answered_the_phone",
+    "category": "Legal & Government Services",
+    "label": "Answered The Phone",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "You could reach a human",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_clear_about_cost",
+    "category": "Legal & Government Services",
+    "label": "Clear About Cost",
+    "type": "universal",
+    "subcategoryScope": "Attorneys & Law Firms; Mediation; Notary Services; Immigration Services; Legal Document Services",
+    "helperText": "You knew the price before starting",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_on_time_prepared",
+    "category": "Legal & Government Services",
+    "label": "On Time & Prepared",
+    "type": "universal",
+    "subcategoryScope": "Attorneys & Law Firms; Mediation; Immigration Services",
+    "helperText": "Ready when it counted",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_they_speak_my_language",
+    "category": "Legal & Government Services",
+    "label": "They Speak My Language",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Representation in your language",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_treated_me_like_family",
+    "category": "Legal & Government Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "You weren't just a case number",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_for_the_culture",
+    "category": "Legal & Government Services",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "They serve our community on purpose",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_fought_for_me",
+    "category": "Legal & Government Services",
+    "label": "Fought For Me",
+    "type": "specific",
+    "subcategoryScope": "Attorneys & Law Firms; Mediation; Immigration Services; Public Services",
+    "helperText": "Genuine advocacy",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_explained_my_rights",
+    "category": "Legal & Government Services",
+    "label": "Explained My Rights",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "You learned what you were entitled to",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_didn_t_take_my_money_and_ghost",
+    "category": "Legal & Government Services",
+    "label": "Didn't Take My Money And Ghost",
+    "type": "specific",
+    "subcategoryScope": "Attorneys & Law Firms; Immigration Services; Legal Document Services",
+    "helperText": "Communication stayed consistent",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_payment_plan_offered",
+    "category": "Legal & Government Services",
+    "label": "Payment Plan Offered",
+    "type": "specific",
+    "subcategoryScope": "Attorneys & Law Firms; Immigration Services; Mediation; Legal Document Services",
+    "helperText": "Access without a lump sum",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_handled_my_immigration_case_with_care",
+    "category": "Legal & Government Services",
+    "label": "Handled My Immigration Case With Care",
+    "type": "specific",
+    "subcategoryScope": "Immigration Services; Attorneys & Law Firms",
+    "helperText": "Trust with the highest stakes",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_treated_me_with_dignity",
+    "category": "Legal & Government Services",
+    "label": "Treated Me With Dignity",
+    "type": "specific",
+    "subcategoryScope": "Government Offices; Public Services",
+    "helperText": "No dismissiveness at the counter",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_same_day_notary",
+    "category": "Legal & Government Services",
+    "label": "Same-Day Notary",
+    "type": "specific",
+    "subcategoryScope": "Notary Services; Legal Document Services",
+    "helperText": "Fast when you needed it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_kept_my_family_together",
+    "category": "Legal & Government Services",
+    "label": "Kept My Family Together",
+    "type": "specific",
+    "subcategoryScope": "Attorneys & Law Firms; Immigration Services; Mediation",
+    "helperText": "The outcome that mattered most",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_legal_government_services_call_them",
+    "category": "Legal & Government Services",
+    "label": "Call Them",
+    "type": "recommendation",
+    "subcategoryScope": "Attorneys & Law Firms; Mediation; Immigration Services; Legal Document Services",
+    "helperText": "Strong enough to contact for help",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_fresh_honest",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Fresh & Honest",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "What they say is what it is",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_fair_prices",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Fair Prices",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Priced for the neighborhood",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_friendly_growers",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Friendly Growers",
+    "type": "universal",
+    "subcategoryScope": "Farms; Farmers Markets; Urban Farms; Specialty Growers",
+    "helperText": "They love to talk about the work",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_grandma_approved",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Quality she'd recognize",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_grows_what_we_cook",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Grows What We Cook",
+    "type": "adaptive",
+    "subcategoryScope": "Farms; Farmers Markets; Urban Farms; Specialty Growers; Food Producers",
+    "helperText": "Home ingredients are actually available",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_for_the_culture",
+    "category": "Agriculture & Specialty Producers",
+    "label": "For The Culture",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Farming as community work",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_picked_this_morning",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Picked This Morning",
+    "type": "specific",
+    "subcategoryScope": "Farms; Farmers Markets; Urban Farms; Specialty Growers",
+    "helperText": "Same-day fresh",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_seeds_from_home",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Seeds From Home",
+    "type": "specific",
+    "subcategoryScope": "Farms; Urban Farms; Specialty Growers; Floriculture",
+    "helperText": "Heritage varieties grown here",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_takes_ebt_snap",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Takes EBT / SNAP",
+    "type": "specific",
+    "subcategoryScope": "Farmers Markets; Farms; Urban Farms; Food Producers",
+    "helperText": "Accessible to everybody",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_land_back_in_our_hands",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Land Back In Our Hands",
+    "type": "specific",
+    "subcategoryScope": "Farms; Urban Farms; Agricultural Products",
+    "helperText": "Ownership that means something",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_teaches_while_selling",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Teaches While Selling",
+    "type": "specific",
+    "subcategoryScope": "Farmers Markets; Urban Farms; Specialty Growers",
+    "helperText": "You leave knowing how to grow it",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_chemical_free_says_so",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Chemical-Free & Says So",
+    "type": "specific",
+    "subcategoryScope": "all",
+    "helperText": "Transparent growing practices",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_feeds_the_block",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Feeds The Block",
+    "type": "specific",
+    "subcategoryScope": "Urban Farms; Farms; Farmers Markets; Food Producers",
+    "helperText": "Donations and free boxes are real",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_agriculture_specialty_producers_shop_here_before_the_cookout",
+    "category": "Agriculture & Specialty Producers",
+    "label": "Shop Here Before The Cookout",
+    "type": "recommendation",
+    "subcategoryScope": "Farmers Markets; Farms; Food Producers",
+    "helperText": "Strong community shopping recommendation",
+    "source": "Added",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_fast_reliable",
+    "category": "Other Services",
+    "label": "Fast & Reliable",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Done when they said",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_fair_price",
+    "category": "Other Services",
+    "label": "Fair Price",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Honest rates",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_careful_with_my_things",
+    "category": "Other Services",
+    "label": "Careful With My Things",
+    "type": "universal",
+    "subcategoryScope": "all",
+    "helperText": "Your belongings respected",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_treated_me_like_family",
+    "category": "Other Services",
+    "label": "Treated Me Like Family",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Kindness with the transaction",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_grandma_approved",
+    "category": "Other Services",
+    "label": "Grandma Approved",
+    "type": "adaptive",
+    "subcategoryScope": "all",
+    "helperText": "Old-school standards",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_blessed_hands",
+    "category": "Other Services",
+    "label": "Blessed Hands",
+    "type": "adaptive",
+    "subcategoryScope": "Tailoring & Alterations; Shoe Repair",
+    "helperText": "Craftsmanship you can see",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_nothing_lost_nothing_damaged",
+    "category": "Other Services",
+    "label": "Nothing Lost, Nothing Damaged",
+    "type": "specific",
+    "subcategoryScope": "Laundry & Dry Cleaning; Shipping & Mailing; Storage",
+    "helperText": "Everything came back right",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_alterations_were_perfect",
+    "category": "Other Services",
+    "label": "Alterations Were Perfect",
+    "type": "specific",
+    "subcategoryScope": "Tailoring & Alterations",
+    "helperText": "Fit like it was made for you",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_brought_my_shoes_back_to_life",
+    "category": "Other Services",
+    "label": "Brought My Shoes Back To Life",
+    "type": "specific",
+    "subcategoryScope": "Shoe Repair",
+    "helperText": "Saved a pair you loved",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_came_out_at_2am",
+    "category": "Other Services",
+    "label": "Came Out At 2AM",
+    "type": "specific",
+    "subcategoryScope": "Locksmiths; Personal Concierge",
+    "helperText": "Emergency service that showed up",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_handled_our_loss_with_grace",
+    "category": "Other Services",
+    "label": "Handled Our Loss With Grace",
+    "type": "specific",
+    "subcategoryScope": "Funeral & Memorial Services",
+    "helperText": "Dignity for your family in grief",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_honored_our_traditions",
+    "category": "Other Services",
+    "label": "Honored Our Traditions",
+    "type": "specific",
+    "subcategoryScope": "Funeral & Memorial Services",
+    "helperText": "Homegoing done our way",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_same_day_when_i_needed_it",
+    "category": "Other Services",
+    "label": "Same-Day When I Needed It",
+    "type": "specific",
+    "subcategoryScope": "Laundry & Dry Cleaning; Tailoring & Alterations; Shipping & Mailing; Personal Concierge",
+    "helperText": "Rush work handled",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_dry_secure",
+    "category": "Other Services",
+    "label": "Dry & Secure",
+    "type": "specific",
+    "subcategoryScope": "Storage",
+    "helperText": "Nothing ruined, nothing stolen",
+    "source": "Existing specification",
+    "existingTagFamily": null
+  },
+  {
+    "key": "official_other_services_save_their_number",
+    "category": "Other Services",
+    "label": "Save Their Number",
+    "type": "recommendation",
+    "subcategoryScope": "all",
+    "helperText": "A provider worth keeping",
+    "source": "Added",
+    "existingTagFamily": null
+  }
+]
