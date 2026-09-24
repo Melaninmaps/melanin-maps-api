@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -637,9 +638,8 @@ function AdminBootstrap({
   const claim = async () => {
     setStatus("loading");
     try {
-      const r = await fetch(`${BASE}api/admin/bootstrap`, {
+      const r = await authenticatedFetch(`${BASE}api/admin/bootstrap`, {
         method: "POST",
-        credentials: "include",
       });
       const body = (await r.json()) as { success?: boolean; error?: string };
       if (r.ok && body.success) {
@@ -723,6 +723,12 @@ function AdminBootstrap({
 
 export default function Admin() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
+  // Every Admin request must send the durable bearer session as well as the
+  // same-origin cookie. A browser can retain the bearer session while an API
+  // subdomain does not receive the cookie; using the shared helper avoids an
+  // Admin capability check succeeding while a later archive/approval request
+  // is incorrectly denied.
+  const fetch = authenticatedFetch;
   const [tab, setTab] = useState<Tab>("waitlist");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [requireApproval, setRequireApproval] = useState(false);
@@ -773,6 +779,8 @@ export default function Admin() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [selectAllFiltered, setSelectAllFiltered] = useState(false);
+  const [accessReconciling, setAccessReconciling] = useState(false);
+  const [accessReconciliationResult, setAccessReconciliationResult] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0);
   const [nudgeSending, setNudgeSending] = useState(false);
@@ -955,19 +963,39 @@ export default function Admin() {
   }, [selectedCity?.slug]);
 
   useEffect(() => {
+    // Wait for the authenticated-user hook before probing Admin capability. A
+    // probe made during sign-in hydration used to store a transient false and
+    // replace the active dashboard with "Admin Access Required".
+    if (authLoading) return;
+    if (!auth?.user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    let cancelled = false;
     syncTokenToCookie();
-    const token = getWebToken();
     fetch(`${BASE}api/admin/check`, {
-      credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-      .then((r) => r.json())
-      .then((data) => {
-        setIsAdmin(data.isAdmin ?? false);
-        setRequireApproval(data.requireApproval ?? false);
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`Admin check failed: ${r.status}`);
+        return r.json();
       })
-      .catch(() => setIsAdmin(false));
-  }, []);
+      .then((data) => {
+        if (!cancelled) {
+          setIsAdmin(data.isAdmin === true);
+          setRequireApproval(data.requireApproval ?? false);
+        }
+      })
+      .catch(() => {
+        // Do not evict an already-authorized administrator during a temporary
+        // network/API failure. A fresh visit without a session still receives
+        // the ordinary access screen rather than an infinite spinner.
+        if (!cancelled) setIsAdmin((previous) => previous ?? false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [auth?.user, authLoading]);
 
   useEffect(() => {
     businessInventoryQueryRef.current = {
@@ -1345,10 +1373,14 @@ export default function Admin() {
     setLoading(true);
     refreshAll().finally(() => setLoading(false));
 
+    // Keep the live metric timestamp current without replacing the active
+    // waitlist/business table underneath an administrator who is reviewing,
+    // selecting, or typing. Full list refresh is explicit (section change,
+    // filter change, or a completed Admin action), never an invisible timer.
     const startTimer = () => {
       if (refreshTimer.current) clearInterval(refreshTimer.current);
       refreshTimer.current = setInterval(() => {
-        if (!document.hidden) refreshAll();
+        if (!document.hidden) void loadMetrics();
       }, 60 * 1000);
     };
 
@@ -1356,7 +1388,7 @@ export default function Admin() {
 
     const handleVisibility = () => {
       if (!document.hidden) {
-        refreshAll();
+        void loadMetrics();
         startTimer();
       } else {
         if (refreshTimer.current) clearInterval(refreshTimer.current);
@@ -1368,7 +1400,7 @@ export default function Admin() {
       if (refreshTimer.current) clearInterval(refreshTimer.current);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [isAdmin, refreshAll]);
+  }, [isAdmin, loadMetrics, refreshAll]);
 
   const handleStatusFilter = (newStatus: string) => {
     openWaitlistSection(newStatus, showSyntheticWaitlist);
@@ -1427,6 +1459,56 @@ export default function Admin() {
       waitlistCityFilter,
     );
     setUpdating(null);
+  };
+
+  const reconcileRetainedAccess = async () => {
+    if (accessReconciling) return;
+    setAccessReconciling(true);
+    setAccessReconciliationResult(null);
+    try {
+      const previewResponse = await fetch(`${BASE}api/admin/access/reconcile-retained`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apply: false }),
+      });
+      const preview = (await previewResponse.json().catch(() => ({}))) as {
+        candidateCount?: number;
+        error?: string;
+      };
+      if (!previewResponse.ok) throw new Error(preview.error ?? "Unable to inspect retained access records.");
+      const count = preview.candidateCount ?? 0;
+      if (count === 0) {
+        setAccessReconciliationResult("No retained approved access records need reconciliation.");
+        return;
+      }
+      if (!window.confirm(
+        `Restore access for ${count} account${count === 1 ? "" : "s"} only where an approved waitlist record, active tester entitlement, or administrator role already exists? This does not approve pending-only accounts and does not change passwords, profiles, content, or tester access.`,
+      )) return;
+
+      const applyResponse = await fetch(`${BASE}api/admin/access/reconcile-retained`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apply: true }),
+      });
+      const applied = (await applyResponse.json().catch(() => ({}))) as {
+        restoredCount?: number;
+        error?: string;
+      };
+      if (!applyResponse.ok) throw new Error(applied.error ?? "Unable to restore retained access records.");
+      const restored = applied.restoredCount ?? 0;
+      setAccessReconciliationResult(
+        restored > 0
+          ? `Restored ${restored} retained access record${restored === 1 ? "" : "s"}. Existing pending-only accounts were not approved.`
+          : "No retained approved access records needed restoration.",
+      );
+      await refreshAll();
+    } catch (error) {
+      setAccessReconciliationResult(
+        error instanceof Error ? error.message : "Unable to reconcile retained access records.",
+      );
+    } finally {
+      setAccessReconciling(false);
+    }
   };
 
   const removeStandaloneWaitlistEntry = async (entry: WaitlistEntry) => {
@@ -3188,6 +3270,15 @@ export default function Admin() {
                       {updating === "ios-waitlist-reconciliation" ? "Reconciling iOS…" : "Add App Store signups"}
                     </button>
                   )}
+                  {!showSyntheticWaitlist && (
+                    <button
+                      onClick={reconcileRetainedAccess}
+                      disabled={accessReconciling}
+                      className="rounded-lg border border-[#7A2637]/35 bg-white px-3 py-1.5 text-xs font-bold text-[#7A2637] hover:bg-[#7A2637]/5 disabled:opacity-50"
+                    >
+                      {accessReconciling ? "Checking retained access…" : "Restore retained access"}
+                    </button>
+                  )}
                   {showSyntheticWaitlist && syntheticTestCount > 0 && (
                     <button
                       onClick={removeSafeSyntheticWaitlistEntries}
@@ -3199,6 +3290,11 @@ export default function Admin() {
                   )}
                 </div>
               </div>
+              {!showSyntheticWaitlist && accessReconciliationResult && (
+                <p className="mt-3 rounded-lg border border-[#7A2637]/15 bg-[#7A2637]/5 px-3 py-2 text-xs font-medium text-[#5C1B29]" role="status">
+                  {accessReconciliationResult}
+                </p>
+              )}
               {!showSyntheticWaitlist && waitlistCityRollup.length > 0 && (
                 <section className="mb-5 overflow-hidden rounded-2xl border border-[#CA922B]/20 bg-[#FFF9EF]">
                   <div className="border-b border-[#CA922B]/15 px-4 py-3">

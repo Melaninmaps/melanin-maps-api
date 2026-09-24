@@ -93,4 +93,10 @@ describe("admin dashboard section selector", () => {
       expect(admin).toContain(marker);
     }
   });
+
+  it("does not replace an active review table on the automatic refresh timer", () => {
+    expect(admin).toContain("Full list refresh is explicit");
+    expect(admin).toContain("if (!document.hidden) void loadMetrics();");
+    expect(admin).not.toContain("if (!document.hidden) refreshAll();");
+  });
 });

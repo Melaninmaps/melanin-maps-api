@@ -15,6 +15,11 @@ const communityRequestSources = [
   "utf8",
 ));
 
+const adminSource = readFileSync(
+  fileURLToPath(new URL("../pages/admin.tsx", import.meta.url)),
+  "utf8",
+);
+
 describe("authenticatedFetch", () => {
   const fetchMock = vi.fn<typeof fetch>();
 
@@ -74,5 +79,12 @@ describe("authenticatedFetch", () => {
       expect(source).toContain("authenticatedFetch(");
       expect(source).not.toMatch(/\bfetch\s*\(/);
     }
+  });
+
+  it("routes every Admin request through the shared bearer-and-cookie helper", () => {
+    expect(adminSource).toContain('import { authenticatedFetch } from "@/lib/authenticatedFetch"');
+    expect(adminSource).toContain("const fetch = authenticatedFetch;");
+    expect(adminSource).toContain("api/admin/businesses/listing-status");
+    expect(adminSource).toContain("api/admin/access/reconcile-retained");
   });
 });

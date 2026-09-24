@@ -168,4 +168,16 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminPublisher).not.toContain('return { lat: "0", lng: "0" }');
     expect(adminPublisher).toContain("searchable MWM profile without a map pin");
   });
+
+  it("restores only retained approval sources with an audit trail", () => {
+    expect(adminRoute).toContain('router.post("/admin/access/reconcile-retained"');
+    expect(adminRoute).toContain("RETAINED_ACCESS_CANDIDATES_SQL");
+    expect(adminRoute).toContain("u.role = 'admin'");
+    expect(adminRoute).toContain("u.tester_status = 'active'");
+    expect(adminRoute).toContain("w.status = 'approved'");
+    expect(adminRoute).toContain("SET approved = TRUE");
+    expect(adminRoute).toContain("admin_access_reconciliation_audit_events");
+    expect(adminRoute).toContain("requiresExplicitApply: true");
+    expect(adminScreen).toContain("Restore retained access");
+  });
 });
