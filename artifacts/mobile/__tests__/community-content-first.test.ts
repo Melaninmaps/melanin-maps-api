@@ -21,6 +21,7 @@ describe("native Community content-first surface", () => {
     expect(feedList).not.toContain("ListHeaderComponent");
     expect(feedList).not.toContain("feedComposeBar");
     expect(feedList).toContain('justifyContent: "flex-start"');
+    expect(feedList).toContain('contentInsetAdjustmentBehavior="never"');
     expect(source).toContain('accessibilityLabel="Add a Community post, photo, or video"');
   });
 
@@ -31,6 +32,8 @@ describe("native Community content-first surface", () => {
     expect(source).toContain('accessibilityLabel="Hide Community keyboard"');
     expect(source).toContain('accessibilityLabel="Cancel Community post and return to feed"');
     expect(source).toContain('keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}');
+    const feedList = source.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
+    expect(feedList).toContain("onScrollBeginDrag={dismissCommunityKeyboard}");
   });
 
   it("preserves private display-only feed choices", () => {

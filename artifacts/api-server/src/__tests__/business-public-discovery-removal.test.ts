@@ -29,4 +29,13 @@ describe("administrator public-discovery removal governance", () => {
     expect(startupMigrations).toContain("business_listing_status_audit_events");
     expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
   });
+
+  it("makes the required audit schema available before either reversible archive path runs", () => {
+    expect(adminRoute).toContain("async function ensureListingStatusAuditSchema");
+    expect(adminRoute).toContain("CREATE TABLE IF NOT EXISTS business_listing_status_audit_events");
+    expect(adminRoute).toContain("await ensureListingStatusAuditSchema(client);");
+    expect(adminRoute).toContain("async function recordListingStatusAudit");
+    expect(adminRoute).toContain("randomUUID()");
+    expect(adminRoute).not.toContain("VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)");
+  });
 });

@@ -34,6 +34,68 @@ import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscovery
 
 const router: IRouter = Router();
 
+type ListingAuditQueryClient = {
+  query: (statement: string, values?: readonly unknown[]) => Promise<unknown>;
+};
+
+type ListingAuditState = {
+  listingStatus: string | null;
+  status: string;
+  promotionEligible: boolean;
+  featured: boolean;
+  promotedUntil: string | null;
+};
+
+// Archive is deliberately a reversible public-discovery change, never a delete.
+// Keep its audit schema available at the point of use as well as during startup:
+// a pre-existing deployment that missed the additive startup migration must not
+// turn an otherwise valid archive request into an opaque server failure.
+async function ensureListingStatusAuditSchema(client: ListingAuditQueryClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS business_listing_status_audit_events (
+      id            UUID PRIMARY KEY,
+      business_id   TEXT NOT NULL,
+      action        TEXT NOT NULL CHECK (action IN ('remove_public_discovery', 'restore_public_discovery')),
+      actor_user_id TEXT,
+      reason        TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      before_state  JSONB NOT NULL,
+      after_state   JSONB NOT NULL,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS business_listing_status_audit_business_created_idx
+      ON business_listing_status_audit_events(business_id, created_at DESC)
+  `);
+}
+
+async function recordListingStatusAudit(
+  client: ListingAuditQueryClient,
+  input: {
+    businessId: string;
+    action: "remove_public_discovery" | "restore_public_discovery";
+    actorUserId: string | null;
+    reason: string;
+    beforeState: ListingAuditState;
+    afterState: ListingAuditState;
+  },
+): Promise<void> {
+  await client.query(
+    `INSERT INTO business_listing_status_audit_events
+       (id, business_id, action, actor_user_id, reason, before_state, after_state)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)`,
+    [
+      randomUUID(),
+      input.businessId,
+      input.action,
+      input.actorUserId,
+      input.reason,
+      JSON.stringify(input.beforeState),
+      JSON.stringify(input.afterState),
+    ],
+  );
+}
+
 // ── GET /admin/check — capability probe (always returns 200) ─────────────────
 // Returns { isAdmin: true/false } for all callers so the client can decide
 // whether to render admin UI without exposing auth details in the HTTP status.
@@ -342,6 +404,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
 
   const client = await pool.connect();
   try {
+    await ensureListingStatusAuditSchema(client);
     await client.query("BEGIN");
     const currentResult = await client.query<{
       id: string;
@@ -418,19 +481,14 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
           current.id,
         ],
       );
-      await client.query(
-        `INSERT INTO business_listing_status_audit_events
-           (id, business_id, action, actor_user_id, reason, before_state, after_state)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
-        [
-          current.id,
-          removing ? "remove_public_discovery" : "restore_public_discovery",
-          req.user?.id ?? null,
-          normalizedReason,
-          JSON.stringify(beforeState),
-          JSON.stringify(nextState),
-        ],
-      );
+      await recordListingStatusAudit(client, {
+        businessId: current.id,
+        action: removing ? "remove_public_discovery" : "restore_public_discovery",
+        actorUserId: req.user?.id ?? null,
+        reason: normalizedReason,
+        beforeState,
+        afterState: nextState,
+      });
     }
     await client.query("COMMIT");
     req.log?.info(
@@ -458,7 +516,7 @@ router.patch(
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] ?? "" : req.params.id;
     const { listingStatus, reason } = req.body as {
       listingStatus?: string;
       reason?: string;
@@ -481,6 +539,7 @@ router.patch(
 
     const client = await pool.connect();
     try {
+      await ensureListingStatusAuditSchema(client);
       await client.query("BEGIN");
       const currentResult = await client.query<{
         id: string;
@@ -558,19 +617,14 @@ router.patch(
           id,
         ],
       );
-      await client.query(
-        `INSERT INTO business_listing_status_audit_events
-           (id, business_id, action, actor_user_id, reason, before_state, after_state)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
-        [
-          id,
-          removing ? "remove_public_discovery" : "restore_public_discovery",
-          req.user?.id ?? null,
-          normalizedReason,
-          JSON.stringify(beforeState),
-          JSON.stringify(nextState),
-        ],
-      );
+      await recordListingStatusAudit(client, {
+        businessId: id,
+        action: removing ? "remove_public_discovery" : "restore_public_discovery",
+        actorUserId: req.user?.id ?? null,
+        reason: normalizedReason,
+        beforeState,
+        afterState: nextState,
+      });
       await client.query("COMMIT");
       req.log?.info(
         { id, listingStatus: nextState.listingStatus, action: removing ? "remove" : "restore" },
