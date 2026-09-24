@@ -116,6 +116,27 @@ async function ensureNationalMasterDirectoryAudit(
   `);
 }
 
+/**
+ * The national directory import keeps the source, intake batch, and Kinfolk
+ * rationale with each profile so administrators can make a reversible cleanup
+ * decision later. Startup migrations are deliberately best-effort; this
+ * protected import must therefore ensure its four additive metadata columns
+ * before it begins its all-or-nothing transaction. These statements never
+ * alter an existing value or listing state.
+ */
+async function ensureNationalMasterDirectoryBusinessMetadata(
+  productionPool: Pool,
+): Promise<void> {
+  for (const statement of [
+    `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS research_source_label VARCHAR(255)`,
+    `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS research_source_url TEXT`,
+    `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS kinfolk_recommendation_reason TEXT`,
+    `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS intake_batch_reference VARCHAR(255)`,
+  ]) {
+    await productionPool.query(statement);
+  }
+}
+
 export function registerAutomatedDirectoryRoutes(
   app: Express,
   reviewPool: Pool,
@@ -596,6 +617,7 @@ export function registerAutomatedDirectoryRoutes(
     const apply = req.body?.apply === true;
     try {
       await ensureNationalMasterDirectoryAudit(productionPool);
+      await ensureNationalMasterDirectoryBusinessMetadata(productionPool);
       const records = assertNationalMasterDirectoryDataset();
       if (records.length !== NATIONAL_MASTER_DIRECTORY_EXPECTED_ROWS) {
         res.status(409).json({
