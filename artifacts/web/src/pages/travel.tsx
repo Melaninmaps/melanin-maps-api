@@ -2514,9 +2514,9 @@ function TravelPage() {
                       ))}
                     </div>
                     <div className="mt-3 grid gap-2 border-t border-[#3A1F0E]/8 pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save only this message to your private Kinfolk memory. This is off by default; you can view, edit, or forget saved memory at any time.">
+                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save only this message to your private Kinfolk memory. You can also type “remember…” to save that direct request. View or forget saved memory at any time.">
                         <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} className="mt-0.5" />
-                        Save this to my private Kinfolk memory
+                        Save this — or simply say “remember…”
                       </label>
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
                         <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} className="mt-0.5" />
