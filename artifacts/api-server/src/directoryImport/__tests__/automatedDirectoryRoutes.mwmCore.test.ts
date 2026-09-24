@@ -257,6 +257,8 @@ describe("automated directory MWM Core ingress admission", () => {
       throw new Error(`Unexpected review query: ${statement}`);
     });
     const productionQuery = vi.fn(async (statement: string) => {
+      if (statement.includes("CREATE TABLE IF NOT EXISTS completed_cohort_directory_discovery_receipts")) return { rows: [] };
+      if (statement.includes("CREATE INDEX IF NOT EXISTS completed_cohort_directory_discovery_business_idx")) return { rows: [] };
       if (statement.includes("completed_cohort_directory_discovery_receipts")) return { rows: [] };
       if (statement.includes("FROM businesses")) return { rows: [] };
       throw new Error(`Unexpected production query: ${statement}`);

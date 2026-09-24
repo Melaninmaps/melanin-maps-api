@@ -51,6 +51,38 @@ function admin(req: Request, res: Response): { id: string } | null {
   return null;
 }
 
+/**
+ * Startup migrations are intentionally best-effort so an unrelated seed cannot
+ * prevent the API from booting. This protected activation cannot make that
+ * assumption: create/verify only its additive audit table before a preview or
+ * a write, rather than treating a missing startup migration as a cohort error.
+ */
+async function ensureCompletedCohortDirectoryDiscoveryAudit(
+  productionPool: Pool,
+): Promise<void> {
+  await productionPool.query(`
+    CREATE TABLE IF NOT EXISTS completed_cohort_directory_discovery_receipts (
+      receipt_root    TEXT NOT NULL,
+      manifest_sha256 TEXT NOT NULL,
+      source_row      INTEGER NOT NULL,
+      source_row_id   TEXT NOT NULL,
+      business_id     VARCHAR,
+      activation_hash TEXT NOT NULL CHECK (char_length(activation_hash) = 64),
+      outcome         TEXT NOT NULL CHECK (outcome IN ('created', 'linked_existing', 'skipped_nonpublic_existing')),
+      reason_code     TEXT,
+      policy_version  TEXT NOT NULL,
+      activated_by    TEXT,
+      activated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (receipt_root, source_row),
+      UNIQUE (receipt_root, source_row_id)
+    )
+  `);
+  await productionPool.query(`
+    CREATE INDEX IF NOT EXISTS completed_cohort_directory_discovery_business_idx
+      ON completed_cohort_directory_discovery_receipts (business_id, activated_at DESC)
+  `);
+}
+
 export function registerAutomatedDirectoryRoutes(
   app: Express,
   reviewPool: Pool,
@@ -325,6 +357,7 @@ export function registerAutomatedDirectoryRoutes(
     const apply = req.body?.apply === true;
 
     try {
+      await ensureCompletedCohortDirectoryDiscoveryAudit(productionPool);
       const batch = await reviewPool.query<{ id: string; source_row_count: number; manifest_count: number }>(
         `SELECT id, source_row_count, manifest_count
            FROM directory_import_batches
