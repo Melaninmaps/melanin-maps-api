@@ -37,6 +37,13 @@ import {
   buildNationalMasterDirectoryProfile,
   nationalMasterActivationReceiptHash,
 } from "./nationalMasterDirectory";
+import {
+  LATINX_LEHIGH_VALLEY_DIRECTORY_POLICY,
+  LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE,
+  LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_LABEL,
+  LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_SHA256,
+  assertLatinxLehighValleyDirectoryDataset,
+} from "./latinxLehighValleyDirectory";
 
 // The signed, immutable 4,183-record source-receipted cohort is a 14.673 MiB
 // JSON envelope. Keep this ceiling scoped to its protected service ingress;
@@ -135,6 +142,30 @@ async function ensureNationalMasterDirectoryBusinessMetadata(
   ]) {
     await productionPool.query(statement);
   }
+}
+
+async function ensureLatinxLehighValleyDirectoryAudit(
+  productionPool: Pool,
+): Promise<void> {
+  await ensureNationalMasterDirectoryBusinessMetadata(productionPool);
+  await productionPool.query(`
+    CREATE TABLE IF NOT EXISTS user_supplied_directory_import_receipts (
+      source_key TEXT NOT NULL,
+      source_sha256 TEXT NOT NULL,
+      profile_id VARCHAR NOT NULL,
+      source_row INTEGER NOT NULL,
+      business_id VARCHAR NOT NULL,
+      outcome TEXT NOT NULL CHECK (outcome IN ('created', 'existing_same_source_id')),
+      policy_version TEXT NOT NULL,
+      activated_by TEXT,
+      activated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (source_key, source_sha256, profile_id)
+    )
+  `);
+  await productionPool.query(`
+    CREATE INDEX IF NOT EXISTS user_supplied_directory_import_business_idx
+      ON user_supplied_directory_import_receipts (business_id, activated_at DESC)
+  `);
 }
 
 export function registerAutomatedDirectoryRoutes(
@@ -741,6 +772,174 @@ export function registerAutomatedDirectoryRoutes(
       res.status(500).json({
         error: "National master directory activation failed.",
         code: "NATIONAL_MASTER_DIRECTORY_ACTIVATION_FAILED",
+      });
+    }
+  });
+
+  /**
+   * The supplied Lehigh Valley directory is a separate, explicit-source import.
+   * It does not inspect or change existing business rows, collapse duplicates,
+   * infer ownership, run the historical cohort worker, or fabricate coordinates.
+   * `apply` remains false by default so an administrator can inspect the fixed
+   * count before creating public directory profiles.
+   */
+  app.get("/api/founder/directory-import/latinx-lehigh-valley/preview", async (req, res) => {
+    if (!admin(req, res)) return;
+    try {
+      const profiles = assertLatinxLehighValleyDirectoryDataset();
+      const byCity = new Map<string, number>();
+      for (const profile of profiles) {
+        const location = `${profile.city}, ${profile.state}`;
+        byCity.set(location, (byCity.get(location) ?? 0) + 1);
+      }
+      res.json({
+        sourceKey: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE,
+        sourceLabel: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_LABEL,
+        sourceSha256: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_SHA256,
+        policyVersion: LATINX_LEHIGH_VALLEY_DIRECTORY_POLICY,
+        profileCount: profiles.length,
+        sourceReportedOwnership: "Latino / Hispanic-Owned",
+        verificationStatus: "source_reported_ownership_unverified",
+        addressedProfiles: profiles.filter((profile) => profile.address).length,
+        mapPinsCreated: 0,
+        cityCounts: [...byCity.entries()]
+          .map(([city, count]) => ({ city, count }))
+          .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city)),
+      });
+    } catch {
+      res.status(500).json({
+        error: "Latinx Lehigh Valley directory preview failed.",
+        code: "LATINX_LEHIGH_VALLEY_DIRECTORY_PREVIEW_FAILED",
+      });
+    }
+  });
+
+  app.post("/api/founder/directory-import/latinx-lehigh-valley/activate-directory", async (req, res) => {
+    const actor = admin(req, res);
+    if (!actor) return;
+    const apply = req.body?.apply === true;
+    try {
+      const profiles = assertLatinxLehighValleyDirectoryDataset();
+      const summary = {
+        sourceProfiles: profiles.length,
+        addressedProfiles: profiles.filter((profile) => profile.address).length,
+        alreadyActivated: 0,
+        pending: profiles.length,
+        created: 0,
+        existingSameSourceId: 0,
+        mapPinsCreated: 0,
+      };
+
+      if (!apply) {
+        res.json({
+          sourceKey: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE,
+          sourceLabel: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_LABEL,
+          sourceSha256: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_SHA256,
+          policyVersion: LATINX_LEHIGH_VALLEY_DIRECTORY_POLICY,
+          dryRun: true,
+          requiresExplicitApply: true,
+          directoryOnly: true,
+          workerUsed: false,
+          summary,
+        });
+        return;
+      }
+
+      await ensureLatinxLehighValleyDirectoryAudit(productionPool);
+      const priorReceipts = await productionPool.query<{ profile_id: string }>(
+        `SELECT profile_id
+           FROM user_supplied_directory_import_receipts
+          WHERE source_key=$1 AND source_sha256=$2`,
+        [LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE, LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_SHA256],
+      );
+      const priorProfileIds = new Set(priorReceipts.rows.map((row) => row.profile_id));
+      const pending = profiles.filter((profile) => !priorProfileIds.has(profile.id));
+      summary.alreadyActivated = profiles.length - pending.length;
+      summary.pending = pending.length;
+
+      const client = await productionPool.connect();
+      try {
+        await client.query("BEGIN");
+        for (let offset = 0; offset < pending.length; offset += 50) {
+          const batch = pending.slice(offset, offset + 50);
+          const values: unknown[] = [];
+          const tuples = batch.map((profile, index) => {
+            const base = index * 22;
+            values.push(
+              profile.id, profile.name, profile.category, profile.subcategory,
+              profile.address, profile.city, profile.state, profile.country,
+              false, JSON.stringify(profile.ownershipDesignations), profile.ownershipClaim,
+              profile.description, profile.phone, profile.website, profile.instagram, profile.facebook,
+              profile.dedupeKey, profile.sourceLabel, profile.sourceUrl,
+              profile.recommendationReason, profile.intakeBatchReference,
+              JSON.stringify(["source-reported", "hispanic-owned", "latinx-owned", "lehigh-valley"]),
+            );
+            return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},
+              'live_unclaimed','unclaimed',false,$${base + 10}::jsonb,'[]'::jsonb,$${base + 11},false,$${base + 12},NULL,NULL,
+              $${base + 13},$${base + 14},NULL,$${base + 15},NULL,$${base + 16},$${base + 17},'active','community_listed','${LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE}',false,false,
+              $${base + 18},$${base + 19},$${base + 20},$${base + 21},$${base + 22}::jsonb)`;
+          });
+          const inserted = await client.query<{ id: string }>(
+            `INSERT INTO businesses
+              (id,name,category,subcategory,address,city,state,country,is_online_only,
+               listing_status,owner_claim_status,verified,ownership_designations,verified_designations,
+               ownership_claim,black_owned,description,latitude,longitude,phone,website,tiktok,instagram,youtube,facebook,
+               dedupe_key,status,profile_status,data_source,is_duplicate,permanently_hidden,
+               research_source_label,research_source_url,kinfolk_recommendation_reason,intake_batch_reference,tags)
+             VALUES ${tuples.join(",")}
+             ON CONFLICT (id) DO NOTHING
+             RETURNING id`,
+            values,
+          );
+          const createdIds = new Set(inserted.rows.map((row) => row.id));
+          summary.created += createdIds.size;
+          summary.existingSameSourceId += batch.length - createdIds.size;
+
+          const receiptValues: unknown[] = [];
+          const receiptTuples = batch.map((profile, index) => {
+            const base = index * 8;
+            receiptValues.push(
+              LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE,
+              LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_SHA256,
+              profile.id,
+              profile.sourceRow,
+              profile.id,
+              createdIds.has(profile.id) ? "created" : "existing_same_source_id",
+              LATINX_LEHIGH_VALLEY_DIRECTORY_POLICY,
+              actor.id,
+            );
+            return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8})`;
+          });
+          await client.query(
+            `INSERT INTO user_supplied_directory_import_receipts
+              (source_key,source_sha256,profile_id,source_row,business_id,outcome,policy_version,activated_by)
+             VALUES ${receiptTuples.join(",")}
+             ON CONFLICT (source_key,source_sha256,profile_id) DO NOTHING`,
+            receiptValues,
+          );
+        }
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+
+      res.json({
+        sourceKey: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE,
+        sourceLabel: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_LABEL,
+        sourceSha256: LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE_SHA256,
+        policyVersion: LATINX_LEHIGH_VALLEY_DIRECTORY_POLICY,
+        dryRun: false,
+        directoryOnly: true,
+        workerUsed: false,
+        summary,
+      });
+    } catch {
+      res.status(500).json({
+        error: "Latinx Lehigh Valley directory activation failed.",
+        code: "LATINX_LEHIGH_VALLEY_DIRECTORY_ACTIVATION_FAILED",
       });
     }
   });

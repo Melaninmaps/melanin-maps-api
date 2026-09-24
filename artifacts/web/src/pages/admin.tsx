@@ -97,6 +97,24 @@ function formatWaitlistSignupSources(value: string | null | undefined): string {
     : "Earlier signup — source not recorded";
 }
 
+type IntakeCohort =
+  | "all"
+  | "protected_historical_cohort"
+  | "user_national_master"
+  | "other_inventory";
+
+type IntakeCohortOption = {
+  value: Exclude<IntakeCohort, "all">;
+  label: string;
+  count: number;
+};
+
+const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
+  protected_historical_cohort: "Protected historical cohort (receipt-backed)",
+  user_national_master: "User-supplied national master",
+  other_inventory: "Other existing, manual, or community inventory",
+};
+
 type WaitlistEntry = {
   id: string;
   firstName: string | null;
@@ -113,6 +131,17 @@ type WaitlistEntry = {
   createdAt: string;
   position: number | null;
   signupSources: string;
+};
+
+type WaitlistCityRollup = {
+  city: string;
+  state: string | null;
+  total: number;
+  pending: number;
+  web: number;
+  ios: number;
+  android: number;
+  sourceNotRecorded: number;
 };
 
 type AdminUser = {
@@ -150,6 +179,7 @@ type AdminBusiness = {
   createdAt: string;
   hasMapPin: boolean;
   hasStreetAddress: boolean;
+  intakeCohort: Exclude<IntakeCohort, "all">;
   dataSource: string | null;
   researchSourceLabel: string | null;
   researchSourceUrl: string | null;
@@ -706,6 +736,9 @@ export default function Admin() {
   const [showSyntheticWaitlist, setShowSyntheticWaitlist] = useState(false);
   const [waitlistCityFilter, setWaitlistCityFilter] = useState("all");
   const [waitlistCityOptions, setWaitlistCityOptions] = useState<string[]>([]);
+  const [waitlistCityRollup, setWaitlistCityRollup] = useState<
+    WaitlistCityRollup[]
+  >([]);
   const PAGE_SIZE = 50;
 
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -763,6 +796,8 @@ export default function Admin() {
   >("active");
   const [bizCityFilter, setBizCityFilter] = useState("all");
   const [bizCategoryFilter, setBizCategoryFilter] = useState("all");
+  const [bizIntakeCohortFilter, setBizIntakeCohortFilter] =
+    useState<IntakeCohort>("all");
   const [bizLinkFilter, setBizLinkFilter] = useState<
     "all" | "website_present" | "website_missing" | "social_present" | "no_public_link"
   >("all");
@@ -797,6 +832,9 @@ export default function Admin() {
   const [businessServiceOptions, setBusinessServiceOptions] = useState<
     { value: string; label: string }[]
   >([]);
+  const [businessIntakeCohortOptions, setBusinessIntakeCohortOptions] = useState<
+    IntakeCohortOption[]
+  >([]);
   const businessInventoryQueryRef = useRef({
     page: 1,
     pageSize: 50 as 50 | 100,
@@ -804,6 +842,7 @@ export default function Admin() {
     status: "active" as typeof bizStatusFilter,
     city: "all",
     category: "all",
+    intakeCohort: "all" as IntakeCohort,
     link: "all" as typeof bizLinkFilter,
     addedFrom: "",
     addedTo: "",
@@ -938,6 +977,7 @@ export default function Admin() {
       status: bizStatusFilter,
       city: bizCityFilter,
       category: bizCategoryFilter,
+      intakeCohort: bizIntakeCohortFilter,
       link: bizLinkFilter,
       addedFrom: bizAddedFrom,
       addedTo: bizAddedTo,
@@ -948,6 +988,7 @@ export default function Admin() {
     bizAddedTo,
     bizCategoryFilter,
     bizCityFilter,
+    bizIntakeCohortFilter,
     bizLinkFilter,
     bizSearch,
     bizSort,
@@ -984,6 +1025,9 @@ export default function Admin() {
           setSyntheticTestCount(data.syntheticTestCount ?? 0);
           setWaitlistCityOptions(
             Array.isArray(data.cityOptions) ? data.cityOptions : [],
+          );
+          setWaitlistCityRollup(
+            Array.isArray(data.cityRollup) ? data.cityRollup : [],
           );
         })
         .finally(() => setWaitlistLoading(false));
@@ -1030,6 +1074,7 @@ export default function Admin() {
     status?: typeof bizStatusFilter;
     city?: string;
     category?: string;
+    intakeCohort?: IntakeCohort;
     link?: typeof bizLinkFilter;
     addedFrom?: string;
     addedTo?: string;
@@ -1042,6 +1087,7 @@ export default function Admin() {
     const statusValue = next.status ?? current.status;
     const cityValue = next.city ?? current.city;
     const categoryValue = next.category ?? current.category;
+    const intakeCohortValue = next.intakeCohort ?? current.intakeCohort;
     const linkValue = next.link ?? current.link;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
     const addedToValue = next.addedTo ?? current.addedTo;
@@ -1059,6 +1105,7 @@ export default function Admin() {
       if (scope === "category") params.set("category", value);
       if (scope === "subcategory") params.set("subcategory", value);
     }
+    if (intakeCohortValue !== "all") params.set("intakeCohort", intakeCohortValue);
     if (linkValue !== "all") params.set("link", linkValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
     if (addedToValue) params.set("addedTo", addedToValue);
@@ -1116,6 +1163,9 @@ export default function Admin() {
         );
         setBusinessServiceOptions(
           Array.isArray(data.serviceOptions) ? data.serviceOptions : [],
+        );
+        setBusinessIntakeCohortOptions(
+          Array.isArray(data.intakeCohortOptions) ? data.intakeCohortOptions : [],
         );
         setLastRefreshed(new Date());
       })
@@ -1890,6 +1940,7 @@ export default function Admin() {
     status?: typeof bizStatusFilter;
     city?: string;
     category?: string;
+    intakeCohort?: IntakeCohort;
     link?: typeof bizLinkFilter;
     addedFrom?: string;
     addedTo?: string;
@@ -1902,6 +1953,7 @@ export default function Admin() {
       status: next.status ?? bizStatusFilter,
       city: next.city ?? bizCityFilter,
       category: next.category ?? bizCategoryFilter,
+      intakeCohort: next.intakeCohort ?? bizIntakeCohortFilter,
       link: next.link ?? bizLinkFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
@@ -1912,6 +1964,7 @@ export default function Admin() {
     setBizStatusFilter(query.status);
     setBizCityFilter(query.city);
     setBizCategoryFilter(query.category);
+    setBizIntakeCohortFilter(query.intakeCohort);
     setBizLinkFilter(query.link);
     setBizAddedFrom(query.addedFrom);
     setBizAddedTo(query.addedTo);
@@ -1931,6 +1984,7 @@ export default function Admin() {
       status: "active",
       city: "all",
       category: "all",
+      intakeCohort: "all",
       link: "all",
       addedFrom: "",
       addedTo: "",
@@ -3145,6 +3199,48 @@ export default function Admin() {
                   )}
                 </div>
               </div>
+              {!showSyntheticWaitlist && waitlistCityRollup.length > 0 && (
+                <section className="mb-5 overflow-hidden rounded-2xl border border-[#CA922B]/20 bg-[#FFF9EF]">
+                  <div className="border-b border-[#CA922B]/15 px-4 py-3">
+                    <h3 className="text-sm font-bold text-[#3A1F0E]">
+                      City rollout counts — no names shown
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">
+                      Total and Pending are unique email-keyed waitlist records. Website, iOS, and Android are source-history counts and may overlap when a person joined from more than one surface; do not add them together.
+                    </p>
+                  </div>
+                  <div className="max-h-80 overflow-auto bg-white">
+                    <table className="min-w-[760px] w-full text-xs">
+                      <thead className="sticky top-0 bg-[#FAF6EF] text-left text-[#3A1F0E]/55">
+                        <tr>
+                          <th className="px-4 py-2.5 font-bold uppercase tracking-wider">City</th>
+                          <th className="px-3 py-2.5 text-right font-bold uppercase tracking-wider">Unique total</th>
+                          <th className="px-3 py-2.5 text-right font-bold uppercase tracking-wider">Pending</th>
+                          <th className="px-3 py-2.5 text-right font-bold uppercase tracking-wider">Website</th>
+                          <th className="px-3 py-2.5 text-right font-bold uppercase tracking-wider">iOS</th>
+                          <th className="px-3 py-2.5 text-right font-bold uppercase tracking-wider">Android</th>
+                          <th className="px-3 py-2.5 text-right font-bold uppercase tracking-wider">Earlier / unknown source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {waitlistCityRollup.map((rollup) => (
+                          <tr key={`${rollup.city}-${rollup.state ?? ""}`} className="border-t border-[#3A1F0E]/5 text-[#3A1F0E]/75">
+                            <td className="px-4 py-2.5 font-semibold">
+                              {rollup.city}{rollup.state ? `, ${rollup.state}` : ""}
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-bold">{rollup.total.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 text-right">{rollup.pending.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 text-right">{rollup.web.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 text-right">{rollup.ios.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 text-right">{rollup.android.toLocaleString()}</td>
+                            <td className="px-3 py-2.5 text-right">{rollup.sourceNotRecorded.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
               {waitlist.length === 0 ? (
                 <div className="text-center py-20 text-[#3A1F0E]/40">
                   <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -3921,6 +4017,22 @@ export default function Admin() {
 
             <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-6">
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Intake cohort
+                <select
+                  value={bizIntakeCohortFilter}
+                  onChange={(event) => applyBusinessInventoryFilters({ intakeCohort: event.target.value as IntakeCohort })}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                  aria-label="Filter businesses by receipt-backed intake cohort"
+                >
+                  <option value="all">All intake cohorts</option>
+                  {businessIntakeCohortOptions.map((cohort) => (
+                    <option key={cohort.value} value={cohort.value}>
+                      {cohort.label} ({cohort.count.toLocaleString()})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 City
                 <select
                   value={bizCityFilter}
@@ -4196,6 +4308,9 @@ export default function Admin() {
                         <td className="max-w-[220px] px-4 py-3 text-xs text-[#3A1F0E]/60">
                           <div className="font-medium text-[#3A1F0E]">
                             {new Date(biz.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="mt-1 font-semibold text-[#3A1F0E]/70">
+                            {INTAKE_COHORT_LABELS[biz.intakeCohort]}
                           </div>
                           {(biz.intakeBatchReference || biz.researchSourceLabel || biz.dataSource) && (
                             <div className="mt-1 line-clamp-2">

@@ -53,6 +53,15 @@ describe("unified waitlist and recovery contract", () => {
     expect(waitlistRoute).toContain("filterCity");
   });
 
+  it("returns city and platform rollout aggregates without adding a second person-level list", () => {
+    expect(waitlistRoute).toContain("const [entriesResult, totalResult, pendingResult, testCountResult, cityResult, cityRollupResult]");
+    expect(waitlistRoute).toContain("cityRollup:");
+    expect(waitlistRoute).toContain("'[city not recorded]'");
+    expect(waitlistRoute).toContain("sourceNotRecorded");
+    expect(waitlistRoute).toContain("signupSources}, '') ~ '(^|,)ios(,|$)'");
+    expect(accessLedger).toContain("Bulk tester access — paste or upload emails");
+  });
+
   it("keeps App Store registrations in the same source-labelled waitlist and archives rather than deletes entries", () => {
     expect(waitlistRoute).toContain('"/admin/waitlist/reconcile-ios-registrations"');
     expect(waitlistRoute).toContain('signupSources: "ios"');

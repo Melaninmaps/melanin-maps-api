@@ -149,6 +149,19 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(migrations).toContain("kinfolk_recommendation_reason");
   });
 
+  it("separates the protected historical cohort from the user-supplied national master by receipts", () => {
+    expect(adminRoute).toContain('const intakeCohort = String(req.query.intakeCohort ?? "all").trim()');
+    expect(adminRoute).toContain("COMPLETED_COHORT_MANIFEST_CHECKSUM");
+    expect(adminRoute).toContain("directory_publication_provenance");
+    expect(adminRoute).toContain("completed_cohort_directory_discovery_receipts");
+    expect(adminRoute).toContain("national_diaspora_master_18294");
+    expect(adminRoute).toContain("intakeCohortOptions");
+    expect(adminScreen).toContain("Intake cohort");
+    expect(adminScreen).toContain("Protected historical cohort (receipt-backed)");
+    expect(adminScreen).toContain("User-supplied national master");
+    expect(adminScreen).toContain("Filter businesses by receipt-backed intake cohort");
+  });
+
   it("creates a map pin only from a successfully geocoded supplied street address", () => {
     expect(adminPublisher).toContain("const coordinates = input.address");
     expect(adminPublisher).toContain("if (coordinates)");
