@@ -614,14 +614,14 @@ describe("startup demo containment static safety", () => {
       startupSource.match(
         /CREATE OR REPLACE VIEW (?:public\.)?public_businesses/g,
       ),
-    ).toHaveLength(2);
-    // Four discoverability writes and the legacy compatibility view use the
-    // raw predicate. The canonical public view delegates to the separately
-    // fail-closed business_record_is_public function instead of duplicating it.
+    ).toHaveLength(1);
+    // Four discoverability writes use the raw demo predicate. The one
+    // canonical public view delegates to business_record_is_public so a later
+    // legacy migration cannot silently replace the founder-led cleanup scope.
     expect(
       startupSource.match(/AND NOT \$\{PROVEN_DEMO_BUSINESS_SQL_PREDICATE\}/g)
         ?.length,
-    ).toBe(5);
+    ).toBe(4);
     expect(startupSource).not.toContain('["dir. businesses",   () => ensureDirectoryBusinesses');
     expect(startupSource).not.toContain('["tour businesses",   () => ensureTourBusinesses');
     expect(startupSource).not.toContain('["curated businesses", () => ensureFounderCuratedBusinesses');
