@@ -26,8 +26,8 @@ const HOUR_OPTIONS = [
   "Call for hours", "Custom",
 ];
 const LISTING_STATUSES = [
-  { value: "staged", label: "Staged (hidden — finish later)", desc: "Does not appear publicly. Safe for incomplete entries." },
-  { value: "live_unclaimed", label: "Live — Unclaimed", desc: "Appears on the map immediately. Business owner has not yet claimed." },
+  { value: "live_unclaimed", label: "Publish as a public MWM profile", desc: "Searchable now. A pin appears only when the supplied street address geocodes successfully." },
+  { value: "staged", label: "Save as staged", desc: "Hidden while an entry is incomplete. Use only when you intentionally do not want it public yet." },
 ];
 
 type Step = "basic" | "social" | "identity" | "discovery" | "review" | "media";
@@ -88,7 +88,11 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [tags, setTags] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
-  const [listingStatus, setListingStatus] = useState("staged");
+  const [listingStatus, setListingStatus] = useState("live_unclaimed");
+  const [researchSourceLabel, setResearchSourceLabel] = useState("");
+  const [researchSourceUrl, setResearchSourceUrl] = useState("");
+  const [kinfolkRecommendationReason, setKinfolkRecommendationReason] = useState("");
+  const [intakeBatchReference, setIntakeBatchReference] = useState("");
 
   const selectedCategory = BUSINESS_CATEGORY_TAXONOMY.find(c => c.name === category);
   const vibeEligible = VIBE_ELIGIBLE_CATEGORIES.includes(category);
@@ -224,6 +228,10 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
         adminNotes: adminNotes.trim() || null,
         listingStatus,
+        researchSourceLabel: researchSourceLabel.trim() || null,
+        researchSourceUrl: researchSourceUrl.trim() || null,
+        kinfolkRecommendationReason: kinfolkRecommendationReason.trim() || null,
+        intakeBatchReference: intakeBatchReference.trim() || null,
       };
 
       const res = await fetch(`${BASE}/api/admin/businesses`, {
@@ -274,7 +282,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
               <Store className="w-5 h-5 text-[#CA922B]" />
               <div>
                 <h2 className="font-serif font-bold text-white text-lg">Add Business</h2>
-                <p className="text-[#F5EBD8]/50 text-xs">Admin entry — saves as staged until published</p>
+                <p className="text-[#F5EBD8]/50 text-xs">Admin entry — defaults to a public, unclaimed MWM profile</p>
               </div>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
@@ -383,7 +391,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                   <input className={inputCls} type="url" value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Street Address</label>
+                  <label className={labelCls}>Street Address <span className="font-normal normal-case text-[#3A1F0E]/35">(adds a pin after successful geocoding)</span></label>
                   <input className={inputCls} value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St" />
                 </div>
                 <div>
@@ -533,13 +541,54 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
               )}
 
               <div>
-                <label className={labelCls}>Internal Tags <span className="font-normal normal-case text-[#3A1F0E]/35">(comma-separated)</span></label>
+                <label className={labelCls}>Service Tags <span className="font-normal normal-case text-[#3A1F0E]/35">(comma-separated)</span></label>
                 <input
                   className={inputCls}
                   value={tags}
                   onChange={e => setTags(e.target.value)}
                   placeholder="e.g. vegan-options, outdoor-seating, live-music"
                 />
+              </div>
+
+              <div className="rounded-xl border border-[#2B1507]/10 bg-[#FAF6EF] p-4 space-y-4">
+                <div>
+                  <label className={labelCls}>Research Source / Directory</label>
+                  <input
+                    className={inputCls}
+                    value={researchSourceLabel}
+                    onChange={e => setResearchSourceLabel(e.target.value)}
+                    placeholder="e.g. Black Chamber directory, founder research, community submission"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Research Source Link <span className="font-normal normal-case text-[#3A1F0E]/35">(internal)</span></label>
+                  <input
+                    className={inputCls}
+                    type="url"
+                    value={researchSourceUrl}
+                    onChange={e => setResearchSourceUrl(e.target.value)}
+                    placeholder="https://"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Backfill / Import Batch</label>
+                  <input
+                    className={inputCls}
+                    value={intakeBatchReference}
+                    onChange={e => setIntakeBatchReference(e.target.value)}
+                    placeholder="e.g. NY-backfill-2026-09-24"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Why Kinfolk Should Recommend This Business <span className="font-normal normal-case text-[#3A1F0E]/35">(internal recommendation context)</span></label>
+                  <textarea
+                    className={inputCls}
+                    value={kinfolkRecommendationReason}
+                    onChange={e => setKinfolkRecommendationReason(e.target.value)}
+                    rows={3}
+                    placeholder="What concrete need, service, or researched evidence makes this a good fit when Kinfolk recommends it."
+                  />
+                </div>
               </div>
 
               <div>
@@ -580,6 +629,9 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                   { label: "Social", value: [instagram, facebook, tiktok].filter(Boolean).join(", ") || "—" },
                   { label: "Ownership", value: ownershipDesignations.join(", ") || "—" },
                   { label: "Vibes", value: selectedVibes.join(", ") || "—" },
+                  { label: "Research source", value: researchSourceLabel || "—" },
+                  { label: "Backfill batch", value: intakeBatchReference || "—" },
+                  { label: "Kinfolk context", value: kinfolkRecommendationReason || "—" },
                   { label: "Status", value: LISTING_STATUSES.find(s => s.value === listingStatus)?.label ?? listingStatus },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex gap-4 px-4 py-2.5">
@@ -590,7 +642,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
               </div>
               {listingStatus === "live_unclaimed" && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-800">
-                  This business will appear on the map immediately. Address will be auto-geocoded. The owner can claim the listing later through the standard claim flow.
+                  This business will receive a full public MWM profile now. A map pin is created only when its street address geocodes successfully; otherwise it remains searchable by name, city, and service. The owner can claim the listing later through the standard claim flow.
                 </div>
               )}
               {listingStatus === "staged" && (

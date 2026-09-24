@@ -17,6 +17,11 @@ export interface DirectBusinessInput {
   ownershipDesignations?: string[];
   blackOwned?: boolean;
   mediaAssetUrls?: string[];
+  listingStatus?: "live_unclaimed" | "staged";
+  researchSourceLabel?: string;
+  researchSourceUrl?: string;
+  kinfolkRecommendationReason?: string;
+  intakeBatchReference?: string;
 }
 
 export function validateDirectBusiness(input: unknown): DirectBusinessInput {
@@ -50,16 +55,34 @@ export function validateDirectBusiness(input: unknown): DirectBusinessInput {
     mediaAssetUrls: Array.isArray(body.mediaAssetUrls)
       ? (body.mediaAssetUrls as string[]).filter((s) => typeof s === "string")
       : [],
+    listingStatus:
+      body.listingStatus === "staged" ? "staged" : "live_unclaimed",
+    researchSourceLabel:
+      typeof body.researchSourceLabel === "string"
+        ? body.researchSourceLabel.trim().slice(0, 255) || undefined
+        : undefined,
+    researchSourceUrl:
+      typeof body.researchSourceUrl === "string"
+        ? body.researchSourceUrl.trim() || undefined
+        : undefined,
+    kinfolkRecommendationReason:
+      typeof body.kinfolkRecommendationReason === "string"
+        ? body.kinfolkRecommendationReason.trim().slice(0, 4_000) || undefined
+        : undefined,
+    intakeBatchReference:
+      typeof body.intakeBatchReference === "string"
+        ? body.intakeBatchReference.trim().slice(0, 255) || undefined
+        : undefined,
   };
 }
 
 // ── Geocoding helper ─────────────────────────────────────────────────────
 async function geocode(
   parts: (string | null | undefined)[],
-): Promise<{ lat: string; lng: string }> {
+): Promise<{ lat: string; lng: string } | null> {
   const query = parts.filter(Boolean).join(", ");
   const gmKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!gmKey || !query) return { lat: "0", lng: "0" };
+  if (!gmKey || !query) return null;
   try {
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${gmKey}`;
     const resp = await fetch(url);
@@ -71,7 +94,7 @@ async function geocode(
       };
     }
   } catch { /* non-fatal */ }
-  return { lat: "0", lng: "0" };
+  return null;
 }
 
 export function registerAdminPublishAndClaimRoutes(app: Express): void {
@@ -94,12 +117,12 @@ export function registerAdminPublishAndClaimRoutes(app: Express): void {
 
       try {
         const input = validateDirectBusiness(req.body);
-        const { lat, lng } = await geocode([
-          input.address,
-          input.city,
-          input.state,
-          input.country,
-        ]);
+        // Only a supplied street address is eligible for a map pin. A city-only
+        // fallback would create a misleading pin, and a failed geocode must not
+        // be stored as the old 0,0 placeholder.
+        const coordinates = input.address
+          ? await geocode([input.address, input.city, input.state, input.country])
+          : null;
 
         const resolvedState = input.state ?? null;
         const resolvedCountry =
@@ -120,14 +143,12 @@ export function registerAdminPublishAndClaimRoutes(app: Express): void {
           description:
             input.description ??
             `${input.name} — ${input.category} in ${input.city}.`,
-          address: input.address ?? input.city,
+          address: input.address ?? null,
           city: input.city,
-          latitude: lat,
-          longitude: lng,
           blackOwned: input.blackOwned ?? designations.includes("black-owned"),
           isReferenceOnly: false,
-          status: "active",
-          listingStatus: "live_unclaimed",
+          status: input.listingStatus === "staged" ? "pending_review" : "active",
+          listingStatus: input.listingStatus ?? "live_unclaimed",
           verified: false,
           featured: false,
           promotionEligible: false,
@@ -137,7 +158,17 @@ export function registerAdminPublishAndClaimRoutes(app: Express): void {
           addedVia: "admin_web",
           addedByMemberId: user.id,
           ownerClaimStatus: "unclaimed",
+          dataSource: input.intakeBatchReference ? "admin_backfill" : "admin_web",
+          researchSourceLabel: input.researchSourceLabel ?? null,
+          researchSourceUrl: input.researchSourceUrl ?? null,
+          kinfolkRecommendationReason: input.kinfolkRecommendationReason ?? null,
+          intakeBatchReference: input.intakeBatchReference ?? null,
         };
+
+        if (coordinates) {
+          insertValues.latitude = coordinates.lat;
+          insertValues.longitude = coordinates.lng;
+        }
 
         if (resolvedState) insertValues.state = resolvedState;
         if (resolvedCountry) insertValues.country = resolvedCountry;
@@ -162,7 +193,12 @@ export function registerAdminPublishAndClaimRoutes(app: Express): void {
           ok: true,
           businessId: business.id,
           slug: (business as any).slug ?? null,
-          message: "Business published and live on the map.",
+          message:
+            input.listingStatus === "staged"
+              ? "Business profile saved as staged."
+              : coordinates
+                ? "Business published with an address-backed map pin."
+                : "Business published as a searchable MWM profile without a map pin.",
         });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Invalid input";

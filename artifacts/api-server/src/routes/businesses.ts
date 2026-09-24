@@ -208,6 +208,10 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
 ) {
   const {
     dataSource: _dataSource,
+    researchSourceLabel: _researchSourceLabel,
+    researchSourceUrl: _researchSourceUrl,
+    kinfolkRecommendationReason: _kinfolkRecommendationReason,
+    intakeBatchReference: _intakeBatchReference,
     isDuplicate: _isDuplicate,
     permanentlyHidden: _permanentlyHidden,
     submittedById: _submittedById,

@@ -4408,6 +4408,8 @@ ${businessCatalog
       meta.push(`for: ${b.audiencesServed.slice(0, 2).join(", ")}`);
     if (b.matchReasons?.length)
       meta.push(`why it fits: ${b.matchReasons.slice(0, 2).join("; ")}`);
+    if (b.recommendationContext)
+      meta.push(`researched recommendation context: ${b.recommendationContext.slice(0, 280)}`);
     if (meta.length) parts.push(`  [${meta.join(" | ")}]`);
     return parts.join("\n");
   })

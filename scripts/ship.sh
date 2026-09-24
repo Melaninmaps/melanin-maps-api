@@ -53,13 +53,12 @@ else
   git rm -f --ignore-unmatch dist/index.mjs.map
 fi
 git add -f dist/public/
-git add -f artifacts/api-server/dist/index.mjs artifacts/api-server/dist/BUILD_IDENTITY
-if [[ -f artifacts/api-server/dist/index.mjs.map ]]; then
-  git add -f artifacts/api-server/dist/index.mjs.map
-else
-  git rm -f --ignore-unmatch artifacts/api-server/dist/index.mjs.map
-fi
-git add -f artifacts/api-server/dist/public/
+# `artifacts/api-server/dist/index.mjs` is a generated API bundle. Railway must
+# compile it afresh; tracking that bundle lets a later Docker COPY overwrite the
+# fresh build with an old one. It is intentionally never staged by this helper.
+git rm --cached --ignore-unmatch artifacts/api-server/dist/index.mjs \
+  artifacts/api-server/dist/index.mjs.map \
+  artifacts/api-server/dist/BUILD_IDENTITY
 git commit -m "$COMMIT_MSG"
 echo "✓  committed: $COMMIT_MSG"
 
