@@ -15766,18 +15766,8 @@ async function ensureBetaSafetyColumns(
       CREATE INDEX IF NOT EXISTS businesses_search_name_lower_idx
         ON businesses (lower(name))
     `);
-    await pool.query(`
-      CREATE OR REPLACE VIEW public_businesses AS
-      SELECT b.*
-      FROM businesses b
-      WHERE b.status = 'active'
-        AND COALESCE(b.is_duplicate, false) = false
-        AND COALESCE(b.permanently_hidden, false) = false
-        AND COALESCE(b.listing_status, 'live_unclaimed') IN ('live_unclaimed', 'live_claimed')
-        AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-    `);
     log(
-      "ensureBetaSafetyColumns: permanently_hidden column, indexes, and public_businesses view confirmed",
+      "ensureBetaSafetyColumns: permanently_hidden column and indexes confirmed; canonical public view is managed by visibility hardening",
     );
   } catch (err: unknown) {
     warn(
