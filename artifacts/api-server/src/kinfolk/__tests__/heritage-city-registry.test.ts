@@ -34,6 +34,19 @@ describe("canonical heritage-city geography resolution", () => {
     });
   });
 
+  it("keeps Allentown and the Bucks County directory center state-scoped", () => {
+    expect(resolveTurnGeography("Show me food in Allentown, PA", null)).toMatchObject({
+      city: "Allentown",
+      state: "PA",
+      currentTurn: true,
+    });
+    expect(resolveTurnGeography("Show me food in Bucks County", null)).toMatchObject({
+      city: "Doylestown",
+      state: "PA",
+      currentTurn: true,
+    });
+  });
+
   it("is reusable for existing cities without demographic attributes", () => {
     expect(HERITAGE_CITIES.length).toBeGreaterThan(40);
     expect(resolveHeritageCity("nightlife in the windy city")).toMatchObject({

@@ -30,6 +30,15 @@ export const HERITAGE_CITIES: readonly HeritageCity[] = [
     stateName: "Pennsylvania",
     aliases: ["Philly", "City of Brotherly Love", "The City of Brotherly Love"],
   },
+  { city: "Allentown", state: "PA", stateName: "Pennsylvania" },
+  {
+    city: "Doylestown",
+    state: "PA",
+    stateName: "Pennsylvania",
+    // Bucks County is a county rather than a city. Route it to this tested
+    // central directory scope instead of treating the request as unscoped.
+    aliases: ["Bucks County"],
+  },
   {
     city: "New York",
     state: "NY",
