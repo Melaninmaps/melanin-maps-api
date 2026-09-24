@@ -15,6 +15,10 @@ const researchPathSource = readFileSync(
   fileURLToPath(new URL("../features/library/libraryResearchPaths.ts", import.meta.url)),
   "utf8",
 );
+const culturalSiteSource = readFileSync(
+  fileURLToPath(new URL("../pages/cultural-site-detail.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Living Library research presentation", () => {
   it("allows visible HTTPS citations and rejects unsafe source schemes or credentials", () => {
@@ -116,5 +120,11 @@ describe("Living Library research presentation", () => {
     expect(collectionSource).toContain("governedLibraryResearchHref(researchCollection?.defaultQuestion ?? topic.title)");
     expect(researchPathSource).toContain("&research=true");
     expect(pageSource).toContain("void researchCurrentQuestion();");
+  });
+
+  it("sends cultural and HBCU learning handoffs to the working governed search route", () => {
+    expect(culturalSiteSource).toContain("/library/search?q=");
+    expect(culturalSiteSource).toContain("&research=true");
+    expect(culturalSiteSource).not.toContain("href={`/library?q=");
   });
 });

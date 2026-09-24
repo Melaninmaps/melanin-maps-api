@@ -25,7 +25,14 @@
  * runtime required, mirrors the exact logic in FullMapView.tsx.
  */
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
+
+const mapSource = readFileSync(
+  fileURLToPath(new URL("../components/FullMapView.tsx", import.meta.url)),
+  "utf8",
+);
 
 // ---------------------------------------------------------------------------
 // Simulation helpers
@@ -81,6 +88,15 @@ function makeMapReadyMachine() {
 // ---------------------------------------------------------------------------
 
 describe("Fix 1: animateToRegion guard — GPS resolves before onMapReady", () => {
+  it("uses the guarded queue in the actual map implementation", () => {
+    expect(mapSource).toContain("const mapReadyRef = useRef(false)");
+    expect(mapSource).toContain("const pendingLocationRef = useRef");
+    expect(mapSource).toContain("if (!mapReadyRef.current)");
+    expect(mapSource).toContain("pendingLocationRef.current = location");
+    expect(mapSource).toContain("const pending = pendingLocationRef.current");
+    expect(mapSource).toContain("pendingLocationRef.current = null");
+  });
+
   it("does NOT call animateToRegion when GPS resolves before map is ready", () => {
     const m = makeMapReadyMachine();
 
