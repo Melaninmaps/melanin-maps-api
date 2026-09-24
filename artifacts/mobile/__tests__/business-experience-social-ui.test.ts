@@ -24,7 +24,8 @@ describe("Expo business experience", () => {
     expect(card).toContain("Owner-provided price");
     expect(card).toContain('group("price", "Price"');
     expect(card).toContain("Different wording is shown only when you select it");
-    expect(card).toContain('group("vibe", "Vibe"');
+    expect(card).toContain('group(\n        "vibe",\n        data.policy.atmosphereLabel');
+    expect(card).toContain('data.policy.experienceLayer === "real"');
     expect(card).toContain("These same tags support VIBES search");
     expect(card).toContain("accessibilityState={{ expanded: isExpanded }}");
   });

@@ -7,7 +7,7 @@ import {
   type BusinessExperiencePolicy,
   type CommunityCode,
 } from "@workspace/constants";
-import { CheckCircle2, Heart, Loader2, Sparkles, Tag } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Heart, Loader2, Sparkles, Tag } from "lucide-react";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 type ExperienceResponse = {
@@ -86,6 +86,7 @@ export function CommunityVibes({
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [communityCode, setCommunityCode] = useState<CommunityCode>(() => readCommunityPreference());
+  const [expandedGroup, setExpandedGroup] = useState<BusinessExperienceKind | null>(null);
 
   const selected = useMemo(
     () => new Set((data?.viewerSelections ?? []).map((item) => `${item.kind}:${item.key}`)),
@@ -172,16 +173,30 @@ export function CommunityVibes({
     icon: ReactNode,
   ) {
     if (choices.length === 0) return null;
+    const isExpanded = expandedGroup === kind;
+    const selectedCount = choices.filter((choice) => {
+      if (kind === "price") return selectedPrice === choice.key;
+      return selected.has(`${kind}:${choice.key}`);
+    }).length;
     return (
       <div className="space-y-3">
-        <div className="flex items-start gap-2">
+        <button
+          type="button"
+          aria-expanded={isExpanded}
+          onClick={() => setExpandedGroup((current) => current === kind ? null : kind)}
+          className="flex w-full items-start gap-3 rounded-xl border border-white/15 bg-[#241810] px-4 py-3 text-left transition-colors hover:border-[#CA922B]"
+        >
           <span className="mt-0.5 text-[#CA922B]">{icon}</span>
-          <div>
-            <h4 className="font-serif text-lg font-bold text-white">{title}</h4>
-            <p className="text-xs text-white/50">{description}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
+          <span className="min-w-0 flex-1">
+            <span className="block font-serif text-lg font-bold text-white">{title}</span>
+            <span className="block text-xs text-white/50">{description}</span>
+          </span>
+          <span className="flex items-center gap-2 text-xs font-bold text-[#F0C76D]">
+            {selectedCount > 0 ? `${selectedCount} chosen` : "Choose"}
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        </button>
+        {isExpanded && <div className="flex flex-wrap gap-2">
           {choices.map((choice) => (
             <ChoiceChip
               key={`${kind}:${choice.key}`}
@@ -198,7 +213,7 @@ export function CommunityVibes({
               onToggle={() => void toggle(kind, choice.key)}
             />
           ))}
-        </div>
+        </div>}
       </div>
     );
   }
@@ -228,7 +243,15 @@ export function CommunityVibes({
       </div>
 
       {group("vibe", data.policy.atmosphereLabel, "Atmosphere, occasion, and energy — only shown when it fits this business type.", data.policy.vibeChoices, <Sparkles className="h-4 w-4" />)}
-      {group("reaction", data.policy.reactionLabel, "Fast, positive feedback tailored to what this kind of business actually does.", data.policy.reactionChoices, <Heart className="h-4 w-4" />)}
+      {group(
+        "reaction",
+        data.policy.reactionLabel,
+        data.policy.experienceLayer === "real"
+          ? "Community feedback about what matters when choosing this service."
+          : "Fast, positive feedback tailored to what this kind of business actually does.",
+        data.policy.reactionChoices,
+        <Heart className="h-4 w-4" />,
+      )}
       {ownerPrice && (
         <div className="rounded-xl border border-[#CA922B]/30 bg-[#CA922B]/10 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-bold text-[#F0C76D]"><Tag className="h-4 w-4" />Owner-provided price</div>

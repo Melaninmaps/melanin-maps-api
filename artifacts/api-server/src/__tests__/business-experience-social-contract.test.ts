@@ -22,8 +22,8 @@ const source = (relativePath: string) => readFileSync(
 describe("category-aware business experience contract", () => {
   it("offers atmosphere, quick reviews, price, and Pop Out Pics for restaurants", () => {
     const policy = getBusinessExperiencePolicy("Food & Drink", "restaurant");
-    expect(policy.atmosphereLabel).toBe("What it feels like here");
-    expect(policy.reactionLabel).toBe("Community Says");
+    expect(policy.atmosphereLabel).toBe("The Vibe");
+    expect(policy.reactionLabel).toBe("Community Feedback");
     expect(policy.vibeChoices.map((choice) => choice.key)).toContain("pop_out_pics");
     expect(policy.reactionChoices.length).toBeGreaterThan(0);
     expect(policy.priceChoices.map((choice) => choice.key)).toEqual([
@@ -37,10 +37,36 @@ describe("category-aware business experience contract", () => {
   it("does not attach restaurant atmosphere tags to lawyers or other professional services", () => {
     const legal = getBusinessExperiencePolicy("Legal & Government Services", "attorney");
     const professional = getBusinessExperiencePolicy("Professional Services", "consultant");
-    expect(legal.reactionLabel).toBe("Community Intelligence");
+    expect(legal.reactionLabel).toBe("The Real");
+    expect(legal.experienceLayer).toBe("real");
     expect(legal.vibeChoices).toEqual([]);
     expect(professional.vibeChoices).toEqual([]);
     expect(legal.reactionChoices.length).toBeGreaterThan(0);
+  });
+
+  it("uses The Real for education and actual care settings, while retaining Vibes for play spaces", () => {
+    const school = getBusinessExperiencePolicy("Education & Learning", "Preschools");
+    const daycare = getBusinessExperiencePolicy("Children & Family", "Childcare");
+    const playSpace = getBusinessExperiencePolicy("Children & Family", "Indoor Play");
+
+    expect(school.experienceLayer).toBe("real");
+    expect(school.reactionLabel).toBe("The Real");
+    expect(school.vibeChoices).toEqual([]);
+    expect(daycare.experienceLayer).toBe("real");
+    expect(daycare.reactionLabel).toBe("The Real");
+    expect(daycare.vibeChoices).toEqual([]);
+    expect(playSpace.experienceLayer).toBe("vibe");
+    expect(playSpace.atmosphereLabel).toBe("The Vibe");
+    expect(playSpace.vibeChoices.map((choice) => choice.label)).toContain("Rainy Day Rescue");
+  });
+
+  it("sources new quick reviews from the founder-approved workbook catalog", () => {
+    const policy = getBusinessExperiencePolicy("Food & Drink", "Restaurants");
+    expect(policy.reactionChoices.map((choice) => choice.key)).toContain("official_food_drink_worth_the_drive");
+    expect(policy.reactionChoices.map((choice) => choice.label)).toContain("Worth The Drive");
+
+    const catalog = source("../../../../lib/constants/src/official-feedback-catalog.ts");
+    expect(catalog).toContain("UPDATEDVIBESCATEGORYforbusinesses-1.xlsx");
   });
 
   it("returns only approved and explicitly public creator contributions on business details", () => {

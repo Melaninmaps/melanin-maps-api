@@ -53,11 +53,12 @@ describe("canonical VIBES discovery", () => {
     expect(route).toContain("getBusinessExperiencePolicy(row.category, row.subcategory)");
   });
 
-  it("uses service-specific Community Intelligence instead of VIBES for attorneys", () => {
+  it("uses The Real instead of Vibes for attorneys", () => {
     const policy = getBusinessExperiencePolicy("Legal & Government Services", "Attorneys & Law Firms");
-    expect(policy.atmosphereLabel).toBe("About the experience");
+    expect(policy.atmosphereLabel).toBe("The Vibe");
     expect(policy.vibeChoices).toHaveLength(0);
-    expect(policy.reactionLabel).toBe("Community Intelligence");
+    expect(policy.experienceLayer).toBe("real");
+    expect(policy.reactionLabel).toBe("The Real");
     expect(policy.reactionChoices.length).toBeGreaterThan(0);
   });
 });

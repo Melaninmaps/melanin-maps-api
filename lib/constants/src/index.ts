@@ -78,6 +78,18 @@ export {
 } from "./endorsement-tags";
 export type { EndorsementTagDef } from "./endorsement-tags";
 
+// ── Founder-approved workbook feedback catalog ──────────────────────────────
+// This source catalog preserves the exact Vibe and one-tap praise wording
+// approved in UPDATEDVIBESCATEGORYforbusinesses-1.xlsx.
+export {
+  OFFICIAL_QUICK_REVIEW_TAGS,
+  OFFICIAL_VIBE_TAGS,
+} from "./official-feedback-catalog";
+export type {
+  OfficialQuickReviewTag,
+  OfficialVibeTag,
+} from "./official-feedback-catalog";
+
 // ── Endorsement tag variants ───────────────────────────────────────────────
 export {
   ENDORSEMENT_TAG_VARIANTS,
@@ -94,6 +106,7 @@ export {
   isExperienceChoiceAllowed,
   normalizeOwnerExperienceKey,
   getOwnerProfileExperienceChoices,
+  usesTheRealExperienceLayer,
 } from "./business-experience";
 export type {
   BusinessExperienceKind,

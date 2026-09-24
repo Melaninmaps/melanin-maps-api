@@ -233,8 +233,20 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
         </TouchableOpacity>
       </View>
 
-      {group("vibe", "Vibe", "Atmosphere, occasion, and energy. These same tags support VIBES search.", data.policy.vibeChoices)}
-      {group("reaction", "Community Says", "Quick community feedback tailored to what this business does.", data.policy.reactionChoices)}
+      {group(
+        "vibe",
+        data.policy.atmosphereLabel,
+        "Atmosphere, occasion, and energy. These same tags support VIBES search.",
+        data.policy.vibeChoices,
+      )}
+      {group(
+        "reaction",
+        data.policy.reactionLabel,
+        data.policy.experienceLayer === "real"
+          ? "Community feedback about what matters when choosing this service."
+          : "Quick community feedback tailored to what this business does.",
+        data.policy.reactionChoices,
+      )}
       {ownerPrice && (
         <View style={[styles.ownerPrice, { borderColor: `${colors.primary}55`, backgroundColor: `${colors.primary}16` }]}>
           <View style={styles.ownerPriceHeading}>
