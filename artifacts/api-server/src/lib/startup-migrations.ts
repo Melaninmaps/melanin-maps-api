@@ -120,6 +120,51 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         ON admin_account_lifecycle_events (user_id, created_at DESC);`,
   },
   {
+    // One-time recovery for the three founder-controlled administrator accounts.
+    // The preceding lifecycle migration introduced account_status and an earlier
+    // closed-rollout release could leave a founder's refreshed session without
+    // its established Admin role. This is deliberately NOT a tester or member
+    // grant: it touches only the named founder accounts, records an audit event,
+    // and is permanently idempotent once this migration is marked complete.
+    name: "founder_admin_access_recovery_v1",
+    sql: `WITH founder_accounts AS (
+        SELECT id, COALESCE(account_status, 'active') AS prior_status
+        FROM users
+        WHERE LOWER(TRIM(email)) IN (
+          'tlindsay428@yahoo.com',
+          'tlindsay428@gmail.com',
+          'tlindsay428@aol.com'
+        )
+          AND (
+            role IS DISTINCT FROM 'admin'
+            OR approved IS DISTINCT FROM true
+            OR account_status IS DISTINCT FROM 'active'
+          )
+        FOR UPDATE
+      ), recovered AS (
+        UPDATE users AS u
+        SET role = 'admin',
+            approved = true,
+            account_status = 'active',
+            lifecycle_updated_at = NOW(),
+            lifecycle_updated_by = 'system:founder_admin_access_recovery_v1',
+            lifecycle_reason = 'Founder Admin access recovery',
+            updated_at = NOW()
+        FROM founder_accounts AS f
+        WHERE u.id = f.id
+        RETURNING u.id, f.prior_status
+      )
+      INSERT INTO admin_account_lifecycle_events
+        (user_id, actor_user_id, prior_status, next_status, reason)
+      SELECT
+        id,
+        'system:founder_admin_access_recovery_v1',
+        prior_status,
+        'active',
+        'Founder Admin access recovery'
+      FROM recovered;`,
+  },
+  {
     name: "community_language_proposals_v1",
     sql: `CREATE TABLE IF NOT EXISTS community_language_proposals (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
