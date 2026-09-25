@@ -375,6 +375,66 @@ export function FullMapView({
   // first camera update rather than calling into an unready native map surface.
   const mapReadyRef = useRef(false);
   const pendingLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  // A deliberate name lookup must center the exact MWM listing, but it can
+  // resolve before Android finishes attaching its native map surface. Queue
+  // that one camera action using the same guarded path as device location.
+  const pendingBusinessFocusRef = useRef<Business | null>(null);
+  // Android can unmount the native map surface before delayed focus/fit work
+  // completes (for example, when a member presses Back while a lookup resolves).
+  // Never send an imperative camera action to a detached MapView.
+  const isMapMountedRef = useRef(true);
+  const mapAnimationTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const safelyAnimateToRegion = useCallback((region: Region, duration: number) => {
+    if (!isMapMountedRef.current || !mapReadyRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      map.animateToRegion(region, duration);
+    } catch {
+      // The screen can be leaving while Android detaches the native MapView.
+    }
+  }, []);
+
+  const safelyFitToCoordinates = useCallback((coordinates: { latitude: number; longitude: number }[]) => {
+    if (!isMapMountedRef.current || !mapReadyRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      map.fitToCoordinates(coordinates, {
+        edgePadding: { top: 80, right: 40, bottom: 100, left: 40 },
+        animated: true,
+      });
+    } catch {
+      // The screen can be leaving while Android detaches the native MapView.
+    }
+  }, []);
+
+  const scheduleMapAction = useCallback((action: () => void, delayMs: number) => {
+    const timer = setTimeout(() => {
+      mapAnimationTimersRef.current = mapAnimationTimersRef.current.filter(
+        (activeTimer) => activeTimer !== timer,
+      );
+      if (!isMapMountedRef.current || !mapReadyRef.current) return;
+      action();
+    }, delayMs);
+    mapAnimationTimersRef.current.push(timer);
+    return timer;
+  }, []);
+
+  useEffect(() => {
+    isMapMountedRef.current = true;
+    return () => {
+      isMapMountedRef.current = false;
+      mapReadyRef.current = false;
+      pendingLocationRef.current = null;
+      pendingBusinessFocusRef.current = null;
+      mapAnimationTimersRef.current.forEach((timer) => clearTimeout(timer));
+      mapAnimationTimersRef.current = [];
+      mapRef.current = null;
+    };
+  }, []);
+
   const { user } = useAuth();
   const { preferences: memberPreferences } = useUserPreferences();
 
@@ -608,7 +668,20 @@ export function FullMapView({
       matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
     );
   }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, memberLocation]);
+  const directMatch = businessSearchScope === "explicit_public_listing"
+    ? businesses[0] ?? null
+    : null;
+  const directMatchHasCoordinates = Boolean(
+    directMatch &&
+    Number.isFinite(directMatch.latitude) &&
+    Number.isFinite(directMatch.longitude) &&
+    (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
+  );
   const displayBusinessPins = useMemo(() => {
+    // A member who deliberately searched a named business asked for its exact
+    // location, not a broad city overview. Keep the map to the one documented
+    // match; the bottom card still opens that listing's MWM profile.
+    if (directMatchHasCoordinates && directMatch) return [directMatch];
     // Local/direct results have richer card data and therefore win when the
     // same business exists in both layers. Canonical pins remain underneath as
     // a stable fallback so valid markers do not disappear during a scope change.
@@ -617,7 +690,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [focusedMappedBusinesses, nearbyCanonicalMapPins]);
+  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -628,25 +701,38 @@ export function FullMapView({
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
-  const directMatch = businessSearchScope === "explicit_public_listing"
-    ? businesses[0] ?? null
-    : null;
-  const directMatchHasCoordinates = Boolean(
-    directMatch &&
-    Number.isFinite(directMatch.latitude) &&
-    Number.isFinite(directMatch.longitude) &&
-    (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
-  );
+  const focusDirectBusinessOnMap = useCallback((business: Business) => {
+    setSelectedBusiness(business);
+    setSelectedCulturalSite(null);
+    setSelectedMapEvent(null);
+    setSelectedOrg(null);
+    setSelectedTourEvent(null);
+    setSelectedTourSite(null);
+    setSelectedTravelDestination(null);
+    setSelectedEssentialService(null);
+
+    if (!mapReadyRef.current) {
+      pendingBusinessFocusRef.current = business;
+      return;
+    }
+
+    safelyAnimateToRegion({
+      latitude: business.latitude,
+      longitude: business.longitude,
+      latitudeDelta: 0.025,
+      longitudeDelta: 0.025,
+    }, 500);
+  }, [safelyAnimateToRegion]);
+
   const showDirectMatchOnMap = useCallback(() => {
     if (!directMatch || !directMatchHasCoordinates) return;
-    setSelectedBusiness(directMatch);
-    mapRef.current?.animateToRegion({
-      latitude: directMatch.latitude,
-      longitude: directMatch.longitude,
-      latitudeDelta: 0.08,
-      longitudeDelta: 0.08,
-    }, 500);
-  }, [directMatch, directMatchHasCoordinates]);
+    focusDirectBusinessOnMap(directMatch);
+  }, [directMatch, directMatchHasCoordinates, focusDirectBusinessOnMap]);
+
+  useEffect(() => {
+    if (!directMatch || !directMatchHasCoordinates) return;
+    focusDirectBusinessOnMap(directMatch);
+  }, [directMatch, directMatchHasCoordinates, focusDirectBusinessOnMap]);
 
   const clearEssentialServices = useCallback(() => {
     setEssentialServiceCategory(null);
@@ -753,8 +839,8 @@ export function FullMapView({
           setSelectedMapEvent(null);
           setSelectedOrg(null);
           setSelectedTourEvent(null);
-          setTimeout(() => {
-            mapRef.current?.animateToRegion(
+          scheduleMapAction(() => {
+            safelyAnimateToRegion(
               {
                 latitude: lat,
                 longitude: lng,
@@ -772,7 +858,7 @@ export function FullMapView({
         const lng = parseFloat(focusLng);
         if (!isNaN(lat) && !isNaN(lng)) {
           setShowTourSites(true);
-          mapRef.current?.animateToRegion(
+          safelyAnimateToRegion(
             {
               latitude: lat,
               longitude: lng,
@@ -785,7 +871,7 @@ export function FullMapView({
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, [focusSiteId, focusLat, focusLng, mapReady, tourSites]);
+  }, [focusSiteId, focusLat, focusLng, mapReady, safelyAnimateToRegion, scheduleMapAction, tourSites]);
 
   // Cultural Explorer uses canonical cultural_sites records, which have a
   // different contract from the tour layer above. Keep these focus paths
@@ -819,8 +905,8 @@ export function FullMapView({
     setSelectedOrg(null);
     setSelectedTourEvent(null);
     setSelectedTourSite(null);
-    mapRef.current?.animateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 }, 700);
-  }, [focusCulturalSiteId, focusLat, focusLng, mapReady, culturalSites]);
+    safelyAnimateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 }, 700);
+  }, [focusCulturalSiteId, focusLat, focusLng, mapReady, culturalSites, safelyAnimateToRegion]);
 
   // Markets and recurring events do not share a cultural-site detail route, but
   // a card with verified coordinates may still open the map at that location.
@@ -829,8 +915,8 @@ export function FullMapView({
     const lat = Number(focusLat);
     const lng = Number(focusLng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-    mapRef.current?.animateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 }, 700);
-  }, [focusSiteId, focusCulturalSiteId, focusLat, focusLng, mapReady]);
+    safelyAnimateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 }, 700);
+  }, [focusSiteId, focusCulturalSiteId, focusLat, focusLng, mapReady, safelyAnimateToRegion]);
 
   // A new local/search scope earns a new fit. Ordinary map views must never
   // fit a country- or world-sized result set; only explicit exploration may.
@@ -839,6 +925,7 @@ export function FullMapView({
   }, [localityScopeKey, mapDiscoveryFocus, mapDiscoveryRadius]);
 
   useEffect(() => {
+    if (directMatchHasCoordinates) return;
     // Local search results stay first. When a location/radius refresh returns
     // no local rows, fit the stable website-equivalent pins instead of leaving
     // a 50-mile choice on a blank map.
@@ -853,13 +940,8 @@ export function FullMapView({
     }));
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
-    setTimeout(() => {
-      mapRef.current?.fitToCoordinates(coordinates, {
-        edgePadding: { top: 80, right: 40, bottom: 100, left: 40 },
-        animated: true,
-      });
-      }, 600);
-  }, [mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius]);
+    scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
+  }, [directMatchHasCoordinates, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1221,6 +1303,7 @@ export function FullMapView({
     setLocating(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      if (!isMapMountedRef.current) return;
       if (status !== "granted") return;
       setLocationGranted(true);
       const loc = (await Promise.race([
@@ -1231,6 +1314,7 @@ export function FullMapView({
           setTimeout(() => reject(new Error("location timeout")), 8_000),
         ),
       ])) as Awaited<ReturnType<typeof Location.getCurrentPositionAsync>>;
+      if (!isMapMountedRef.current) return;
       setMemberLocation({
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
@@ -1251,18 +1335,19 @@ export function FullMapView({
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       };
+      if (!isMapMountedRef.current) return;
       if (!mapReadyRef.current) {
         pendingLocationRef.current = location;
       } else {
-        mapRef.current?.animateToRegion(
+        safelyAnimateToRegion(
           { ...location, latitudeDelta: 0.12, longitudeDelta: 0.12 },
           600,
         );
       }
     } catch {} finally {
-      setLocating(false);
+      if (isMapMountedRef.current) setLocating(false);
     }
-  }, []);
+  }, [safelyAnimateToRegion]);
 
   // Ask once when the native map is first opened so nearby results and the
   // camera can use the member's precise device location. A declined request
@@ -1300,14 +1385,28 @@ export function FullMapView({
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
         onMapReady={() => {
+          if (!isMapMountedRef.current) return;
           mapReadyRef.current = true;
           setMapReady(true);
           const pending = pendingLocationRef.current;
           if (pending) {
             pendingLocationRef.current = null;
-            mapRef.current?.animateToRegion(
+            safelyAnimateToRegion(
               { ...pending, latitudeDelta: 0.12, longitudeDelta: 0.12 },
               600,
+            );
+          }
+          const pendingBusiness = pendingBusinessFocusRef.current;
+          if (pendingBusiness) {
+            pendingBusinessFocusRef.current = null;
+            safelyAnimateToRegion(
+              {
+                latitude: pendingBusiness.latitude,
+                longitude: pendingBusiness.longitude,
+                latitudeDelta: 0.025,
+                longitudeDelta: 0.025,
+              },
+              500,
             );
           }
         }}

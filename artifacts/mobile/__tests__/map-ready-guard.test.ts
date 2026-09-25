@@ -95,6 +95,23 @@ describe("Fix 1: animateToRegion guard — GPS resolves before onMapReady", () =
     expect(mapSource).toContain("pendingLocationRef.current = location");
     expect(mapSource).toContain("const pending = pendingLocationRef.current");
     expect(mapSource).toContain("pendingLocationRef.current = null");
+    expect(mapSource).toContain("const pendingBusinessFocusRef = useRef<Business | null>(null)");
+    expect(mapSource).toContain("pendingBusinessFocusRef.current = business");
+    expect(mapSource).toContain("const pendingBusiness = pendingBusinessFocusRef.current");
+    expect(mapSource).toContain("pendingBusinessFocusRef.current = null");
+  });
+
+  it("cancels queued native camera work when the map screen unmounts", () => {
+    expect(mapSource).toContain("const isMapMountedRef = useRef(true)");
+    expect(mapSource).toContain("const mapAnimationTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])");
+    expect(mapSource).toContain("const safelyAnimateToRegion = useCallback");
+    expect(mapSource).toContain("const safelyFitToCoordinates = useCallback");
+    expect(mapSource).toContain("const scheduleMapAction = useCallback");
+    expect(mapSource).toContain("isMapMountedRef.current = false");
+    expect(mapSource).toContain("mapReadyRef.current = false");
+    expect(mapSource).toContain("mapAnimationTimersRef.current.forEach((timer) => clearTimeout(timer))");
+    expect(mapSource).not.toContain("mapRef.current?.animateToRegion");
+    expect(mapSource).not.toContain("mapRef.current?.fitToCoordinates");
   });
 
   it("does NOT call animateToRegion when GPS resolves before map is ready", () => {

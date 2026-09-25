@@ -150,6 +150,16 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("Show pin");
   });
 
+  it("centers a deliberate exact-name search on the matched pin and opens its MWM card", () => {
+    expect(fullMapSource).toContain("const pendingBusinessFocusRef = useRef<Business | null>(null)");
+    expect(fullMapSource).toContain("if (directMatchHasCoordinates && directMatch) return [directMatch]");
+    expect(fullMapSource).toContain("const focusDirectBusinessOnMap = useCallback");
+    expect(fullMapSource).toContain("pendingBusinessFocusRef.current = business");
+    expect(fullMapSource).toContain("const pendingBusiness = pendingBusinessFocusRef.current");
+    expect(fullMapSource).toContain("latitudeDelta: 0.025");
+    expect(fullMapSource).toContain("if (directMatchHasCoordinates) return;");
+  });
+
   it("offers 50 miles for business discovery without widening public-facility availability", () => {
     expect(fullMapSource).toContain("useState<5 | 10 | 25 | 50>(10)");
     expect(fullMapSource).toContain("[5, 10, 25, 50].map");

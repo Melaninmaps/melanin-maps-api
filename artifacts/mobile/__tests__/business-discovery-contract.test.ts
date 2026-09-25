@@ -17,6 +17,10 @@ const webDetailSource = readFileSync(
   decodeURIComponent(new URL("../app/business/[id].web.tsx", import.meta.url).pathname),
   "utf8",
 );
+const mapSource = readFileSync(
+  decodeURIComponent(new URL("../components/FullMapView.tsx", import.meta.url).pathname),
+  "utf8",
+);
 const locationShareSource = readFileSync(
   decodeURIComponent(new URL("../app/location-share.tsx", import.meta.url).pathname),
   "utf8",
@@ -84,5 +88,13 @@ describe("business discovery data contract", () => {
   it("gives deep-linked location sharing an accessible Safety Hub return path", () => {
     expect(locationShareSource).toContain('router.replace("/(tabs)/safety-hub" as never)');
     expect(locationShareSource).toContain('accessibilityLabel="Back"');
+  });
+
+  it("keeps an exact map match on the MWM business page, with directions as a separate action", () => {
+    expect(mapSource).toContain('pathname: "/business/[id]"');
+    expect(mapSource).toContain("params: { id: selectedBusiness.id }");
+    expect(mapSource).toContain("View Business");
+    expect(mapSource).toContain("openMapDirections(");
+    expect(mapSource).toContain("Directions");
   });
 });
