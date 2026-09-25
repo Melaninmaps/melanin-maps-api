@@ -130,6 +130,22 @@ describe("Kinfolk business personalization", () => {
     expect(ranked[0]?.matchReasons[0]).toBe("Matches what you asked for right now");
   });
 
+  it("soft-ranks only a listing's documented metadata for saved planning context", () => {
+    const documentedLuxurySpa = business("luxury", "Documented Luxury Spa", "Beauty & Wellness", "Spa", [
+      "luxury spa experience",
+    ]);
+    const standardSpa = business("standard", "Neighborhood Spa", "Beauty & Wellness", "Spa", []);
+    const ranked = rankGovernedBusinessesForMember([standardSpa, documentedLuxurySpa], {
+      ageBand: "18_plus",
+      preferenceTerms: ["luxury"],
+      priorityPreferenceTerms: ["luxury"],
+      currentRequest: "Find a spa in Philadelphia",
+    });
+    expect(ranked.map((entry) => entry.name)).toEqual(["Documented Luxury Spa", "Neighborhood Spa"]);
+    expect(ranked[0]?.matchReasons).toContain("Matches your saved preference: luxury");
+    expect(ranked[1]?.matchReasons).not.toContain("Matches your saved preference: luxury");
+  });
+
   it("blocks adult-only nightlife for a real persisted 13_15 member but retains a venue with published teen evidence", () => {
     const ranked = rankGovernedBusinessesForMember(PHILADELPHIA_ACTIVITIES, {
       ageBand: "13_15",

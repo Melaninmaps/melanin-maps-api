@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
   parseExplicitMemberMemory,
+  profileDiscoveryContextTerms,
 } from "../explicit-member-memory";
 import { buildPlanningDiscoveryFollowUp } from "../consented-planning-context";
 
@@ -14,6 +16,24 @@ describe("explicit member memory", () => {
     });
     expect(parseExplicitMemberMemory("Remember where we ate last Tuesday?")).toBeNull();
     expect(parseExplicitMemberMemory("What do you remember about me?")).toBeNull();
+  });
+
+  it("recognizes the full typed or transcribed memory phrasing", () => {
+    expect(parseExplicitMemberMemory("This is what I want you to remember about me: I am a Hispanic woman.")).toMatchObject({
+      content: "I am a Hispanic woman.",
+      purpose: "profile_context",
+      isSensitive: true,
+    });
+    expect(parseExplicitMemberMemory("I want you to remember about me: I have children and my budget is tight.")).toMatchObject({
+      purpose: "planning_context",
+      isSensitive: true,
+    });
+  });
+
+  it("answers memory capability questions without sending them to the model", () => {
+    expect(isExplicitMemberMemoryCapabilityQuestion("Can Kinfolk remember my personal preferences?")).toBe(true);
+    expect(isExplicitMemberMemoryCapabilityQuestion("Can you store personal information?")).toBe(true);
+    expect(isExplicitMemberMemoryCapabilityQuestion("What restaurants are open?")).toBe(false);
   });
 
   it("classifies funds, hours, and family needs as planning context", () => {
@@ -36,6 +56,17 @@ describe("explicit member memory", () => {
     expect(workTravel).not.toBeNull();
     expect(isExplicitProfileMemoryRelevant(workTravel!, "What do I need to know in Minneapolis?")).toBe(true);
     expect(isExplicitProfileMemoryRelevant(workTravel!, "Explain photosynthesis.")).toBe(false);
+
+    const healthProfile = parseExplicitMemberMemory("This is what I want you to remember about me: I am a Hispanic woman.");
+    expect(healthProfile).not.toBeNull();
+    expect(isExplicitProfileMemoryRelevant(healthProfile!, "Find a doctor in Philadelphia.")).toBe(true);
+    expect(profileDiscoveryContextTerms(healthProfile!)).toEqual(expect.arrayContaining(["Hispanic", "Latina", "Woman"]));
+    expect(isExplicitProfileMemoryRelevant(healthProfile!, "Explain photosynthesis.")).toBe(false);
+
+    const militaryInterest = parseExplicitMemberMemory("Kinfolk, this is what I want you to remember about me: I follow military activity and deployments.");
+    expect(militaryInterest).not.toBeNull();
+    expect(isExplicitProfileMemoryRelevant(militaryInterest!, "What is happening with the war in Iran?")).toBe(true);
+    expect(isExplicitProfileMemoryRelevant(militaryInterest!, "Explain photosynthesis.")).toBe(false);
   });
 
   it("adds only a bounded decision-aware prompt to deterministic directory results", () => {

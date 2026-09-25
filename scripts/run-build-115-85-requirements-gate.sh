@@ -118,6 +118,8 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/image-creation-safety.test.ts \
   src/kinfolk/__tests__/lean-general-chat.test.ts \
   src/kinfolk/__tests__/consented-planning-context.test.ts \
+  src/kinfolk/__tests__/explicit-member-memory.test.ts \
+  src/kinfolk/__tests__/private-memory-runtime.test.ts \
   src/kinfolk/__tests__/current-research.test.ts \
   src/kinfolk/__tests__/source-relevance.test.ts \
   src/kinfolk/__tests__/contextual-evidence-safety.test.ts \
