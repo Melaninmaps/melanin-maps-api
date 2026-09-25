@@ -18,7 +18,12 @@ const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string;
   fallback: { env: "KINFOLK_FALLBACK_MODEL", fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
   webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
   libraryResearch: { env: "LIBRARY_RESEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
-  transcription: { env: "KINFOLK_TRANSCRIPTION_MODEL", fallback: "gpt-4o-mini-transcribe", allowed: TRANSCRIPTION_MODELS },
+  // The deployed integration accepts Whisper on its multipart transcription
+  // endpoint. Pin this role to that contract instead of allowing a stale
+  // deployment variable to select a model the provider rejects. This restores
+  // voice input without sending recordings through a different service or
+  // retaining any member audio.
+  transcription: { env: null, fallback: "whisper-1", allowed: TRANSCRIPTION_MODELS },
   // Semantic retrieval is an existing optional internal path, not a configurable
   // provider-readiness role. Keep its model centralized without inventing an
   // additional environment role beyond the five approved by this assignment.

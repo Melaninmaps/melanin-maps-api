@@ -49,7 +49,7 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain("Choose Big Cousin, Professor, and other Kinfolk preferences");
     expect(widgetSource).toContain("Microphone access is off");
     expect(widgetSource).toContain("Kinfolk Voice could not start");
-    expect(widgetSource).toContain("Listening… tap the microphone again when you’re finished.");
+    expect(widgetSource).toContain("Recording… 60-second maximum. Tap the microphone again when you’re finished.");
     expect(widgetSource).toContain("Turning your words into text…");
   });
 
@@ -99,11 +99,12 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain('openRef.current && appStateRef.current === "active"');
     expect(widgetSource).toContain('stopPlayback("widget_closed")');
     expect(widgetSource).toContain('stopPlayback("app_background")');
-    expect(widgetSource).toContain("signal: request.signal");
     expect(widgetSource).toContain("if (!voiceGuardRef.current.canPlay(request)");
     expect(widgetSource).toContain("queuedPlaybackRequestRef.current = request");
     expect(widgetSource).toContain("player.play()");
     expect(widgetSource).toContain("setListenUri(undefined)");
+    expect(widgetSource).not.toContain("signal: request.signal");
+    expect(travelSource).not.toContain("signal: request.signal");
   });
 
   it("invalidates deferred travel auto-speech when the app backgrounds", async () => {

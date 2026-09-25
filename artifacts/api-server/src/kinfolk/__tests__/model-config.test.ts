@@ -11,7 +11,7 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("fallback", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("webSearch", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("libraryResearch", {})).toBe("gpt-4o-mini");
-    expect(kinfolkModel("transcription", {})).toBe("gpt-4o-mini-transcribe");
+    expect(kinfolkModel("transcription", {})).toBe("whisper-1");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
@@ -20,14 +20,20 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("fallback", { KINFOLK_FALLBACK_MODEL: "gpt-4.1-mini" })).toBe("gpt-4.1-mini");
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-5" })).toBe("gpt-5");
     expect(kinfolkModel("libraryResearch", { LIBRARY_RESEARCH_MODEL: "gpt-4o" })).toBe("gpt-4o");
-    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "whisper-1" })).toBe("whisper-1");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
   it("fails closed to the role default for arbitrary or cross-purpose IDs", () => {
     expect(kinfolkModel("staffDemo", { KINFOLK_STAFF_DEMO_MODEL: "private-preview-model" })).toBe("gpt-4o-mini");
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-4o-mini-transcribe" })).toBe("gpt-4o-mini");
-    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("gpt-4o-mini-transcribe");
+    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("whisper-1");
+  });
+
+  it("pins transcription to the provider-supported multipart model despite stale deployment variables", () => {
+    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe" }))
+      .toBe("whisper-1");
+    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-4o-transcribe" }))
+      .toBe("whisper-1");
   });
 
   it("omits semantic embedding configuration when dimensions are absent or blank", () => {
