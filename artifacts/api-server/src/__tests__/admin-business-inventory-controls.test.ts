@@ -191,4 +191,5 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("requiresExplicitApply: true");
     expect(adminScreen).toContain("Restore retained access");
   });
+
 });

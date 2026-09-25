@@ -150,6 +150,9 @@ type WaitlistEntry = {
   createdAt: string;
   position: number | null;
   signupSources: string;
+  testerStatus: string | null;
+  testerAccessSource: string | null;
+  pendingTesterAccess: boolean;
 };
 
 type WaitlistCityRollup = {
@@ -174,6 +177,8 @@ type AdminUser = {
   lifecycleUpdatedAt: string | null;
   lifecycleReason: string | null;
   role: "user" | "tester" | "admin";
+  testerStatus: string | null;
+  testerAccessSource: string | null;
   createdAt: string;
 };
 
@@ -757,6 +762,8 @@ export default function Admin() {
 
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [waitlistTotal, setWaitlistTotal] = useState(0);
+  const [waitlistRetainedTotal, setWaitlistRetainedTotal] = useState(0);
+  const [waitlistArchivedCount, setWaitlistArchivedCount] = useState(0);
   const [waitlistPage, setWaitlistPage] = useState(1);
   const [waitlistTotalPages, setWaitlistTotalPages] = useState(1);
   const [pendingWaitlistCount, setPendingWaitlistCount] = useState(0);
@@ -770,6 +777,8 @@ export default function Admin() {
   const PAGE_SIZE = 50;
 
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersRetainedTotal, setUsersRetainedTotal] = useState(0);
+  const [hiddenUserCount, setHiddenUserCount] = useState(0);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -1071,6 +1080,8 @@ export default function Admin() {
         .then((data) => {
           setWaitlist(data.entries ?? []);
           setWaitlistTotal(data.total ?? 0);
+          setWaitlistRetainedTotal(data.retainedTotal ?? data.total ?? 0);
+          setWaitlistArchivedCount(data.archivedCount ?? 0);
           setWaitlistPage(data.page ?? 1);
           setWaitlistTotalPages(data.totalPages ?? 1);
           setPendingWaitlistCount(data.pendingCount ?? 0);
@@ -1093,6 +1104,8 @@ export default function Admin() {
       .then((r) => r.json())
       .then((data) => {
         setUsers(data.users ?? []);
+        setUsersRetainedTotal(data.retainedTotal ?? data.users?.length ?? 0);
+        setHiddenUserCount(data.hiddenCount ?? 0);
         setLastRefreshed(new Date());
       });
   }, [showHiddenUsers]);
@@ -1512,6 +1525,44 @@ export default function Admin() {
       waitlistCityFilter,
     );
     setUpdating(null);
+  };
+
+  const updateWaitlistTesterAccess = async (
+    entry: WaitlistEntry,
+    action: "grant" | "revoke",
+  ) => {
+    const hasCurrentAccount = entry.testerStatus !== null;
+    const message = action === "grant"
+      ? hasCurrentAccount
+        ? `Grant unlimited tester access to ${entry.email}? This approves the existing account and preserves its password, profile, Community activity, saves, and all other data.`
+        : `Pre-approve ${entry.email} for unlimited tester access? No account exists yet, so this preserves the Waitlist record and automatically attaches tester access when that person registers. It does not create or replace a password.`
+      : `Remove only the tester entitlement for ${entry.email}? Their Waitlist record, account, password, profile, Community activity, and any ordinary approval remain unchanged.`;
+    if (!window.confirm(message)) return;
+
+    const updatingKey = `${entry.id}-tester`;
+    setUpdating(updatingKey);
+    try {
+      const response = action === "grant"
+        ? await fetch(`${BASE}api/admin/testers/apply`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ emails: [entry.email], accessSource: "admin_invite" }),
+          })
+        : await fetch(`${BASE}api/admin/testers/${encodeURIComponent(entry.email)}`, {
+            method: "DELETE",
+          });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The tester access change could not be saved.");
+        return;
+      }
+      await Promise.all([
+        loadWaitlist(waitlistPage, statusFilter, showSyntheticWaitlist, waitlistCityFilter),
+        loadUsers(),
+      ]);
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const reconcileRetainedAccess = async () => {
@@ -3306,12 +3357,12 @@ export default function Admin() {
                 <div>
                   <h2 className="text-base font-bold text-[#3A1F0E] flex items-center gap-2">
                     <BarChart2 className="w-4 h-4 text-[#CA922B]" />
-                    {showSyntheticWaitlist ? "Synthetic Audit Signups" : "People on the Waitlist"} ({waitlist.length})
+                    {showSyntheticWaitlist ? "Synthetic Audit Signups" : "People on the Waitlist"} ({waitlistTotal.toLocaleString()} shown of {waitlistRetainedTotal.toLocaleString()} retained)
                   </h2>
-                  <p className="mt-1 text-xs text-[#3A1F0E]/50">
-                    {showSyntheticWaitlist
-                      ? "Automated fixtures are separated from real people and are never part of the default list."
-                      : "Website, iOS, and Android joins are one email-keyed list. Use the source column to see where each person joined."}
+                    <p className="mt-1 text-xs text-[#3A1F0E]/50">
+                      {showSyntheticWaitlist
+                        ? "Automated fixtures are separated from real people and are never part of the default list."
+                      : "Website, iOS, and Android joins are one email-keyed list. Approval controls normal access; tester access is a separate unlimited testing entitlement."}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -3333,11 +3384,11 @@ export default function Admin() {
                     aria-label="Filter waitlist by status"
                     className="rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]"
                   >
-                    <option value="all">All statuses</option>
+                    <option value="all">Active statuses</option>
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
-                    <option value="archived">Hidden / archived</option>
+                    <option value="archived">Archive vault ({waitlistArchivedCount})</option>
                   </select>
                   <label className="flex items-center gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-xs font-semibold text-[#3A1F0E]/70">
                     City
@@ -3482,6 +3533,9 @@ export default function Admin() {
                           Status
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                          Tester access
+                        </th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                           Signed Up
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -3585,6 +3639,19 @@ export default function Admin() {
                             <td className="px-4 py-3">
                               {statusBadge(entry.status)}
                             </td>
+                            <td className="px-4 py-3">
+                              {entry.testerStatus === "active" ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
+                                  Unlimited tester
+                                </span>
+                              ) : entry.pendingTesterAccess ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
+                                  Tester pre-approved
+                                </span>
+                              ) : (
+                                <span className="text-xs text-[#3A1F0E]/40">Standard access</span>
+                              )}
+                            </td>
                             <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
                               {new Date(entry.createdAt).toLocaleDateString(
                                 "en-US",
@@ -3596,7 +3663,7 @@ export default function Admin() {
                               )}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 {entry.status !== "approved" && (
                                   <Button
                                     size="sm"
@@ -3635,6 +3702,27 @@ export default function Admin() {
                                     Reset
                                   </Button>
                                 )}
+                                {entry.testerStatus === "active" || entry.pendingTesterAccess ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => updateWaitlistTesterAccess(entry, "revoke")}
+                                    disabled={updating === entry.id + "-tester"}
+                                    className="h-7 rounded-full border-purple-200 px-3 text-xs text-purple-700 hover:bg-purple-50"
+                                  >
+                                    {updating === entry.id + "-tester" ? "Saving…" : "Remove tester access"}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => updateWaitlistTesterAccess(entry, "grant")}
+                                    disabled={updating === entry.id + "-tester"}
+                                    className="h-7 rounded-full border-purple-200 px-3 text-xs text-purple-700 hover:bg-purple-50"
+                                  >
+                                    {updating === entry.id + "-tester" ? "Saving…" : "Grant tester access"}
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -3667,7 +3755,7 @@ export default function Admin() {
             <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
               <div>
                 <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
-                  Registered Users ({users.length})
+                  Registered Users ({users.length} shown of {usersRetainedTotal} retained)
                 </h2>
                 <p className="text-xs text-[#3A1F0E]/55 mt-1">
                   Hide keeps the account and activity for records; suspend also revokes access. Neither action deletes data.
@@ -3678,7 +3766,7 @@ export default function Admin() {
                 onClick={() => setShowHiddenUsers((visible) => !visible)}
                 className="text-xs font-bold px-3 py-2 rounded-xl border border-[#3A1F0E]/15 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
               >
-                {showHiddenUsers ? "Hide archived accounts" : "View hidden accounts"}
+                {showHiddenUsers ? "Return to active view" : `View hidden accounts (${hiddenUserCount})`}
               </button>
             </div>
             {users.length === 0 ? (

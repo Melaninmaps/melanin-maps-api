@@ -70,7 +70,7 @@ describe("admin dashboard section selector", () => {
     for (const marker of [
       "const reconcileIosWaitlistRegistrations",
       "Add App Store signups",
-      "Hidden / archived",
+      "Archive vault",
       "updateUserLifecycle",
       '"hide" | "suspend" | "restore"',
       "View hidden accounts",
@@ -98,5 +98,18 @@ describe("admin dashboard section selector", () => {
     expect(admin).toContain("Full list refresh is explicit");
     expect(admin).toContain("if (!document.hidden) void loadMetrics();");
     expect(admin).not.toContain("if (!document.hidden) refreshAll();");
+  });
+
+  it("keeps launch approval distinct from the unlimited tester entitlement in the Waitlist", () => {
+    for (const marker of [
+      "const updateWaitlistTesterAccess",
+      "api/admin/testers/apply",
+      "api/admin/testers/${encodeURIComponent(entry.email)}",
+      "Grant tester access",
+      "Remove tester access",
+      "Approval controls normal access; tester access is a separate unlimited testing entitlement",
+    ]) {
+      expect(admin).toContain(marker);
+    }
   });
 });

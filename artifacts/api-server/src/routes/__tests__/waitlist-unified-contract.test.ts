@@ -54,7 +54,7 @@ describe("unified waitlist and recovery contract", () => {
   });
 
   it("returns city and platform rollout aggregates without adding a second person-level list", () => {
-    expect(waitlistRoute).toContain("const [entriesResult, totalResult, pendingResult, testCountResult, cityResult, cityRollupResult]");
+    expect(waitlistRoute).toContain("cityRollupResult, retainedTotalResult, archivedCountResult");
     expect(waitlistRoute).toContain("cityRollup:");
     expect(waitlistRoute).toContain("'[city not recorded]'");
     expect(waitlistRoute).toContain("sourceNotRecorded");
@@ -70,6 +70,9 @@ describe("unified waitlist and recovery contract", () => {
     expect(waitlistRoute).toContain("status = 'archived'");
     expect(waitlistRoute).toContain('"archived"');
     expect(waitlistRoute).not.toContain("DELETE FROM waitlist_signups WHERE id = $1");
+    expect(waitlistRoute).toContain('showingArchived');
+    expect(waitlistRoute).toContain('retainedTotal');
+    expect(waitlistRoute).toContain('archivedCount');
   });
 
   it("permits phone password recovery only for an already verified phone", () => {
@@ -90,5 +93,13 @@ describe("unified waitlist and recovery contract", () => {
     expect(testerRoute).toContain("approved = TRUE");
     expect(accessLedger).toContain("Bulk tester access — paste or upload emails");
     expect(accessLedger).toContain("Upload .txt or .csv");
+  });
+
+  it("returns the separate tester entitlement state beside each Waitlist record", () => {
+    expect(waitlistRoute).toContain("testerStatus: tester?.tester_status ?? null");
+    expect(waitlistRoute).toContain("pendingTesterAccess: pendingTesterEmails.has(email)");
+    expect(waitlistRoute).toContain("pending_tester_emails");
+    expect(testerRoute).toContain('router.post("/admin/testers/apply"');
+    expect(testerRoute).toContain('router.delete("/admin/testers/:email"');
   });
 });

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable, businessSuggestionsTable, waitlistSafetyReportsTable } from "@workspace/db";
-import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, ne, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation } from "../lib/email";
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
@@ -552,11 +552,17 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const statusFilter = String(req.query.status ?? "");
     const allowed = ["pending", "approved", "rejected", "archived"];
     const filterByStatus = allowed.includes(statusFilter) ? statusFilter : null;
+    const showingArchived = filterByStatus === "archived";
     const syntheticFilter = String(req.query.synthetic ?? "people");
     const showingSynthetic = syntheticFilter === "only";
     const cityFilter = String(req.query.city ?? "").trim().slice(0, 120);
     const whereClause = and(
-      filterByStatus ? eq(waitlistTable.status, filterByStatus) : undefined,
+      showingArchived
+        ? eq(waitlistTable.status, "archived")
+        : ne(waitlistTable.status, "archived"),
+      filterByStatus && !showingArchived
+        ? eq(waitlistTable.status, filterByStatus)
+        : undefined,
       showingSynthetic
         ? eq(waitlistTable.isSyntheticTest, true)
         : eq(waitlistTable.isSyntheticTest, false),
@@ -566,7 +572,7 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     );
     const offset = (page - 1) * pageSize;
 
-    const [entriesResult, totalResult, pendingResult, testCountResult, cityResult, cityRollupResult] = await Promise.all([
+    const [entriesResult, totalResult, pendingResult, testCountResult, cityResult, cityRollupResult, retainedTotalResult, archivedCountResult] = await Promise.all([
       db.select().from(waitlistTable).where(whereClause).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset),
       db.select({ total: count() }).from(waitlistTable).where(whereClause),
       db.select({ pending: count() }).from(waitlistTable).where(and(eq(waitlistTable.status, "pending"), eq(waitlistTable.isSyntheticTest, false))),
@@ -607,6 +613,19 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
         )
         .orderBy(desc(count()))
         .limit(200),
+      db
+        .select({ total: count() })
+        .from(waitlistTable)
+        .where(showingSynthetic ? eq(waitlistTable.isSyntheticTest, true) : eq(waitlistTable.isSyntheticTest, false)),
+      db
+        .select({ total: count() })
+        .from(waitlistTable)
+        .where(
+          and(
+            showingSynthetic ? eq(waitlistTable.isSyntheticTest, true) : eq(waitlistTable.isSyntheticTest, false),
+            eq(waitlistTable.status, "archived"),
+          ),
+        ),
     ]);
 
     const total = Number(totalResult[0]?.total ?? 0);
@@ -619,14 +638,55 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
       .orderBy(asc(waitlistTable.createdAt));
     const positionMap = new Map(allForPositions.map((r, i) => [r.id, i + 1]));
 
-    const entriesWithPosition = entriesResult.map((e) => ({
-      ...e,
-      position: positionMap.get(e.id) ?? null,
-    }));
+    // The Waitlist is the launch ledger; tester access is a separate, explicit
+    // entitlement. Return only its status so an administrator can grant or
+    // revoke it in the same row without exposing another member list.
+    const entryEmails = entriesResult
+      .map((entry) => entry.email?.trim().toLowerCase())
+      .filter((email): email is string => Boolean(email));
+    const [testerUsers, pendingTesters] = entryEmails.length > 0
+      ? await Promise.all([
+          pool.query<{
+            email: string;
+            tester_status: string | null;
+            tester_access_source: string | null;
+          }>(
+            `SELECT LOWER(TRIM(email)) AS email, tester_status, tester_access_source
+               FROM users
+              WHERE LOWER(TRIM(email)) = ANY($1::text[])`,
+            [entryEmails],
+          ),
+          pool.query<{ email: string }>(
+            `SELECT LOWER(TRIM(email)) AS email
+               FROM pending_tester_emails
+              WHERE LOWER(TRIM(email)) = ANY($1::text[])
+                AND applied_at IS NULL`,
+            [entryEmails],
+          ),
+        ])
+      : [{ rows: [] }, { rows: [] }];
+    const testerByEmail = new Map(
+      testerUsers.rows.map((row) => [row.email, row]),
+    );
+    const pendingTesterEmails = new Set(pendingTesters.rows.map((row) => row.email));
+
+    const entriesWithPosition = entriesResult.map((e) => {
+      const email = e.email?.trim().toLowerCase() ?? "";
+      const tester = testerByEmail.get(email);
+      return {
+        ...e,
+        position: positionMap.get(e.id) ?? null,
+        testerStatus: tester?.tester_status ?? null,
+        testerAccessSource: tester?.tester_access_source ?? null,
+        pendingTesterAccess: pendingTesterEmails.has(email),
+      };
+    });
 
     res.json({
       entries: entriesWithPosition,
       total,
+      retainedTotal: Number(retainedTotalResult[0]?.total ?? 0),
+      archivedCount: Number(archivedCountResult[0]?.total ?? 0),
       page,
       pageSize,
       totalPages,
