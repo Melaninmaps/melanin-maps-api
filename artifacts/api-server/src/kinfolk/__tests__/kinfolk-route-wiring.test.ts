@@ -68,7 +68,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("ageBand: effectiveAudienceBand");
     expect(chatRoute).toMatch(/audienceAllowsBusinessText\(\{\s*ageBand:\s*effectiveAudienceBand,\s*text:\s*message,?\s*\}\)/);
     expect(chatRoute).toContain("const directNameCatalog = namedBusiness");
-    expect(chatRoute).toContain("safeCatalog.filter((business) => business.id !== namedBusiness.id)");
+    expect(chatRoute).toContain("subjectScopedCatalog.filter((business) => business.id !== namedBusiness.id)");
     expect(chatRoute).toContain("favoriteCategories: prefs?.favoriteCategories");
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
@@ -169,6 +169,13 @@ describe("Kinfolk chat static wiring", () => {
     expect(researchExecution).toBeGreaterThan(semanticPlanner);
     expect(chatRoute).toContain('contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000');
     expect(chatRoute).toContain("I will not substitute a generic city description");
+  });
+
+  it("does not replace a current work-travel city briefing with a restaurant itinerary", () => {
+    expect(chatRoute).toContain('const isCurrentCityBriefing = contextualPlan?.taskMode === "city_briefing"');
+    expect(chatRoute).toMatch(
+      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*\(isTravelPlanningPrompt\(message\)\s*\|\|\s*earlyDecision\.route === "travel_planning"\);/,
+    );
   });
 
   it("does not turn the platform mission or saved services into a member identity assumption", () => {
