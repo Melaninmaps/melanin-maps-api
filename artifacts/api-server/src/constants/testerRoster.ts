@@ -27,4 +27,12 @@ export const FOUNDER_APPROVED_TESTER_EMAILS = Object.freeze([
   "jandirafernandes13@gmail.com",
   "aniaylar@gmail.com",
   "moon.mayes444@gmail.com",
+  "777lmt777@gmail.com",
 ] as const);
+
+// Hash of the founder-authorized one-time invitation password. It is used only
+// when a fixed-roster address has no existing user account. Existing accounts
+// never receive a password change from roster recovery and must keep the
+// password they already created.
+export const FOUNDER_TESTER_INVITE_PASSWORD_HASH =
+  "$2b$10$E3FOTtxTun0sJXa5.tknZ.oIUt.IRpDx7fAMjysb5evjT1sqcRCoq";

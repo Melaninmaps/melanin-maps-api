@@ -20,7 +20,7 @@ function stringSet(constantName: string): string[] {
 }
 
 describe("founder-approved tester roster source guard", () => {
-  it("pins the exact 28-address founder roster and rejects drift", () => {
+  it("pins the exact 29-address founder roster and rejects drift", () => {
     const normalized = FOUNDER_APPROVED_TESTER_EMAILS.map((email) =>
       email.trim().toLowerCase(),
     );
@@ -28,10 +28,13 @@ describe("founder-approved tester roster source guard", () => {
       .update(`${[...normalized].sort().join("\n")}\n`)
       .digest("hex");
 
-    expect(normalized).toHaveLength(28);
-    expect(new Set(normalized).size).toBe(28);
+    expect(normalized).toHaveLength(29);
+    expect(new Set(normalized).size).toBe(29);
     expect(normalized.every((email) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))).toBe(true);
-    expect(digest).toBe("ac56bd3b0f041d1870e4016c4233973f868e7a0dfcbf2c7725c679d3d1f29c97");
+    expect(digest).toBe("3b644cc6f4f50efeaf3f3e10a66e026d8ed406abac1a5c43bf171576d371be05");
+    expect(normalized).toContain("kaylacardwell3@gmail.com");
+    expect(normalized).toContain("dghaskin@gmail.com");
+    expect(normalized).toContain("777lmt777@gmail.com");
   });
 
   it("keeps the canonical roster distinct from startup account mutations", () => {
@@ -75,11 +78,18 @@ describe("founder-approved tester roster source guard", () => {
     expect(migrationExecution).toBeGreaterThan(loopGuard);
   });
 
-  it("does not seed, grant, or reconcile tester access during startup", () => {
+  it("allows only the explicit founder-approved roster recovery during startup", () => {
     const startupStart = startupSource.indexOf("export async function runStartupMigrations");
     const startupEnd = startupSource.indexOf("// ── Helper:", startupStart);
     const startupBody = startupSource.slice(startupStart, startupEnd);
 
+    const recoveryCall = startupBody.indexOf(
+      "await ensureFounderApprovedTesterAccessRecovery(log, warn)",
+    );
+    const seedGuard = startupBody.indexOf('process.env.ENABLE_STARTUP_SEED_GUARDS !== "true"');
+
+    expect(recoveryCall).toBeGreaterThan(-1);
+    expect(seedGuard).toBeGreaterThan(recoveryCall);
     expect(startupBody).not.toContain("() => ensureAdminAccounts(log, warn)");
     expect(startupBody).not.toContain("() => ensureTesterAccounts(log, warn)");
     expect(startupBody).not.toContain("() => ensurePendingTesterEmails(log, warn)");
