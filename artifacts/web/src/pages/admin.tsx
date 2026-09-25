@@ -2226,6 +2226,14 @@ export default function Admin() {
     applyBusinessInventoryFilters({ cities: nextCities });
   };
 
+  // City checkboxes filter immediately. Give keyboard and pointer users an
+  // explicit way to finish with the popover before they continue to a search
+  // or another filter, rather than leaving focus trapped in the city finder.
+  const closeBusinessInventoryCityPicker = () => {
+    setBizCityPickerOpen(false);
+    setBizCityFilterSearch("");
+  };
+
   const changeBusinessInventoryPage = (nextPage: number) => {
     if (nextPage < 1 || nextPage > businessInventoryTotalPages) return;
     setSelectedBusinessIds(new Set());
@@ -4216,6 +4224,7 @@ export default function Admin() {
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
+                      closeBusinessInventoryCityPicker();
                       applyBusinessInventoryFilters({ search: bizSearchInput });
                     }
                   }}
@@ -4225,7 +4234,10 @@ export default function Admin() {
                 />
                 <button
                   type="button"
-                  onClick={() => applyBusinessInventoryFilters({ search: bizSearchInput })}
+                  onClick={() => {
+                    closeBusinessInventoryCityPicker();
+                    applyBusinessInventoryFilters({ search: bizSearchInput });
+                  }}
                   className="rounded-xl bg-[#2B1507] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A1F0E]"
                 >
                   Search
@@ -4350,7 +4362,16 @@ export default function Admin() {
                 <span>Cities (select one or more)</span>
                 <button
                   type="button"
-                  onClick={() => setBizCityPickerOpen((open) => !open)}
+                  onClick={() => {
+                    if (bizCityPickerOpen) closeBusinessInventoryCityPicker();
+                    else setBizCityPickerOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      closeBusinessInventoryCityPicker();
+                    }
+                  }}
                   aria-expanded={bizCityPickerOpen}
                   aria-label="Filter businesses by one or more cities"
                   className="mt-1.5 flex w-full items-center justify-between gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-left text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
@@ -4369,7 +4390,14 @@ export default function Admin() {
                         type="search"
                         value={bizCityFilterSearch}
                         onChange={(event) => setBizCityFilterSearch(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === "Escape") {
+                            event.preventDefault();
+                            closeBusinessInventoryCityPicker();
+                          }
+                        }}
                         placeholder="Find a city or variant"
+                        aria-label="Find a city or variant; press Enter or Escape when done"
                         className="min-w-0 flex-1 rounded-lg border border-[#3A1F0E]/15 px-2.5 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                       />
                       {bizCityFilters.length > 0 && (
@@ -4381,7 +4409,18 @@ export default function Admin() {
                           Clear
                         </button>
                       )}
+                      <button
+                        type="button"
+                        onClick={closeBusinessInventoryCityPicker}
+                        className="rounded-lg bg-[#2B1507] px-2.5 py-2 text-xs font-bold normal-case text-white hover:bg-[#3A1F0E]"
+                        aria-label="Apply selected cities and close city filter"
+                      >
+                        Done
+                      </button>
                     </div>
+                    <p className="mb-2 px-0.5 text-xs font-normal normal-case tracking-normal text-[#3A1F0E]/55">
+                      City selections apply immediately. Select Done, or press Enter or Escape, to continue with other filters.
+                    </p>
                     <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
                       {visibleInventoryCities.map((city) => {
                         const selected = bizCityFilters.includes(city.value);

@@ -100,6 +100,18 @@ describe("admin dashboard section selector", () => {
     expect(admin).not.toContain("if (!document.hidden) refreshAll();");
   });
 
+  it("lets an administrator finish a multi-city filter without trapping the keyboard", () => {
+    for (const marker of [
+      "const closeBusinessInventoryCityPicker",
+      "Apply selected cities and close city filter",
+      "City selections apply immediately. Select Done",
+      'event.key === "Enter" || event.key === "Escape"',
+      "closeBusinessInventoryCityPicker();",
+    ]) {
+      expect(admin).toContain(marker);
+    }
+  });
+
   it("keeps launch approval distinct from the unlimited tester entitlement in the Waitlist", () => {
     for (const marker of [
       "const updateWaitlistTesterAccess",
