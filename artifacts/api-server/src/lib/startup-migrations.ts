@@ -86,6 +86,19 @@ const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
 const PUBLIC_BUSINESSES_VIEW_FILTER =
   "public.business_record_is_public(b.status, b.listing_status, b.is_duplicate, b.permanently_hidden, b.name, b.description, b.data_source, b.phone)";
 
+// Non-identifying process status for the fixed founder-approved tester
+// recovery. The public build-identity response carries only this state, never
+// roster emails, account IDs, counts, credentials, or member data.
+let founderTesterAccessRecoveryStatus: "pending" | "complete" | "failed" =
+  "pending";
+
+export function getFounderTesterAccessRecoveryStatus():
+  | "pending"
+  | "complete"
+  | "failed" {
+  return founderTesterAccessRecoveryStatus;
+}
+
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
     // Retain every member and waitlist record while allowing an administrator
@@ -6096,7 +6109,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   // seed guard. It is required to repair the fixed tester roster when a
   // previously active account is wrongly sent to pending approval and cannot
   // reach the Admin controls that normally perform the same restoration.
-  await ensureFounderApprovedTesterAccessRecovery(log, warn);
+  founderTesterAccessRecoveryStatus = (await ensureFounderApprovedTesterAccessRecovery(log, warn))
+    ? "complete"
+    : "failed";
 
   // Production startup is schema-only by default. Inventory, directory, and
   // content population must remain an explicit, reviewed operator action so a
@@ -7734,7 +7749,7 @@ const PRE_APPROVED_TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;
 async function ensureFounderApprovedTesterAccessRecovery(
   log: (msg: string) => void,
   warn: (msg: string) => void,
-): Promise<void> {
+): Promise<boolean> {
   const roster = FOUNDER_APPROVED_TESTER_EMAILS.map((email) =>
     email.trim().toLowerCase(),
   );
@@ -7898,11 +7913,13 @@ async function ensureFounderApprovedTesterAccessRecovery(
     log(
       `Founder-approved tester access recovery: ${updatedExisting.rowCount ?? 0} existing account(s) restored, ${createdMissing.rowCount ?? 0} missing account(s) provisioned, ${roster.length} fixed roster address(es) reconciled.`,
     );
+    return true;
   } catch (err: unknown) {
     await client.query("ROLLBACK").catch(() => undefined);
     warn(
       `Founder-approved tester access recovery failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+    return false;
   } finally {
     client.release();
   }

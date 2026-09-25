@@ -9,6 +9,7 @@ const migrations = readFileSync(
   new URL("../startup-migrations.ts", import.meta.url),
   "utf8",
 );
+const appSource = readFileSync(new URL("../../app.ts", import.meta.url), "utf8");
 
 function section(start: string, end: string): string {
   const startAt = migrations.indexOf(start);
@@ -83,5 +84,28 @@ describe("founder-approved tester access recovery", () => {
 
     expect(recoveryCall).toBeGreaterThan(-1);
     expect(seedGuard).toBeGreaterThan(recoveryCall);
+  });
+
+  it("records a non-identifying complete-or-failed status only after the recovery transaction returns", () => {
+    expect(migrations).toContain("let founderTesterAccessRecoveryStatus");
+    expect(migrations).toContain("getFounderTesterAccessRecoveryStatus");
+    expect(migrations).toContain('return true;');
+    expect(migrations).toContain('return false;');
+    expect(migrations).toContain('? "complete"');
+    expect(migrations).toContain(': "failed"');
+  });
+
+  it("exposes only the recovery state in build identity, never roster details", () => {
+    const versionStart = appSource.indexOf('app.get("/api/version"');
+    const versionEnd = appSource.indexOf("app.use(", versionStart);
+    const versionRoute = appSource.slice(versionStart, versionEnd);
+
+    expect(versionStart).toBeGreaterThan(-1);
+    expect(versionEnd).toBeGreaterThan(versionStart);
+    expect(versionRoute).toContain("startup_access_recovery");
+    expect(versionRoute).toContain("getFounderTesterAccessRecoveryStatus()");
+    expect(versionRoute).not.toContain("FOUNDER_APPROVED_TESTER_EMAILS");
+    expect(versionRoute).not.toContain("kaylacardwell3@gmail.com");
+    expect(versionRoute).not.toContain("createdMissing");
   });
 });
