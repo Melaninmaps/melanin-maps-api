@@ -49,6 +49,7 @@ import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
 import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDiscoveryPolicy";
 import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
+import { sanitizePublicListingCopy } from "../businesses/publicListingCopy";
 import {
   completedCohortDirectoryDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
@@ -236,8 +237,8 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
   // Old imports placed the internal provenance phrase in descriptions. Do not
   // expose it on any public client; listing status already communicates whether
   // a profile is claimed or verified without changing the business-page layout.
-  const description = publicRecord.description;
-  if (typeof description !== "string") return publicRecord;
+  if (typeof publicRecord.description !== "string") return publicRecord;
+  const description = sanitizePublicListingCopy(publicRecord.description);
   return {
     ...publicRecord,
     description: description
