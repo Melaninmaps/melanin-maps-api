@@ -121,6 +121,13 @@ type IntakeCohortOption = {
   count: number;
 };
 
+type AdminCityOption = {
+  value: string;
+  label: string;
+  variants: string[];
+  count: number;
+};
+
 const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
   protected_historical_cohort: "Protected historical cohort (receipt-backed)",
   user_national_master: "User-supplied national master",
@@ -817,7 +824,9 @@ export default function Admin() {
   const [bizStatusFilter, setBizStatusFilter] = useState<
     "active" | "permanently_closed" | "needs_review" | "archived"
   >("active");
-  const [bizCityFilter, setBizCityFilter] = useState("all");
+  const [bizCityFilters, setBizCityFilters] = useState<string[]>([]);
+  const [bizCityFilterSearch, setBizCityFilterSearch] = useState("");
+  const [bizCityPickerOpen, setBizCityPickerOpen] = useState(false);
   const [bizCategoryFilter, setBizCategoryFilter] = useState("all");
   const [bizIntakeCohortFilter, setBizIntakeCohortFilter] =
     useState<IntakeCohort>("all");
@@ -851,7 +860,7 @@ export default function Admin() {
   const [businessInventoryTotalPages, setBusinessInventoryTotalPages] =
     useState(1);
   const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
-  const [businessCityOptions, setBusinessCityOptions] = useState<string[]>([]);
+  const [businessCityOptions, setBusinessCityOptions] = useState<AdminCityOption[]>([]);
   const [businessServiceOptions, setBusinessServiceOptions] = useState<
     { value: string; label: string }[]
   >([]);
@@ -863,7 +872,7 @@ export default function Admin() {
     pageSize: 50 as 50 | 100,
     search: "",
     status: "active" as typeof bizStatusFilter,
-    city: "all",
+    cities: [] as string[],
     category: "all",
     intakeCohort: "all" as IntakeCohort,
     link: "all" as typeof bizLinkFilter,
@@ -1018,7 +1027,7 @@ export default function Admin() {
       pageSize: businessInventoryPageSize,
       search: bizSearch,
       status: bizStatusFilter,
-      city: bizCityFilter,
+      cities: bizCityFilters,
       category: bizCategoryFilter,
       intakeCohort: bizIntakeCohortFilter,
       link: bizLinkFilter,
@@ -1030,7 +1039,7 @@ export default function Admin() {
     bizAddedFrom,
     bizAddedTo,
     bizCategoryFilter,
-    bizCityFilter,
+    bizCityFilters,
     bizIntakeCohortFilter,
     bizLinkFilter,
     bizSearch,
@@ -1115,7 +1124,7 @@ export default function Admin() {
     pageSize?: 50 | 100;
     search?: string;
     status?: typeof bizStatusFilter;
-    city?: string;
+    cities?: string[];
     category?: string;
     intakeCohort?: IntakeCohort;
     link?: typeof bizLinkFilter;
@@ -1128,7 +1137,7 @@ export default function Admin() {
     const pageSize = next.pageSize ?? current.pageSize;
     const searchValue = next.search ?? current.search;
     const statusValue = next.status ?? current.status;
-    const cityValue = next.city ?? current.city;
+    const cityValues = next.cities ?? current.cities;
     const categoryValue = next.category ?? current.category;
     const intakeCohortValue = next.intakeCohort ?? current.intakeCohort;
     const linkValue = next.link ?? current.link;
@@ -1141,7 +1150,7 @@ export default function Admin() {
     // navigation cannot fall back to an older API default that included the
     // archive in ordinary city or name review.
     params.set("status", statusValue);
-    if (cityValue !== "all") params.set("city", cityValue);
+    cityValues.forEach((city) => params.append("city", city));
     if (categoryValue !== "all") {
       const [scope, ...rawValue] = categoryValue.split(":");
       const value = rawValue.join(":");
@@ -1202,7 +1211,36 @@ export default function Admin() {
           typeof data.totalPages === "number" ? data.totalPages : 1,
         );
         setBusinessCityOptions(
-          Array.isArray(data.cityOptions) ? data.cityOptions : [],
+          Array.isArray(data.cityOptions)
+            ? data.cityOptions
+                .map((option: unknown): AdminCityOption | null => {
+                  if (typeof option === "string") {
+                    const label = option.trim();
+                    return label
+                      ? { value: label.toLowerCase(), label, variants: [label], count: 0 }
+                      : null;
+                  }
+                  if (!option || typeof option !== "object") return null;
+                  const raw = option as {
+                    value?: unknown;
+                    label?: unknown;
+                    variants?: unknown;
+                    count?: unknown;
+                  };
+                  const value = typeof raw.value === "string" ? raw.value.trim() : "";
+                  const label = typeof raw.label === "string" ? raw.label.trim() : value;
+                  if (!value || !label) return null;
+                  return {
+                    value,
+                    label,
+                    variants: Array.isArray(raw.variants)
+                      ? raw.variants.filter((variant): variant is string => typeof variant === "string")
+                      : [label],
+                    count: typeof raw.count === "number" ? raw.count : 0,
+                  };
+                })
+                .filter((option: AdminCityOption | null): option is AdminCityOption => option !== null)
+            : [],
         );
         setBusinessServiceOptions(
           Array.isArray(data.serviceOptions) ? data.serviceOptions : [],
@@ -2054,6 +2092,16 @@ export default function Admin() {
   const needsReviewCount = businessNeedsReviewTotal;
   const archivedCount = businessArchivedInventoryTotal;
   const inventoryCities = businessCityOptions;
+  const selectedInventoryCities = inventoryCities.filter((city) =>
+    bizCityFilters.includes(city.value),
+  );
+  const visibleInventoryCities = inventoryCities.filter((city) => {
+    const query = bizCityFilterSearch.trim().toLowerCase();
+    if (!query) return true;
+    return [city.label, ...city.variants].some((variant) =>
+      variant.toLowerCase().includes(query),
+    );
+  });
   const inventoryServices = Array.from(
     new Map(businessServiceOptions.map((service) => [service.value, service])).values(),
   ).sort((a, b) => a.label.localeCompare(b.label));
@@ -2066,7 +2114,7 @@ export default function Admin() {
     pageSize?: 50 | 100;
     search?: string;
     status?: typeof bizStatusFilter;
-    city?: string;
+    cities?: string[];
     category?: string;
     intakeCohort?: IntakeCohort;
     link?: typeof bizLinkFilter;
@@ -2079,7 +2127,7 @@ export default function Admin() {
       pageSize: next.pageSize ?? businessInventoryPageSize,
       search: next.search ?? bizSearch,
       status: next.status ?? bizStatusFilter,
-      city: next.city ?? bizCityFilter,
+      cities: next.cities ?? bizCityFilters,
       category: next.category ?? bizCategoryFilter,
       intakeCohort: next.intakeCohort ?? bizIntakeCohortFilter,
       link: next.link ?? bizLinkFilter,
@@ -2090,7 +2138,7 @@ export default function Admin() {
     setBizSearch(query.search);
     setBizSearchInput(query.search);
     setBizStatusFilter(query.status);
-    setBizCityFilter(query.city);
+    setBizCityFilters(query.cities);
     setBizCategoryFilter(query.category);
     setBizIntakeCohortFilter(query.intakeCohort);
     setBizLinkFilter(query.link);
@@ -2110,7 +2158,7 @@ export default function Admin() {
       // Archive vault. Archived duplicate records therefore stay out of a
       // repeated city/name cleanup unless an administrator opens the vault.
       status: "active",
-      city: "all",
+      cities: [],
       category: "all",
       intakeCohort: "all",
       link: "all",
@@ -2118,6 +2166,13 @@ export default function Admin() {
       addedTo: "",
       sort: "name_asc",
     });
+  };
+
+  const toggleBusinessInventoryCity = (cityValue: string) => {
+    const nextCities = bizCityFilters.includes(cityValue)
+      ? bizCityFilters.filter((value) => value !== cityValue)
+      : [...bizCityFilters, cityValue];
+    applyBusinessInventoryFilters({ cities: nextCities });
   };
 
   const changeBusinessInventoryPage = (nextPage: number) => {
@@ -4203,19 +4258,93 @@ export default function Admin() {
                   ))}
                 </select>
               </label>
-              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
-                City
-                <select
-                  value={bizCityFilter}
-                  onChange={(event) => applyBusinessInventoryFilters({ city: event.target.value })}
-                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+              <div className="relative text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                <span>Cities (select one or more)</span>
+                <button
+                  type="button"
+                  onClick={() => setBizCityPickerOpen((open) => !open)}
+                  aria-expanded={bizCityPickerOpen}
+                  aria-label="Filter businesses by one or more cities"
+                  className="mt-1.5 flex w-full items-center justify-between gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-left text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
                 >
-                  <option value="all">All cities</option>
-                  {inventoryCities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </label>
+                  <span className="truncate">
+                    {selectedInventoryCities.length === 0
+                      ? "All cities"
+                      : `${selectedInventoryCities.length} ${selectedInventoryCities.length === 1 ? "city" : "cities"} selected`}
+                  </span>
+                  <span aria-hidden="true" className="text-[#3A1F0E]/45">▾</span>
+                </button>
+                {bizCityPickerOpen && (
+                  <div className="absolute z-30 mt-1 w-full min-w-[18rem] rounded-xl border border-[#3A1F0E]/15 bg-white p-3 shadow-xl">
+                    <div className="mb-2 flex gap-2">
+                      <input
+                        type="search"
+                        value={bizCityFilterSearch}
+                        onChange={(event) => setBizCityFilterSearch(event.target.value)}
+                        placeholder="Find a city or variant"
+                        className="min-w-0 flex-1 rounded-lg border border-[#3A1F0E]/15 px-2.5 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                      />
+                      {bizCityFilters.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => applyBusinessInventoryFilters({ cities: [] })}
+                          className="rounded-lg border border-[#3A1F0E]/15 px-2.5 py-2 text-xs font-bold normal-case text-[#3A1F0E]/65 hover:border-[#CA922B]/50"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+                      {visibleInventoryCities.map((city) => {
+                        const selected = bizCityFilters.includes(city.value);
+                        const variants = city.variants.filter(
+                          (variant) => variant.toLowerCase() !== city.label.toLowerCase(),
+                        );
+                        return (
+                          <label
+                            key={city.value}
+                            className="flex cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] hover:bg-[#FAF6EF]"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() => toggleBusinessInventoryCity(city.value)}
+                              className="mt-0.5 h-4 w-4 accent-[#CA922B]"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate">{city.label}</span>
+                              <span className="block text-xs text-[#3A1F0E]/45">
+                                {city.count.toLocaleString()} record{city.count === 1 ? "" : "s"}
+                                {variants.length > 0 ? ` · also stored as ${variants.join(", ")}` : ""}
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                      {visibleInventoryCities.length === 0 && (
+                        <p className="px-2 py-3 text-sm font-normal normal-case text-[#3A1F0E]/50">
+                          No cities match that search.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {selectedInventoryCities.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5 normal-case tracking-normal">
+                    {selectedInventoryCities.map((city) => (
+                      <button
+                        key={city.value}
+                        type="button"
+                        onClick={() => toggleBusinessInventoryCity(city.value)}
+                        className="rounded-full bg-[#CA922B]/15 px-2 py-0.5 text-xs font-semibold text-[#704809] hover:bg-[#CA922B]/25"
+                        title={`Remove ${city.label}`}
+                      >
+                        {city.label} ×
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 Business type / service
                 <select
@@ -4273,6 +4402,10 @@ export default function Admin() {
                 />
               </label>
             </div>
+
+            <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
+              Filters combine: select one or more cities, then add business type, source cohort, website/social, date, and name/key-phrase filters to narrow the same review list.
+            </p>
 
             {bizStatusFilter === "permanently_closed" && (
               <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">

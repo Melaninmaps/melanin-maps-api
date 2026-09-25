@@ -35,6 +35,33 @@ import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortRec
 
 const router: IRouter = Router();
 
+// Administration can group superficial city variants (case, leading/trailing
+// spaces, or repeated spaces) without rewriting source data. A spelling variant
+// such as "philadelphi" intentionally remains its own review choice, so an
+// administrator decides whether to include it alongside Philadelphia.
+const normalizedAdminCitySql =
+  "LOWER(REGEXP_REPLACE(BTRIM(COALESCE(city, '')), '\\s+', ' ', 'g'))";
+
+function normalizeAdminCityFilter(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function parseAdminCityFilters(value: unknown): string[] {
+  const rawValues = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? [value]
+      : [];
+  return [
+    ...new Set(
+      rawValues
+        .filter((entry): entry is string => typeof entry === "string")
+        .map(normalizeAdminCityFilter)
+        .filter(Boolean),
+    ),
+  ].slice(0, 50);
+}
+
 type ListingAuditQueryClient = {
   query: (statement: string, values?: readonly unknown[]) => Promise<unknown>;
 };
@@ -309,7 +336,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       ? Math.min(Math.max(requestedPageSize, 1), MAX_INVENTORY_PAGE_SIZE)
       : DEFAULT_INVENTORY_PAGE_SIZE;
     const search = String(req.query.search ?? "").trim();
-    const city = String(req.query.city ?? "").trim();
+    // Repeated `city` query parameters intentionally mean OR: an Admin can
+    // review Philadelphia plus a known spelling variant in one result set.
+    // The remaining filter controls still combine with this group using AND.
+    const cityFilters = parseAdminCityFilters(req.query.city);
     const category = String(req.query.category ?? "").trim();
     const subcategory = String(req.query.subcategory ?? "").trim();
     // Controlled provenance scopes change only this administrator review list.
@@ -369,7 +399,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const nationalMasterPredicate =
       "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'national_diaspora_master_18294'";
     const filters: string[] = [];
-    const filterParams: string[] = [];
+    const filterParams: unknown[] = [];
     const addFilter = (clause: string, value: string) => {
       filterParams.push(value);
       filters.push(clause.replace("?", `$${filterParams.length}`));
@@ -386,7 +416,10 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       const parameter = `$${filterParams.length}`;
       filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter} OR COALESCE(description, '') ILIKE ${parameter} OR COALESCE(tags::text, '') ILIKE ${parameter} OR COALESCE(vibes::text, '') ILIKE ${parameter} OR COALESCE(website, '') ILIKE ${parameter} OR COALESCE(instagram, '') ILIKE ${parameter} OR COALESCE(tiktok, '') ILIKE ${parameter} OR COALESCE(facebook, '') ILIKE ${parameter} OR COALESCE(twitter, '') ILIKE ${parameter} OR COALESCE(youtube, '') ILIKE ${parameter} OR COALESCE(pinterest, '') ILIKE ${parameter})`;
     }
-    if (city) addFilter("LOWER(city) = LOWER(?)", city);
+    if (cityFilters.length > 0) {
+      filterParams.push(cityFilters);
+      filters.push(`${normalizedAdminCitySql} = ANY($${filterParams.length}::text[])`);
+    }
     if (category) addFilter("category = ?", category);
     if (subcategory) addFilter("subcategory = ?", subcategory);
     if (intakeCohort === "protected_historical_cohort") {
@@ -531,12 +564,16 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
         `SELECT COUNT(*)::text AS total FROM businesses ${where}`,
         filterParams,
       ),
-      pool.query<{ city: string }>(
-        `SELECT DISTINCT city
+      pool.query<{ value: string; label: string; variants: string[]; count: string }>(
+        `SELECT ${normalizedAdminCitySql} AS value,
+                MIN(BTRIM(city)) AS label,
+                ARRAY_AGG(DISTINCT BTRIM(city) ORDER BY BTRIM(city)) AS variants,
+                COUNT(*)::text AS count
            FROM businesses
           WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}
             AND NULLIF(BTRIM(city), '') IS NOT NULL
-          ORDER BY city ASC`,
+          GROUP BY ${normalizedAdminCitySql}
+          ORDER BY MIN(BTRIM(city)) ASC`,
       ),
       pool.query<{ category: string; subcategory: string | null }>(
         `SELECT DISTINCT category, subcategory
@@ -652,7 +689,12 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
       inventoryLimit: MAX_INVENTORY_PAGE_SIZE,
       inventoryIsTruncated: filteredTotal > result.length,
-      cityOptions: cities.rows.map((row) => row.city),
+      cityOptions: cities.rows.map((row) => ({
+        value: row.value,
+        label: row.label,
+        variants: row.variants,
+        count: Number(row.count),
+      })),
       serviceOptions: services.rows.flatMap((row) => [
         { value: `category:${row.category}`, label: `${row.category} — category` },
         ...(row.subcategory
