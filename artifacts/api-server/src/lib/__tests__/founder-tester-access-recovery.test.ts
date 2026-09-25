@@ -89,6 +89,8 @@ describe("founder-approved tester access recovery", () => {
   it("records a non-identifying complete-or-failed status only after the recovery transaction returns", () => {
     expect(migrations).toContain("let founderTesterAccessRecoveryStatus");
     expect(migrations).toContain("getFounderTesterAccessRecoveryStatus");
+    expect(migrations).toContain("getFounderTesterAccessRecoveryStage");
+    expect(migrations).toContain("founderTesterAccessRecoveryStage");
     expect(migrations).toContain('return true;');
     expect(migrations).toContain('return false;');
     expect(migrations).toContain('? "complete"');
@@ -103,7 +105,9 @@ describe("founder-approved tester access recovery", () => {
     expect(versionStart).toBeGreaterThan(-1);
     expect(versionEnd).toBeGreaterThan(versionStart);
     expect(versionRoute).toContain("startup_access_recovery");
+    expect(versionRoute).toContain("startup_access_recovery_stage");
     expect(versionRoute).toContain("getFounderTesterAccessRecoveryStatus()");
+    expect(versionRoute).toContain("getFounderTesterAccessRecoveryStage()");
     expect(versionRoute).not.toContain("FOUNDER_APPROVED_TESTER_EMAILS");
     expect(versionRoute).not.toContain("kaylacardwell3@gmail.com");
     expect(versionRoute).not.toContain("createdMissing");

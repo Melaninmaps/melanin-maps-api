@@ -91,12 +91,17 @@ const PUBLIC_BUSINESSES_VIEW_FILTER =
 // roster emails, account IDs, counts, credentials, or member data.
 let founderTesterAccessRecoveryStatus: "pending" | "complete" | "failed" =
   "pending";
+let founderTesterAccessRecoveryStage = "not_started";
 
 export function getFounderTesterAccessRecoveryStatus():
   | "pending"
   | "complete"
   | "failed" {
   return founderTesterAccessRecoveryStatus;
+}
+
+export function getFounderTesterAccessRecoveryStage(): string {
+  return founderTesterAccessRecoveryStage;
 }
 
 const MIGRATIONS: { name: string; sql: string }[] = [
@@ -7756,7 +7761,9 @@ async function ensureFounderApprovedTesterAccessRecovery(
   const recoveryActor = "system:founder_approved_tester_access_recovery_v1";
   const client = await pool.connect();
   try {
+    founderTesterAccessRecoveryStage = "begin";
     await client.query("BEGIN");
+    founderTesterAccessRecoveryStage = "ensure_pending_tester_schema";
     await client.query(`
       CREATE TABLE IF NOT EXISTS pending_tester_emails (
         id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -7769,6 +7776,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
         applied_to_user_id varchar
       )
     `);
+    founderTesterAccessRecoveryStage = "ensure_access_ledger_schema";
     await client.query(`
       CREATE TABLE IF NOT EXISTS access_entitlement_events (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -7782,6 +7790,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    founderTesterAccessRecoveryStage = "lock_existing_roster_accounts";
     await client.query(
       `SELECT id
          FROM users
@@ -7790,6 +7799,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
       [roster],
     );
 
+    founderTesterAccessRecoveryStage = "restore_existing_accounts";
     const updatedExisting = await client.query<{
       id: string;
       email: string;
@@ -7819,6 +7829,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
       [roster, recoveryActor],
     );
 
+    founderTesterAccessRecoveryStage = "provision_missing_accounts";
     const createdMissing = await client.query<{
       id: string;
       email: string;
@@ -7849,6 +7860,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
       [roster, FOUNDER_TESTER_INVITE_PASSWORD_HASH, recoveryActor],
     );
 
+    founderTesterAccessRecoveryStage = "approve_waitlist_records";
     await client.query(
       `INSERT INTO waitlist_signups (email, status, approved_at, signup_sources)
        SELECT roster.email, 'approved', NOW(), 'web'
@@ -7869,6 +7881,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
              )`,
       [roster],
     );
+    founderTesterAccessRecoveryStage = "upsert_tester_entitlements";
     await client.query(
       `INSERT INTO pending_tester_emails
          (email, tester_access_source, granted_by, granted_at,
@@ -7891,6 +7904,7 @@ async function ensureFounderApprovedTesterAccessRecovery(
       ...createdMissing.rows.map((row) => ({ ...row, createdAccount: true })),
     ];
     if (repaired.length > 0) {
+      founderTesterAccessRecoveryStage = "record_access_audit_events";
       await client.query(
         `INSERT INTO access_entitlement_events
            (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
@@ -7909,7 +7923,9 @@ async function ensureFounderApprovedTesterAccessRecovery(
         ],
       );
     }
+    founderTesterAccessRecoveryStage = "commit";
     await client.query("COMMIT");
+    founderTesterAccessRecoveryStage = "complete";
     log(
       `Founder-approved tester access recovery: ${updatedExisting.rowCount ?? 0} existing account(s) restored, ${createdMissing.rowCount ?? 0} missing account(s) provisioned, ${roster.length} fixed roster address(es) reconciled.`,
     );
