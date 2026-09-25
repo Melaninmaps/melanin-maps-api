@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the complete 123/93
+# Requirements-to-proof source/artifact gate. Defaults to the complete 124/94
 # repair release while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
@@ -26,8 +26,8 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-123}"
-EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-93}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-124}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-94}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "117/87" ] &&
@@ -36,7 +36,8 @@ if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "120/90" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "121/91" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "122/92" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "123/93" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "123/93" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "124/94" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
@@ -124,6 +125,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/audio-inspection.test.ts \
   src/kinfolk/__tests__/transcription-handler.test.ts \
   src/__tests__/kinfolk-server-voice-contract.test.ts \
+  src/__tests__/admin-business-inventory-controls.test.ts \
   src/routes/__tests__/waitlist-unified-contract.test.ts \
   src/kinfolk/__tests__/designation-predicate-policy.test.ts \
   src/businesses/__tests__/mwmCoreDiscoveryPolicy.test.ts \
@@ -147,6 +149,7 @@ pnpm exec vitest run \
   artifacts/web/src/__tests__/essential-services-map.test.ts \
   artifacts/web/src/__tests__/map-profile-navigation.test.ts \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
+  artifacts/mobile/__tests__/ios-background-audio-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
   artifacts/mobile/__tests__/community-map-voice-regressions.test.ts \
   artifacts/mobile/__tests__/community-content-first.test.ts \

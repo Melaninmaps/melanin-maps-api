@@ -57,6 +57,17 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("api/admin/businesses/listing-status");
   });
 
+  it("lets administrators combine multiple normalized city selections without mutating source cities", () => {
+    expect(adminRoute).toContain("function parseAdminCityFilters");
+    expect(adminRoute).toContain("REGEXP_REPLACE(BTRIM(COALESCE(city, ''))");
+    expect(adminRoute).toContain("const cityFilters = parseAdminCityFilters(req.query.city)");
+    expect(adminRoute).toContain("= ANY($${filterParams.length}::text[])");
+    expect(adminRoute).toContain("ARRAY_AGG(DISTINCT BTRIM(city) ORDER BY BTRIM(city)) AS variants");
+    expect(adminScreen).toContain("Cities (select one or more)");
+    expect(adminScreen).toContain("toggleBusinessInventoryCity");
+    expect(adminScreen).toContain('params.append("city", city)');
+  });
+
   it("keeps same-name duplicate review together with a safe server-side A–Z order", () => {
     expect(adminRoute).toContain('const sort = String(req.query.sort ?? "name_asc")');
     expect(adminRoute).toContain('sort === "name_asc"');
