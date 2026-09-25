@@ -67,6 +67,7 @@ import {
   DIRECTORY_REVIEW_INGRESS_JSON_LIMIT,
   registerAutomatedDirectoryRoutes,
 } from "./directoryImport/automatedDirectoryRoutes";
+import { getFounderTesterAccessRecoveryStatus } from "./lib/startup-migrations";
 
 // Defined by esbuild in build.mjs. These values are substituted into the
 // current dist/index.mjs and therefore cannot retain an older generated file.
@@ -231,6 +232,9 @@ app.get("/api/version", (_req: Request, res: Response) => {
     bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || "not-embedded",
     // one-probe stale-deployment detector
     stale_bundle: stale,
+    // Non-identifying transaction completion proof for the fixed founder
+    // tester roster. No roster email, user ID, count, or credential is exposed.
+    startup_access_recovery: getFounderTesterAccessRecoveryStatus(),
   });
 });
 
