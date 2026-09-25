@@ -18,7 +18,8 @@ router.get("/admin/users", async (req: Request, res: Response) => {
   }
   try {
     const includeHidden = String(req.query.visibility ?? "active") === "all";
-    const users = await db
+    const [users, retainedCountResult, hiddenCountResult] = await Promise.all([
+      db
       .select({
         id: usersTable.id,
         email: usersTable.email,
@@ -30,12 +31,21 @@ router.get("/admin/users", async (req: Request, res: Response) => {
         lifecycleUpdatedAt: usersTable.lifecycleUpdatedAt,
         lifecycleReason: usersTable.lifecycleReason,
         role: usersTable.role,
+        testerStatus: usersTable.testerStatus,
+        testerAccessSource: usersTable.testerAccessSource,
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)
       .where(includeHidden ? undefined : ne(usersTable.accountStatus, "hidden"))
-      .orderBy(desc(usersTable.createdAt));
-    res.json({ users });
+      .orderBy(desc(usersTable.createdAt)),
+      db.select({ total: count() }).from(usersTable),
+      db.select({ total: count() }).from(usersTable).where(eq(usersTable.accountStatus, "hidden")),
+    ]);
+    res.json({
+      users,
+      retainedTotal: Number(retainedCountResult[0]?.total ?? 0),
+      hiddenCount: Number(hiddenCountResult[0]?.total ?? 0),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to list users");
     res.status(500).json({ error: "Failed to list users" });
@@ -43,7 +53,8 @@ router.get("/admin/users", async (req: Request, res: Response) => {
 });
 
 // Reversible lifecycle control: Hide removes an account from the default Admin
-// presentation list. Suspend additionally revokes access and active sessions.
+// presentation list. Suspend revokes access while retaining the account,
+// profile, community content, and audit history.
 router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -52,7 +63,11 @@ router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) =
   const id = String(req.params.id);
   const action = String(req.body?.action ?? "");
   const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "";
-  const actionToStatus = { hide: "hidden", suspend: "suspended", restore: "active" } as const;
+  const actionToStatus = {
+    hide: "hidden",
+    suspend: "suspended",
+    restore: "active",
+  } as const;
   if (!(action in actionToStatus)) {
     res.status(400).json({ error: "action must be hide, suspend, or restore" });
     return;
@@ -90,13 +105,13 @@ router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) =
     await client.query(
       `UPDATE users
           SET account_status = $2,
-              approved = CASE WHEN $2 = 'suspended' THEN FALSE ELSE approved END,
+              approved = CASE WHEN $5 = 'suspend' THEN FALSE ELSE approved END,
               lifecycle_updated_at = NOW(),
               lifecycle_updated_by = $3,
               lifecycle_reason = $4,
               updated_at = NOW()
         WHERE id = $1`,
-      [id, nextStatus, req.user?.id ?? null, reason || null],
+      [id, nextStatus, req.user?.id ?? null, reason || null, action],
     );
     await client.query(
       `INSERT INTO admin_account_lifecycle_events
@@ -104,11 +119,17 @@ router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) =
        VALUES ($1, $2, $3, $4, $5)`,
       [id, req.user?.id ?? null, user.account_status, nextStatus, reason || null],
     );
-    if (nextStatus === "suspended") {
+    if (action === "suspend") {
       await client.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [id]);
     }
     await client.query("COMMIT");
-    res.json({ user: { id, accountStatus: nextStatus, approved: nextStatus === "suspended" ? false : user.approved } });
+    res.json({
+      user: {
+        id,
+        accountStatus: nextStatus,
+        approved: action === "suspend" ? false : user.approved,
+      },
+    });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     req.log.error({ err }, "Failed to update account lifecycle");
