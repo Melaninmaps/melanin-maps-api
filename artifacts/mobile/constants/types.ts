@@ -107,6 +107,8 @@ export interface CommunityPost {
   likes: number;
   comments: number;
   commentPolicy?: "everyone" | "followers" | "off";
+  /** The source visibility controls whether an operating-system share can expose this post. */
+  visibility?: "public" | "followers_only";
   timeAgo: string;
   category: PostCategory;
   postType: PostType;

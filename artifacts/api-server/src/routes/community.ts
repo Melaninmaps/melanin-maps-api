@@ -214,6 +214,64 @@ async function resolveCommentAccess(postId: string, viewerId: string): Promise<C
   return { post: normalizedPost, canView: true, canComment: true, reason: null };
 }
 
+/** Keeps feed and thread responses on the same camel-case public contract. */
+function serializeCommunityPost(row: Record<string, any>) {
+  return {
+    id: row.id,
+    authorId: row.author_id ?? row.authorId,
+    authorName: row.author_name ?? row.authorName,
+    authorInitials: row.author_initials ?? row.authorInitials,
+    authorColor: row.author_color ?? row.authorColor,
+    authorImageUrl: row.author_image_url ?? row.authorImageUrl ?? null,
+    content: row.content,
+    category: row.category,
+    postType: row.post_type ?? row.postType,
+    groupId: row.group_id ?? row.groupId ?? null,
+    businessId: row.business_id ?? row.businessId,
+    businessName: row.business_name ?? row.businessName,
+    businessLink: row.business_link ?? row.businessLink,
+    mediaUrls: normalizeCommunityMediaUrls(row.media_urls ?? row.mediaUrls),
+    savedPlaceId: row.saved_place_id ?? row.savedPlaceId,
+    locationTag: row.location_tag ?? row.locationTag,
+    locationVenueName: row.location_venue_name ?? row.locationVenueName ?? null,
+    locationCity: row.location_city ?? row.locationCity ?? null,
+    locationCountry: row.location_country ?? row.locationCountry ?? null,
+    locationPlaceId: row.location_place_id ?? row.locationPlaceId ?? null,
+    locationType: row.location_type ?? row.locationType,
+    hashtags: Array.isArray(row.hashtags) ? row.hashtags : null,
+    topicTag: row.topic_tag ?? row.topicTag,
+    isPrivateTopic: row.is_private_topic ?? row.isPrivateTopic,
+    visibility: row.visibility,
+    commentPolicy: ["everyone", "followers", "off"].includes(row.comment_policy ?? row.commentPolicy)
+      ? (row.comment_policy ?? row.commentPolicy)
+      : "everyone",
+    hasContentWarning: row.has_content_warning ?? row.hasContentWarning ?? false,
+    contentWarningType: row.content_warning_type ?? row.contentWarningType ?? null,
+    audienceRating: row.audience_rating ?? row.audienceRating ?? "everyone",
+    ratingReason: row.rating_reason ?? row.ratingReason ?? null,
+    linkUrl: row.link_url ?? row.linkUrl ?? null,
+    linkTitle: row.link_title ?? row.linkTitle ?? null,
+    linkDescription: row.link_description ?? row.linkDescription ?? null,
+    linkDomain: row.link_domain ?? row.linkDomain ?? null,
+    linkFavicon: row.link_favicon ?? row.linkFavicon ?? null,
+    repostId: row.repost_id ?? row.repostId ?? null,
+    repostAuthorName: row.repost_author_name ?? row.repostAuthorName ?? null,
+    repostAuthorInitials: row.repost_author_initials ?? row.repostAuthorInitials ?? null,
+    repostContent: row.repost_content ?? row.repostContent ?? null,
+    mentionedBusinessId: row.mentioned_business_id ?? row.mentionedBusinessId ?? null,
+    mentionedBusinessName: row.mentioned_business_name ?? row.mentionedBusinessName ?? null,
+    mentionedBusinessTag: row.mentioned_business_tag ?? row.mentionedBusinessTag ?? null,
+    mentionedBusinessRating: row.mentioned_business_rating ?? row.mentionedBusinessRating ?? null,
+    upvotes: row.upvotes,
+    downvotes: row.downvotes,
+    commentsCount: row.comments_count ?? row.commentsCount,
+    threadId: row.thread_id ?? row.threadId ?? null,
+    threadPosition: row.thread_position ?? row.threadPosition ?? 1,
+    threadTotal: row.thread_total ?? row.threadTotal ?? 1,
+    createdAt: row.created_at ?? row.createdAt,
+  };
+}
+
 // GET /community/posts — paginated feed with business enrichment
 router.get("/community/posts", async (req: Request, res: Response) => {
   if (!req.user?.id) {
@@ -1270,9 +1328,13 @@ router.post("/community/posts/:id/read", async (req: Request, res: Response) => 
 
 // GET /community/thread/:threadId — all segments of a thread in order + engagement stats for author
 router.get("/community/thread/:threadId", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   try {
     const threadId = String(req.params["threadId"]);
-    const viewerId = req.user?.id ?? null;
+    const viewerId = req.user.id;
 
     const posts = await db
       .select()
@@ -1281,6 +1343,15 @@ router.get("/community/thread/:threadId", async (req: Request, res: Response) =>
       .orderBy(communityPostsTable.threadPosition);
 
     if (!posts.length) { res.status(404).json({ error: "Thread not found" }); return; }
+
+    // A thread endpoint must honor the same relationship, privacy, block, group,
+    // moderation, and test-content boundary as the feed and comments endpoints.
+    // Do not disclose even a partial thread when any segment is unavailable.
+    const access = await Promise.all(posts.map((post) => resolveCommentAccess(post.id, viewerId)));
+    if (access.some((entry) => !entry.canView)) {
+      res.status(404).json({ error: "Thread not found" });
+      return;
+    }
 
     const totalSegments = posts.length;
 
@@ -1312,7 +1383,13 @@ router.get("/community/thread/:threadId", async (req: Request, res: Response) =>
       suggestVideoUpgrade = completionReaders >= 10 && completionRate >= 0.7;
     }
 
-    res.json({ posts, threadId, totalSegments, stats: statsPayload, suggestVideoUpgrade });
+    res.json({
+      posts: posts.map((post) => serializeCommunityPost(post)),
+      threadId,
+      totalSegments,
+      stats: statsPayload,
+      suggestVideoUpgrade,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch thread");
     res.status(500).json({ error: "Failed to fetch thread" });

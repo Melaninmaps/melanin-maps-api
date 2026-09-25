@@ -14,6 +14,7 @@ export type BusinessSubjectKey =
   | "hotel"
   | "nightlife"
   | "hvac"
+  | "plumbing"
   | "auto_repair"
   | "locs"
   | "spa"
@@ -175,6 +176,25 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     match:
       /\b(?:hvac|heating and (?:air|cooling)|air conditioning|a\/c repair)\b/i,
     searchTerms: ["hvac", "heating", "air conditioning", "cooling"],
+  },
+  {
+    key: "plumbing",
+    label: "plumbing services",
+    match:
+      /\b(?:plumb(?:er|ers|ing)?|drain(?:age)? services?|pipe repair|water heater repair|sewer services?)\b/i,
+    // These governed service terms are matched only against the listing name,
+    // category, subcategory, or administrator-managed specialty. They prevent a
+    // saved nightlife or other preference from being presented as a plumber.
+    searchTerms: [
+      "plumber",
+      "plumbing",
+      "plumbing service",
+      "drain service",
+      "pipe repair",
+      "water heater repair",
+      "sewer service",
+    ],
+    priority: 24,
   },
   {
     key: "auto_repair",
@@ -395,6 +415,46 @@ export function deriveBusinessSubject(
 
 export function hasBusinessSubject(message: string): boolean {
   return deriveBusinessSubject(message) !== null;
+}
+
+/**
+ * Business cards are permitted only when the stored service classification is a
+ * direct match for the member's current request. Profile preferences may rank
+ * those matching cards, but they can never substitute an unrelated service.
+ */
+export function matchesStructuredBusinessSubject(
+  business: Readonly<{
+    name?: string | null;
+    category?: string | null;
+    subcategory?: string | null;
+    specialties?: readonly string[] | null;
+  }>,
+  subject: NormalizedBusinessSubject,
+): boolean {
+  const structured = [
+    business.name ?? "",
+    business.category ?? "",
+    business.subcategory ?? "",
+    ...(business.specialties ?? []),
+  ]
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!structured) return false;
+
+  if (
+    subject.key === "hvac" &&
+    /\b(?:auto|automotive|car|vehicle)\b/.test(structured) &&
+    !/\b(?:hvac|heating|furnace|heat pump)\b/.test(structured)
+  ) {
+    return false;
+  }
+
+  return subject.searchTerms.some((term) => {
+    const phrase = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    return Boolean(phrase) && ` ${structured} `.includes(` ${phrase} `);
+  });
 }
 
 export function businessSubjectSearchPatterns(

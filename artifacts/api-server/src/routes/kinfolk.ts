@@ -197,7 +197,10 @@ import {
   summarizeKinfolkProviderReadiness,
 } from "../kinfolk/provider-readiness";
 import { rankResults } from "../kinfolk/web-ranker";
-import { deriveBusinessSubject } from "../kinfolk/business-subject";
+import {
+  deriveBusinessSubject,
+  matchesStructuredBusinessSubject,
+} from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
 import {
@@ -8966,8 +8969,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       destination &&
       !travelPlanning &&
       !contextResolution.suppressBusinessRecommendations &&
-      (intentClass === "culture_entertainment" ||
-        intentClass === "business_discovery")
+      intentClass === "culture_entertainment"
     ) {
       const discoveryPattern =
         /entertainment|bar|nightlife|music|restaurant|food|recreation/i;
@@ -9195,6 +9197,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       id: business.id,
       name: business.name,
       category: business.category,
+      subcategory: business.subcategory,
+      specialties: business.specialties,
       city: business.city,
       state: business.stateCode,
       address: business.address ?? undefined,
@@ -9204,16 +9208,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       verified: business.verified,
       matchReasons: business.matchReasons,
     }));
+    // Saved preferences may rank matching plumbing results, but they must never
+    // substitute a lounge, restaurant, or another unrelated service for the
+    // member's current request. Unspecified discovery requests get text guidance
+    // rather than arbitrary cards until the member names a service or business.
+    const currentDiscoverySubject =
+      intentClass === "business_discovery"
+        ? deriveBusinessSubject(message)
+        : null;
+    const subjectScopedCatalog = currentDiscoverySubject
+      ? safeCatalog.filter((business) =>
+          matchesStructuredBusinessSubject(business, currentDiscoverySubject),
+        )
+      : intentClass === "business_discovery"
+        ? []
+        : safeCatalog;
     // A direct-name lookup is a deliberate member request, not a default
     // promotion. Keep its MWM card available even when the listing falls
     // outside the default documented-Diaspora recommendation catalog.
     const directNameCatalog = namedBusiness
       ? [
-          ...safeCatalog.filter((business) => business.id !== namedBusiness.id),
+          ...subjectScopedCatalog.filter((business) => business.id !== namedBusiness.id),
           {
             id: namedBusiness.id,
             name: namedBusiness.name,
             category: namedBusiness.category,
+            subcategory: namedBusiness.subcategory ?? null,
+            specialties: namedBusiness.specialties ?? [],
             city: namedBusiness.city,
             state: namedBusiness.stateCode,
             address: namedBusiness.address ?? undefined,
@@ -9224,7 +9245,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             recommendationReason: `You asked for ${namedBusiness.name} by name. Tap its card to open the Mapping With Melanin listing.`,
           },
         ]
-      : safeCatalog;
+      : subjectScopedCatalog;
     const localCoverageNote =
       webResearchSourceNote ??
       (assembledSources.length === 0 && destination

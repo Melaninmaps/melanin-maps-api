@@ -67,7 +67,9 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(travel).toContain("/api/kinfolk/transcribe");
     expect(travel).toContain('form.append("durationMs", String(durationMs))');
     expect(travel).toContain("Record a voice question for Kinfolk");
-    expect(travel).toContain("await handleSend(payload.text)");
+    expect(travel).toContain("setInputText(payload.text)");
+    expect(travel).toContain("Review your transcription, then tap Send when you’re ready.");
+    expect(travel).not.toContain("await handleSend(payload.text)");
   });
 
   it("keeps How do you travel multi-select and explains the behavior", () => {

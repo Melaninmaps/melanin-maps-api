@@ -136,4 +136,12 @@ describe("admin dashboard section selector", () => {
       expect(admin).toContain(marker);
     }
   });
+
+  it("keeps internal intake and Kinfolk reconciliation notes out of routine inventory rows", () => {
+    expect(admin).toContain("Added &amp; inventory");
+    expect(admin).toContain("Source receipts retained in Admin exports and audit history.");
+    expect(admin).not.toContain("Added &amp; research");
+    expect(admin).not.toContain("Kinfolk context:");
+    expect(admin).not.toContain("{biz.intakeBatchReference} ·");
+  });
 });

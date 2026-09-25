@@ -119,6 +119,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     likes: (raw.upvotes as number) ?? 0,
     comments: (raw.commentsCount as number) ?? 0,
     commentPolicy: (["everyone", "followers", "off"].includes(String(raw.commentPolicy)) ? raw.commentPolicy : "everyone") as CommunityPost["commentPolicy"],
+    visibility: raw.visibility === "followers_only" ? "followers_only" : "public",
     timeAgo: formatTimeAgo(raw.createdAt as string),
     category: (raw.category === "recommendation" || raw.category === "alert" || raw.category === "question" ? raw.category : "discussion") as CommunityPost["category"],
     postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place" || (raw.postType as string) === "safety" || (raw.postType as string) === "travel"
@@ -1490,6 +1491,7 @@ export default function CommunityScreen() {
                 onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
                 onTopicPress={(tag) => router.push({ pathname: "/topic-feed", params: { topic: tag.toLowerCase() } } as any)}
                 onHashtagPress={(tag) => router.push({ pathname: "/hashtag-feed", params: { tag } } as any)}
+                onThreadPress={(threadId) => router.push({ pathname: "/community-thread", params: { threadId } } as never)}
                 onEdit={handleEditPost}
                 onDelete={(id) => handleDeletePost(id)}
               />
