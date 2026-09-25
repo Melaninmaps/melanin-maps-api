@@ -60,7 +60,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   it("lets administrators combine multiple normalized city selections without mutating source cities", () => {
     expect(adminRoute).toContain("function parseAdminCityFilters");
     expect(adminRoute).toContain("REGEXP_REPLACE(BTRIM(COALESCE(city, ''))");
-    expect(adminRoute).toContain("const cityFilters = parseAdminCityFilters(req.query.city)");
+    expect(adminRoute).toContain("const cityFilters = parseAdminCityFilters(query.city)");
     expect(adminRoute).toContain("= ANY($${filterParams.length}::text[])");
     expect(adminRoute).toContain("ARRAY_AGG(DISTINCT BTRIM(city) ORDER BY BTRIM(city)) AS variants");
     expect(adminScreen).toContain("Cities (select one or more)");
@@ -69,7 +69,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("keeps same-name duplicate review together with a safe server-side A–Z order", () => {
-    expect(adminRoute).toContain('const sort = String(req.query.sort ?? "name_asc")');
+    expect(adminRoute).toContain('const sort = String(query.sort ?? "name_asc")');
     expect(adminRoute).toContain('sort === "name_asc"');
     expect(adminRoute).toContain("LOWER(name) ASC NULLS LAST, id ASC");
     expect(adminRoute).toContain("created_at DESC, id ASC");
@@ -79,7 +79,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("keeps archived duplicate records in a separate vault and counts each discovery surface", () => {
-    expect(adminRoute).toContain('const status = String(req.query.status ?? "active")');
+    expect(adminRoute).toContain('const status = String(query.status ?? "active")');
     expect(adminRoute).toContain("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
     expect(adminRoute).toContain("const liveInventoryWhere");
     expect(adminRoute).toContain("const archivedInventoryWhere");
@@ -145,6 +145,27 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
   });
 
+  it("exports the exact filtered inventory, Archive vault, or deliberate all-inventory scope", () => {
+    expect(adminRoute).toContain("compileAdminBusinessInventoryFilters");
+    expect(adminRoute).toContain("status !== \"all\"");
+    expect(adminRoute).toContain("all-inventory-including-archive");
+    expect(adminRoute).not.toContain(".limit(2000)");
+    expect(adminScreen).toContain("Export current list CSV");
+    expect(adminScreen).toContain("Export all + Archive CSV");
+    expect(adminScreen).toContain("status: bizStatusFilter");
+    expect(adminScreen).toContain("status=all&sort=name_asc");
+  });
+
+  it("restores only selected Archive vault records and leaves the remainder hidden", () => {
+    expect(adminScreen).toContain("const restorableFilteredBiz");
+    expect(adminScreen).toContain("const restoreSelectedBusinesses");
+    expect(adminScreen).toContain("Restore selected (");
+    expect(adminScreen).toContain("All other Archive vault records remain hidden.");
+    expect(adminRoute).toContain("Bulk restore accepts only selected records from the Archive vault");
+    expect(adminRoute).toContain('row.listing_status !== "archived"');
+    expect(adminRoute).toContain("restore_public_discovery");
+  });
+
   it("stores intake evidence and a Kinfolk recommendation context through an archive", () => {
     for (const field of [
       "researchSourceLabel",
@@ -161,7 +182,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("separates the protected historical cohort from the user-supplied national master by receipts", () => {
-    expect(adminRoute).toContain('const intakeCohort = String(req.query.intakeCohort ?? "all").trim()');
+    expect(adminRoute).toContain('const intakeCohort = String(query.intakeCohort ?? "all").trim()');
     expect(adminRoute).toContain("COMPLETED_COHORT_MANIFEST_CHECKSUM");
     expect(adminRoute).toContain("directory_publication_provenance");
     expect(adminRoute).toContain("completed_cohort_directory_discovery_receipts");

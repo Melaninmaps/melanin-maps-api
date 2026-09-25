@@ -2178,7 +2178,28 @@ export default function Admin() {
   const archivableFilteredBiz = filteredBiz.filter(
     (b) => b.listingStatus !== "archived",
   );
+  const restorableFilteredBiz = filteredBiz.filter(
+    (b) => b.listingStatus === "archived",
+  );
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
+  const businessInventoryExportHref = (() => {
+    const params = new URLSearchParams({ status: bizStatusFilter });
+    if (bizSearch.trim()) params.set("search", bizSearch.trim());
+    bizCityFilters.forEach((city) => params.append("city", city));
+    if (bizCategoryFilter !== "all") {
+      const [scope, ...rawValue] = bizCategoryFilter.split(":");
+      const value = rawValue.join(":");
+      if (scope === "category") params.set("category", value);
+      if (scope === "subcategory") params.set("subcategory", value);
+    }
+    if (bizIntakeCohortFilter !== "all") params.set("intakeCohort", bizIntakeCohortFilter);
+    if (bizLinkFilter !== "all") params.set("link", bizLinkFilter);
+    if (bizAddedFrom) params.set("addedFrom", bizAddedFrom);
+    if (bizAddedTo) params.set("addedTo", bizAddedTo);
+    if (bizSort !== "added_desc") params.set("sort", bizSort);
+    return `${BASE}api/admin/businesses/export-csv?${params}`;
+  })();
+  const allBusinessInventoryExportHref = `${BASE}api/admin/businesses/export-csv?status=all&sort=name_asc`;
 
   const applyBusinessInventoryFilters = (next: {
     pageSize?: 50 | 100;
@@ -2268,20 +2289,30 @@ export default function Admin() {
     });
   };
 
-  const selectAllArchivableFilteredBusinesses = () => {
-    setSelectedBusinessIds(new Set(archivableFilteredBiz.map((business) => business.id)));
+  const selectAllVisibleBusinessListings = () => {
+    const selectable = bizStatusFilter === "archived"
+      ? restorableFilteredBiz
+      : archivableFilteredBiz;
+    setSelectedBusinessIds(new Set(selectable.map((business) => business.id)));
   };
 
-  const archiveSelectedBusinesses = async () => {
+  const updateSelectedBusinessListingStatus = async (
+    listingStatus: "archived" | "live_unclaimed",
+  ) => {
     const ids = [...selectedBusinessIds];
     if (ids.length === 0) return;
+    const restoring = listingStatus === "live_unclaimed";
     const reason = window.prompt(
-      `Why should these ${ids.length} business profile${ids.length === 1 ? "" : "s"} be removed from public discovery? This is reversible. Their profiles, research, source links, Kinfolk context, media, and audit history remain preserved.`,
+      restoring
+        ? `Why should these ${ids.length} selected archived business profile${ids.length === 1 ? "" : "s"} return to public discovery? This is reversible and recorded. Only the checked Archive vault records will be restored; all other archived records stay hidden.`
+        : `Why should these ${ids.length} business profile${ids.length === 1 ? "" : "s"} be removed from public discovery? This is reversible. Their profiles, research, source links, Kinfolk context, media, and audit history remain preserved.`,
     )?.trim();
     if (!reason) return;
     if (
       !window.confirm(
-        `Remove ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} from public search, Kinfolk, and the map? This archives—not deletes—them.`,
+        restoring
+          ? `Restore only these ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} to public search, Kinfolk, and map discovery? All other Archive vault records remain hidden.`
+          : `Remove ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} from public search, Kinfolk, and the map? This archives—not deletes—them.`,
       )
     )
       return;
@@ -2291,21 +2322,31 @@ export default function Admin() {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, listingStatus: "archived", reason }),
+        body: JSON.stringify({ ids, listingStatus, reason }),
       });
       const body = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
-        window.alert(body.error ?? "The selected listings could not be archived.");
+        window.alert(body.error ?? (restoring
+          ? "The selected archived listings could not be restored."
+          : "The selected listings could not be archived."));
         return;
       }
       setSelectedBusinessIds(new Set());
       await loadBusinesses();
     } catch {
-      window.alert("The selected listings could not be archived. Please try again.");
+      window.alert(restoring
+        ? "The selected archived listings could not be restored. Please try again."
+        : "The selected listings could not be archived. Please try again.");
     } finally {
       setBulkBusinessUpdating(false);
     }
   };
+
+  const archiveSelectedBusinesses = () =>
+    updateSelectedBusinessListingStatus("archived");
+
+  const restoreSelectedBusinesses = () =>
+    updateSelectedBusinessListingStatus("live_unclaimed");
 
   // ── Waitlist analytics (all computed client-side) ─────────────────────────
   const referralCounts: Record<string, number> = {};
@@ -2898,12 +2939,18 @@ export default function Admin() {
                   <PlusCircle className="w-3.5 h-3.5" /> Add Business
                 </button>
                 <a
-                  href={`${BASE}api/admin/businesses/export-csv`}
+                  href={businessInventoryExportHref}
                   download
                   className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
                 >
-                  <Download className="w-3.5 h-3.5" /> Export Leads CSV (
-                  {businesses.length})
+                  <Download className="w-3.5 h-3.5" /> Export current list CSV
+                </a>
+                <a
+                  href={allBusinessInventoryExportHref}
+                  download
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/70 hover:text-[#3A1F0E] transition-colors py-1 px-3 rounded-lg border border-[#3A1F0E]/15 hover:border-[#CA922B]/50 hover:bg-[#CA922B]/5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export all + Archive CSV
                 </a>
               </div>
             )}
@@ -4590,11 +4637,11 @@ export default function Admin() {
                     <option value={100}>100</option>
                   </select>
                 </label>
-                {bizStatusFilter !== "archived" && (
+                {bizStatusFilter !== "archived" ? (
                   <>
                     <button
                       type="button"
-                      onClick={selectAllArchivableFilteredBusinesses}
+                      onClick={selectAllVisibleBusinessListings}
                       disabled={archivableFilteredBiz.length === 0}
                       className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -4610,6 +4657,28 @@ export default function Admin() {
                       {bulkBusinessUpdating
                         ? "Archiving…"
                         : `Archive selected (${selectedVisibleBusinessCount})`}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={selectAllVisibleBusinessListings}
+                      disabled={restorableFilteredBiz.length === 0}
+                      className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Select this page ({restorableFilteredBiz.length.toLocaleString()})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={restoreSelectedBusinesses}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {bulkBusinessUpdating
+                        ? "Restoring…"
+                        : `Restore selected (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 )}
@@ -4637,25 +4706,25 @@ export default function Admin() {
                   <thead>
                     <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
                       <th className="w-10 px-3 py-3 text-center">
-                        {bizStatusFilter === "archived" ? (
-                          <span className="text-xs font-bold text-[#3A1F0E]/35" title="Archive vault rows are restored one at a time">
-                            Vault
-                          </span>
-                        ) : (
-                          <input
-                            type="checkbox"
-                            aria-label="Select all visible live listings"
-                            checked={
-                              archivableFilteredBiz.length > 0 &&
-                              archivableFilteredBiz.every((business) => selectedBusinessIds.has(business.id))
-                            }
-                            onChange={(event) => {
-                              if (event.target.checked) selectAllArchivableFilteredBusinesses();
-                              else setSelectedBusinessIds(new Set());
-                            }}
-                            className="h-4 w-4 accent-[#CA922B]"
-                          />
-                        )}
+                        <input
+                          type="checkbox"
+                          aria-label={bizStatusFilter === "archived"
+                            ? "Select all visible archived listings"
+                            : "Select all visible live listings"}
+                          checked={
+                            (bizStatusFilter === "archived"
+                              ? restorableFilteredBiz
+                              : archivableFilteredBiz).length > 0 &&
+                            (bizStatusFilter === "archived"
+                              ? restorableFilteredBiz
+                              : archivableFilteredBiz).every((business) => selectedBusinessIds.has(business.id))
+                          }
+                          onChange={(event) => {
+                            if (event.target.checked) selectAllVisibleBusinessListings();
+                            else setSelectedBusinessIds(new Set());
+                          }}
+                          className="h-4 w-4 accent-[#CA922B]"
+                        />
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Business
@@ -4687,18 +4756,13 @@ export default function Admin() {
                         className={`border-b border-[#3A1F0E]/5 transition-colors hover:bg-[#FAF6EF]/50 ${selectedBusinessIds.has(biz.id) ? "bg-[#CA922B]/10" : i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
                       >
                         <td className="px-3 py-3 text-center">
-                          {bizStatusFilter === "archived" ? (
-                            <span className="text-xs text-[#3A1F0E]/35">—</span>
-                          ) : (
-                            <input
-                              type="checkbox"
-                              aria-label={`Select ${biz.name}`}
-                              checked={selectedBusinessIds.has(biz.id)}
-                              disabled={biz.listingStatus === "archived"}
-                              onChange={() => toggleBusinessSelection(biz.id)}
-                              className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-30"
-                            />
-                          )}
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${biz.name}`}
+                            checked={selectedBusinessIds.has(biz.id)}
+                            onChange={() => toggleBusinessSelection(biz.id)}
+                            className="h-4 w-4 accent-[#CA922B]"
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <div className="font-semibold text-[#3A1F0E]">
