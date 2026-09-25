@@ -56,6 +56,19 @@ export function hasEffectiveRolloutAccess(
   return user.waitlistApproved;
 }
 
+/**
+ * A temporary failure to read the access ledger is not an authorization
+ * decision. Preserve the approval already held in the server-side session
+ * until the authoritative lookup succeeds again. This never elevates a
+ * pending session; explicit suspension, revocation, and expiry still apply
+ * whenever the lookup is available.
+ */
+export function preserveSessionApprovalOnAuthorityFailure(
+  sessionApproved: boolean,
+): boolean {
+  return sessionApproved;
+}
+
 declare global {
   namespace Express {
     interface User extends AuthUser {
@@ -242,11 +255,23 @@ export async function authMiddleware(
         await updateSession(sid, refreshed);
       }
     }
-  } catch {
-    // Closed rollout policy: a database failure must never turn a stale session
-    // into access. Keep the stored session intact for recovery, but deny this
-    // request until the authoritative waitlist/tester check succeeds.
-    refreshed.user.approved = false;
+  } catch (err) {
+    // A lookup outage is not a revocation. Preserving the existing signed-in
+    // session avoids briefly redirecting a known approved tester to pending.
+    // A pending session remains pending, and every successful later lookup
+    // still enforces suspension, revocation, expiration, or waitlist changes.
+    refreshed.user.approved = preserveSessionApprovalOnAuthorityFailure(
+      refreshed.user.approved,
+    );
+    req.log.warn(
+      {
+        event: "ACCESS_AUTHORITY_LOOKUP_FAILED",
+        sidPrefix: sid.slice(0, 8) + "…",
+        userId: refreshed.user.id,
+        err,
+      },
+      "access lookup failed — preserving existing session approval until retry",
+    );
   }
 
   req.user = refreshed.user;

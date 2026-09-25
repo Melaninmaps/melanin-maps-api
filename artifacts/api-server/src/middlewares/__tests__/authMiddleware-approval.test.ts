@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { hasEffectiveRolloutAccess } from "../authMiddleware";
+import {
+  hasEffectiveRolloutAccess,
+  preserveSessionApprovalOnAuthorityFailure,
+} from "../authMiddleware";
 
 const NOW = new Date("2026-09-25T17:40:00.000Z");
 
@@ -71,5 +74,13 @@ describe("effective rollout access", () => {
         NOW,
       ),
     ).toBe(false);
+  });
+
+  it("preserves an existing approved session during a transient authority lookup failure", () => {
+    expect(preserveSessionApprovalOnAuthorityFailure(true)).toBe(true);
+  });
+
+  it("never elevates a pending session when the authority lookup is unavailable", () => {
+    expect(preserveSessionApprovalOnAuthorityFailure(false)).toBe(false);
   });
 });
