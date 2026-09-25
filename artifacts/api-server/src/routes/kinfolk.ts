@@ -242,10 +242,13 @@ import {
   buildPlanningDiscoveryFollowUp,
   buildConsentedPlanningContextPrompt,
   isConsentedPlanningMemoryRelevant,
+  planningDiscoveryPreferenceTerms,
 } from "../kinfolk/consented-planning-context";
 import {
+  isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
   parseExplicitMemberMemory,
+  profileDiscoveryContextTerms,
 } from "../kinfolk/explicit-member-memory";
 import { filterMemberFacingSources } from "../kinfolk/source-relevance";
 import {
@@ -5771,6 +5774,41 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     relevantPlanningMemories,
     input.message,
   );
+  const planningDiscoveryTerms = planningDiscoveryPreferenceTerms(
+    relevantPlanningMemories,
+  );
+  // Profile notes can refine a matching service search only where their own
+  // documented listing metadata supports it. They never become a designation
+  // filter or an inferred ownership claim.
+  const relevantProfileDiscoveryTerms = explicitMemberMemoryEnabled
+    ? await db
+        .select({
+          content: kinfolkPrivateMemoriesTable.content,
+          purpose: kinfolkPrivateMemoriesTable.purpose,
+        })
+        .from(kinfolkPrivateMemoriesTable)
+        .where(
+          and(
+            eq(kinfolkPrivateMemoriesTable.userId, input.req.user!.id),
+            eq(kinfolkPrivateMemoriesTable.purpose, "profile_context"),
+            isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            or(
+              isNull(kinfolkPrivateMemoriesTable.expiresAt),
+              gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
+            ),
+          ),
+        )
+        .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+        .limit(8)
+        .then((memories) =>
+          memories.flatMap((memory) =>
+            isExplicitProfileMemoryRelevant(memory, input.message)
+              ? profileDiscoveryContextTerms(memory)
+              : [],
+          ),
+        )
+        .catch(() => [])
+    : [];
   const [prefs, assuredAgeBand] = await Promise.all([
     getCachedPrefs(input.req.user!.id),
     getMemberAgeBand(input.req.user!.id),
@@ -5807,6 +5845,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     ...(prefs?.communities ?? []),
     ...(prefs?.cultures ?? []),
     ...(prefs?.preferredLanguages ?? []),
+    ...relevantProfileDiscoveryTerms,
   ];
   // A member can deliberately override their saved Support Lens for this one
   // recommendation turn. This is the only way Kinfolk may leave the Diaspora
@@ -5829,11 +5868,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         ...(prefs?.lifestyleServices ?? []),
         ...preferredDesignationLabels,
         ...memberContextTerms,
+        ...planningDiscoveryTerms,
       ],
       priorityPreferenceTerms: [
         ...(prefs?.favoriteCategories ?? []),
         ...preferredDesignationLabels,
         ...memberContextTerms,
+        ...planningDiscoveryTerms,
       ],
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: input.message,
@@ -6005,6 +6046,45 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       originalQuery: message,
       answerMode: "memory_confirmation",
       remembered: explicitMemory.remembered,
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  // This is a product capability question, not a question for the model to
+  // interpret through its privacy boundary. A deterministic answer prevents a
+  // false claim that Kinfolk cannot save a member's direct instruction.
+  if (isExplicitMemberMemoryCapabilityQuestion(message)) {
+    return void res.json({
+      sessionId,
+      reply:
+        "Yes. Kinfolk can remember a detail you explicitly ask it to save to your private memory. Type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Your existing support selections stay in Preferences, and you can review or forget saved details any time in Kinfolk memory settings.",
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "personalization",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "memory_help",
+      remembered: false,
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],

@@ -61,6 +61,10 @@ describe("Kinfolk private-memory production control", () => {
       content: privateContent,
       purpose: "ongoing_context",
     }])).toContain("same member directly asks");
+    expect(buildPrivateMemoryPromptBlock(true, [{
+      content: privateContent,
+      purpose: "profile_context",
+    }])).toContain("must not change the factual answer");
   });
 
   it("honors the owner opt-out and fails closed when the setting cannot be read", async () => {
@@ -140,16 +144,21 @@ describe("Kinfolk private-memory production control", () => {
     expect(source).toContain("const memberMemoryEnabled = memoryEnabled || explicitMemberMemoryEnabled");
     expect(source).toContain("const activePrivateMemories = memberMemoryEnabled && req.user?.id");
     expect(source).toContain("persistExplicitMemberMemory({");
+    expect(source).toContain("isExplicitMemberMemoryCapabilityQuestion(message)");
+    expect(source).toContain("answerMode: \"memory_help\"");
     expect(source).toContain("return resolveExplicitMemberMemoryAccess()");
     expect(source).toContain("if (!input.memoryEnabled) return undefined");
 
     const chatRoute = source.slice(source.indexOf('router.post("/kinfolk/chat"'));
     const ownerSetting = chatRoute.indexOf("const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id)");
     const arithmetic = chatRoute.indexOf("deterministicArithmeticAnswer(message)");
+    const memoryHelp = chatRoute.indexOf("isExplicitMemberMemoryCapabilityQuestion(message)");
     const deterministicDiscovery = chatRoute.indexOf("tryAnswerDeterministicBusinessDiscovery({");
     const sessionRead = chatRoute.indexOf('chatStage = "session_read"');
     expect(ownerSetting).toBeGreaterThan(0);
     expect(ownerSetting).toBeLessThan(arithmetic);
+    expect(memoryHelp).toBeGreaterThan(ownerSetting);
+    expect(memoryHelp).toBeLessThan(arithmetic);
     expect(ownerSetting).toBeLessThan(deterministicDiscovery);
     expect(ownerSetting).toBeLessThan(sessionRead);
   });
