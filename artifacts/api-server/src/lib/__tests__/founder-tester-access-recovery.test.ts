@@ -71,6 +71,8 @@ describe("founder-approved tester access recovery", () => {
     expect(recovery).toContain("INSERT INTO pending_tester_emails");
     expect(recovery).toContain("INSERT INTO access_entitlement_events");
     expect(recovery).toContain("'granted'");
+    expect(recovery).toContain("for (const entry of repaired)");
+    expect(recovery).not.toContain("unnest($1::text[], $2::varchar[], $3::boolean[])");
     expect(recovery).not.toContain("DELETE FROM");
   });
 
