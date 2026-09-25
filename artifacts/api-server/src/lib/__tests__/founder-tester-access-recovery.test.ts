@@ -115,3 +115,45 @@ describe("founder-approved tester access recovery", () => {
     expect(versionRoute).not.toContain("createdMissing");
   });
 });
+
+describe("authorized App Review account recovery", () => {
+  const recovery = section(
+    "async function ensureAuthorizedAppReviewAccount(",
+    "async function ensureAdminAccounts(",
+  );
+
+  it("limits the credential reset to the single authorized review account", () => {
+    expect(recovery).toContain("APP_REVIEW_ACCOUNT_EMAIL");
+    expect(recovery).toContain("WHERE LOWER(TRIM(email)) = $1");
+    expect(recovery).toContain("FOR UPDATE");
+    expect(recovery).toContain("APP_REVIEW_ACCOUNT_PASSWORD_HASH");
+    expect(recovery).toContain("password_hash = $1");
+    expect(recovery).toContain("must_change_password = FALSE");
+    expect(recovery).toContain("failed_login_attempts = 0");
+    expect(recovery).toContain("locked_until = NULL");
+    expect(recovery).not.toContain("DELETE FROM users");
+  });
+
+  it("grants unrestricted reviewer tester access with one approved iOS waitlist record", () => {
+    expect(recovery).toContain("member_type = 'founding'");
+    expect(recovery).toContain("tester_status = 'active'");
+    expect(recovery).toContain("testing_entitlement_ends_at = NULL");
+    expect(recovery).toContain("INSERT INTO waitlist_signups");
+    expect(recovery).toContain("'ios'");
+    expect(recovery).toContain("INSERT INTO pending_tester_emails");
+    expect(recovery).toContain("INSERT INTO access_entitlement_events");
+    expect(recovery).toContain("authorized_app_review_account_v1");
+  });
+
+  it("reports only a non-identifying App Review recovery state", () => {
+    const versionStart = appSource.indexOf('app.get("/api/version"');
+    const versionEnd = appSource.indexOf("app.use(", versionStart);
+    const versionRoute = appSource.slice(versionStart, versionEnd);
+
+    expect(migrations).toContain("getAppReviewAccountRecoveryStatus");
+    expect(versionRoute).toContain("app_review_access");
+    expect(versionRoute).toContain("getAppReviewAccountRecoveryStatus()");
+    expect(versionRoute).not.toContain("apple.reviewer@mappingwithmelanin.com");
+    expect(versionRoute).not.toContain("APP_REVIEW_ACCOUNT_PASSWORD_HASH");
+  });
+});
