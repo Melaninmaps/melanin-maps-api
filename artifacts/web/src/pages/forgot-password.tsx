@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, KeyRound, Mail, Phone, AlertCircle, CheckCircle } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+const RESET_CONTEXT_KEY = "mwm_password_reset_context_v1";
 
 type Step = "email" | "code" | "done";
 type RecoveryMethod = "email" | "phone";
@@ -55,10 +56,23 @@ export default function ForgotPassword() {
       setError(`Please enter the 6-digit code from your ${method === "email" ? "email" : "phone"}.`);
       return;
     }
-    const identity = method === "email"
-      ? `email=${encodeURIComponent(email.trim())}`
-      : `phone=${encodeURIComponent(phone.trim())}&method=phone`;
-    navigate(`/reset-password?${identity}&code=${encodeURIComponent(trimmed)}`);
+    // A one-time reset code is a credential. Keep it in browser-session memory
+    // rather than in a URL where it can be copied into history, referrer logs,
+    // analytics, screenshots, or a shared link.
+    try {
+      sessionStorage.setItem(
+        RESET_CONTEXT_KEY,
+        JSON.stringify({
+          method,
+          email: method === "email" ? email.trim() : "",
+          phone: method === "phone" ? phone.trim() : "",
+          code: trimmed,
+        }),
+      );
+      navigate("/reset-password");
+    } catch {
+      setError("Could not securely continue the reset. Please try again in a regular browser window.");
+    }
   }
 
   return (
