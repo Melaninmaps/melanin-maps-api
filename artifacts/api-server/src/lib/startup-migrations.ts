@@ -7905,23 +7905,28 @@ async function ensureFounderApprovedTesterAccessRecovery(
     ];
     if (repaired.length > 0) {
       founderTesterAccessRecoveryStage = "record_access_audit_events";
-      await client.query(
-        `INSERT INTO access_entitlement_events
-           (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
-         SELECT grant.email, grant.user_id, 'granted', 'admin_invite', $4, NULL,
-                jsonb_build_object(
-                  'workflow', 'founder_approved_tester_access_recovery_v1',
-                  'createdAccount', grant.created_account
-                )
-           FROM unnest($1::text[], $2::varchar[], $3::boolean[])
-             AS grant(email, user_id, created_account)`,
-        [
-          repaired.map((row) => row.email),
-          repaired.map((row) => row.id),
-          repaired.map((row) => row.createdAccount),
-          recoveryActor,
-        ],
-      );
+      // Deliberately record one immutable event per changed account instead of
+      // using a multi-array unnest. The prior bulk form is PostgreSQL-version
+      // sensitive and caused the surrounding transaction to roll back. These
+      // inserts remain inside the same transaction, so a later failure still
+      // restores the exact pre-recovery state without partial access changes.
+      for (const entry of repaired) {
+        await client.query(
+          `INSERT INTO access_entitlement_events
+             (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
+           VALUES ($1, $2, 'granted', 'admin_invite', $3, NULL,
+                   jsonb_build_object(
+                     'workflow', 'founder_approved_tester_access_recovery_v1',
+                     'createdAccount', $4::boolean
+                   ))`,
+          [
+            entry.email,
+            entry.id,
+            recoveryActor,
+            entry.createdAccount,
+          ],
+        );
+      }
     }
     founderTesterAccessRecoveryStage = "commit";
     await client.query("COMMIT");
