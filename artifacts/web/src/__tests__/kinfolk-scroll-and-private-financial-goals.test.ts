@@ -37,9 +37,23 @@ describe("Kinfolk conversation scroll and private financial goals", () => {
     expect(travelPage).toContain("onScroll={handleConversationScroll}");
     expect(travelPage).toContain("requestConversationScroll(\"send\")");
     expect(travelPage).toContain("requestConversationScroll(\"completion\")");
-    expect(travelPage).toContain("min-h-0 flex-1 overflow-y-auto");
+    expect(travelPage).toContain("min-h-0 px-4 py-5 space-y-4");
+    expect(travelPage).toContain('"flex-1 overflow-y-auto"');
     expect(travelPage).not.toContain("scrollIntoView");
     expect(travelPage).not.toContain("window.scrollTo");
+  });
+
+  it("keeps standard keyboard navigation available inside the fixed Kinfolk shell", () => {
+    expect(travelPage).toContain("handleConversationKeyboardScroll");
+    expect(travelPage).toContain('event.key === "ArrowUp"');
+    expect(travelPage).toContain('event.key === "ArrowDown"');
+    expect(travelPage).toContain('event.key === "PageUp"');
+    expect(travelPage).toContain('event.key === "PageDown"');
+    expect(travelPage).toContain('event.key === "Home"');
+    expect(travelPage).toContain('event.key === "End"');
+    expect(travelPage).toContain('window.addEventListener("keydown", handleConversationKeyboardScroll)');
+    expect(travelPage).toContain('target === inputRef.current');
+    expect(travelPage).toContain("focusedComposer && !input.trim()");
   });
 
   it("shows simple monthly math only from valid voluntary target and future-deadline inputs", () => {

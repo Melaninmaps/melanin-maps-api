@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { useEvent } from "expo";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -440,6 +440,26 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
     })();
   };
 
+  const handleShare = async () => {
+    if (post.visibility !== "public") {
+      Alert.alert(
+        "This post is shared privately",
+        "Only public Community posts can be shared outside the app.",
+      );
+      return;
+    }
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const excerpt = post.content.trim().replace(/\s+/g, " ").slice(0, 240);
+    try {
+      await Share.share({
+        title: "Mapping With Melanin Community",
+        message: `${excerpt}${post.content.trim().length > excerpt.length ? "…" : ""}\n\nShared from Mapping With Melanin Community\nhttps://www.mappingwithmelanin.com/community`,
+      });
+    } catch {
+      // Native share sheets may be dismissed without an error worth surfacing.
+    }
+  };
+
   const markAsRead = async (postId: string) => {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -709,7 +729,14 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
 
       {/* Footer actions */}
       <View style={[s.footer, { borderTopColor: colors.border }]}>
-        <TouchableOpacity onPress={handleLike} style={s.action} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={handleLike}
+          style={s.action}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={liked ? "Remove reaction from post" : "React to post"}
+          accessibilityState={{ selected: liked }}
+        >
           <Feather name="heart" size={16} color={liked ? "#C4622D" : colors.mutedForeground} />
           <Text style={[s.actionText, { color: liked ? "#C4622D" : colors.mutedForeground }]}>{likeCount}</Text>
         </TouchableOpacity>
@@ -719,17 +746,36 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
             <Text style={[s.actionText, { color: colors.mutedForeground }]}>Off</Text>
           </View>
         ) : (
-          <TouchableOpacity style={s.action} activeOpacity={0.7} onPress={onCommentPress}>
+          <TouchableOpacity
+            style={s.action}
+            activeOpacity={0.7}
+            onPress={onCommentPress}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${post.comments} comment${post.comments === 1 ? "" : "s"}`}
+          >
             <Feather name="message-circle" size={16} color={colors.mutedForeground} />
             <Text style={[s.actionText, { color: colors.mutedForeground }]}>{post.comments}</Text>
           </TouchableOpacity>
         )}
         {onRepost && (
-          <TouchableOpacity style={s.action} activeOpacity={0.7} onPress={() => onRepost(post)}>
+          <TouchableOpacity
+            style={s.action}
+            activeOpacity={0.7}
+            onPress={() => onRepost(post)}
+            accessibilityRole="button"
+            accessibilityLabel="Repost to Community"
+          >
             <Feather name="repeat" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={s.action} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={s.action}
+          activeOpacity={0.7}
+          onPress={() => void handleShare()}
+          accessibilityRole="button"
+          accessibilityLabel={post.visibility === "public" ? "Share public post" : "This post cannot be shared outside Community"}
+          accessibilityHint={post.visibility === "public" ? undefined : "This private post stays inside Community."}
+        >
           <Feather name="share-2" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
         <View style={s.action}>

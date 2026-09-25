@@ -36,4 +36,13 @@ describe("Community client contract", () => {
     expect(media).toContain('target="_blank"');
     expect(media).toContain('rel="noopener noreferrer"');
   });
+
+  it("keeps thread retrieval authenticated, private, and client-serializable", () => {
+    const route = source("../routes/community.ts");
+    expect(route).toContain('router.get("/community/thread/:threadId"');
+    expect(route).toContain('res.status(401).json({ error: "Authentication required" })');
+    expect(route).toContain("resolveCommentAccess(post.id, viewerId)");
+    expect(route).toContain("posts: posts.map((post) => serializeCommunityPost(post))");
+    expect(route).toContain("function serializeCommunityPost");
+  });
 });

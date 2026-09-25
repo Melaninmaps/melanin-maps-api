@@ -1544,6 +1544,45 @@ function TravelPage() {
     if (element) isConversationNearBottomRef.current = isNearConversationBottom(element);
   }, []);
 
+  // The Kinfolk page intentionally has a fixed shell and a dedicated scroll
+  // pane. Restore standard keyboard navigation inside that pane so Arrow keys,
+  // Page Up/Down, Home, and End never appear to do nothing. A focused textarea
+  // with text keeps its native caret behavior; an empty composer can navigate
+  // the conversation just like the rest of the site.
+  const handleConversationKeyboardScroll = useCallback((event: KeyboardEvent) => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (showPrefs || Boolean(shareLink)) return;
+
+    const target = event.target;
+    const focusedComposer = target === inputRef.current;
+    const targetIsEditable = target instanceof HTMLInputElement
+      || target instanceof HTMLTextAreaElement
+      || (target instanceof HTMLElement && target.isContentEditable);
+    if (targetIsEditable && !(focusedComposer && !input.trim())) return;
+
+    const pane = msgContainerRef.current;
+    if (!pane || pane.scrollHeight <= pane.clientHeight) return;
+
+    const pageDistance = Math.max(120, Math.round(pane.clientHeight * 0.8));
+    let destination: number | null = null;
+    if (event.key === "ArrowUp") destination = pane.scrollTop - 72;
+    if (event.key === "ArrowDown") destination = pane.scrollTop + 72;
+    if (event.key === "PageUp") destination = pane.scrollTop - pageDistance;
+    if (event.key === "PageDown") destination = pane.scrollTop + pageDistance;
+    if (event.key === "Home") destination = 0;
+    if (event.key === "End") destination = pane.scrollHeight;
+    if (destination === null) return;
+
+    event.preventDefault();
+    pane.scrollTo({ top: Math.max(0, destination), behavior: "smooth" });
+    isConversationNearBottomRef.current = isNearConversationBottom(pane);
+  }, [input, shareLink, showPrefs]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleConversationKeyboardScroll);
+    return () => window.removeEventListener("keydown", handleConversationKeyboardScroll);
+  }, [handleConversationKeyboardScroll]);
+
   const requestConversationScroll = useCallback((reason: Exclude<ConversationScrollReason, null>) => {
     pendingConversationScrollRef.current = reason;
   }, []);

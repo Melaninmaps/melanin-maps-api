@@ -10,6 +10,10 @@ const postCardSource = readFileSync(
   fileURLToPath(new URL("../components/CommunityPostCard.tsx", import.meta.url)),
   "utf8",
 );
+const threadSource = readFileSync(
+  fileURLToPath(new URL("../app/community-thread.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("native Community content-first surface", () => {
   it("keeps Community navigation limited to the feed and groups", () => {
@@ -63,5 +67,15 @@ describe("native Community content-first surface", () => {
       expect(postCardSource).toContain(marker);
     }
     expect(postCardSource).not.toContain('backgroundColor: "#0008", justifyContent: "center", alignItems: "center"');
+  });
+
+  it("opens long threads and makes Share functional without exposing private posts", () => {
+    expect(source).toContain('pathname: "/community-thread"');
+    expect(postCardSource).toContain("await Share.share");
+    expect(postCardSource).toContain('post.visibility !== "public"');
+    expect(postCardSource).toContain("Only public Community posts can be shared outside the app.");
+    expect(threadSource).toContain("/api/community/thread/");
+    expect(threadSource).toContain("Community thread");
+    expect(threadSource).toContain("keyboardDismissMode=\"on-drag\"");
   });
 });

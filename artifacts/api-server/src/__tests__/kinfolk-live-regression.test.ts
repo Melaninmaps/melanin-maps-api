@@ -9,7 +9,10 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { classifyKinfolkRequest } from "../kinfolk/request-classifier";
-import { deriveBusinessSubject } from "../kinfolk/business-subject";
+import {
+  deriveBusinessSubject,
+  matchesStructuredBusinessSubject,
+} from "../kinfolk/business-subject";
 import { businessDiscoveryClarification } from "../kinfolk/business-discovery-clarification";
 
 const kinfolkRouteSource = readFileSync(resolve(import.meta.dirname, "../routes/kinfolk.ts"), "utf8");
@@ -357,5 +360,47 @@ describe("Senior-support service discovery", () => {
       discoveryKind: "business",
       location: "Philadelphia",
     });
+  });
+});
+
+describe("Plumbing discovery and card-service boundaries", () => {
+  it("routes a Philadelphia plumbing request to governed discovery", () => {
+    const message = "can you find me a reasonably priced plumber in Philadelphia";
+    const subject = deriveBusinessSubject(message);
+    const decision = classifyKinfolkRequest(message, "Philadelphia");
+
+    expect(subject).toMatchObject({
+      key: "plumbing",
+      label: "plumbing services",
+    });
+    expect(subject?.searchTerms).toContain("plumber");
+    expect(decision).toMatchObject({
+      route: "business_discovery",
+      discoveryKind: "business",
+      location: "Philadelphia",
+    });
+  });
+
+  it("never treats a saved nightlife preference as a plumbing result", () => {
+    const subject = deriveBusinessSubject("need a plumber in Philadelphia")!;
+    expect(matchesStructuredBusinessSubject({
+      name: "Eight Twelve Lounge",
+      category: "Entertainment & Recreation",
+      subcategory: "Nightlife",
+      specialties: ["cocktails", "events"],
+    }, subject)).toBe(false);
+    expect(matchesStructuredBusinessSubject({
+      name: "Philadelphia Plumbing Services",
+      category: "Home Services",
+      subcategory: "Plumbing",
+      specialties: ["plumbing", "drain service"],
+    }, subject)).toBe(true);
+  });
+
+  it("restricts model card validation to current structured service matches", () => {
+    expect(kinfolkRouteSource).toContain("const subjectScopedCatalog");
+    expect(kinfolkRouteSource).toContain("matchesStructuredBusinessSubject(business, currentDiscoverySubject)");
+    expect(kinfolkRouteSource).toContain("intentClass === \"culture_entertainment\"");
+    expect(kinfolkRouteSource).not.toContain('intentClass === "culture_entertainment" ||\n        intentClass === "business_discovery"');
   });
 });

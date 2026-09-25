@@ -4736,7 +4736,7 @@ export default function Admin() {
                         Tags
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
-                        Added &amp; research
+                        Added &amp; inventory
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Website &amp; social
@@ -4826,17 +4826,9 @@ export default function Admin() {
                           <div className="mt-1 font-semibold text-[#3A1F0E]/70">
                             {INTAKE_COHORT_LABELS[biz.intakeCohort]}
                           </div>
-                          {(biz.intakeBatchReference || biz.researchSourceLabel || biz.dataSource) && (
-                            <div className="mt-1 line-clamp-2">
-                              {biz.intakeBatchReference && <span>{biz.intakeBatchReference} · </span>}
-                              {biz.researchSourceLabel ?? biz.dataSource}
-                            </div>
-                          )}
-                          {biz.kinfolkRecommendationReason && (
-                            <div className="mt-1 line-clamp-2 text-[#3A1F0E]/45" title={biz.kinfolkRecommendationReason}>
-                              Kinfolk context: {biz.kinfolkRecommendationReason}
-                            </div>
-                          )}
+                          <div className="mt-1 text-[#3A1F0E]/45">
+                            Source receipts retained in Admin exports and audit history.
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
                           {biz.phone && (

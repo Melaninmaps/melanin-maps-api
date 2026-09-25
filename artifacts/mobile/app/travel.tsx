@@ -2078,6 +2078,7 @@ export default function TravelScreen() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ text: content, mode: voiceMode, requestId: `${source}-${Date.now()}` }),
+        signal: request.signal,
       });
       if (!autoSpeechGuardRef.current.canPlay(request)) return;
       if (response.status === 401) {
@@ -2368,9 +2369,11 @@ export default function TravelScreen() {
         throw new Error(recovery);
       }
       if (!payload.text?.trim()) throw new Error("Kinfolk could not hear that clearly. Please try again or type your question.");
-      setVoiceInputStatus("Sending your question to Kinfolk…");
-      await handleSend(payload.text);
-      setVoiceInputStatus(null);
+      // Keep the native experience aligned with the web: transcription is a
+      // draft for member review, never an automatic message send. This lets a
+      // member correct a misheard name, place, or sensitive detail first.
+      setInputText(payload.text);
+      setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
     } catch (cause) {
       setVoiceInputStatus(null);
       Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
@@ -2380,7 +2383,7 @@ export default function TravelScreen() {
       setIsTranscribingVoice(false);
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [handleSend, isRecordingVoice, primaryRecorder]);
+  }, [isRecordingVoice, primaryRecorder]);
 
   const cancelPrimaryVoiceRecording = useCallback(async () => {
     if (!primaryRecorder.isRecording) return;
