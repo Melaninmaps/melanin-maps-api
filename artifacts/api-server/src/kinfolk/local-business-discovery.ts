@@ -5,7 +5,10 @@ import type {
   GovernedKinfolkMapPlace,
   ValidatedKinfolkCityScope,
 } from "./governedBusinessRepository";
-import type { NormalizedBusinessSubject } from "./business-subject";
+import {
+  matchesDocumentedDietaryRequirement,
+  type NormalizedBusinessSubject,
+} from "./business-subject";
 import {
   audienceAllowsBusinessText,
   rankGovernedBusinessesForMember,
@@ -178,15 +181,18 @@ function webQueries(
   scope: ValidatedKinfolkCityScope,
 ): SearchQuery[] {
   const location = `${scope.city}, ${scope.stateCode}`;
+  const requestedSubjectLabel = subject.dietaryRequirement
+    ? `${subject.dietaryRequirement.label} ${subject.label}`
+    : subject.label;
   return [
     {
-      text: `community and minority-owned ${subject.label} ${location}`,
+      text: `community and minority-owned ${requestedSubjectLabel} ${location}`,
       role: "community_primary",
       reason:
         "MWM mission query for community-serving and minority-owned options; this is a search criterion, never an inference about the member.",
     },
     {
-      text: `${subject.label} ${location}`,
+      text: `${requestedSubjectLabel} ${location}`,
       role: "general",
       reason:
         "Neutral local query retained for broad coverage and cross-checking.",
@@ -284,8 +290,11 @@ function buildReply(input: {
     web,
     webState,
   } = input;
+  const requestedSubjectLabel = subject.dietaryRequirement
+    ? `${subject.dietaryRequirement.label} ${subject.label}`
+    : subject.label;
   const lines = [
-    `Here’s what I found for ${subject.label} in ${scope.city}, ${scope.stateCode}.`,
+    `Here’s what I found for ${requestedSubjectLabel} in ${scope.city}, ${scope.stateCode}.`,
   ];
 
   if (businesses.length > 0) {
@@ -332,7 +341,7 @@ function buildReply(input: {
   ) {
     lines.push(
       "",
-      `I couldn’t find matching MWM records or current web results for ${subject.label} in ${scope.city}, ${scope.stateCode}.`,
+      `I couldn’t find matching MWM records or current web results for ${requestedSubjectLabel} in ${scope.city}, ${scope.stateCode}.`,
     );
   } else if (businesses.length + mapPlaces.length === 0) {
     lines.push(
@@ -520,6 +529,14 @@ export async function discoverLocalBusinesses(input: {
   const rankedWeb = (input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
     ? []
     : rankLocalBusinessResults(webOutcome.results))
+    .filter(
+      (result) =>
+        !input.subject.dietaryRequirement ||
+        matchesDocumentedDietaryRequirement(
+          { name: result.title, description: result.content },
+          input.subject.dietaryRequirement,
+        ),
+    )
     .filter((result) =>
       audienceAllowsBusinessText({
         ageBand: input.personalization?.ageBand,
@@ -535,6 +552,9 @@ export async function discoverLocalBusinesses(input: {
   )
     .slice(0, 12)
     .map(platformBusiness);
+  const requestedSubjectLabel = input.subject.dietaryRequirement
+    ? `${input.subject.dietaryRequirement.label} ${input.subject.label}`
+    : input.subject.label;
   const mapPlaces = (input.requiredDesignationIds?.length ? [] : mapRows)
     .filter((place) =>
       audienceAllowsBusinessText({
@@ -601,7 +621,7 @@ export async function discoverLocalBusinesses(input: {
       businesses.length > 0
         ? {
             destination: `${input.scope.city}, ${input.scope.stateCode}`,
-            summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${input.subject.label}.`,
+            summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${requestedSubjectLabel}.`,
             businesses: businesses.slice(0, 6).map((business) => ({
               id: business.id,
               name: business.name,
@@ -645,7 +665,7 @@ export async function discoverLocalBusinesses(input: {
     resultView: buildConversationalBusinessResultView({
       businesses,
       external: rankedWeb,
-      subjectLabel: input.subject.label,
+      subjectLabel: requestedSubjectLabel,
     }),
   };
 }

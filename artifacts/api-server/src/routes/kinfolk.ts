@@ -5891,18 +5891,21 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
+  const requestedSubjectLabel = subject.dietaryRequirement
+    ? `${subject.dietaryRequirement.label} ${subject.label}`
+    : subject.label;
   const conciseReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
-      ? `I couldn't find a documented ${designationSummary} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
+      ? `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
         ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} ${designationSummary} ${subject.label} ${platformCount === 1 ? "option" : "options"} in ${scope.city}. I put the strongest matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"} in ${scope.city}. I put the documented matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
-        ? `I couldn't finish checking MWM's public listings for ${subject.label} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
+        ? `I couldn't finish checking MWM's public listings for ${requestedSubjectLabel} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
-          ? `I didn't find a matching MWM public listing for ${subject.label} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
-          : `I didn't find a matching ${designationSummary} place for ${subject.label} in ${scope.city}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
+          ? `I didn't find a matching MWM public listing for ${requestedSubjectLabel} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
+          : `I didn't find a matching ${designationSummary} place for ${requestedSubjectLabel} in ${scope.city}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
   const deterministicFollowUps = [
     resultView.followUp,
     ...(planningFollowUp ? [planningFollowUp] : []),

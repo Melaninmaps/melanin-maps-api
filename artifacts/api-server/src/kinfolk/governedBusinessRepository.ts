@@ -9,6 +9,8 @@ import {
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
+  dietaryRequirementSearchPatterns,
+  matchesDocumentedDietaryRequirement,
   type NormalizedBusinessSubject,
 } from "./business-subject";
 import { canonicalizeContextualUrl } from "./contextual-url";
@@ -350,6 +352,12 @@ function subjectMatchReasons(
   business: GovernedKinfolkBusiness,
   subject: NormalizedBusinessSubject,
 ): string[] {
+  if (
+    subject.dietaryRequirement &&
+    !matchesDocumentedDietaryRequirement(business, subject.dietaryRequirement)
+  ) {
+    return [];
+  }
   const terms = subject.searchTerms.map((term) => term.toLowerCase());
   const structuredText = [
     business.name,
@@ -377,7 +385,7 @@ function subjectMatchReasons(
       ? [field]
       : [];
   };
-  return [
+  const reasons = [
     ...fieldMatches(business.category, "category"),
     ...fieldMatches(business.subcategory, "subcategory"),
     ...fieldMatches(business.name, "name"),
@@ -385,6 +393,9 @@ function subjectMatchReasons(
       fieldMatches(specialty, "specialty"),
     ),
   ];
+  return subject.dietaryRequirement
+    ? [...reasons, `dietary: ${subject.dietaryRequirement.label}`]
+    : reasons;
 }
 
 export type GovernedDuplicateSuppression = Readonly<{
@@ -505,13 +516,16 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
       const patterns = businessSubjectSearchPatterns(subject);
+      const dietaryPatterns = subject.dietaryRequirement
+        ? dietaryRequirementSearchPatterns(subject.dietaryRequirement)
+        : [];
       const vibeKeys = subject.vibeKeys ?? [];
       if (!patterns.length) return [];
       const designationIds = normalizeOwnershipDesignationFilterIds(requiredDesignationIds);
       const designationValueGroups = designationIds.map((id) => ownershipDesignationStorageValues(id).values);
       const designationClauses = designationValueGroups
         .map((_, index) => {
-          const parameter = 7 + index;
+          const parameter = 8 + index;
           return `AND ${buildDesignationPredicateSql(designationIds[index], "b.ownership_designations", parameter)}`;
         })
         .join("");
@@ -556,6 +570,25 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
               )
             )
           )
+          -- A dietary request is a hard current-turn requirement. It may be
+          -- documented in published listing fields, but a generic restaurant
+          -- record cannot satisfy it and is never substituted as a fallback.
+          AND (
+            cardinality($7::text[]) = 0
+            OR LOWER(CONCAT_WS(' ',
+              b.name,
+              b.category,
+              b.subcategory,
+              b.description,
+              COALESCE(b.tags, '[]'::jsonb)::text
+            )) ~ ANY($7::text[])
+            OR EXISTS (
+              SELECT 1
+              FROM public.business_specialties AS specialty
+              WHERE specialty.business_id::text = b.id::text
+                AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($7::text[])
+            )
+          )
           ${designationClauses}
         ORDER BY
           CASE
@@ -588,6 +621,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           resultLimit,
           subject.key,
           vibeKeys,
+          dietaryPatterns,
           ...designationValueGroups,
         ],
       );

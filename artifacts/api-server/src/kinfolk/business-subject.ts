@@ -39,6 +39,14 @@ export type NormalizedBusinessSubject = Readonly<{
   searchTerms: readonly string[];
   /** Optional explicit atmosphere keys derived from the current request only. */
   vibeKeys?: readonly string[];
+  /** A current-turn dietary requirement that every returned card must document. */
+  dietaryRequirement?: DietaryRequirement;
+}>;
+
+export type DietaryRequirement = Readonly<{
+  key: "vegan";
+  label: "vegan";
+  searchTerms: readonly string[];
 }>;
 
 type SubjectDefinition = NormalizedBusinessSubject &
@@ -354,6 +362,22 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   },
 ] as const;
 
+const VEGAN_REQUIREMENT: DietaryRequirement = {
+  key: "vegan",
+  label: "vegan",
+  // Vegetarian is intentionally excluded. A vegetarian listing is not evidence
+  // that it offers vegan food, drinks, or accommodations.
+  searchTerms: ["vegan", "plant based", "plant-based"],
+};
+
+export function deriveDietaryRequirement(
+  message: string,
+): DietaryRequirement | undefined {
+  return /\b(?:vegan|plant[ -]?based)\b/i.test(message)
+    ? VEGAN_REQUIREMENT
+    : undefined;
+}
+
 export function deriveBusinessSubject(
   message: string,
 ): NormalizedBusinessSubject | null {
@@ -389,6 +413,7 @@ export function deriveBusinessSubject(
         label: salon.label,
         searchTerms: salon.searchTerms,
         vibeKeys: findVibeKeysForSearch(message),
+        dietaryRequirement: deriveDietaryRequirement(message),
       };
     }
     const booksAsShoppingRequest =
@@ -403,6 +428,7 @@ export function deriveBusinessSubject(
       label: bookstore.label,
       searchTerms: bookstore.searchTerms,
       vibeKeys: findVibeKeysForSearch(message),
+      dietaryRequirement: deriveDietaryRequirement(message),
     };
   }
   return {
@@ -410,6 +436,7 @@ export function deriveBusinessSubject(
     label: subject.label,
     searchTerms: subject.searchTerms,
     vibeKeys: findVibeKeysForSearch(message),
+    dietaryRequirement: deriveDietaryRequirement(message),
   };
 }
 
@@ -427,6 +454,8 @@ export function matchesStructuredBusinessSubject(
     name?: string | null;
     category?: string | null;
     subcategory?: string | null;
+    description?: string | null;
+    tags?: readonly string[] | null;
     specialties?: readonly string[] | null;
   }>,
   subject: NormalizedBusinessSubject,
@@ -451,10 +480,62 @@ export function matchesStructuredBusinessSubject(
     return false;
   }
 
-  return subject.searchTerms.some((term) => {
+  const matchesService = subject.searchTerms.some((term) => {
     const phrase = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     return Boolean(phrase) && ` ${structured} `.includes(` ${phrase} `);
   });
+  return (
+    matchesService &&
+    (!subject.dietaryRequirement ||
+      matchesDocumentedDietaryRequirement(business, subject.dietaryRequirement))
+  );
+}
+
+/**
+ * Dietary requests are hard constraints. Only direct published listing metadata
+ * can satisfy them; saved preferences and generic cuisine cards cannot.
+ */
+export function matchesDocumentedDietaryRequirement(
+  business: Readonly<{
+    name?: string | null;
+    category?: string | null;
+    subcategory?: string | null;
+    description?: string | null;
+    tags?: readonly string[] | null;
+    specialties?: readonly string[] | null;
+  }>,
+  requirement: DietaryRequirement,
+): boolean {
+  const evidence = [
+    business.name ?? "",
+    business.category ?? "",
+    business.subcategory ?? "",
+    business.description ?? "",
+    ...(business.tags ?? []),
+    ...(business.specialties ?? []),
+  ]
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!evidence) return false;
+  if (/\b(?:not|non)\s+vegan\b/.test(evidence)) return false;
+  return requirement.searchTerms.some((term) => {
+    const phrase = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
+  });
+}
+
+function searchTermPatterns(searchTerms: readonly string[]): string[] {
+  return searchTerms
+    .map((term) => term.trim().toLowerCase())
+    .filter(Boolean)
+    .map(
+      (term) =>
+        `\\m${term
+          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/[\s-]+/g, "[[:space:]-]+")}\\M`,
+    );
 }
 
 export function businessSubjectSearchPatterns(
@@ -464,15 +545,13 @@ export function businessSubjectSearchPatterns(
   // governed directory fields, never arbitrary descriptive copy, so "books
   // fast" does not qualify a restaurant as a bookstore while "bookstore-cafe"
   // remains an explicit match.
-  return subject.searchTerms
-    .map((term) => term.trim().toLowerCase())
-    .filter(Boolean)
-    .map(
-      (term) =>
-        `\\m${term
-          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-          .replace(/[\s-]+/g, "[[:space:]-]+")}\\M`,
-    );
+  return searchTermPatterns(subject.searchTerms);
+}
+
+export function dietaryRequirementSearchPatterns(
+  requirement: DietaryRequirement,
+): string[] {
+  return searchTermPatterns(requirement.searchTerms);
 }
 
 export const BUSINESS_SUBJECTS = SUBJECTS.map(

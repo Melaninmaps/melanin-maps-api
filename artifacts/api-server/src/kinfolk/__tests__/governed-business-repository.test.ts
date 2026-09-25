@@ -12,6 +12,7 @@ import {
   normalizeExactBusinessName,
   suppressProbableDuplicateBusinesses,
 } from "../governedBusinessRepository";
+import { deriveBusinessSubject } from "../business-subject";
 
 const AMINA_ROW = {
   id: "91f14ab4-0f8d-4f52-97be-f12617191919",
@@ -313,6 +314,7 @@ describe("governed Kinfolk business repository", () => {
       12,
       "bookstore",
       [],
+      [],
     ]);
   });
 
@@ -356,6 +358,57 @@ describe("governed Kinfolk business repository", () => {
       12,
       "senior_home_care",
       [],
+      [],
+    ]);
+  });
+
+  it("requires documented vegan evidence before returning a restaurant card", async () => {
+    const subject = deriveBusinessSubject(
+      "Find a vegan restaurant in Philadelphia",
+    )!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "bbq-only",
+        name: "Barkley's BBQ",
+        category: "Food & Drink",
+        subcategory: "Restaurant",
+        description: "Barbecue and grilled meats.",
+        tags: ["barbecue"],
+        specialties: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "documented-vegan",
+        name: "Garden Table",
+        category: "Food & Drink",
+        subcategory: "Restaurant",
+        description: "Plant-based dining.",
+        tags: ["vegan"],
+        specialties: [],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(results.map(({ id }) => id)).toEqual(["documented-vegan"]);
+    expect(results[0]?.matchReasons).toEqual(
+      expect.arrayContaining(["dietary: vegan"]),
+    );
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("A dietary request is a hard current-turn requirement");
+    expect(sql).toContain("cardinality($7::text[]) = 0");
+    expect(params).toEqual([
+      "Philadelphia",
+      "PA",
+      ["\\mrestaurant\\M", "\\mrestaurants\\M", "\\mdining\\M", "\\mfood\\M", "\\mcuisine\\M"],
+      12,
+      "restaurant",
+      [],
+      ["\\mvegan\\M", "\\mplant[[:space:]-]+based\\M", "\\mplant[[:space:]-]+based\\M"],
     ]);
   });
 
