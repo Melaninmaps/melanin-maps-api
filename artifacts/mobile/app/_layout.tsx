@@ -356,14 +356,27 @@ function AuthGate() {
 
 function ApprovalChecker() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
     if (isAuthenticated && user && user.approved === false) {
       router.replace("/pending-approval");
+      return;
     }
-  }, [isLoading, isAuthenticated, user, router]);
+    // A pending screen can remain in the native navigation stack after an
+    // administrator approves the account or an active tester entitlement is
+    // refreshed. Return the now-approved member to the app rather than leaving
+    // them on stale pending copy.
+    if (
+      isAuthenticated &&
+      user?.approved === true &&
+      pathname.startsWith("/pending-approval")
+    ) {
+      router.replace("/(tabs)" as Href);
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   return null;
 }
