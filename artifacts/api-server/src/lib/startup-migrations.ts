@@ -50,7 +50,10 @@ import {
   FOUNDER_APPROVED_TESTER_EMAILS,
   FOUNDER_TESTER_INVITE_PASSWORD_HASH,
 } from "../constants/testerRoster";
-import { PROTECTED_ADMIN_EMAILS } from "./protectedAdminAccess";
+import {
+  FOUNDER_OWNER_ADMIN_EMAILS,
+  PROTECTED_ADMIN_EMAILS,
+} from "./protectedAdminAccess";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
@@ -8119,19 +8122,23 @@ async function ensureAuthorizedAppReviewAccount(
 }
 
 /**
- * Founder-authorized recovery for two existing protected administrator
- * accounts. It deliberately refuses to create a user if an address is absent:
- * this workflow is for restoring established accounts, not for silently
- * inventing people or credentials. Existing passwords, profiles, Community
- * content, media, saves, preferences, and sessions are not selected or
- * changed. The transaction adds only the requested full-access fields and
+ * Founder-authorized recovery for existing founder and protected administrator
+ * accounts. Founder aliases are intentionally optional: an owner may use one
+ * established identity, not every historical alias. The two protected
+ * administrators remain mandatory once configured. This deliberately refuses
+ * to create a user if an address is absent: it restores established accounts,
+ * never silently invents people or credentials. Existing passwords, profiles,
+ * Community content, media, saves, preferences, and sessions are not selected
+ * or changed. The transaction adds only the requested full-access fields and
  * durable audit records.
  */
 async function ensureProtectedAdministratorAccess(
   log: (msg: string) => void,
   warn: (msg: string) => void,
 ): Promise<boolean> {
-  const emails = [...PROTECTED_ADMIN_EMAILS];
+  const protectedEmails = [...PROTECTED_ADMIN_EMAILS];
+  const founderEmails = [...FOUNDER_OWNER_ADMIN_EMAILS];
+  const emails = [...new Set([...founderEmails, ...protectedEmails])];
   const recoveryActor = "system:founder_protected_administrator_access_v1";
   const client = await pool.connect();
   try {
@@ -8155,7 +8162,12 @@ async function ensureProtectedAdministratorAccess(
         FOR UPDATE`,
       [emails],
     );
-    if (existing.rowCount !== emails.length) {
+    const foundEmails = new Set(existing.rows.map((account) => account.email));
+    const missingProtectedAdministrator = protectedEmails.some(
+      (email) => !foundEmails.has(email),
+    );
+    const hasFounderOwner = founderEmails.some((email) => foundEmails.has(email));
+    if (missingProtectedAdministrator || !hasFounderOwner) {
       throw new Error("A protected administrator account is missing; no accounts were changed.");
     }
 
