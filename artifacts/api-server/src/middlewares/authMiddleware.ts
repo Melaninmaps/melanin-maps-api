@@ -29,6 +29,33 @@ interface RoleCache {
 }
 const roleCache = new Map<string, RoleCache>();
 
+/**
+ * Controlled-rollout access is derived from the authoritative access ledger,
+ * not from a stale session snapshot or a duplicate account boolean. An active,
+ * unexpired tester grant and an approved waitlist record are both deliberate
+ * access decisions. Suspension remains an explicit block.
+ */
+export function hasEffectiveRolloutAccess(
+  user: Readonly<{
+    role: string;
+    accountStatus: string | null;
+    testerStatus: string | null;
+    testingEntitlementEndsAt: Date | null;
+    waitlistApproved: boolean;
+  }>,
+  now = new Date(),
+): boolean {
+  if (user.accountStatus === "suspended") return false;
+  if (user.role === "admin") return true;
+  if (
+    user.testerStatus === "active" &&
+    (!user.testingEntitlementEndsAt || user.testingEntitlementEndsAt > now)
+  ) {
+    return true;
+  }
+  return user.waitlistApproved;
+}
+
 declare global {
   namespace Express {
     interface User extends AuthUser {
@@ -138,9 +165,10 @@ export async function authMiddleware(
 
   // Re-read effective access from the source of truth so a waitlist approval,
   // tester grant, archival, or suspension takes effect for existing sessions.
-  // An account is admitted only when the founder has approved it AND it has an
-  // approved waitlist record, an active tester entitlement, or administrator
-  // role. This keeps App Store/Play enrollment separate from MWM access.
+  // An approved waitlist record or active tester entitlement is itself a
+  // deliberate access decision. This keeps App Store/Play enrollment separate
+  // from MWM access without stranding an already-approved tester on a stale
+  // session flag.
   try {
     const userId = refreshed.user.id;
     const cached = roleCache.get(userId);
@@ -158,26 +186,22 @@ export async function authMiddleware(
       const freshRes = await pool.query<{
         role: string;
         is_load_test: boolean;
-        approved: boolean;
+        account_status: string | null;
+        tester_status: string | null;
+        testing_entitlement_ends_at: Date | null;
+        waitlist_approved: boolean;
       }>(
         `SELECT u.role,
                 u.is_load_test,
-                (
-                  COALESCE(u.approved, false)
-                  AND (
-                    u.role = 'admin'
-                    OR (
-                      u.tester_status = 'active'
-                      AND (u.testing_entitlement_ends_at IS NULL OR u.testing_entitlement_ends_at > NOW())
-                    )
-                    OR EXISTS (
-                      SELECT 1
-                      FROM waitlist_signups w
-                      WHERE LOWER(TRIM(w.email)) = LOWER(TRIM(u.email))
-                        AND w.status = 'approved'
-                    )
-                  )
-                ) AS approved
+                u.account_status,
+                u.tester_status,
+                u.testing_entitlement_ends_at,
+                EXISTS (
+                  SELECT 1
+                  FROM waitlist_signups w
+                  WHERE LOWER(TRIM(w.email)) = LOWER(TRIM(u.email))
+                    AND w.status = 'approved'
+                ) AS waitlist_approved
            FROM users u
           WHERE u.id = $1
           LIMIT 1`,
@@ -187,7 +211,13 @@ export async function authMiddleware(
       if (row) {
         freshRole = row.role;
         freshIsLoadTest = row.is_load_test ?? false;
-        freshApproved = row.approved === true;
+        freshApproved = hasEffectiveRolloutAccess({
+          role: row.role,
+          accountStatus: row.account_status,
+          testerStatus: row.tester_status,
+          testingEntitlementEndsAt: row.testing_entitlement_ends_at,
+          waitlistApproved: row.waitlist_approved === true,
+        });
         roleCache.set(userId, {
           role: freshRole,
           isLoadTest: freshIsLoadTest,
