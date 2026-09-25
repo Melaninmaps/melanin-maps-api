@@ -795,7 +795,6 @@ export function AIChatWidget() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ text, mode: voiceMode, requestId: msgId }),
-        signal: request.signal,
       });
       if (!voiceGuardRef.current.canPlay(request)) return;
       if (r.status === 429) {
@@ -865,7 +864,6 @@ export function AIChatWidget() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ text: KINFOLK_PREVIEW_TEXT, mode, requestId: `preview-${mode}` }),
-        signal: request.signal,
       });
       if (!r.ok) {
         let serverMessage = "Kinfolk could not create a voice preview right now. Please try again.";

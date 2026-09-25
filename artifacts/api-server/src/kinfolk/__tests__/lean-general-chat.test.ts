@@ -39,6 +39,10 @@ describe("lean general Kinfolk chat", () => {
     expect(prompt).toContain("connected plan");
     expect(prompt).toContain("right fit, not simply any result");
     expect(prompt).toContain("WHEN THE MEMBER ASKS HOW KINFOLK IS DIFFERENT");
+    expect(prompt).toContain("find the right fit, not simply any result");
+    expect(prompt).toContain("one concrete example, such as planning a move or finding a birthday spot");
+    expect(prompt).toContain("community input, ownership designations, and verification are kept distinct");
+    expect(prompt).toContain("Do not claim that an unsupplied local result, community report, or current signal exists");
     expect(prompt).toContain("Do not answer with generic claims about being warm, capable, friendly, relatable");
     expect(prompt).toContain("Big Cousin mode");
     expect(prompt).toContain("Do not invent facts, sources, business listings, addresses");

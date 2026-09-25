@@ -2078,7 +2078,6 @@ export default function TravelScreen() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ text: content, mode: voiceMode, requestId: `${source}-${Date.now()}` }),
-        signal: request.signal,
       });
       if (!autoSpeechGuardRef.current.canPlay(request)) return;
       if (response.status === 401) {
