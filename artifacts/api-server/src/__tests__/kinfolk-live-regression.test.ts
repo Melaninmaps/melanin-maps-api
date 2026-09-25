@@ -336,3 +336,26 @@ describe("Philadelphia stylist deterministic fast path", () => {
     expect(modelPolicy).toBeGreaterThan(fastPathReturn);
   });
 });
+
+describe("Senior-support service discovery", () => {
+  it.each([
+    "I need senior support in Philadelphia",
+    "Find home care in Philadelphia",
+    "Can you recommend a caregiver in Philadelphia?",
+  ])("classifies %j as governed senior and home-care discovery", (message) => {
+    const subject = deriveBusinessSubject(message);
+    const decision = classifyKinfolkRequest(message, "Philadelphia");
+
+    expect(subject).toMatchObject({
+      key: "senior_home_care",
+      label: "senior support and home-care services",
+    });
+    expect(subject?.searchTerms).toContain("senior support");
+    expect(subject?.searchTerms).toContain("home care");
+    expect(decision).toMatchObject({
+      route: "business_discovery",
+      discoveryKind: "business",
+      location: "Philadelphia",
+    });
+  });
+});

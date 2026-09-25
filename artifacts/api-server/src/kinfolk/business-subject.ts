@@ -7,6 +7,7 @@ export type BusinessSubjectKey =
   | "barber"
   | "braider"
   | "childcare"
+  | "senior_home_care"
   | "salon"
   | "grocery"
   | "laundromat"
@@ -104,6 +105,29 @@ const SUBJECTS: readonly SubjectDefinition[] = [
       "preschool",
       "infant care",
       "before after school",
+    ],
+    priority: 24,
+  },
+  {
+    key: "senior_home_care",
+    label: "senior support and home-care services",
+    match:
+      /\b(?:senior support|senior care|senior services?|home ?care|home health(?:care)?|in[ -]?home care|caregiv(?:er|ing)|personal assistance)\b/i,
+    // These are governed service terms. Retrieval is limited to name, category,
+    // subcategory, and administrator-managed specialties—not free-form notes or
+    // generic tags—so a member asking for senior support is matched to a record
+    // explicitly classified as that service.
+    searchTerms: [
+      "senior support",
+      "senior care",
+      "senior services",
+      "home care",
+      "home health",
+      "home healthcare",
+      "in home care",
+      "caregiver",
+      "caregiving",
+      "personal assistance",
     ],
     priority: 24,
   },

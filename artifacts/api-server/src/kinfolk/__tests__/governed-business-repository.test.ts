@@ -316,6 +316,49 @@ describe("governed Kinfolk business repository", () => {
     ]);
   });
 
+  it("retrieves an explicitly classified Philadelphia senior-support service for Kinfolk", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [{
+      ...AMINA_ROW,
+      id: "abacares-services",
+      name: "AbaCares Services",
+      category: "Family & Community",
+      subcategory: "Home Care / Senior Support",
+      specialties: [],
+      tags: [],
+    }] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    const results = await repository.findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      {
+        key: "senior_home_care",
+        label: "senior support and home-care services",
+        searchTerms: ["senior support", "senior care", "home care", "caregiver"],
+      },
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: "abacares-services",
+        name: "AbaCares Services",
+        subcategory: "Home Care / Senior Support",
+        matchReasons: ["subcategory"],
+      }),
+    ]);
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])");
+    expect(sql).toContain("FROM public.business_specialties AS specialty");
+    expect(sql).not.toContain("LOWER(COALESCE(b.description, '')) ~ ANY");
+    expect(params).toEqual([
+      "Philadelphia",
+      "PA",
+      ["\\msenior[[:space:]-]+support\\M", "\\msenior[[:space:]-]+care\\M", "\\mhome[[:space:]-]+care\\M", "\\mcaregiver\\M"],
+      12,
+      "senior_home_care",
+      [],
+    ]);
+  });
+
   it("rejects incidental description and generic tags but retains a governed specialty", async () => {
     const pool = { query: vi.fn().mockResolvedValue({
       rows: [
