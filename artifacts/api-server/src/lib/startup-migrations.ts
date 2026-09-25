@@ -92,6 +92,8 @@ const PUBLIC_BUSINESSES_VIEW_FILTER =
 let founderTesterAccessRecoveryStatus: "pending" | "complete" | "failed" =
   "pending";
 let founderTesterAccessRecoveryStage = "not_started";
+let appReviewAccountRecoveryStatus: "pending" | "complete" | "failed" =
+  "pending";
 
 export function getFounderTesterAccessRecoveryStatus():
   | "pending"
@@ -102,6 +104,13 @@ export function getFounderTesterAccessRecoveryStatus():
 
 export function getFounderTesterAccessRecoveryStage(): string {
   return founderTesterAccessRecoveryStage;
+}
+
+export function getAppReviewAccountRecoveryStatus():
+  | "pending"
+  | "complete"
+  | "failed" {
+  return appReviewAccountRecoveryStatus;
 }
 
 const MIGRATIONS: { name: string; sql: string }[] = [
@@ -6117,6 +6126,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   founderTesterAccessRecoveryStatus = (await ensureFounderApprovedTesterAccessRecovery(log, warn))
     ? "complete"
     : "failed";
+  appReviewAccountRecoveryStatus = (await ensureAuthorizedAppReviewAccount(log, warn))
+    ? "complete"
+    : "failed";
 
   // Production startup is schema-only by default. Inventory, directory, and
   // content population must remain an explicit, reviewed operator action so a
@@ -7939,6 +7951,153 @@ async function ensureFounderApprovedTesterAccessRecovery(
     await client.query("ROLLBACK").catch(() => undefined);
     warn(
       `Founder-approved tester access recovery failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Founder-authorized App Review account repair. This narrow operation exists
+ * because App Store Connect requires an email/password reviewer account that
+ * can sign in immediately during review. It is intentionally limited to the
+ * supplied review address: no ordinary member account can enter this path.
+ *
+ * The password is represented only by the established bcrypt hash; plaintext
+ * credentials are neither logged nor returned. Existing account content is not
+ * selected or modified. The controlled reviewer credential is reset by design,
+ * while access, tester entitlement, and the linked approved waitlist record are
+ * made active in the same transaction.
+ */
+const APP_REVIEW_ACCOUNT_EMAIL = "apple.reviewer@mappingwithmelanin.com";
+const APP_REVIEW_ACCOUNT_PASSWORD_HASH =
+  "$2b$08$dsQzFsaQkl4p/Qk5kYKMUutTgUdXpWr5AHl3CJ76Fg.2hEanFjcaO";
+
+async function ensureAuthorizedAppReviewAccount(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<boolean> {
+  const recoveryActor = "system:authorized_app_review_account_v1";
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const existing = await client.query<{ id: string }>(
+      `SELECT id
+         FROM users
+        WHERE LOWER(TRIM(email)) = $1
+        FOR UPDATE`,
+      [APP_REVIEW_ACCOUNT_EMAIL],
+    );
+
+    let userId: string;
+    let createdAccount = false;
+    if (existing.rows[0]) {
+      userId = existing.rows[0].id;
+      await client.query(
+        `UPDATE users
+            SET password_hash = $1,
+                must_change_password = FALSE,
+                failed_login_attempts = 0,
+                locked_until = NULL,
+                email_verified = TRUE,
+                agree_to_terms = TRUE,
+                profile_setup_complete = TRUE,
+                approved = TRUE,
+                account_status = 'active',
+                role = 'tester',
+                member_type = 'founding',
+                tester_status = 'active',
+                tester_access_source = 'testflight',
+                tester_granted_at = COALESCE(tester_granted_at, NOW()),
+                tester_granted_by = $2,
+                testing_entitlement_ends_at = NULL,
+                lifecycle_updated_at = NOW(),
+                lifecycle_updated_by = $2,
+                lifecycle_reason = 'Authorized App Review access',
+                updated_at = NOW()
+          WHERE id = $3`,
+        [APP_REVIEW_ACCOUNT_PASSWORD_HASH, recoveryActor, userId],
+      );
+    } else {
+      const created = await client.query<{ id: string }>(
+        `INSERT INTO users (
+           id, email, username, first_name, last_name, password_hash,
+           must_change_password, failed_login_attempts, email_verified,
+           agree_to_terms, profile_setup_complete, approved, account_status,
+           role, member_type, tester_status, tester_access_source,
+           tester_granted_at, tester_granted_by, testing_entitlement_ends_at,
+           referral_code, created_at, updated_at
+         ) VALUES (
+           gen_random_uuid()::varchar, $1,
+           'appreview_' || SUBSTRING(MD5($1) FROM 1 FOR 20),
+           'Apple', 'Reviewer', $2,
+           FALSE, 0, TRUE,
+           TRUE, TRUE, TRUE, 'active',
+           'tester', 'founding', 'active', 'testflight',
+           NOW(), $3, NULL,
+           'APR' || UPPER(SUBSTRING(MD5('app-review:' || $1) FROM 1 FOR 12)),
+           NOW(), NOW()
+         )
+         RETURNING id`,
+        [APP_REVIEW_ACCOUNT_EMAIL, APP_REVIEW_ACCOUNT_PASSWORD_HASH, recoveryActor],
+      );
+      userId = created.rows[0]!.id;
+      createdAccount = true;
+    }
+
+    await client.query(
+      `INSERT INTO waitlist_signups (email, status, approved_at, signup_sources)
+       VALUES ($1, 'approved', NOW(), 'ios')
+       ON CONFLICT (email) DO UPDATE
+         SET status = 'approved',
+             approved_at = COALESCE(waitlist_signups.approved_at, NOW()),
+             signup_sources = (
+               SELECT array_to_string(
+                 ARRAY(
+                   SELECT DISTINCT source
+                     FROM unnest(string_to_array(COALESCE(waitlist_signups.signup_sources, ''), ',')) AS source
+                    WHERE source IN ('web', 'ios', 'android')
+                   UNION SELECT 'ios'
+                 ),
+                 ','
+               )
+             )`,
+      [APP_REVIEW_ACCOUNT_EMAIL],
+    );
+    await client.query(
+      `INSERT INTO pending_tester_emails
+         (email, tester_access_source, granted_by, granted_at,
+          entitlement_ends_at, applied_at, applied_to_user_id)
+       VALUES ($1, 'testflight', $2, NOW(), NULL, NOW(), $3)
+       ON CONFLICT (email) DO UPDATE
+         SET tester_access_source = 'testflight',
+             granted_by = EXCLUDED.granted_by,
+             granted_at = NOW(),
+             entitlement_ends_at = NULL,
+             applied_at = NOW(),
+             applied_to_user_id = EXCLUDED.applied_to_user_id`,
+      [APP_REVIEW_ACCOUNT_EMAIL, recoveryActor, userId],
+    );
+    await client.query(
+      `INSERT INTO access_entitlement_events
+         (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
+       VALUES ($1, $2, 'granted', 'testflight', $3, NULL,
+               jsonb_build_object(
+                 'workflow', 'authorized_app_review_account_v1',
+                 'createdAccount', $4::boolean
+               ))`,
+      [APP_REVIEW_ACCOUNT_EMAIL, userId, recoveryActor, createdAccount],
+    );
+    await client.query("COMMIT");
+    log(
+      `Authorized App Review account reconciled (${createdAccount ? "created" : "existing account access refreshed"}).`,
+    );
+    return true;
+  } catch (err: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    warn(
+      `Authorized App Review account recovery failed: ${err instanceof Error ? err.message : String(err)}`,
     );
     return false;
   } finally {

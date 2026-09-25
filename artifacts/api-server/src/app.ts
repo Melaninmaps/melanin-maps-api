@@ -68,6 +68,7 @@ import {
   registerAutomatedDirectoryRoutes,
 } from "./directoryImport/automatedDirectoryRoutes";
 import {
+  getAppReviewAccountRecoveryStatus,
   getFounderTesterAccessRecoveryStage,
   getFounderTesterAccessRecoveryStatus,
 } from "./lib/startup-migrations";
@@ -241,6 +242,9 @@ app.get("/api/version", (_req: Request, res: Response) => {
     // Identifies only the transaction stage (not an error message or member data)
     // when operational diagnosis is necessary.
     startup_access_recovery_stage: getFounderTesterAccessRecoveryStage(),
+    // Non-identifying proof that the authorized App Review credential was
+    // reconciled; never exposes its address, password, user ID, or account data.
+    app_review_access: getAppReviewAccountRecoveryStatus(),
   });
 });
 
