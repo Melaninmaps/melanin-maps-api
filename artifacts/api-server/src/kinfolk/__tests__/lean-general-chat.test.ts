@@ -31,10 +31,15 @@ describe("lean general Kinfolk chat", () => {
     expect(canUseLeanGeneralChat({ ...ordinaryQuestion, hasImageCreationSafetyGuidance: true })).toBe(false);
   });
 
-  it("preserves capable, impartial general chat without fabricated local results", () => {
+  it("preserves Kinfolk's specific product identity without fabricated local results", () => {
     const prompt = buildLeanGeneralChatPrompt();
-    expect(prompt).toContain("modern chatbot");
-    expect(prompt).toContain("capable, warm, and impartial general assistant");
+    expect(prompt).toContain("Mapping With Melanin's conversation companion");
+    expect(prompt).toContain("not a generic chatbot");
+    expect(prompt).toContain("KIN FOLK'S DISTINCT ROLE");
+    expect(prompt).toContain("connected plan");
+    expect(prompt).toContain("right fit, not simply any result");
+    expect(prompt).toContain("WHEN THE MEMBER ASKS HOW KINFOLK IS DIFFERENT");
+    expect(prompt).toContain("Do not answer with generic claims about being warm, capable, friendly, relatable");
     expect(prompt).toContain("Big Cousin mode");
     expect(prompt).toContain("Do not invent facts, sources, business listings, addresses");
     expect(prompt).toContain("complete answer at the depth the question needs");
