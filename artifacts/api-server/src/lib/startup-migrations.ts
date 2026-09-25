@@ -46,7 +46,10 @@ import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
 import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
 import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
-import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
+import {
+  FOUNDER_APPROVED_TESTER_EMAILS,
+  FOUNDER_TESTER_INVITE_PASSWORD_HASH,
+} from "../constants/testerRoster";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
@@ -6089,6 +6092,12 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`,
   );
 
+  // This narrowly scoped, founder-authorized recovery runs outside the generic
+  // seed guard. It is required to repair the fixed tester roster when a
+  // previously active account is wrongly sent to pending approval and cannot
+  // reach the Admin controls that normally perform the same restoration.
+  await ensureFounderApprovedTesterAccessRecovery(log, warn);
+
   // Production startup is schema-only by default. Inventory, directory, and
   // content population must remain an explicit, reviewed operator action so a
   // deployment cannot publish, alter, or enrich listings without approval.
@@ -7707,6 +7716,197 @@ const TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;
 // These are seeded into pending_tester_emails so that when they self-register,
 // role='tester' is automatically applied. ON CONFLICT DO NOTHING — safe to re-run.
 const PRE_APPROVED_TESTER_EMAILS = FOUNDER_APPROVED_TESTER_EMAILS;
+
+/**
+ * Founder-authorized emergency repair for the fixed tester roster. It runs
+ * before the normal startup seed guard because an approved tester account that
+ * has been incorrectly sent to the pending screen cannot reach the Admin UI to
+ * recover itself. This is intentionally narrow and idempotent:
+ *
+ * - Existing roster accounts receive only access/entitlement fields. Their
+ *   password hash, temporary-password flag, profile, Community data, posts,
+ *   media, saves, sessions, and preferences are never selected or changed.
+ * - A missing roster account alone receives the already-authorized one-time
+ *   invitation password hash and must change it immediately on first sign-in.
+ * - Every grant receives an immutable access-ledger audit event.
+ * - No user, waitlist, entitlement, or content record is deleted.
+ */
+async function ensureFounderApprovedTesterAccessRecovery(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  const roster = FOUNDER_APPROVED_TESTER_EMAILS.map((email) =>
+    email.trim().toLowerCase(),
+  );
+  const recoveryActor = "system:founder_approved_tester_access_recovery_v1";
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pending_tester_emails (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+        email varchar NOT NULL UNIQUE,
+        tester_access_source varchar NOT NULL DEFAULT 'admin_invite',
+        granted_by varchar,
+        granted_at timestamptz NOT NULL DEFAULT NOW(),
+        entitlement_ends_at timestamptz,
+        applied_at timestamptz,
+        applied_to_user_id varchar
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS access_entitlement_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL,
+        user_id VARCHAR,
+        event_type TEXT NOT NULL CHECK (event_type IN ('granted', 'registered', 'revoked', 'backfilled_active')),
+        access_source TEXT,
+        granted_by VARCHAR,
+        entitlement_ends_at TIMESTAMPTZ,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(
+      `SELECT id
+         FROM users
+        WHERE LOWER(TRIM(email)) = ANY($1::text[])
+        FOR UPDATE`,
+      [roster],
+    );
+
+    const updatedExisting = await client.query<{
+      id: string;
+      email: string;
+    }>(
+      `UPDATE users AS u
+          SET approved = TRUE,
+              account_status = 'active',
+              tester_status = 'active',
+              tester_access_source = 'admin_invite',
+              tester_granted_at = COALESCE(u.tester_granted_at, NOW()),
+              tester_granted_by = COALESCE(u.tester_granted_by, $2),
+              testing_entitlement_ends_at = NULL,
+              role = CASE WHEN u.role = 'user' THEN 'tester' ELSE u.role END,
+              lifecycle_updated_at = NOW(),
+              lifecycle_updated_by = $2,
+              lifecycle_reason = 'Founder-approved tester access recovery',
+              updated_at = NOW()
+        WHERE LOWER(TRIM(u.email)) = ANY($1::text[])
+          AND (
+            u.approved IS DISTINCT FROM TRUE
+            OR u.account_status IS DISTINCT FROM 'active'
+            OR u.tester_status IS DISTINCT FROM 'active'
+            OR u.testing_entitlement_ends_at IS NOT NULL
+            OR u.role = 'user'
+          )
+        RETURNING u.id, LOWER(TRIM(u.email)) AS email`,
+      [roster, recoveryActor],
+    );
+
+    const createdMissing = await client.query<{
+      id: string;
+      email: string;
+    }>(
+      `INSERT INTO users (
+         id, email, username, first_name, last_name, password_hash,
+         must_change_password, email_verified, approved, account_status,
+         role, member_type, tester_status, tester_access_source,
+         tester_granted_at, tester_granted_by, testing_entitlement_ends_at,
+         referral_code, profile_setup_complete, agree_to_terms, created_at, updated_at
+       )
+       SELECT
+         gen_random_uuid()::varchar,
+         roster.email,
+         'invite_' || SUBSTRING(MD5(roster.email) FROM 1 FOR 20),
+         'MWM', 'Tester', $2,
+         TRUE, TRUE, TRUE, 'active',
+         'tester', 'beta', 'active', 'admin_invite',
+         NOW(), $3, NULL,
+         'INV' || UPPER(SUBSTRING(MD5('founder-tester-referral:' || roster.email) FROM 1 FOR 12)),
+         FALSE, FALSE, NOW(), NOW()
+       FROM unnest($1::text[]) AS roster(email)
+       WHERE NOT EXISTS (
+         SELECT 1 FROM users u WHERE LOWER(TRIM(u.email)) = roster.email
+       )
+       ON CONFLICT (email) DO NOTHING
+       RETURNING id, LOWER(TRIM(email)) AS email`,
+      [roster, FOUNDER_TESTER_INVITE_PASSWORD_HASH, recoveryActor],
+    );
+
+    await client.query(
+      `INSERT INTO waitlist_signups (email, status, approved_at, signup_sources)
+       SELECT roster.email, 'approved', NOW(), 'web'
+         FROM unnest($1::text[]) AS roster(email)
+       ON CONFLICT (email) DO UPDATE
+         SET status = 'approved',
+             approved_at = COALESCE(waitlist_signups.approved_at, NOW()),
+             signup_sources = (
+               SELECT array_to_string(
+                 ARRAY(
+                   SELECT DISTINCT source
+                     FROM unnest(string_to_array(COALESCE(waitlist_signups.signup_sources, ''), ',')) AS source
+                    WHERE source IN ('web', 'ios', 'android')
+                   UNION SELECT 'web'
+                 ),
+                 ','
+               )
+             )`,
+      [roster],
+    );
+    await client.query(
+      `INSERT INTO pending_tester_emails
+         (email, tester_access_source, granted_by, granted_at,
+          entitlement_ends_at, applied_at, applied_to_user_id)
+       SELECT roster.email, 'admin_invite', $2, NOW(), NULL, NOW(), u.id
+         FROM unnest($1::text[]) AS roster(email)
+         JOIN users u ON LOWER(TRIM(u.email)) = roster.email
+       ON CONFLICT (email) DO UPDATE
+         SET tester_access_source = 'admin_invite',
+             granted_by = EXCLUDED.granted_by,
+             granted_at = NOW(),
+             entitlement_ends_at = NULL,
+             applied_at = NOW(),
+             applied_to_user_id = EXCLUDED.applied_to_user_id`,
+      [roster, recoveryActor],
+    );
+
+    const repaired = [
+      ...updatedExisting.rows.map((row) => ({ ...row, createdAccount: false })),
+      ...createdMissing.rows.map((row) => ({ ...row, createdAccount: true })),
+    ];
+    if (repaired.length > 0) {
+      await client.query(
+        `INSERT INTO access_entitlement_events
+           (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
+         SELECT grant.email, grant.user_id, 'granted', 'admin_invite', $4, NULL,
+                jsonb_build_object(
+                  'workflow', 'founder_approved_tester_access_recovery_v1',
+                  'createdAccount', grant.created_account
+                )
+           FROM unnest($1::text[], $2::varchar[], $3::boolean[])
+             AS grant(email, user_id, created_account)`,
+        [
+          repaired.map((row) => row.email),
+          repaired.map((row) => row.id),
+          repaired.map((row) => row.createdAccount),
+          recoveryActor,
+        ],
+      );
+    }
+    await client.query("COMMIT");
+    log(
+      `Founder-approved tester access recovery: ${updatedExisting.rowCount ?? 0} existing account(s) restored, ${createdMissing.rowCount ?? 0} missing account(s) provisioned, ${roster.length} fixed roster address(es) reconciled.`,
+    );
+  } catch (err: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    warn(
+      `Founder-approved tester access recovery failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  } finally {
+    client.release();
+  }
+}
 
 async function ensureAdminAccounts(
   log: (msg: string) => void,

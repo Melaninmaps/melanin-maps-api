@@ -18,7 +18,10 @@ import { createHash } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
-import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
+import {
+  FOUNDER_APPROVED_TESTER_EMAILS,
+  FOUNDER_TESTER_INVITE_PASSWORD_HASH,
+} from "../constants/testerRoster";
 
 const router: IRouter = Router();
 
@@ -33,14 +36,6 @@ const VALID_TESTER_ACCESS_SOURCES = [
   "admin_invite",
   "website_test",
 ] as const;
-
-// This is a bcrypt hash of the founder-authorized, one-time tester invitation
-// password. The plaintext is intentionally never stored in source, sent in an
-// API response, logged, or displayed in the Admin UI. Only accounts which do
-// not already exist receive this hash, and the platform forces a replacement
-// password immediately after the first successful sign-in.
-const FOUNDER_TESTER_INVITE_PASSWORD_HASH =
-  "$2b$10$E3FOTtxTun0sJXa5.tknZ.oIUt.IRpDx7fAMjysb5evjT1sqcRCoq";
 
 type FounderRosterAccountRow = {
   email: string;
