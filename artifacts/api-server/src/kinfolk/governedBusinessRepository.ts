@@ -2,6 +2,10 @@ import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoCo
 import {
   mwmDiasporaPromotionSqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
+import {
+  sanitizePublicListingCopy,
+  sanitizePublicListingCopyOrNull,
+} from "../businesses/publicListingCopy";
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
@@ -259,7 +263,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     name: text(row.name),
     category: text(row.category),
     subcategory: nullableText(row.subcategory),
-    description: text(row.description),
+    description: sanitizePublicListingCopy(text(row.description)),
     address: nullableText(row.address),
     city: text(row.city),
     stateCode: nullableText(row.state_code),
@@ -296,7 +300,9 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     environmentTags: stringArray(row.environment_tags),
     amenityTags: stringArray(row.amenity_tags),
     matchReasons: [],
-    recommendationContext: nullableText(row.kinfolk_recommendation_reason),
+    recommendationContext: sanitizePublicListingCopyOrNull(
+      row.kinfolk_recommendation_reason,
+    ),
     identityReasons: [],
   };
 }

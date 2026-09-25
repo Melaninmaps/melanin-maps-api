@@ -24,6 +24,7 @@ import {
 } from "../lib/library-growth-engine";
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { sanitizePublicListingCopyOrNull } from "../businesses/publicListingCopy";
 import {
   buildDesignationPredicateSql,
   matchesDocumentedDesignationScope,
@@ -813,7 +814,7 @@ async function searchBusinesses(opts: {
         results.set(row.id, {
           id: row.id, name: row.name, category: row.category,
           subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
-          description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+          description: sanitizePublicListingCopyOrNull(row.description) ?? undefined, imageUrl: row.image_url ?? undefined,
           rating: row.rating ? parseFloat(row.rating) : undefined,
           reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
@@ -894,7 +895,7 @@ async function searchBusinesses(opts: {
         results.set(row.id, {
           id: row.id, name: row.name, category: row.category,
           subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
-          description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+          description: sanitizePublicListingCopyOrNull(row.description) ?? undefined, imageUrl: row.image_url ?? undefined,
           rating: row.rating ? parseFloat(row.rating) : undefined,
           reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
@@ -961,7 +962,7 @@ async function searchBusinesses(opts: {
         results.set(row.id, {
           id: row.id, name: row.name, category: row.category,
           subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
-          description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+          description: sanitizePublicListingCopyOrNull(row.description) ?? undefined, imageUrl: row.image_url ?? undefined,
           rating: row.rating ? parseFloat(row.rating) : undefined,
           reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
@@ -1073,7 +1074,7 @@ async function searchBusinesses(opts: {
               id: row.id, name: row.name, category: row.category,
               subcategory: row.subcategory ?? undefined,
               city: row.city, state: row.state,
-              description: row.description ?? undefined,
+              description: sanitizePublicListingCopyOrNull(row.description) ?? undefined,
               imageUrl: row.image_url ?? undefined,
               rating: row.rating ? parseFloat(row.rating) : undefined,
               reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
@@ -1262,7 +1263,7 @@ async function searchBusinesses(opts: {
         results.set(row.id, {
           id: row.id, name: row.name, category: row.category,
           subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
-          description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+          description: sanitizePublicListingCopyOrNull(row.description) ?? undefined, imageUrl: row.image_url ?? undefined,
           rating: row.rating ? parseFloat(row.rating) : undefined,
           reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
@@ -1345,7 +1346,7 @@ async function searchBusinesses(opts: {
           results.set(row.id, {
             id: row.id, name: row.name, category: row.category,
             subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
-            description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+            description: sanitizePublicListingCopyOrNull(row.description) ?? undefined, imageUrl: row.image_url ?? undefined,
             rating: row.rating ? parseFloat(row.rating) : undefined,
             reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
             verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
@@ -1410,7 +1411,7 @@ async function searchBusinesses(opts: {
         results.set(row.id, {
           id: row.id, name: row.name, category: row.category,
           subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
-          description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+          description: sanitizePublicListingCopyOrNull(row.description) ?? undefined, imageUrl: row.image_url ?? undefined,
           rating: row.rating ? parseFloat(row.rating) : undefined,
           reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
           verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
