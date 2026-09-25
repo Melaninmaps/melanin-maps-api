@@ -19,6 +19,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const rootLayout = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../app/_layout.tsx"),
+  "utf8",
+);
 
 // ---------------------------------------------------------------------------
 // Minimal simulation of the AuthProvider state machine
@@ -279,5 +287,15 @@ describe("AuthGate guard invariant", () => {
     expect(auth.authGateShouldRedirect("/(tabs)")).toBe(false);
     expect(auth.authGateShouldRedirect("/map")).toBe(false);
     expect(auth.authGateShouldRedirect("/discover")).toBe(false);
+  });
+});
+
+describe("Approved member recovery from the pending route", () => {
+  it("returns a newly approved tester from stale pending copy to the app", () => {
+    expect(rootLayout).toContain("function ApprovalChecker()");
+    expect(rootLayout).toContain("const pathname = usePathname();");
+    expect(rootLayout).toContain('user?.approved === true');
+    expect(rootLayout).toContain('pathname.startsWith("/pending-approval")');
+    expect(rootLayout).toContain('router.replace("/(tabs)" as Href);');
   });
 });
