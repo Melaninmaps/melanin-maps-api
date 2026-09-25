@@ -321,6 +321,7 @@ import {
 } from "../kinfolk/voice-delivery";
 import { buildKendrickDrakeCulturalConsensusAnswer } from "../kinfolk/cultural-consensus-answer";
 import { buildCulturalConflictClarification } from "../kinfolk/cultural-conflict-clarification";
+import { buildKinfolkProductIdentityResponse } from "../kinfolk/product-identity-response";
 import {
   buildLeanGeneralChatPrompt,
   buildLeanGeneralHistory,
@@ -6053,6 +6054,57 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       needsClarification: false,
       originalQuery: message,
       answerMode: "direct_answer",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  // Kinfolk's product role is stable and should not be delegated to a general
+  // model answer. Returning the canonical explanation prevents the generic
+  // chatbot comparison previously seen in the member experience.
+  const productIdentity = buildKinfolkProductIdentityResponse(message);
+  if (productIdentity !== null) {
+    const productIdentitySessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: productIdentity.reply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [...productIdentity.followUpSuggestions],
+      sources: [],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: productIdentitySessionId,
+      reply: productIdentity.reply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: productIdentity.followUpSuggestions,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "product_identity",
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],
