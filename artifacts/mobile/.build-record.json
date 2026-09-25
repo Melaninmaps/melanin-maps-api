@@ -1,12 +1,12 @@
 {
   "lastIosSubmitted": 112,
   "lastAndroidSubmitted": 82,
-  "lastIosReserved": 122,
-  "lastAndroidReserved": 92,
+  "lastIosReserved": 124,
+  "lastAndroidReserved": 94,
   "iosEasBuildId": "4718d09b-56bf-4a5a-bd8b-19ab94973384",
   "iosEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
   "androidEasBuildId": null,
   "androidEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
-  "sourceCommit": "be77b6ddc03379ab321c0d780918881abe8b8a53",
-  "notes": "EAS evidence on 2026-09-24 confirmed iOS build 122 and Android versionCode 92 finished from source commit be77b6ddc03379ab321c0d780918881abe8b8a53. Their identifiers are consumed and must never be reused. The next source-traceable Community repair release is iOS build 123 and Android versionCode 93."
+  "sourceCommit": "5bc2b63",
+  "notes": "Founder-supplied EAS Builds evidence on 2026-09-25 confirmed completed iOS build 124 and Android versionCode 94 from git ref 5bc2b63. These identifiers are consumed and must never be reused. The next source-traceable release must use iOS build 125 and Android versionCode 95 or higher."
 }

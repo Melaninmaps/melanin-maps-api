@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the complete 124/94
+# Requirements-to-proof source/artifact gate. Defaults to the next 125/95
 # repair release while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
@@ -26,8 +26,8 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-124}"
-EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-94}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-125}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-95}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "117/87" ] &&
@@ -37,7 +37,8 @@ if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "121/91" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "122/92" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "123/93" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "124/94" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "124/94" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "125/95" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
