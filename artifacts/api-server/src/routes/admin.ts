@@ -62,6 +62,158 @@ function parseAdminCityFilters(value: unknown): string[] {
   ].slice(0, 50);
 }
 
+type AdminBusinessInventoryQuery = Readonly<{
+  search?: unknown;
+  city?: unknown;
+  category?: unknown;
+  subcategory?: unknown;
+  intakeCohort?: unknown;
+  status?: unknown;
+  link?: unknown;
+  addedFrom?: unknown;
+  addedTo?: unknown;
+  sort?: unknown;
+}>;
+
+type AdminBusinessInventoryFilters = Readonly<{
+  status: string;
+  sort: "added_desc" | "name_asc";
+  orderBy: string;
+  where: string;
+  filterParams: unknown[];
+  completedCohortPredicate: string;
+  nationalMasterPredicate: string;
+}>;
+
+/**
+ * One filter compiler serves both the paged Admin review table and its CSV
+ * export. Keeping them together prevents an export from silently changing the
+ * city, archive, intake-cohort, or search scope an administrator is reviewing.
+ */
+async function compileAdminBusinessInventoryFilters(
+  query: AdminBusinessInventoryQuery,
+): Promise<AdminBusinessInventoryFilters> {
+  const search = String(query.search ?? "").trim();
+  // Repeated `city` query parameters intentionally mean OR: an Admin can
+  // review Philadelphia plus a known spelling variant in one result set.
+  const cityFilters = parseAdminCityFilters(query.city);
+  const category = String(query.category ?? "").trim();
+  const subcategory = String(query.subcategory ?? "").trim();
+  const intakeCohort = String(query.intakeCohort ?? "all").trim();
+  const status = String(query.status ?? "active");
+  const link = String(query.link ?? "all");
+  const addedFrom = String(query.addedFrom ?? "").trim();
+  const addedTo = String(query.addedTo ?? "").trim();
+  const sort = String(query.sort ?? "name_asc") === "added_desc"
+    ? "added_desc"
+    : "name_asc";
+  const orderBy = sort === "name_asc"
+    ? "LOWER(name) ASC NULLS LAST, id ASC"
+    : "created_at DESC, id ASC";
+
+  // The historical cohort must be identified by immutable receipt evidence.
+  // The table probes preserve Admin review/export availability during an
+  // additive startup migration retry.
+  const receiptTableProbe = await pool.query<{ table_name: string | null }>(
+    `SELECT to_regclass(value) AS table_name
+       FROM unnest($1::text[]) AS value`,
+    [[
+      "public.directory_publication_provenance",
+      "public.completed_cohort_directory_discovery_receipts",
+    ]],
+  );
+  const hasReceiptTable = (name: string) => receiptTableProbe.rows.some(
+    (row) => String(row.table_name ?? "").includes(name),
+  );
+  const completedCohortPredicateParts = [
+    "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'completed_cohort_directory_discovery'",
+  ];
+  if (hasReceiptTable("directory_publication_provenance")) {
+    completedCohortPredicateParts.push(`EXISTS (
+      SELECT 1
+        FROM directory_publication_provenance completed_provenance
+       WHERE completed_provenance.record_id = businesses.id
+         AND completed_provenance.source_sha256 = '${COMPLETED_COHORT_MANIFEST_CHECKSUM}'
+         AND completed_provenance.outcome IN ('created', 'linked_existing')
+    )`);
+  }
+  if (hasReceiptTable("completed_cohort_directory_discovery_receipts")) {
+    completedCohortPredicateParts.push(`EXISTS (
+      SELECT 1
+        FROM completed_cohort_directory_discovery_receipts completed_discovery_receipt
+       WHERE completed_discovery_receipt.business_id = businesses.id
+    )`);
+  }
+  const completedCohortPredicate = `(${completedCohortPredicateParts.join(" OR ")})`;
+  const nationalMasterPredicate =
+    "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'national_diaspora_master_18294'";
+  const filters: string[] = [];
+  const filterParams: unknown[] = [];
+  const addFilter = (clause: string, value: string) => {
+    filterParams.push(value);
+    filters.push(clause.replace("?", `$${filterParams.length}`));
+  };
+
+  if (search) {
+    addFilter(
+      "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ? OR COALESCE(description, '') ILIKE ? OR COALESCE(tags::text, '') ILIKE ? OR COALESCE(vibes::text, '') ILIKE ? OR COALESCE(website, '') ILIKE ? OR COALESCE(instagram, '') ILIKE ? OR COALESCE(tiktok, '') ILIKE ? OR COALESCE(facebook, '') ILIKE ? OR COALESCE(twitter, '') ILIKE ? OR COALESCE(youtube, '') ILIKE ? OR COALESCE(pinterest, '') ILIKE ?)",
+      `%${search}%`,
+    );
+    const parameter = `$${filterParams.length}`;
+    filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter} OR COALESCE(description, '') ILIKE ${parameter} OR COALESCE(tags::text, '') ILIKE ${parameter} OR COALESCE(vibes::text, '') ILIKE ${parameter} OR COALESCE(website, '') ILIKE ${parameter} OR COALESCE(instagram, '') ILIKE ${parameter} OR COALESCE(tiktok, '') ILIKE ${parameter} OR COALESCE(facebook, '') ILIKE ${parameter} OR COALESCE(twitter, '') ILIKE ${parameter} OR COALESCE(youtube, '') ILIKE ${parameter} OR COALESCE(pinterest, '') ILIKE ${parameter})`;
+  }
+  if (cityFilters.length > 0) {
+    filterParams.push(cityFilters);
+    filters.push(`${normalizedAdminCitySql} = ANY($${filterParams.length}::text[])`);
+  }
+  if (category) addFilter("category = ?", category);
+  if (subcategory) addFilter("subcategory = ?", subcategory);
+  if (intakeCohort === "protected_historical_cohort") {
+    filters.push(completedCohortPredicate);
+  } else if (intakeCohort === "user_national_master") {
+    filters.push(nationalMasterPredicate);
+  } else if (intakeCohort === "other_inventory") {
+    filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
+  }
+  if (status === "archived") {
+    filters.push("listing_status = 'archived'");
+  } else if (status !== "all") {
+    // All ordinary review modes exclude the reversible archive. `all` is used
+    // only by the explicit Admin CSV inventory download.
+    filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
+  }
+  if (status === "permanently_closed") {
+    filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
+  } else if (status === "needs_review") {
+    filters.push("needs_verification = true");
+  }
+  if (link === "website_present") {
+    filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NOT NULL");
+  } else if (link === "website_missing") {
+    filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL");
+  } else if (link === "social_present") {
+    filters.push("NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL");
+  } else if (link === "no_public_link") {
+    filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL");
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(addedFrom)) {
+    addFilter("created_at >= ?::date", addedFrom);
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(addedTo)) {
+    addFilter("created_at < (?::date + INTERVAL '1 day')", addedTo);
+  }
+
+  return {
+    status,
+    sort,
+    orderBy,
+    where: filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "",
+    filterParams,
+    completedCohortPredicate,
+    nationalMasterPredicate,
+  };
+}
+
 type ListingAuditQueryClient = {
   query: (statement: string, values?: readonly unknown[]) => Promise<unknown>;
 };
@@ -335,129 +487,15 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const pageSize = Number.isFinite(requestedPageSize)
       ? Math.min(Math.max(requestedPageSize, 1), MAX_INVENTORY_PAGE_SIZE)
       : DEFAULT_INVENTORY_PAGE_SIZE;
-    const search = String(req.query.search ?? "").trim();
-    // Repeated `city` query parameters intentionally mean OR: an Admin can
-    // review Philadelphia plus a known spelling variant in one result set.
-    // The remaining filter controls still combine with this group using AND.
-    const cityFilters = parseAdminCityFilters(req.query.city);
-    const category = String(req.query.category ?? "").trim();
-    const subcategory = String(req.query.subcategory ?? "").trim();
-    // Controlled provenance scopes change only this administrator review list.
-    // They do not infer ownership and do not change any public listing state.
-    const intakeCohort = String(req.query.intakeCohort ?? "all").trim();
-    // The normal administrator review screen is deliberately a live-inventory
-    // view. Archived records live in the separate Archive vault instead of
-    // resurfacing each time an administrator filters a city or a business name.
-    const status = String(req.query.status ?? "active");
-    const link = String(req.query.link ?? "all");
-    const addedFrom = String(req.query.addedFrom ?? "").trim();
-    const addedTo = String(req.query.addedTo ?? "").trim();
-    // City-by-city duplicate review defaults to A–Z so every similarly named
-    // listing is adjacent even after a browser reload or a filter reset.
-    const sort = String(req.query.sort ?? "name_asc");
-    // Use a fixed, server-owned order expression rather than interpolating an
-    // arbitrary query parameter. Name A–Z keeps all similarly named listings
-    // together across inventory pages for duplicate review.
-    const orderBy = sort === "name_asc"
-      ? "LOWER(name) ASC NULLS LAST, id ASC"
-      : "created_at DESC, id ASC";
-    // The historical 4,183-row cohort must be identified by its immutable
-    // receipt evidence. Some linked rows predate the data_source marker, so
-    // source text alone is deliberately insufficient. The table probes keep a
-    // partially migrated older deployment from taking down Admin inventory.
-    const receiptTableProbe = await pool.query<{ table_name: string | null }>(
-      `SELECT to_regclass(value) AS table_name
-         FROM unnest($1::text[]) AS value`,
-      [[
-        "public.directory_publication_provenance",
-        "public.completed_cohort_directory_discovery_receipts",
-      ]],
-    );
-    const hasReceiptTable = (name: string) => receiptTableProbe.rows.some(
-      (row) => String(row.table_name ?? "").includes(name),
-    );
-    const completedCohortPredicateParts = [
-      "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'completed_cohort_directory_discovery'",
-    ];
-    if (hasReceiptTable("directory_publication_provenance")) {
-      completedCohortPredicateParts.push(`EXISTS (
-        SELECT 1
-          FROM directory_publication_provenance completed_provenance
-         WHERE completed_provenance.record_id = businesses.id
-           AND completed_provenance.source_sha256 = '${COMPLETED_COHORT_MANIFEST_CHECKSUM}'
-           AND completed_provenance.outcome IN ('created', 'linked_existing')
-      )`);
-    }
-    if (hasReceiptTable("completed_cohort_directory_discovery_receipts")) {
-      completedCohortPredicateParts.push(`EXISTS (
-        SELECT 1
-          FROM completed_cohort_directory_discovery_receipts completed_discovery_receipt
-         WHERE completed_discovery_receipt.business_id = businesses.id
-      )`);
-    }
-    const completedCohortPredicate = `(${completedCohortPredicateParts.join(" OR ")})`;
-    const nationalMasterPredicate =
-      "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'national_diaspora_master_18294'";
-    const filters: string[] = [];
-    const filterParams: unknown[] = [];
-    const addFilter = (clause: string, value: string) => {
-      filterParams.push(value);
-      filters.push(clause.replace("?", `$${filterParams.length}`));
-    };
-
-    if (search) {
-      addFilter(
-        "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ? OR COALESCE(description, '') ILIKE ? OR COALESCE(tags::text, '') ILIKE ? OR COALESCE(vibes::text, '') ILIKE ? OR COALESCE(website, '') ILIKE ? OR COALESCE(instagram, '') ILIKE ? OR COALESCE(tiktok, '') ILIKE ? OR COALESCE(facebook, '') ILIKE ? OR COALESCE(twitter, '') ILIKE ? OR COALESCE(youtube, '') ILIKE ? OR COALESCE(pinterest, '') ILIKE ?)",
-        `%${search}%`,
-      );
-      // The same value is intentionally used for every searchable public
-      // profile field, so an administrator can recover a listing by its exact
-      // name, an identifying phrase, tag, or social/website handle.
-      const parameter = `$${filterParams.length}`;
-      filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter} OR COALESCE(description, '') ILIKE ${parameter} OR COALESCE(tags::text, '') ILIKE ${parameter} OR COALESCE(vibes::text, '') ILIKE ${parameter} OR COALESCE(website, '') ILIKE ${parameter} OR COALESCE(instagram, '') ILIKE ${parameter} OR COALESCE(tiktok, '') ILIKE ${parameter} OR COALESCE(facebook, '') ILIKE ${parameter} OR COALESCE(twitter, '') ILIKE ${parameter} OR COALESCE(youtube, '') ILIKE ${parameter} OR COALESCE(pinterest, '') ILIKE ${parameter})`;
-    }
-    if (cityFilters.length > 0) {
-      filterParams.push(cityFilters);
-      filters.push(`${normalizedAdminCitySql} = ANY($${filterParams.length}::text[])`);
-    }
-    if (category) addFilter("category = ?", category);
-    if (subcategory) addFilter("subcategory = ?", subcategory);
-    if (intakeCohort === "protected_historical_cohort") {
-      filters.push(completedCohortPredicate);
-    } else if (intakeCohort === "user_national_master") {
-      filters.push(nationalMasterPredicate);
-    } else if (intakeCohort === "other_inventory") {
-      filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
-    }
-    if (status === "archived") {
-      filters.push("listing_status = 'archived'");
-    } else {
-      // All ordinary review modes exclude the reversible archive. This keeps a
-      // completed duplicate cleanup out of the next city/name review while
-      // retaining its record and audit evidence in the Archive vault.
-      filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
-    }
-    if (status === "permanently_closed") {
-      filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
-    } else if (status === "needs_review") {
-      filters.push("needs_verification = true");
-    }
-    if (link === "website_present") {
-      filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NOT NULL");
-    } else if (link === "website_missing") {
-      filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL");
-    } else if (link === "social_present") {
-      filters.push("NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL");
-    } else if (link === "no_public_link") {
-      filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL");
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(addedFrom)) {
-      addFilter("created_at >= ?::date", addedFrom);
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(addedTo)) {
-      addFilter("created_at < (?::date + INTERVAL '1 day')", addedTo);
-    }
-    const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+    const {
+      status,
+      sort,
+      orderBy,
+      where,
+      filterParams,
+      completedCohortPredicate,
+      nationalMasterPredicate,
+    } = await compileAdminBusinessInventoryFilters(req.query);
     const pageParams = [...filterParams, String(pageSize), String((page - 1) * pageSize)];
 
     // Use to_jsonb for the optional, additive intake fields. The older records
@@ -785,6 +823,13 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
     }
 
     const removing = listingStatus === "archived";
+    if (!removing && currentResult.rows.some((row) => row.listing_status !== "archived")) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "Bulk restore accepts only selected records from the Archive vault. Refresh the vault selection and try again.",
+      });
+      return;
+    }
     for (const current of currentResult.rows) {
       const beforeState = {
         listingStatus: current.listing_status,
@@ -3952,7 +3997,11 @@ router.get("/admin/referral-stats", async (req: Request, res: Response) => {
   }
 });
 
-// ── Business leads CSV export ─────────────────────────────────────────────────
+// ── Business inventory CSV export ─────────────────────────────────────────────
+// Exports deliberately use the exact same server-side filters as the paged Admin
+// table. An explicit `status=all` is the only way to include both live records
+// and the retained Archive vault in one download; no export ever changes a
+// listing's visibility or public-discovery state.
 router.get(
   "/admin/businesses/export-csv",
   async (req: Request, res: Response) => {
@@ -3961,23 +4010,55 @@ router.get(
       return;
     }
     try {
-      const businesses = await db
-        .select({
-          id: businessesTable.id,
-          name: businessesTable.name,
-          category: businessesTable.category,
-          city: businessesTable.city,
-          state: businessesTable.state,
-          verified: businessesTable.verified,
-          blackOwned: businessesTable.blackOwned,
-          status: businessesTable.status,
-          phone: businessesTable.phone,
-          website: businessesTable.website,
-          createdAt: businessesTable.createdAt,
-        })
-        .from(businessesTable)
-        .orderBy(desc(businessesTable.createdAt))
-        .limit(2000);
+      const {
+        status,
+        orderBy,
+        where,
+        filterParams,
+        completedCohortPredicate,
+        nationalMasterPredicate,
+      } = await compileAdminBusinessInventoryFilters(req.query);
+      const businesses = await pool.query<{
+        id: string;
+        name: string;
+        category: string;
+        subcategory: string | null;
+        city: string;
+        state: string;
+        listing_status: string | null;
+        verified: boolean;
+        black_owned: boolean;
+        status: string;
+        phone: string | null;
+        website: string | null;
+        instagram: string | null;
+        tiktok: string | null;
+        facebook: string | null;
+        created_at: string;
+        needs_verification: boolean;
+        research_source_label: string | null;
+        research_source_url: string | null;
+        kinfolk_recommendation_reason: string | null;
+        intake_batch_reference: string | null;
+        intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
+      }>(
+        `SELECT id, name, category, subcategory, city, state, listing_status, verified,
+                black_owned, status, phone, website, instagram, tiktok, facebook,
+                created_at, needs_verification,
+                to_jsonb(businesses)->>'research_source_label' AS research_source_label,
+                to_jsonb(businesses)->>'research_source_url' AS research_source_url,
+                to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
+                to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference,
+                CASE
+                  WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
+                  WHEN ${nationalMasterPredicate} THEN 'user_national_master'
+                  ELSE 'other_inventory'
+                END AS intake_cohort
+           FROM businesses
+           ${where}
+           ORDER BY ${orderBy}`,
+        filterParams,
+      );
 
       const invites = await db
         .select({
@@ -3997,56 +4078,92 @@ router.get(
       }
 
       const escape = (v: unknown) => {
-        const s = String(v ?? "").replace(/"/g, '""');
+        const raw = String(v ?? "");
+        // Prevent spreadsheet applications from treating an imported business
+        // name, URL, or user-entered text as a formula. The stored value stays
+        // unchanged; this applies only to the downloaded CSV representation.
+        const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+        const s = safe.replace(/"/g, '""');
         return /[",\n\r]/.test(s) ? `"${s}"` : s;
       };
 
       const headers = [
+        "Business ID",
         "Name",
         "Category",
+        "Subcategory / Service",
         "City",
         "State",
         "Phone",
         "Website",
+        "Instagram",
+        "TikTok",
+        "Facebook",
         "Verified",
-        "Minority-Owned",
-        "Status",
+        "Black-Owned designation",
+        "Listing visibility",
+        "Account status",
+        "Needs verification",
+        "Intake cohort",
+        "Intake batch reference",
+        "Research source label",
+        "Research source URL",
+        "Kinfolk recommendation context",
         "Outreach Status",
         "Outreach Handle",
         "Outreach Date",
         "Added Date",
       ];
-      const rows = businesses.map((b) => {
+      const rows = businesses.rows.map((b) => {
         const out = outreachByBusiness.get(b.id);
         return [
+          b.id,
           b.name,
           b.category,
+          b.subcategory ?? "",
           b.city,
           b.state,
           b.phone ?? "",
           b.website ?? "",
+          b.instagram ?? "",
+          b.tiktok ?? "",
+          b.facebook ?? "",
           b.verified ? "Yes" : "No",
-          b.blackOwned ? "Yes" : "No",
+          b.black_owned ? "Yes" : "No",
+          b.listing_status ?? "live_unclaimed",
           b.status,
+          b.needs_verification ? "Yes" : "No",
+          b.intake_cohort,
+          b.intake_batch_reference ?? "",
+          b.research_source_label ?? "",
+          b.research_source_url ?? "",
+          b.kinfolk_recommendation_reason ?? "",
           out?.status ?? "Not contacted",
           out?.socialHandle ?? "",
           out ? new Date(out.createdAt).toLocaleDateString() : "",
-          new Date(b.createdAt).toLocaleDateString(),
+          new Date(b.created_at).toLocaleDateString(),
         ]
           .map(escape)
           .join(",");
       });
 
-      const csv = [headers.join(","), ...rows].join("\n");
+      const csv = `\ufeff${[headers.join(","), ...rows].join("\n")}`;
       const date = new Date().toISOString().slice(0, 10);
-      res.setHeader("Content-Type", "text/csv");
+      const scope = status === "archived"
+        ? "archive-vault"
+        : status === "all"
+          ? "all-inventory-including-archive"
+          : "filtered-live-inventory";
+      res.setHeader("Cache-Control", "private, no-store");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="business-leads-${date}.csv"`,
+        `attachment; filename="business-${scope}-${date}.csv"`,
       );
       res.send(csv);
     } catch (err) {
-      req.log.error({ err }, "Failed to export business leads CSV");
+      req.log.error({ err }, "Failed to export business inventory CSV");
       res.status(500).json({ error: "Failed to export" });
     }
   },
