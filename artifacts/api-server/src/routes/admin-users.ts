@@ -4,6 +4,10 @@ import { eq, ne, desc, count, gte, isNotNull, sql } from "drizzle-orm";
 import { sendApprovalNotification } from "../lib/email";
 import { sendPushToUser } from "../lib/pushNotifications";
 import { isAdmin } from "../lib/adminAuth";
+import {
+  isFounderOwnerRequest,
+  isProtectedAdminEmail,
+} from "../lib/protectedAdminAccess";
 
 const router: IRouter = Router();
 
@@ -114,6 +118,125 @@ router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) =
   }
 });
 
+// Founder-only access control for the two explicitly protected administrator
+// accounts. Generic Admin lifecycle, approval, role, and tester controls may
+// not change these records. A founder owner can revoke or restore their full
+// platform access here; revocation is retained across restarts until restored.
+router.patch("/admin/protected-administrators/:id/access", async (req: Request, res: Response) => {
+  if (!isAdmin(req) || !isFounderOwnerRequest(req)) {
+    return void res.status(403).json({ error: "Only the founder owner can change protected administrator access." });
+  }
+  const id = String(req.params.id);
+  const action = String(req.body?.action ?? "");
+  if (action !== "revoke" && action !== "restore") {
+    return void res.status(400).json({ error: "action must be revoke or restore" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_protected_admin_access_overrides (
+        email TEXT PRIMARY KEY,
+        revoked_by_user_id VARCHAR(255),
+        revoked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        reason VARCHAR(500) NOT NULL DEFAULT 'Founder revoked protected administrator access'
+      )
+    `);
+    const target = await client.query<{
+      id: string;
+      email: string | null;
+      account_status: "active" | "hidden" | "suspended";
+    }>(
+      `SELECT id, email, account_status
+         FROM users
+        WHERE id = $1
+        FOR UPDATE`,
+      [id],
+    );
+    const user = target.rows[0];
+    if (!user || !isProtectedAdminEmail(user.email)) {
+      await client.query("ROLLBACK");
+      return void res.status(404).json({ error: "Protected administrator account not found." });
+    }
+    const email = user.email!.trim().toLowerCase();
+    const actorId = req.user?.id ?? null;
+
+    if (action === "revoke") {
+      await client.query(
+        `INSERT INTO founder_protected_admin_access_overrides
+           (email, revoked_by_user_id, revoked_at, reason)
+         VALUES ($1, $2, NOW(), 'Founder revoked protected administrator access')
+         ON CONFLICT (email) DO UPDATE
+           SET revoked_by_user_id = EXCLUDED.revoked_by_user_id,
+               revoked_at = NOW(),
+               reason = EXCLUDED.reason`,
+        [email, actorId],
+      );
+      await client.query(
+        `UPDATE users
+            SET role = 'user',
+                approved = FALSE,
+                account_status = 'suspended',
+                tester_status = 'inactive',
+                testing_entitlement_ends_at = NOW(),
+                lifecycle_updated_at = NOW(),
+                lifecycle_updated_by = $2,
+                lifecycle_reason = 'Founder revoked protected administrator access',
+                updated_at = NOW()
+          WHERE id = $1`,
+        [id, actorId],
+      );
+      await client.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [id]);
+    } else {
+      await client.query(
+        `DELETE FROM founder_protected_admin_access_overrides WHERE email = $1`,
+        [email],
+      );
+      await client.query(
+        `UPDATE users
+            SET role = 'admin',
+                approved = TRUE,
+                account_status = 'active',
+                member_type = 'founding',
+                tester_status = 'active',
+                tester_access_source = 'admin_invite',
+                tester_granted_at = COALESCE(tester_granted_at, NOW()),
+                tester_granted_by = COALESCE(tester_granted_by, $2),
+                testing_entitlement_ends_at = NULL,
+                lifecycle_updated_at = NOW(),
+                lifecycle_updated_by = $2,
+                lifecycle_reason = 'Founder restored protected administrator access',
+                updated_at = NOW()
+          WHERE id = $1`,
+        [id, actorId],
+      );
+    }
+    const nextStatus = action === "revoke" ? "suspended" : "active";
+    await client.query(
+      `INSERT INTO admin_account_lifecycle_events
+         (user_id, actor_user_id, prior_status, next_status, reason)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id, actorId, user.account_status, nextStatus, `Founder ${action}d protected administrator access`],
+    );
+    await client.query(
+      `INSERT INTO access_entitlement_events
+         (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
+       VALUES ($1, $2, $3, 'admin_invite', $4, $5,
+               jsonb_build_object('workflow', 'founder_protected_administrator_access_v1'))`,
+      [email, id, action === "revoke" ? "revoked" : "granted", actorId, action === "revoke" ? new Date() : null],
+    );
+    await client.query("COMMIT");
+    res.json({ ok: true, accountStatus: nextStatus, access: action === "revoke" ? "revoked" : "restored" });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log.error({ err }, "Failed to change protected administrator access");
+    res.status(500).json({ error: "Protected administrator access change failed; no partial change was saved." });
+  } finally {
+    client.release();
+  }
+});
+
 router.patch("/admin/users/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -132,6 +255,28 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
   }
   if (approved === undefined && role === undefined) {
     res.status(400).json({ error: "Must provide approved or role" });
+    return;
+  }
+
+  const current = await pool.query<{ email: string | null; role: string }>(
+    `SELECT email, role FROM users WHERE id = $1 LIMIT 1`,
+    [id],
+  );
+  const target = current.rows[0];
+  if (!target) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  if (isProtectedAdminEmail(target.email)) {
+    if (!isFounderOwnerRequest(req)) {
+      res.status(403).json({ error: "Only the founder owner can change protected administrator access." });
+      return;
+    }
+    res.status(409).json({ error: "Use the founder-only protected administrator access control for this account." });
+    return;
+  }
+  if (target.role === "admin") {
+    res.status(409).json({ error: "Administrator role changes are not available from the general user control." });
     return;
   }
 
@@ -211,6 +356,17 @@ router.patch("/admin/users/:id/email", async (req: Request, res: Response) => {
     return void res.status(400).json({ error: "Cannot set an Apple relay address as the real email" });
   }
   try {
+    const target = await pool.query<{ email: string | null }>(
+      `SELECT email FROM users WHERE id = $1 LIMIT 1`,
+      [id],
+    );
+    if (!target.rows[0]) return void res.status(404).json({ error: "User not found" });
+    if (isProtectedAdminEmail(target.rows[0].email) && !isFounderOwnerRequest(req)) {
+      return void res.status(403).json({ error: "Only the founder owner can change protected administrator access." });
+    }
+    if (isProtectedAdminEmail(target.rows[0].email)) {
+      return void res.status(409).json({ error: "Protected administrator email changes require a separate founder-controlled recovery review." });
+    }
     const { rows: existing } = await pool.query(
       `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2`,
       [email.trim(), id],

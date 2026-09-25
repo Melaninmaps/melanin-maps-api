@@ -50,6 +50,7 @@ import {
   FOUNDER_APPROVED_TESTER_EMAILS,
   FOUNDER_TESTER_INVITE_PASSWORD_HASH,
 } from "../constants/testerRoster";
+import { PROTECTED_ADMIN_EMAILS } from "./protectedAdminAccess";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
@@ -94,6 +95,8 @@ let founderTesterAccessRecoveryStatus: "pending" | "complete" | "failed" =
 let founderTesterAccessRecoveryStage = "not_started";
 let appReviewAccountRecoveryStatus: "pending" | "complete" | "failed" =
   "pending";
+let protectedAdminAccessRecoveryStatus: "pending" | "complete" | "failed" =
+  "pending";
 
 export function getFounderTesterAccessRecoveryStatus():
   | "pending"
@@ -111,6 +114,13 @@ export function getAppReviewAccountRecoveryStatus():
   | "complete"
   | "failed" {
   return appReviewAccountRecoveryStatus;
+}
+
+export function getProtectedAdminAccessRecoveryStatus():
+  | "pending"
+  | "complete"
+  | "failed" {
+  return protectedAdminAccessRecoveryStatus;
 }
 
 const MIGRATIONS: { name: string; sql: string }[] = [
@@ -6129,6 +6139,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   appReviewAccountRecoveryStatus = (await ensureAuthorizedAppReviewAccount(log, warn))
     ? "complete"
     : "failed";
+  protectedAdminAccessRecoveryStatus = (await ensureProtectedAdministratorAccess(log, warn))
+    ? "complete"
+    : "failed";
 
   // Production startup is schema-only by default. Inventory, directory, and
   // content population must remain an explicit, reviewed operator action so a
@@ -8098,6 +8111,109 @@ async function ensureAuthorizedAppReviewAccount(
     await client.query("ROLLBACK").catch(() => undefined);
     warn(
       `Authorized App Review account recovery failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Founder-authorized recovery for two existing protected administrator
+ * accounts. It deliberately refuses to create a user if an address is absent:
+ * this workflow is for restoring established accounts, not for silently
+ * inventing people or credentials. Existing passwords, profiles, Community
+ * content, media, saves, preferences, and sessions are not selected or
+ * changed. The transaction adds only the requested full-access fields and
+ * durable audit records.
+ */
+async function ensureProtectedAdministratorAccess(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<boolean> {
+  const emails = [...PROTECTED_ADMIN_EMAILS];
+  const recoveryActor = "system:founder_protected_administrator_access_v1";
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_protected_admin_access_overrides (
+        email TEXT PRIMARY KEY,
+        revoked_by_user_id VARCHAR(255),
+        revoked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        reason VARCHAR(500) NOT NULL DEFAULT 'Founder revoked protected administrator access'
+      )
+    `);
+    const existing = await client.query<{
+      id: string;
+      email: string;
+      account_status: string;
+    }>(
+      `SELECT id, LOWER(TRIM(email)) AS email, COALESCE(account_status, 'active') AS account_status
+         FROM users
+        WHERE LOWER(TRIM(email)) = ANY($1::text[])
+        FOR UPDATE`,
+      [emails],
+    );
+    if (existing.rowCount !== emails.length) {
+      throw new Error("A protected administrator account is missing; no accounts were changed.");
+    }
+
+    const restored = await client.query<{
+      id: string;
+      email: string;
+      prior_status: string;
+    }>(
+      `WITH protected_accounts AS (
+         SELECT id, LOWER(TRIM(email)) AS email, COALESCE(account_status, 'active') AS prior_status
+           FROM users
+          WHERE LOWER(TRIM(email)) = ANY($1::text[])
+       )
+       UPDATE users AS u
+          SET role = 'admin',
+              approved = TRUE,
+              account_status = 'active',
+              member_type = 'founding',
+              tester_status = 'active',
+              tester_access_source = 'admin_invite',
+              tester_granted_at = COALESCE(u.tester_granted_at, NOW()),
+              tester_granted_by = COALESCE(u.tester_granted_by, $2),
+              testing_entitlement_ends_at = NULL,
+              lifecycle_updated_at = NOW(),
+              lifecycle_updated_by = $2,
+              lifecycle_reason = 'Founder-protected administrator access recovery',
+              updated_at = NOW()
+         FROM protected_accounts AS p
+         LEFT JOIN founder_protected_admin_access_overrides AS override
+           ON override.email = p.email
+        WHERE u.id = p.id
+          AND override.email IS NULL
+       RETURNING u.id, LOWER(TRIM(u.email)) AS email, p.prior_status`,
+      [emails, recoveryActor],
+    );
+
+    for (const account of restored.rows) {
+      await client.query(
+        `INSERT INTO admin_account_lifecycle_events
+           (user_id, actor_user_id, prior_status, next_status, reason)
+         VALUES ($1, $2, $3, 'active', 'Founder-protected administrator access recovery')`,
+        [account.id, recoveryActor, account.prior_status],
+      );
+      await client.query(
+        `INSERT INTO access_entitlement_events
+           (email, user_id, event_type, access_source, granted_by, entitlement_ends_at, metadata)
+         VALUES ($1, $2, 'granted', 'admin_invite', $3, NULL,
+                 jsonb_build_object('workflow', 'founder_protected_administrator_access_v1'))`,
+        [account.email, account.id, recoveryActor],
+      );
+    }
+    await client.query("COMMIT");
+    log(`Founder-protected administrator access recovery: ${restored.rowCount ?? 0} existing account(s) restored.`);
+    return true;
+  } catch (err: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    warn(
+      `Founder-protected administrator access recovery failed: ${err instanceof Error ? err.message : String(err)}`,
     );
     return false;
   } finally {

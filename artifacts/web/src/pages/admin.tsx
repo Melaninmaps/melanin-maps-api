@@ -68,6 +68,17 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
+const FOUNDER_OWNER_ADMIN_EMAILS = new Set([
+  "tlindsay428@yahoo.com",
+  "tlindsay428@gmail.com",
+  "tlindsay428@aol.com",
+]);
+
+const PROTECTED_ADMIN_EMAILS = new Set([
+  "kaylacardwell3@gmail.com",
+  "bigdot6017@gmail.com",
+]);
+
 function publicSocialHref(value: string | null, platform: "instagram" | "tiktok" | "facebook"): string | null {
   if (!value?.trim()) return null;
   const raw = value.trim();
@@ -729,6 +740,10 @@ export default function Admin() {
   // Admin capability check succeeding while a later archive/approval request
   // is incorrectly denied.
   const fetch = authenticatedFetch;
+  const currentAdminEmail = String((auth?.user as any)?.email ?? "")
+    .trim()
+    .toLowerCase();
+  const isFounderOwner = FOUNDER_OWNER_ADMIN_EMAILS.has(currentAdminEmail);
   const [tab, setTab] = useState<Tab>("waitlist");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [requireApproval, setRequireApproval] = useState(false);
@@ -1654,6 +1669,37 @@ export default function Admin() {
     });
     await loadUsers();
     setUpdating(null);
+  };
+
+  const changeProtectedAdministratorAccess = async (
+    user: AdminUser,
+    action: "revoke" | "restore",
+  ) => {
+    if (!isFounderOwner) {
+      window.alert("Only the founder owner can change this protected administrator access.");
+      return;
+    }
+    const message = action === "revoke"
+      ? "This will suspend the protected administrator, end their sessions, and revoke their full platform access. Their account and data are retained. Continue?"
+      : "This will restore the protected administrator's full access without changing their password or account data. Continue?";
+    if (!window.confirm(message)) return;
+    setUpdating(`${user.id}-protected-admin`);
+    try {
+      const response = await fetch(`${BASE}api/admin/protected-administrators/${user.id}/access`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The protected administrator access change could not be saved.");
+        return;
+      }
+      await loadUsers();
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const updateUserLifecycle = async (
@@ -3669,20 +3715,26 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              updateUserRole(
-                                user.id,
-                                user.role === "tester" ? "user" : "tester",
-                              )
-                            }
-                            disabled={updating === user.id + "-role"}
-                            className={`h-7 px-3 rounded-full text-xs ${user.role === "tester" ? "bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200" : "bg-white text-[#3A1F0E]/50 border border-[#3A1F0E]/15 hover:bg-[#FAF6EF]"}`}
-                            variant="outline"
-                          >
-                            {user.role === "tester" ? "Tester ✓" : "Tester"}
-                          </Button>
+                          {user.role === "admin" ? (
+                            <span className="inline-flex rounded-full border border-[#7A2637]/20 bg-[#7A2637]/10 px-2 py-1 text-xs font-bold text-[#7A2637]">
+                              Administrator
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                updateUserRole(
+                                  user.id,
+                                  user.role === "tester" ? "user" : "tester",
+                                )
+                              }
+                              disabled={updating === user.id + "-role"}
+                              className={`h-7 px-3 rounded-full text-xs ${user.role === "tester" ? "bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200" : "bg-white text-[#3A1F0E]/50 border border-[#3A1F0E]/15 hover:bg-[#FAF6EF]"}`}
+                              variant="outline"
+                            >
+                              {user.role === "tester" ? "Tester ✓" : "Tester"}
+                            </Button>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
                           {new Date(user.createdAt).toLocaleDateString(
@@ -3692,7 +3744,30 @@ export default function Admin() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            {user.accountStatus === "active" && (
+                            {PROTECTED_ADMIN_EMAILS.has((user.email ?? "").trim().toLowerCase()) ? (
+                              isFounderOwner ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => void changeProtectedAdministratorAccess(
+                                    user,
+                                    user.accountStatus === "suspended" ? "restore" : "revoke",
+                                  )}
+                                  disabled={updating === user.id + "-protected-admin"}
+                                  className={`h-7 px-3 rounded-full text-xs ${user.accountStatus === "suspended" ? "border-green-200 text-green-700 hover:bg-green-50" : "border-red-200 text-red-700 hover:bg-red-50"}`}
+                                >
+                                  {updating === user.id + "-protected-admin"
+                                    ? "Saving…"
+                                    : user.accountStatus === "suspended"
+                                      ? "Restore protected Admin"
+                                      : "Revoke protected Admin"}
+                                </Button>
+                              ) : (
+                                <span className="text-xs font-semibold text-[#3A1F0E]/55">
+                                  Founder-controlled access
+                                </span>
+                              )
+                            ) : user.accountStatus === "active" && user.role !== "admin" && (
                               <>
                                 <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "hide")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs">
                                   Hide
@@ -3702,12 +3777,12 @@ export default function Admin() {
                                 </Button>
                               </>
                             )}
-                            {user.accountStatus !== "active" && (
+                            {user.accountStatus !== "active" && user.role !== "admin" && (
                               <Button size="sm" variant="outline" onClick={() => updateUserLifecycle(user, "restore")} disabled={updating === user.id + "-lifecycle"} className="h-7 px-3 rounded-full text-xs border-green-200 text-green-700 hover:bg-green-50">
                                 Restore
                               </Button>
                             )}
-                            {!user.approved && user.accountStatus !== "suspended" && (
+                            {!user.approved && user.accountStatus !== "suspended" && user.role !== "admin" && (
                               <Button size="sm" onClick={() => updateUser(user.id, true)} disabled={updating === user.id} className="h-7 px-3 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white">
                                 <Check className="w-3 h-3 mr-1" /> Approve
                               </Button>
