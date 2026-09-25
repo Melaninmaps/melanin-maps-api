@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle, Clock, Eye, RefreshCw, Users } from "lucide-react";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -66,6 +67,7 @@ function parseTesterEmails(value: string): string[] {
 }
 
 export function AdminAccessLedger() {
+  const fetch = authenticatedFetch;
   const [ledger, setLedger] = useState<AccessLedger | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -90,6 +92,16 @@ export function AdminAccessLedger() {
   } | null>(null);
   const [bulkPreviewing, setBulkPreviewing] = useState(false);
   const [bulkApplying, setBulkApplying] = useState(false);
+  const [founderRosterPreview, setFounderRosterPreview] = useState<{
+    rosterCount: number;
+    existingAccounts: number;
+    activeTesters: number;
+    retainedPasswordAccounts: number;
+    missingAccounts: number;
+    existingAccountsNeedingEntitlement: number;
+  } | null>(null);
+  const [founderRosterPreviewing, setFounderRosterPreviewing] = useState(false);
+  const [founderRosterApplying, setFounderRosterApplying] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -295,6 +307,85 @@ export function AdminAccessLedger() {
     }
   };
 
+  const previewFounderRoster = async () => {
+    setFounderRosterPreviewing(true);
+    setFounderRosterPreview(null);
+    setMessage(null);
+    try {
+      const response = await fetch(`${BASE}api/admin/testers/founder-roster-preview`, {
+        method: "POST",
+      });
+      const payload = (await response.json()) as {
+        rosterCount?: number;
+        existingAccounts?: number;
+        activeTesters?: number;
+        retainedPasswordAccounts?: number;
+        missingAccounts?: number;
+        existingAccountsNeedingEntitlement?: number;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not inspect the founder tester roster.");
+      }
+      setFounderRosterPreview({
+        rosterCount: payload.rosterCount ?? 0,
+        existingAccounts: payload.existingAccounts ?? 0,
+        activeTesters: payload.activeTesters ?? 0,
+        retainedPasswordAccounts: payload.retainedPasswordAccounts ?? 0,
+        missingAccounts: payload.missingAccounts ?? 0,
+        existingAccountsNeedingEntitlement:
+          payload.existingAccountsNeedingEntitlement ?? 0,
+      });
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not inspect the founder tester roster.",
+      );
+    } finally {
+      setFounderRosterPreviewing(false);
+    }
+  };
+
+  const provisionFounderRoster = async () => {
+    if (!founderRosterPreview) return;
+    const { rosterCount, existingAccounts, missingAccounts } = founderRosterPreview;
+    if (!window.confirm(
+      `Confirm full tester access for the fixed founder roster of ${rosterCount} approved addresses? ${existingAccounts} existing account${existingAccounts === 1 ? "" : "s"} will keep every password, profile, post, media item, community record, and saved item. ${missingAccounts} missing account${missingAccounts === 1 ? "" : "s"} will receive the founder-approved one-time password and will be required to replace it immediately after sign-in. Pending-only accounts outside this roster are not changed.`,
+    )) return;
+
+    setFounderRosterApplying(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${BASE}api/admin/testers/provision-founder-roster`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed: true }),
+      });
+      const payload = (await response.json()) as {
+        existingAccountsGranted?: number;
+        missingAccountsCreated?: number;
+        alreadyActive?: number;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not provision the founder tester roster.");
+      }
+      setMessage(
+        `Founder tester roster reconciled: ${payload.existingAccountsGranted ?? 0} existing account${payload.existingAccountsGranted === 1 ? "" : "s"} granted or restored, ${payload.missingAccountsCreated ?? 0} missing account${payload.missingAccountsCreated === 1 ? "" : "s"} created with a required first-login password change, and ${payload.alreadyActive ?? 0} already active.`,
+      );
+      await Promise.all([load(), previewFounderRoster()]);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not provision the founder tester roster.",
+      );
+    } finally {
+      setFounderRosterApplying(false);
+    }
+  };
+
   return (
     <section>
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -319,6 +410,50 @@ export function AdminAccessLedger() {
           Refresh
         </button>
       </div>
+
+      <section className="mt-6 rounded-2xl border border-[#7A2637]/25 bg-[#7A2637]/[0.04] p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#7A2637]" />
+          <div>
+            <h3 className="font-semibold text-[#3A1F0E]">
+              Founder-approved tester roster
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">
+              Inspect the fixed founder roster first. The preview shows aggregate
+              counts only. If confirmed, existing accounts retain all account
+              data; only roster addresses with no account receive a one-time
+              password and must replace it on first sign-in.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void previewFounderRoster()}
+          disabled={founderRosterPreviewing || founderRosterApplying}
+          className="mt-4 rounded-xl bg-[#2B1507] px-4 py-2 text-sm font-bold text-white hover:bg-[#3A1F0E] disabled:opacity-50"
+        >
+          {founderRosterPreviewing ? "Checking roster…" : "Preview founder tester roster"}
+        </button>
+        {founderRosterPreview && (
+          <div className="mt-4 rounded-xl border border-[#7A2637]/20 bg-white p-4">
+            <p className="font-semibold text-[#3A1F0E]">
+              {founderRosterPreview.rosterCount} approved addresses · {founderRosterPreview.existingAccounts} existing account{founderRosterPreview.existingAccounts === 1 ? "" : "s"} · {founderRosterPreview.activeTesters} already active tester{founderRosterPreview.activeTesters === 1 ? "" : "s"}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">
+              {founderRosterPreview.retainedPasswordAccounts} existing account{founderRosterPreview.retainedPasswordAccounts === 1 ? "" : "s"} already retain a password. {founderRosterPreview.existingAccountsNeedingEntitlement} existing account{founderRosterPreview.existingAccountsNeedingEntitlement === 1 ? "" : "s"} need tester entitlement recovery. {founderRosterPreview.missingAccounts} missing account{founderRosterPreview.missingAccounts === 1 ? "" : "s"} would be created with the required first-login password change.
+            </p>
+            <button
+              type="button"
+              onClick={() => void provisionFounderRoster()}
+              disabled={founderRosterApplying}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7A2637] px-4 py-2 text-sm font-bold text-white hover:bg-[#5C1B29] disabled:opacity-50"
+            >
+              <CheckCircle className="h-4 w-4" />
+              {founderRosterApplying ? "Restoring approved testers…" : "Confirm approved tester access"}
+            </button>
+          </div>
+        )}
+      </section>
 
       <section className="mt-6 rounded-2xl border border-[#CA922B]/30 bg-[#CA922B]/[0.06] p-5">
         <div className="flex items-start gap-3">
