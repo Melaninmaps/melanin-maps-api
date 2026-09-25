@@ -246,10 +246,13 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
 
 export async function sendPasswordResetEmail(to: string, firstName: string | null, code: string) {
   const name = firstName ?? "there";
-  const encodedEmail = encodeURIComponent(to);
   const frontendBase = process.env.FRONTEND_URL ?? "https://www.mappingwithmelanin.com";
-  const webLink = `${frontendBase}/reset-password?email=${encodedEmail}&code=${code}`;
-  const appDeepLink = `mappingwithmelanin://reset-password?email=${encodedEmail}&code=${code}`;
+  // Reset codes are one-time credentials. They must never appear in link
+  // query strings, which can leak through browser history, referrers, link
+  // scanners, screenshots, and forwarded email. Members enter the code on the
+  // password-recovery page instead.
+  const webLink = `${frontendBase}/forgot-password`;
+  const appDeepLink = "mappingwithmelanin://forgot-password";
   await sendEmail({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
@@ -260,17 +263,17 @@ export async function sendPasswordResetEmail(to: string, firstName: string | nul
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
         <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">Password Reset</h1>
         <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
-          Hi ${name}, tap the button below to set a new password. The link expires in <strong>15 minutes</strong>.
+          Hi ${name}, use the one-time code below to reset your password. The code expires in <strong>15 minutes</strong>.
         </p>
 
         <div style="text-align:center;margin-bottom:20px">
           <a href="${webLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:17px;padding:18px 44px;border-radius:50px;text-decoration:none;letter-spacing:0.3px">
-            Reset My Password →
+            Open Password Reset →
           </a>
         </div>
 
         <p style="text-align:center;margin:0 0 28px">
-          <a href="${appDeepLink}" style="color:#CA922B;font-size:13px;text-decoration:underline">Already have the app? Tap here to reset in-app</a>
+          <a href="${appDeepLink}" style="color:#CA922B;font-size:13px;text-decoration:underline">Already have the app? Open password reset in-app</a>
         </p>
 
         <div style="background:#2B1507;border-radius:14px;padding:24px 32px;text-align:center;margin-bottom:28px">

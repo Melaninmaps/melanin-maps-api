@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowLeft, KeyRound, Eye, EyeOff, CheckCircle, AlertCircle, Smartphone } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+const RESET_CONTEXT_KEY = "mwm_password_reset_context_v1";
 
 function getQueryParam(name: string): string {
   const params = new URLSearchParams(window.location.search);
@@ -23,6 +24,35 @@ export default function ResetPassword() {
   const [missingParams, setMissingParams] = useState(false);
 
   useEffect(() => {
+    // New resets arrive here from /forgot-password with their one-time code in
+    // browser-session storage, not in a shareable URL. Keep a legacy query
+    // fallback only for reset emails generated before this repair, then remove
+    // the credential-bearing query immediately from browser history.
+    try {
+      const raw = sessionStorage.getItem(RESET_CONTEXT_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          method?: "email" | "phone";
+          email?: string;
+          phone?: string;
+          code?: string;
+        };
+        const savedMethod = saved.method === "phone" ? "phone" : "email";
+        const savedEmail = typeof saved.email === "string" ? saved.email : "";
+        const savedPhone = typeof saved.phone === "string" ? saved.phone : "";
+        const savedCode = typeof saved.code === "string" ? saved.code : "";
+        if ((savedMethod === "email" ? savedEmail : savedPhone) && /^\d{6}$/.test(savedCode)) {
+          setMethod(savedMethod);
+          setEmail(savedEmail);
+          setPhone(savedPhone);
+          setCode(savedCode);
+          return;
+        }
+      }
+    } catch {
+      // The ordinary missing-context view below gives the member a safe retry.
+    }
+
     const e = getQueryParam("email");
     const p = getQueryParam("phone");
     const c = getQueryParam("code");
@@ -31,7 +61,11 @@ export default function ResetPassword() {
     setEmail(e);
     setPhone(p);
     setCode(c);
-    if ((!phoneRecovery && !e) || (phoneRecovery && !p) || !c) setMissingParams(true);
+    if ((!phoneRecovery && !e) || (phoneRecovery && !p) || !c) {
+      setMissingParams(true);
+    } else {
+      window.history.replaceState({}, "", "/reset-password");
+    }
   }, []);
 
   const valid = newPw.length >= 8 && newPw === confirmPw;
@@ -53,6 +87,7 @@ export default function ResetPassword() {
         setError(data.error ?? "Reset failed. The link may have expired — please request a new one from the app.");
         return;
       }
+      sessionStorage.removeItem(RESET_CONTEXT_KEY);
       setDone(true);
     } catch {
       setError("Could not connect. Please check your internet connection and try again.");
