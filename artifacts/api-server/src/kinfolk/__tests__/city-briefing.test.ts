@@ -31,6 +31,15 @@ describe("city briefing policy", () => {
     expect(isCityBriefingRequest("What should I know about this city?", "Minneapolis")).toBe(true);
   });
 
+  it("recognizes a work-travel briefing as a researched city question, not a restaurant itinerary", () => {
+    expect(
+      isCityBriefingRequest(
+        "I am heading to Minneapolis for work. What should I know as a Black woman?",
+        "Minneapolis",
+      ),
+    ).toBe(true);
+  });
+
   it("uses only saved interests as an optional lens and preserves a factual core", () => {
     const prompt = buildCityBriefingPromptBlock({
       city: "Minneapolis",

@@ -8321,9 +8321,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Minimum-use policy inside loadKinfolkMemberContext governs these existing,
     // non-business member affordances. Explicit cultural/population context still
     // comes only from the current turn through permittedIdentity above.
+    // A current city briefing may use travel language (for example, a work trip),
+    // but it must keep its researched news, civic, and practical-answer contract.
+    // It is not permission to substitute a catalog itinerary.
+    const isCurrentCityBriefing = contextualPlan?.taskMode === "city_briefing";
     const travelPlanning =
-      isTravelPlanningPrompt(message) ||
-      earlyDecision.route === "travel_planning";
+      !isCurrentCityBriefing &&
+      (isTravelPlanningPrompt(message) ||
+        earlyDecision.route === "travel_planning");
     if (
       travelPlanning &&
       broadCatalogAllowed &&
