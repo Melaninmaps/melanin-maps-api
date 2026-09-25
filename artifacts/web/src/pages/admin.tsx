@@ -128,6 +128,54 @@ type AdminCityOption = {
   count: number;
 };
 
+/**
+ * The Business inventory groups city spelling/case variants into objects, while
+ * the older Waitlist contract returns strings. Keep all response parsing here
+ * so an API upgrade can never put a raw object inside an option label and crash
+ * the Admin page while React is rendering it.
+ */
+function normalizeAdminCityOptions(options: unknown): AdminCityOption[] {
+  if (!Array.isArray(options)) return [];
+
+  const normalized = options
+    .map((option: unknown): AdminCityOption | null => {
+      if (typeof option === "string") {
+        const label = option.trim();
+        return label
+          ? { value: label.toLocaleLowerCase(), label, variants: [label], count: 0 }
+          : null;
+      }
+      if (!option || typeof option !== "object") return null;
+
+      const raw = option as {
+        value?: unknown;
+        label?: unknown;
+        variants?: unknown;
+        count?: unknown;
+      };
+      const value = typeof raw.value === "string" ? raw.value.trim() : "";
+      const label = typeof raw.label === "string" ? raw.label.trim() : value;
+      if (!value || !label) return null;
+
+      const variants = Array.isArray(raw.variants)
+        ? raw.variants
+            .filter((variant): variant is string => typeof variant === "string")
+            .map((variant) => variant.trim())
+            .filter(Boolean)
+        : [label];
+
+      return {
+        value,
+        label,
+        variants: variants.length > 0 ? variants : [label],
+        count: typeof raw.count === "number" && Number.isFinite(raw.count) ? raw.count : 0,
+      };
+    })
+    .filter((option: AdminCityOption | null): option is AdminCityOption => option !== null);
+
+  return Array.from(new Map(normalized.map((option) => [option.value, option])).values());
+}
+
 const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
   protected_historical_cohort: "Protected historical cohort (receipt-backed)",
   user_national_master: "User-supplied national master",
@@ -1087,7 +1135,7 @@ export default function Admin() {
           setPendingWaitlistCount(data.pendingCount ?? 0);
           setSyntheticTestCount(data.syntheticTestCount ?? 0);
           setWaitlistCityOptions(
-            Array.isArray(data.cityOptions) ? data.cityOptions : [],
+            normalizeAdminCityOptions(data.cityOptions).map((option) => option.label),
           );
           setWaitlistCityRollup(
             Array.isArray(data.cityRollup) ? data.cityRollup : [],
@@ -1224,36 +1272,7 @@ export default function Admin() {
           typeof data.totalPages === "number" ? data.totalPages : 1,
         );
         setBusinessCityOptions(
-          Array.isArray(data.cityOptions)
-            ? data.cityOptions
-                .map((option: unknown): AdminCityOption | null => {
-                  if (typeof option === "string") {
-                    const label = option.trim();
-                    return label
-                      ? { value: label.toLowerCase(), label, variants: [label], count: 0 }
-                      : null;
-                  }
-                  if (!option || typeof option !== "object") return null;
-                  const raw = option as {
-                    value?: unknown;
-                    label?: unknown;
-                    variants?: unknown;
-                    count?: unknown;
-                  };
-                  const value = typeof raw.value === "string" ? raw.value.trim() : "";
-                  const label = typeof raw.label === "string" ? raw.label.trim() : value;
-                  if (!value || !label) return null;
-                  return {
-                    value,
-                    label,
-                    variants: Array.isArray(raw.variants)
-                      ? raw.variants.filter((variant): variant is string => typeof variant === "string")
-                      : [label],
-                    count: typeof raw.count === "number" ? raw.count : 0,
-                  };
-                })
-                .filter((option: AdminCityOption | null): option is AdminCityOption => option !== null)
-            : [],
+          normalizeAdminCityOptions(data.cityOptions),
         );
         setBusinessServiceOptions(
           Array.isArray(data.serviceOptions) ? data.serviceOptions : [],

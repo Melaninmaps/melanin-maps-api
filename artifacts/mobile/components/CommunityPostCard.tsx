@@ -104,6 +104,62 @@ function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () 
   );
 }
 
+/**
+ * A feed video must never look like missing content while its first frame is
+ * loading. The previous tile was only a black TouchableOpacity in the
+ * video-first view, which read as a large unexplained gap in Community. This
+ * keeps a visible, tappable Community video card in place and lets the native
+ * player render over it when a frame is available.
+ */
+function InlineCommunityVideoPreview({
+  url,
+  emphasized,
+  compact,
+  onPress,
+}: {
+  url: string;
+  emphasized: boolean;
+  compact: boolean;
+  onPress: () => void;
+}) {
+  const player = useVideoPlayer({ uri: url, useCaching: true }, (instance) => {
+    instance.muted = true;
+  });
+  const { status } = useEvent(player, "statusChange", { status: player.status });
+  const playerReady = status === "readyToPlay";
+
+  return (
+    <TouchableOpacity
+      style={[
+        s.mediaThumb,
+        compact && s.mediaThumbCompact,
+        emphasized && s.mediaThumbEmphasized,
+        s.inlineVideoPreview,
+      ]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel="Play Community video"
+    >
+      {playerReady ? (
+        <VideoView
+          player={player}
+          style={StyleSheet.absoluteFill}
+          nativeControls={false}
+          contentFit="cover"
+          pointerEvents="none"
+          accessibilityElementsHidden
+        />
+      ) : null}
+      <View style={s.inlineVideoShade} pointerEvents="none" />
+      <View style={s.inlineVideoCallToAction} pointerEvents="none">
+        <Feather name="play-circle" size={emphasized ? 44 : 32} color="#FFFFFF" />
+        <Text style={s.inlineVideoLabel}>{playerReady ? "Play video" : "Community video"}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasized = false, compact = false }: {
   mediaUrls: string[];
   hasContentWarning: boolean;
@@ -169,15 +225,13 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
             </Text>
           </TouchableOpacity>
         ) : isVideo ? (
-          <TouchableOpacity
+          <InlineCommunityVideoPreview
             key={i}
-            style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
+            url={url}
+            emphasized={Boolean(emphasized)}
+            compact={Boolean(compact)}
             onPress={() => setActiveVideoUrl(url)}
-            activeOpacity={0.8}
-          >
-            <Feather name="play-circle" size={36} color="#fff" />
-            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Play Video</Text>
-          </TouchableOpacity>
+          />
         ) : (
           <Image key={i} source={{ uri: url }} style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized]} resizeMode="cover" />
         );
@@ -832,6 +886,28 @@ const s = StyleSheet.create({
     borderRadius: 0,
   },
   mediaThumbCompact: { width: 72, height: 72, aspectRatio: 1 },
+  inlineVideoPreview: {
+    backgroundColor: "#2B1507",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inlineVideoShade: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(15, 8, 3, 0.28)",
+  },
+  inlineVideoCallToAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: "rgba(20, 10, 3, 0.45)",
+  },
+  inlineVideoLabel: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+  },
   warningOverlay: {
     marginHorizontal: 14,
     marginBottom: 10,

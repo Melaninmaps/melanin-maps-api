@@ -112,6 +112,18 @@ describe("admin dashboard section selector", () => {
     }
   });
 
+  it("normalizes grouped city records before either Admin filter renders them", () => {
+    for (const marker of [
+      "function normalizeAdminCityOptions",
+      "normalizeAdminCityOptions(data.cityOptions).map((option) => option.label)",
+      "normalizeAdminCityOptions(data.cityOptions)",
+      "raw.variants",
+    ]) {
+      expect(admin).toContain(marker);
+    }
+    expect(admin).not.toContain("setWaitlistCityOptions(\n            Array.isArray(data.cityOptions)");
+  });
+
   it("keeps launch approval distinct from the unlimited tester entitlement in the Waitlist", () => {
     for (const marker of [
       "const updateWaitlistTesterAccess",

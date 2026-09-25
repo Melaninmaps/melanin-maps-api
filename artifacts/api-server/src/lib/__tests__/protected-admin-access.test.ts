@@ -35,7 +35,7 @@ describe("founder-protected administrator access", () => {
     expect(isProtectedAdminEmail("ordinary-member@example.test")).toBe(false);
   });
 
-  it("restores existing protected accounts only and leaves credentials and member data untouched", () => {
+  it("restores existing founder and protected accounts only and leaves credentials and member data untouched", () => {
     const start = migrations.indexOf("async function ensureProtectedAdministratorAccess(");
     const end = migrations.indexOf("async function ensureAdminAccounts(", start);
     const recovery = migrations.slice(start, end);
@@ -43,6 +43,9 @@ describe("founder-protected administrator access", () => {
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
     expect(recovery).toContain("PROTECTED_ADMIN_EMAILS");
+    expect(recovery).toContain("FOUNDER_OWNER_ADMIN_EMAILS");
+    expect(recovery).toContain("const missingProtectedAdministrator");
+    expect(recovery).toContain("const hasFounderOwner");
     expect(recovery).toContain("A protected administrator account is missing; no accounts were changed.");
     expect(recovery).toContain("role = 'admin'");
     expect(recovery).toContain("member_type = 'founding'");

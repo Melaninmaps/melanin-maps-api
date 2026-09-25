@@ -6,6 +6,10 @@ const source = readFileSync(
   fileURLToPath(new URL("../app/(tabs)/community.tsx", import.meta.url)),
   "utf8",
 );
+const postCardSource = readFileSync(
+  fileURLToPath(new URL("../components/CommunityPostCard.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("native Community content-first surface", () => {
   it("keeps Community navigation limited to the feed and groups", () => {
@@ -46,5 +50,18 @@ describe("native Community content-first surface", () => {
     expect(source).toContain("This changes presentation only");
     expect(source).toContain("People & connections");
     expect(source).toContain('router.push("/connections")');
+  });
+
+  it("keeps a playable visual card in the feed while a native video frame loads", () => {
+    for (const marker of [
+      "function InlineCommunityVideoPreview",
+      "Community video",
+      "Play Community video",
+      "inlineVideoCallToAction",
+      "useVideoPlayer({ uri: url, useCaching: true }",
+    ]) {
+      expect(postCardSource).toContain(marker);
+    }
+    expect(postCardSource).not.toContain('backgroundColor: "#0008", justifyContent: "center", alignItems: "center"');
   });
 });
