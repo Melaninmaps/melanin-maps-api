@@ -71,6 +71,7 @@ import {
   getAppReviewAccountRecoveryStatus,
   getFounderTesterAccessRecoveryStage,
   getFounderTesterAccessRecoveryStatus,
+  getProtectedAdminAccessRecoveryStatus,
 } from "./lib/startup-migrations";
 
 // Defined by esbuild in build.mjs. These values are substituted into the
@@ -245,6 +246,9 @@ app.get("/api/version", (_req: Request, res: Response) => {
     // Non-identifying proof that the authorized App Review credential was
     // reconciled; never exposes its address, password, user ID, or account data.
     app_review_access: getAppReviewAccountRecoveryStatus(),
+    // Non-identifying proof that both founder-protected existing administrator
+    // accounts were recovered. Names, emails, IDs, and account data are omitted.
+    protected_admin_access: getProtectedAdminAccessRecoveryStatus(),
   });
 });
 

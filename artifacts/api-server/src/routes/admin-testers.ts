@@ -22,6 +22,10 @@ import {
   FOUNDER_APPROVED_TESTER_EMAILS,
   FOUNDER_TESTER_INVITE_PASSWORD_HASH,
 } from "../constants/testerRoster";
+import {
+  isFounderOwnerRequest,
+  isProtectedAdminEmail,
+} from "../lib/protectedAdminAccess";
 
 const router: IRouter = Router();
 
@@ -920,12 +924,16 @@ router.post(
 // Revoke an active tester's entitlement or remove a pending email.
 router.delete("/admin/testers/:email", async (req: Request, res: Response) => {
   if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
-
   const email = normalizeEmail(decodeURIComponent(req.params.email as string));
   if (!email.includes("@")) {
     return void res.status(400).json({ error: "Invalid email" });
   }
-
+  if (isProtectedAdminEmail(email)) {
+    if (!isFounderOwnerRequest(req)) {
+      return void res.status(403).json({ error: "Only the founder owner can change protected administrator access." });
+    }
+    return void res.status(409).json({ error: "Use the founder-only protected administrator access control for this account." });
+  }
   try {
     // Revoke from users table if they have an account
     const userResult = await pool.query(
