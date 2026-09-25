@@ -22,6 +22,16 @@ describe("web waitlist and password recovery contract", () => {
     expect(admin).toContain("Remove safe synthetic entries");
   });
 
+  it("tells a recognized tester to sign in rather than await approval", () => {
+    const waitlist = source("../pages/waitlist.tsx");
+    const home = source("../pages/home.tsx");
+    for (const page of [waitlist, home]) {
+      expect(page).toContain("testerAccessActive");
+      expect(page).toContain("Tester access is active");
+      expect(page).toContain("No wait for approval is required");
+    }
+  });
+
   it("offers both email and verified-phone password recovery", () => {
     const forgot = source("../pages/forgot-password.tsx");
     const reset = source("../pages/reset-password.tsx");

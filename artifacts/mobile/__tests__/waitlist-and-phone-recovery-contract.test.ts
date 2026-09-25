@@ -26,6 +26,13 @@ describe("mobile waitlist and password recovery contract", () => {
     expect(mobileWaitlist).toContain("cityNomination: cityNomination.trim() || undefined,");
   });
 
+  it("does not show an active tester as awaiting approval after a waitlist submission", () => {
+    expect(mobileWaitlist).toContain("testerAccessActive?: boolean;");
+    expect(mobileWaitlist).toContain("setTesterAccessActive(data.testerAccessActive === true);");
+    expect(mobileWaitlist).toContain('"Tester access is active"');
+    expect(mobileWaitlist).toContain("No wait for approval is required");
+  });
+
   it("keeps email recovery and adds verified-phone recovery rather than phone login", () => {
     expect(mobileRecovery).toContain('useState<"email" | "phone">("email")');
     expect(mobileRecovery).toContain('"/api/auth/phone/forgot-password/send"');

@@ -37,6 +37,7 @@ export default function WaitlistPage() {
   const [copied, setCopied] = useState(false);
   const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [testerAccessActive, setTesterAccessActive] = useState(false);
   const refParsed = useRef(false);
 
   useEffect(() => {
@@ -75,13 +76,19 @@ export default function WaitlistPage() {
           signupSource: "web",
         }),
       });
-      const data = await res.json().catch(() => ({})) as { position?: number; referralCode?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as {
+        position?: number;
+        referralCode?: string;
+        testerAccessActive?: boolean;
+        error?: string;
+      };
       if (!res.ok) {
         setSubmitError(data.error ?? "We could not join the waitlist. Please try again.");
         return;
       }
       setPosition(data.position ?? null);
       setReferralCode(data.referralCode ?? null);
+      setTesterAccessActive(data.testerAccessActive === true);
       setSubmitted(true);
     } catch {
       setSubmitError("We could not connect. Please check your connection and try again.");
@@ -303,15 +310,19 @@ export default function WaitlistPage() {
                     <polyline points="20,6 9,17 4,12" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">You're on the list!</h2>
-                {position && (
+                <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">
+                  {testerAccessActive ? "Tester access is active" : "You're on the list!"}
+                </h2>
+                {!testerAccessActive && position && (
                   <p className="text-[#CA922B] font-bold text-lg mb-1">Position #{position.toLocaleString()}</p>
                 )}
                 <p className="text-[#3A1F0E]/60 text-sm leading-relaxed mb-6">
-                  Check your email for a confirmation and your referral code. We'll notify you the moment you're approved.
+                  {testerAccessActive
+                    ? "You are already approved as a tester. No wait for approval is required—sign in to access Mapping with Melanin™."
+                    : "Check your email for a confirmation and your referral code. We'll notify you the moment you're approved."}
                 </p>
 
-                {referralCode && referralLink && (
+                {!testerAccessActive && referralCode && referralLink && (
                   <div className="bg-[#2B1507] rounded-2xl p-5 mb-6 text-left">
                     <p className="text-[#CA922B]/80 text-[10px] font-bold uppercase tracking-widest mb-1">Move up the list — share your link</p>
                     <p className="text-white font-mono font-bold text-base mb-3">{referralCode}</p>
