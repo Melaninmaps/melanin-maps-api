@@ -32,7 +32,8 @@ describe("Kinfolk mobile continuity contract", () => {
   });
 
   it("uses plain member-facing ownership discovery language", () => {
-    expect(source).toContain("I found ${platformCount} ${designationSummary} ${subject.label}");
+    expect(source).toContain("I found ${platformCount} ${designationSummary} ${requestedSubjectLabel}");
+    expect(source).toContain("const requestedSubjectLabel = subject.dietaryRequirement");
     expect(source).not.toContain("Diaspora Promotion Catalog listings");
   });
 });

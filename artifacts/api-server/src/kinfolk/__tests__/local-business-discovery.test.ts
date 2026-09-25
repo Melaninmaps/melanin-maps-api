@@ -214,6 +214,63 @@ describe("local business subject classification", () => {
 });
 
 describe("deterministic local business discovery", () => {
+  it("labels documented vegan restaurant results without claiming a generic restaurant match", async () => {
+    const subject = deriveBusinessSubject(
+      "Find a vegan restaurant in Philadelphia",
+    )!;
+    const webSearch = vi.fn().mockResolvedValue({
+      state: "completed",
+      attempted: true,
+      provider: "openai",
+      results: [
+        {
+          title: "Barbecue House",
+          url: "https://example.com/barbecue",
+          content: "Smoked meats and barbecue.",
+          providerScore: 0.9,
+          sourceQuery: { text: "restaurants Philadelphia, PA", role: "general", reason: "neutral" },
+        },
+        {
+          title: "Vegan Garden",
+          url: "https://example.com/vegan",
+          content: "Plant-based and vegan meals.",
+          providerScore: 0.8,
+          sourceQuery: { text: "vegan restaurants Philadelphia, PA", role: "general", reason: "neutral" },
+        },
+      ],
+    });
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      repository: repository({ businesses: [{
+        ...governedBusiness,
+        id: "documented-vegan",
+        name: "Garden Table",
+        city: "Philadelphia",
+        stateCode: "PA",
+        category: "Food & Drink",
+        subcategory: "Restaurant",
+        description: "Plant-based dining.",
+        tags: ["vegan"],
+        matchReasons: ["category", "dietary: vegan"],
+      }] }),
+      webSearch,
+    });
+
+    expect(result.recommendations?.summary).toContain("vegan restaurants");
+    expect(result.resultView.cards[0]?.matchReason).toContain(
+      "vegan restaurants",
+    );
+    expect(webSearch.mock.calls[0]?.[0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ text: "vegan restaurants Philadelphia, PA" }),
+      ]),
+    );
+    expect(result.discovery.webFindings).toEqual([
+      expect.objectContaining({ title: "Vegan Garden" }),
+    ]);
+  });
+
   it("uses one generic Philadelphia activity request to produce four distinct profile-backed cards", async () => {
     const activity = deriveBusinessSubject("Find things to do in Philadelphia PA")!;
     const profiles = [
@@ -433,8 +490,7 @@ describe("deterministic local business discovery", () => {
     );
   });
 
-  it("does not recommend externally found businesses while the Diaspora Promotion Catalog is active", async () => {
-    vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "documented_diaspora");
+  it("keeps current public discovery available during founder-led cleanup", async () => {
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",
       attempted: true,
@@ -453,13 +509,14 @@ describe("deterministic local business discovery", () => {
       repository: repository(),
       webSearch,
     });
-    expect(webSearch).not.toHaveBeenCalled();
-    expect(result.discovery.webFindings).toEqual([]);
+    expect(webSearch).toHaveBeenCalled();
+    expect(result.discovery.webFindings).toEqual([
+      expect.objectContaining({ title: "Undocumented business" }),
+    ]);
     expect(result.recommendations).toBeNull();
   });
 
   it("permits an all-places query only after explicit consent", async () => {
-    vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "documented_diaspora");
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",
       attempted: true,
@@ -554,7 +611,7 @@ describe("deterministic local business discovery", () => {
       repository: repository(),
       webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
     });
-    expect(unavailable.reply).toContain("no web-search provider is configured");
+    expect(unavailable.reply).toContain("Current external details are unavailable");
     expect(unavailable.reply).not.toContain("or current web results");
   });
 
@@ -568,7 +625,7 @@ describe("deterministic local business discovery", () => {
     expect(result.discovery.webSearch.state).toBe("degraded");
     expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
     expect(result.reply).toContain("For Keeps Books");
-    expect(result.reply).toContain("provider error");
+    expect(result.reply).toContain("Current external details could not be confirmed");
     expect(result.recommendations).toBeNull();
   });
 

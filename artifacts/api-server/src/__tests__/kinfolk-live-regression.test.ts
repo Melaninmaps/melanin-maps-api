@@ -403,4 +403,40 @@ describe("Plumbing discovery and card-service boundaries", () => {
     expect(kinfolkRouteSource).toContain("intentClass === \"culture_entertainment\"");
     expect(kinfolkRouteSource).not.toContain('intentClass === "culture_entertainment" ||\n        intentClass === "business_discovery"');
   });
+
+  it("treats vegan as a hard documented restaurant requirement", () => {
+    const subject = deriveBusinessSubject(
+      "Find a Black-owned vegan restaurant in Philadelphia",
+    )!;
+    expect(subject).toMatchObject({
+      key: "restaurant",
+      dietaryRequirement: { key: "vegan" },
+    });
+    expect(
+      matchesStructuredBusinessSubject(
+        {
+          name: "Barkley's BBQ",
+          category: "Food & Drink",
+          subcategory: "Restaurant",
+          description: "Barbecue and grilled meats.",
+          tags: ["barbecue", "soul food"],
+          specialties: [],
+        },
+        subject,
+      ),
+    ).toBe(false);
+    expect(
+      matchesStructuredBusinessSubject(
+        {
+          name: "Garden Table",
+          category: "Food & Drink",
+          subcategory: "Restaurant",
+          description: "Plant-based dining.",
+          tags: ["vegan"],
+          specialties: [],
+        },
+        subject,
+      ),
+    ).toBe(true);
+  });
 });
