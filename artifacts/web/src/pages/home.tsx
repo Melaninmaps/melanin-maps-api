@@ -204,6 +204,7 @@ export default function Home() {
   const [submitError, setSubmitError] = useState("");
   const [position, setPosition] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [testerAccessActive, setTesterAccessActive] = useState(false);
   const [referredBy, setReferredBy] = useState("");
   const [familyEmails, setFamilyEmails] = useState<string[]>([""]);
   const [showFamilySection, setShowFamilySection] = useState(false);
@@ -269,7 +270,12 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, websiteUrl: isBusinessOwner ? businessWebsite.trim() : undefined, referredBy: referredBy.trim() || undefined, cityNomination: cityNomination.trim() || undefined, familyEmails: showFamilySection ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase()) : undefined }),
       });
-      const data = await res.json().catch(() => ({})) as { position?: number; referralCode?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as {
+        position?: number;
+        referralCode?: string;
+        testerAccessActive?: boolean;
+        error?: string;
+      };
       if (!res.ok) {
         setSubmitError(data.error ?? "We could not join the waitlist. Please try again.");
         return;
@@ -277,6 +283,7 @@ export default function Home() {
       setPosition(data.position ?? null);
       const code = data.referralCode ?? null;
       setReferralCode(code);
+      setTesterAccessActive(data.testerAccessActive === true);
       if (code) setMyCode(code);
       setSubmitted(true);
     } catch {
@@ -453,10 +460,24 @@ export default function Home() {
                     <div className="w-16 h-16 rounded-full bg-[#CA922B]/20 flex items-center justify-center mx-auto mb-4">
                       <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#CA922B]" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20,6 9,17 4,12" /></svg>
                     </div>
-                    <h3 className="text-2xl font-serif font-bold text-white mb-2">You're In!</h3>
-                    {position && <p className="text-[#CA922B] font-bold text-lg mb-2">Position #{position.toLocaleString()}</p>}
-                    <p className="text-[#F5EBD8]/70 font-semibold mb-4 text-sm">Check your email for your referral code to move up the list.</p>
-                    {referralCode && (
+                    <h3 className="text-2xl font-serif font-bold text-white mb-2">
+                      {testerAccessActive ? "Tester access is active" : "You're In!"}
+                    </h3>
+                    {!testerAccessActive && position && <p className="text-[#CA922B] font-bold text-lg mb-2">Position #{position.toLocaleString()}</p>}
+                    <p className="text-[#F5EBD8]/70 font-semibold mb-4 text-sm">
+                      {testerAccessActive
+                        ? "You are already approved as a tester. No wait for approval is required—sign in to access Mapping with Melanin™."
+                        : "Check your email for your referral code to move up the list."}
+                    </p>
+                    {testerAccessActive && (
+                      <a
+                        href="/login"
+                        className="inline-flex items-center justify-center rounded-full bg-[#CA922B] px-5 py-3 text-sm font-bold text-[#1C0E06]"
+                      >
+                        Sign In
+                      </a>
+                    )}
+                    {!testerAccessActive && referralCode && (
                       <div className="bg-white/5 rounded-xl p-4 mb-4 text-left">
                         <p className="text-xs font-bold text-[#CA922B] uppercase tracking-wider mb-2">Your Referral Code</p>
                         <p className="text-white font-mono font-bold text-xl">{referralCode}</p>

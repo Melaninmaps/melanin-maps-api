@@ -47,6 +47,38 @@ function normalizeWaitlistState(raw: unknown): string | null {
   return /^[A-Z]{2}$/.test(value) ? value : null;
 }
 
+/**
+ * A tester can appear in the public waitlist for city/source reporting, but a
+ * current tester must never be represented as awaiting rollout approval.
+ * This reads existing access only; it does not grant, revoke, or modify an
+ * account entitlement.
+ */
+async function hasActiveTesterEntitlement(email: string): Promise<boolean> {
+  const result = await pool.query<{ active: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+         FROM users AS candidate
+        WHERE LOWER(TRIM(candidate.email)) = LOWER(TRIM($1))
+          AND candidate.tester_status = 'active'
+          AND COALESCE(candidate.account_status, 'active') <> 'suspended'
+          AND (candidate.testing_entitlement_ends_at IS NULL OR candidate.testing_entitlement_ends_at > NOW())
+       UNION ALL
+       SELECT 1
+         FROM pending_tester_emails AS invitation
+        WHERE LOWER(TRIM(invitation.email)) = LOWER(TRIM($1))
+          AND (invitation.entitlement_ends_at IS NULL OR invitation.entitlement_ends_at > NOW())
+          -- Once an account exists, its current lifecycle state is authoritative.
+          AND NOT EXISTS (
+            SELECT 1
+              FROM users AS existing_account
+             WHERE LOWER(TRIM(existing_account.email)) = LOWER(TRIM($1))
+          )
+     ) AS active`,
+    [email],
+  );
+  return result.rows[0]?.active === true;
+}
+
 function parseStoredCityNomination(raw: unknown): { city: string; state: string | null } | null {
   const nomination = normalizeWaitlistCity(raw);
   if (!nomination) return null;
@@ -108,6 +140,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const code = referralCode ?? `MWM-${namePrefix}-${digits}`;
     const primaryEmail = email.toLowerCase().trim();
     const source = resolveWaitlistSignupSource(signupSource);
+    const testerAccessActive = await hasActiveTesterEntitlement(primaryEmail);
 
     // Validate and deduplicate family emails
     const validFamilyEmails = Array.isArray(familyEmails)
@@ -129,6 +162,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
         signupSources: waitlistTable.signupSources,
         city: waitlistTable.city,
         state: waitlistTable.state,
+        status: waitlistTable.status,
       })
       .from(waitlistTable)
       .where(eq(waitlistTable.email, primaryEmail))
@@ -147,6 +181,12 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
           // app/web join to fill a previously omitted rollout location.
           city: priorEntry.city?.trim() ? priorEntry.city : normalizedCity,
           state: priorEntry.state?.trim() ? priorEntry.state : normalizedState,
+          // Keep deliberately archived, rejected, or approved records intact.
+          // Only correct a pending record when a current tester entitlement is
+          // already present for this exact email.
+          ...(testerAccessActive && priorEntry.status === "pending"
+            ? { status: "approved", approvedAt: new Date() }
+            : {}),
         })
         .where(eq(waitlistTable.id, priorEntry.id));
     } else {
@@ -162,7 +202,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
           websiteUrl: websiteUrl?.trim() || null,
           referralCode: code,
           referredBy: referredBy ?? null,
-          status: "pending",
+          status: testerAccessActive ? "approved" : "pending",
+          approvedAt: testerAccessActive ? new Date() : null,
           familyGroupId,
           cityNomination: cityNomination?.trim() || null,
           previewChoice: ['safety', 'discovery', 'business', 'community', 'ambassador'].includes(previewChoice ?? '') ? previewChoice : null,
@@ -248,12 +289,17 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const cleanEmail = email.toLowerCase().trim();
     const cleanFirst = firstName?.trim() || null;
     const cleanLast = lastName?.trim() || null;
-    if (created) {
+    if (created && !testerAccessActive) {
       sendWaitlistConfirmation(cleanEmail, position, canonicalReferralCode, cleanFirst ?? "there", cleanLast ?? undefined)
         .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, canonicalReferralCode)))
         .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
       sendWelcomeEmail(cleanEmail, cleanFirst)
         .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
+    } else if (created && testerAccessActive) {
+      // A recognized tester may receive the ordinary welcome, but never the
+      // waitlist email that says access is still awaiting approval.
+      sendWelcomeEmail(cleanEmail, cleanFirst)
+        .catch((err: unknown) => req.log.error({ err }, "Failed to send tester welcome email"));
     }
 
     // Fire referral milestone update to the referrer when someone joins via their code
@@ -302,6 +348,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       id: entryId,
       created,
       signupSources: insertedEntry?.signupSources ?? source,
+      testerAccessActive,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to join waitlist");

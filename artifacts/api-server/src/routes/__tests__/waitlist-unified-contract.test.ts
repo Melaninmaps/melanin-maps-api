@@ -102,4 +102,12 @@ describe("unified waitlist and recovery contract", () => {
     expect(testerRoute).toContain('router.post("/admin/testers/apply"');
     expect(testerRoute).toContain('router.delete("/admin/testers/:email"');
   });
+
+  it("does not present an active tester as awaiting waitlist approval", () => {
+    expect(waitlistRoute).toContain("async function hasActiveTesterEntitlement");
+    expect(waitlistRoute).toContain('status: testerAccessActive ? "approved" : "pending"');
+    expect(waitlistRoute).toContain("created && !testerAccessActive");
+    expect(waitlistRoute).toContain("Once an account exists, its current lifecycle state is authoritative.");
+    expect(waitlistRoute).toContain("testerAccessActive,");
+  });
 });

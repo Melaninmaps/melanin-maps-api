@@ -288,6 +288,7 @@ export default function WaitlistScreen() {
   const [familyAdded, setFamilyAdded] = useState(0);
   const [cityNomination, setCityNomination] = useState("");
   const [joinError, setJoinError] = useState("");
+  const [testerAccessActive, setTesterAccessActive] = useState(false);
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -324,13 +325,19 @@ export default function WaitlistScreen() {
           signupSource: Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web",
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { position?: number; familyAdded?: number; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        position?: number;
+        familyAdded?: number;
+        testerAccessActive?: boolean;
+        error?: string;
+      };
       if (!res.ok) {
         setJoinError(data.error ?? "We could not join the waitlist. Please try again.");
         return;
       }
       if (data.position) setPosition(data.position);
       if (data.familyAdded) setFamilyAdded(data.familyAdded);
+      setTesterAccessActive(data.testerAccessActive === true);
       setSubmitted(true);
     } catch {
       setJoinError("We could not connect. Please check your connection and try again.");
@@ -624,16 +631,22 @@ export default function WaitlistScreen() {
               <View style={[styles.successCircle, { backgroundColor: colors.success + "20" }]}>
                 <Feather name="check-circle" size={52} color={colors.success} />
               </View>
-              <Text style={[styles.successTitle, { color: colors.foreground }]}>You&apos;re on the list!</Text>
+              <Text style={[styles.successTitle, { color: colors.foreground }]}>
+                {testerAccessActive ? "Tester access is active" : "You&apos;re on the list!"}
+              </Text>
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                We&apos;ll send your early access invite to {email} when we launch in your city.
+                {testerAccessActive
+                  ? "You are already approved as a tester. No wait for approval is required—sign in to access Mapping with Melanin™."
+                  : `We&apos;ll send your early access invite to ${email} when we launch in your city.`}
               </Text>
 
-              <View style={[styles.positionCard, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.positionNum, { color: colors.primary }]}>#{position}</Text>
-                <Text style={[styles.positionLabel, { color: colors.mutedForeground }]}>Your waitlist position</Text>
-                <Text style={[styles.positionHint, { color: colors.mutedForeground }]}>Share your link to move up the list</Text>
-              </View>
+              {!testerAccessActive && (
+                <View style={[styles.positionCard, { backgroundColor: colors.secondary }]}>
+                  <Text style={[styles.positionNum, { color: colors.primary }]}>#{position}</Text>
+                  <Text style={[styles.positionLabel, { color: colors.mutedForeground }]}>Your waitlist position</Text>
+                  <Text style={[styles.positionHint, { color: colors.mutedForeground }]}>Share your link to move up the list</Text>
+                </View>
+              )}
 
               {familyAdded > 0 && (
                 <View style={[styles.positionCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25", borderWidth: 1, gap: 4 }]}>
