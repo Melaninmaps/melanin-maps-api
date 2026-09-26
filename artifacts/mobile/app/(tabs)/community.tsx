@@ -1432,7 +1432,7 @@ export default function CommunityScreen() {
             // Cards remain immediately below the tabs. Presentation controls,
             // people, topics, and composing stay reachable without a promo or
             // discovery block displacing the content-first feed.
-            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
+            contentContainerStyle={[styles.list, { paddingTop: 16, paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
             // The screen already accounts for its own safe area in the header.
             // Do not let iOS add a second automatic inset before the first post.
             contentInsetAdjustmentBehavior="never"

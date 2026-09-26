@@ -28,6 +28,7 @@ describe("native Community content-first surface", () => {
     expect(source).toContain("<CommunityPostCard");
     expect(feedList).not.toContain("ListHeaderComponent");
     expect(feedList).not.toContain("feedComposeBar");
+    expect(feedList).toContain("paddingTop: 16");
     expect(feedList).toContain('justifyContent: "flex-start"');
     expect(feedList).toContain('contentInsetAdjustmentBehavior="never"');
     expect(source).toContain('accessibilityLabel="Add a Community post, photo, or video"');
@@ -67,6 +68,14 @@ describe("native Community content-first surface", () => {
       expect(postCardSource).toContain(marker);
     }
     expect(postCardSource).not.toContain('backgroundColor: "#0008", justifyContent: "center", alignItems: "center"');
+  });
+
+  it("prioritizes selected media and keeps long captions deliberately expandable", () => {
+    expect(postCardSource).toContain("const COMMUNITY_CAPTION_PREVIEW_LENGTH = 280");
+    expect(postCardSource).toContain("const showMediaBeforeText = hasMedia && !isConversation");
+    expect(postCardSource).toContain("emphasized={!isConversation}");
+    expect(postCardSource).toContain('accessibilityLabel={captionExpanded ? "See less of this Community caption" : "See more of this Community caption"}');
+    expect(postCardSource).toContain("aspectRatio: 4 / 5");
   });
 
   it("opens long threads and makes Share functional without exposing private posts", () => {

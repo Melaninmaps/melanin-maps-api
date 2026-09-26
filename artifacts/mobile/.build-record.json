@@ -1,12 +1,12 @@
 {
   "lastIosSubmitted": 112,
   "lastAndroidSubmitted": 82,
-  "lastIosReserved": 124,
-  "lastAndroidReserved": 94,
+  "lastIosReserved": 125,
+  "lastAndroidReserved": 95,
   "iosEasBuildId": "4718d09b-56bf-4a5a-bd8b-19ab94973384",
   "iosEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
   "androidEasBuildId": null,
   "androidEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
   "sourceCommit": "5bc2b63",
-  "notes": "Founder-supplied EAS Builds evidence on 2026-09-25 confirmed completed iOS build 124 and Android versionCode 94 from git ref 5bc2b63. These identifiers are consumed and must never be reused. The next source-traceable release must use iOS build 125 and Android versionCode 95 or higher."
+  "notes": "Founder-supplied EAS evidence on 2026-09-25 confirmed iOS build 125 completed. Android versionCode 95 is conservatively retired with that attempted release because remote EAS status is not independently available in this environment. Neither identifier will be reused. The next source-traceable release must use iOS build 126 and Android versionCode 96 or higher."
 }

@@ -54,6 +54,8 @@ const WARNING_LABELS: Record<string, string> = {
   other: "Sensitive Content",
 };
 
+const COMMUNITY_CAPTION_PREVIEW_LENGTH = 280;
+
 
 function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () => void }) {
   const colors = useColors();
@@ -353,6 +355,7 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const [failedAuthorImageUrl, setFailedAuthorImageUrl] = useState<string | null>(null);
   const [showBizCard, setShowBizCard] = useState(false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
+  const [captionExpanded, setCaptionExpanded] = useState(false);
 
   const isOwnPost = !!(currentUserId && post.authorId && currentUserId === post.authorId);
 
@@ -402,14 +405,22 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const accentColor = POST_TYPE_ACCENT[post.postType ?? "community"] ?? POST_TYPE_ACCENT.community;
   const isRepost = !!post.repostId;
   const isConversation = presentation === "text_first";
-  const showMediaBeforeText = presentation === "video_first";
+  const hasMedia = Boolean(post.mediaUrls?.length);
+  // Community Mix and Watch lead with a member-selected image or video. The
+  // explicit Conversation preference remains text-first for members who want
+  // a compact reading view.
+  const showMediaBeforeText = hasMedia && !isConversation;
   const showAuthorImage = !!post.authorImageUrl && failedAuthorImageUrl !== post.authorImageUrl;
+  const hasLongCaption = post.content.length > COMMUNITY_CAPTION_PREVIEW_LENGTH;
+  const visibleCaption = captionExpanded || !hasLongCaption
+    ? post.content
+    : `${post.content.slice(0, COMMUNITY_CAPTION_PREVIEW_LENGTH).trimEnd()}…`;
   const postMedia = post.mediaUrls && post.mediaUrls.length > 0 ? (
     <MediaGrid
       mediaUrls={post.mediaUrls}
       hasContentWarning={post.hasContentWarning ?? false}
       contentWarningType={post.contentWarningType}
-      emphasized={presentation === "video_first"}
+      emphasized={!isConversation}
       compact={isConversation}
     />
   ) : null;
@@ -591,7 +602,7 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
 
       {/* Content — inline hashtag tapping */}
       <Text style={[s.content, isConversation && s.contentConversation, { color: colors.foreground }]}>
-        {post.content.split(/(#\w+)/g).map((part, i) => {
+        {visibleCaption.split(/(#\w+)/g).map((part, i) => {
           if (/^#\w+$/.test(part)) {
             const tag = part.slice(1);
             return (
@@ -610,6 +621,17 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
           return part;
         })}
       </Text>
+      {hasLongCaption ? (
+        <TouchableOpacity
+          onPress={() => setCaptionExpanded((expanded) => !expanded)}
+          style={s.captionToggle}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={captionExpanded ? "See less of this Community caption" : "See more of this Community caption"}
+        >
+          <Text style={[s.captionToggleText, { color: colors.primary }]}>{captionExpanded ? "See less" : "See more"}</Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Thread continuation */}
       {(post.threadTotal ?? 1) > 1 && (
@@ -875,9 +897,11 @@ const s = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     paddingHorizontal: 14,
-    paddingBottom: 12,
+    paddingBottom: 6,
   },
   contentConversation: { fontSize: 15, lineHeight: 23, paddingBottom: 14 },
+  captionToggle: { alignSelf: "flex-start", marginLeft: 14, marginBottom: 12, paddingVertical: 2 },
+  captionToggleText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   // Link preview
   linkPreview: {
     flexDirection: "row",
@@ -928,7 +952,7 @@ const s = StyleSheet.create({
   },
   mediaThumbEmphasized: {
     width: "100%",
-    aspectRatio: 9 / 12,
+    aspectRatio: 4 / 5,
     borderRadius: 0,
   },
   mediaThumbCompact: { width: 72, height: 72, aspectRatio: 1 },

@@ -24,7 +24,7 @@ describe("mobile Community feed recovery", () => {
   it("renders posts directly below Community navigation while retaining compose and filter controls", () => {
     const feedList = source.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
     expect(feedList).toContain('justifyContent: "flex-start"');
-    expect(source).toContain("list: { paddingHorizontal: 16, paddingTop: 0 }");
+    expect(feedList).toContain("paddingTop: 16");
     expect(feedList).not.toContain("ListHeaderComponent");
     expect(feedList).not.toContain("feedComposeBar");
     expect(source).toContain("setShowFeedControls(true)");
@@ -79,7 +79,7 @@ describe("mobile Community feed recovery", () => {
     expect(source).toContain("This changes presentation only. It never changes which posts are permitted, their privacy, or their ranking.");
     expect(source).not.toContain("communityFeedDisplay}`");
     expect(card).toContain('const isConversation = presentation === "text_first"');
-    expect(card).toContain('const showMediaBeforeText = presentation === "video_first"');
+    expect(card).toContain("const showMediaBeforeText = hasMedia && !isConversation");
     expect(card).toContain("compact={isConversation}");
   });
 });
