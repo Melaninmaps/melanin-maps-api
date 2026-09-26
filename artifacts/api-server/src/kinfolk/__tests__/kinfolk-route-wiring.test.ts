@@ -134,6 +134,15 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain('id: business.website!');
   });
 
+  it("does not offer or build an itinerary outside an exact governed destination scope", () => {
+    expect(chatRoute).toContain("const hasGovernedItineraryCoverage =");
+    expect(chatRoute).toContain("Boolean(destinationScope) && businessCatalog.length > 0");
+    expect(chatRoute).toContain("travelPlanning && hasGovernedItineraryCoverage && destination");
+    expect(chatRoute).toContain("I will not substitute listings from another city.");
+    expect(chatRoute).toContain("!hasGovernedItineraryCoverage && destination");
+    expect(chatRoute).toContain("itiner(?:ary|aries)");
+  });
+
 
 
   it("short-circuits category discovery before quota/model calls while preserving session context", () => {

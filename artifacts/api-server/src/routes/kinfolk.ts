@@ -9262,11 +9262,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       });
     }
 
+    // An itinerary is only an MWM capability when this exact destination has
+    // a governed directory scope and at least one eligible listing. Never reuse
+    // a member's prior city catalog to manufacture a plan for another place.
+    const hasGovernedItineraryCoverage =
+      Boolean(destinationScope) && businessCatalog.length > 0;
+
     // A basic itinerary from the governed MWM catalog must remain available even
     // when the language-model provider is unavailable. Rich/current research,
     // Circle planning, and image-aware trips continue through the provider path.
     const deterministicTravelEligible =
       travelPlanning &&
+      hasGovernedItineraryCoverage &&
       Boolean(destination) &&
       businessCatalog.length > 0 &&
       !contextualEvidence &&
@@ -9556,7 +9563,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Also prepend any brunch/discovery instruction from the pre-classifier.
     // Empty string for low-consequence general knowledge queries (no overhead).
     const itineraryInstruction =
-      travelPlanning && destination
+      travelPlanning && hasGovernedItineraryCoverage && destination
         ? itineraryPromptInstruction(
             extractItineraryDayCount(message),
             destination,
@@ -9870,7 +9877,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    if (travelPlanning && destination) {
+    if (travelPlanning && hasGovernedItineraryCoverage && destination) {
       const parsedItinerary =
         modelPayload.valid && modelPayload.value ? modelPayload.value : null;
       itinerary = buildValidatedOrRankedItinerary({
@@ -9880,6 +9887,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       });
       reply = buildValidatedItineraryReply(destination, itinerary);
       recommendations = null;
+    }
+
+    if (travelPlanning && destination && !hasGovernedItineraryCoverage) {
+      reply = `I can help with general, source-backed information about ${destination}, but I cannot build an MWM itinerary there yet because the MWM directory does not have governed coverage for that destination. I will not substitute listings from another city. Ask a general question about ${destination}, or choose a city covered by the MWM directory.`;
+      recommendations = null;
+      itinerary = null;
+      followUpSuggestions = [];
+    }
+
+    // A general answer about an uncovered place must not entice a member into
+    // an itinerary or travel-plan path Kinfolk cannot actually deliver.
+    if (!hasGovernedItineraryCoverage && destination) {
+      followUpSuggestions = followUpSuggestions.filter(
+        (suggestion) =>
+          !/\b(?:itiner(?:ary|aries)|plan(?:ning)?|travel(?:ing)?|trip|visit(?:ing)?)\b/i.test(
+            suggestion,
+          ),
+      );
     }
 
     const protectedReply = protectContextualOutput({
