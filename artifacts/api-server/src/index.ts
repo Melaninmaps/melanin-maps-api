@@ -16,6 +16,10 @@ import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagin
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
 import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase";
 import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
+import {
+  publishLatinxLehighValleyDirectory,
+  startLatinxLehighValleyPinResolution,
+} from "./directoryImport/latinxLehighValleyPublication";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
@@ -186,6 +190,18 @@ const onListening = (err?: Error) => {
   // before the first cron tick fires.
   runStartupMigrations(logger)
     .then(async () => {
+      // This is the one explicit founder-authorized directory operation in this
+      // release. It is receipt-idempotent, source-scoped, and runs only after
+      // the HTTP listener is serving existing traffic.
+      try {
+        const publication = await publishLatinxLehighValleyDirectory(pool);
+        logger.info(publication, "Latinx Lehigh Valley directory publication complete");
+        startLatinxLehighValleyPinResolution(pool, (message, details) =>
+          logger.info(details ?? {}, message),
+        );
+      } catch (error) {
+        logger.error({ error }, "Latinx Lehigh Valley directory publication failed");
+      }
       try {
         const insertedLibraryTopics = await seedLibraryStarterTopics(pool);
         logger.info({ insertedLibraryTopics }, "Living Library starter topics ready");
