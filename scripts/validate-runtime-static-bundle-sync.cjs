@@ -14,6 +14,7 @@ const root = path.resolve(__dirname, "..");
 const dockerfilePath = path.join(root, "artifacts", "api-server", "Dockerfile");
 const staticServerPath = path.join(root, "static-server.mjs");
 const apiAppPath = path.join(root, "artifacts", "api-server", "src", "app.ts");
+const freshWebStatic = path.join(root, "artifacts", "web", "dist", "public");
 const rootStatic = path.join(root, "web-static");
 const apiStatic = path.join(root, "artifacts", "api-server", "web-static");
 
@@ -72,20 +73,29 @@ for (const legacySearchPath of [
   }
 }
 
+const freshIndex = read(path.join(freshWebStatic, "index.html"));
 const rootIndex = read(path.join(rootStatic, "index.html"));
 const apiIndex = read(path.join(apiStatic, "index.html"));
-if (rootIndex !== apiIndex) {
-  fail("web-static/index.html differs from artifacts/api-server/web-static/index.html");
+if (freshIndex !== rootIndex) {
+  fail("web-static/index.html differs from the freshly built Vite index — synchronize fresh web assets before packaging");
+}
+if (freshIndex !== apiIndex) {
+  fail("artifacts/api-server/web-static/index.html differs from the freshly built Vite index — API fallback would serve an older browser bundle");
 }
 
-const referencedAssets = [...rootIndex.matchAll(/(?:src|href)="\/?(assets\/index-[A-Za-z0-9_-]+\.(?:js|css))"/g)]
+const referencedAssets = [...freshIndex.matchAll(/(?:src|href)="\/?(assets\/index-[A-Za-z0-9_-]+\.(?:js|css))"/g)]
   .map((match) => match[1]);
 if (referencedAssets.length < 2) fail("reviewed index.html does not reference the expected JavaScript and CSS assets");
 
 for (const asset of referencedAssets) {
+  const freshAsset = path.join(freshWebStatic, asset);
+  if (!fs.existsSync(freshAsset)) fail(`missing freshly built asset ${path.relative(root, freshAsset)}`);
   for (const directory of [rootStatic, apiStatic]) {
     const target = path.join(directory, asset);
     if (!fs.existsSync(target)) fail(`missing reviewed asset ${path.relative(root, target)}`);
+    if (!fs.readFileSync(freshAsset).equals(fs.readFileSync(target))) {
+      fail(`${path.relative(root, target)} differs from freshly built ${path.relative(root, freshAsset)}`);
+    }
   }
 }
 
@@ -103,6 +113,7 @@ console.log(JSON.stringify({
   ok: true,
   docker_runtime_static_sync: true,
   public_frontend_runtime_static_sync: true,
+  fresh_vite_output_sync: true,
   kinfolk_marker: kinfolkMarker,
   reviewed_assets: referencedAssets.sort(),
 }, null, 2));

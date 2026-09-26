@@ -22,12 +22,28 @@ sed -i "s|echo [a-z0-9._-]* && pnpm --filter @workspace/web|echo ${TOKEN}-web \&
 sed -i "s|echo [a-z0-9._-]* && pnpm --filter @workspace/api-server|echo ${TOKEN}-api \&\& pnpm --filter @workspace/api-server|" nixpacks.toml
 echo "✓  nixpacks.toml tokens rotated"
 
-# ── 2. Build api-server ────────────────────────────────────────────────────────
+# ── 2. Build and synchronize the browser bundle ───────────────────────────────
+# The API build embeds web-static/index.html. Building the API before replacing
+# both tracked static directories would package a stale browser bundle even when
+# the server source is current.
+echo "Building @workspace/web..."
+pnpm --filter @workspace/web run build
+echo "✓  web built"
+
+for static_dir in web-static artifacts/api-server/web-static; do
+  rm -rf "$static_dir"
+  mkdir -p "$static_dir"
+  cp -a artifacts/web/dist/public/. "$static_dir/"
+done
+node scripts/validate-runtime-static-bundle-sync.cjs
+echo "✓  fresh web bundle synchronized"
+
+# ── 3. Build api-server ────────────────────────────────────────────────────────
 echo "Building @workspace/api-server..."
 pnpm --filter @workspace/api-server run build
 echo "✓  api-server built"
 
-# ── 3. Sync dist to root (mirrors nixpacks steps 4 & 5) ──────────────────────
+# ── 4. Sync dist to root (mirrors runtime build steps) ───────────────────────
 cp artifacts/api-server/dist/index.mjs      dist/index.mjs
 if [[ -f artifacts/api-server/dist/index.mjs.map ]]; then
   cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
@@ -42,10 +58,11 @@ mkdir -p dist/public
 cp -r artifacts/api-server/dist/public/. dist/public/
 echo "✓  dist/ synced to root"
 
-# ── 4. Commit everything ──────────────────────────────────────────────────────
+# ── 5. Commit everything ──────────────────────────────────────────────────────
 COMMIT_MSG="ship: ${TOKEN}${MSG_SUFFIX:+ — ${MSG_SUFFIX}}"
 # dist/ is in .gitignore but must be tracked — use -f to force-add
 git add nixpacks.toml
+git add web-static artifacts/api-server/web-static
 git add -f dist/index.mjs dist/BUILD_IDENTITY
 if [[ -f dist/index.mjs.map ]]; then
   git add -f dist/index.mjs.map
@@ -62,7 +79,7 @@ git rm --cached --ignore-unmatch artifacts/api-server/dist/index.mjs \
 git commit -m "$COMMIT_MSG"
 echo "✓  committed: $COMMIT_MSG"
 
-# ── 5. Push (triggers Railway deploy) ────────────────────────────────────────
+# ── 6. Push (triggers Railway deploy) ────────────────────────────────────────
 # Worktrees in this release environment use `origin`; retain an override for a
 # checkout that deliberately names its deployment remote differently.
 PUSH_REMOTE="${SHIP_PUSH_REMOTE:-origin}"

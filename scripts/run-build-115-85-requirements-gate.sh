@@ -178,7 +178,9 @@ pnpm --dir artifacts/web run build
 # The API fallback page is generated from artifacts/api-server/web-static during
 # its build. Synchronize reviewed Vite output first, otherwise direct API SPA
 # fallbacks can embed the previous asset hash while the public static server
-# serves the new one.
+# serves the new one. In --verify-final mode the validator below compares both
+# tracked static directories byte-for-byte against this fresh Vite output and
+# fails rather than allowing a stale browser bundle to ship.
 if [ "$MODE" = "--prepare-static" ]; then
   find web-static -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   find artifacts/api-server/web-static -mindepth 1 -maxdepth 1 -exec rm -rf {} +
