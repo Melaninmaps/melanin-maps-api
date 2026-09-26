@@ -136,6 +136,22 @@ describe("turn geography and enabled-session continuity", () => {
     });
   });
 
+  it("uses a direct city-location question instead of stale session geography", () => {
+    expect(resolveTurnGeography("where is aspen?", "Jamison")).toEqual({
+      city: "Aspen",
+      state: null,
+      source: "explicit",
+      currentTurn: true,
+      matchedText: "Aspen",
+    });
+    expect(resolveTurnGeography("Are you planning to visit Aspen?", "Jamison")).toMatchObject({
+      city: "Aspen",
+      state: null,
+      source: "explicit",
+      currentTurn: true,
+    });
+  });
+
   it("prefers an explicit destination over another city mentioned in the request", () => {
     expect(
       resolveTurnGeography("I am traveling from Philadelphia to Atlanta", null),

@@ -1414,7 +1414,7 @@ export function AIChatWidget() {
               {suggestions.map((s, i) => (
                 <TouchableOpacity
                   key={i}
-                  style={[styles.chip, { backgroundColor: colors.card, borderColor: colors.primary + "55" }]}
+                  style={[styles.chip, { backgroundColor: colors.secondary, borderColor: colors.primary }]}
                   onPress={() => {
                     setSuggestions([]);
                     setInput(s);
@@ -1422,7 +1422,7 @@ export function AIChatWidget() {
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.chipTxt, { color: colors.primary }]}>{s}</Text>
+                  <Text numberOfLines={2} style={[styles.chipTxt, { color: colors.primary }]}>{s}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -1710,14 +1710,15 @@ const styles = StyleSheet.create({
   trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
   voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   voiceInputStatusText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 17 },
-  chipsScroll: { borderTopWidth: 1, maxHeight: 56 },
-  chipsRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "center" },
+  chipsScroll: { borderTopWidth: 1 },
+  chipsRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "stretch" },
   chip: {
+    minHeight: 42, maxWidth: 280, justifyContent: "center",
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 20, borderWidth: 1,
     flexShrink: 0,
   },
-  chipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  chipTxt: { fontSize: 13, lineHeight: 18, textAlign: "center", includeFontPadding: false, fontFamily: "Inter_500Medium" },
   inputRow: {
     flexDirection: "row", alignItems: "center", gap: 8,
     paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1,

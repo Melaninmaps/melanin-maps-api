@@ -9830,7 +9830,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : null;
       followUpSuggestions = Array.isArray(parsed.followUpSuggestions)
         ? parsed.followUpSuggestions
-            .filter((value): value is string => typeof value === "string")
+            .filter(
+              (value): value is string =>
+                typeof value === "string" && value.trim().length > 0,
+            )
+            .map((value) => value.trim())
             .slice(0, 3)
         : [];
       smartPromotion =

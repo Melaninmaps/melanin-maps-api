@@ -71,6 +71,11 @@ const PLATFORM_POLICY_SUBJECT_RE =
   /\b(?:promot(?:e|ing|ion)|recommend(?:ation|ing)?|support\s+lens|ownership|minority[-\s]?owned|black[-\s]?owned|business(?:es)?|listing(?:s)?|directory|catalog)\b/i;
 const DIRECT_DISCOVERY_IMPERATIVE_RE =
   /^\s*(?:show|find|recommend|locate|search\s+for|where\s+can\s+i\s+(?:find|go|get))\b/i;
+// “Where is Aspen?” is a general place question, not a request to search the
+// directory. Keep this deliberately narrow so “Where can I find a restaurant?”
+// remains a discovery request.
+const DIRECT_LOCATION_QUESTION_RE =
+  /^\s*where\s+is\s+(?!a\b|an\b|the\b|my\b|your\b)([A-Za-z][A-Za-z .'-]{1,50}?)\s*[?!.]?\s*$/i;
 
 export function isKinfolkPlatformPolicyQuestion(message: string): boolean {
   return (
@@ -107,6 +112,23 @@ export function classifyKinfolkRequest(
   const ownershipPreference =
     text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];
+
+  if (
+    DIRECT_LOCATION_QUESTION_RE.test(text) &&
+    !normalizedBusinessSubject &&
+    !FOOD_RE.test(lower) &&
+    !NIGHTLIFE_RE.test(lower)
+  ) {
+    return {
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location,
+      ownershipPreference,
+      culturalContext,
+      clarification: null,
+      reason: "direct_location_question_routes_to_general_knowledge",
+    };
+  }
 
   if (isKinfolkPlatformPolicyQuestion(text)) {
     return {

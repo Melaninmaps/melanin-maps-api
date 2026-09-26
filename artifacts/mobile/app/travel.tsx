@@ -929,11 +929,11 @@ function AiMessageBubble({
             {msg.followUpSuggestions.map((s, i) => (
               <TouchableOpacity
                 key={i}
-                style={[aiStyles.chip, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[aiStyles.chip, { backgroundColor: colors.secondary, borderColor: colors.primary }]}
                 onPress={() => onQuickReply(s)}
                 activeOpacity={0.7}
               >
-                <Text style={[aiStyles.chipText, { color: colors.text }]}>{s}</Text>
+                <Text numberOfLines={2} style={[aiStyles.chipText, { color: colors.primary }]}>{s}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -1036,8 +1036,8 @@ const aiStyles = StyleSheet.create({
   clarificationOptionText: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 16 },
   clarificationSkip: { fontFamily: "Inter_600SemiBold", fontSize: 11, textAlign: "center", paddingVertical: 5 },
   chipsScroll: { marginBottom: 8 },
-  chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
-  chipText: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  chip: { minHeight: 40, maxWidth: 280, justifyContent: "center", borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
+  chipText: { fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17, textAlign: "center", includeFontPadding: false },
   provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
   provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
   sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },

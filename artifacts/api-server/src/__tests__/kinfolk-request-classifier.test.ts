@@ -122,6 +122,15 @@ describe("classifyKinfolkRequest — stylist proof-of-concept", () => {
 });
 
 describe("classifyKinfolkRequest — general current-affairs protection", () => {
+  it("answers a direct city-location question without forcing a directory search", () => {
+    expect(classifyKinfolkRequest("where is aspen?", "Aspen")).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location: "Aspen",
+      reason: "direct_location_question_routes_to_general_knowledge",
+    });
+  });
+
   it("keeps the reported named-person question in general chat", () => {
     const result = classifyKinfolkRequest("what's going on with Sarah Paulson and Sterling K Brown");
     expect(result).toMatchObject({

@@ -68,6 +68,15 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain("Turning your words into text…");
   });
 
+  it("keeps follow-up suggestions readable in both Kinfolk mobile surfaces", () => {
+    expect(widgetSource).toContain('backgroundColor: colors.secondary, borderColor: colors.primary');
+    expect(widgetSource).toContain('numberOfLines={2}');
+    expect(widgetSource).toContain('minHeight: 42, maxWidth: 280');
+    expect(widgetSource).not.toContain('chipsScroll: { borderTopWidth: 1, maxHeight: 56 }');
+    expect(travelSource).toContain('backgroundColor: colors.secondary, borderColor: colors.primary');
+    expect(travelSource).toContain('minHeight: 40, maxWidth: 280');
+  });
+
   it("enables the Expo Audio iOS recording session before starting Kinfolk Voice", () => {
     expect(widgetSource).toContain("setAudioModeAsync");
     expect(widgetSource).toContain("allowsRecording: true");

@@ -21,14 +21,34 @@ export type TurnGeographyResolution = Readonly<{
   currentTurn: boolean;
   matchedText: string | null;
 }>;
+
+function displayCityName(value: string): string {
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function extractUnregisteredDestination(message: string): string | null {
+  // General place questions must resolve their named city before the caller can
+  // fall back to a prior private-session destination. This is intentionally not
+  // a directory lookup: discovery still requires a registered MWM city/state
+  // scope further downstream.
+  const directLocationQuestion = message
+    .match(/^\s*where\s+is\s+(?!a\b|an\b|the\b|my\b|your\b)([A-Za-z][A-Za-z .'-]{1,50}?)\s*[?!.]?\s*$/i)?.[1]
+    ?.trim();
+  if (directLocationQuestion && directLocationQuestion.length >= 3) {
+    return displayCityName(directLocationQuestion);
+  }
+
   const patterns = [
-    /\b(?:in|to|at|around|visiting|headed to|going to|travelling to|traveling to|moving to|near)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\b/,
+    /\b(?:in|to|at|around|visit|visiting|headed to|going to|travelling to|traveling to|moving to|near)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\b/,
     /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:restaurants|food|spots|places|businesses|things to do|events|bars|brunch|coffee|barbershop|barbers|salons|vibes|nightlife|heritage sites|historic sites)\b/i,
   ];
   for (const pattern of patterns) {
     const match = message.match(pattern)?.[1]?.trim();
-    if (match && match.length >= 3) return match;
+    if (match && match.length >= 3) return displayCityName(match);
   }
   return null;
 }
