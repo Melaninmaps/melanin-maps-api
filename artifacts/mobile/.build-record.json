@@ -1,12 +1,19 @@
 {
   "lastIosSubmitted": 112,
   "lastAndroidSubmitted": 82,
-  "lastIosReserved": 126,
-  "lastAndroidReserved": 95,
+  "lastIosReserved": 127,
+  "lastAndroidReserved": 96,
   "iosEasBuildId": "70a12893-9432-4c32-9788-a72b929bc58a",
   "iosEasArtifactStatus": "APP_STORE_CONNECT_REJECTED_VERSION_TRAIN",
   "androidEasBuildId": null,
-  "androidEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
+  "androidEasArtifactStatus": "EAS_BUILD_FINISHED_REMOTE_EVIDENCE",
   "sourceCommit": "64dc3aade93c619a1a019ef16338bedb3626ac35",
-  "notes": "Founder-supplied App Store Connect evidence on 2026-09-26 confirmed that EAS build 126 completed from source 64dc3aade93c619a1a019ef16338bedb3626ac35, then Apple rejected the IPA because version train 1.1.9 is closed (90186/90062). Build 126 is consumed and will not be reused. The next iOS source-traceable release must use app version 1.1.10 and build 127 or higher. Android versionCode 96 remains unbuilt and unchanged."
+  "remoteEvidence": {
+    "date": "2026-09-26",
+    "source": "founder-supplied Expo build list screenshot",
+    "gitRefPrefix": "acb57ad",
+    "ios": "EAS build finished: iOS App Store build 1.1.10 (127)",
+    "android": "EAS build finished: Android Play Store build 1.1.10 (96)"
+  },
+  "notes": "Founder-supplied App Store Connect evidence on 2026-09-26 confirmed that EAS build 126 completed from source 64dc3aade93c619a1a019ef16338bedb3626ac35, then Apple rejected the IPA because version train 1.1.9 is closed (90186/90062). Build 126 is consumed and will not be reused. Founder-supplied Expo evidence subsequently confirmed successful EAS artifacts for iOS 1.1.10 (127) and Android 1.1.10 (96), both from Git ref prefix acb57ad. They are consumed and will not be reused. The next source release must use iOS build 128 and Android versionCode 97 or higher. This record does not claim App Store Connect or Google Play submission status for those successful EAS artifacts."
 }

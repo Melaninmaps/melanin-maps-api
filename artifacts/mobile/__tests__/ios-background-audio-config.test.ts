@@ -39,15 +39,15 @@ describe("iOS App Review background-audio configuration", () => {
     // The build record is historical evidence, not the EAS source of truth.
     // It deliberately remains conservative when a newer identifier was reserved
     // by EAS after the record was written. The release gate enforces this
-    // reviewed source's exact 127/96 identifiers before a build is allowed.
+    // reviewed source's exact 128/97 identifiers before a build is allowed.
     expect(Number(appJson.expo.ios.buildNumber)).toBeGreaterThan(
       Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0),
     );
     expect(appJson.expo.android.versionCode).toBeGreaterThan(
       Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0),
     );
-    expect(appJson.expo.ios.buildNumber).toBe("127");
-    expect(appJson.expo.android.versionCode).toBe(96);
+    expect(appJson.expo.ios.buildNumber).toBe("128");
+    expect(appJson.expo.android.versionCode).toBe(97);
     expect(appJson.expo.version).toBe("1.1.10");
     expect(appJson.expo.android.version).toBe("1.1.7");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");
