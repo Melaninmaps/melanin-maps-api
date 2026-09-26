@@ -184,7 +184,7 @@ describe("Kinfolk chat static wiring", () => {
   it("routes a resolved before-you-go question through current news research even when semantic planning is off", () => {
     const cityBriefingPlan = chatRoute.indexOf("const cityBriefingPlan = isCityBriefingRequest(message, destination)");
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
-    const semanticPlanner = chatRoute.indexOf("if (contextualIntelligenceEnabled && !contextualPlan)");
+    const semanticPlanner = chatRoute.indexOf("if (contextualResearchEnabled && !contextualPlan)");
     const researchExecution = chatRoute.indexOf("if (contextualPlan) {");
 
     expect(cityBriefingPlan).toBeGreaterThan(-1);
@@ -193,6 +193,23 @@ describe("Kinfolk chat static wiring", () => {
     expect(researchExecution).toBeGreaterThan(semanticPlanner);
     expect(chatRoute).toContain('contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000');
     expect(chatRoute).toContain("I will not substitute a generic city description");
+  });
+
+  it("routes a current question through cited research even when optional contextual intelligence is off", () => {
+    expect(chatRoute).toContain("const citedResearchRequired =");
+    expect(chatRoute).toContain("requiresCurrentResearch(researchContextMessage)");
+    expect(chatRoute).toContain("let contextualResearchEnabled = contextualIntelligenceEnabled");
+    expect(chatRoute).toContain("contextualResearchEnabled =\n      contextualIntelligenceEnabled || citedResearchRequired");
+    expect(chatRoute).toContain("if (contextualResearchEnabled && !contextualPlan)");
+    expect(chatRoute).toContain("!contextualResearchEnabled");
+  });
+
+  it("uses the bounded source-seeking ancient Mediterranean follow-up only for the supplied cultural case", () => {
+    expect(routeSource).toContain("buildKinfolkCulturalLearningOpportunity");
+    expect(chatRoute).toContain("const culturalLearningOpportunity =");
+    expect(chatRoute).toContain("culturalLearningOpportunity.promptBlock");
+    expect(chatRoute).toContain("culturalLearningOpportunity.followUpSuggestion");
+    expect(chatRoute).toContain("!contextualEvidence.degraded");
   });
 
   it("does not replace a current work-travel city briefing with a restaurant itinerary", () => {

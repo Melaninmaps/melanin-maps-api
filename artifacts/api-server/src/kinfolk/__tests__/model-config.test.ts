@@ -9,7 +9,7 @@ describe("Kinfolk model configuration", () => {
   it("uses reviewed defaults when a role is not configured", () => {
     expect(kinfolkModel("staffDemo", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("fallback", {})).toBe("gpt-4o-mini");
-    expect(kinfolkModel("webSearch", {})).toBe("gpt-4o-mini");
+    expect(kinfolkModel("webSearch", {})).toBe("gpt-5-mini");
     expect(kinfolkModel("libraryResearch", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("transcription", {})).toBe("whisper-1");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
@@ -25,7 +25,7 @@ describe("Kinfolk model configuration", () => {
 
   it("fails closed to the role default for arbitrary or cross-purpose IDs", () => {
     expect(kinfolkModel("staffDemo", { KINFOLK_STAFF_DEMO_MODEL: "private-preview-model" })).toBe("gpt-4o-mini");
-    expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-4o-mini-transcribe" })).toBe("gpt-4o-mini");
+    expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-4o-mini-transcribe" })).toBe("gpt-5-mini");
     expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("whisper-1");
   });
 

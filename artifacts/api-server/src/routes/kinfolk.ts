@@ -106,6 +106,7 @@ import {
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
 } from "../kinfolk/current-research";
+import { buildKinfolkCulturalLearningOpportunity } from "../kinfolk/cultural-learning-opportunity";
 import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
 import {
@@ -6839,6 +6840,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       administrator: isAdmin(req),
       activeTester,
     });
+    const culturalLearningOpportunity =
+      buildKinfolkCulturalLearningOpportunity(message);
+    let contextualResearchEnabled = contextualIntelligenceEnabled;
     const modelPolicy = resolveKinfolkModelPolicy(
       isStaffDemoEligible({
         authenticated: true,
@@ -7122,6 +7126,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     researchContextMessage = savedMemberResearchContext.question;
     savedMemberResearchContextTags = savedMemberResearchContext.appliedTags;
+    // Current facts and this narrow cultural current-events case must never fall
+    // through to a cached Library answer merely because optional adaptive
+    // contextual intelligence is disabled. They still use the existing cited
+    // provider path and preserve the same fail-closed evidence behavior.
+    const citedResearchRequired =
+      requiresCurrentResearch(researchContextMessage) ||
+      culturalLearningOpportunity !== null;
+    contextualResearchEnabled =
+      contextualIntelligenceEnabled || citedResearchRequired;
 
     // Resolve current-turn geography before session continuity. A city explicitly
     // named now is authoritative and may change an enabled session's destination.
@@ -7444,7 +7457,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // routing and governed business handling. It receives the locked route and no
     // member profile, so it cannot weaken consequence policy or infer identity.
     let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan;
-    if (contextualIntelligenceEnabled && !contextualPlan) {
+    if (contextualResearchEnabled && !contextualPlan) {
       contextualPlan = await planSemanticTurn({
         message: researchContextMessage,
         evidenceRoute,
@@ -7507,6 +7520,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                 query.toLowerCase() !== lifeIntentSourceQuery.toLowerCase(),
             ),
           ].slice(0, 3),
+        };
+      }
+      if (culturalLearningOpportunity) {
+        contextualPlan = {
+          ...contextualPlan,
+          freshness: "current",
+          evidenceNeeds: ["official_current", "reputable_reporting"],
+          retrievalQueries: [...culturalLearningOpportunity.retrievalQueries],
         };
       }
       if (
@@ -7577,7 +7598,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // optional enrichment and may never block an in-chat answer.
     if (
       shouldResearchInLibrary &&
-      !contextualIntelligenceEnabled &&
+      !contextualResearchEnabled &&
       !destination &&
       message.trim().length > 15
     ) {
@@ -9066,6 +9087,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             "Never include personal profile, inferred identity, private memory, or raw history in structured fields.",
           ].join("\n")
         : "") +
+      (culturalLearningOpportunity
+        ? `\n\n${culturalLearningOpportunity.promptBlock}`
+        : "") +
       (cityBriefingPromptBlock ? `\n\n${cityBriefingPromptBlock}` : "");
 
     // Build server-authoritative supplemental blocks from context resolution
@@ -9490,6 +9514,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // continue from “I want to…” to a useful, practical follow-up.
     if (lifeGuidance && !protectedReply.blocked) {
       followUpSuggestions = [...lifeGuidance.followUpSuggestions];
+    }
+
+    // The optional cultural bridge is source-backed by the surrounding
+    // contextual turn and cannot displace the answer or its safety boundaries.
+    if (
+      culturalLearningOpportunity &&
+      !protectedReply.blocked &&
+      contextualEvidence &&
+      !contextualEvidence.degraded &&
+      contextualEvidence.internal.length +
+        contextualEvidence.external.length +
+        contextualEvidence.media.length >
+        0
+    ) {
+      followUpSuggestions = [
+        culturalLearningOpportunity.followUpSuggestion,
+        ...followUpSuggestions.filter(
+          (suggestion) =>
+            suggestion !== culturalLearningOpportunity.followUpSuggestion,
+        ),
+      ].slice(0, 3);
     }
 
     // A named business response stays scoped to exactly the canonical visible row.

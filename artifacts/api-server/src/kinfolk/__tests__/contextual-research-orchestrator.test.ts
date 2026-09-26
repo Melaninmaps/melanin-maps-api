@@ -363,6 +363,44 @@ describe("contextual research orchestrator", () => {
     expect(result.gaps).not.toContain("The claim or consensus could not be corroborated.");
   });
 
+  it("classifies university scholarship and current film reporting as corroborating cultural evidence", async () => {
+    const consensusPlan = plan({
+      taskMode: "cultural_consensus",
+      freshness: "stable",
+      evidenceNeeds: ["primary_cultural", "critical_consensus"],
+      retrievalQueries: ["Odyssey casting and ancient Greek African representation"],
+    });
+    const result = await orchestrateContextualResearch(consensusPlan, {
+      primaryProvider: {
+        name: "openai",
+        search: vi.fn().mockResolvedValue({
+          documents: [
+            document(1, {
+              title: "Skin colour in ancient Greece",
+              url: "https://lucas.leeds.ac.uk/article/skin-colour-in-ancient-greece/",
+              content: "Historical scholarship about representation in ancient Greece.",
+            }),
+            document(2, {
+              title: "The Odyssey casting discussion",
+              url: "https://au.variety.com/2026/film/news/odyssey-casting/",
+              content: "Current reporting about the casting discussion.",
+            }),
+          ],
+          provider: "openai",
+          status: "available",
+        }),
+      },
+      now: () => NOW,
+    });
+
+    expect(result.external).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "research", url: expect.stringContaining("leeds.ac.uk") }),
+        expect.objectContaining({ kind: "reporting", url: expect.stringContaining("variety.com") }),
+      ]),
+    );
+  });
+
   it("fails closed for cultural consensus when two primary sources have no critical reception", async () => {
     const consensusPlan = plan({
       taskMode: "cultural_consensus",

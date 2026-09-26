@@ -43,7 +43,7 @@ export type ContextualResearchDeps = {
 };
 
 const VIDEO_HOSTS = new Set(["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com", "tiktok.com", "www.tiktok.com", "instagram.com", "www.instagram.com"]);
-const REPORTING_HOSTS = new Set(["apnews.com", "reuters.com", "bbc.com", "bbc.co.uk", "npr.org", "nytimes.com", "washingtonpost.com", "theguardian.com"]);
+const REPORTING_HOSTS = new Set(["apnews.com", "reuters.com", "bbc.com", "bbc.co.uk", "npr.org", "nytimes.com", "washingtonpost.com", "theguardian.com", "variety.com", "au.variety.com", "abc.net.au"]);
 const RESEARCH_HOSTS = new Set(["doi.org", "jstor.org", "nature.com", "sciencedirect.com", "springer.com", "pubmed.ncbi.nlm.nih.gov"]);
 const INJECTION_LINE = /(?:ignore|disregard|override|forget)\s+(?:all\s+)?(?:previous|prior|system|developer)|system\s+prompt|developer\s+message|reveal\s+(?:private|hidden|secret)|private\s+memor(?:y|ies)|follow\s+these\s+instructions|you\s+are\s+(?:chatgpt|an?\s+assistant)/i;
 
@@ -123,7 +123,7 @@ function classifyDocument(document: ResearchDocument, url: string, plan: Semanti
   if (VIDEO_HOSTS.has(host)) return document.creatorVerified === true ? "creator" : "reference";
   if (isVerifiedEntityPrimarySource(document, url, plan)) return "primary";
   if (isOfficialHost(host)) return "official";
-  if (host.endsWith(".edu") || RESEARCH_HOSTS.has(host)) return "research";
+  if (host.endsWith(".edu") || host.endsWith(".ac.uk") || RESEARCH_HOSTS.has(host)) return "research";
   const criticalReceptionText = canonicalizeContextualPolicyText(`${document.title ?? ""} ${document.content ?? ""}`);
   if (plan.evidenceNeeds.includes("critical_consensus") && /\b(review|criticism|critical reception|analysis|retrospective|essay|ranking|critic)\b/i.test(criticalReceptionText)) return "criticism";
   if (REPORTING_HOSTS.has(host)) return "reporting";

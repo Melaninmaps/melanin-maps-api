@@ -16,7 +16,10 @@ const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string;
   // Higher-cost models remain an explicit, allowlisted operator choice.
   staffDemo: { env: "KINFOLK_STAFF_DEMO_MODEL", fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
   fallback: { env: "KINFOLK_FALLBACK_MODEL", fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
-  webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
+  // The cited web-search adapter requires a model with native tool support.
+  // gpt-4o-mini can return uncited prose through the compatible endpoint, so
+  // use the reviewed GPT-5 mini tool-capable default for current facts.
+  webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-5-mini", allowed: RESEARCH_MODELS },
   libraryResearch: { env: "LIBRARY_RESEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
   // The deployed integration accepts Whisper on its multipart transcription
   // endpoint. Pin this role to that contract instead of allowing a stale
