@@ -26,4 +26,8 @@ describe("exact directory-to-Map handoff", () => {
   it("does not cover a governed directory handoff with the unrelated global pin loader", () => {
     expect(mapSource).toContain("(!ready || (isLoading && !handoffQuery))");
   });
+
+  it("renders the exact directory records as Map cards instead of the location empty state", () => {
+    expect(mapSource).toContain(") : !isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch ? (");
+  });
 });

@@ -2001,7 +2001,7 @@ export default function MapPage() {
                     }
                     onPinsChange={(pins, area) => applyLocalMapViewport(makeMapAdapter(), area, pins)}
                   />
-                ) : !isDiscoveryFilterActive && businessSearchActive ? (
+                ) : !isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch ? (
                   <div className="p-8 text-center">
                     <p className="text-sm font-semibold text-[#2B1507] mb-1">Add a city or ZIP code</p>
                     <p className="text-xs text-[#3A1F0E]/50 leading-relaxed">
