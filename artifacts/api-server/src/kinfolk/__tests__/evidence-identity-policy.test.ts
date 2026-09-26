@@ -300,6 +300,13 @@ describe("neutral research and health planning", () => {
     );
   });
 
+  it("treats a reported breast change as a neutral symptom topic instead of a diagnosis", () => {
+    expect(extractHealthTopic("I found a lump in my breast")).toBe(
+      "breast change or lump",
+    );
+    expect(extractHealthTopic("I have breast cancer")).toBe("breast cancer");
+  });
+
   it("keeps generic health templates neutral and explicit population templates non-diagnostic", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response("<nlmSearchResult></nlmSearchResult>", { status: 200 }),

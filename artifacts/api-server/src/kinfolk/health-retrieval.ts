@@ -33,6 +33,7 @@ export interface HealthRetrievalResult {
 }
 
 const CONDITION_PATTERNS: Array<[RegExp, string]> = [
+  [/(?:breast\s+(?:lump|mass|change|changes|pain|discharge)|lump\s+(?:in|on)\s+(?:my\s+)?breast|nipple\s+(?:change|changes|discharge))/i, "breast change or lump"],
   [/prostate\s+cancer/i, "prostate cancer"],
   [/breast\s+cancer/i, "breast cancer"],
   [/maternal\s+mort/i, "maternal mortality"],

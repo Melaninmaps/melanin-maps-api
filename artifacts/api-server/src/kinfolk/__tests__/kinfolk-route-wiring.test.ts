@@ -41,6 +41,30 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+  it("keeps qualified care navigation outside the ordinary ownership-scoped business catalog", () => {
+    const careOverride = chatRoute.indexOf("const healthCareOverride = buildHealthCareOverride");
+    const catalogFilter = chatRoute.indexOf("businessCatalog = healthCareOverride.suppressesGeneralBusinessCatalog");
+    const promptAssembly = chatRoute.indexOf("healthCareOverride.promptBlock || null");
+
+    expect(careOverride).toBeGreaterThan(-1);
+    expect(catalogFilter).toBeGreaterThan(careOverride);
+    expect(promptAssembly).toBeGreaterThan(catalogFilter);
+    expect(chatRoute).toContain("healthRetrievalSources.push(...healthCareOverride.sources)");
+    expect(chatRoute).toContain("namedBusiness && !healthCareOverride.suppressesGeneralBusinessCatalog");
+  });
+
+  it("keeps city-bearing health requests out of the ordinary discovery fast path", () => {
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(helper).toContain("const fastPathEvidenceDomain = classifyEvidenceRoute(input.message)");
+    expect(helper).toContain('fastPathEvidenceDomain === "medical_health"');
+    expect(helper).toContain('fastPathEvidenceDomain === "safety_emergency"');
+    expect(chatRoute).toContain("const highConsequenceEvidence =");
+    expect(chatRoute).toContain("!highConsequenceEvidence");
+  });
+
   it("passes an explicit article source into exact-source retrieval", () => {
     expect(chatRoute).toContain(
       "requestedArticleUrl: requestedArticleSummaryUrl(message)",

@@ -162,6 +162,7 @@ import {
   buildHealthRetrievalContext,
   extractHealthTopic,
 } from "../kinfolk/health-retrieval";
+import { buildHealthCareOverride } from "../kinfolk/health-care-override";
 import {
   buildLifeIntentSourceQuery,
   getLifeIntentGuidance,
@@ -5690,6 +5691,18 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   cityHint?: string;
   conversationContext?: unknown;
 }): Promise<boolean> {
+  // A city-bearing health, safety, legal, or financial question must never be
+  // consumed by the ordinary business-card fast path. It continues below to the
+  // evidence and care-navigation policies instead.
+  const fastPathEvidenceDomain = classifyEvidenceRoute(input.message).domain;
+  if (
+    fastPathEvidenceDomain === "medical_health" ||
+    fastPathEvidenceDomain === "legal_regulated" ||
+    fastPathEvidenceDomain === "financial_regulated" ||
+    fastPathEvidenceDomain === "safety_emergency"
+  ) {
+    return false;
+  }
   let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
   if (input.memoryEnabled && input.sessionId && input.req.user?.id) {
     try {
@@ -6816,15 +6829,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Intent classification ────────────────────────────────────────────────
     // Runs before catalog fetch so high-consequence intents can adjust what
     // gets injected. No extra API call — deterministic keyword classifier.
-    // When the pre-classifier is definitive (brunch/travel), override the
-    // raw result so the LLM never reclassifies back to pop culture.
+    // When the pre-classifier is definitive for ordinary discovery, override
+    // the raw result so the LLM never reclassifies it back to pop culture.
+    // High-consequence evidence domains must retain their stricter route even
+    // when the message also contains a city or a provider-seeking verb.
     const evidenceIntentClass = evidenceRoute.domain;
+    const highConsequenceEvidence =
+      evidenceIntentClass === "medical_health" ||
+      evidenceIntentClass === "legal_regulated" ||
+      evidenceIntentClass === "financial_regulated" ||
+      evidenceIntentClass === "safety_emergency";
     const rawIntentClass: KinfolkIntent =
       earlyDecision.route === "business_discovery" &&
-      evidenceIntentClass !== "legal_regulated"
+      !highConsequenceEvidence
         ? "business_discovery"
         : earlyDecision.route === "travel_planning" &&
-            evidenceIntentClass !== "legal_regulated"
+            !highConsequenceEvidence
           ? "business_discovery"
           : evidenceIntentClass;
     // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
@@ -6855,6 +6875,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     );
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
+    // A care-navigation request is a narrow current-turn exception to ordinary
+    // ownership-scoped business discovery. It never changes saved preferences
+    // and it never turns an unqualified directory listing into a medical referral.
+    const healthCareOverride = buildHealthCareOverride({
+      message,
+      intentClass,
+    });
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
 
     const shouldResearchInLibrary =
@@ -7499,6 +7526,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         /* non-fatal — Kinfolk falls back to model knowledge */
       }
     }
+    if (healthCareOverride.sources.length > 0) {
+      healthRetrievalSources.push(...healthCareOverride.sources);
+    }
 
     // ── Consent-gated web search (Kinfolk lens layer) ─────────────────────────
     // For health, image, and entity queries, any optional ranking context is
@@ -8024,12 +8054,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // The Support Lens is an all-of documentary boundary, not a ranking hint.
     // Apply it to every catalog source (named, city, radius, and home) before a
     // business can become Kinfolk context or a recommendation.
-    businessCatalog = businessCatalog.filter((business) =>
-      matchesDocumentedDesignationScope(
-        business,
-        requiredSupportLensDesignationIds,
-      ),
-    );
+    businessCatalog = healthCareOverride.suppressesGeneralBusinessCatalog
+      ? []
+      : businessCatalog.filter((business) =>
+          matchesDocumentedDesignationScope(
+            business,
+            requiredSupportLensDesignationIds,
+          ),
+        );
     if (
       !audienceAllowsBusinessText({
         ageBand: effectiveAudienceBand,
@@ -8674,8 +8706,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const combinedPolicyPrompt = [
       _discoveryInstruction || null,
       intentPolicyPrompt || null,
+      healthCareOverride.promptBlock || null,
       evidenceRoutePromptBlock(evidenceRoute, permittedIdentity),
-      namedBusiness ? namedBusinessPromptBlock(namedBusiness) : null,
+      namedBusiness && !healthCareOverride.suppressesGeneralBusinessCatalog
+        ? namedBusinessPromptBlock(namedBusiness)
+        : null,
       itineraryInstruction || null,
       staffDemoPromptBlock(modelPolicy) || null,
     ]

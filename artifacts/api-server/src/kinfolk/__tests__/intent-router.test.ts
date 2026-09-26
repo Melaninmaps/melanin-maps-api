@@ -118,6 +118,12 @@ describe("safety_emergency classification", () => {
     expect(intent).toBe("safety_emergency");
   });
 
+  it("keeps a city-bearing breast-care request in medical health", () => {
+    expect(
+      classifyIntent("I found a lump in my breast. Where can I find a doctor in Philadelphia?", true),
+    ).toBe("medical_health");
+  });
+
   it("blocks community data and requires citations for emergencies", () => {
     const policy = getEvidencePolicy("safety_emergency");
     expect(policy.blockCommunityAsProof).toBe(true);
