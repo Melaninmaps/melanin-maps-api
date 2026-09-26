@@ -38,6 +38,35 @@ export type LatinxLehighValleyPinSummary = Readonly<{
   errors: number;
 }>;
 
+type LatinxLehighValleyPublicationRuntimeStatus = Readonly<{
+  state: "not_started" | "running" | "published" | "failed";
+  source_profiles: number;
+  created: number;
+  existing_same_source_id: number;
+  failure_class: string | null;
+}>;
+
+let publicationRuntimeStatus: LatinxLehighValleyPublicationRuntimeStatus = {
+  state: "not_started",
+  source_profiles: 77,
+  created: 0,
+  existing_same_source_id: 0,
+  failure_class: null,
+};
+
+/** Public-safe operational evidence: no raw error, source row, profile, or member data. */
+export function getLatinxLehighValleyPublicationRuntimeStatus(): LatinxLehighValleyPublicationRuntimeStatus {
+  return { ...publicationRuntimeStatus };
+}
+
+function publicationFailureClass(error: unknown): string {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String((error as { code?: unknown }).code ?? "")
+      : "";
+  return /^[0-9A-Z]{5}$/i.test(code) ? `postgres_${code.toUpperCase()}` : "runtime_error";
+}
+
 type PublicationClient = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(
     statement: string,
@@ -335,12 +364,33 @@ export function startLatinxLehighValleyPublication(
   productionPool: PublicationPool,
   log: Log,
 ): void {
+  publicationRuntimeStatus = {
+    state: "running",
+    source_profiles: 77,
+    created: 0,
+    existing_same_source_id: 0,
+    failure_class: null,
+  };
   void (async () => {
     try {
       const publication = await publishLatinxLehighValleyDirectory(productionPool);
+      publicationRuntimeStatus = {
+        state: "published",
+        source_profiles: publication.sourceProfiles,
+        created: publication.created,
+        existing_same_source_id: publication.existingSameSourceId,
+        failure_class: null,
+      };
       log("Latinx Lehigh Valley directory publication complete", publication);
       startLatinxLehighValleyPinResolution(productionPool, log);
     } catch (error) {
+      publicationRuntimeStatus = {
+        state: "failed",
+        source_profiles: 77,
+        created: 0,
+        existing_same_source_id: 0,
+        failure_class: publicationFailureClass(error),
+      };
       log("Latinx Lehigh Valley directory publication failed", {
         error: error instanceof Error ? error.message : String(error),
       });

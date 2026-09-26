@@ -23,6 +23,21 @@ describe("founder-authorized Latinx Lehigh Valley publication", () => {
     expect(publicationStart).toBeLessThan(optionalMigrationStart);
   });
 
+  it("limits the public publication evidence to a non-identifying status object", () => {
+    const appSource = readFileSync(
+      fileURLToPath(new URL("../../app.ts", import.meta.url)),
+      "utf8",
+    );
+    const publicationSource = readFileSync(
+      fileURLToPath(new URL("../latinxLehighValleyPublication.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(appSource).toContain("latinx_lehigh_valley_publication");
+    expect(appSource).toContain("getLatinxLehighValleyPublicationRuntimeStatus()");
+    expect(publicationSource).toContain('failure_class: publicationFailureClass(error)');
+    expect(publicationSource).not.toContain('failure_class: error instanceof Error ? error.message');
+  });
+
   it("creates exactly the immutable 77 source profiles with receipts and no fabricated map pins", async () => {
     const profiles = assertLatinxLehighValleyDirectoryDataset();
     const clientQuery = vi.fn(async (statement: string, values?: readonly unknown[]) => {

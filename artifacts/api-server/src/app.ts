@@ -73,6 +73,7 @@ import {
   getFounderTesterAccessRecoveryStatus,
   getProtectedAdminAccessRecoveryStatus,
 } from "./lib/startup-migrations";
+import { getLatinxLehighValleyPublicationRuntimeStatus } from "./directoryImport/latinxLehighValleyPublication";
 
 // Defined by esbuild in build.mjs. These values are substituted into the
 // current dist/index.mjs and therefore cannot retain an older generated file.
@@ -249,6 +250,9 @@ app.get("/api/version", (_req: Request, res: Response) => {
     // Non-identifying proof that both founder-protected existing administrator
     // accounts were recovered. Names, emails, IDs, and account data are omitted.
     protected_admin_access: getProtectedAdminAccessRecoveryStatus(),
+    // Non-identifying evidence for the explicit founder-authorized Lehigh Valley
+    // source publication. It exposes no raw error, source row, profile, or user data.
+    latinx_lehigh_valley_publication: getLatinxLehighValleyPublicationRuntimeStatus(),
   });
 });
 
