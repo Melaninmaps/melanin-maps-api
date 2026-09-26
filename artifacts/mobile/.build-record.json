@@ -1,12 +1,12 @@
 {
   "lastIosSubmitted": 112,
   "lastAndroidSubmitted": 82,
-  "lastIosReserved": 125,
+  "lastIosReserved": 126,
   "lastAndroidReserved": 95,
-  "iosEasBuildId": "4718d09b-56bf-4a5a-bd8b-19ab94973384",
-  "iosEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
+  "iosEasBuildId": "70a12893-9432-4c32-9788-a72b929bc58a",
+  "iosEasArtifactStatus": "APP_STORE_CONNECT_REJECTED_VERSION_TRAIN",
   "androidEasBuildId": null,
   "androidEasArtifactStatus": "FINISHED_SOURCE_VERIFIED",
-  "sourceCommit": "5bc2b63",
-  "notes": "Founder-supplied EAS evidence on 2026-09-25 confirmed iOS build 125 completed. Android versionCode 95 is conservatively retired with that attempted release because remote EAS status is not independently available in this environment. Neither identifier will be reused. The next source-traceable release must use iOS build 126 and Android versionCode 96 or higher."
+  "sourceCommit": "64dc3aade93c619a1a019ef16338bedb3626ac35",
+  "notes": "Founder-supplied App Store Connect evidence on 2026-09-26 confirmed that EAS build 126 completed from source 64dc3aade93c619a1a019ef16338bedb3626ac35, then Apple rejected the IPA because version train 1.1.9 is closed (90186/90062). Build 126 is consumed and will not be reused. The next iOS source-traceable release must use app version 1.1.10 and build 127 or higher. Android versionCode 96 remains unbuilt and unchanged."
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the next 126/96
-# repair release while retaining prior reviewed pairs for reproducible checks.
+# Requirements-to-proof source/artifact gate. Defaults to the next 127/96
+# iOS version-train repair while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
 #   bash scripts/run-build-115-85-requirements-gate.sh --prepare-static
@@ -26,7 +26,7 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-126}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-127}"
 EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-96}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
@@ -39,7 +39,8 @@ if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "123/93" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "124/94" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "125/95" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "126/96" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "126/96" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "127/96" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
@@ -79,12 +80,13 @@ fi
 
 printf 'BUILD_%s_%s_REQUIREMENTS_GATE\n' "$EXPECTED_IOS_BUILD" "$EXPECTED_ANDROID_CODE"
 printf 'mode=%s\nsha=%s\n' "$MODE" "$SHA"
-printf 'ios=1.1.9 (%s); android=1.1.7 (%s)\n' \
+printf 'ios=1.1.10 (%s); android=1.1.7 (%s)\n' \
   "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" \
   "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)"
 
 [ "$(jq -r '.expo.ios.buildNumber' artifacts/mobile/app.json)" = "$EXPECTED_IOS_BUILD" ] || fail "iOS build must be $EXPECTED_IOS_BUILD"
 [ "$(jq -r '.expo.android.versionCode' artifacts/mobile/app.json)" = "$EXPECTED_ANDROID_CODE" ] || fail "Android versionCode must be $EXPECTED_ANDROID_CODE"
+[ "$(jq -r '.expo.version' artifacts/mobile/app.json)" = "1.1.10" ] || fail "iOS App Store marketing version must be 1.1.10"
 [ "$(jq -r '.expo.ios.supportsTablet' artifacts/mobile/app.json)" = "true" ] || fail "iPad support must remain enabled"
 [ "$(jq -r '.expo.ios.infoPlist.UIRequiresFullScreen' artifacts/mobile/app.json)" = "false" ] || fail "iPad multitasking must remain enabled"
 node scripts/validate-android-eas-jdk17.cjs || fail "Android EAS Java 17 image configuration is invalid"
