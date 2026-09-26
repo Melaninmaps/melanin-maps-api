@@ -114,6 +114,11 @@ import {
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
 } from "../kinfolk/current-research";
+import {
+  extractLiveWeatherLocation,
+  isLiveWeatherQuestion,
+  resolveAuthoritativeWeather,
+} from "../kinfolk/authoritative-weather";
 import { buildKinfolkCulturalLearningOpportunity } from "../kinfolk/cultural-learning-opportunity";
 import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
@@ -6212,6 +6217,142 @@ async function persistDeterministicDiscoveryTurn(input: {
   }
 }
 
+/**
+ * Weather is a provider-sourced response, not a model-generated or generic-web
+ * answer. This keeps the same question aligned across web, iOS, and Android
+ * without collecting device coordinates or changing Location Sharing.
+ */
+async function tryAnswerAuthoritativeWeather(input: {
+  req: Request;
+  res: Response;
+  sessionId?: string;
+  message: string;
+  vibes: string[];
+  memoryEnabled: boolean;
+  cityHint?: string;
+}): Promise<boolean> {
+  if (!isLiveWeatherQuestion(input.message)) return false;
+
+  const requestedLocation = extractLiveWeatherLocation(
+    input.message,
+    input.cityHint,
+  );
+  if (!requestedLocation) {
+    input.res.status(200).json({
+      sessionId: input.sessionId,
+      reply:
+        "Tell me the city you want checked, and I will pull a live weather update. I do not use your device location unless you explicitly share a place in the conversation.",
+      recommendations: null,
+      itinerary: null,
+      resultView: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "current_information",
+      responseMeta: {
+        schemaVersion: 1,
+        planKind: "current_or_high_consequence",
+        answerMode: "cited_answer",
+        retrieval: "existing_authoritative_route",
+        allowBusinessCards: false,
+        evidenceRequired: true,
+        requiresClarification: true,
+      },
+      sources: [],
+      needsClarification: true,
+      originalQuery: input.message,
+      answerMode: "authoritative_weather",
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return true;
+  }
+
+  const weather = await resolveAuthoritativeWeather(requestedLocation);
+  const reply = weather
+    ? weather.reply
+    : `I could not verify live weather for ${requestedLocation} right now, so I will not guess. Please try again in a moment or check your local weather service.`;
+  const sources = weather ? [weather.source] : [];
+  const finalSessionId = await persistDeterministicDiscoveryTurn({
+    userId: input.req.user!.id,
+    memoryEnabled: input.memoryEnabled,
+    sessionId: input.sessionId,
+    message: input.message,
+    reply,
+    recommendations: null,
+    resultView: null,
+    followUpSuggestions: [],
+    sources,
+    destination: weather?.location.city ?? "",
+    vibes: input.vibes,
+  });
+
+  input.res.status(200).json({
+    sessionId: finalSessionId,
+    reply,
+    recommendations: null,
+    itinerary: null,
+    resultView: null,
+    followUpSuggestions: [],
+    smartPromotion: null,
+    taskAction: null,
+    libraryAction: null,
+    intentClass: "current_information",
+    responseMeta: {
+      schemaVersion: 1,
+      planKind: "current_or_high_consequence",
+      answerMode: "cited_answer",
+      retrieval: "existing_authoritative_route",
+      allowBusinessCards: false,
+      evidenceRequired: true,
+      requiresClarification: false,
+    },
+    sources,
+    sourceNote: weather
+      ? "Live weather is supplied directly by Open-Meteo, not generated from model memory."
+      : "A live weather lookup was unavailable; Kinfolk did not substitute a remembered forecast.",
+    needsClarification: false,
+    originalQuery: input.message,
+    answerMode: "authoritative_weather",
+    ...(weather
+      ? {
+          location: {
+            city: weather.location.city,
+            state: weather.location.state,
+            source: "explicit",
+          },
+          locationSource: "explicit",
+        }
+      : {}),
+    researchStatus: {
+      usedInternal: false,
+      usedLiveWeb: weather !== null,
+      degraded: weather === null,
+      web: {
+        attempted: true,
+        state: weather ? "completed" : "unavailable",
+        provider: weather ? "open_meteo" : null,
+        fallbackUsed: false,
+        partial: false,
+      },
+      asOf: weather?.asOf ?? new Date().toISOString(),
+    },
+  });
+  return true;
+}
+
 function memberFacingDesignationLabel(id: string): string {
   if (id === "black-african-american") return "Black-owned";
   if (id === "foundational-black-american") return "Foundational Black American-owned";
@@ -6759,6 +6900,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         asOf: new Date().toISOString(),
       },
     });
+  }
+
+  // A provider-sourced weather answer must precede generic current-information
+  // research. Generic search citations cannot reject, replace, or reinterpret a
+  // direct forecast response.
+  if (
+    await tryAnswerAuthoritativeWeather({
+      req,
+      res,
+      sessionId,
+      message,
+      vibes,
+      memoryEnabled,
+      cityHint: typeof cityHint === "string" ? cityHint : undefined,
+    })
+  ) {
+    return;
   }
 
   // Arithmetic is deterministic and must not trigger Library, web, or model work.

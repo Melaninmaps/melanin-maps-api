@@ -204,6 +204,17 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!contextualResearchEnabled");
   });
 
+  it("answers live weather from a server-owned source before generic current-research gating", () => {
+    const weatherShortCircuit = chatRoute.indexOf("await tryAnswerAuthoritativeWeather({");
+    const citedResearch = chatRoute.indexOf("const citedResearchRequired =");
+
+    expect(weatherShortCircuit).toBeGreaterThan(-1);
+    expect(citedResearch).toBeGreaterThan(weatherShortCircuit);
+    expect(routeSource).toContain("resolveAuthoritativeWeather");
+    expect(routeSource).toContain("Live weather is supplied directly by Open-Meteo");
+    expect(routeSource).toContain('answerMode: "authoritative_weather"');
+  });
+
   it("uses the bounded source-seeking ancient Mediterranean follow-up only for the supplied cultural case", () => {
     expect(routeSource).toContain("buildKinfolkCulturalLearningOpportunity");
     expect(chatRoute).toContain("const culturalLearningOpportunity =");
