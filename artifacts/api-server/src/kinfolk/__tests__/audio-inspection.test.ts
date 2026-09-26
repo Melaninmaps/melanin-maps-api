@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canonicalVoiceFormat,
+  inspectFragmentedMp4Duration,
   inspectVoiceAudio,
   VoiceAudioInspectionError,
 } from "../voice/audioInspection";
@@ -25,6 +26,40 @@ function pcmWav(durationSeconds: number): Buffer {
   buffer.write("data", 36, "ascii");
   buffer.writeUInt32LE(dataLength, 40);
   return buffer;
+}
+
+function u32(value: number): Buffer {
+  const buffer = Buffer.alloc(4);
+  buffer.writeUInt32BE(value);
+  return buffer;
+}
+
+function isoBox(type: string, ...payloads: Buffer[]): Buffer {
+  const payload = Buffer.concat(payloads);
+  const buffer = Buffer.alloc(8 + payload.length);
+  buffer.writeUInt32BE(buffer.length, 0);
+  buffer.write(type, 4, "ascii");
+  payload.copy(buffer, 8);
+  return buffer;
+}
+
+function fullBox(flags: number, ...payloads: Buffer[]): Buffer {
+  return Buffer.concat([Buffer.from([0, (flags >>> 16) & 0xff, (flags >>> 8) & 0xff, flags & 0xff]), ...payloads]);
+}
+
+/** A small, structurally valid audio-only fMP4 with zero movie-header duration. */
+function fragmentedM4a(sampleCount: number, defaultSampleDuration = 1_024, timescale = 48_000): Buffer {
+  const tkhd = isoBox("tkhd", fullBox(0, u32(0), u32(0), u32(1), u32(0), u32(0)));
+  const mdhd = isoBox("mdhd", fullBox(0, u32(0), u32(0), u32(timescale), u32(0)));
+  const hdlr = isoBox("hdlr", fullBox(0, u32(0), Buffer.from("soun", "ascii")));
+  const mdia = isoBox("mdia", mdhd, hdlr);
+  const trak = isoBox("trak", tkhd, mdia);
+  const trex = isoBox("trex", fullBox(0, u32(1), u32(1), u32(defaultSampleDuration), u32(0)));
+  const moov = isoBox("moov", trak, isoBox("mvex", trex));
+  const tfhd = isoBox("tfhd", fullBox(0x000008, u32(1), u32(defaultSampleDuration)));
+  const trun = isoBox("trun", fullBox(0, u32(sampleCount)));
+  const moof = isoBox("moof", isoBox("traf", tfhd, trun));
+  return Buffer.concat([isoBox("ftyp", Buffer.from("isom\x00\x00\x00\x01isom", "binary")), moov, moof, isoBox("mdat", Buffer.from([0]))]);
 }
 
 describe("Kinfolk voice audio inspection", () => {
@@ -56,6 +91,24 @@ describe("Kinfolk voice audio inspection", () => {
   it("rejects invalid bytes without echoing them", async () => {
     await expect(inspectVoiceAudio(Buffer.alloc(256, 7), "audio/wav", 60_000)).rejects.toMatchObject({
       code: "AUDIO_MIME_MISMATCH",
+    });
+  });
+
+  it("measures a valid Safari-style fragmented M4A when the movie header has no duration", async () => {
+    const audio = fragmentedM4a(96);
+    await expect(inspectFragmentedMp4Duration(audio)).toEqual({
+      container: "M4A fragmented MP4",
+      durationMs: 2_048,
+    });
+    await expect(inspectVoiceAudio(audio, "audio/mp4", 60_000)).resolves.toEqual({
+      container: "M4A fragmented MP4",
+      durationMs: 2_048,
+    });
+  });
+
+  it("still rejects a fragmented M4A whose measured audio exceeds the voice limit", async () => {
+    await expect(inspectVoiceAudio(fragmentedM4a(3_000), "audio/mp4", 60_000)).rejects.toMatchObject({
+      code: "AUDIO_DURATION_EXCEEDED",
     });
   });
 });

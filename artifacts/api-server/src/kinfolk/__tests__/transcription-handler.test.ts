@@ -30,6 +30,38 @@ function longPcmWav(durationSeconds: number): Buffer {
   return buffer;
 }
 
+function u32(value: number): Buffer {
+  const buffer = Buffer.alloc(4);
+  buffer.writeUInt32BE(value);
+  return buffer;
+}
+
+function isoBox(type: string, ...payloads: Buffer[]): Buffer {
+  const payload = Buffer.concat(payloads);
+  const buffer = Buffer.alloc(8 + payload.length);
+  buffer.writeUInt32BE(buffer.length, 0);
+  buffer.write(type, 4, "ascii");
+  payload.copy(buffer, 8);
+  return buffer;
+}
+
+function fullBox(flags: number, ...payloads: Buffer[]): Buffer {
+  return Buffer.concat([Buffer.from([0, (flags >>> 16) & 0xff, (flags >>> 8) & 0xff, flags & 0xff]), ...payloads]);
+}
+
+function safariStyleFragmentedM4a(): Buffer {
+  const tkhd = isoBox("tkhd", fullBox(0, u32(0), u32(0), u32(1), u32(0), u32(0)));
+  const mdhd = isoBox("mdhd", fullBox(0, u32(0), u32(0), u32(48_000), u32(0)));
+  const hdlr = isoBox("hdlr", fullBox(0, u32(0), Buffer.from("soun", "ascii")));
+  const trak = isoBox("trak", tkhd, isoBox("mdia", mdhd, hdlr));
+  const trex = isoBox("trex", fullBox(0, u32(1), u32(1), u32(1_024), u32(0)));
+  const moov = isoBox("moov", trak, isoBox("mvex", trex));
+  const tfhd = isoBox("tfhd", fullBox(0x000008, u32(1), u32(1_024)));
+  const trun = isoBox("trun", fullBox(0, u32(96)));
+  const moof = isoBox("moof", isoBox("traf", tfhd, trun));
+  return Buffer.concat([isoBox("ftyp", Buffer.from("isom\x00\x00\x00\x01isom", "binary")), moov, moof, isoBox("mdat", Buffer.from([0]))]);
+}
+
 function app(authenticated = true) {
   const instance = express();
   instance.use((req, _res, next) => {
@@ -83,6 +115,17 @@ describe("actual Kinfolk transcription handler", () => {
     const response = await request(app())
       .post("/api/kinfolk/transcribe")
       .attach("audio", load(filename), { filename, contentType: mimeType });
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ transcript: "hello Kinfolk", audioRetained: false });
+    expect(transcribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts a Safari-style fragmented M4A with zero movie-header duration", async () => {
+    const response = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("mimeType", "audio/mp4")
+      .field("durationMs", "2048")
+      .attach("audio", safariStyleFragmentedM4a(), { filename: "kinfolk-voice.m4a", contentType: "audio/mp4" });
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ transcript: "hello Kinfolk", audioRetained: false });
     expect(transcribe).toHaveBeenCalledTimes(1);
