@@ -5,6 +5,7 @@ export declare function resolveAudioOpenAIConfiguration(environment?: NodeJS.Pro
     baseURL: string;
 }>;
 export declare const openai: OpenAI;
+export declare const audioOpenai: OpenAI;
 export type AudioFormat = "wav" | "mp3" | "webm" | "mp4" | "ogg" | "unknown";
 export declare function detectAudioFormat(buffer: Buffer): AudioFormat;
 export declare function convertToWav(audioBuffer: Buffer): Promise<Buffer>;

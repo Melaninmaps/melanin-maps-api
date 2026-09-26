@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const transcribe = vi.hoisted(() => vi.fn());
 const resolveOpenAIConfiguration = vi.hoisted(() => vi.fn());
+const resolveAudioOpenAIConfiguration = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
   openai: {
     audio: { transcriptions: { create: transcribe } },
@@ -13,7 +14,11 @@ vi.mock("@workspace/integrations-openai-ai-server", () => ({
   },
   resolveOpenAIConfiguration,
 }));
-vi.mock("@workspace/integrations-openai-ai-server/audio", () => ({ textToSpeech: vi.fn() }));
+vi.mock("@workspace/integrations-openai-ai-server/audio", () => ({
+  audioOpenai: { audio: { transcriptions: { create: transcribe } } },
+  resolveAudioOpenAIConfiguration,
+  textToSpeechWithStyle: vi.fn(),
+}));
 
 import router, { safeKinfolkErrorMetadata } from "../../routes/kinfolk";
 
@@ -87,6 +92,11 @@ beforeEach(() => {
       ? { apiKey: "test-provider-key", baseURL: "https://api.openai.test/v1" }
       : null,
   );
+  resolveAudioOpenAIConfiguration.mockImplementation((environment = process.env) =>
+    environment.OPENAI_API_KEY || environment.AI_INTEGRATIONS_OPENAI_API_KEY
+      ? { apiKey: "test-provider-key", baseURL: "https://api.openai.test/v1" }
+      : null,
+  );
   transcribe.mockResolvedValue({ text: "hello Kinfolk" });
 });
 
@@ -119,7 +129,7 @@ describe("actual Kinfolk transcription handler", () => {
       .post("/api/kinfolk/transcribe")
       .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
     expect(response.status).toBe(200);
-    expect(resolveOpenAIConfiguration).toHaveBeenCalled();
+    expect(resolveAudioOpenAIConfiguration).toHaveBeenCalled();
     expect(transcribe).toHaveBeenCalledTimes(1);
   });
 

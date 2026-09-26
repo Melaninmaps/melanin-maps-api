@@ -4,7 +4,7 @@ import {
   openai,
   resolveOpenAIConfiguration,
 } from "@workspace/integrations-openai-ai-server";
-import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
+import { audioOpenai, textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 import { canonicalizeContextualUrl } from "./contextual-url";
 import { inspectVoiceAudio } from "./voice/audioInspection";
 import { buildKinfolkChatCompletionRequest } from "./staff-demo-policy";
@@ -54,7 +54,7 @@ function readinessDependencies(
     // Preserve SDK receivers. Capturing these methods directly loses client context.
     chatCreate: (body) => openai.chat.completions.create(body as never),
     responsesCreate: (body) => openai.responses.create(body as never),
-    transcriptionCreate: (body) => openai.audio.transcriptions.create(body as never),
+    transcriptionCreate: (body) => audioOpenai.audio.transcriptions.create(body as never),
     tavilySearch: (url, init) => fetch(url, init),
     tavilyTimeoutMilliseconds: 6_000,
     textToSpeech,

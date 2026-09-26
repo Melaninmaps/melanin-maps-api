@@ -41,7 +41,7 @@ describe("Kinfolk server-owned voice cross-client contract", () => {
     expect(webSource).toContain("Just Big Cousin");
   });
 
-  it("uses the canonical OpenAI configuration resolver for every voice endpoint", () => {
+  it("uses the dedicated audio configuration resolver for every voice endpoint", () => {
     const transcribeStart = routeSource.indexOf('router.post("/kinfolk/transcribe"');
     const transcribeEnd = routeSource.indexOf("// ─── GET /api/kinfolk/provider-readiness", transcribeStart);
     const transcribeRoute = routeSource.slice(transcribeStart, transcribeEnd);
@@ -52,9 +52,10 @@ describe("Kinfolk server-owned voice cross-client contract", () => {
     const previewRoute = routeSource.slice(previewStart, usageStart);
 
     for (const route of [transcribeRoute, speakRoute, previewRoute]) {
-      expect(route).toContain("resolveOpenAIConfiguration()");
+      expect(route).toContain("resolveAudioOpenAIConfiguration()");
       expect(route).not.toContain('process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]');
     }
+    expect(transcribeRoute).toContain("audioOpenai.audio.transcriptions.create(");
   });
 
   it("keeps a visible mobile cancellation path that discards a recording before transcription", () => {

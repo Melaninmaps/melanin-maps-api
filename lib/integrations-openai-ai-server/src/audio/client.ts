@@ -5,11 +5,22 @@ import { writeFile, unlink, readFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import { tmpdir } from "os";
 import { join } from "path";
-import { resolveOpenAIConfiguration } from "../client";
+import {
+  resolveOpenAIConfiguration,
+  STANDARD_OPENAI_BASE_URL,
+} from "../client";
 
 export function resolveAudioOpenAIConfiguration(
   environment: NodeJS.ProcessEnv = process.env,
 ) {
+  const standardApiKey = environment.OPENAI_API_KEY?.trim();
+  // Voice requires audio endpoints that a chat-compatible integration proxy
+  // may not implement. When a standard OpenAI credential is available, use the
+  // documented endpoint for audio only; ordinary Kinfolk chat keeps its own
+  // existing provider selection.
+  if (standardApiKey) {
+    return { apiKey: standardApiKey, baseURL: STANDARD_OPENAI_BASE_URL };
+  }
   const configuration = resolveOpenAIConfiguration(environment);
   if (!configuration) {
     throw new Error(
@@ -33,6 +44,10 @@ export const openai: OpenAI = new Proxy({} as OpenAI, {
     return (getOpenAI() as any)[prop];
   },
 });
+
+// Named separately from the general chat client so voice routes cannot
+// accidentally inherit a text-only provider configuration.
+export const audioOpenai = openai;
 
 export type AudioFormat = "wav" | "mp3" | "webm" | "mp4" | "ogg" | "unknown";
 

@@ -25,6 +25,17 @@ describe("Kinfolk voice provider configuration", () => {
     });
   });
 
+  it("prefers the standard OpenAI endpoint for audio when both providers are configured", () => {
+    expect(resolveAudioOpenAIConfiguration({
+      OPENAI_API_KEY: "standard-production-key",
+      AI_INTEGRATIONS_OPENAI_API_KEY: "integration-key",
+      AI_INTEGRATIONS_OPENAI_BASE_URL: "https://text-only-proxy.example/v1",
+    } as NodeJS.ProcessEnv)).toEqual({
+      apiKey: "standard-production-key",
+      baseURL: STANDARD_OPENAI_BASE_URL,
+    });
+  });
+
   it("does not pair a standard OpenAI key with a leftover integration endpoint", () => {
     expect(resolveOpenAIConfiguration({
       OPENAI_API_KEY: "standard-production-key",

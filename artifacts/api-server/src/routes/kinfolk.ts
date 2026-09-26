@@ -3,7 +3,11 @@ import {
   openai,
   resolveOpenAIConfiguration,
 } from "@workspace/integrations-openai-ai-server";
-import { textToSpeechWithStyle } from "@workspace/integrations-openai-ai-server/audio";
+import {
+  audioOpenai,
+  resolveAudioOpenAIConfiguration,
+  textToSpeechWithStyle,
+} from "@workspace/integrations-openai-ai-server/audio";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import {
   OWNERSHIP_FILTER_OPTIONS,
@@ -11701,7 +11705,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       audioRetained: false,
     });
   }
-  if (!resolveOpenAIConfiguration()) {
+  if (!resolveAudioOpenAIConfiguration()) {
     return void res.status(503).json({
       error: "TRANSCRIPTION_UNAVAILABLE",
       message: "Transcription is temporarily unavailable.",
@@ -11855,7 +11859,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       type: canonicalMimeType,
     });
 
-    const transcription = await openai.audio.transcriptions.create(
+    const transcription = await audioOpenai.audio.transcriptions.create(
       { file, model: transcriptionModel },
       { signal: controller.signal },
     );
@@ -11953,7 +11957,7 @@ router.get(
 router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  if (!resolveOpenAIConfiguration()) {
+  if (!resolveAudioOpenAIConfiguration()) {
     return void res.status(503).json({
       error: "TTS_UNAVAILABLE",
       message: "Kinfolk audio is unavailable right now. You can still read the response.",
@@ -12045,7 +12049,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
 router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  if (!resolveOpenAIConfiguration()) {
+  if (!resolveAudioOpenAIConfiguration()) {
     return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk audio is unavailable right now." });
   }
   const speechConfig = resolveKinfolkSpeechConfiguration();
