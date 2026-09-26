@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import {
+  resolveOpenAIConfiguration,
+  STANDARD_OPENAI_BASE_URL,
+} from "@workspace/integrations-openai-ai-server";
 import { resolveAudioOpenAIConfiguration } from "@workspace/integrations-openai-ai-server/audio";
 
 describe("Kinfolk voice provider configuration", () => {
@@ -13,6 +17,27 @@ describe("Kinfolk voice provider configuration", () => {
 
   it("continues to support the paired integration configuration", () => {
     expect(resolveAudioOpenAIConfiguration({
+      AI_INTEGRATIONS_OPENAI_API_KEY: "integration-key",
+      AI_INTEGRATIONS_OPENAI_BASE_URL: "https://provider.example/v1",
+    } as NodeJS.ProcessEnv)).toEqual({
+      apiKey: "integration-key",
+      baseURL: "https://provider.example/v1",
+    });
+  });
+
+  it("does not pair a standard OpenAI key with a leftover integration endpoint", () => {
+    expect(resolveOpenAIConfiguration({
+      OPENAI_API_KEY: "standard-production-key",
+      AI_INTEGRATIONS_OPENAI_BASE_URL: "https://legacy-proxy.example/v1",
+    } as NodeJS.ProcessEnv)).toEqual({
+      apiKey: "standard-production-key",
+      baseURL: STANDARD_OPENAI_BASE_URL,
+    });
+  });
+
+  it("uses a custom endpoint only when it is paired with its integration key", () => {
+    expect(resolveOpenAIConfiguration({
+      OPENAI_API_KEY: "standard-production-key",
       AI_INTEGRATIONS_OPENAI_API_KEY: "integration-key",
       AI_INTEGRATIONS_OPENAI_BASE_URL: "https://provider.example/v1",
     } as NodeJS.ProcessEnv)).toEqual({
