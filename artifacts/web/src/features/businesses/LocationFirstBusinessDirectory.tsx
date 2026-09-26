@@ -4,6 +4,7 @@ import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { parseBusinessMapSearchPhrase } from "@/features/map/parseBusinessMapSearchPhrase";
 import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
 import { canDisplayBusinessCover, getBusinessHeroIcon } from "./businessHero";
 import {
@@ -126,23 +127,38 @@ export function LocationFirstBusinessDirectory() {
       null,
     [specialty],
   );
+  // Use the same constrained phrase interpreter as the directory-to-Map
+  // handoff. A typed request such as "Black-owned restaurants" should apply
+  // documented ownership and category filters rather than behave like an
+  // unlikely business-name match.
+  const parsedFinderQuery = useMemo(
+    () => parseBusinessMapSearchPhrase(searchText),
+    [searchText],
+  );
+  const effectiveCategory = category ?? parsedFinderQuery.category ?? null;
+  const effectiveOwnership = parsedFinderQuery.ownership ?? null;
+  const effectiveSearchText = parsedFinderQuery.search ||
+    (parsedFinderQuery.category || parsedFinderQuery.ownership ? "" : searchText);
 
   const queryParams = useMemo(() => {
     if (!location.city) return null;
     return buildCanonicalBusinessSearchParams({
       city: location.city,
       stateCode: location.stateCode,
-      category,
+      category: effectiveCategory,
       specialty: specialtyLabel,
+      ownership: effectiveOwnership,
       designations: designationIds,
       vibes: selectedVibes,
-      searchText,
+      searchText: effectiveSearchText,
       limit: PAGE_SIZE,
       offset: 0,
     });
   }, [
-    category,
     designationIds,
+    effectiveCategory,
+    effectiveOwnership,
+    effectiveSearchText,
     location.city,
     location.stateCode,
     searchText,
