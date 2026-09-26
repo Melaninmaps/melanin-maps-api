@@ -26,7 +26,7 @@ const APPROVED_OPENAI_VOICES = new Set([
 export type KinfolkSpeechConfiguration = Readonly<{
   enabled: boolean;
   provider: "openai";
-  model: "gpt-audio";
+  model: "gpt-4o-mini-tts";
   baseVoice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 }>;
 
@@ -58,13 +58,16 @@ export function resolveKinfolkSpeechConfiguration(
     .toLowerCase();
   if (!APPROVED_OPENAI_VOICES.has(requestedVoice)) return null;
 
-  const model = (environment[KINFOLK_TTS_MODEL_ENV] ?? "gpt-audio").trim();
-  if (model !== "gpt-audio") return null;
+  const requestedModel = (environment[KINFOLK_TTS_MODEL_ENV] ?? "gpt-4o-mini-tts").trim();
+  // Earlier Kinfolk releases used `gpt-audio` through Chat Completions. Treat
+  // that existing setting as an alias, then use the documented Speech API model
+  // so Railway only needs the standard OPENAI_API_KEY already configured.
+  if (requestedModel !== "gpt-4o-mini-tts" && requestedModel !== "gpt-audio") return null;
 
   return {
     enabled: true,
     provider: "openai",
-    model: "gpt-audio",
+    model: "gpt-4o-mini-tts",
     baseVoice: requestedVoice as KinfolkSpeechConfiguration["baseVoice"],
   };
 }

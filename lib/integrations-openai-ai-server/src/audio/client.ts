@@ -1,4 +1,5 @@
 import OpenAI, { toFile } from "openai";
+import type { SpeechCreateParams } from "openai/resources/audio/speech";
 import { Buffer } from "node:buffer";
 import { spawn } from "child_process";
 import { writeFile, unlink, readFile } from "fs/promises";
@@ -126,16 +127,57 @@ export async function voiceChatStream(
   })();
 }
 
+type SpeechResponseFormat = "wav" | "mp3" | "flac" | "opus" | "pcm16";
+type OpenAiSpeechVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+
+function normalizeSpeechResponseFormat(
+  format: SpeechResponseFormat = "wav",
+): NonNullable<SpeechCreateParams["response_format"]> {
+  switch (format) {
+    case "pcm16":
+      return "pcm";
+    case "wav":
+    case "mp3":
+    case "flac":
+    case "opus":
+      return format;
+  }
+}
+
+export function createOpenAISpeechRequest(input: {
+  text: string;
+  voice: OpenAiSpeechVoice;
+  format?: SpeechResponseFormat;
+  model?: "gpt-4o-mini-tts" | "gpt-audio";
+  styleInstruction?: string;
+}): SpeechCreateParams {
+  // `gpt-audio` was used by the former Chat Completions implementation. Keep
+  // that value as a compatibility alias so existing server configuration moves
+  // to the documented speech endpoint without a second environment edit.
+  const model = input.model === "gpt-audio" || !input.model
+    ? "gpt-4o-mini-tts"
+    : input.model;
+  const responseFormat = normalizeSpeechResponseFormat(input.format);
+  const instructions = input.styleInstruction?.trim();
+
+  return {
+    model,
+    voice: input.voice,
+    input: input.text,
+    response_format: responseFormat,
+    ...(instructions ? { instructions } : {}),
+  };
+}
+
 export async function textToSpeech(
   text: string,
-  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
-  format: "wav" | "mp3" | "flac" | "opus" | "pcm16" = "wav"
+  voice: OpenAiSpeechVoice = "alloy",
+  format: SpeechResponseFormat = "wav"
 ): Promise<Buffer> {
-  const response = await getOpenAI().chat.completions.create({
-    model: "gpt-audio", modalities: ["text", "audio"], audio: { voice, format },
-    messages: [{ role: "system", content: "You are an assistant that performs text-to-speech." }, { role: "user", content: `Repeat the following text verbatim: ${text}` }],
-  });
-  return Buffer.from((response.choices[0]?.message as any)?.audio?.data ?? "", "base64");
+  const response = await getOpenAI().audio.speech.create(
+    createOpenAISpeechRequest({ text, voice, format }),
+  );
+  return Buffer.from(await response.arrayBuffer());
 }
 
 /**
@@ -146,29 +188,15 @@ export async function textToSpeech(
  */
 export async function textToSpeechWithStyle(input: {
   text: string;
-  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-  format?: "wav" | "mp3" | "flac" | "opus" | "pcm16";
-  model?: "gpt-audio";
+  voice: OpenAiSpeechVoice;
+  format?: SpeechResponseFormat;
+  model?: "gpt-4o-mini-tts" | "gpt-audio";
   styleInstruction: string;
 }): Promise<Buffer> {
-  const format = input.format ?? "wav";
-  const response = await getOpenAI().chat.completions.create({
-    model: input.model ?? "gpt-audio",
-    modalities: ["text", "audio"],
-    audio: { voice: input.voice, format },
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a text-to-speech renderer. Follow the delivery direction, but speak only the script after the final colon. Do not read instructions, labels, markup, or punctuation descriptions aloud.",
-      },
-      {
-        role: "user",
-        content: `${input.styleInstruction}: ${input.text}`,
-      },
-    ],
-  });
-  return Buffer.from((response.choices[0]?.message as any)?.audio?.data ?? "", "base64");
+  const response = await getOpenAI().audio.speech.create(
+    createOpenAISpeechRequest(input),
+  );
+  return Buffer.from(await response.arrayBuffer());
 }
 
 export async function textToSpeechStream(

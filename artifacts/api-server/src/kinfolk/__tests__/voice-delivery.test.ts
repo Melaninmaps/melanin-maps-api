@@ -12,8 +12,13 @@ describe("Kinfolk server-owned voice delivery", () => {
   it("keeps one approved base voice on the server and fails closed on invalid settings", () => {
     expect(resolveKinfolkSpeechConfiguration({} as NodeJS.ProcessEnv)).toMatchObject({
       provider: "openai",
-      model: "gpt-audio",
+      model: "gpt-4o-mini-tts",
       baseVoice: "onyx",
+    });
+    expect(resolveKinfolkSpeechConfiguration({
+      [KINFOLK_TTS_MODEL_ENV]: "gpt-audio",
+    } as NodeJS.ProcessEnv)).toMatchObject({
+      model: "gpt-4o-mini-tts",
     });
     expect(resolveKinfolkSpeechConfiguration({
       [KINFOLK_TTS_PROVIDER_ENV]: "unapproved-provider",

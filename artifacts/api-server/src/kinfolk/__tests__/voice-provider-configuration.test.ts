@@ -3,7 +3,10 @@ import {
   resolveOpenAIConfiguration,
   STANDARD_OPENAI_BASE_URL,
 } from "@workspace/integrations-openai-ai-server";
-import { resolveAudioOpenAIConfiguration } from "@workspace/integrations-openai-ai-server/audio";
+import {
+  createOpenAISpeechRequest,
+  resolveAudioOpenAIConfiguration,
+} from "@workspace/integrations-openai-ai-server/audio";
 
 describe("Kinfolk voice provider configuration", () => {
   it("accepts the standard production OpenAI configuration for server audio", () => {
@@ -61,5 +64,29 @@ describe("Kinfolk voice provider configuration", () => {
     expect(() => resolveAudioOpenAIConfiguration({} as NodeJS.ProcessEnv)).toThrow(
       /OpenAI configuration is required/,
     );
+  });
+
+  it("uses the documented speech endpoint request shape and keeps delivery direction separate from the script", () => {
+    expect(createOpenAISpeechRequest({
+      text: "Here is what matters next.",
+      voice: "onyx",
+      format: "wav",
+      model: "gpt-audio",
+      styleInstruction: "Speak in English with a calm, warm, direct cadence.",
+    })).toEqual({
+      model: "gpt-4o-mini-tts",
+      voice: "onyx",
+      input: "Here is what matters next.",
+      response_format: "wav",
+      instructions: "Speak in English with a calm, warm, direct cadence.",
+    });
+  });
+
+  it("maps the legacy PCM label to the documented speech endpoint value", () => {
+    expect(createOpenAISpeechRequest({
+      text: "A short check.",
+      voice: "alloy",
+      format: "pcm16",
+    }).response_format).toBe("pcm");
   });
 });

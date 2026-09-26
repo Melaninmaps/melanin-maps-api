@@ -2,6 +2,7 @@ export {
   openai,
   audioOpenai,
   resolveAudioOpenAIConfiguration,
+  createOpenAISpeechRequest,
   detectAudioFormat,
   convertToWav,
   ensureCompatibleFormat,

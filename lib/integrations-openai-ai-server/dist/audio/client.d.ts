@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { SpeechCreateParams } from "openai/resources/audio/speech";
 import { Buffer } from "node:buffer";
 export declare function resolveAudioOpenAIConfiguration(environment?: NodeJS.ProcessEnv): Readonly<{
     apiKey: string;
@@ -21,7 +22,16 @@ export declare function voiceChatStream(audioBuffer: Buffer, voice?: "alloy" | "
     type: "transcript" | "audio";
     data: string;
 }>>;
-export declare function textToSpeech(text: string, voice?: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer", format?: "wav" | "mp3" | "flac" | "opus" | "pcm16"): Promise<Buffer>;
+type SpeechResponseFormat = "wav" | "mp3" | "flac" | "opus" | "pcm16";
+type OpenAiSpeechVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+export declare function createOpenAISpeechRequest(input: {
+    text: string;
+    voice: OpenAiSpeechVoice;
+    format?: SpeechResponseFormat;
+    model?: "gpt-4o-mini-tts" | "gpt-audio";
+    styleInstruction?: string;
+}): SpeechCreateParams;
+export declare function textToSpeech(text: string, voice?: OpenAiSpeechVoice, format?: SpeechResponseFormat): Promise<Buffer>;
 /**
  * Server-side TTS control for a named product voice. The delivery instruction
  * is never supplied by an end-user client; callers own the selected base voice
@@ -30,12 +40,13 @@ export declare function textToSpeech(text: string, voice?: "alloy" | "echo" | "f
  */
 export declare function textToSpeechWithStyle(input: {
     text: string;
-    voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-    format?: "wav" | "mp3" | "flac" | "opus" | "pcm16";
-    model?: "gpt-audio";
+    voice: OpenAiSpeechVoice;
+    format?: SpeechResponseFormat;
+    model?: "gpt-4o-mini-tts" | "gpt-audio";
     styleInstruction: string;
 }): Promise<Buffer>;
 export declare function textToSpeechStream(text: string, voice?: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"): Promise<AsyncIterable<string>>;
 export declare function speechToText(audioBuffer: Buffer, format?: "wav" | "mp3" | "webm"): Promise<string>;
 export declare function speechToTextStream(audioBuffer: Buffer, format?: "wav" | "mp3" | "webm"): Promise<AsyncIterable<string>>;
+export {};
 //# sourceMappingURL=client.d.ts.map
