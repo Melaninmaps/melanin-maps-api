@@ -20,10 +20,11 @@ export function KinfolkCompanionMemoryOfferCard({
   const [dismissed, setDismissed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sensitiveConfirmationRequired, setSensitiveConfirmationRequired] = useState(false);
 
   if (dismissed) return null;
 
-  const save = async () => {
+  const save = async (sensitiveConsent = false) => {
     const trimmed = notes.trim();
     if (!trimmed || saving) return;
     setSaving(true);
@@ -39,9 +40,14 @@ export function KinfolkCompanionMemoryOfferCard({
           companionLabel: offer.label,
           companionNotes: trimmed,
           sessionId: sessionId ?? undefined,
+          sensitiveConsent,
         }),
       });
       const body = await response.json().catch(() => ({})) as { error?: string };
+      if (response.status === 409) {
+        setSensitiveConfirmationRequired(true);
+        return;
+      }
       if (!response.ok) throw new Error(body.error ?? "Could not save that private note.");
       setSaved(true);
     } catch (cause) {
@@ -82,14 +88,15 @@ export function KinfolkCompanionMemoryOfferCard({
             Separate from your profile. Kinfolk uses it only when you bring up {offer.label}, and your current request always comes first.
           </p>
           {error && <p role="alert" className="mt-2 text-[11px] text-red-700">{error}</p>}
+          {sensitiveConfirmationRequired && <p className="mt-3 text-xs leading-5 text-[#8D5C17]">This note may include a sensitive detail. Kinfolk has not saved it. Choose separately if you want to keep it private.</p>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() => void save()}
+              onClick={() => void save(sensitiveConfirmationRequired)}
               disabled={!notes.trim() || saving}
               className="rounded-full bg-[#2B1507] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#5A3517] disabled:cursor-not-allowed disabled:opacity-55"
             >
-              {saving ? "Saving…" : "Save private note"}
+              {saving ? "Saving…" : sensitiveConfirmationRequired ? "Save sensitive note privately" : "Save private note"}
             </button>
             <button
               type="button"

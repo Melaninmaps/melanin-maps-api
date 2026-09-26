@@ -45,6 +45,19 @@ export const userSettingsTable = pgTable("user_settings", {
   kinfolkContinuityUpdatedAt: timestamp("kinfolk_continuity_updated_at", {
     withTimezone: true,
   }),
+  // Null means this member has not yet seen and chosen the first-use
+  // continuity disclosure. It must never be interpreted as acceptance.
+  kinfolkContinuityDisclosureDecision: varchar(
+    "kinfolk_continuity_disclosure_decision",
+    { enum: ["accepted", "declined"] },
+  ),
+  kinfolkContinuityDisclosureVersion: varchar(
+    "kinfolk_continuity_disclosure_version",
+    { length: 32 },
+  ),
+  kinfolkContinuityDisclosedAt: timestamp("kinfolk_continuity_disclosed_at", {
+    withTimezone: true,
+  }),
   profileViewTrackingEnabled: boolean("profile_view_tracking_enabled").notNull().default(true),
 
   // ── Business owner opt-outs ───────────────────────────────────────────────

@@ -174,6 +174,8 @@ export type ChatMessage = {
   needsClarification?: boolean;
   originalQuery?: string;
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+  /** A separate save choice is required; raw content remains local until chosen. */
+  sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
 };
@@ -200,6 +202,8 @@ export function useKinfolk() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
+  const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
+  const [kinfolkContinuityDecision, setKinfolkContinuityDecision] = useState<"accepted" | "declined" | null>(null);
   const [queriesUsed, setQueriesUsed] = useState<number | null>(null);
   const [queriesLimit, setQueriesLimit] = useState<number>(3);
   /** Holds the original question text when KINFOLK_BUSY fires — lets the UI pre-fill the input for retry. */
@@ -305,15 +309,23 @@ export function useKinfolk() {
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
           responseMeta?: KinfolkResponseMeta | null;
+          sensitiveMemoryConfirmation?: { confirmationRequired?: boolean } | null;
         };
 
         if (data.sessionId) setSessionId(data.sessionId);
+        let sensitiveMemoryDraft: ChatMessage["sensitiveMemoryDraft"] =
+          data.sensitiveMemoryConfirmation?.confirmationRequired === true
+            ? { content: text, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId }
+            : null;
         if (opts?.rememberThis) {
-          fetch(`${apiBase}/api/kinfolk/memories`, {
+          const memoryResponse = await fetch(`${apiBase}/api/kinfolk/memories`, {
             method: "POST",
             headers,
             body: JSON.stringify({ consent: true, content: text, purpose: "ongoing_context", sessionId: data.sessionId }),
-          }).catch(() => {});
+          }).catch(() => null);
+          if (memoryResponse?.status === 409) {
+            sensitiveMemoryDraft = { content: text, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId };
+          }
         }
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
         if (typeof data.queriesLimit === "number") setQueriesLimit(data.queriesLimit);
@@ -346,6 +358,7 @@ export function useKinfolk() {
           location: data.location ?? null,
           locationSource: data.locationSource ?? null,
           companionMemoryOffer: data.companionMemoryOffer ?? null,
+          sensitiveMemoryDraft,
           responseMeta,
         };
         setPendingRetryText(null); // clear retry on success
@@ -464,12 +477,21 @@ export function useKinfolk() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
-      const data = await res.json() as { enabled?: boolean };
+      const data = await res.json() as {
+        enabled?: boolean;
+        disclosureRequired?: boolean;
+        decision?: "accepted" | "declined" | null;
+      };
       setKinfolkContinuityEnabled(data.enabled === true);
+      setKinfolkContinuityDisclosureRequired(data.disclosureRequired === true);
+      setKinfolkContinuityDecision(data.decision ?? null);
     } catch {}
   }, []);
 
-  const setKinfolkContinuity = useCallback(async (enabled: boolean): Promise<boolean> => {
+  const setKinfolkContinuity = useCallback(async (
+    enabled: boolean,
+    decision?: "accepted" | "declined",
+  ): Promise<boolean> => {
     const token = await getToken();
     const apiBase = getApiBase();
     if (!token || !apiBase) return false;
@@ -477,12 +499,19 @@ export function useKinfolk() {
       const res = await fetch(`${apiBase}/api/kinfolk/continuity`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ enabled }),
+        body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) }),
       });
       if (!res.ok) return false;
-      setKinfolkContinuityEnabled(enabled);
+      const data = await res.json() as {
+        enabled?: boolean;
+        disclosureRequired?: boolean;
+        decision?: "accepted" | "declined" | null;
+      };
+      setKinfolkContinuityEnabled(data.enabled === true);
+      setKinfolkContinuityDisclosureRequired(data.disclosureRequired === true);
+      setKinfolkContinuityDecision(data.decision ?? null);
       setSessions([]);
-      if (enabled) await loadSessions();
+      if (data.enabled === true) await loadSessions();
       return true;
     } catch { return false; }
   }, [loadSessions]);
@@ -584,6 +613,10 @@ export function useKinfolk() {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
   }, []);
 
+  const dismissSensitiveMemoryDraft = useCallback((messageId: string) => {
+    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, sensitiveMemoryDraft: null } : m));
+  }, []);
+
   const clearPendingRetryText = useCallback(() => setPendingRetryText(null), []);
 
   return {
@@ -592,6 +625,8 @@ export function useKinfolk() {
     isLoading,
     sessions,
     kinfolkContinuityEnabled,
+    kinfolkContinuityDisclosureRequired,
+    kinfolkContinuityDecision,
     queriesUsed,
     queriesLimit,
     /** When KINFOLK_BUSY/KINFOLK_RATE_LIMITED fires, holds the original question for retry. */
@@ -608,5 +643,6 @@ export function useKinfolk() {
     startNewSession,
     confirmTaskAction,
     dismissTaskAction,
+    dismissSensitiveMemoryDraft,
   };
 }

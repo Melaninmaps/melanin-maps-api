@@ -14,6 +14,8 @@ export const kinfolkPrivateMemoriesTable = pgTable(
     sourceSessionId: varchar("source_session_id", { length: 100 }),
     isSensitive: boolean("is_sensitive").notNull().default(false),
     consentGrantedAt: timestamp("consent_granted_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Null for pre-v2 sensitive memories until the member confirms the individual item again. */
+    sensitiveConsentGrantedAt: timestamp("sensitive_consent_granted_at", { withTimezone: true }),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -9,6 +9,7 @@ const hookSource = readFileSync(fileURLToPath(new URL("../hooks/useKinfolk.ts", 
 const detailSource = readFileSync(fileURLToPath(new URL("../app/business/[id].tsx", import.meta.url)), "utf8");
 const widgetSource = readFileSync(fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)), "utf8");
 const settingsSource = readFileSync(fileURLToPath(new URL("../app/kinfolk-settings.tsx", import.meta.url)), "utf8");
+const disclosureSource = readFileSync(fileURLToPath(new URL("../components/KinfolkContinuityDisclosure.tsx", import.meta.url)), "utf8");
 
 describe("Expo Kinfolk business demo cards", () => {
   it("supports canonical detail, vetted website, unclaimed status, and match reasons", () => {
@@ -48,11 +49,14 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain("KinfolkCompanionMemoryOfferCard");
   });
 
-  it("keeps mobile chat continuity off by default and uses the dedicated consent API", () => {
+  it("uses first-use disclosure and reversible mobile continuity", () => {
     expect(settingsSource).toContain("const [continuityEnabled, setContinuityEnabled] = useState(false)");
     expect(settingsSource).toContain("/api/kinfolk/continuity");
-    expect(settingsSource).toContain('body: JSON.stringify({ enabled })');
-    expect(settingsSource).toContain("Off by default. Kinfolk does not retain chat history");
+    expect(settingsSource).toContain('body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) })');
+    expect(settingsSource).toContain("KinfolkContinuityDisclosure");
+    expect(disclosureSource).toContain("Let Kinfolk remember");
+    expect(disclosureSource).toContain("Keep memory off");
+    expect(travelSource).toContain("KinfolkSensitiveMemoryConfirmation");
   });
 
   it("keeps Kinfolk voice modes discoverable and makes microphone failures visible", () => {

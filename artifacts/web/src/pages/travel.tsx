@@ -16,6 +16,8 @@ import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
+import { KinfolkContinuityDisclosure } from "@/components/kinfolk/KinfolkContinuityDisclosure";
+import { KinfolkSensitiveMemoryConfirmation } from "@/components/kinfolk/KinfolkSensitiveMemoryConfirmation";
 import {
   KinfolkCompanionMemoryOfferCard,
   type KinfolkCompanionMemoryOffer,
@@ -1015,6 +1017,12 @@ function TravelPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
+  const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
+  const [pendingSensitiveMemory, setPendingSensitiveMemory] = useState<{
+    content: string;
+    purpose: string;
+    sessionId?: string;
+  } | null>(null);
   const [historyView, setHistoryView] = useState<"active" | "archived">("active");
   const [feedback, setFeedback] = useState<Record<string, "like" | "dislike">>({});
   const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
@@ -1553,22 +1561,47 @@ function TravelPage() {
     if (!isLoggedIn) return;
     const response = await fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include", headers: kinfolkAuthHeaders() });
     if (!response.ok) return;
-    const body = await response.json() as { enabled?: boolean };
+    const body = await response.json() as { enabled?: boolean; disclosureRequired?: boolean };
     setKinfolkContinuityEnabled(body.enabled === true);
+    setKinfolkContinuityDisclosureRequired(body.disclosureRequired === true);
   }, [isLoggedIn]);
 
-  const setKinfolkContinuity = useCallback(async (enabled: boolean) => {
+  const setKinfolkContinuity = useCallback(async (
+    enabled: boolean,
+    decision?: "accepted" | "declined",
+  ): Promise<boolean> => {
     const response = await fetch(`${BASE}api/kinfolk/continuity`, {
       method: "PUT",
       credentials: "include",
       headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ enabled }),
+      body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) }),
     });
-    if (!response.ok) return;
-    setKinfolkContinuityEnabled(enabled);
+    if (!response.ok) return false;
+    const body = await response.json() as { enabled?: boolean; disclosureRequired?: boolean };
+    setKinfolkContinuityEnabled(body.enabled === true);
+    setKinfolkContinuityDisclosureRequired(body.disclosureRequired === true);
     setSessions([]);
-    if (enabled) void loadSessions();
+    if (body.enabled === true) void loadSessions();
+    return true;
   }, [loadSessions]);
+
+  const saveSpecificMemory = useCallback(async (
+    content: string,
+    purpose: string,
+    memorySessionId?: string,
+  ): Promise<boolean> => {
+    const response = await fetch(`${BASE}api/kinfolk/memories`, {
+      method: "POST",
+      credentials: "include",
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ consent: true, content, purpose, sessionId: memorySessionId }),
+    });
+    if (response.status === 409) {
+      setPendingSensitiveMemory({ content, purpose, sessionId: memorySessionId });
+      return false;
+    }
+    return response.ok;
+  }, []);
 
   const organizeSession = useCallback(async (id: string, action: "archive" | "restore" | "pin" | "unpin") => {
     const response = await fetch(`${BASE}api/kinfolk/sessions/${encodeURIComponent(id)}/organization`, {
@@ -1776,6 +1809,7 @@ function TravelPage() {
         degradedReason?: string | null;
         companionMemoryOffer?: CompanionMemoryOffer | null;
         responseMeta?: KinfolkResponseMeta | null;
+        sensitiveMemoryConfirmation?: { confirmationRequired?: boolean } | null;
       };
 
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
@@ -1789,11 +1823,11 @@ function TravelPage() {
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
       setImageUrls([]);
       if (shouldRemember) {
-        fetch(`${BASE}api/kinfolk/memories`, {
-          method: "POST", credentials: "include", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ consent: true, content: trimmed, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId }),
-        }).catch(() => {});
+        void saveSpecificMemory(trimmed, "ongoing_context", data.sessionId ?? sessionId);
         setRememberThis(false);
+      }
+      if (data.sensitiveMemoryConfirmation?.confirmationRequired === true) {
+        setPendingSensitiveMemory({ content: trimmed, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId });
       }
       // Capture the ID so we can wire the clarifier to this specific message.
       const assistantMsgId = crypto.randomUUID();
@@ -1866,7 +1900,7 @@ function TravelPage() {
       clearResponseStatusTimers();
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages]);
+  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, saveSpecificMemory]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2060,6 +2094,10 @@ function TravelPage() {
       {/* Preferences panel */}
       {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={() => setShowPrefs(false)} prefs={prefs} onSave={savePrefs}
         hydrated={preferencesHydrated} />}
+      <KinfolkContinuityDisclosure
+        visible={isLoggedIn && kinfolkContinuityDisclosureRequired}
+        onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
+      />
 
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-[#F5EBD8]/10 bg-[#2B1507] px-4 py-3 md:px-6">
@@ -2151,7 +2189,7 @@ function TravelPage() {
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 size={16} className="text-[#CA922B] animate-spin" /></div>
           ) : !kinfolkContinuityEnabled ? (
-            <div className="px-3 py-6 text-center text-xs leading-5 text-[#3A1F0E]/40">Continuity is paused. Turn it on here whenever you want Kinfolk to use your saved conversations or approved memory again.</div>
+            <div className="px-3 py-6 text-center text-xs leading-5 text-[#3A1F0E]/40">Continuity is off. Turn it on in Memory settings whenever you want Kinfolk to use your saved conversations or approved memory again.</div>
           ) : sessions.length === 0 ? (
             <div className="px-3 py-6 text-center text-xs text-[#3A1F0E]/30">{historyView === "archived" ? "Nothing archived yet." : "Nothing yet — start a conversation!"}</div>
           ) : (
@@ -2563,6 +2601,13 @@ function TravelPage() {
               {/* Input bar */}
               <div className="border-t border-[#3A1F0E]/8 bg-white px-4 py-3 shrink-0">
                 {/* Voice privacy notice — shown once before first recording */}
+                {pendingSensitiveMemory && <KinfolkSensitiveMemoryConfirmation
+                  content={pendingSensitiveMemory.content}
+                  purpose={pendingSensitiveMemory.purpose}
+                  sessionId={pendingSensitiveMemory.sessionId}
+                  onSaved={() => setPendingSensitiveMemory(null)}
+                  onDismiss={() => setPendingSensitiveMemory(null)}
+                />}
                 {voiceState === "notice" && (
                   <div role="dialog" aria-label="Voice privacy notice" className="mb-3 max-w-3xl mx-auto bg-[#FFF8EC] border border-[#CA922B]/30 rounded-2xl px-4 py-3">
                     <p className="text-xs text-[#3A1F0E]/80 leading-relaxed mb-2">
@@ -2630,7 +2675,7 @@ function TravelPage() {
                     <span className="text-[#3A1F0E]/35">· Voice & privacy</span>
                     <ChevronRight size={12} className={`transition-transform ${showComposerControls ? "rotate-90" : ""}`} />
                   </button>
-                  <span className="hidden text-[10px] text-[#3A1F0E]/38 sm:block">Private memory stays off unless you turn it on.</span>
+                  <span className="hidden text-[10px] text-[#3A1F0E]/38 sm:block">Review, edit, or turn off memory anytime.</span>
                 </div>
                 {showComposerControls && (
                   <div id="kinfolk-composer-controls" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
@@ -2641,9 +2686,9 @@ function TravelPage() {
                       ))}
                     </div>
                     <div className="mt-3 grid gap-2 border-t border-[#3A1F0E]/8 pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save only this message to your private Kinfolk memory. You can also type “remember…” to save that direct request. View or forget saved memory at any time.">
+                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save this message as a specific private note. After you choose memory, Kinfolk can also retain useful non-sensitive preferences, plans, and goals when you share them.">
                         <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} className="mt-0.5" />
-                        Save this — or simply say “remember…”
+                        Save this as a specific note
                       </label>
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
                         <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} className="mt-0.5" />
@@ -2710,7 +2755,7 @@ function TravelPage() {
                   </button>
                 </div>
                 <p className="text-center text-[10px] text-[#3A1F0E]/25 mt-2">
-                  {isLoggedIn ? "Enter to send · Shift+Enter for new line · Add up to 2 images · Memory is opt-in" : "Enter to send · Shift+Enter for new line"}
+                  {isLoggedIn ? "Enter to send · Shift+Enter for new line · Add up to 2 images · Memory is yours to review or turn off" : "Enter to send · Shift+Enter for new line"}
                 </p>
                 <DisclaimerBanner type="ai" className="mt-2 mx-auto max-w-3xl" />
                 {showMemoryManager && <KinfolkMemoryManager
@@ -2726,6 +2771,7 @@ function TravelPage() {
                     setShowHistory(false);
                     setRememberThis(false);
                     setIncludeCommunityPerspective(false);
+                    void loadKinfolkContinuity();
                   }}
                 />}
               </div>

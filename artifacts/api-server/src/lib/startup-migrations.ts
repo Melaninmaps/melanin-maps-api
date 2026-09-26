@@ -4806,6 +4806,15 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON kinfolk_private_memories (user_id, revoked_at, expires_at)`,
   },
   {
+    // Do not backfill: a past generic memory opt-in is not the new, separate
+    // sensitive-detail confirmation. Existing sensitive records remain owner-
+    // reviewable and deletable, but are excluded from future prompt use until
+    // the member explicitly confirms or edits that individual item.
+    name: "kinfolk_private_memories_sensitive_confirmation_v2",
+    sql: `ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz`,
+  },
+  {
     name: "happening_personalization_privacy_v1",
     sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS home_state varchar(2);
     UPDATE users
@@ -5355,6 +5364,30 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
 
       CREATE INDEX IF NOT EXISTS kinfolk_sessions_owner_continuity_idx
       ON kinfolk_sessions (user_id, archived_at, is_pinned DESC, updated_at DESC);`,
+  },
+  {
+    // Existing members remain pending until they see the first-use disclosure
+    // and make an explicit choice. This does not alter prior continuity values.
+    name: "kinfolk_continuity_first_use_disclosure_v2",
+    sql: `ALTER TABLE user_settings
+      ADD COLUMN IF NOT EXISTS kinfolk_continuity_disclosure_decision VARCHAR(16),
+      ADD COLUMN IF NOT EXISTS kinfolk_continuity_disclosure_version VARCHAR(32),
+      ADD COLUMN IF NOT EXISTS kinfolk_continuity_disclosed_at TIMESTAMPTZ;
+
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'user_settings_kinfolk_continuity_disclosure_decision_check'
+            AND conrelid = 'user_settings'::regclass
+        ) THEN
+          ALTER TABLE user_settings
+            ADD CONSTRAINT user_settings_kinfolk_continuity_disclosure_decision_check
+            CHECK (kinfolk_continuity_disclosure_decision IN ('accepted', 'declined'))
+            NOT VALID;
+        END IF;
+      END $$;
+      ALTER TABLE user_settings
+        VALIDATE CONSTRAINT user_settings_kinfolk_continuity_disclosure_decision_check;`,
   },
   // ── Founder-controlled product knowledge — no implicit training ───────────
   {

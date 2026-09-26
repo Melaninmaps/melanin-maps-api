@@ -269,7 +269,7 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
             tableName: "user_settings";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "community" | "private" | "public";
+            data: "public" | "community" | "private";
             driverParam: string;
             notNull: true;
             hasDefault: true;
@@ -406,6 +406,61 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
         }, {}, {}>;
         kinfolkContinuityUpdatedAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "kinfolk_continuity_updated_at";
+            tableName: "user_settings";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        kinfolkContinuityDisclosureDecision: import("drizzle-orm/pg-core").PgColumn<{
+            name: "kinfolk_continuity_disclosure_decision";
+            tableName: "user_settings";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: "accepted" | "declined";
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: ["accepted", "declined"];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        kinfolkContinuityDisclosureVersion: import("drizzle-orm/pg-core").PgColumn<{
+            name: "kinfolk_continuity_disclosure_version";
+            tableName: "user_settings";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 32;
+        }>;
+        kinfolkContinuityDisclosedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "kinfolk_continuity_disclosed_at";
             tableName: "user_settings";
             dataType: "date";
             columnType: "PgTimestamp";
@@ -793,7 +848,7 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
         tableName: "user_settings";
         dataType: "string";
         columnType: "PgVarchar";
-        data: "community" | "private" | "public";
+        data: "public" | "community" | "private";
         driverParam: string;
         notNull: true;
         hasDefault: true;
@@ -930,6 +985,61 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
     }, {}, {}>;
     kinfolkContinuityUpdatedAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "kinfolk_continuity_updated_at";
+        tableName: "user_settings";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    kinfolkContinuityDisclosureDecision: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_continuity_disclosure_decision";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: "accepted" | "declined";
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: ["accepted", "declined"];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
+    kinfolkContinuityDisclosureVersion: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_continuity_disclosure_version";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 32;
+    }>;
+    kinfolkContinuityDisclosedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_continuity_disclosed_at";
         tableName: "user_settings";
         dataType: "date";
         columnType: "PgTimestamp";
@@ -1315,7 +1425,7 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
         tableName: "user_settings";
         dataType: "string";
         columnType: "PgVarchar";
-        data: "community" | "private" | "public";
+        data: "public" | "community" | "private";
         driverParam: string;
         notNull: true;
         hasDefault: true;
@@ -1452,6 +1562,61 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
     }, {}, {}>;
     kinfolkContinuityUpdatedAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "kinfolk_continuity_updated_at";
+        tableName: "user_settings";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    kinfolkContinuityDisclosureDecision: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_continuity_disclosure_decision";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: "accepted" | "declined";
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: ["accepted", "declined"];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
+    kinfolkContinuityDisclosureVersion: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_continuity_disclosure_version";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 32;
+    }>;
+    kinfolkContinuityDisclosedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "kinfolk_continuity_disclosed_at";
         tableName: "user_settings";
         dataType: "date";
         columnType: "PgTimestamp";

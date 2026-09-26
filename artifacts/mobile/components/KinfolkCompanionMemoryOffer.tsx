@@ -27,10 +27,11 @@ export function KinfolkCompanionMemoryOfferCard({
   const [dismissed, setDismissed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [sensitiveConfirmationRequired, setSensitiveConfirmationRequired] = useState(false);
 
   if (dismissed) return null;
 
-  const save = async () => {
+  const save = async (sensitiveConsent = false) => {
     const trimmed = notes.trim();
     if (!trimmed || saving) return;
     setSaving(true);
@@ -47,9 +48,14 @@ export function KinfolkCompanionMemoryOfferCard({
           companionLabel: offer.label,
           companionNotes: trimmed,
           sessionId: sessionId ?? undefined,
+          sensitiveConsent,
         }),
       });
       const body = await response.json().catch(() => ({})) as { error?: string };
+      if (response.status === 409) {
+        setSensitiveConfirmationRequired(true);
+        return;
+      }
       if (!response.ok) throw new Error(body.error ?? "Could not save that private note.");
       setSaved(true);
     } catch (cause) {
@@ -117,16 +123,17 @@ export function KinfolkCompanionMemoryOfferCard({
           <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 7 }}>
             Separate from your profile. Kinfolk uses it only when you bring up {offer.label}, and your current request always comes first.
           </Text>
+          {sensitiveConfirmationRequired && <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium", fontSize: 10, lineHeight: 14, marginTop: 7 }}>This note may include a sensitive detail. Kinfolk has not saved it. Choose separately if you want to keep it private.</Text>}
           {!!error && <Text style={{ color: "#B91C1C", fontFamily: "Inter_500Medium", fontSize: 10, marginTop: 6 }}>{error}</Text>}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
             <TouchableOpacity
-              onPress={() => void save()}
+              onPress={() => void save(sensitiveConfirmationRequired)}
               disabled={!notes.trim() || saving}
               style={{ backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 11, paddingVertical: 7, opacity: !notes.trim() || saving ? 0.55 : 1 }}
               accessibilityLabel={`Save a private note about ${offer.label}`}
             >
               <Text style={{ color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>
-                {saving ? "Saving…" : "Save private note"}
+                {saving ? "Saving…" : sensitiveConfirmationRequired ? "Save sensitive note privately" : "Save private note"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setDismissed(true)} accessibilityLabel="Dismiss companion memory offer">

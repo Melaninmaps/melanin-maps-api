@@ -1,3 +1,5 @@
+import { sensitiveMemoryTopic } from "./sensitive-memory";
+
 export type ExplicitMemberMemory = Readonly<{
   content: string;
   purpose: "planning_context" | "profile_context";
@@ -12,8 +14,6 @@ const QUESTION_AFTER_REMEMBER = /^(?:what|when|where|who|why|how|if|to)\b/i;
 const MEMORY_CAPABILITY_QUESTION = /^(?:(?:can|could|do|will)\s+(?:you|kinfolk(?:ai)?)\s+)?(?:remember|store|save|keep)\s+(?:my\s+)?(?:personal\s+)?(?:information|details?|preferences?|context|memory)(?:\s+(?:about\s+me|for\s+me))?\??$/i;
 
 const PLANNING_CONTEXT = /\b(?:funds? (?:are|is) tight|money is tight|tight budget|budget|income|pay(?:\s+cut)?|hours? (?:are|were|was|have been|got)|shift|work schedule|new job|job search|career|children|kids?|son|daughter|daycare|aftercare|school pickup|caregiv(?:er|ing)|travel(?:s|ing)?(?: often)? for work|commute|moving|relocat(?:e|ing|ion))\b/i;
-
-const SENSITIVE_CONTEXT = /\b(?:black|african|diaspora|woman|women|man|men|nonbinary|lgbtq(?:ia\+?)?|gay|lesbian|bisexual|trans(?:gender)?|\d{1,3}[- ]?year[- ]?old|divorc(?:ed|e)|married|single|income|six figures|salary|funds? (?:are|is) tight|money is tight|children|kids?|son|daughter|mother|father|mom|dad|health|medical|disab(?:led|ility))\b/i;
 
 const NAME_OR_NICKNAME_CONTEXT = /\b(?:my name is|call me|prefer to be called|i go by|nickname)\b/i;
 const LIFESTYLE_PROFILE_CONTEXT = /\b(?:travel(?:s|ing)? often for work|i am a\b|i enjoy\b|i like\b|i love\b)\b/i;
@@ -66,7 +66,7 @@ export function parseExplicitMemberMemory(
         : PLANNING_CONTEXT.test(content)
           ? "planning_context"
           : "profile_context",
-    isSensitive: SENSITIVE_CONTEXT.test(content),
+    isSensitive: sensitiveMemoryTopic(content) !== null,
   };
 }
 

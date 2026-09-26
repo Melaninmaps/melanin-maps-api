@@ -49,6 +49,8 @@ import { openExternalUrl } from "@/lib/safeLinking";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
+import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
+import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
@@ -1997,7 +1999,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, sessions, kinfolkContinuityEnabled, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
+  const { messages, sessionId, isLoading, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2060,7 +2062,7 @@ export default function TravelScreen() {
   useEffect(() => {
     void loadSessions();
     void loadKinfolkContinuity();
-  }, [loadSessions, loadKinfolkContinuity]);
+  }, [isAuthenticated, loadSessions, loadKinfolkContinuity]);
 
   useEffect(() => { void loadWishlist(); }, [loadWishlist]);
 
@@ -2567,22 +2569,31 @@ export default function TravelScreen() {
       return <UserMessageBubble msg={item} colors={colors} />;
     }
     return (
-      <AiMessageBubble
-        msg={item}
-        onFeedback={handleFeedback}
-        onQuickReply={(t) => void handleSend(t)}
-        onWishlist={handleWishlist}
-        wishlistedNames={wishlistedNames}
-        compareMode={compareMode}
-        compareSelectedNames={compareSelectedNamesSet}
-        onCompareToggle={handleCompareToggle}
-        onConfirmTaskAction={handleConfirmTaskAction}
-        onDismissTaskAction={handleDismissTaskAction}
-        onSpeak={speakManually}
-        colors={colors}
-      />
+      <View>
+        <AiMessageBubble
+          msg={item}
+          onFeedback={handleFeedback}
+          onQuickReply={(t) => void handleSend(t)}
+          onWishlist={handleWishlist}
+          wishlistedNames={wishlistedNames}
+          compareMode={compareMode}
+          compareSelectedNames={compareSelectedNamesSet}
+          onCompareToggle={handleCompareToggle}
+          onConfirmTaskAction={handleConfirmTaskAction}
+          onDismissTaskAction={handleDismissTaskAction}
+          onSpeak={speakManually}
+          colors={colors}
+        />
+        {item.sensitiveMemoryDraft && <KinfolkSensitiveMemoryConfirmation
+          content={item.sensitiveMemoryDraft.content}
+          purpose={item.sensitiveMemoryDraft.purpose}
+          sessionId={item.sensitiveMemoryDraft.sessionId}
+          onSaved={() => dismissSensitiveMemoryDraft(item.id)}
+          onDismiss={() => dismissSensitiveMemoryDraft(item.id)}
+        />}
+      </View>
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, dismissSensitiveMemoryDraft]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -2590,6 +2601,10 @@ export default function TravelScreen() {
         visible={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         feature="KinfolkAI™"
+      />
+      <KinfolkContinuityDisclosure
+        visible={isAuthenticated && kinfolkContinuityDisclosureRequired}
+        onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
       />
 
       {/* Premium upsell banner — shown for non-premium, non-trial members */}
@@ -2824,7 +2839,7 @@ export default function TravelScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }} accessibilityLabel="Save this to my private Kinfolk memory">
               <Ionicons name={rememberThis ? "checkbox" : "square-outline"} size={18} color={rememberThis ? colors.primary : colors.mutedForeground} />
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Save this — or simply say “remember…”</Text>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Save this as a specific note</Text>
             </TouchableOpacity>
             <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>

@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -118,6 +119,7 @@ export default function KinfolkSettingsScreen() {
   const [supportLens, setSupportLens] = useState<string[]>([]);
   // Separate, affirmative consent: this does not reuse the generic settings flag.
   const [continuityEnabled, setContinuityEnabled] = useState(false);
+  const [continuityDisclosureRequired, setContinuityDisclosureRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
   const behaviorSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -152,8 +154,9 @@ export default function KinfolkSettingsScreen() {
         }
       }
       if (continuityRes.ok) {
-        const data = await continuityRes.json() as { enabled?: boolean };
+        const data = await continuityRes.json() as { enabled?: boolean; disclosureRequired?: boolean };
         setContinuityEnabled(data.enabled === true);
+        setContinuityDisclosureRequired(data.disclosureRequired === true);
       }
     } catch {}
     finally { setLoading(false); }
@@ -202,7 +205,10 @@ export default function KinfolkSettingsScreen() {
     });
   };
 
-  const updateContinuity = async (enabled: boolean) => {
+  const updateContinuity = async (
+    enabled: boolean,
+    decision?: "accepted" | "declined",
+  ): Promise<boolean> => {
     const prior = continuityEnabled;
     setContinuityEnabled(enabled);
     try {
@@ -212,13 +218,18 @@ export default function KinfolkSettingsScreen() {
       const response = await fetch(`${base}/api/kinfolk/continuity`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ enabled }),
+        body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) }),
       });
       if (!response.ok) throw new Error("Chat Memory could not be updated.");
+      const data = await response.json() as { enabled?: boolean; disclosureRequired?: boolean };
+      setContinuityEnabled(data.enabled === true);
+      setContinuityDisclosureRequired(data.disclosureRequired === true);
       if (Platform.OS !== "web") Haptics.selectionAsync();
+      return true;
     } catch (cause) {
       setContinuityEnabled(prior);
       Alert.alert("Chat Memory was not changed", cause instanceof Error ? cause.message : "Please try again.");
+      return false;
     }
   };
 
@@ -307,6 +318,10 @@ export default function KinfolkSettingsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <KinfolkContinuityDisclosure
+        visible={!loading && continuityDisclosureRequired}
+        onChoose={(decision) => updateContinuity(decision === "accepted", decision)}
+      />
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
@@ -520,8 +535,8 @@ export default function KinfolkSettingsScreen() {
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>Chat Memory</Text>
               <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
                 {continuityEnabled
-                  ? "Kinfolk saves chat history and explicitly approved memories. You can turn this off anytime."
-                  : "Off by default. Kinfolk does not retain chat history or new memories until you turn this on."}
+                  ? "Kinfolk can retain useful non-sensitive preferences, plans, goals, and conversation history. You can turn this off anytime."
+                  : "Continuity is off. Kinfolk will not retain new chat history or use saved memory until you turn it on."}
               </Text>
             </View>
             <TouchableOpacity activeOpacity={0.85} onPress={() => void updateContinuity(!continuityEnabled)}>

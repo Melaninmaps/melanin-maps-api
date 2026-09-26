@@ -26,6 +26,10 @@ const memoryManagerSource = readFileSync(
   fileURLToPath(new URL("../components/kinfolk/KinfolkMemoryManager.tsx", import.meta.url)),
   "utf8",
 );
+const disclosureSource = readFileSync(
+  fileURLToPath(new URL("../components/kinfolk/KinfolkContinuityDisclosure.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk chat presentation", () => {
   it("continues the original local search for both a clarification answer and Skip", () => {
@@ -78,12 +82,16 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("sessionId={sessionId}");
   });
 
-  it("keeps web continuity explicitly off by default and reversible", () => {
+  it("uses first-use disclosure, immediate opt-out, and reversible web continuity", () => {
     expect(memoryManagerSource).toContain("const [continuityEnabled, setContinuityEnabled] = useState(false)");
     expect(memoryManagerSource).toContain('fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include" })');
     expect(memoryManagerSource).toContain('method: "PUT", credentials: "include"');
     expect(memoryManagerSource).toContain("body: JSON.stringify({ enabled })");
-    expect(memoryManagerSource).toContain("Off by default. Turn this on only if you want Kinfolk");
+    expect(memoryManagerSource).toContain("Turn it off immediately any time");
+    expect(travelPageSource).toContain("KinfolkContinuityDisclosure");
+    expect(disclosureSource).toContain("Let Kinfolk remember");
+    expect(disclosureSource).toContain("Keep memory off");
+    expect(memoryManagerSource).toContain("Confirm sensitive edit");
   });
 
   it("renders deterministic business recommendations with active detail and website links", () => {

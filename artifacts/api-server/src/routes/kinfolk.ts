@@ -258,6 +258,14 @@ import {
   parseExplicitMemberMemory,
   profileDiscoveryContextTerms,
 } from "../kinfolk/explicit-member-memory";
+import {
+  extractOrdinaryContinuityMemory,
+  isOrdinaryContinuityMemoryRelevant,
+} from "../kinfolk/ordinary-continuity-memory";
+import {
+  sensitiveMemoryTopic,
+  type SensitiveMemoryTopic,
+} from "../kinfolk/sensitive-memory";
 import { filterMemberFacingSources } from "../kinfolk/source-relevance";
 import {
   buildCompanionMemoryOffer,
@@ -5194,6 +5202,9 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
           kinfolkMemoryEnabled: false,
           kinfolkContinuityEnabled: false,
           kinfolkContinuityUpdatedAt: new Date(),
+          kinfolkContinuityDisclosureDecision: null,
+          kinfolkContinuityDisclosureVersion: null,
+          kinfolkContinuityDisclosedAt: null,
           personalisedSuggestions: false,
           updatedAt: new Date(),
         })
@@ -5203,6 +5214,9 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
             kinfolkMemoryEnabled: false,
             kinfolkContinuityEnabled: false,
             kinfolkContinuityUpdatedAt: new Date(),
+            kinfolkContinuityDisclosureDecision: null,
+            kinfolkContinuityDisclosureVersion: null,
+            kinfolkContinuityDisclosedAt: null,
             personalisedSuggestions: false,
             updatedAt: new Date(),
           },
@@ -5222,7 +5236,7 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
       ok: true,
       receipt,
       message:
-        "Kinfolk has started fresh. Chat memory and personalised suggestions are off until you choose to enable them again.",
+        "Kinfolk has started fresh. Chat memory and personalised suggestions are off. If you use Kinfolk again, you can choose whether it remembers ordinary continuity.",
     });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to reset Kinfolk");
@@ -5231,9 +5245,34 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
 });
 
 // ─── GET/PUT /api/kinfolk/continuity ──────────────────────────────────────────
-// Continuity is an affirmative, owner-controlled setting. It is independent of
-// legacy profile fields, so no existing chat, memory, or preference silently
-// starts influencing future Kinfolk replies.
+// One first-use choice is required before continuity can be active. The nullable
+// decision keeps legacy member settings pending rather than treating a previous
+// value as consent. Settings can subsequently turn continuity off or back on.
+const KINFOLK_CONTINUITY_DISCLOSURE_VERSION = "v2";
+type KinfolkContinuityDecision = "accepted" | "declined";
+
+function normalizeKinfolkContinuityDecision(value: unknown): KinfolkContinuityDecision | null {
+  return value === "accepted" || value === "declined" ? value : null;
+}
+
+function kinfolkContinuityStatus(settings?: {
+  enabled?: boolean | null;
+  decision?: string | null;
+  updatedAt?: Date | null;
+  disclosedAt?: Date | null;
+  disclosureVersion?: string | null;
+}) {
+  const decision = normalizeKinfolkContinuityDecision(settings?.decision);
+  return {
+    enabled: decision === "accepted" && settings?.enabled === true,
+    disclosureRequired: decision === null,
+    decision,
+    updatedAt: settings?.updatedAt ?? null,
+    disclosedAt: settings?.disclosedAt ?? null,
+    disclosureVersion: settings?.disclosureVersion ?? null,
+  };
+}
+
 router.get("/kinfolk/continuity", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
@@ -5242,14 +5281,14 @@ router.get("/kinfolk/continuity", async (req: Request, res: Response) => {
       .select({
         enabled: userSettingsTable.kinfolkContinuityEnabled,
         updatedAt: userSettingsTable.kinfolkContinuityUpdatedAt,
+        decision: userSettingsTable.kinfolkContinuityDisclosureDecision,
+        disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt,
+        disclosureVersion: userSettingsTable.kinfolkContinuityDisclosureVersion,
       })
       .from(userSettingsTable)
       .where(eq(userSettingsTable.userId, req.user.id))
       .limit(1);
-    res.json({
-      enabled: settings?.enabled === true,
-      updatedAt: settings?.updatedAt ?? null,
-    });
+    res.json(kinfolkContinuityStatus(settings));
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to read Kinfolk continuity setting");
     res.status(500).json({ error: "Failed to read Kinfolk continuity setting" });
@@ -5259,33 +5298,70 @@ router.get("/kinfolk/continuity", async (req: Request, res: Response) => {
 router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  const enabled = (req.body as { enabled?: unknown }).enabled;
+  const body = req.body as { enabled?: unknown; decision?: unknown };
+  const enabled = body.enabled;
+  const requestedDecision = normalizeKinfolkContinuityDecision(body.decision);
   if (typeof enabled !== "boolean") {
     return void res.status(400).json({
       error: "A boolean enabled value is required.",
       code: "KINFOLK_CONTINUITY_VALUE_REQUIRED",
     });
   }
+  if (body.decision !== undefined && requestedDecision === null) {
+    return void res.status(400).json({
+      error: "A continuity decision must be accepted or declined.",
+      code: "KINFOLK_CONTINUITY_DECISION_INVALID",
+    });
+  }
+  if ((requestedDecision === "accepted" && enabled !== true) || (requestedDecision === "declined" && enabled !== false)) {
+    return void res.status(400).json({
+      error: "The continuity decision must match the enabled value.",
+      code: "KINFOLK_CONTINUITY_DECISION_MISMATCH",
+    });
+  }
   try {
     const updatedAt = new Date();
+    const [current] = await db
+      .select({
+        decision: userSettingsTable.kinfolkContinuityDisclosureDecision,
+        disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt,
+      })
+      .from(userSettingsTable)
+      .where(eq(userSettingsTable.userId, req.user.id))
+      .limit(1);
+    const currentDecision = normalizeKinfolkContinuityDecision(current?.decision);
+    const decision = requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined");
+    const disclosedAt = current?.disclosedAt ?? updatedAt;
     await db
       .insert(userSettingsTable)
       .values({
         userId: req.user.id,
         kinfolkContinuityEnabled: enabled,
         kinfolkContinuityUpdatedAt: updatedAt,
+        kinfolkContinuityDisclosureDecision: decision,
+        kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+        kinfolkContinuityDisclosedAt: disclosedAt,
       })
       .onConflictDoUpdate({
         target: userSettingsTable.userId,
         set: {
           kinfolkContinuityEnabled: enabled,
           kinfolkContinuityUpdatedAt: updatedAt,
+          kinfolkContinuityDisclosureDecision: decision,
+          kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+          kinfolkContinuityDisclosedAt: disclosedAt,
           updatedAt,
         },
       });
     invalidatePrefsCache(req.user.id);
     invalidateSessionsCache(req.user.id);
-    res.json({ enabled, updatedAt });
+    res.json(kinfolkContinuityStatus({
+      enabled,
+      decision,
+      updatedAt,
+      disclosedAt,
+      disclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+    }));
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to update Kinfolk continuity setting");
     res.status(500).json({ error: "Failed to update Kinfolk continuity setting" });
@@ -5610,50 +5686,13 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 const FREE_MONTHLY_LIMIT = 3;
 
 // ─── Kinfolk private memory — explicit consent and ownership only ──────────────
-const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{ key: string; pattern: RegExp }> =
-  [
-    {
-      key: "fertility",
-      pattern:
-        /\b(fertility|infertility|ivf|iui|egg freezing|pregnan(?:t|cy)|miscarriage|reproductive|ob[- ]?gyn)\b/i,
-    },
-    {
-      key: "skin_health",
-      pattern:
-        /\b(rash|eczema|psoriasis|acne|skin condition|dermatolog(?:y|ist))\b/i,
-    },
-    {
-      key: "mental_health",
-      pattern:
-        /\b(depression|anxiety|therapy|therapist|trauma|panic attack|mental health|suicid(?:e|al))\b/i,
-    },
-    {
-      key: "sexual_health",
-      pattern:
-        /\b(sexual health|sti|std|hiv|aids|contraception|birth control)\b/i,
-    },
-    {
-      key: "safety",
-      pattern:
-        /\b(assault|harass(?:ment|ed)|abuse|stalk(?:er|ing)|unsafe|discrimination|hate crime|domestic violence)\b/i,
-    },
-    {
-      key: "financial",
-      pattern:
-        /\b(income|salary|debt|bankruptcy|credit score|foreclosure|eviction|financial hardship)\b/i,
-    },
-    {
-      key: "identity",
-      pattern:
-        /\b(sexuality|sexual orientation|gender identity|transgender|nonbinary|religion|immigration status)\b/i,
-    },
-  ];
-
-function sensitiveMemoryTopic(value: string): string | null {
-  return (
-    SENSITIVE_MEMORY_TOPICS.find((topic) => topic.pattern.test(value))?.key ??
-    null
-  );
+function sensitiveMemoryConfirmation(topic: SensitiveMemoryTopic | null) {
+  return {
+    confirmationRequired: true,
+    sensitiveTopic: topic ?? "sensitive_detail",
+    message:
+      "This detail is sensitive. Kinfolk has not saved it. Confirm separately if you want to keep it private for future conversations.",
+  };
 }
 
 function isSensitiveMemoryRelevant(
@@ -5687,8 +5726,11 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
         content: kinfolkPrivateMemoriesTable.content,
         purpose: kinfolkPrivateMemoriesTable.purpose,
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        sensitiveConsentGrantedAt:
+          kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
         expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
         createdAt: kinfolkPrivateMemoriesTable.createdAt,
+        updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
       })
       .from(kinfolkPrivateMemoriesTable)
       .where(
@@ -5778,6 +5820,16 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       ? new Date(Date.now() + expiresInDays * 86_400_000)
       : null;
 
+    const sensitiveTopic = sensitiveMemoryTopic(content);
+    const isSensitive = sensitiveTopic !== null || body.isSensitive === true;
+    if (isSensitive && body.sensitiveConsent !== true) {
+      return void res.status(409).json({
+        error: "Separate confirmation is required before saving this sensitive detail.",
+        code: "SENSITIVE_MEMORY_CONFIRMATION_REQUIRED",
+        ...sensitiveMemoryConfirmation(sensitiveTopic),
+      });
+    }
+
     const [memory] = await db
       .insert(kinfolkPrivateMemoriesTable)
       .values({
@@ -5786,8 +5838,8 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
         purpose,
         sourceSessionId:
           typeof body.sessionId === "string" ? body.sessionId : null,
-        isSensitive:
-          body.isSensitive === true || sensitiveMemoryTopic(content) !== null,
+        isSensitive,
+        sensitiveConsentGrantedAt: isSensitive ? new Date() : null,
         expiresAt,
       })
       .returning();
@@ -5801,6 +5853,87 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       "Failed to save Kinfolk memory",
     );
     res.status(500).json({ error: "Failed to save memory" });
+  }
+});
+
+router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({
+      error: "Kinfolk private memory is disabled.",
+      code: "PRIVATE_MEMORY_DISABLED",
+    });
+  }
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  const body = req.body as Record<string, unknown>;
+  const content = typeof body.content === "string" ? body.content.trim() : "";
+  if (!content || content.length > 1_000) {
+    return void res.status(400).json({
+      error: "Memory must be between 1 and 1,000 characters.",
+      code: "MEMORY_CONTENT_INVALID",
+    });
+  }
+  try {
+    const [existing] = await db
+      .select({
+        id: kinfolkPrivateMemoriesTable.id,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        sensitiveConsentGrantedAt:
+          kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+      })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .limit(1);
+    if (!existing) return void res.status(404).json({ error: "Memory not found" });
+
+    const sensitiveTopic = sensitiveMemoryTopic(content);
+    const willBeSensitive = existing.isSensitive || sensitiveTopic !== null;
+    if (willBeSensitive && body.sensitiveConsent !== true) {
+      return void res.status(409).json({
+        error: "Separate confirmation is required before saving this sensitive detail.",
+        code: "SENSITIVE_MEMORY_CONFIRMATION_REQUIRED",
+        ...sensitiveMemoryConfirmation(sensitiveTopic),
+      });
+    }
+
+    const [memory] = await db
+      .update(kinfolkPrivateMemoriesTable)
+      .set({
+        content,
+        // Preserve original source session and purpose. An edit cannot silently
+        // change provenance or reduce a prior sensitive classification.
+        isSensitive: willBeSensitive,
+        sensitiveConsentGrantedAt: willBeSensitive ? new Date() : null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.id, existing.id),
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .returning({
+        id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        sensitiveConsentGrantedAt:
+          kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+        updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+      });
+    if (!memory) return void res.status(404).json({ error: "Memory not found" });
+    res.json({ memory });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to edit Kinfolk memory");
+    res.status(500).json({ error: "Failed to edit memory" });
   }
 });
 
@@ -5846,11 +5979,14 @@ async function resolveOwnerKinfolkMemoryAccess(userId: string) {
       const [settings] = await db
         .select({
           kinfolkContinuityEnabled: userSettingsTable.kinfolkContinuityEnabled,
+          kinfolkContinuityDisclosureDecision:
+            userSettingsTable.kinfolkContinuityDisclosureDecision,
         })
         .from(userSettingsTable)
         .where(eq(userSettingsTable.userId, userId))
         .limit(1);
-      return settings?.kinfolkContinuityEnabled === true;
+      return settings?.kinfolkContinuityEnabled === true &&
+        settings.kinfolkContinuityDisclosureDecision === "accepted";
     },
   });
 }
@@ -5867,7 +6003,11 @@ async function persistExplicitMemberMemory(input: {
   userId: string;
   sessionId?: string;
   message: string;
-}): Promise<{ remembered: boolean; reply: string } | null> {
+}): Promise<{
+  remembered: boolean;
+  reply: string;
+  sensitiveMemoryConfirmation?: ReturnType<typeof sensitiveMemoryConfirmation>;
+} | null> {
   const parsed = parseExplicitMemberMemory(input.message);
   if (!parsed) return null;
 
@@ -5876,7 +6016,17 @@ async function persistExplicitMemberMemory(input: {
     return {
       remembered: false,
       reply:
-        "I heard you. Turn on Kinfolk continuity in your Memory settings if you want me to save that detail for future conversations. I have not saved it yet.",
+        "I heard you. Choose whether Kinfolk should remember ordinary continuity in the first-use memory notice or in Memory settings. I have not saved that detail.",
+    };
+  }
+
+  const sensitiveTopic = sensitiveMemoryTopic(parsed.content);
+  if (sensitiveTopic !== null) {
+    return {
+      remembered: false,
+      reply:
+        "I heard you. That detail is sensitive, so I have not saved it. Confirm separately below if you want Kinfolk to keep it privately for future conversations.",
+      sensitiveMemoryConfirmation: sensitiveMemoryConfirmation(sensitiveTopic),
     };
   }
 
@@ -5899,7 +6049,7 @@ async function persistExplicitMemberMemory(input: {
       content: parsed.content,
       purpose: parsed.purpose,
       sourceSessionId: input.sessionId ?? null,
-      isSensitive: parsed.isSensitive,
+      isSensitive: false,
     });
   }
 
@@ -5908,6 +6058,38 @@ async function persistExplicitMemberMemory(input: {
     reply:
       "I’ll remember that and use it only when it is genuinely relevant to a future question. You can review or forget it any time in Kinfolk settings.",
   };
+}
+
+async function persistOrdinaryContinuityMemory(input: {
+  userId: string;
+  sessionId?: string;
+  message: string;
+}): Promise<void> {
+  const memory = extractOrdinaryContinuityMemory(input.message);
+  if (!memory) return;
+  try {
+    const existing = await db
+      .select({ id: kinfolkPrivateMemoriesTable.id })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.userId, input.userId),
+          eq(kinfolkPrivateMemoriesTable.content, memory.content),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .limit(1);
+    if (existing.length) return;
+    await db.insert(kinfolkPrivateMemoriesTable).values({
+      userId: input.userId,
+      content: memory.content,
+      purpose: memory.purpose,
+      sourceSessionId: input.sessionId ?? null,
+      isSensitive: false,
+    });
+  } catch (error) {
+    console.warn(`[kinfolk-ordinary-memory] save_failed pgCode=${pgCode(error)}`);
+  }
 }
 
 async function findFounderApprovedProductAnswer(message: string): Promise<string | null> {
@@ -5992,6 +6174,11 @@ async function persistDeterministicDiscoveryTurn(input: {
           updatedAt: new Date(),
         })
         .where(eq(kinfolkSessionsTable.id, currentSession.id));
+      await persistOrdinaryContinuityMemory({
+        userId: input.userId,
+        sessionId: currentSession.id,
+        message: input.message,
+      });
       return currentSession.id;
     }
 
@@ -6008,6 +6195,11 @@ async function persistDeterministicDiscoveryTurn(input: {
         messages,
       })
       .returning({ id: kinfolkSessionsTable.id });
+    await persistOrdinaryContinuityMemory({
+      userId: input.userId,
+      sessionId: created?.id,
+      message: input.message,
+    });
     return created?.id;
   } catch (error) {
     // Discovery results are still useful when optional conversation persistence
@@ -6195,6 +6387,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
           and(
             eq(kinfolkPrivateMemoriesTable.userId, input.req.user!.id),
             eq(kinfolkPrivateMemoriesTable.purpose, "planning_context"),
+            or(
+              eq(kinfolkPrivateMemoriesTable.isSensitive, false),
+              isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
+            ),
             isNull(kinfolkPrivateMemoriesTable.revokedAt),
             or(
               isNull(kinfolkPrivateMemoriesTable.expiresAt),
@@ -6232,6 +6428,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
           and(
             eq(kinfolkPrivateMemoriesTable.userId, input.req.user!.id),
             eq(kinfolkPrivateMemoriesTable.purpose, "profile_context"),
+            or(
+              eq(kinfolkPrivateMemoriesTable.isSensitive, false),
+              isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
+            ),
             isNull(kinfolkPrivateMemoriesTable.revokedAt),
             or(
               isNull(kinfolkPrivateMemoriesTable.expiresAt),
@@ -6499,6 +6699,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       originalQuery: message,
       answerMode: "memory_confirmation",
       remembered: explicitMemory.remembered,
+      sensitiveMemoryConfirmation: explicitMemory.sensitiveMemoryConfirmation ?? null,
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],
@@ -6527,7 +6728,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       reply:
         memoryEnabled
           ? "Yes. Kinfolk can remember a detail you explicitly ask it to save to your private memory. Type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Your existing support selections stay in Preferences, and you can review or forget saved details any time in Kinfolk memory settings."
-          : "Yes—after you turn on Kinfolk continuity in History or Memory settings. Then you can type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Until then, I will not save or reuse it.",
+          : "Yes—choose whether Kinfolk remembers in the first-use notice or turn it on in Memory settings. Then you can type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Until then, I will not save or reuse it.",
       recommendations: null,
       itinerary: null,
       followUpSuggestions: [],
@@ -9033,6 +9234,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             .where(
               and(
                 eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+                or(
+                  eq(kinfolkPrivateMemoriesTable.isSensitive, false),
+                  isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
+                ),
                 isNull(kinfolkPrivateMemoriesTable.revokedAt),
                 or(
                   isNull(kinfolkPrivateMemoriesTable.expiresAt),
@@ -9050,6 +9255,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           ? isConsentedPlanningMemoryRelevant(memory, message)
           : memory.purpose === "profile_context"
             ? isExplicitProfileMemoryRelevant(memory, message)
+            : ["preference", "goal", "ongoing_context"].includes(memory.purpose)
+              ? isOrdinaryContinuityMemoryRelevant(memory, message)
             : (!memory.isSensitive ||
               isSensitiveMemoryRelevant(memory.content, message))) &&
         (memory.purpose !== "companion_context" ||
@@ -9672,6 +9879,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               updatedAt: new Date(),
             })
             .where(eq(kinfolkSessionsTable.id, currentSession.id));
+          finalSessionId = currentSession.id;
         } else {
           const title = detectedDestination
             ? `${detectedDestination} Trip`
@@ -9690,6 +9898,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             .returning();
           finalSessionId = newSession?.id;
         }
+        await persistOrdinaryContinuityMemory({
+          userId: req.user.id,
+          sessionId: finalSessionId,
+          message,
+        });
       } catch (err) {
         if (!isOptionalSchemaGap(err)) throw err;
         console.warn(

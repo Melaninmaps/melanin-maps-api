@@ -47,6 +47,13 @@ describe("explicit member memory", () => {
     });
   });
 
+  it("marks approved sensitive categories as requiring a separate save choice", () => {
+    expect(parseExplicitMemberMemory("Remember I live at 123 Main Street.")).toMatchObject({ isSensitive: true });
+    expect(parseExplicitMemberMemory("Remember I am Muslim.")).toMatchObject({ isSensitive: true });
+    expect(parseExplicitMemberMemory("Remember I am bisexual.")).toMatchObject({ isSensitive: true });
+    expect(parseExplicitMemberMemory("Remember my son needs daycare.")).toMatchObject({ isSensitive: true });
+  });
+
   it("uses a chosen name broadly but limits other profile context to a matching turn", () => {
     const nickname = parseExplicitMemberMemory("Remember I prefer to be called T-Money.");
     expect(nickname).not.toBeNull();

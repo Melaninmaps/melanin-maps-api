@@ -129,6 +129,23 @@ export declare const kinfolkPrivateMemoriesTable: import("drizzle-orm/pg-core").
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        sensitiveConsentGrantedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "sensitive_consent_granted_at";
+            tableName: "kinfolk_private_memories";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         expiresAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "expires_at";
             tableName: "kinfolk_private_memories";
