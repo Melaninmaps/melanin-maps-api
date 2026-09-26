@@ -1328,10 +1328,7 @@ export async function runKinfolkCanary(): Promise<{
   latencyMs?: number;
   reason?: string;
 }> {
-  if (
-    !process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] ||
-    !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]
-  ) {
+  if (!resolveOpenAIConfiguration()) {
     return { ok: false, reason: "AI env vars not configured" };
   }
   const start = Date.now();
@@ -11704,7 +11701,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       audioRetained: false,
     });
   }
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+  if (!resolveOpenAIConfiguration()) {
     return void res.status(503).json({
       error: "TRANSCRIPTION_UNAVAILABLE",
       message: "Transcription is temporarily unavailable.",
@@ -11956,7 +11953,7 @@ router.get(
 router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+  if (!resolveOpenAIConfiguration()) {
     return void res.status(503).json({
       error: "TTS_UNAVAILABLE",
       message: "Kinfolk audio is unavailable right now. You can still read the response.",
@@ -12048,7 +12045,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
 router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+  if (!resolveOpenAIConfiguration()) {
     return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk audio is unavailable right now." });
   }
   const speechConfig = resolveKinfolkSpeechConfiguration();

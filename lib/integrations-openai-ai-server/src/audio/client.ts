@@ -5,21 +5,26 @@ import { writeFile, unlink, readFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import { tmpdir } from "os";
 import { join } from "path";
+import { resolveOpenAIConfiguration } from "../client";
+
+export function resolveAudioOpenAIConfiguration(
+  environment: NodeJS.ProcessEnv = process.env,
+) {
+  const configuration = resolveOpenAIConfiguration(environment);
+  if (!configuration) {
+    throw new Error(
+      "OpenAI configuration is required. Set AI_INTEGRATIONS_OPENAI_API_KEY with AI_INTEGRATIONS_OPENAI_BASE_URL, or OPENAI_API_KEY.",
+    );
+  }
+  return configuration;
+}
 
 function getOpenAI(): OpenAI {
-  if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-    throw new Error(
-      "AI_INTEGRATIONS_OPENAI_BASE_URL must be set. Did you forget to provision the OpenAI AI integration?",
-    );
-  }
-  if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-    throw new Error(
-      "AI_INTEGRATIONS_OPENAI_API_KEY must be set. Did you forget to provision the OpenAI AI integration?",
-    );
-  }
+  const configuration = resolveAudioOpenAIConfiguration();
   return new OpenAI({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    apiKey: configuration.apiKey,
+    baseURL: configuration.baseURL,
+    maxRetries: 0,
   });
 }
 

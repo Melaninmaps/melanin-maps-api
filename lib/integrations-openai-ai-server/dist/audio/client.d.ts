@@ -1,5 +1,9 @@
 import OpenAI from "openai";
 import { Buffer } from "node:buffer";
+export declare function resolveAudioOpenAIConfiguration(environment?: NodeJS.ProcessEnv): Readonly<{
+    apiKey: string;
+    baseURL: string;
+}>;
 export declare const openai: OpenAI;
 export type AudioFormat = "wav" | "mp3" | "webm" | "mp4" | "ogg" | "unknown";
 export declare function detectAudioFormat(buffer: Buffer): AudioFormat;

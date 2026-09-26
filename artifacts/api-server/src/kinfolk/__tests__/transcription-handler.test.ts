@@ -4,12 +4,14 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const transcribe = vi.hoisted(() => vi.fn());
+const resolveOpenAIConfiguration = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
   openai: {
     audio: { transcriptions: { create: transcribe } },
     chat: { completions: { create: vi.fn() } },
     responses: { create: vi.fn() },
   },
+  resolveOpenAIConfiguration,
 }));
 vi.mock("@workspace/integrations-openai-ai-server/audio", () => ({ textToSpeech: vi.fn() }));
 
@@ -79,11 +81,17 @@ function app(authenticated = true) {
 }
 
 beforeEach(() => {
-  process.env.AI_INTEGRATIONS_OPENAI_API_KEY = "test-provider-key";
+  process.env.OPENAI_API_KEY = "test-provider-key";
+  resolveOpenAIConfiguration.mockImplementation((environment = process.env) =>
+    environment.OPENAI_API_KEY || environment.AI_INTEGRATIONS_OPENAI_API_KEY
+      ? { apiKey: "test-provider-key", baseURL: "https://api.openai.test/v1" }
+      : null,
+  );
   transcribe.mockResolvedValue({ text: "hello Kinfolk" });
 });
 
 afterEach(() => {
+  delete process.env.OPENAI_API_KEY;
   delete process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
   vi.clearAllMocks();
 });
@@ -100,10 +108,19 @@ describe("actual Kinfolk transcription handler", () => {
   });
 
   it("checks authentication before revealing provider configuration", async () => {
-    delete process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
     const response = await request(app(false)).post("/api/kinfolk/transcribe");
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({ error: "AUTHENTICATION_REQUIRED", audioRetained: false });
+  });
+
+  it("accepts the standard production OpenAI configuration for voice input", async () => {
+    const response = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
+    expect(response.status).toBe(200);
+    expect(resolveOpenAIConfiguration).toHaveBeenCalled();
+    expect(transcribe).toHaveBeenCalledTimes(1);
   });
 
   it.each([

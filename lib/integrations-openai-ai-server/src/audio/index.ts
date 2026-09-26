@@ -1,5 +1,6 @@
 export {
   openai,
+  resolveAudioOpenAIConfiguration,
   detectAudioFormat,
   convertToWav,
   ensureCompatibleFormat,

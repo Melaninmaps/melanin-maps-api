@@ -9,7 +9,7 @@ const block = route.slice(start, end);
 describe("production Kinfolk transcription route contract", () => {
   it("checks authentication before provider configuration", () => {
     expect(block.indexOf("if (!req.user?.id)")).toBeGreaterThan(-1);
-    expect(block.indexOf('process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]')).toBeGreaterThan(block.indexOf("if (!req.user?.id)"));
+    expect(block.indexOf("if (!resolveOpenAIConfiguration())")).toBeGreaterThan(block.indexOf("if (!req.user?.id)"));
   });
 
   it("requires bounded multipart uploads, then inspects actual container duration", () => {
