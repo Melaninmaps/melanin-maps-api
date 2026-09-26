@@ -17,8 +17,7 @@ import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSch
 import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase";
 import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
 import {
-  publishLatinxLehighValleyDirectory,
-  startLatinxLehighValleyPinResolution,
+  startLatinxLehighValleyPublication,
 } from "./directoryImport/latinxLehighValleyPublication";
 
 // Route pool events through the structured pino logger so they appear in
@@ -182,6 +181,13 @@ const onListening = (err?: Error) => {
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 
+  // The explicit founder-authorized Lehigh Valley publication must not wait for
+  // optional migrations. It is receipt-idempotent and begins only after the
+  // HTTP listener is serving existing app and website traffic.
+  startLatinxLehighValleyPublication(pool, (message, details) =>
+    logger.info(details ?? {}, message),
+  );
+
   // Apply optional and backfill migrations after the required request-path
   // schema has already been verified above.
   //
@@ -190,18 +196,6 @@ const onListening = (err?: Error) => {
   // before the first cron tick fires.
   runStartupMigrations(logger)
     .then(async () => {
-      // This is the one explicit founder-authorized directory operation in this
-      // release. It is receipt-idempotent, source-scoped, and runs only after
-      // the HTTP listener is serving existing traffic.
-      try {
-        const publication = await publishLatinxLehighValleyDirectory(pool);
-        logger.info(publication, "Latinx Lehigh Valley directory publication complete");
-        startLatinxLehighValleyPinResolution(pool, (message, details) =>
-          logger.info(details ?? {}, message),
-        );
-      } catch (error) {
-        logger.error({ error }, "Latinx Lehigh Valley directory publication failed");
-      }
       try {
         const insertedLibraryTopics = await seedLibraryStarterTopics(pool);
         logger.info({ insertedLibraryTopics }, "Living Library starter topics ready");

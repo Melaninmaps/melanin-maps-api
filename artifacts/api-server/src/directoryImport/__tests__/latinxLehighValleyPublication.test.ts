@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import {
   publishLatinxLehighValleyDirectory,
@@ -9,6 +11,18 @@ import {
 } from "../latinxLehighValleyDirectory";
 
 describe("founder-authorized Latinx Lehigh Valley publication", () => {
+  it("starts independently after the listener instead of waiting for optional migrations", () => {
+    const indexSource = readFileSync(
+      fileURLToPath(new URL("../../index.ts", import.meta.url)),
+      "utf8",
+    );
+    const publicationStart = indexSource.indexOf("startLatinxLehighValleyPublication(pool");
+    const optionalMigrationStart = indexSource.indexOf("runStartupMigrations(logger)");
+    expect(publicationStart).toBeGreaterThan(-1);
+    expect(optionalMigrationStart).toBeGreaterThan(-1);
+    expect(publicationStart).toBeLessThan(optionalMigrationStart);
+  });
+
   it("creates exactly the immutable 77 source profiles with receipts and no fabricated map pins", async () => {
     const profiles = assertLatinxLehighValleyDirectoryDataset();
     const clientQuery = vi.fn(async (statement: string, values?: readonly unknown[]) => {

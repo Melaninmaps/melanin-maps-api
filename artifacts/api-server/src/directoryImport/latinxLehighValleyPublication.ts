@@ -320,3 +320,25 @@ export function startLatinxLehighValleyPinResolution(
       }));
   }, 1_000).unref();
 }
+
+/**
+ * Starts the approved one-time publication independently of optional startup
+ * migrations. The HTTP listener is already live when this is called; a slow or
+ * failed unrelated migration must never prevent this receipt-idempotent work.
+ */
+export function startLatinxLehighValleyPublication(
+  productionPool: PublicationPool,
+  log: Log,
+): void {
+  void (async () => {
+    try {
+      const publication = await publishLatinxLehighValleyDirectory(productionPool);
+      log("Latinx Lehigh Valley directory publication complete", publication);
+      startLatinxLehighValleyPinResolution(productionPool, log);
+    } catch (error) {
+      log("Latinx Lehigh Valley directory publication failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  })();
+}
