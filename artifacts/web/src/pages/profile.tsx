@@ -1086,6 +1086,9 @@ function SocialProfileHub({
               {isBusinessOwner ? <Link href="/business-dashboard" className="inline-flex items-center gap-2 rounded-xl border border-[#CA922B]/40 bg-white px-3.5 py-2 text-sm font-bold text-[#8D5C17] hover:bg-[#F5EBD8]"><Building2 className="h-4 w-4" /> Business dashboard</Link> : null}
             </div>
             <div className="mt-4 flex flex-wrap gap-3 text-sm">
+              <Link href="/travel?settings=kinfolk" className="inline-flex items-center gap-1.5 font-bold text-[#8D5C17] hover:underline">
+                <Sparkles className="h-4 w-4" /> KinfolkAI preferences
+              </Link>
               <a href="#legacy-account-controls" className="font-bold text-[#8D5C17] hover:underline">Profile & privacy controls ↓</a>
               <a href="#legacy-community-badges" className="font-bold text-[#8D5C17] hover:underline">Community badges ↓</a>
             </div>

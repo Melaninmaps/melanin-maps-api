@@ -6,6 +6,10 @@ const profile = readFileSync(
   fileURLToPath(new URL("../pages/profile.tsx", import.meta.url)),
   "utf8",
 );
+const travel = readFileSync(
+  fileURLToPath(new URL("../pages/travel.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("profile settings viewport", () => {
   it("opens retained account controls without reinstating a second profile header or off-screen avatar", () => {
@@ -34,5 +38,12 @@ describe("profile settings viewport", () => {
     ]) {
       expect(profile).toContain(marker);
     }
+  });
+
+  it("provides a visible Profile entry point to the existing Kinfolk settings drawer", () => {
+    expect(profile).toContain('href="/travel?settings=kinfolk"');
+    expect(profile).toContain("KinfolkAI preferences");
+    expect(travel).toContain('new URLSearchParams(window.location.search).get("settings") === "kinfolk"');
+    expect(travel).toContain("const closePreferences = useCallback");
   });
 });

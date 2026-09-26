@@ -1048,6 +1048,20 @@ function TravelPage() {
     KINFOLK_WELCOME_HEADLINES[Math.floor(Math.random() * KINFOLK_WELCOME_HEADLINES.length)]
   );
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("settings") === "kinfolk") {
+      setShowPrefs(true);
+    }
+  }, []);
+
+  const closePreferences = useCallback(() => {
+    setShowPrefs(false);
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("settings") !== "kinfolk") return;
+    url.searchParams.delete("settings");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
   const msgContainerRef = useRef<HTMLDivElement>(null);
   const isConversationNearBottomRef = useRef(true);
   const pendingConversationScrollRef = useRef<ConversationScrollReason>(null);
@@ -2146,7 +2160,7 @@ function TravelPage() {
       )}
 
       {/* Preferences panel */}
-      {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={() => setShowPrefs(false)} prefs={prefs} onSave={savePrefs}
+      {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={closePreferences} prefs={prefs} onSave={savePrefs}
         hydrated={preferencesHydrated} />}
       <KinfolkContinuityDisclosure
         visible={isLoggedIn && kinfolkContinuityDisclosureRequired}

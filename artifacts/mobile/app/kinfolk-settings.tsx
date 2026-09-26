@@ -53,7 +53,7 @@ const VOICE_DEFAULTS: VoicePrefs = {
 const CAPABILITIES = [
   { icon: "map-pin" as const, label: "Local Discovery", desc: "Finds minority-owned businesses, events, and community spots tailored to your vibe" },
   { icon: "shield" as const, label: "Safety Intel", desc: "Summarises community safety reports so you can travel and move with confidence" },
-  { icon: "navigation" as const, label: "Trip Planning", desc: "Builds personalised itineraries with culturally relevant stops and insider recommendations" },
+  { icon: "navigation" as const, label: "Travel Guidance", desc: "Helps you think through travel choices and find supported places when coverage is available" },
   { icon: "users" as const, label: "Community Connections", desc: "Surfaces people, circles, and events aligned with your interests and lifestyle" },
 ];
 

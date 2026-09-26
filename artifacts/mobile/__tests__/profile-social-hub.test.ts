@@ -22,16 +22,23 @@ describe("mobile social profile hub", () => {
     expect(profile).toContain('route: "/dashboard"');
     expect(profile).toContain('label: "Circles"');
     expect(profile).toContain('route: "/circles"');
-    expect(profile).toContain('label: "Privacy & safety"');
-    expect(profile).toContain('route: "/privacy"');
-    expect(profile).toContain('label: "Account settings"');
-    expect(profile).toContain('route: "/settings"');
-    expect(profile).toContain('route: "/business-owner"');
+    expect(profile).not.toContain('label: "Privacy & safety"');
+    expect(profile).not.toContain('label: "Account settings"');
+    expect(profile).not.toContain('const SETTINGS = [');
+    expect(profile).not.toContain('<PrivacyToggleCard user=');
+    expect(profile).not.toContain('<SafetyAlertPrefsCard colors=');
   });
 
-  it("preserves settings and enforces the profile activity privacy response before loading posts", () => {
+  it("keeps Profile settings behind the gear and preserves the profile activity privacy response", () => {
     expect(settings).toContain('route: "/privacy"');
     expect(settings).toContain('route: "/(tabs)/profile"');
+    expect(settings).toContain('label: "KinfolkAI™"');
+    expect(settings).toContain('route: "/kinfolk-settings"');
+    expect(settings).toContain('title: "Your Spaces"');
+    expect(settings).toContain('label: "Chat with KinfolkAI™"');
+    expect(settings).toContain('route: "/travel"');
+    expect(settings).toContain('route: "/circles"');
+    expect(settings).toContain('route: "/creator-profile"');
     expect(profile).toContain("Private Account");
     expect(memberProfile).toContain("const permitted = data.canSeeContent === true");
     expect(memberProfile).toContain("if (!permitted)");

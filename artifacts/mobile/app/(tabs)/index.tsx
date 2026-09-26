@@ -18,12 +18,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessCard } from "@/components/BusinessCard";
 import { SkipFeedbackModal } from "@/components/SkipFeedbackModal";
 import { SwipeableBusinessCard } from "@/components/SwipeableBusinessCard";
 import { SkeletonBusinessCardHorizontal, SkeletonBusinessCardVertical } from "@/components/SkeletonCard";
-import { NeighborhoodSafetySurvey } from "@/components/NeighborhoodSafetySurvey";
 import {
   OnboardingPreferenceSurvey,
   toKinfolkPreferenceUpdate,
@@ -38,7 +36,6 @@ import { getDailyQuoteText } from "@/constants/brandQuotes";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
-import { useAlerts } from "@/hooks/useAlerts";
 import { type FilterState } from "@/components/ScoreFilterPanel";
 import { useSpaces } from "@/hooks/useSpaces";
 import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
@@ -66,9 +63,6 @@ export default function DiscoverScreen() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { alerts: liveAlerts, isLive, error: alertError, refetch: refetchAlerts } = useAlerts();
-  const [alerts, setAlerts] = useState(liveAlerts);
-  React.useEffect(() => { queueMicrotask(() => { setAlerts(liveAlerts); }); }, [liveAlerts]);
   const [filters, setFilters] = useState<FilterState>({
     minScore: 0,
     verifiedOnly: false,
@@ -133,7 +127,6 @@ export default function DiscoverScreen() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences?.preferredOwnershipTypes?.join(",")]);
-  const [showNeighborhoodSurvey, setShowNeighborhoodSurvey] = useState(false);
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
   const [feedbackBusiness, setFeedbackBusiness] = useState<{ id: string; name: string; feedbackOptIn?: boolean } | null>(null);
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
@@ -265,7 +258,7 @@ export default function DiscoverScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchBusinesses(), refetchAlerts()]);
+    await refetchBusinesses();
     setRefreshing(false);
   };
 
@@ -647,51 +640,6 @@ export default function DiscoverScreen() {
               </View>
             )}
 
-            {/* Safety alerts */}
-            <View style={styles.section}>
-              <View style={styles.safetyHeader}>
-                <View style={styles.safetyTitleRow}>
-                  <Feather name="shield" size={16} color="#DC2626" />
-                  <Text style={[styles.safetyTitle, { color: colors.foreground }]}>Community Safety</Text>
-                  {isLive && (
-                    <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
-                      <Text style={styles.alertCountText}>LIVE</Text>
-                    </View>
-                  )}
-                  {alerts.length > 0 && (
-                    <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
-                      <Text style={styles.alertCountText}>{alerts.length}</Text>
-                    </View>
-                  )}
-                </View>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity style={[styles.reportBtn, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F30" }]} onPress={() => setShowNeighborhoodSurvey(true)} activeOpacity={0.8}>
-                    <Feather name="map-pin" size={13} color="#2D7A4F" />
-                    <Text style={[styles.reportBtnText, { color: "#2D7A4F" }]}>Rate Neighborhood</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.reportBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]} onPress={() => router.push("/report-safety")} activeOpacity={0.8}>
-                    <Feather name="plus" size={13} color="#DC2626" />
-                    <Text style={[styles.reportBtnText, { color: "#DC2626" }]}>Report</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              {alertError ? (
-                <View style={[styles.noAlerts, { backgroundColor: colors.card, borderColor: "#D97706" }]}>
-                  <Feather name="alert-circle" size={20} color="#D97706" />
-                  <Text style={[styles.noAlertsText, { color: colors.mutedForeground }]}>{alertError}</Text>
-                </View>
-              ) : alerts.length > 0 ? (
-                alerts.map((a) => (
-                  <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
-                ))
-              ) : (
-                <View style={[styles.noAlerts, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Feather name="check-circle" size={20} color="#2D7A4F" />
-                  <Text style={[styles.noAlertsText, { color: colors.mutedForeground }]}>No active alerts in your area</Text>
-                </View>
-              )}
-            </View>
-
             {/* Hero banner */}
             <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
               <View style={[styles.heroBanner, { overflow: "hidden" }]}>
@@ -924,10 +872,6 @@ export default function DiscoverScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <NeighborhoodSafetySurvey
-        visible={showNeighborhoodSurvey}
-        onClose={() => setShowNeighborhoodSurvey(false)}
-      />
       <OnboardingPreferenceSurvey
         visible={showPrefsSurvey}
         onClose={() => setShowPrefsSurvey(false)}

@@ -56,12 +56,25 @@ export default function SettingsScreen() {
     {
       title: "App Settings",
       rows: [
+        { id: "kinfolk", icon: "message-circle", label: "KinfolkAI™", sub: "Tone, memory, preferences, and private controls", route: "/kinfolk-settings" },
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "video-sources", icon: "play-circle", label: "Video Sources", sub: "Choose YouTube, TikTok, Twitch, Snapchat & more", route: "/social-video-preferences" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },
         { id: "safetyhub", icon: "shield", label: "Safety Hub", sub: "Check-ins, location sharing & meetup verification", route: "/safety-hub" },
         { id: "trusted-safety", icon: "users", label: "Trusted Safety Share", sub: "Share safety alerts with family — nothing else", route: "/trusted-safety-share" },
         { id: "appearance", icon: "moon", label: "Dark Mode", value: isDark ? "On" : "Off", route: null },
+      ],
+    },
+    {
+      title: "Your Spaces",
+      rows: [
+        { id: "kinfolk-chat", icon: "message-circle", label: "Chat with KinfolkAI™", sub: "Ask a question or get supported place guidance", route: "/travel" },
+        { id: "circles", icon: "users", label: "My Circles", sub: "Plan with your people and share recommendations", route: "/circles" },
+        { id: "family-circle", icon: "users", label: "Family Circle", sub: "Invite family members at no extra cost — stay safely connected", route: "/family-circle" },
+        { id: "trips", icon: "bookmark", label: "Trips I'd Love", sub: "Your saved places and Kinfolk picks", route: "/wishlist" },
+        { id: "dashboard", icon: "grid", label: "My Dashboard", sub: "Saved places, activity & stats", route: "/dashboard" },
+        { id: "community-preference", icon: "globe", label: "Community Preference", sub: "Personalise results by cultural identity", route: "/cultural-preference" },
+        { id: "connections", icon: "users", label: "My Connections", sub: "Connection requests and people you follow", route: "/connections" },
       ],
     },
     {
@@ -80,6 +93,9 @@ export default function SettingsScreen() {
         { id: "list", icon: "plus-circle", label: "List My Business", route: "/list-business" },
         { id: "dashboard", icon: "bar-chart-2", label: "Business Dashboard", route: "/business-dashboard" },
         { id: "verify", icon: "check-circle", label: "Verify My Business", route: "/business-verify" },
+        { id: "creator-profile", icon: "video", label: "Creator Profile", sub: "Connect your channels — send fans to where you create", route: "/creator-profile" },
+        { id: "business-owner", icon: "briefcase", label: "Business Admin", sub: "Manage your listing, category & profile", route: "/business-owner" },
+        { id: "business-submissions", icon: "clock", label: "My Business Submissions", sub: "Track pending, published, or needs-info reviews", route: "/my-business-submissions" },
       ],
     },
     {
@@ -89,6 +105,9 @@ export default function SettingsScreen() {
         { id: "roadmap", icon: "map", label: "Product Roadmap", sub: "See what we're building", route: "/roadmap" },
         { id: "waitlist", icon: "zap", label: "Early Access Waitlist", sub: "Skip the line", route: "/waitlist" },
         { id: "referral", icon: "share-2", label: "Referral Program", sub: "Earn rewards", route: "/referral" },
+        { id: "nominate-business", icon: "plus-circle", label: "Nominate a Business", sub: "Share a business with our review team", route: "/nominate-business" },
+        { id: "mentorship", icon: "users", label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" },
+        { id: "affiliate", icon: "tag", label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" },
       ],
     },
     {

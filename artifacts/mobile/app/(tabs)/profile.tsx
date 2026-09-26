@@ -46,33 +46,11 @@ import { CommunityImpactCard } from "@/components/CommunityImpactCard";
 import { useShowLoveReceived } from "@/hooks/useShowLove";
 import { ShowLoveCard } from "@/components/ShowLoveCard";
 
-const SETTINGS = [
-  { icon: "users" as const, label: "My Circles", sub: "Plan with your people and share recommendations", route: "/circles" as const },
-  { icon: "users" as const, label: "Family Circle", sub: "Invite family members at no extra cost — stay safely connected", route: "/family-circle" as const },
-  { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
-  { icon: "bookmark" as const, label: "Trips I'd Love", sub: "Your KinfolkAI™ saved spots", route: "/wishlist" as const },
-  { icon: "grid" as const, label: "My Dashboard", sub: "Saved places, activity & stats", route: "/dashboard" as const },
-  { icon: "globe" as const, label: "Community Preference", sub: "Personalise results by cultural identity", route: "/cultural-preference" as const },
-  { icon: "users" as const, label: "My Connections", sub: "Connection requests and people you follow", route: "/connections" as const },
-  { icon: "video" as const, label: "Creator Profile", sub: "Connect your channels — send fans to where you create", route: "/creator-profile" as const },
-  { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
-  { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
-  { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },
-  { icon: "briefcase" as const, label: "Business Admin", sub: "Manage your listing, category & profile", route: "/business-owner" as const },
-  { icon: "clock" as const, label: "My Business Submissions", sub: "Track pending, published, or needs-info reviews", route: "/my-business-submissions" as const },
-  { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
-  { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Share a business with our review team", route: "/nominate-business" as const },
-  { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
-  { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
-];
-
 const SOCIAL_PROFILE_ACTIONS = [
   { icon: "users" as const, label: "Connections", detail: "Followers, following & requests", route: "/connections" as const },
   { icon: "message-circle" as const, label: "Community activity", detail: "Posts, comments & conversations", route: "/(tabs)/community" as const },
   { icon: "bookmark" as const, label: "Saved places", detail: "Businesses you have saved", route: "/dashboard" as const },
   { icon: "users" as const, label: "Circles", detail: "Your private group spaces", route: "/circles" as const },
-  { icon: "shield" as const, label: "Privacy & safety", detail: "Visibility and message choices", route: "/privacy" as const },
-  { icon: "settings" as const, label: "Account settings", detail: "Profile, alerts & account", route: "/settings" as const },
 ];
 
 const INDUSTRIES = [
@@ -1455,53 +1433,6 @@ export default function ProfileScreen() {
         </View>
         <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
       </TouchableOpacity>
-
-      {/* Privacy toggle card */}
-      {isAuthenticated && (
-        <PrivacyToggleCard user={user} refreshUser={refreshUser} colors={colors} />
-      )}
-
-      {/* Safety alert preferences */}
-      {isAuthenticated && (
-        <SafetyAlertPrefsCard colors={colors} />
-      )}
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Settings</Text>
-        <View style={[styles.settingsList, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
-          {SETTINGS.map((item, idx) => (
-            <TouchableOpacity
-              key={item.label}
-              style={[
-                styles.settingItem,
-                idx < SETTINGS.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 },
-              ]}
-              onPress={() => item.route && router.push(item.route as any)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.settingIcon, { backgroundColor: colors.primary + "15" }]}>
-                <Feather name={item.icon} size={16} color={colors.primary} />
-              </View>
-              <View style={styles.settingText}>
-                <Text style={[styles.settingLabel, { color: colors.foreground }]}>{item.label}</Text>
-                <Text style={[styles.settingSub, { color: colors.mutedForeground }]}>
-                  {item.label === "Membership"
-                    ? subscription
-                      ? `${subscription.productName || "Premium"} — Active`
-                      : "Explore (Free) — upgrade anytime"
-                    : item.sub}
-                </Text>
-              </View>
-              {item.label === "Membership" && subscription ? (
-                <View style={[styles.activeIndicator, { backgroundColor: "#22C55E18", borderColor: "#22C55E30" }]}>
-                  <View style={[styles.activeDot, { backgroundColor: "#22C55E" }]} />
-                </View>
-              ) : null}
-              <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
 
       {isAuthenticated && biometricSupported && (
         <View style={[styles.biometricRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
