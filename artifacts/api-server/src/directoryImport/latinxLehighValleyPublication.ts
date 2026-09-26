@@ -149,7 +149,12 @@ export async function publishLatinxLehighValleyDirectory(
           profile.address, profile.city, profile.state, profile.country,
           false, JSON.stringify(profile.ownershipDesignations), profile.ownershipClaim,
           profile.description, profile.phone, profile.website, profile.instagram, profile.facebook,
-          profile.dedupeKey, profile.sourceLabel, profile.sourceUrl,
+          // The founder explicitly authorized this source cohort to remain
+          // individually discoverable while they reconcile possible duplicates.
+          // A source-profile key prevents an unrelated active canonical row
+          // from rolling back the entire additive 77-record publication.
+          `${LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE}:${profile.id}`,
+          profile.sourceLabel, profile.sourceUrl,
           profile.recommendationReason, profile.intakeBatchReference,
           JSON.stringify(["source-reported", "hispanic-owned", "latinx-owned", "lehigh-valley"]),
         );

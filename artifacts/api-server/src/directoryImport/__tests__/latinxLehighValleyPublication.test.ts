@@ -68,6 +68,12 @@ describe("founder-authorized Latinx Lehigh Valley publication", () => {
     expect(insert?.[0]).toContain("'unclaimed'");
     expect(insert?.[1]).toContain("source_reported_ownership_unverified");
     expect(insert?.[0]).toContain("'user_supplied_latinx_lehigh_valley_directory_20260924'");
+    expect(insert?.[1]?.[16]).toBe(
+      `user_supplied_latinx_lehigh_valley_directory_20260924:${profiles[0]!.id}`,
+    );
+    expect(new Set(profiles.map((profile) =>
+      `user_supplied_latinx_lehigh_valley_directory_20260924:${profile.id}`,
+    )).size).toBe(77);
     expect(insert?.[0]).not.toMatch(/latitude[^,]*,longitude[^,]*\)\s*VALUES[^;]*[0-9]/i);
   });
 
