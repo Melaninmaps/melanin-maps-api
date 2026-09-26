@@ -140,7 +140,18 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("travelPlanning && hasGovernedItineraryCoverage && destination");
     expect(chatRoute).toContain("I will not substitute listings from another city.");
     expect(chatRoute).toContain("!hasGovernedItineraryCoverage && destination");
-    expect(chatRoute).toContain("itiner(?:ary|aries)");
+    expect(chatRoute).toContain("itiner(?:ary|aries)|plan(?:ning)?|trip|visit(?:ing)?");
+    expect(chatRoute).toContain("may offer useful, general travel");
+    expect(chatRoute).not.toContain("travel(?:ing)?|trip|visit(?:ing)?");
+  });
+
+  it("does not attach a local-directory coverage note to a general place answer", () => {
+    expect(chatRoute).toContain("const usedLocalDirectoryContext =");
+    expect(chatRoute).toContain("travelPlanning && hasGovernedItineraryCoverage");
+    expect(chatRoute).toContain("destination && usedLocalDirectoryContext");
+    expect(chatRoute).not.toMatch(
+      /assembledSources\.length === 0 && destination\s*\? tourSiteBlock/,
+    );
   });
 
 

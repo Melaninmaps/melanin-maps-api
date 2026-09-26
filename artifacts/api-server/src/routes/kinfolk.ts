@@ -9896,12 +9896,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       followUpSuggestions = [];
     }
 
-    // A general answer about an uncovered place must not entice a member into
-    // an itinerary or travel-plan path Kinfolk cannot actually deliver.
+    // A general answer about an uncovered place may offer useful, general travel
+    // tips. It must not entice a member into an itinerary, visit, or trip-plan
+    // path that Kinfolk cannot actually deliver from governed MWM coverage.
     if (!hasGovernedItineraryCoverage && destination) {
       followUpSuggestions = followUpSuggestions.filter(
         (suggestion) =>
-          !/\b(?:itiner(?:ary|aries)|plan(?:ning)?|travel(?:ing)?|trip|visit(?:ing)?)\b/i.test(
+          !/\b(?:itiner(?:ary|aries)|plan(?:ning)?|trip|visit(?:ing)?)\b/i.test(
             suggestion,
           ),
       );
@@ -10305,9 +10306,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           },
         ]
       : subjectScopedCatalog;
+    // Local-directory attribution is only meaningful when this answer actually
+    // used a governed MWM local result. A general answer about a place must not
+    // inherit a prior session city's catalog or claim MWM listing coverage.
+    const usedLocalDirectoryContext =
+      decisionPlan.allowBusinessCards ||
+      intentClass === "business_discovery" ||
+      Boolean(tourSiteBlock) ||
+      Boolean(cityContext) ||
+      (travelPlanning && hasGovernedItineraryCoverage);
     const localCoverageNote =
       webResearchSourceNote ??
-      (assembledSources.length === 0 && destination
+      (assembledSources.length === 0 && destination && usedLocalDirectoryContext
         ? tourSiteBlock
           ? "Coverage note: Heritage-site details come from MWM platform records; no external citation URLs are attached to this coverage."
           : cityContext

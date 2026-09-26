@@ -77,6 +77,11 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain('minHeight: 40, maxWidth: 280');
   });
 
+  it("shows a searching-city label only for governed local discovery or itinerary answers", () => {
+    expect(travelSource).toContain('msg.intentClass === "business_discovery" || msg.intentClass === "travel_planning"');
+    expect(widgetSource).toContain('item.intentClass === "business_discovery" || item.intentClass === "travel_planning"');
+  });
+
   it("enables the Expo Audio iOS recording session before starting Kinfolk Voice", () => {
     expect(widgetSource).toContain("setAudioModeAsync");
     expect(widgetSource).toContain("allowsRecording: true");

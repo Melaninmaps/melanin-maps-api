@@ -1191,7 +1191,8 @@ export function AIChatWidget() {
                   </View>
                 </View>
                 {/* Location resolution pill — shows which city Kinfolk resolved */}
-                {!item.fromUser && item.location?.city && (
+                {!item.fromUser && item.location?.city &&
+                  (item.intentClass === "business_discovery" || item.intentClass === "travel_planning") && (
                   <View style={[styles.locationPill, { marginLeft: 42 }]}>
                     <Feather name="map-pin" size={10} color={colors.primary} />
                     <Text style={[styles.locationPillTxt, { color: colors.primary }]}>

@@ -706,7 +706,8 @@ function AiMessageBubble({
 
         {/* Location resolution pill — shows which city Kinfolk resolved so the member
             never wonders whether their alias (e.g. "Philly", "nawlins") was understood */}
-        {msg.role === "assistant" && msg.location?.city && (
+        {msg.role === "assistant" && msg.location?.city &&
+          (msg.intentClass === "business_discovery" || msg.intentClass === "travel_planning") && (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, marginBottom: 2 }}>
             <Ionicons name="location-outline" size={11} color={GOLD} />
             <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: GOLD + "BB" }}>
