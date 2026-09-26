@@ -4,6 +4,7 @@ import {
   buildLeanGeneralHistory,
   canUseLeanGeneralChat,
 } from "../lean-general-chat";
+import { buildKinfolkFormalResponseContract } from "../conversation-mode";
 
 const ordinaryQuestion = {
   intentClass: "general_knowledge",
@@ -59,6 +60,36 @@ describe("lean general Kinfolk chat", () => {
     expect(buildLeanGeneralChatPrompt("business_manager")).toContain("Business Manager mode");
     expect(buildLeanGeneralChatPrompt("best_friend")).toContain("Best Friend mode");
     expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin mode");
+  });
+
+  it("keeps the solar-science core factual across all four conversational voices", () => {
+    for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
+      const prompt = buildLeanGeneralChatPrompt(mode);
+      expect(prompt).toContain("hydrogen fusion in the sun's core releases energy");
+      expect(prompt).toContain("gravity compresses the core");
+      expect(prompt).toContain("light and heat");
+      expect(prompt).toContain("roughly five billion years");
+    }
+    expect(buildLeanGeneralChatPrompt("business_manager")).toContain("never promotional or sales-oriented");
+  });
+
+  it("keeps emotional check-ins supportive and free of discovery output", () => {
+    for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
+      const prompt = buildLeanGeneralChatPrompt(mode);
+      expect(prompt).toContain("EMOTIONAL CHECK-INS");
+      expect(prompt).toContain("Do not turn a check-in into a business recommendation");
+      expect(prompt).toContain("Ask at most one gentle follow-up question");
+    }
+  });
+
+  it("reserves clean document formatting for formal or official requests", () => {
+    const contract = buildKinfolkFormalResponseContract();
+    expect(contract).toContain("email, letter, request, complaint, appeal, proposal, policy, plan, report");
+    expect(contract).toContain("selected Kinfolk voice");
+    expect(contract).toContain("numbered list only for an ordered sequence");
+    expect(contract).toContain("single-level hyphen list only when a list is necessary");
+    expect(contract).toContain("Do not use decorative stars, asterisks");
+    expect(contract).toContain("do not force formal-document formatting");
   });
 
   it("keeps only recent bounded conversation history", () => {

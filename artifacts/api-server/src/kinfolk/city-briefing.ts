@@ -91,6 +91,9 @@ export function buildCityBriefingPromptBlock(input: {
     "Do not invent local events, crime/safety claims, political positions, statistics, businesses, or community sentiment. If evidence is incomplete, say so plainly.",
     "Do not make a restaurant, nightlife, or business list unless the member separately asks for one. A direct request always overrides any optional interest lens.",
     "The Community perspective is not currently source evidence. Do not claim community-feed findings unless a separately governed, visible Community perspective is supplied by the server.",
+    "State that a verified alert, travel concern, affected area, event, or event date exists only when the supplied current sources support that specific claim. Never say a member is clear, safe, unaffected, or outside an affected area unless the supplied sources and the member’s actual current plan support it.",
+    "Do not imply that a hotel, itinerary, route, planned stop, or travel date is known when the member did not provide it. When a plan or date is needed to assess an alert or an event, say what is not known and ask one concise follow-up.",
+    "When the member expressly asks for Black, African, Afro-Latin, or broader diaspora context, use only source-supported cultural events, businesses, and community information. Keep that request separate from an assumption about the member’s identity.",
   ];
   if (knowBeforeYouGo) {
     lines.push("Include practical context only when it is supported by the supplied sources, such as public-service changes, civic deadlines, transit disruptions, or confirmed public advisories.");

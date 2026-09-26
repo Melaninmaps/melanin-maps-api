@@ -317,6 +317,10 @@ import {
 } from "../kinfolk/voice-personalization";
 import {
   buildKinfolkConversationModePrompt,
+  buildKinfolkEmotionalCheckInContract,
+  buildKinfolkFormalResponseContract,
+  isKinfolkFormalDocumentRequest,
+  normalizeKinfolkFormalDocumentReply,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
 import {
@@ -4337,7 +4341,9 @@ SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - Lead with the finding: "I found three places nearby…" not "Based on your preferences I have identified…"
 - One sentence, one follow-up maximum when voice is likely: "Want relaxed, lively, or something more upscale?"
 
-${voiceInstructions}${
+${voiceInstructions}
+
+${buildKinfolkEmotionalCheckInContract(normalizedConversationMode)}${
     languagePersonalization
       ? `
 
@@ -8751,6 +8757,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}`;
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`
@@ -8771,7 +8778,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const aiMessages: Parameters<
       typeof openai.chat.completions.create
     >[0]["messages"] = [
-      { role: "system", content: systemPromptWithLibrary },
+      { role: "system", content: systemPromptWithResponseFormat },
       ...(leanGeneralChat ? buildLeanGeneralHistory(existingMessages) : historyMessages),
       { role: "user", content: currentUserContent },
     ];
@@ -9355,6 +9362,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentClass,
     });
     reply = enforced.reply;
+    if (isKinfolkFormalDocumentRequest(message)) {
+      reply = normalizeKinfolkFormalDocumentReply(reply);
+    }
     recommendations = enforced.recommendations as Record<
       string,
       unknown

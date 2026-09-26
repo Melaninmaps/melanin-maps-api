@@ -57,11 +57,26 @@ describe("city briefing policy", () => {
     expect(prompt).toContain("not assumptions about identity");
     expect(prompt).toContain("Community perspective is not currently source evidence");
     expect(prompt).toContain("current news and reporting");
+    expect(prompt).toContain("supplied current sources support that specific claim");
+    expect(prompt).toContain("member’s actual current plan support it");
+    expect(prompt).toContain("hotel, itinerary, route, planned stop, or travel date is known");
+    expect(prompt).toContain("Black, African, Afro-Latin, or broader diaspora context");
   });
 
   it("does not claim a preference lens when no interests were explicitly saved", () => {
     const prompt = buildCityBriefingPromptBlock({ city: "Minneapolis", stateCode: "MN", preferences: null });
     expect(prompt).toContain("No optional interest lens is available");
     expect(prompt).not.toContain("explicitly saved these optional interests:");
+  });
+
+  it("does not permit unsupported reassurance, itinerary impact, or event claims", () => {
+    const prompt = buildCityBriefingPromptBlock({
+      city: "Minneapolis",
+      stateCode: "MN",
+      preferences: null,
+    });
+    expect(prompt).toContain("Never say a member is clear, safe, unaffected");
+    expect(prompt).toContain("When a plan or date is needed to assess an alert or an event");
+    expect(prompt).toContain("use only source-supported cultural events, businesses, and community information");
   });
 });

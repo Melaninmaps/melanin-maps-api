@@ -59,5 +59,10 @@ describe("Kinfolk practical relevance and member reset contract", () => {
     expect(routeSource).toContain("requestedVoiceMode ?? savedConversationMode");
     expect(routeSource).toContain("voiceMode: conversationVoiceMode");
     expect(routeSource).toContain("buildLeanGeneralChatPrompt(conversationVoiceMode)");
+    expect(routeSource).toContain("buildKinfolkFormalResponseContract()");
+    expect(routeSource).toContain('content: systemPromptWithResponseFormat');
+    expect(routeSource).toContain("isKinfolkFormalDocumentRequest(message)");
+    expect(routeSource).toContain("reply = normalizeKinfolkFormalDocumentReply(reply)");
+    expect(routeSource).toContain("buildKinfolkEmotionalCheckInContract(normalizedConversationMode)");
   });
 });
