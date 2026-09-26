@@ -90,6 +90,32 @@ type LocationResolver = (input: {
 }) => Promise<ResolvedBusinessLocation | null>;
 
 const PIN_POLICY_VERSION = "latinx-lehigh-valley-exact-pin-v1" as const;
+const BUSINESS_SUBCATEGORY_MAX_LENGTH = 100;
+
+function publicationSubcategory(profile: {
+  id: string;
+  subcategory: string;
+}): string {
+  if (profile.subcategory.length <= BUSINESS_SUBCATEGORY_MAX_LENGTH) {
+    return profile.subcategory;
+  }
+  // Preserve the complete source-provided specialty in description and tags;
+  // this shorter UI label is only the bounded database presentation field.
+  if (profile.id === "latinx-lv-61273d8624f066393c3f01cc") {
+    return "AudioVisual, IT & Telecommunications Services";
+  }
+  throw new Error("LATINX_LEHIGH_VALLEY_SUBCATEGORY_COMPATIBILITY_REQUIRED");
+}
+
+function publicationTags(profile: { subcategory: string }): string[] {
+  return [
+    "source-reported",
+    "hispanic-owned",
+    "latinx-owned",
+    "lehigh-valley",
+    profile.subcategory,
+  ];
+}
 
 async function ensureLatinxLehighValleyDirectoryAudit(
   productionPool: Pick<Pool, "query">,
@@ -174,7 +200,7 @@ export async function publishLatinxLehighValleyDirectory(
       const tuples = batch.map((profile, index) => {
         const base = index * 22;
         values.push(
-          profile.id, profile.name, profile.category, profile.subcategory,
+          profile.id, profile.name, profile.category, publicationSubcategory(profile),
           profile.address, profile.city, profile.state, profile.country,
           false, JSON.stringify(profile.ownershipDesignations), profile.ownershipClaim,
           profile.description, profile.phone, profile.website, profile.instagram, profile.facebook,
@@ -185,7 +211,7 @@ export async function publishLatinxLehighValleyDirectory(
           `${LATINX_LEHIGH_VALLEY_DIRECTORY_SOURCE}:${profile.id}`,
           profile.sourceLabel, profile.sourceUrl,
           profile.recommendationReason, profile.intakeBatchReference,
-          JSON.stringify(["source-reported", "hispanic-owned", "latinx-owned", "lehigh-valley"]),
+          JSON.stringify(publicationTags(profile)),
         );
         return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},
           'live_unclaimed','unclaimed',false,$${base + 10}::jsonb,'[]'::jsonb,$${base + 11},false,$${base + 12},NULL,NULL,

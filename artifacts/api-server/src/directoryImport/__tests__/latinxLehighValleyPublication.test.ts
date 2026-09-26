@@ -89,6 +89,14 @@ describe("founder-authorized Latinx Lehigh Valley publication", () => {
     expect(new Set(profiles.map((profile) =>
       `user_supplied_latinx_lehigh_valley_directory_20260924:${profile.id}`,
     )).size).toBe(77);
+    const insertedSubcategories = (insert?.[1] ?? []).filter(
+      (_value, index) => index % 22 === 3,
+    ).map(String);
+    expect(insertedSubcategories.every((subcategory) => subcategory.length <= 100)).toBe(true);
+    expect(insertedSubcategories[0]).toBe("AudioVisual, IT & Telecommunications Services");
+    const firstTags = JSON.parse(String(insert?.[1]?.[21]));
+    expect(firstTags).toContain(profiles[0]!.subcategory);
+    expect(profiles[0]!.description).toContain(profiles[0]!.subcategory);
     expect(insert?.[0]).not.toMatch(/latitude[^,]*,longitude[^,]*\)\s*VALUES[^;]*[0-9]/i);
   });
 
