@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AlertCircle, ExternalLink, Link2, X } from "lucide-react";
 import { detectSocialVideoPlatform } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
+
+const BASE = import.meta.env.BASE_URL;
 
 export type CommunityMediaKind =
   | { type: "youtube"; embedUrl: string }
@@ -13,6 +16,12 @@ export type CommunityMediaKind =
 
 const VIDEO_EXTENSIONS = new Set(["mp4", "m4v", "mov", "webm", "ogv"]);
 const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "jpe", "png", "webp", "gif", "heic", "heif", "avif"]);
+
+type TikTokVideoPreview = {
+  thumbnailUrl: string;
+  title: string | null;
+  authorName: string | null;
+};
 
 function hostMatches(hostname: string, domain: string): boolean {
   const normalized = hostname.toLowerCase().replace(/\.$/, "");
@@ -140,6 +149,93 @@ function NativeVideo({ url, compact }: { url: string; compact: boolean }) {
   );
 }
 
+function TikTokPreviewCard({
+  url,
+  index,
+  compact,
+  removeButton,
+}: {
+  url: string;
+  index: number;
+  compact: boolean;
+  removeButton: ReactNode;
+}) {
+  const [preview, setPreview] = useState<TikTokVideoPreview | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await authenticatedFetch(`${BASE}api/community/social-video-preview?url=${encodeURIComponent(url)}`, {
+          signal: controller.signal,
+        });
+        const body = await response.json().catch(() => ({})) as { preview?: TikTokVideoPreview | null };
+        if (active && response.ok && body.preview?.thumbnailUrl) setPreview(body.preview);
+      } catch {
+        // The link remains available even if TikTok's public metadata is unavailable.
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; controller.abort(); };
+  }, [url]);
+
+  if (!preview && !loading) {
+    const playerUrl = getTikTokPlayerUrl(url);
+    return playerUrl ? (
+      <div className={`relative ${compact ? "w-28" : "mx-auto w-full max-w-sm"}`}>
+        <div className={`overflow-hidden rounded-xl bg-black ${compact ? "aspect-[9/16] w-28" : "aspect-[9/16] w-full"}`}>
+          <iframe
+            data-testid="community-tiktok-player"
+            src={playerUrl}
+            title={`TikTok attachment ${index + 1}`}
+            loading="lazy"
+            className="h-full w-full"
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+        <a
+          data-testid={`community-tiktok-link-${index}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#CA922B]/35 bg-[#FAF6EF] px-4 py-2 text-sm font-bold text-[#3A1F0E] hover:border-[#CA922B]/70"
+        >
+          Open on TikTok <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </a>
+        {removeButton}
+      </div>
+    ) : null;
+  }
+
+  return (
+    <div className={`relative ${compact ? "h-24 w-28" : "mx-auto aspect-[9/16] w-full max-w-sm"}`}>
+      <a
+        data-testid={`community-tiktok-preview-${index}`}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={preview?.title ? `Open TikTok video: ${preview.title}` : "Open TikTok video"}
+        className="group relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-[#6B3C16]"
+      >
+        {preview ? <img src={preview.thumbnailUrl} alt="" className="absolute inset-0 h-full w-full object-cover" onError={() => setPreview(null)} /> : null}
+        <span className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        <span className="relative flex max-w-[82%] flex-col items-center rounded-2xl bg-black/50 px-4 py-3 text-center text-white">
+          <span className="mb-1 text-3xl leading-none" aria-hidden="true">▶</span>
+          <span className="text-xs font-bold">{loading ? "Loading TikTok preview" : "Watch on TikTok"}</span>
+          {preview?.authorName ? <span className="mt-0.5 max-w-full truncate text-[10px] text-[#F5EBD8]">@{preview.authorName}</span> : null}
+        </span>
+      </a>
+      {removeButton}
+    </div>
+  );
+}
+
 export function CommunityMedia({
   url,
   index,
@@ -218,33 +314,7 @@ export function CommunityMedia({
   }
 
   if (media.type === "tiktok") {
-    return (
-      <div className={`relative ${compact ? "w-28" : "mx-auto w-full max-w-sm"}`}>
-        <div className={`overflow-hidden rounded-xl bg-black ${compact ? "aspect-[9/16] w-28" : "aspect-[9/16] w-full"}`}>
-          <iframe
-            data-testid="community-tiktok-player"
-            src={media.playerUrl}
-            title={`TikTok attachment ${index + 1}`}
-            loading="lazy"
-            className="h-full w-full"
-            allow="encrypted-media; picture-in-picture; fullscreen"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
-        </div>
-        <a
-          data-testid={`community-tiktok-link-${index}`}
-          href={safeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#CA922B]/35 bg-[#FAF6EF] px-4 py-2 text-sm font-bold text-[#3A1F0E] hover:border-[#CA922B]/70"
-        >
-          Open on TikTok <ExternalLink className="h-4 w-4" aria-hidden="true" />
-        </a>
-        {removeButton}
-      </div>
-    );
+    return <TikTokPreviewCard url={safeUrl ?? url} index={index} compact={compact} removeButton={removeButton} />;
   }
 
   if (media.type === "twitch") {

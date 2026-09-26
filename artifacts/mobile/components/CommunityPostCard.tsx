@@ -3,7 +3,7 @@ import { useEvent } from "expo";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { Alert, Image, Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useColors } from "@/hooks/useColors";
@@ -162,6 +162,78 @@ function InlineCommunityVideoPreview({
   );
 }
 
+type TikTokPreview = {
+  thumbnailUrl: string;
+  title: string | null;
+  authorName: string | null;
+};
+
+/**
+ * TikTok's public oEmbed thumbnail makes a social attachment recognizable in
+ * the feed before the member chooses to leave the app. If its public metadata
+ * is unavailable, the existing provider link remains available on a warm,
+ * labeled card rather than becoming a black placeholder.
+ */
+function TikTokCommunityPreview({
+  url,
+  emphasized,
+  compact,
+}: {
+  url: string;
+  emphasized: boolean;
+  compact: boolean;
+}) {
+  const [preview, setPreview] = useState<TikTokPreview | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/community/social-video-preview?url=${encodeURIComponent(url)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
+        });
+        const body = await response.json().catch(() => ({})) as { preview?: TikTokPreview | null };
+        if (active && response.ok && body.preview?.thumbnailUrl) setPreview(body.preview);
+      } catch {
+        // The public preview is optional. The original provider link remains usable.
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; controller.abort(); };
+  }, [url]);
+
+  return (
+    <TouchableOpacity
+      style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, s.socialVideoPreview]}
+      onPress={() => { void openExternalUrl(url, { unavailableMessage: "This public TikTok video is unavailable." }); }}
+      activeOpacity={0.86}
+      accessibilityRole="link"
+      accessibilityLabel={preview?.title ? `Open TikTok video: ${preview.title}` : "Open TikTok video"}
+    >
+      {preview ? (
+        <Image
+          source={{ uri: preview.thumbnailUrl }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          onError={() => setPreview(null)}
+          accessibilityElementsHidden
+        />
+      ) : null}
+      <View style={[s.socialVideoShade, !preview && s.socialVideoFallbackShade]} pointerEvents="none" />
+      <View style={s.socialVideoCallToAction} pointerEvents="none">
+        <Feather name="play-circle" size={emphasized ? 44 : 32} color="#FFFFFF" />
+        <Text style={s.socialVideoLabel}>{loading ? "Loading TikTok preview" : "Watch on TikTok"}</Text>
+        {preview?.authorName ? <Text style={s.socialVideoByline} numberOfLines={1}>@{preview.authorName}</Text> : null}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasized = false, compact = false }: {
   mediaUrls: string[];
   hasContentWarning: boolean;
@@ -212,7 +284,14 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
       {visibleUrls.map((url, i) => {
         const socialPlatform = detectSocialVideoPlatform(url);
         const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
-        return socialPlatform ? (
+        return socialPlatform === "tiktok" ? (
+          <TikTokCommunityPreview
+            key={i}
+            url={url}
+            emphasized={Boolean(emphasized)}
+            compact={Boolean(compact)}
+          />
+        ) : socialPlatform ? (
           <TouchableOpacity
             key={i}
             style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
@@ -977,6 +1056,40 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "Inter_600SemiBold",
     fontSize: 12,
+  },
+  socialVideoPreview: {
+    backgroundColor: "#6B3C16",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  socialVideoShade: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(15, 8, 3, 0.30)",
+  },
+  socialVideoFallbackShade: {
+    backgroundColor: "rgba(58, 31, 14, 0.14)",
+  },
+  socialVideoCallToAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    maxWidth: "82%",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: "rgba(20, 10, 3, 0.48)",
+  },
+  socialVideoLabel: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    textAlign: "center",
+  },
+  socialVideoByline: {
+    color: "#F5EBD8",
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    maxWidth: 150,
   },
   warningOverlay: {
     marginHorizontal: 14,

@@ -50,6 +50,16 @@ describe("mobile Community feed recovery", () => {
     expect(source).toContain("comments: count");
   });
 
+  it("opens Community comments full screen without sacrificing the native safe area", () => {
+    const modal = readFileSync(
+      fileURLToPath(new URL("../components/PostDetailModal.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(modal).toContain('presentationStyle="fullScreen"');
+    expect(modal).not.toContain('presentationStyle="pageSheet"');
+    expect(modal).toContain('paddingTop: Platform.OS === "web" ? 0 : insets.top');
+  });
+
   it("renders current author photos with initials fallbacks in cards and post detail", () => {
     const card = readFileSync(
       fileURLToPath(new URL("../components/CommunityPostCard.tsx", import.meta.url)),

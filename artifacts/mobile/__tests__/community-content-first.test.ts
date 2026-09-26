@@ -70,6 +70,20 @@ describe("native Community content-first surface", () => {
     expect(postCardSource).not.toContain('backgroundColor: "#0008", justifyContent: "center", alignItems: "center"');
   });
 
+  it("shows a public TikTok cover before sending a member to the provider", () => {
+    for (const marker of [
+      "function TikTokCommunityPreview",
+      "/api/community/social-video-preview?url=",
+      'socialPlatform === "tiktok"',
+      "Loading TikTok preview",
+      "Watch on TikTok",
+      "socialVideoPreview",
+    ]) {
+      expect(postCardSource).toContain(marker);
+    }
+    expect(postCardSource).not.toContain('backgroundColor: "#000000", justifyContent: "center", alignItems: "center"');
+  });
+
   it("prioritizes selected media and keeps long captions deliberately expandable", () => {
     expect(postCardSource).toContain("const COMMUNITY_CAPTION_PREVIEW_LENGTH = 280");
     expect(postCardSource).toContain("const showMediaBeforeText = hasMedia && !isConversation");

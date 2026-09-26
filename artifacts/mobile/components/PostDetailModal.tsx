@@ -252,9 +252,15 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
 
   const typeConfig = POST_TYPE_CONFIG[post.postType ?? "community"];
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        style={[m.root, { backgroundColor: colors.background }]}
+        style={[
+          m.root,
+          {
+            backgroundColor: colors.background,
+            paddingTop: Platform.OS === "web" ? 0 : insets.top,
+          },
+        ]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/* Handle bar */}

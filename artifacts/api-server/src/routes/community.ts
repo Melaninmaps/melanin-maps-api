@@ -22,8 +22,12 @@ import {
   normalizeCommunityMediaUrls,
   validateCommunityMediaUrls,
 } from "../community/communityMediaValidation";
+import { fetchTikTokVideoPreview, type TikTokVideoPreview } from "../community/tiktokPreview";
 
 const router: IRouter = Router();
+const TIKTOK_PREVIEW_CACHE_TTL_MS = 10 * 60 * 1_000;
+const TIKTOK_PREVIEW_CACHE_MAX_ENTRIES = 200;
+const tiktokPreviewCache = new Map<string, { preview: TikTokVideoPreview; expiresAt: number }>();
 
 // Monthly media limits per membership tier
 // videoMonthly: max video posts per calendar month (enforced at upload time)
@@ -119,6 +123,14 @@ function normalizeCommentPolicy(value: unknown, visibility: string): CommentPoli
   if (value === "off") return "off";
   if (value === "followers") return "followers";
   return visibility === "followers_only" ? "followers" : "everyone";
+}
+
+function rememberTikTokPreview(url: string, preview: TikTokVideoPreview): void {
+  if (tiktokPreviewCache.size >= TIKTOK_PREVIEW_CACHE_MAX_ENTRIES) {
+    const oldestKey = tiktokPreviewCache.keys().next().value;
+    if (oldestKey) tiktokPreviewCache.delete(oldestKey);
+  }
+  tiktokPreviewCache.set(url, { preview, expiresAt: Date.now() + TIKTOK_PREVIEW_CACHE_TTL_MS });
 }
 
 async function resolveCommentAccess(postId: string, viewerId: string): Promise<CommentAccess> {
@@ -271,6 +283,46 @@ function serializeCommunityPost(row: Record<string, any>) {
     createdAt: row.created_at ?? row.createdAt,
   };
 }
+
+// GET /community/social-video-preview — safe, ephemeral cover metadata for canonical TikTok posts.
+// This route never fetches the supplied URL. The provider URL is validated again inside
+// fetchTikTokVideoPreview, and other community attachments retain their existing rendering.
+router.get("/community/social-video-preview", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const url = typeof req.query["url"] === "string" ? req.query["url"].trim() : "";
+  if (!url || url.length > 2_048) {
+    res.status(400).json({ error: "A valid public TikTok video URL is required." });
+    return;
+  }
+
+  const cached = tiktokPreviewCache.get(url);
+  if (cached && cached.expiresAt > Date.now()) {
+    res.setHeader("Cache-Control", "private, max-age=600");
+    res.json({ preview: cached.preview });
+    return;
+  }
+  if (cached) tiktokPreviewCache.delete(url);
+
+  try {
+    const preview = await fetchTikTokVideoPreview(url);
+    if (!preview) {
+      res.json({ preview: null });
+      return;
+    }
+    rememberTikTokPreview(url, preview);
+    res.setHeader("Cache-Control", "private, max-age=600");
+    res.json({ preview });
+  } catch (err) {
+    req.log.warn({ err }, "TikTok public preview unavailable");
+    // Provider metadata is an enhancement only. Return the existing feed item
+    // without preview data instead of making a public attachment unavailable.
+    res.json({ preview: null });
+  }
+});
 
 // GET /community/posts — paginated feed with business enrichment
 router.get("/community/posts", async (req: Request, res: Response) => {

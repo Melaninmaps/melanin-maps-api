@@ -37,6 +37,18 @@ describe("Community client contract", () => {
     expect(media).toContain('rel="noopener noreferrer"');
   });
 
+  it("serves a bounded authenticated TikTok cover preview without fetching arbitrary member URLs", () => {
+    const route = source("../routes/community.ts");
+    const preview = source("../community/tiktokPreview.ts");
+    expect(route).toContain('router.get("/community/social-video-preview"');
+    expect(route).toContain("fetchTikTokVideoPreview(url)");
+    expect(route).toContain("TIKTOK_PREVIEW_CACHE_MAX_ENTRIES");
+    expect(preview).toContain('https://www.tiktok.com/oembed?url=');
+    expect(preview).toContain("isCanonicalTikTokVideoUrl(rawUrl)");
+    expect(preview).toContain("TIKTOK_THUMBNAIL_HOST_SUFFIXES");
+    expect(preview).toContain('redirect: "error"');
+  });
+
   it("keeps thread retrieval authenticated, private, and client-serializable", () => {
     const route = source("../routes/community.ts");
     expect(route).toContain('router.get("/community/thread/:threadId"');

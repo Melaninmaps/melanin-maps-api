@@ -6,7 +6,7 @@ import {
   MessageSquare, Heart, Users, Calendar, Globe, ChevronDown,
   X, Image as ImageIcon, Video, Hash, MapPin, Send, Loader2,
   Plus, AlertCircle, Smile, MoreHorizontal, Flag, Trash2,
-  TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2, ChevronLeft
+  TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2, ChevronLeft, SlidersHorizontal
 } from "lucide-react";
 import { CommentsDialog } from "@/components/community/CommentsDialog";
 import { CommunityMedia } from "@/components/community/CommunityMedia";
@@ -66,6 +66,18 @@ interface Group {
   isPrivate?: boolean;
 }
 
+type CommunityFeedDisplay = "text_first" | "mixed" | "video_first";
+
+const COMMUNITY_FEED_DISPLAY_OPTIONS: ReadonlyArray<{
+  id: CommunityFeedDisplay;
+  label: string;
+  description: string;
+}> = [
+  { id: "text_first", label: "Conversation", description: "Read captions before media" },
+  { id: "mixed", label: "Community Mix", description: "Lead with shared media when a post includes it" },
+  { id: "video_first", label: "Watch", description: "Lead with media in a viewing-focused feed" },
+];
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -122,10 +134,11 @@ function normalizeMediaUrls(value: unknown): string[] | undefined {
 }
 
 // ── Post Card ──────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpenComments }: {
+function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpenComments, presentation = "mixed" }: {
   post: Post; onLike: (id: string) => void; onDelete: (id: string) => void;
   currentUserId?: string; onHashtagClick: (tag: string) => void;
   onOpenComments: (post: Post) => void;
+  presentation?: CommunityFeedDisplay;
 }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.upvotes);
@@ -133,6 +146,16 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
   const [showWarning, setShowWarning] = useState(post.hasContentWarning ?? false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
   const { toast } = useToast();
+  const media = post.mediaUrls && post.mediaUrls.length > 0 ? (
+    <div className={`grid gap-1 mx-4 mb-3 rounded-xl overflow-hidden ${post.mediaUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+      {post.mediaUrls.slice(0, 4).map((url, i) => (
+        <CommunityMedia key={url} url={url} index={i} />
+      ))}
+    </div>
+  ) : null;
+  // This account-level choice changes only the order of presentation inside the
+  // same permitted post card. It does not change post eligibility or ranking.
+  const showMediaBeforeText = Boolean(media) && presentation !== "text_first";
 
   const handleLike = () => {
     setLiked(l => !l);
@@ -263,6 +286,8 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
         </div>
       )}
 
+      {showMediaBeforeText ? media : null}
+
       {/* Content */}
       <div className="px-4 pb-3">
         <p className="text-sm text-[#3A1F0E] leading-relaxed whitespace-pre-wrap">{post.content}</p>
@@ -279,14 +304,7 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
         )}
       </div>
 
-      {/* Media */}
-      {post.mediaUrls && post.mediaUrls.length > 0 && (
-        <div className={`grid gap-1 mx-4 mb-3 rounded-xl overflow-hidden ${post.mediaUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {post.mediaUrls.slice(0, 4).map((url, i) => (
-            <CommunityMedia key={url} url={url} index={i} />
-          ))}
-        </div>
-      )}
+      {!showMediaBeforeText ? media : null}
 
       {/* Footer */}
       <div className="flex items-center gap-4 px-4 py-3 border-t border-[#3A1F0E]/6">
@@ -840,6 +858,49 @@ export default function Community() {
   const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
   const [trending, setTrending] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
+  const [showFeedControls, setShowFeedControls] = useState(false);
+  const [savingFeedDisplay, setSavingFeedDisplay] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void authenticatedFetch(`${BASE}api/users/me/content-preferences`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({})) as { communityFeedDisplay?: unknown };
+        if (active && response.ok && ["text_first", "mixed", "video_first"].includes(String(body.communityFeedDisplay))) {
+          setCommunityFeedDisplay(body.communityFeedDisplay as CommunityFeedDisplay);
+        }
+      })
+      .catch(() => {
+        // A balanced feed remains available if the private preference cannot load.
+      });
+    return () => { active = false; };
+  }, [isAuthenticated]);
+
+  const selectCommunityFeedDisplay = async (next: CommunityFeedDisplay) => {
+    if (savingFeedDisplay || next === communityFeedDisplay) {
+      setShowFeedControls(false);
+      return;
+    }
+    const previous = communityFeedDisplay;
+    setCommunityFeedDisplay(next);
+    setSavingFeedDisplay(true);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/users/me/content-preferences`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ communityFeedDisplay: next }),
+      });
+      if (!response.ok) throw new Error("Could not save Community display preference");
+      setShowFeedControls(false);
+    } catch {
+      setCommunityFeedDisplay(previous);
+      toast({ title: "Could not save Community view", description: "Your posts have not changed. Please try again.", variant: "destructive" });
+    } finally {
+      setSavingFeedDisplay(false);
+    }
+  };
 
   const loadPosts = useCallback(async () => {
     setLoadErrorStatus(null);
@@ -1035,7 +1096,19 @@ export default function Community() {
                     {mode === "everyone" ? "Everyone" : "Following"}
                   </button>
                 ))}
-                <button onClick={handleRefresh} className="ml-auto p-2 rounded-xl bg-white border border-[#3A1F0E]/8 text-[#3A1F0E]/40 hover:text-[#CA922B] transition-colors">
+                {isAuthenticated && (
+                  <button
+                    type="button"
+                    data-testid="community-settings-open"
+                    onClick={() => setShowFeedControls(true)}
+                    aria-label="Open Community settings"
+                    className="ml-auto flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:text-[#CA922B] hover:border-[#CA922B]/40 transition-colors"
+                  >
+                    <SlidersHorizontal className="w-4 h-4" />
+                    <span className="hidden sm:inline">Feed settings</span>
+                  </button>
+                )}
+                <button onClick={handleRefresh} aria-label="Refresh Community feed" className="p-2 rounded-xl bg-white border border-[#3A1F0E]/8 text-[#3A1F0E]/40 hover:text-[#CA922B] transition-colors">
                   <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
                 </button>
               </div>
@@ -1118,6 +1191,7 @@ export default function Community() {
                   <PostCard key={post.id} post={post}
                     onLike={handleLike} onDelete={handleDelete}
                     currentUserId={(auth?.user as any)?.id}
+                    presentation={communityFeedDisplay}
                     onHashtagClick={tag => setHashtagFilter(hashtagFilter === tag ? null : tag)}
                     onOpenComments={selected => setCommentTarget({ postId: selected.id, label: selected.content })}
                   />
@@ -1129,6 +1203,42 @@ export default function Community() {
 
         {!searchActive && activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
       </div>
+
+      {showFeedControls && (
+        <div data-testid="community-settings-dialog" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4" onClick={() => !savingFeedDisplay && setShowFeedControls(false)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="community-settings-title" className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p id="community-settings-title" className="font-serif text-lg font-bold text-[#2B1507]">Community Settings</p>
+                <p className="mt-1 text-sm leading-5 text-[#3A1F0E]/60">Choose whether shared posts feel conversation-first, balanced, or video-first. This changes presentation only. It never changes which posts are permitted, their privacy, or their ranking.</p>
+              </div>
+              <button type="button" onClick={() => setShowFeedControls(false)} disabled={savingFeedDisplay} aria-label="Close Community settings" className="rounded-full bg-[#FAF6EF] p-2 text-[#3A1F0E]/60 hover:text-[#2B1507] disabled:opacity-50"><X className="h-4 w-4" /></button>
+            </div>
+            <div role="radiogroup" aria-label="Choose your Community experience" className="mt-5 space-y-2">
+              {COMMUNITY_FEED_DISPLAY_OPTIONS.map((option) => {
+                const selected = communityFeedDisplay === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    disabled={savingFeedDisplay}
+                    onClick={() => { void selectCommunityFeedDisplay(option.id); }}
+                    className={`w-full rounded-2xl border p-4 text-left transition-colors disabled:opacity-60 ${selected ? "border-[#CA922B] bg-[#FFF8EC]" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/45"}`}
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-bold text-[#2B1507]">{option.label}</span>
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${selected ? "border-[#CA922B] bg-[#CA922B] text-white" : "border-[#3A1F0E]/25 text-transparent"}`}>✓</span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-[#3A1F0E]/60">{option.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Compose modal */}
       {showCompose && <ComposeModal groupId={activeGroupId ?? undefined} groupName={activeGroupId ? activeGroupName : undefined} onClose={() => setShowCompose(false)} onPost={p => setPosts(ps => [p, ...ps])} />}
