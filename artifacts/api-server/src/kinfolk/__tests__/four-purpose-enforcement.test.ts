@@ -17,6 +17,7 @@ describe("Kinfolk business-card intent boundary", () => {
       sources: [],
       libraryAction: null,
       intentClass: "business_discovery",
+      allowBusinessCards: true,
     });
 
     expect(result.recommendations).toMatchObject({
@@ -32,6 +33,7 @@ describe("Kinfolk business-card intent boundary", () => {
       sources: [],
       libraryAction: null,
       intentClass: "general_knowledge",
+      allowBusinessCards: false,
     });
 
     expect(result.recommendations).toBeNull();

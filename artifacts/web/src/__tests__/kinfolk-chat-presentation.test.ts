@@ -22,6 +22,10 @@ const travelPageSource = readFileSync(
   fileURLToPath(new URL("../pages/travel.tsx", import.meta.url)),
   "utf8",
 );
+const memoryManagerSource = readFileSync(
+  fileURLToPath(new URL("../components/kinfolk/KinfolkMemoryManager.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk chat presentation", () => {
   it("continues the original local search for both a clarification answer and Skip", () => {
@@ -74,6 +78,14 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("sessionId={sessionId}");
   });
 
+  it("keeps web continuity explicitly off by default and reversible", () => {
+    expect(memoryManagerSource).toContain("const [continuityEnabled, setContinuityEnabled] = useState(false)");
+    expect(memoryManagerSource).toContain('fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include" })');
+    expect(memoryManagerSource).toContain('method: "PUT", credentials: "include"');
+    expect(memoryManagerSource).toContain("body: JSON.stringify({ enabled })");
+    expect(memoryManagerSource).toContain("Off by default. Turn this on only if you want Kinfolk");
+  });
+
   it("renders deterministic business recommendations with active detail and website links", () => {
     expect(travelPageSource).toContain("biz.detailUrl");
     expect(travelPageSource).toContain("View details");
@@ -83,8 +95,11 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("Claimed · Not MWM verified");
     expect(travelPageSource).toContain("MWM verified");
     expect(travelPageSource).toContain("Why it surfaced:");
+    expect(travelPageSource).toContain("Know before you go:");
+    expect(travelPageSource).toContain("Confirm current hours, services, and availability");
     expect(travelPageSource).toContain('data-testid="kinfolk-business-result-view"');
-    expect(travelPageSource).toContain("resultView: data.resultView ?? null");
+    expect(travelPageSource).toContain("const businessCardsAllowed = canRenderKinfolkBusinessCards(responseMeta)");
+    expect(travelPageSource).toContain("resultView: businessCardsAllowed ? data.resultView ?? null : null");
     expect(travelPageSource).toContain("msg.recommendations && !msg.resultView");
     expect(travelPageSource).toContain("External sources are not MWM-verified business listings.");
   });

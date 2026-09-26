@@ -1,6 +1,10 @@
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
+import {
+  canRenderKinfolkBusinessCards,
+  type KinfolkResponseMeta,
+} from "@workspace/constants";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -170,6 +174,8 @@ export type ChatMessage = {
   needsClarification?: boolean;
   originalQuery?: string;
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+  /** Server decision metadata; clients fail closed when cards are not authorized. */
+  responseMeta?: KinfolkResponseMeta | null;
 };
 
 export type SessionSummary = {
@@ -298,6 +304,7 @@ export function useKinfolk() {
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+          responseMeta?: KinfolkResponseMeta | null;
         };
 
         if (data.sessionId) setSessionId(data.sessionId);
@@ -311,12 +318,14 @@ export function useKinfolk() {
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
         if (typeof data.queriesLimit === "number") setQueriesLimit(data.queriesLimit);
 
+        const responseMeta = data.responseMeta ?? null;
+        const businessCardsAllowed = canRenderKinfolkBusinessCards(responseMeta);
         const aiMsg: ChatMessage = {
           id: makeId(),
           role: "assistant",
           content: data.reply,
-          recommendations: data.recommendations ?? null,
-          resultView: data.resultView ?? null,
+          recommendations: businessCardsAllowed ? data.recommendations ?? null : null,
+          resultView: businessCardsAllowed ? data.resultView ?? null : null,
           followUpSuggestions: data.followUpSuggestions ?? [],
           smartPromotion: data.smartPromotion ?? null,
           taskAction: data.taskAction ?? null,
@@ -337,6 +346,7 @@ export function useKinfolk() {
           location: data.location ?? null,
           locationSource: data.locationSource ?? null,
           companionMemoryOffer: data.companionMemoryOffer ?? null,
+          responseMeta,
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);

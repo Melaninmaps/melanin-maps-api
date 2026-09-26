@@ -221,9 +221,12 @@ function BusinessCard({
         <Text style={[bizStyles.matchReason, { color: colors.mutedForeground }]}>Why it surfaced: {biz.matchReasons.join(" · ")}</Text>
       )}
       <View style={[bizStyles.mustTry, { backgroundColor: GOLD + "14", borderColor: GOLD + "33" }]}>
-        <Ionicons name="star" size={12} color={GOLD} />
+        <Ionicons name="information-circle-outline" size={13} color={GOLD} />
         <Text style={[bizStyles.mustTryText, { color: colors.text }]}>
-          <Text style={{ fontFamily: "Inter_600SemiBold" }}>Must try: </Text>{biz.mustTry}
+          <Text style={{ fontFamily: "Inter_600SemiBold" }}>Know before you go: </Text>
+          {biz.mustTry?.trim() || (biz.website
+            ? "Confirm current hours, services, and availability on the official website before you go."
+            : "Open the Mapping With Melanin listing to confirm the currently documented details before you go.")}
         </Text>
       </View>
       {(biz.id || biz.website) && (

@@ -172,7 +172,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(approvedLookup).toBeGreaterThan(intentStart);
     expect(approvedLookup).toBeLessThan(semanticPlanner);
     expect(approvedLookup).toBeLessThan(providerCall);
-    expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*!shouldResearchInLibrary\s*&&\s*!namedBusiness/);
+    expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*!shouldResearchInLibrary\s*&&\s*decisionPlan\.kind !== "platform_policy"\s*&&\s*!namedBusiness/);
     expect(routeSource).toContain("requiresCurrentResearch,");
     expect(chatRoute).toMatch(/intentClass === "general_knowledge"\s*&&\s*requiresCurrentResearch\(researchContextMessage\)/);
     expect(chatRoute).toContain('answerMode: "approved_library"');
@@ -281,6 +281,7 @@ describe("Kinfolk recommendation enforcement", () => {
       sources: [],
       libraryAction: null,
       intentClass: "general_knowledge",
+      allowBusinessCards: false,
     });
 
     expect(enforced.recommendations).toBeNull();
@@ -297,6 +298,7 @@ describe("Kinfolk recommendation enforcement", () => {
       sources: [],
       libraryAction: null,
       intentClass: "business_discovery",
+      allowBusinessCards: true,
     });
 
     expect(enforced.rejectedRecommendations).toBe(1);

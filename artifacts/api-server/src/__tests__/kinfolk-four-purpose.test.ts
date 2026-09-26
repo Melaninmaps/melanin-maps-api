@@ -173,6 +173,7 @@ describe("enforceKinfolkResponse — integration", () => {
       sources: [{ id: "src-1", title: "Google", url: "https://maps.google.com/?place_id=place-1", label: "maps" }],
       libraryAction: null,
       intentClass: "business_discovery",
+      allowBusinessCards: true,
     });
     expect(result.recommendations?.businesses.length).toBe(1);
     expect(result.rejectedRecommendations).toBe(1);
@@ -188,6 +189,7 @@ describe("enforceKinfolkResponse — integration", () => {
       sources: [],
       libraryAction: null,
       intentClass: "safety_emergency",
+      allowBusinessCards: false,
     });
     expect(result.safetyNotice).toMatch(/emergency services/i);
     expect(result.reply).toMatch(/emergency services/i);
@@ -201,6 +203,7 @@ describe("enforceKinfolkResponse — integration", () => {
       sources: [],
       libraryAction: null,
       intentClass: "business_discovery",
+      allowBusinessCards: true,
     });
     expect(result.reply).toBe("Here are a few places to consider.");
     expect(result.sourceNote).toMatch(/^Source note: General information only;/);
@@ -214,6 +217,7 @@ describe("enforceKinfolkResponse — integration", () => {
       sources: [],
       libraryAction: null,
       intentClass: "culture_entertainment",
+      allowBusinessCards: false,
     });
     expect(result.reply).toBe("That sounds like a great idea for your weekend.");
     expect(result.sourceNote).toBeNull();
@@ -227,6 +231,7 @@ describe("enforceKinfolkResponse — integration", () => {
       sources: [],
       libraryAction: null,
       intentClass: "business_discovery",
+      allowBusinessCards: true,
     });
     expect(result.recommendations?.businesses).toHaveLength(1);
     expect(result.sourceNote).toBeNull();
@@ -240,6 +245,7 @@ describe("enforceKinfolkResponse — integration", () => {
       sources: [{ id: "src-1", title: "Official source", url: "https://example.org/source", label: "official" }],
       libraryAction: null,
       intentClass: "current_information",
+      allowBusinessCards: false,
     });
     expect(result.educationalStatus).toBe("grounded");
     expect(result.sourceNote).toBeNull();

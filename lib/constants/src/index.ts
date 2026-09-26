@@ -185,3 +185,12 @@ export type {
   MapEssentialServiceCategory,
   MapEssentialServiceCategoryDefinition,
 } from "./map-essential-services";
+
+// ── Kinfolk client-safe response metadata ─────────────────────────────────
+export { canRenderKinfolkBusinessCards } from "./kinfolk-chat-contract";
+export type {
+  KinfolkAnswerMode,
+  KinfolkPlanKind,
+  KinfolkResponseMeta,
+  KinfolkRetrievalKind,
+} from "./kinfolk-chat-contract";

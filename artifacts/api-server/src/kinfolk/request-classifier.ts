@@ -66,12 +66,15 @@ const BRUNCH_CULTURAL_RE =
 // the discovery rules below. Keep this narrow: an actual "find/show/recommend"
 // request remains a directory search.
 const PLATFORM_POLICY_CONTEXT_RE =
-  /\b(?:you(?:'re| are)\s+built\s+to|built\s+to|how\s+would\s+(?:a|the)\s+user|how\s+should\s+(?:we|the\s+app|kinfolk)|what\s+would\s+be\s+(?:your|the)\s+suggested\s+(?:method|approach)|how\s+do\s+we\s+handle|(?:platform|app|kinfolk)\s+(?:policy|approach|method|model))\b/i;
+  /\b(?:you(?:'re| are)\s+built\s+to|built\s+to|how\s+would\s+(?:a|the)\s+user|how\s+should\s+(?:we|the\s+app|kinfolk)|what\s+would\s+be\s+(?:your|the)\s+suggested\s+(?:method|approach)|how\s+do\s+we\s+handle|(?:platform|app|kinfolk|mwm|mapping\s+with\s+melanin)\s+(?:policy|approach|method|model)|how\s+can\s+(?:mwm|mapping\s+with\s+melanin|kinfolk)\s+(?:protect|balance)|(?:protect|balance)\s+(?:minority|black|diaspora)[-\s]?owned\s+businesses?)\b/i;
 const PLATFORM_POLICY_SUBJECT_RE =
   /\b(?:promot(?:e|ing|ion)|recommend(?:ation|ing)?|support\s+lens|ownership|minority[-\s]?owned|black[-\s]?owned|business(?:es)?|listing(?:s)?|directory|catalog)\b/i;
+const DIRECT_DISCOVERY_IMPERATIVE_RE =
+  /^\s*(?:show|find|recommend|locate|search\s+for|where\s+can\s+i\s+(?:find|go|get))\b/i;
 
 export function isKinfolkPlatformPolicyQuestion(message: string): boolean {
   return (
+    !DIRECT_DISCOVERY_IMPERATIVE_RE.test(message) &&
     PLATFORM_POLICY_CONTEXT_RE.test(message) &&
     PLATFORM_POLICY_SUBJECT_RE.test(message)
   );

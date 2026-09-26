@@ -73,6 +73,10 @@ import {
   buildDiscoveryInstruction,
 } from "../kinfolk/request-classifier";
 import {
+  buildKinfolkDecisionRetrievalPlan,
+  kinfolkDecisionResponseMeta,
+} from "../kinfolk/decision-retrieval-plan";
+import {
   destinationForEnabledSession,
   getHeritageCity,
   resolveTurnGeography,
@@ -6375,6 +6379,15 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     taskAction: null,
     libraryAction: null,
     intentClass: "business_discovery",
+    responseMeta: {
+      schemaVersion: 1,
+      planKind: "direct_discovery",
+      answerMode: "governed_discovery",
+      retrieval: "governed_business_catalog",
+      allowBusinessCards: true,
+      evidenceRequired: false,
+      requiresClarification: false,
+    },
     sources: discoveryResult.sources,
     sourceNote: discoveryResult.sourceNote,
     educationalStatus: discoveryResult.educationalStatus,
@@ -7311,6 +7324,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // a concise explanation of why sources apply. It never reads profile data or
     // changes the existing health and education evidence safeguards.
     const lifeGuidance = getLifeIntentGuidance(message);
+    // This server-owned plan is the only authority that can permit directory
+    // cards. It runs before Library lookup, catalog assembly, and model prompting
+    // so a policy tradeoff can never be misread as a local-business search.
+    const decisionPlan = buildKinfolkDecisionRetrievalPlan({
+      message,
+      request: earlyDecision,
+      evidence: evidenceRoute,
+      lifeGuidance,
+    });
     const memberCtx = req.user?.id
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
       : {
@@ -7347,6 +7369,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (
       intentClass === "general_knowledge" &&
       !shouldResearchInLibrary &&
+      decisionPlan.kind !== "platform_policy" &&
       !namedBusiness
     ) {
       const approvedLibraryAnswer = await findApprovedLibraryAnswer({
@@ -9900,6 +9923,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       sources: assembledSources,
       libraryAction,
       intentClass,
+      allowBusinessCards: decisionPlan.allowBusinessCards,
     });
     reply = enforced.reply;
     if (isKinfolkFormalDocumentRequest(message)) {
@@ -10013,6 +10037,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Intent classification — lets the client know how this answer was governed.
       // Does not leak user data; intentClass is derived from the message only.
       intentClass,
+      // Additive, client-safe explanation of the server decision. It contains
+      // no raw question, personal memory, hidden source query, or catalog data.
+      responseMeta: kinfolkDecisionResponseMeta(decisionPlan),
       // Provenance note — required display text for high-consequence intents (legal/medical/
       // financial/emergency). Deterministic from intent class, never from model output.
       // Provenance note — deterministic per intent class, never derived from model output.

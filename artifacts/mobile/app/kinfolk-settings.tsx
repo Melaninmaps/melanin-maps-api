@@ -28,7 +28,6 @@ async function getAuthToken(): Promise<string | null> {
 }
 
 interface BehaviorSettings {
-  kinfolkMemoryEnabled: boolean;
   personalisedSuggestions: boolean;
 }
 
@@ -40,7 +39,6 @@ interface VoicePrefs {
 }
 
 const BEHAVIOR_DEFAULTS: BehaviorSettings = {
-  kinfolkMemoryEnabled: true,
   personalisedSuggestions: true,
 };
 
@@ -118,6 +116,8 @@ export default function KinfolkSettingsScreen() {
   const [behavior, setBehavior] = useState<BehaviorSettings>(BEHAVIOR_DEFAULTS);
   const [voice, setVoice] = useState<VoicePrefs>(VOICE_DEFAULTS);
   const [supportLens, setSupportLens] = useState<string[]>([]);
+  // Separate, affirmative consent: this does not reuse the generic settings flag.
+  const [continuityEnabled, setContinuityEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
   const behaviorSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -132,9 +132,10 @@ export default function KinfolkSettingsScreen() {
       const base = getApiBase();
       if (!token || !base) { setLoading(false); return; }
 
-      const [settingsRes, prefsRes] = await Promise.all([
+      const [settingsRes, prefsRes, continuityRes] = await Promise.all([
         fetch(`${base}/api/users/settings`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${base}/api/kinfolk/preferences`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${base}/api/kinfolk/continuity`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (settingsRes.ok) {
@@ -149,6 +150,10 @@ export default function KinfolkSettingsScreen() {
           setVoice(normalizeVoicePrefs(data.preferences));
           setSupportLens(Array.isArray(data.preferences.ownershipTypes) ? data.preferences.ownershipTypes : []);
         }
+      }
+      if (continuityRes.ok) {
+        const data = await continuityRes.json() as { enabled?: boolean };
+        setContinuityEnabled(data.enabled === true);
       }
     } catch {}
     finally { setLoading(false); }
@@ -195,6 +200,26 @@ export default function KinfolkSettingsScreen() {
       saveBehavior(next);
       return next;
     });
+  };
+
+  const updateContinuity = async (enabled: boolean) => {
+    const prior = continuityEnabled;
+    setContinuityEnabled(enabled);
+    try {
+      const token = await getAuthToken();
+      const base = getApiBase();
+      if (!token || !base) throw new Error("Please sign in again before changing Chat Memory.");
+      const response = await fetch(`${base}/api/kinfolk/continuity`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!response.ok) throw new Error("Chat Memory could not be updated.");
+      if (Platform.OS !== "web") Haptics.selectionAsync();
+    } catch (cause) {
+      setContinuityEnabled(prior);
+      Alert.alert("Chat Memory was not changed", cause instanceof Error ? cause.message : "Please try again.");
+    }
   };
 
   const updateVoice = (patch: Partial<VoicePrefs>) => {
@@ -251,7 +276,8 @@ export default function KinfolkSettingsScreen() {
       });
       const body = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) throw new Error(body.error ?? "Kinfolk could not reset. Please try again.");
-      setBehavior({ kinfolkMemoryEnabled: false, personalisedSuggestions: false });
+      setContinuityEnabled(false);
+      setBehavior({ personalisedSuggestions: false });
       setVoice(VOICE_DEFAULTS);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Kinfolk is fresh", "Memory and personalised suggestions are off until you choose to turn them back on.");
@@ -493,14 +519,14 @@ export default function KinfolkSettingsScreen() {
             <View style={styles.rowContent}>
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>Chat Memory</Text>
               <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
-                {behavior.kinfolkMemoryEnabled
-                  ? "KinfolkAI™ remembers your conversations to give better advice"
-                  : "Conversations are not saved — each chat starts fresh"}
+                {continuityEnabled
+                  ? "Kinfolk saves chat history and explicitly approved memories. You can turn this off anytime."
+                  : "Off by default. Kinfolk does not retain chat history or new memories until you turn this on."}
               </Text>
             </View>
-            <TouchableOpacity activeOpacity={0.85} onPress={() => updateBehavior({ kinfolkMemoryEnabled: !behavior.kinfolkMemoryEnabled })}>
-              <View style={[styles.sw, { backgroundColor: behavior.kinfolkMemoryEnabled ? colors.primary : colors.border }]}>
-                <View style={[styles.swThumb, { transform: [{ translateX: behavior.kinfolkMemoryEnabled ? 20 : 2 }] }]} />
+            <TouchableOpacity activeOpacity={0.85} onPress={() => void updateContinuity(!continuityEnabled)}>
+              <View style={[styles.sw, { backgroundColor: continuityEnabled ? colors.primary : colors.border }]}>
+                <View style={[styles.swThumb, { transform: [{ translateX: continuityEnabled ? 20 : 2 }] }]} />
               </View>
             </TouchableOpacity>
           </View>

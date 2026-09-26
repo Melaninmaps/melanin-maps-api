@@ -8,6 +8,7 @@ const travelSource = readFileSync(fileURLToPath(new URL("../app/travel.tsx", imp
 const hookSource = readFileSync(fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)), "utf8");
 const detailSource = readFileSync(fileURLToPath(new URL("../app/business/[id].tsx", import.meta.url)), "utf8");
 const widgetSource = readFileSync(fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)), "utf8");
+const settingsSource = readFileSync(fileURLToPath(new URL("../app/kinfolk-settings.tsx", import.meta.url)), "utf8");
 
 describe("Expo Kinfolk business demo cards", () => {
   it("supports canonical detail, vetted website, unclaimed status, and match reasons", () => {
@@ -21,8 +22,11 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain("Unclaimed · Not MWM verified");
     expect(travelSource).toContain("MWM verified");
     expect(travelSource).toContain("Why it surfaced:");
+    expect(travelSource).toContain("Know before you go:");
+    expect(travelSource).toContain("Confirm current hours, services, and availability");
     expect(hookSource).toContain("resultView?: ConversationalBusinessResultView | null");
-    expect(hookSource).toContain("resultView: data.resultView ?? null");
+    expect(hookSource).toContain("const businessCardsAllowed = canRenderKinfolkBusinessCards(responseMeta)");
+    expect(hookSource).toContain("resultView: businessCardsAllowed ? data.resultView ?? null : null");
     expect(travelSource).toContain("<ConversationalResultCards view={msg.resultView}");
     expect(travelSource).toContain("recs && !msg.resultView");
     expect(travelSource).toContain("External sources are not MWM-verified business listings.");
@@ -42,6 +46,13 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(hookSource).toContain("companionMemoryOffer: data.companionMemoryOffer ?? null");
     expect(widgetSource).toContain("KinfolkCompanionMemoryOfferCard");
     expect(travelSource).toContain("KinfolkCompanionMemoryOfferCard");
+  });
+
+  it("keeps mobile chat continuity off by default and uses the dedicated consent API", () => {
+    expect(settingsSource).toContain("const [continuityEnabled, setContinuityEnabled] = useState(false)");
+    expect(settingsSource).toContain("/api/kinfolk/continuity");
+    expect(settingsSource).toContain('body: JSON.stringify({ enabled })');
+    expect(settingsSource).toContain("Off by default. Kinfolk does not retain chat history");
   });
 
   it("keeps Kinfolk voice modes discoverable and makes microphone failures visible", () => {

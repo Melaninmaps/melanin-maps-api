@@ -204,12 +204,14 @@ export function enforceKinfolkResponse(input: {
   sources: SafeSource[];
   libraryAction: Record<string, unknown> | null;
   intentClass: string;
+  /** Server-owned decision-plan permission; clients must also fail closed. */
+  allowBusinessCards: boolean;
 }) {
   const promotion = validatePromotionCandidates(input.modelRecommendations, input.catalog);
   // Business cards are navigation into the local directory, not a generic response
   // decoration. A model proposal can only surface when the server classified the
   // turn as an explicit business-discovery request.
-  const visibleBusinesses = input.intentClass === "business_discovery"
+  const visibleBusinesses = input.allowBusinessCards && input.intentClass === "business_discovery"
     ? promotion.businesses
     : [];
   const education = enforceEducationalSources(input.reply, input.sources, input.libraryAction);
@@ -218,7 +220,7 @@ export function enforceKinfolkResponse(input: {
   // governed local listing. Do not attach a source-limitation footer to a clearly
   // framed suggestion just because it has no external research citation.
   const hasGovernedLocalSupport =
-    input.intentClass === "business_discovery" && visibleBusinesses.length > 0;
+    input.allowBusinessCards && input.intentClass === "business_discovery" && visibleBusinesses.length > 0;
   return {
     reply: safety ? `${education.reply}\n\n${safety}` : education.reply,
     recommendations: visibleBusinesses.length > 0 ? { businesses: visibleBusinesses } : null,

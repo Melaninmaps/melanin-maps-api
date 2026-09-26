@@ -4,7 +4,7 @@ import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
-  Mic, MicOff, Square, ImagePlus, Archive, Pin, RotateCcw,
+  Mic, MicOff, Square, ImagePlus, Archive, Pin, RotateCcw, Info,
 } from "lucide-react";
 import {
   MwmHome, MwmPlane, MwmBriefcase, MwmStore,
@@ -50,6 +50,10 @@ import {
 } from "@/lib/kinfolkVoicePreferences";
 import { createVoicePlaybackGuard } from "@/lib/voicePlaybackGuard";
 import { useAgeAssurance } from "@/hooks/useAgeAssurance";
+import {
+  canRenderKinfolkBusinessCards,
+  type KinfolkResponseMeta,
+} from "@workspace/constants";
 import {
   isNearConversationBottom,
   scrollConversationToBottom,
@@ -188,6 +192,8 @@ interface Message {
   privateFinancialGoalOffer?: boolean;
   /** Explicit private-memory offer for a named companion; never a profile mutation. */
   companionMemoryOffer?: CompanionMemoryOffer | null;
+  /** Server decision metadata; the client fails closed for unauthorized cards. */
+  responseMeta?: KinfolkResponseMeta | null;
 }
 interface Session {
   id: string;
@@ -834,8 +840,10 @@ function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback
             <p className="mb-3 text-[11px] leading-relaxed text-[#3A1F0E]/65"><strong>Why it surfaced:</strong> {biz.matchReasons.join(" · ")}</p>
           )}
           <div className="bg-[#FAF6EF] rounded-xl p-2.5 text-xs text-[#3A1F0E]/80 flex items-start gap-1.5 mb-3">
-            <Sparkles size={12} className="text-[#CA922B] shrink-0 mt-0.5" />
-            <span><strong>Try:</strong> {biz.mustTry}</span>
+            <Info size={12} className="text-[#CA922B] shrink-0 mt-0.5" />
+            <span><strong>Know before you go:</strong> {biz.mustTry?.trim() || (biz.website
+              ? " Confirm current hours, services, and availability on the official website before you go."
+              : " Open the Mapping With Melanin listing to confirm the currently documented details before you go.")}</span>
           </div>
           <div className="mb-3 flex flex-wrap gap-2">
             {biz.detailUrl && <Link href={biz.detailUrl} className="inline-flex items-center gap-1 rounded-full bg-[#2B1507] px-3 py-1 text-xs font-semibold text-white">View details <ChevronRight size={11} /></Link>}
@@ -1767,6 +1775,7 @@ function TravelPage() {
         degraded?: boolean;
         degradedReason?: string | null;
         companionMemoryOffer?: CompanionMemoryOffer | null;
+        responseMeta?: KinfolkResponseMeta | null;
       };
 
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
@@ -1788,11 +1797,13 @@ function TravelPage() {
       }
       // Capture the ID so we can wire the clarifier to this specific message.
       const assistantMsgId = crypto.randomUUID();
+      const responseMeta = data.responseMeta ?? null;
+      const businessCardsAllowed = canRenderKinfolkBusinessCards(responseMeta);
       requestConversationScroll("completion");
       setMessages(prev => [...prev, {
         id: assistantMsgId, role: "assistant",
-        content: replyContent, recommendations: data.recommendations ?? null,
-        resultView: data.resultView ?? null,
+        content: replyContent, recommendations: businessCardsAllowed ? data.recommendations ?? null : null,
+        resultView: businessCardsAllowed ? data.resultView ?? null : null,
         itinerary: data.itinerary ?? null,
         structuredContent: data.structuredContent ?? null,
         mediaLinks: data.mediaLinks ?? [],
@@ -1821,6 +1832,7 @@ function TravelPage() {
         experience: data.experience ?? null,
         privateFinancialGoalOffer: Boolean(data.reply?.trim()) && isExplicitSavingsGoalPrompt(trimmed),
         companionMemoryOffer: data.companionMemoryOffer ?? null,
+        responseMeta,
       }]);
       if (shouldAutoSpeakNewReply({
         autoSpeak: prefs.autoSpeak,
