@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap');
 
-@import "tailwindcss";
+/* Only scan authored web source. Generated dist assets otherwise enter Tailwind's
+   automatic source scan and make the stylesheet fingerprint alternate by build. */
+@import "tailwindcss" source(none);
+@source "./";
+@source "../index.html";
 @import "tw-animate-css";
 @import "./styles/mwm-gold-feather.css";
 @plugin "@tailwindcss/typography";
