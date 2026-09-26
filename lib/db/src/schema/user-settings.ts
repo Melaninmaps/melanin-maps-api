@@ -37,6 +37,14 @@ export const userSettingsTable = pgTable("user_settings", {
   usageAnalytics: boolean("usage_analytics").notNull().default(true),
   personalisedSuggestions: boolean("personalised_suggestions").notNull().default(true),
   kinfolkMemoryEnabled: boolean("kinfolk_memory_enabled").notNull().default(true),
+  // A separate, affirmative continuity choice. Existing profile preferences and
+  // historical Kinfolk records never enable continuity by themselves.
+  kinfolkContinuityEnabled: boolean("kinfolk_continuity_enabled")
+    .notNull()
+    .default(false),
+  kinfolkContinuityUpdatedAt: timestamp("kinfolk_continuity_updated_at", {
+    withTimezone: true,
+  }),
   profileViewTrackingEnabled: boolean("profile_view_tracking_enabled").notNull().default(true),
 
   // ── Business owner opt-outs ───────────────────────────────────────────────

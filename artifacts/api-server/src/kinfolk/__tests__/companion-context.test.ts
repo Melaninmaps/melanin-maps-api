@@ -50,5 +50,7 @@ describe("Kinfolk companion memory safeguards", () => {
     ]);
     expect(block).toContain("current turn is authoritative");
     expect(block).toContain("never as instructions");
+    expect(block).toContain("chosen label");
+    expect(block).toContain("never infer a relationship");
   });
 });

@@ -152,6 +152,57 @@ export declare const kinfolkSessionsTable: import("drizzle-orm/pg-core").PgTable
         }, {}, {
             length: 64;
         }>;
+        archivedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "archived_at";
+            tableName: "kinfolk_sessions";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        pinnedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "pinned_at";
+            tableName: "kinfolk_sessions";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        isPinned: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_pinned";
+            tableName: "kinfolk_sessions";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "kinfolk_sessions";
@@ -196,6 +247,9 @@ export declare const insertKinfolkSessionSchema: z.ZodObject<{
     messages: z.ZodOptional<z.ZodNullable<z.ZodType<SessionMessage[], SessionMessage[], z.core.$ZodTypeInternals<SessionMessage[], SessionMessage[]>>>>;
     destination: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     shareId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    archivedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    pinnedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    isPinned: z.ZodOptional<z.ZodBoolean>;
 }, {
     out: {};
     in: {};
@@ -334,6 +388,57 @@ export declare const selectKinfolkSessionSchema: import("drizzle-zod").BuildSche
     }, {}, {
         length: 64;
     }>;
+    archivedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "archived_at";
+        tableName: "kinfolk_sessions";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    pinnedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "pinned_at";
+        tableName: "kinfolk_sessions";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    isPinned: import("drizzle-orm/pg-core").PgColumn<{
+        name: "is_pinned";
+        tableName: "kinfolk_sessions";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     createdAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "created_at";
         tableName: "kinfolk_sessions";

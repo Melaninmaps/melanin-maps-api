@@ -176,6 +176,9 @@ export type SessionSummary = {
   id: string;
   title: string | null;
   destination: string | null;
+  archivedAt?: string | null;
+  pinnedAt?: string | null;
+  isPinned?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -190,6 +193,7 @@ export function useKinfolk() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [queriesUsed, setQueriesUsed] = useState<number | null>(null);
   const [queriesLimit, setQueriesLimit] = useState<number>(3);
   /** Holds the original question text when KINFOLK_BUSY fires — lets the UI pre-fill the input for retry. */
@@ -426,12 +430,12 @@ export function useKinfolk() {
     } catch {}
   }, [sessionId]);
 
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (view: "active" | "archived" = "active") => {
     const token = await getToken();
     const apiBase = getApiBase();
     if (!token || !apiBase) return;
     try {
-      const res = await fetch(`${apiBase}/api/kinfolk/sessions`, {
+      const res = await fetch(`${apiBase}/api/kinfolk/sessions?view=${view}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -440,6 +444,56 @@ export function useKinfolk() {
       }
     } catch {}
   }, []);
+
+  const loadKinfolkContinuity = useCallback(async () => {
+    const token = await getToken();
+    const apiBase = getApiBase();
+    if (!token || !apiBase) return;
+    try {
+      const res = await fetch(`${apiBase}/api/kinfolk/continuity`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { enabled?: boolean };
+      setKinfolkContinuityEnabled(data.enabled === true);
+    } catch {}
+  }, []);
+
+  const setKinfolkContinuity = useCallback(async (enabled: boolean): Promise<boolean> => {
+    const token = await getToken();
+    const apiBase = getApiBase();
+    if (!token || !apiBase) return false;
+    try {
+      const res = await fetch(`${apiBase}/api/kinfolk/continuity`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) return false;
+      setKinfolkContinuityEnabled(enabled);
+      setSessions([]);
+      if (enabled) await loadSessions();
+      return true;
+    } catch { return false; }
+  }, [loadSessions]);
+
+  const organizeSession = useCallback(async (
+    id: string,
+    action: "archive" | "restore" | "pin" | "unpin",
+  ): Promise<boolean> => {
+    const token = await getToken();
+    const apiBase = getApiBase();
+    if (!token || !apiBase) return false;
+    try {
+      const res = await fetch(`${apiBase}/api/kinfolk/sessions/${encodeURIComponent(id)}/organization`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) await loadSessions();
+      return res.ok;
+    } catch { return false; }
+  }, [loadSessions]);
 
   const loadSession = useCallback(async (id: string) => {
     const token = await getToken();
@@ -527,6 +581,7 @@ export function useKinfolk() {
     sessionId,
     isLoading,
     sessions,
+    kinfolkContinuityEnabled,
     queriesUsed,
     queriesLimit,
     /** When KINFOLK_BUSY/KINFOLK_RATE_LIMITED fires, holds the original question for retry. */
@@ -536,6 +591,9 @@ export function useKinfolk() {
     interruptCurrentReply,
     submitFeedback,
     loadSessions,
+    loadKinfolkContinuity,
+    setKinfolkContinuity,
+    organizeSession,
     loadSession,
     startNewSession,
     confirmTaskAction,

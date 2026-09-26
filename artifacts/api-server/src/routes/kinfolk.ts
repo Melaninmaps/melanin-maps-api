@@ -35,6 +35,8 @@ import {
   kinfolkPrivateMemoriesTable,
   kinfolkFeedbackTable,
   kinfolkResponseFeedbackTable,
+  founderProductKnowledgeTable,
+  founderProductKnowledgeAuditTable,
   savedPlacesTable,
   businessesTable,
   businessIdentityTable,
@@ -46,7 +48,7 @@ import {
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
-import { eq, desc, and, ilike, or, inArray, isNull, gt } from "drizzle-orm";
+import { eq, desc, and, ilike, or, inArray, isNull, isNotNull, gt } from "drizzle-orm";
 import {
   getKnowledgeGraphContext,
   renderKnowledgeGraphContext,
@@ -320,10 +322,12 @@ import {
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
   buildKinfolkFormalResponseContract,
+  buildKinfolkNaturalConversationContract,
   isKinfolkFormalDocumentRequest,
   normalizeKinfolkFormalDocumentReply,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import { buildKinfolkCurrentTurnCorrectionInstruction } from "../kinfolk/current-turn-correction";
 import {
   KINFOLK_VOICE_PREVIEW_TEXT,
   normalizeKinfolkSpeechRequest,
@@ -333,6 +337,7 @@ import {
 import { buildKendrickDrakeCulturalConsensusAnswer } from "../kinfolk/cultural-consensus-answer";
 import { buildCulturalConflictClarification } from "../kinfolk/cultural-conflict-clarification";
 import { buildKinfolkProductIdentityResponse } from "../kinfolk/product-identity-response";
+import { matchFounderApprovedProductKnowledge } from "../kinfolk/founder-product-knowledge";
 import {
   buildLeanGeneralChatPrompt,
   buildLeanGeneralHistory,
@@ -426,6 +431,9 @@ interface SessionsCacheEntry {
       id: string;
       title: string | null;
       destination: string | null;
+      archivedAt: Date | null;
+      pinnedAt: Date | null;
+      isPinned: boolean;
       createdAt: Date;
       updatedAt: Date;
     }>
@@ -435,42 +443,110 @@ interface SessionsCacheEntry {
 const sessionsCache = new Map<string, SessionsCacheEntry>();
 const SESSIONS_CACHE_TTL_MS = 15_000;
 
+// Continuity can be paused without breaking a live chat. These records are
+// server-memory-only, scoped to one authenticated member and expire quickly;
+// they are never written to Postgres, exposed in History, or reused after the
+// process restarts. They exist solely so “make that email more formal” can
+// revise the current conversation even when long-term continuity is off.
+type EphemeralKinfolkSession = {
+  userId: string;
+  messages: SessionMessage[];
+  destination: string | null;
+  expiresAt: number;
+};
+const ephemeralKinfolkSessions = new Map<string, EphemeralKinfolkSession>();
+const EPHEMERAL_KINFOLK_SESSION_TTL_MS = 2 * 60 * 60 * 1_000;
+const EPHEMERAL_KINFOLK_SESSION_LIMIT = 2_000;
+
+function readEphemeralKinfolkSession(
+  userId: string,
+  sessionId: string | undefined,
+): EphemeralKinfolkSession | null {
+  if (!sessionId) return null;
+  const value = ephemeralKinfolkSessions.get(sessionId);
+  if (!value || value.userId !== userId || value.expiresAt <= Date.now()) {
+    if (value) ephemeralKinfolkSessions.delete(sessionId);
+    return null;
+  }
+  return value;
+}
+
+function writeEphemeralKinfolkSession(
+  input: Omit<EphemeralKinfolkSession, "expiresAt">,
+  existingId?: string,
+): string {
+  if (ephemeralKinfolkSessions.size >= EPHEMERAL_KINFOLK_SESSION_LIMIT) {
+    const oldest = ephemeralKinfolkSessions.keys().next().value;
+    if (typeof oldest === "string") ephemeralKinfolkSessions.delete(oldest);
+  }
+  const id = existingId ?? crypto.randomUUID();
+  ephemeralKinfolkSessions.set(id, {
+    ...input,
+    messages: input.messages.slice(-16),
+    expiresAt: Date.now() + EPHEMERAL_KINFOLK_SESSION_TTL_MS,
+  });
+  return id;
+}
+
 export function invalidateSessionsCache(userId: string): void {
-  sessionsCache.delete(userId);
+  for (const cacheKey of sessionsCache.keys()) {
+    if (cacheKey.startsWith(`${userId}:`)) sessionsCache.delete(cacheKey);
+  }
 }
 
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of sessionsCache)
     if (v.expiresAt <= now) sessionsCache.delete(k);
+  for (const [k, v] of ephemeralKinfolkSessions)
+    if (v.expiresAt <= now) ephemeralKinfolkSessions.delete(k);
 }, 60_000).unref();
 
-async function getCachedSessions(userId: string): Promise<
+type KinfolkSessionView = "active" | "archived";
+
+async function getCachedSessions(
+  userId: string,
+  view: KinfolkSessionView,
+): Promise<
   Array<{
     id: string;
     title: string | null;
     destination: string | null;
+    archivedAt: Date | null;
+    pinnedAt: Date | null;
+    isPinned: boolean;
     createdAt: Date;
     updatedAt: Date;
   }>
 > {
   const now = Date.now();
-  const cached = sessionsCache.get(userId);
+  const cacheKey = `${userId}:${view}`;
+  const cached = sessionsCache.get(cacheKey);
   if (cached && cached.expiresAt > now) return cached.promise;
   const promise = db
     .select({
       id: kinfolkSessionsTable.id,
       title: kinfolkSessionsTable.title,
       destination: kinfolkSessionsTable.destination,
+      archivedAt: kinfolkSessionsTable.archivedAt,
+      pinnedAt: kinfolkSessionsTable.pinnedAt,
+      isPinned: kinfolkSessionsTable.isPinned,
       createdAt: kinfolkSessionsTable.createdAt,
       updatedAt: kinfolkSessionsTable.updatedAt,
     })
     .from(kinfolkSessionsTable)
-    .where(eq(kinfolkSessionsTable.userId, userId))
-    .orderBy(desc(kinfolkSessionsTable.updatedAt))
+    .where(
+      and(
+        eq(kinfolkSessionsTable.userId, userId),
+        view === "archived"
+          ? isNotNull(kinfolkSessionsTable.archivedAt)
+          : isNull(kinfolkSessionsTable.archivedAt),
+      ),
+    )
+    .orderBy(desc(kinfolkSessionsTable.isPinned), desc(kinfolkSessionsTable.updatedAt))
     .limit(30)
     .catch(() => []);
-  sessionsCache.set(userId, {
+  sessionsCache.set(cacheKey, {
     promise,
     expiresAt: now + SESSIONS_CACHE_TTL_MS,
   });
@@ -3890,6 +3966,7 @@ function buildSystemPrompt(opts: {
   // web mode selectors now share the same four values.
   const normalizedConversationMode = normalizeKinfolkConversationMode(voiceMode);
   let voiceInstructions = buildKinfolkConversationModePrompt(normalizedConversationMode);
+  const naturalConversationContract = buildKinfolkNaturalConversationContract();
 
   if (voiceMode === "local") {
     const localLang = localTerms
@@ -4344,7 +4421,9 @@ SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 
 ${voiceInstructions}
 
-${buildKinfolkEmotionalCheckInContract(normalizedConversationMode)}${
+${buildKinfolkEmotionalCheckInContract(normalizedConversationMode)}
+
+${naturalConversationContract}${
     languagePersonalization
       ? `
 
@@ -5108,6 +5187,8 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
         .values({
           userId,
           kinfolkMemoryEnabled: false,
+          kinfolkContinuityEnabled: false,
+          kinfolkContinuityUpdatedAt: new Date(),
           personalisedSuggestions: false,
           updatedAt: new Date(),
         })
@@ -5115,6 +5196,8 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
           target: userSettingsTable.userId,
           set: {
             kinfolkMemoryEnabled: false,
+            kinfolkContinuityEnabled: false,
+            kinfolkContinuityUpdatedAt: new Date(),
             personalisedSuggestions: false,
             updatedAt: new Date(),
           },
@@ -5142,6 +5225,265 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
   }
 });
 
+// ─── GET/PUT /api/kinfolk/continuity ──────────────────────────────────────────
+// Continuity is an affirmative, owner-controlled setting. It is independent of
+// legacy profile fields, so no existing chat, memory, or preference silently
+// starts influencing future Kinfolk replies.
+router.get("/kinfolk/continuity", async (req: Request, res: Response) => {
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const [settings] = await db
+      .select({
+        enabled: userSettingsTable.kinfolkContinuityEnabled,
+        updatedAt: userSettingsTable.kinfolkContinuityUpdatedAt,
+      })
+      .from(userSettingsTable)
+      .where(eq(userSettingsTable.userId, req.user.id))
+      .limit(1);
+    res.json({
+      enabled: settings?.enabled === true,
+      updatedAt: settings?.updatedAt ?? null,
+    });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to read Kinfolk continuity setting");
+    res.status(500).json({ error: "Failed to read Kinfolk continuity setting" });
+  }
+});
+
+router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  const enabled = (req.body as { enabled?: unknown }).enabled;
+  if (typeof enabled !== "boolean") {
+    return void res.status(400).json({
+      error: "A boolean enabled value is required.",
+      code: "KINFOLK_CONTINUITY_VALUE_REQUIRED",
+    });
+  }
+  try {
+    const updatedAt = new Date();
+    await db
+      .insert(userSettingsTable)
+      .values({
+        userId: req.user.id,
+        kinfolkContinuityEnabled: enabled,
+        kinfolkContinuityUpdatedAt: updatedAt,
+      })
+      .onConflictDoUpdate({
+        target: userSettingsTable.userId,
+        set: {
+          kinfolkContinuityEnabled: enabled,
+          kinfolkContinuityUpdatedAt: updatedAt,
+          updatedAt,
+        },
+      });
+    invalidatePrefsCache(req.user.id);
+    invalidateSessionsCache(req.user.id);
+    res.json({ enabled, updatedAt });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to update Kinfolk continuity setting");
+    res.status(500).json({ error: "Failed to update Kinfolk continuity setting" });
+  }
+});
+
+// ─── Founder product knowledge — administrator-only, approval required ───────
+function productKnowledgeSnapshot(record: typeof founderProductKnowledgeTable.$inferSelect) {
+  return {
+    question: record.question,
+    answer: record.answer,
+    keywords: record.keywords,
+    approved: record.approved,
+    archivedAt: record.archivedAt,
+  };
+}
+
+function normalizeFounderProductKeywords(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim().replace(/\s+/g, " "))
+    .filter((item) => item.length >= 2 && item.length <= 80))].slice(0, 20);
+}
+
+function requireFounderProductKnowledgeAdmin(req: Request, res: Response): boolean {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return false;
+  }
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Administrator access is required" });
+    return false;
+  }
+  return true;
+}
+
+router.get("/kinfolk/founder-product-knowledge", async (req: Request, res: Response) => {
+  if (!requireFounderProductKnowledgeAdmin(req, res)) return;
+  try {
+    const includeArchived = req.query.archived === "true";
+    const records = await db
+      .select()
+      .from(founderProductKnowledgeTable)
+      .where(includeArchived ? undefined : isNull(founderProductKnowledgeTable.archivedAt))
+      .orderBy(desc(founderProductKnowledgeTable.updatedAt))
+      .limit(100);
+    res.json({ records });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to load founder product knowledge");
+    res.status(500).json({ error: "Failed to load founder product knowledge" });
+  }
+});
+
+router.post("/kinfolk/founder-product-knowledge", async (req: Request, res: Response) => {
+  if (!requireFounderProductKnowledgeAdmin(req, res)) return;
+  const body = req.body as Record<string, unknown>;
+  const question = typeof body.question === "string" ? body.question.trim().replace(/\s+/g, " ") : "";
+  const answer = typeof body.answer === "string" ? body.answer.trim() : "";
+  if (question.length < 3 || question.length > 500 || answer.length < 3 || answer.length > 6000) {
+    return void res.status(400).json({
+      error: "Question and answer are required and must fit the approved length limits.",
+      code: "FOUNDER_PRODUCT_KNOWLEDGE_VALIDATION_FAILED",
+    });
+  }
+  try {
+    const [record] = await db
+      .insert(founderProductKnowledgeTable)
+      .values({
+        question,
+        answer,
+        keywords: normalizeFounderProductKeywords(body.keywords),
+        approved: false,
+        createdByUserId: req.user!.id,
+        updatedByUserId: req.user!.id,
+      })
+      .returning();
+    if (!record) throw new Error("Founder product knowledge insert returned no record");
+    await db.insert(founderProductKnowledgeAuditTable).values({
+      knowledgeId: record.id,
+      actorUserId: req.user!.id,
+      action: "created",
+      before: null,
+      after: productKnowledgeSnapshot(record),
+    });
+    res.status(201).json({ record });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to create founder product knowledge");
+    res.status(500).json({ error: "Failed to create founder product knowledge" });
+  }
+});
+
+router.patch("/kinfolk/founder-product-knowledge/:id", async (req: Request, res: Response) => {
+  if (!requireFounderProductKnowledgeAdmin(req, res)) return;
+  const body = req.body as Record<string, unknown>;
+  const question = typeof body.question === "string" ? body.question.trim().replace(/\s+/g, " ") : "";
+  const answer = typeof body.answer === "string" ? body.answer.trim() : "";
+  if (question.length < 3 || question.length > 500 || answer.length < 3 || answer.length > 6000) {
+    return void res.status(400).json({ error: "Question and answer are required." });
+  }
+  try {
+    const [before] = await db
+      .select()
+      .from(founderProductKnowledgeTable)
+      .where(eq(founderProductKnowledgeTable.id, String(req.params.id)))
+      .limit(1);
+    if (!before) return void res.status(404).json({ error: "Product knowledge record not found" });
+    const [record] = await db
+      .update(founderProductKnowledgeTable)
+      .set({
+        question,
+        answer,
+        keywords: normalizeFounderProductKeywords(body.keywords),
+        // Edited answers must be approved again before Kinfolk can use them.
+        approved: false,
+        updatedByUserId: req.user!.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(founderProductKnowledgeTable.id, before.id))
+      .returning();
+    if (!record) throw new Error("Founder product knowledge update returned no record");
+    await db.insert(founderProductKnowledgeAuditTable).values({
+      knowledgeId: record.id,
+      actorUserId: req.user!.id,
+      action: "updated",
+      before: productKnowledgeSnapshot(before),
+      after: productKnowledgeSnapshot(record),
+    });
+    res.json({ record });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to update founder product knowledge");
+    res.status(500).json({ error: "Failed to update founder product knowledge" });
+  }
+});
+
+router.post("/kinfolk/founder-product-knowledge/:id/approval", async (req: Request, res: Response) => {
+  if (!requireFounderProductKnowledgeAdmin(req, res)) return;
+  const approved = (req.body as { approved?: unknown }).approved;
+  if (typeof approved !== "boolean")
+    return void res.status(400).json({ error: "A boolean approved value is required." });
+  try {
+    const [before] = await db
+      .select()
+      .from(founderProductKnowledgeTable)
+      .where(eq(founderProductKnowledgeTable.id, String(req.params.id)))
+      .limit(1);
+    if (!before) return void res.status(404).json({ error: "Product knowledge record not found" });
+    const [record] = await db
+      .update(founderProductKnowledgeTable)
+      .set({ approved, updatedByUserId: req.user!.id, updatedAt: new Date() })
+      .where(eq(founderProductKnowledgeTable.id, before.id))
+      .returning();
+    if (!record) throw new Error("Founder product knowledge approval returned no record");
+    await db.insert(founderProductKnowledgeAuditTable).values({
+      knowledgeId: record.id,
+      actorUserId: req.user!.id,
+      action: approved ? "approved" : "unapproved",
+      before: productKnowledgeSnapshot(before),
+      after: productKnowledgeSnapshot(record),
+    });
+    res.json({ record });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to update founder product approval");
+    res.status(500).json({ error: "Failed to update founder product approval" });
+  }
+});
+
+router.post("/kinfolk/founder-product-knowledge/:id/archive", async (req: Request, res: Response) => {
+  if (!requireFounderProductKnowledgeAdmin(req, res)) return;
+  const archived = (req.body as { archived?: unknown }).archived;
+  if (typeof archived !== "boolean")
+    return void res.status(400).json({ error: "A boolean archived value is required." });
+  try {
+    const [before] = await db
+      .select()
+      .from(founderProductKnowledgeTable)
+      .where(eq(founderProductKnowledgeTable.id, String(req.params.id)))
+      .limit(1);
+    if (!before) return void res.status(404).json({ error: "Product knowledge record not found" });
+    const [record] = await db
+      .update(founderProductKnowledgeTable)
+      .set({
+        archivedAt: archived ? new Date() : null,
+        updatedByUserId: req.user!.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(founderProductKnowledgeTable.id, before.id))
+      .returning();
+    if (!record) throw new Error("Founder product knowledge archive returned no record");
+    await db.insert(founderProductKnowledgeAuditTable).values({
+      knowledgeId: record.id,
+      actorUserId: req.user!.id,
+      action: archived ? "archived" : "restored",
+      before: productKnowledgeSnapshot(before),
+      after: productKnowledgeSnapshot(record),
+    });
+    res.json({ record });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to archive founder product knowledge");
+    res.status(500).json({ error: "Failed to archive founder product knowledge" });
+  }
+});
+
 // ─── GET /api/kinfolk/sessions ────────────────────────────────────────────────
 // Cache: 15-second per-user single-flight via getCachedSessions(). Hit/miss logged.
 router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
@@ -5154,13 +5496,14 @@ router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
   try {
     const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(userId);
     if (!memoryEnabled) return void res.json({ sessions: [] });
+    const view: KinfolkSessionView = req.query.view === "archived" ? "archived" : "active";
     const now = Date.now();
-    const existingEntry = sessionsCache.get(userId);
+    const existingEntry = sessionsCache.get(`${userId}:${view}`);
     const cacheState: "hit" | "miss" | "coalesced" =
       existingEntry && existingEntry.expiresAt > now ? "hit" : "miss";
 
-    const sessions = await getCachedSessions(userId);
-    res.json({ sessions });
+    const sessions = await getCachedSessions(userId, view);
+    res.json({ sessions, view });
     logCacheMetric(req, {
       endpoint: "GET /kinfolk/sessions",
       cacheState,
@@ -5172,6 +5515,57 @@ router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch sessions");
     res.status(500).json({ error: "Failed to fetch sessions" });
+  }
+});
+
+// Archive, restore, pin, and unpin preserve the underlying session. These are
+// owner-only organizational controls; no account, session, or message is deleted.
+router.patch("/kinfolk/sessions/:id/organization", async (req: Request, res: Response) => {
+  if (!req.user?.id)
+    return void res.status(401).json({ error: "Authentication required" });
+  const action = (req.body as { action?: unknown }).action;
+  if (action !== "archive" && action !== "restore" && action !== "pin" && action !== "unpin") {
+    return void res.status(400).json({
+      error: "Use archive, restore, pin, or unpin.",
+      code: "KINFOLK_SESSION_ORGANIZATION_ACTION_INVALID",
+    });
+  }
+  try {
+    const continuityEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    if (!continuityEnabled)
+      return void res.status(403).json({
+        error: "Turn on Kinfolk continuity before organizing saved conversations.",
+        code: "KINFOLK_CONTINUITY_DISABLED",
+      });
+    const now = new Date();
+    const organizationUpdate = action === "archive"
+      ? { archivedAt: now, updatedAt: now }
+      : action === "restore"
+        ? { archivedAt: null, updatedAt: now }
+        : action === "pin"
+          ? { isPinned: true, pinnedAt: now, updatedAt: now }
+          : { isPinned: false, pinnedAt: null, updatedAt: now };
+    const [session] = await db
+      .update(kinfolkSessionsTable)
+      .set(organizationUpdate)
+      .where(
+        and(
+          eq(kinfolkSessionsTable.id, String(req.params.id)),
+          eq(kinfolkSessionsTable.userId, req.user.id),
+        ),
+      )
+      .returning({
+        id: kinfolkSessionsTable.id,
+        archivedAt: kinfolkSessionsTable.archivedAt,
+        isPinned: kinfolkSessionsTable.isPinned,
+        pinnedAt: kinfolkSessionsTable.pinnedAt,
+      });
+    if (!session) return void res.status(404).json({ error: "Session not found" });
+    invalidateSessionsCache(req.user.id);
+    res.json({ session, action });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to organize Kinfolk session");
+    res.status(500).json({ error: "Failed to organize Kinfolk session" });
   }
 });
 
@@ -5446,27 +5840,22 @@ async function resolveOwnerKinfolkMemoryAccess(userId: string) {
     readOwnerSetting: async () => {
       const [settings] = await db
         .select({
-          kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled,
+          kinfolkContinuityEnabled: userSettingsTable.kinfolkContinuityEnabled,
         })
         .from(userSettingsTable)
         .where(eq(userSettingsTable.userId, userId))
         .limit(1);
-      return settings?.kinfolkMemoryEnabled ?? null;
+      return settings?.kinfolkContinuityEnabled === true;
     },
   });
 }
 
 /**
- * Direct "remember …" statements have their own narrow runtime control. They
- * still honor the member's existing memory switch, but do not silently enable
- * retained conversation history in production.
+ * Direct "remember …" statements remain an item-level instruction, but they
+ * can only be retained while the owner has explicitly enabled continuity.
  */
 async function resolveOwnerExplicitMemberMemoryAccess(userId: string) {
-  // The authenticated member's direct `remember …` instruction is the
-  // item-level opt-in; do not require the separate session-history setting.
-  // Keep the userId parameter so the call site remains explicit about ownership.
-  void userId;
-  return resolveExplicitMemberMemoryAccess();
+  return resolveExplicitMemberMemoryAccess() && resolveOwnerKinfolkMemoryAccess(userId);
 }
 
 async function persistExplicitMemberMemory(input: {
@@ -5482,7 +5871,7 @@ async function persistExplicitMemberMemory(input: {
     return {
       remembered: false,
       reply:
-        "I heard you, but Kinfolk's direct-memory feature is temporarily unavailable. I have not saved that detail.",
+        "I heard you. Turn on Kinfolk continuity in your Memory settings if you want me to save that detail for future conversations. I have not saved it yet.",
     };
   }
 
@@ -5514,6 +5903,35 @@ async function persistExplicitMemberMemory(input: {
     reply:
       "I’ll remember that and use it only when it is genuinely relevant to a future question. You can review or forget it any time in Kinfolk settings.",
   };
+}
+
+async function findFounderApprovedProductAnswer(message: string): Promise<string | null> {
+  try {
+    const records = await db
+      .select({
+        id: founderProductKnowledgeTable.id,
+        question: founderProductKnowledgeTable.question,
+        answer: founderProductKnowledgeTable.answer,
+        keywords: founderProductKnowledgeTable.keywords,
+        approved: founderProductKnowledgeTable.approved,
+        archivedAt: founderProductKnowledgeTable.archivedAt,
+      })
+      .from(founderProductKnowledgeTable)
+      .where(
+        and(
+          eq(founderProductKnowledgeTable.approved, true),
+          isNull(founderProductKnowledgeTable.archivedAt),
+        ),
+      )
+      .orderBy(desc(founderProductKnowledgeTable.updatedAt))
+      .limit(100);
+    return matchFounderApprovedProductKnowledge(message, records)?.reply ?? null;
+  } catch (error) {
+    // Product knowledge is additive. A schema gap or lookup error must never
+    // interrupt ordinary Kinfolk chat, directory search, or account access.
+    console.warn(`[kinfolk-founder-product-knowledge] lookup_failed pgCode=${pgCode(error)}`);
+    return null;
+  }
 }
 
 async function persistDeterministicDiscoveryTurn(input: {
@@ -5759,8 +6177,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // Deterministic business search has no model prompt. Load only member-approved
   // planning notes that directly match this practical request so its follow-up
   // can surface timing or budget tradeoffs without inventing facts.
-  const explicitMemberMemoryEnabled =
-    await resolveOwnerExplicitMemberMemoryAccess(input.req.user!.id);
+  const explicitMemberMemoryEnabled = input.memoryEnabled;
   const relevantPlanningMemories = explicitMemberMemoryEnabled
     ? await db
         .select({
@@ -6094,7 +6511,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return void res.json({
       sessionId,
       reply:
-        "Yes. Kinfolk can remember a detail you explicitly ask it to save to your private memory. Type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Your existing support selections stay in Preferences, and you can review or forget saved details any time in Kinfolk memory settings.",
+        memoryEnabled
+          ? "Yes. Kinfolk can remember a detail you explicitly ask it to save to your private memory. Type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Your existing support selections stay in Preferences, and you can review or forget saved details any time in Kinfolk memory settings."
+          : "Yes—after you turn on Kinfolk continuity in History or Memory settings. Then you can type or say: “This is what I want you to remember about me: [your detail].” Kinfolk will confirm it was saved and use it only when genuinely relevant. Until then, I will not save or reuse it.",
       recommendations: null,
       itinerary: null,
       followUpSuggestions: [],
@@ -6178,30 +6597,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
   }
 
-  // Kinfolk's product role is stable and should not be delegated to a general
-  // model answer. Returning the canonical explanation prevents the generic
-  // chatbot comparison previously seen in the member experience.
+  // Product responses are deterministic. A founder-approved answer takes
+  // precedence; otherwise the existing canonical explanation remains the safe
+  // fallback. Member chats, memories, and directory searches never write here.
+  const founderProductAnswer = await findFounderApprovedProductAnswer(message);
   const productIdentity = buildKinfolkProductIdentityResponse(message);
-  if (productIdentity !== null) {
+  if (founderProductAnswer !== null || productIdentity !== null) {
+    const productReply = founderProductAnswer ?? productIdentity!.reply;
+    const productFollowUps = productIdentity?.followUpSuggestions ?? [];
     const productIdentitySessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,
       memoryEnabled,
       sessionId,
       message,
-      reply: productIdentity.reply,
+      reply: productReply,
       recommendations: null,
       resultView: null,
-      followUpSuggestions: [...productIdentity.followUpSuggestions],
+      followUpSuggestions: [...productFollowUps],
       sources: [],
       destination: "",
       vibes,
     });
     return void res.json({
       sessionId: productIdentitySessionId,
-      reply: productIdentity.reply,
+      reply: productReply,
       recommendations: null,
       itinerary: null,
-      followUpSuggestions: productIdentity.followUpSuggestions,
+      followUpSuggestions: productFollowUps,
       smartPromotion: null,
       taskAction: null,
       libraryAction: null,
@@ -6647,6 +7069,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Load or create session
     chatStage = "session_read";
     let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
+    const ephemeralSession = !memoryEnabled
+      ? readEphemeralKinfolkSession(req.user.id, sessionId)
+      : null;
     let sessionPersistenceAvailable = memoryEnabled;
     if (memoryEnabled && sessionId && req.user?.id) {
       try {
@@ -6670,7 +7095,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    const existingMessages: SessionMessage[] = currentSession?.messages ?? [];
+    const existingMessages: SessionMessage[] =
+      currentSession?.messages ?? ephemeralSession?.messages ?? [];
     const conversationHistoryForContext: Array<{ role: "user" | "assistant"; content: string }> = buildKinfolkHistory(
       existingMessages,
       modelPolicy,
@@ -6700,7 +7126,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Resolve current-turn geography before session continuity. A city explicitly
     // named now is authoritative and may change an enabled session's destination.
     // Session fallback remains inside the existing private-memory/runtime gate.
-    const sessionDestination = currentSession?.destination ?? null;
+    const sessionDestination =
+      currentSession?.destination ?? ephemeralSession?.destination ?? null;
     const turnGeography = resolveTurnGeography(message, sessionDestination);
     const destination = turnGeography?.city ?? null;
     const locationSource = turnGeography?.source ?? null;
@@ -8533,10 +8960,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A member's direct remember command may be used even when production does
     // not retain ordinary chat sessions. Both paths still honor the same owner
     // opt-out, and only relevant selected facts reach the response prompt.
-    const explicitMemberMemoryEnabled = await resolveOwnerExplicitMemberMemoryAccess(
-      req.user.id,
-    );
-    const memberMemoryEnabled = memoryEnabled || explicitMemberMemoryEnabled;
+    const explicitMemberMemoryEnabled = memoryEnabled;
+    const memberMemoryEnabled = memoryEnabled;
     const activePrivateMemories = memberMemoryEnabled && req.user?.id
         ? await db
             .select({
@@ -8593,6 +9018,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             preferences: prefs,
           })
         : "";
+    const currentTurnCorrectionInstruction =
+      buildKinfolkCurrentTurnCorrectionInstruction({
+        message,
+        history: existingMessages,
+      });
     const baseSystemPrompt =
       buildSystemPrompt({
         prefs,
@@ -8738,6 +9168,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "") +
       (communityHashtagContext.promptBlock
         ? `\n\n${communityHashtagContext.promptBlock}`
+        : "") +
+      (currentTurnCorrectionInstruction
+        ? `\n\n${currentTurnCorrectionInstruction}`
         : "");
 
     // Build bounded history according to the selected experience policy.
@@ -9087,7 +9520,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : null;
     let detectedDestination = destinationForEnabledSession({
       turn: turnGeography,
-      existingDestination: currentSession?.destination ?? null,
+      existingDestination:
+        currentSession?.destination ?? ephemeralSession?.destination ?? null,
       modelDestination: validatedModelDestination,
     });
 
@@ -9178,6 +9612,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         );
         finalSessionId = undefined;
       }
+    } else if (req.user?.id && !memoryEnabled) {
+      finalSessionId = writeEphemeralKinfolkSession(
+        {
+          userId: req.user.id,
+          messages: updatedMessages,
+          destination: detectedDestination,
+        },
+        ephemeralSession ? sessionId : undefined,
+      );
     }
 
     // ── Library action (server-controlled, not model-generated) ──────────────

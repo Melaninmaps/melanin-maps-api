@@ -1,4 +1,4 @@
-import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -22,6 +22,11 @@ export const kinfolkSessionsTable = pgTable("kinfolk_sessions", {
   vibes: jsonb("vibes").$type<string[]>().default([]),
   messages: jsonb("messages").$type<SessionMessage[]>().default([]),
   shareId: varchar("share_id", { length: 64 }),
+  // Archive and pin are reversible organization controls. They do not delete
+  // source messages or alter their owner.
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  pinnedAt: timestamp("pinned_at", { withTimezone: true }),
+  isPinned: boolean("is_pinned").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

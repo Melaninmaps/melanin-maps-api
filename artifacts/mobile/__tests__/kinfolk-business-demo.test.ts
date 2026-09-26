@@ -103,8 +103,10 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain("queuedPlaybackRequestRef.current = request");
     expect(widgetSource).toContain("player.play()");
     expect(widgetSource).toContain("setListenUri(undefined)");
+    // The widget guard blocks playback when it closes or backgrounds. The primary
+    // Kinfolk screen additionally cancels its in-flight TTS request on lifecycle change.
     expect(widgetSource).not.toContain("signal: request.signal");
-    expect(travelSource).not.toContain("signal: request.signal");
+    expect(travelSource).toContain("signal: request.signal");
   });
 
   it("invalidates deferred travel auto-speech when the app backgrounds", async () => {

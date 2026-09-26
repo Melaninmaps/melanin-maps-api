@@ -20,6 +20,12 @@ describe("governed community language", () => {
     const baltimore = buildCityLanguageRecognitionPrompt("Baltimore, MD");
     expect(baltimore).toContain('"chicken box"');
     expect(baltimore).toContain('"half-and-half"');
+
+    const philadelphia = buildCityLanguageRecognitionPrompt("Philadelphia, PA");
+    expect(philadelphia).toContain('"jawn"');
+    expect(philadelphia).toContain('"uptown"');
+    expect(philadelphia).toContain('"down North Philly"');
+    expect(philadelphia).toContain("repeat that exact term once");
   });
 
   it("accepts bounded plain-text proposals and rejects prompt-like content", () => {

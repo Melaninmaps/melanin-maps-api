@@ -63,6 +63,8 @@ const CITY_LANGUAGE: Record<string, CityLanguageEntry> = {
       { term: "jawn", meaning: "a flexible Philly word for a person, place, thing, or situation" },
       { term: "water ice", meaning: "Philadelphia's name for a frozen dessert; do not automatically substitute Italian ice" },
       { term: "hoagie", meaning: "the local word for a long sandwich, similar to a sub or hero" },
+      { term: "uptown", meaning: "a context-dependent local area reference; ask a focused neighborhood question if a route or recommendation depends on the exact area" },
+      { term: "down North Philly", meaning: "a local directional expression for going to North Philadelphia; understand it as a location reference without correcting the member's wording" },
     ],
   },
 };
@@ -108,7 +110,7 @@ export function buildCityLanguageRecognitionPrompt(destination: string | null | 
   const entry = matchingCityLanguage(destination);
   if (!entry) return "";
   const terms = entry.terms.map((item) => `• "${item.term}" means ${item.meaning}${item.clarification ? `\n  Clarification: ${item.clarification}` : ""}`).join("\n");
-  return `CITY-AWARE LANGUAGE RECOGNITION — ${destination}:\nRecognize the following local vocabulary and use it to understand the member's intent. Do not correct a member harshly, presume a term's meaning when it is ambiguous, or imitate a dialect. When a city-specific distinction would change a recommendation, offer one brief, respectful clarification. Do not use a local term merely for style.\n${terms}`;
+  return `CITY-AWARE LANGUAGE RECOGNITION — ${destination}:\nRecognize the following local vocabulary and use it to understand the member's intent. Do not correct a member harshly, presume a term's meaning when it is ambiguous, or imitate a dialect. When a city-specific distinction would change a recommendation, offer one brief, respectful clarification. If the member uses one of these exact terms in a low-stakes request, you may repeat that exact term once to confirm understanding; do not use a local term merely for style.\n${terms}`;
 }
 
 /** Approved member proposals are compact, city-scoped, and always subordinate to verified facts. */

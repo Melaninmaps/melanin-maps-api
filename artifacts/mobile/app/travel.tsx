@@ -1615,15 +1615,26 @@ const tpStyles = StyleSheet.create({
 
 // ─── Sub-component: Session History Drawer ───────────────────────────────────
 function SessionHistoryDrawer({
-  visible, sessions, onClose, onSelect, onNew, colors,
+  visible, sessions, onClose, onSelect, onNew, continuityEnabled, onToggleContinuity,
+  onLoadView, onOrganize, colors,
 }: {
   visible: boolean;
-  sessions: { id: string; title: string | null; destination: string | null; createdAt: string }[];
+  sessions: { id: string; title: string | null; destination: string | null; createdAt: string; isPinned?: boolean }[];
   onClose: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
+  continuityEnabled: boolean;
+  onToggleContinuity: (enabled: boolean) => void;
+  onLoadView: (view: "active" | "archived") => void;
+  onOrganize: (id: string, action: "archive" | "restore" | "pin" | "unpin") => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const [historyView, setHistoryView] = useState<"active" | "archived">("active");
+
+  useEffect(() => {
+    if (visible && continuityEnabled) onLoadView(historyView);
+  }, [visible, continuityEnabled, historyView, onLoadView]);
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[shStyles.container, { backgroundColor: colors.background }]}>
@@ -1641,29 +1652,36 @@ function SessionHistoryDrawer({
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={[shStyles.newBtnText, { color: colors.primary }]}>Start New Conversation</Text>
         </TouchableOpacity>
+        <View style={[shStyles.continuityCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+          <Text style={[shStyles.continuityTitle, { color: colors.text }]}>{continuityEnabled ? "Kinfolk continuity is on" : "Kinfolk continuity is paused"}</Text>
+          <Text style={[shStyles.continuityText, { color: colors.mutedForeground }]}>{continuityEnabled ? "Your saved conversations and approved memories may be used only for your future Kinfolk chats." : "Past chats are stored but not shown to or used by Kinfolk until you turn continuity on."}</Text>
+          <TouchableOpacity activeOpacity={0.82} style={[shStyles.continuityButton, { backgroundColor: continuityEnabled ? colors.card : colors.primary, borderColor: colors.primary }]} onPress={() => onToggleContinuity(!continuityEnabled)}>
+            <Text style={[shStyles.continuityButtonText, { color: continuityEnabled ? colors.primary : "#fff" }]}>{continuityEnabled ? "Pause continuity" : "Turn on continuity"}</Text>
+          </TouchableOpacity>
+        </View>
+        {continuityEnabled && <View style={[shStyles.viewToggle, { backgroundColor: colors.secondary }]}>
+          {(["active", "archived"] as const).map((view) => <TouchableOpacity key={view} activeOpacity={0.8} onPress={() => setHistoryView(view)} style={[shStyles.viewToggleButton, historyView === view && { backgroundColor: colors.card }]}><Text style={[shStyles.viewToggleText, { color: historyView === view ? colors.primary : colors.mutedForeground }]}>{view === "active" ? "Conversations" : "Archive"}</Text></TouchableOpacity>)}
+        </View>}
         <ScrollView
         keyboardDismissMode="on-drag" style={{ flex: 1 }}>
-          {sessions.length === 0 ? (
-            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>No past conversations yet</Text>
+          {!continuityEnabled ? (
+            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>Turn on continuity to see or use saved conversations.</Text>
+          ) : sessions.length === 0 ? (
+            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>{historyView === "archived" ? "Nothing archived yet" : "No past conversations yet"}</Text>
           ) : (
             sessions.map((s) => (
-              <TouchableOpacity
-                key={s.id}
-                style={[shStyles.item, { borderBottomColor: colors.border }]}
-                onPress={() => { onSelect(s.id); onClose(); }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chatbubble-outline" size={16} color={colors.mutedForeground} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[shStyles.itemTitle, { color: colors.text }]} numberOfLines={1}>
-                    {s.title ?? s.destination ?? "Conversation"}
-                  </Text>
-                  <Text style={[shStyles.itemDate, { color: colors.mutedForeground }]}>
-                    {new Date(s.createdAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
-              </TouchableOpacity>
+              <View key={s.id} style={[shStyles.item, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }} onPress={() => { onSelect(s.id); onClose(); }} activeOpacity={0.7}>
+                  <Ionicons name={s.isPinned ? "pin" : "chatbubble-outline"} size={16} color={s.isPinned ? colors.primary : colors.mutedForeground} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[shStyles.itemTitle, { color: colors.text }]} numberOfLines={1}>{s.title ?? s.destination ?? "Conversation"}</Text>
+                    <Text style={[shStyles.itemDate, { color: colors.mutedForeground }]}>{new Date(s.createdAt).toLocaleDateString()}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+                </TouchableOpacity>
+                {historyView === "active" && <TouchableOpacity accessibilityLabel={s.isPinned ? "Unpin conversation" : "Pin conversation"} onPress={() => onOrganize(s.id, s.isPinned ? "unpin" : "pin")}><Ionicons name="pin-outline" size={17} color={colors.mutedForeground} /></TouchableOpacity>}
+                <TouchableOpacity accessibilityLabel={historyView === "active" ? "Archive conversation" : "Restore conversation"} onPress={() => onOrganize(s.id, historyView === "active" ? "archive" : "restore")}><Ionicons name={historyView === "active" ? "archive-outline" : "refresh-outline"} size={17} color={colors.mutedForeground} /></TouchableOpacity>
+              </View>
             ))
           )}
         </ScrollView>
@@ -1681,6 +1699,14 @@ const shStyles = StyleSheet.create({
   item: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
   itemTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   itemDate: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  continuityCard: { marginHorizontal: 16, marginBottom: 10, borderRadius: 12, borderWidth: 1, padding: 12 },
+  continuityTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 4 },
+  continuityText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  continuityButton: { alignSelf: "flex-start", borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7, marginTop: 10 },
+  continuityButtonText: { fontFamily: "Inter_700Bold", fontSize: 11 },
+  viewToggle: { flexDirection: "row", gap: 4, borderRadius: 9, padding: 4, marginHorizontal: 16, marginBottom: 8 },
+  viewToggleButton: { flex: 1, paddingVertical: 7, alignItems: "center", borderRadius: 6 },
+  viewToggleText: { fontFamily: "Inter_700Bold", fontSize: 11 },
 });
 
 // ─── Flight Tracker ───────────────────────────────────────────────────────────
@@ -1968,7 +1994,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, sessions, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
+  const { messages, sessionId, isLoading, sessions, kinfolkContinuityEnabled, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2030,7 +2056,8 @@ export default function TravelScreen() {
 
   useEffect(() => {
     void loadSessions();
-  }, [loadSessions]);
+    void loadKinfolkContinuity();
+  }, [loadSessions, loadKinfolkContinuity]);
 
   useEffect(() => { void loadWishlist(); }, [loadWishlist]);
 
@@ -2928,6 +2955,10 @@ export default function TravelScreen() {
         onClose={() => setShowHistory(false)}
         onSelect={handleHistorySelect}
         onNew={handleNewSession}
+        continuityEnabled={kinfolkContinuityEnabled}
+        onToggleContinuity={(enabled) => { void setKinfolkContinuity(enabled); }}
+        onLoadView={(view) => { void loadSessions(view); }}
+        onOrganize={(id, action) => { void organizeSession(id, action); }}
         colors={colors}
       />
 

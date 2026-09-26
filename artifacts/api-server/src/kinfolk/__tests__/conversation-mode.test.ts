@@ -3,6 +3,7 @@ import {
   buildKinfolkConversationModeInstruction,
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
+  buildKinfolkNaturalConversationContract,
   isKinfolkFormalDocumentRequest,
   normalizeKinfolkConversationMode,
   normalizeKinfolkFormalDocumentReply,
@@ -48,5 +49,14 @@ describe("Kinfolk conversation modes", () => {
       expect(contract).toContain("Do not turn a check-in into a business recommendation");
       expect(contract).toContain("Ask at most one gentle follow-up question");
     }
+  });
+
+  it("requires natural reference resolution without inventing prior history or dialect", () => {
+    const contract = buildKinfolkNaturalConversationContract();
+    expect(contract).toContain("jawn we went to last time for soul food");
+    expect(contract).toContain("active, member-owned conversation history");
+    expect(contract).toContain("never invent a prior visit");
+    expect(contract).toContain("J-Money");
+    expect(contract).toContain("Do not imitate an accent");
   });
 });

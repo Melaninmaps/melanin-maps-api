@@ -7,6 +7,18 @@ const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|rec
 // the same cited-live-research path as an explicit “as of today” request.
 const CHANGING_PUBLIC_STATISTIC_RE = /\b(?:how many\s+(?:people|residents)\s+live|(?:current|estimated|estimated\s+total)\s+population|population\s+(?:of|in|is))\b/i;
 
+// Currency values move even when the member does not say “current,” “rate,”
+// or “exchange.” Route natural conversion wording through cited live research
+// rather than allowing an old Library or model-memory answer. This deliberately
+// requires both a recognized currency unit and a conversion request so a stable
+// history question about a currency is not over-routed.
+const CURRENCY_UNIT_RE = /\b(?:usd|us\s*dollars?|dollars?|eur|euros?|gbp|pounds?|sterling|try|turkish\s*lira|lira|cad|canadian\s*dollars?|aud|australian\s*dollars?|jpy|yen|cny|yuan|rmb|inr|rupees?|mxn|pesos?|brl|reais?|zar|rand|ngn|naira|kes|shillings?)\b/i;
+const CURRENCY_CONVERSION_REQUEST_RE = /\b(?:convert(?:ed|ing|s|ion)?|exchange|rate|how\s+much(?:\s+(?:is|are))?|what(?:'s|\s+is)\s+(?:the\s+)?(?:value|equivalent)|(?:value|worth)\s+in|how\s+many\s+(?:[\p{L}$]+\s+){0,3}(?:make|equals?|is))\b/iu;
+
+function isCurrencyConversionRequest(message: string): boolean {
+  return CURRENCY_UNIT_RE.test(message) && CURRENCY_CONVERSION_REQUEST_RE.test(message);
+}
+
 /**
  * Conversational wording such as “Is Durk coming home?” can be a concise
  * request for the current custody or release status of a named public figure.
@@ -42,6 +54,7 @@ export function hasRequestedArticleEvidence(
 export function requiresCurrentResearch(message: string): boolean {
   return CURRENT_RESEARCH_RE.test(message)
     || CHANGING_PUBLIC_STATISTIC_RE.test(message)
+    || isCurrencyConversionRequest(message)
     || NAMED_CUSTODY_STATUS_RE.test(message)
     || requestedArticleSummaryUrl(message) !== null;
 }

@@ -1,5 +1,6 @@
 import {
   buildKinfolkEmotionalCheckInContract,
+  buildKinfolkNaturalConversationContract,
   buildKinfolkConversationModeInstruction,
   normalizeKinfolkConversationMode,
 } from "./conversation-mode";
@@ -48,6 +49,7 @@ export function buildLeanGeneralChatPrompt(voiceMode = "community"): string {
   const normalizedVoiceMode = normalizeKinfolkConversationMode(voiceMode);
   const tone = buildKinfolkConversationModeInstruction(normalizedVoiceMode);
   const emotionalCheckIn = buildKinfolkEmotionalCheckInContract(normalizedVoiceMode);
+  const naturalConversation = buildKinfolkNaturalConversationContract();
   return `You are KinfolkAI™, Mapping With Melanin's conversation companion — not a generic chatbot and not merely a warmer version of one. You help a member connect a real-life need to the businesses, services, places, community knowledge, and practical next steps that fit the life they are trying to live.
 
 KIN FOLK'S DISTINCT ROLE:
@@ -64,6 +66,8 @@ SOLAR-SCIENCE ACCEPTANCE CASE:
 When the member asks why the sun is hot or how it stays hot, give the same scientific core in every Kinfolk voice: hydrogen fusion in the sun's core releases energy; gravity compresses the core so pressure and temperature sustain fusion; that energy leaves as light and heat; and the sun has roughly five billion years of core hydrogen-burning lifetime remaining. The selected voice may change only the presentation, order, and practical framing. Business Manager must remain informational, practical, and organized—never promotional or sales-oriented.
 
 ${emotionalCheckIn}
+
+${naturalConversation}
 
 Rules:
 - ${tone}

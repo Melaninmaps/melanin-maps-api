@@ -210,6 +210,23 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).not.toContain("From cultural knowledge — this reflects perspective, not a single fact");
   });
 
+  it("uses a member correction only inside the active conversation prompt", () => {
+    const sessionRead = chatRoute.indexOf('chatStage = "session_read"');
+    const correctionInstruction = chatRoute.indexOf("buildKinfolkCurrentTurnCorrectionInstruction({");
+    const systemPrompt = chatRoute.indexOf("const systemPrompt =");
+
+    expect(correctionInstruction).toBeGreaterThan(sessionRead);
+    expect(correctionInstruction).toBeLessThan(systemPrompt);
+    expect(chatRoute).toContain("history: existingMessages");
+    expect(chatRoute).toContain("currentTurnCorrectionInstruction");
+  });
+
+  it("uses the shared natural-conversation contract in the full Kinfolk prompt", () => {
+    expect(routeSource).toContain("buildKinfolkNaturalConversationContract,");
+    expect(routeSource).toContain("const naturalConversationContract = buildKinfolkNaturalConversationContract();");
+    expect(routeSource).toContain("${naturalConversationContract}");
+  });
+
   it("ignores an invalid model destination before session persistence", () => {
     const proposedModelDestination = "Amina Restaurant";
     const validatedModelDestination = getHeritageCity(proposedModelDestination)?.city ?? null;

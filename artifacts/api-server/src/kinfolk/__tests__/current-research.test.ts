@@ -44,6 +44,10 @@ describe("current research routing", () => {
     "schedule",
     "weather",
     "price",
+    "How much is 10K Turkish lira?",
+    "How many US dollars make 10K in Turkish lira?",
+    "Convert $100 USD to Turkish lira",
+    "What is 10,000 Turkish lira in dollars today?",
     "Is Durk coming home?",
     "Will Lil Durk be released?",
   ])("requires current research for %s", (message) => {
@@ -59,6 +63,7 @@ describe("current research routing", () => {
     "Give me travel recommendations in Atlanta",
     "live music recommendations",
     "My sister is coming home from school",
+    "I collect Turkish lira from 2015",
   ])("does not mistake stable or entertainment language for freshness in %s", (message) => {
     expect(requiresCurrentResearch(message)).toBe(false);
   });

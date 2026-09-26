@@ -5341,6 +5341,51 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     sql: `ALTER TABLE user_preferences
             ADD COLUMN IF NOT EXISTS use_member_context_by_default BOOLEAN NOT NULL DEFAULT FALSE`,
   },
+  // ── Kinfolk continuity — affirmative, reversible, owner-only ──────────────
+  {
+    name: "kinfolk_continuity_owner_consent_v1",
+    sql: `ALTER TABLE user_settings
+      ADD COLUMN IF NOT EXISTS kinfolk_continuity_enabled boolean NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS kinfolk_continuity_updated_at timestamptz;
+
+      ALTER TABLE kinfolk_sessions
+      ADD COLUMN IF NOT EXISTS archived_at timestamptz,
+      ADD COLUMN IF NOT EXISTS pinned_at timestamptz,
+      ADD COLUMN IF NOT EXISTS is_pinned boolean NOT NULL DEFAULT false;
+
+      CREATE INDEX IF NOT EXISTS kinfolk_sessions_owner_continuity_idx
+      ON kinfolk_sessions (user_id, archived_at, is_pinned DESC, updated_at DESC);`,
+  },
+  // ── Founder-controlled product knowledge — no implicit training ───────────
+  {
+    name: "founder_product_knowledge_v1",
+    sql: `CREATE TABLE IF NOT EXISTS founder_product_knowledge (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      question varchar(500) NOT NULL,
+      answer varchar(6000) NOT NULL,
+      keywords jsonb NOT NULL DEFAULT '[]'::jsonb,
+      approved boolean NOT NULL DEFAULT false,
+      archived_at timestamptz,
+      created_by_user_id text NOT NULL,
+      updated_by_user_id text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS founder_product_knowledge_active_idx
+      ON founder_product_knowledge (approved, archived_at, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS founder_product_knowledge_audit (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      knowledge_id uuid NOT NULL,
+      actor_user_id text NOT NULL,
+      action text NOT NULL CHECK (action IN ('created', 'updated', 'approved', 'unapproved', 'archived', 'restored')),
+      before jsonb,
+      after jsonb,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS founder_product_knowledge_audit_record_idx
+      ON founder_product_knowledge_audit (knowledge_id, created_at DESC);`,
+  },
 ];
 
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<

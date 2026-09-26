@@ -4,7 +4,7 @@ import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
-  Mic, MicOff, Square, ImagePlus,
+  Mic, MicOff, Square, ImagePlus, Archive, Pin, RotateCcw,
 } from "lucide-react";
 import {
   MwmHome, MwmPlane, MwmBriefcase, MwmStore,
@@ -189,7 +189,14 @@ interface Message {
   /** Explicit private-memory offer for a named companion; never a profile mutation. */
   companionMemoryOffer?: CompanionMemoryOffer | null;
 }
-interface Session { id: string; title: string; destination?: string; createdAt: string }
+interface Session {
+  id: string;
+  title: string;
+  destination?: string;
+  createdAt: string;
+  isPinned?: boolean;
+  archivedAt?: string | null;
+}
 interface Prefs {
   recommendationLifeStage: "unspecified" | "18_39" | "40_64" | "65_plus";
   favoriteCategories: string[]; favoriteCities: string[];
@@ -999,6 +1006,8 @@ function TravelPage() {
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
+  const [historyView, setHistoryView] = useState<"active" | "archived">("active");
   const [feedback, setFeedback] = useState<Record<string, "like" | "dislike">>({});
   const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
   const [responseFeedbackNotes, setResponseFeedbackNotes] = useState<Record<string, string>>({});
@@ -1527,12 +1536,43 @@ function TravelPage() {
     if (!isLoggedIn) return;
     setSessionsLoading(true);
     try {
-      const r = await fetch(`${BASE}api/kinfolk/sessions`, { credentials: "include", headers: kinfolkAuthHeaders() });
+      const r = await fetch(`${BASE}api/kinfolk/sessions?view=${historyView}`, { credentials: "include", headers: kinfolkAuthHeaders() });
       if (r.ok) { const d = await r.json() as { sessions: Session[] }; setSessions(d.sessions); }
     } finally { setSessionsLoading(false); }
+  }, [isLoggedIn, historyView]);
+
+  const loadKinfolkContinuity = useCallback(async () => {
+    if (!isLoggedIn) return;
+    const response = await fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include", headers: kinfolkAuthHeaders() });
+    if (!response.ok) return;
+    const body = await response.json() as { enabled?: boolean };
+    setKinfolkContinuityEnabled(body.enabled === true);
   }, [isLoggedIn]);
 
-  useEffect(() => { loadSessions(); loadPrefs(); }, [loadSessions, loadPrefs]);
+  const setKinfolkContinuity = useCallback(async (enabled: boolean) => {
+    const response = await fetch(`${BASE}api/kinfolk/continuity`, {
+      method: "PUT",
+      credentials: "include",
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ enabled }),
+    });
+    if (!response.ok) return;
+    setKinfolkContinuityEnabled(enabled);
+    setSessions([]);
+    if (enabled) void loadSessions();
+  }, [loadSessions]);
+
+  const organizeSession = useCallback(async (id: string, action: "archive" | "restore" | "pin" | "unpin") => {
+    const response = await fetch(`${BASE}api/kinfolk/sessions/${encodeURIComponent(id)}/organization`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action }),
+    });
+    if (response.ok) void loadSessions();
+  }, [loadSessions]);
+
+  useEffect(() => { loadSessions(); loadPrefs(); loadKinfolkContinuity(); }, [loadSessions, loadPrefs, loadKinfolkContinuity]);
 
   // The viewport scrolls only inside the dedicated conversation pane. In this
   // flex layout `min-h-0` on the pane's ancestors is required for overflow-y-auto
@@ -2057,7 +2097,7 @@ function TravelPage() {
           <div className="flex min-w-[17rem] items-center justify-between border-b border-[#3A1F0E]/8 px-4 py-4">
             <div>
               <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#3A1F0E]/40">Past conversations</span>
-              <span className="mt-1 block text-xs text-[#3A1F0E]/52">Return whenever you want.</span>
+              <span className="mt-1 block text-xs text-[#3A1F0E]/52">Private and under your control.</span>
             </div>
             <div className="flex items-center gap-1">
               <button onClick={newChat} className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#CA922B] transition-colors hover:bg-[#CA922B]/8 hover:text-[#B38024]">
@@ -2068,19 +2108,55 @@ function TravelPage() {
               </button>
             </div>
           </div>
+          <div className="min-w-[17rem] border-b border-[#3A1F0E]/8 px-3 py-3">
+            <button
+              type="button"
+              onClick={() => void setKinfolkContinuity(!kinfolkContinuityEnabled)}
+              className={`w-full rounded-lg px-3 py-2 text-left text-[11px] font-semibold transition-colors ${kinfolkContinuityEnabled ? "bg-[#CA922B]/10 text-[#8D5C17] hover:bg-[#CA922B]/15" : "bg-[#3A1F0E]/6 text-[#3A1F0E]/70 hover:bg-[#3A1F0E]/10"}`}
+            >
+              {kinfolkContinuityEnabled ? "Pause Kinfolk continuity" : "Turn on Kinfolk continuity"}
+            </button>
+            <p className="mt-2 text-[10px] leading-4 text-[#3A1F0E]/45">
+              {kinfolkContinuityEnabled
+                ? "Saved conversations and approved memories can help only your future Kinfolk chats."
+                : "Your prior chats stay stored but are not shown to or used by Kinfolk until you turn this on."}
+            </p>
+            {kinfolkContinuityEnabled && (
+              <div className="mt-3 flex gap-1 rounded-lg bg-[#FAF6EF] p-1">
+                {(["active", "archived"] as const).map((view) => (
+                  <button
+                    key={view}
+                    type="button"
+                    onClick={() => setHistoryView(view)}
+                    className={`flex-1 rounded-md px-2 py-1 text-[10px] font-semibold ${historyView === view ? "bg-white text-[#8D5C17] shadow-sm" : "text-[#3A1F0E]/45"}`}
+                  >
+                    {view === "active" ? "Conversations" : "Archive"}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 size={16} className="text-[#CA922B] animate-spin" /></div>
+          ) : !kinfolkContinuityEnabled ? (
+            <div className="px-3 py-6 text-center text-xs leading-5 text-[#3A1F0E]/40">Continuity is paused. Turn it on here whenever you want Kinfolk to use your saved conversations or approved memory again.</div>
           ) : sessions.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-[#3A1F0E]/30">Nothing yet — start a conversation!</div>
+            <div className="px-3 py-6 text-center text-xs text-[#3A1F0E]/30">{historyView === "archived" ? "Nothing archived yet." : "Nothing yet — start a conversation!"}</div>
           ) : (
             <div className="py-1">
               {sessions.map(s => (
-                <button key={s.id} onClick={() => loadSession(s.id)}
-                  className={`w-full text-left px-3 py-2.5 hover:bg-[#FAF6EF] transition-colors border-b border-[#3A1F0E]/4 ${sessionId === s.id ? "bg-[#FAF6EF] border-l-2 border-l-[#CA922B]" : ""}`}>
-                  <div className="text-xs font-semibold text-[#3A1F0E] truncate leading-tight">{s.title}</div>
-                  {s.destination && <div className="text-[10px] text-[#CA922B] font-medium mt-0.5">{s.destination}</div>}
-                  <div className="text-[10px] text-[#3A1F0E]/30 mt-0.5">{new Date(s.createdAt).toLocaleDateString()}</div>
-                </button>
+                <div key={s.id} className={`group flex border-b border-[#3A1F0E]/4 ${sessionId === s.id ? "bg-[#FAF6EF] border-l-2 border-l-[#CA922B]" : ""}`}>
+                  <button onClick={() => loadSession(s.id)}
+                    className="min-w-0 flex-1 text-left px-3 py-2.5 hover:bg-[#FAF6EF] transition-colors">
+                    <div className="flex items-center gap-1 text-xs font-semibold text-[#3A1F0E] truncate leading-tight">{s.isPinned && <Pin size={10} className="shrink-0 text-[#CA922B]" />}<span className="truncate">{s.title ?? s.destination ?? "Conversation"}</span></div>
+                    {s.destination && <div className="text-[10px] text-[#CA922B] font-medium mt-0.5">{s.destination}</div>}
+                    <div className="text-[10px] text-[#3A1F0E]/30 mt-0.5">{new Date(s.createdAt).toLocaleDateString()}</div>
+                  </button>
+                  <div className="flex items-center pr-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                    {historyView === "active" && <button type="button" aria-label={s.isPinned ? "Unpin conversation" : "Pin conversation"} onClick={() => void organizeSession(s.id, s.isPinned ? "unpin" : "pin")} className="rounded p-1.5 text-[#3A1F0E]/45 hover:bg-[#CA922B]/10 hover:text-[#8D5C17]"><Pin size={12} /></button>}
+                    <button type="button" aria-label={historyView === "active" ? "Archive conversation" : "Restore conversation"} onClick={() => void organizeSession(s.id, historyView === "active" ? "archive" : "restore")} className="rounded p-1.5 text-[#3A1F0E]/45 hover:bg-[#CA922B]/10 hover:text-[#8D5C17]">{historyView === "active" ? <Archive size={12} /> : <RotateCcw size={12} />}</button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
