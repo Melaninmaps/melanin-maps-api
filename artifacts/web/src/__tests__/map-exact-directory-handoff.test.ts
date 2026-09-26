@@ -22,4 +22,8 @@ describe("exact directory-to-Map handoff", () => {
     expect(mapSource).toContain("latitude: detectedLocation.lat");
     expect(mapSource).toContain("!universalResults?.exactDirectorySearch");
   });
+
+  it("does not cover a governed directory handoff with the unrelated global pin loader", () => {
+    expect(mapSource).toContain("(!ready || (isLoading && !handoffQuery))");
+  });
 });

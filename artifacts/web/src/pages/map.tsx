@@ -2210,7 +2210,9 @@ export default function MapPage() {
 
       {/* ── Map ── */}
       <div className="flex-1 min-w-0 relative">
-        {(!ready || isLoading) && (
+        {/* A directory handoff has its own governed result layer. Do not keep
+            that explicit search behind the unrelated all-business-pin fetch. */}
+        {(!ready || (isLoading && !handoffQuery)) && (
           <div className="absolute inset-0 bg-[#F5EBD8] flex flex-col items-center justify-center z-10">
             <div className="w-10 h-10 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-[#3A1F0E]/50 text-sm">Loading map…</p>
