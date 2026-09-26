@@ -13,7 +13,10 @@ describe("production Kinfolk transcription route contract", () => {
   });
 
   it("requires bounded multipart uploads, then inspects actual container duration", () => {
-    expect(route).toContain("limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 3 }");
+    // Busboy counts one multipart framing part on current Expo native uploads.
+    // Preserve the strict one-file/two-field boundary while allowing that valid
+    // transport framing part to reach server-side audio inspection.
+    expect(route).toContain("limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 4 }");
     expect(block).toContain('req.is("multipart/form-data")');
     expect(block).toContain('error: "AUDIO_MULTIPART_REQUIRED"');
     expect(block).not.toContain('req.is("application/json")');

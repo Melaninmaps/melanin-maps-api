@@ -35,6 +35,9 @@ describe("Kinfolk web voice upload", () => {
     expect(travel).toContain('document.addEventListener("visibilitychange", handleVisibilityChange)');
     expect(travel).toContain('discardRecording("page_hidden")');
     expect(travel).toContain('recorder?.stream?.getTracks().forEach(t => t.stop())');
+    expect(travel).toContain('recorder.start();');
+    expect(travel).not.toContain('recorder.start(250)');
+    expect(travel).toContain('recorder.stream.getTracks().forEach((track) => track.stop())');
   });
 });
 

@@ -1227,8 +1227,9 @@ function TravelPage() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
-    // Revoke any MediaStream tracks to release the mic indicator
-    mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
+    // Do not stop the MediaStream here. `stop()` asynchronously emits the final
+    // dataavailable event before onstop; ending Safari's audio track first can
+    // truncate the final MP4/WebM container and make it impossible to inspect.
   }, []);
 
   const abortTranscription = useCallback((reason: string) => {
@@ -1399,12 +1400,19 @@ function TravelPage() {
         if (discardedRecordingRef.current) {
           discardedRecordingRef.current = false;
           audioChunksRef.current = [];
+          recorder.stream.getTracks().forEach((track) => track.stop());
           return;
         }
+        // onstop follows the recorder's final dataavailable event, so this is
+        // the earliest safe point to release the microphone without truncating
+        // the browser-created audio container.
+        recorder.stream.getTracks().forEach((track) => track.stop());
         void finishRecording(chunks, actualMimeType);
       };
 
-      recorder.start(250); // collect chunks every 250ms
+      // A single bounded recording finalizes a complete container on Stop.
+      // Periodic time slices can leave Safari MP4/WebM output fragmented.
+      recorder.start();
       recordingStartedAtRef.current = performance.now(); // wall-clock start for duration
       setVoiceState("recording");
       setRecordingElapsed(0);
