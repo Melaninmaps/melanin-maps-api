@@ -147,6 +147,28 @@ describe("classifyKinfolkRequest — general current-affairs protection", () => 
   });
 });
 
+describe("classifyKinfolkRequest — platform policy protection", () => {
+  it("answers the reported Philadelphia nightlife policy question without triggering directory cards", () => {
+    const result = classifyKinfolkRequest(
+      "You are built to only promote minority-owned businesses based on preferences. How would a user find non-minority-owned businesses that others frequent? There is very little Black or minority-owned nightlife in Philadelphia—what would be your suggested method to handle this?",
+      "Philadelphia",
+    );
+
+    expect(result).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location: "Philadelphia",
+      reason: "platform_policy_question_routes_to_general_knowledge",
+    });
+  });
+
+  it("keeps a direct Philadelphia nightlife request in discovery", () => {
+    expect(
+      classifyKinfolkRequest("Show me Philadelphia nightlife", "Philadelphia"),
+    ).toMatchObject({ route: "business_discovery", discoveryKind: "nightlife" });
+  });
+});
+
 // ── Voice duration validation ─────────────────────────────────────────────────
 
 describe("validateVoiceRecording", () => {

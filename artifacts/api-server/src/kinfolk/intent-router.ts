@@ -19,6 +19,8 @@
  *   their criteria or acknowledge multiple defensible views without stock boilerplate.
  */
 
+import { isKinfolkPlatformPolicyQuestion } from "./request-classifier";
+
 // ─── Intent types ─────────────────────────────────────────────────────────────
 
 export type KinfolkIntent =
@@ -265,6 +267,11 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   if (MEDICAL_SIGNALS.some((re) => re.test(msg))) return "medical_health";
   if (LEGAL_SIGNALS.some((re) => re.test(msg))) return "legal_regulated";
   if (FINANCIAL_SIGNALS.some((re) => re.test(msg))) return "financial_regulated";
+
+  // Platform-policy questions may use a city and a service category only as an
+  // example. They need a conversational policy answer, not a directory search
+  // or recommendation cards. High-consequence routes above still take priority.
+  if (isKinfolkPlatformPolicyQuestion(message)) return "general_knowledge";
 
   // Current information (time-sensitive)
   if (CURRENT_INFO_SIGNALS.some((re) => re.test(msg))) return "current_information";

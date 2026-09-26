@@ -182,6 +182,15 @@ describe("business-card eligibility", () => {
   it("keeps an explicit Philadelphia nightlife request in directory discovery", () => {
     expect(classifyIntent("Show me Philadelphia nightlife", true)).toBe("business_discovery");
   });
+
+  it("keeps platform-policy questions conversational even when they use nightlife and Philadelphia as examples", () => {
+    expect(
+      classifyIntent(
+        "You are built to only promote minority-owned businesses based on preferences. How would a user find non-minority-owned businesses that others frequent? There is very little Black or minority-owned nightlife in Philadelphia—what would be your suggested method to handle this?",
+        true,
+      ),
+    ).toBe("general_knowledge");
+  });
 });
 
 // ─── Provenance labels ────────────────────────────────────────────────────────

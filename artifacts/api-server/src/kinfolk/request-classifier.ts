@@ -60,6 +60,23 @@ const BUSINESS_RE =
 const BRUNCH_CULTURAL_RE =
   /\b(brunch as a|history of brunch|origin of brunch|brunch tradition|cultural.*brunch|brunch.*culture|tell me about brunch|meaning of brunch|what is brunch)\b/i;
 
+// A member can discuss how Kinfolk or the platform should handle recommendations
+// without asking Kinfolk to search the directory. These questions often contain a
+// city plus a service category as an example, so they must be recognized before
+// the discovery rules below. Keep this narrow: an actual "find/show/recommend"
+// request remains a directory search.
+const PLATFORM_POLICY_CONTEXT_RE =
+  /\b(?:you(?:'re| are)\s+built\s+to|built\s+to|how\s+would\s+(?:a|the)\s+user|how\s+should\s+(?:we|the\s+app|kinfolk)|what\s+would\s+be\s+(?:your|the)\s+suggested\s+(?:method|approach)|how\s+do\s+we\s+handle|(?:platform|app|kinfolk)\s+(?:policy|approach|method|model))\b/i;
+const PLATFORM_POLICY_SUBJECT_RE =
+  /\b(?:promot(?:e|ing|ion)|recommend(?:ation|ing)?|support\s+lens|ownership|minority[-\s]?owned|black[-\s]?owned|business(?:es)?|listing(?:s)?|directory|catalog)\b/i;
+
+export function isKinfolkPlatformPolicyQuestion(message: string): boolean {
+  return (
+    PLATFORM_POLICY_CONTEXT_RE.test(message) &&
+    PLATFORM_POLICY_SUBJECT_RE.test(message)
+  );
+}
+
 function cleanLocation(raw: string | undefined): string | null {
   if (!raw) return null;
   const value = raw.replace(/[?.,!]+$/g, "").trim();
@@ -87,6 +104,18 @@ export function classifyKinfolkRequest(
   const ownershipPreference =
     text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];
+
+  if (isKinfolkPlatformPolicyQuestion(text)) {
+    return {
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location,
+      ownershipPreference,
+      culturalContext,
+      clarification: null,
+      reason: "platform_policy_question_routes_to_general_knowledge",
+    };
+  }
 
   // Pure cultural/informational brunch queries short-circuit to general_knowledge
   // BEFORE any discovery routing so they never fall into the clarification branch.

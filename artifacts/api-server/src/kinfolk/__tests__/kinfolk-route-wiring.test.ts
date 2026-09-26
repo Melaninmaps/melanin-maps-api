@@ -244,6 +244,14 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("${naturalConversationContract}");
   });
 
+  it("keeps promotion-versus-community policy questions out of the business catalog and card prompt", () => {
+    expect(chatRoute).toContain('"platform_policy_question_routes_to_general_knowledge"');
+    expect(chatRoute).toContain("PLATFORM-POLICY QUESTION — NOT A DIRECTORY SEARCH:");
+    expect(chatRoute).toContain("Do not return business cards, listings, or an itinerary.");
+    expect(chatRoute).toContain("businessCatalog = [];");
+    expect(chatRoute).toContain("catalogSource = \"none\";");
+  });
+
   it("ignores an invalid model destination before session persistence", () => {
     const proposedModelDestination = "Amina Restaurant";
     const validatedModelDestination = getHeritageCity(proposedModelDestination)?.city ?? null;

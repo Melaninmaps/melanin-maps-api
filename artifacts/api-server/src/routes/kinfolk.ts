@@ -7244,6 +7244,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     const _discoveryInstruction = buildDiscoveryInstruction(earlyDecision);
+    const platformPolicyAnswerContract =
+      earlyDecision.reason === "platform_policy_question_routes_to_general_knowledge"
+        ? [
+            "PLATFORM-POLICY QUESTION — NOT A DIRECTORY SEARCH:",
+            "Answer the member's policy question directly. Do not return business cards, listings, or an itinerary.",
+            "Explain the distinction clearly: verified minority-owned businesses may be eligible for default promotion; a community-frequented place or event venue can be shared only as planning information and must never be called promoted, minority-owned, or safe unless the supporting evidence specifically establishes that claim.",
+            "Do not claim current attendance, a welcoming atmosphere, safety, event-organizer ownership, or recent community feedback unless the server supplied dated, attributable evidence. If that data is not available, say so plainly and describe it as a future sourced Community-information layer rather than pretending it exists today.",
+          ].join("\n")
+        : "";
 
     // ── kinfolk_local_resolution structured log ────────────────────────────
     // Fires whenever a local discovery request has a resolved city, enabling
@@ -8510,6 +8519,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             requiredSupportLensDesignationIds,
           ),
         );
+    if (platformPolicyAnswerContract) {
+      // The question can cite a city/category as an example, but no catalog row
+      // belongs in a policy answer. This prevents the model from seeing unrelated
+      // venue context even though the response enforcement already blocks cards.
+      businessCatalog = [];
+      catalogSource = "none";
+    }
     if (
       !audienceAllowsBusinessText({
         ageBand: effectiveAudienceBand,
@@ -9159,6 +9175,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "";
     const combinedPolicyPrompt = [
       _discoveryInstruction || null,
+      platformPolicyAnswerContract || null,
       intentPolicyPrompt || null,
       healthCareOverride.promptBlock || null,
       evidenceRoutePromptBlock(evidenceRoute, permittedIdentity),
