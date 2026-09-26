@@ -131,6 +131,10 @@ describe("actual Kinfolk transcription handler", () => {
     expect(response.status).toBe(200);
     expect(resolveAudioOpenAIConfiguration).toHaveBeenCalled();
     expect(transcribe).toHaveBeenCalledTimes(1);
+    expect(transcribe).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "gpt-transcribe" }),
+      expect.anything(),
+    );
   });
 
   it.each([

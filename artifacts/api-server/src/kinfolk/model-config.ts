@@ -7,7 +7,7 @@ export type KinfolkModelRole = "staffDemo" | "fallback" | "webSearch" | "library
 
 const CHAT_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"]);
 const RESEARCH_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
-const TRANSCRIPTION_MODELS = new Set(["gpt-4o-transcribe", "gpt-4o-mini-transcribe", "whisper-1"]);
+const TRANSCRIPTION_MODELS = new Set(["gpt-transcribe", "gpt-4o-transcribe", "gpt-4o-mini-transcribe", "whisper-1"]);
 const EMBEDDING_MODELS = new Set(["text-embedding-3-small"]);
 export const KINFOLK_EMBEDDING_DIMENSIONS = 1536;
 
@@ -21,12 +21,10 @@ const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string;
   // use the reviewed GPT-5 mini tool-capable default for current facts.
   webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-5-mini", allowed: RESEARCH_MODELS },
   libraryResearch: { env: "LIBRARY_RESEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
-  // The deployed integration accepts Whisper on its multipart transcription
-  // endpoint. Pin this role to that contract instead of allowing a stale
-  // deployment variable to select a model the provider rejects. This restores
-  // voice input without sending recordings through a different service or
-  // retaining any member audio.
-  transcription: { env: null, fallback: "whisper-1", allowed: TRANSCRIPTION_MODELS },
+  // OpenAI's documented completed-recording transcription model. Keep this
+  // server-owned rather than accepting a deployment override: recordings stay
+  // on the existing private endpoint, with no retention or service change.
+  transcription: { env: null, fallback: "gpt-transcribe", allowed: TRANSCRIPTION_MODELS },
   // Semantic retrieval is an existing optional internal path, not a configurable
   // provider-readiness role. Keep its model centralized without inventing an
   // additional environment role beyond the five approved by this assignment.
