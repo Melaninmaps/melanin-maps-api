@@ -50,6 +50,11 @@ import {
   REGIONAL_LANGUAGE_OPTIONS,
   shouldAutoSpeakNewReply,
 } from "@/lib/kinfolkVoicePreferences";
+import {
+  canRecordBrowserPcm,
+  startBrowserPcmVoiceRecorder,
+  type BrowserPcmVoiceRecorder,
+} from "@/lib/browserPcmVoiceRecorder";
 import { createVoicePlaybackGuard } from "@/lib/voicePlaybackGuard";
 import { useAgeAssurance } from "@/hooks/useAgeAssurance";
 import {
@@ -1128,6 +1133,7 @@ function TravelPage() {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const mediaRecorderRef        = useRef<MediaRecorder | null>(null);
+  const pcmRecorderRef          = useRef<BrowserPcmVoiceRecorder | null>(null);
   const audioChunksRef          = useRef<Blob[]>([]);
   const recordingStartedAtRef   = useRef<number | null>(null); // wall-clock ms for duration
   const elapsedTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1221,17 +1227,6 @@ function TravelPage() {
     }
   }, [isLoggedIn, kinfolkMode, modeSaveStatus]);
 
-  // ── Voice: stop recording and submit the captured clip ─────────────────────
-  const stopRecording = useCallback(() => {
-    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    // Do not stop the MediaStream here. `stop()` asynchronously emits the final
-    // dataavailable event before onstop; ending Safari's audio track first can
-    // truncate the final MP4/WebM container and make it impossible to inspect.
-  }, []);
-
   const abortTranscription = useCallback((reason: string) => {
     if (transcriptionTimeoutRef.current) {
       clearTimeout(transcriptionTimeoutRef.current);
@@ -1244,10 +1239,13 @@ function TravelPage() {
   // audio captured when the page is hidden or left must be discarded, not uploaded.
   const discardRecording = useCallback((reason: string) => {
     const recorder = mediaRecorderRef.current;
+    const pcmRecorder = pcmRecorderRef.current;
     if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
     recordingStartedAtRef.current = null;
     audioChunksRef.current = [];
     abortTranscription(reason);
+    pcmRecorderRef.current = null;
+    if (pcmRecorder) pcmRecorder.discard();
     if (recorder && recorder.state !== "inactive") {
       discardedRecordingRef.current = true;
       recorder.stop();
@@ -1278,7 +1276,7 @@ function TravelPage() {
     return "Voice transcription is unavailable right now. You can still type your question.";
   }
 
-  const finishRecording = useCallback(async (chunks: Blob[], mimeType: SupportedRecordingMimeType) => {
+  const finishRecording = useCallback(async (captured: Blob | Blob[], mimeType: SupportedRecordingMimeType) => {
     setVoiceState("processing");
     // Wall-clock duration from the ref set when recording started
     const durationMs = recordingStartedAtRef.current !== null
@@ -1288,7 +1286,7 @@ function TravelPage() {
 
     let controller: AbortController | null = null;
     try {
-      const blob = new Blob(chunks, { type: mimeType });
+      const blob = captured instanceof Blob ? captured : new Blob(captured, { type: mimeType });
       if (blob.size < 100) { setVoiceState("idle"); return; }
 
       // Client-side preflight: reject before sending
@@ -1359,27 +1357,74 @@ function TravelPage() {
     }
   }, []);
 
+  // ── Voice: stop recording and submit the captured clip ─────────────────────
+  const stopRecording = useCallback(() => {
+    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
+    const pcmRecorder = pcmRecorderRef.current;
+    if (pcmRecorder) {
+      pcmRecorderRef.current = null;
+      const blob = pcmRecorder.stop();
+      void finishRecording(blob, "audio/wav");
+      return;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    // Do not stop the MediaStream here. `stop()` asynchronously emits the final
+    // dataavailable event before onstop; ending Safari's audio track first can
+    // truncate the final MP4/WebM container and make it impossible to inspect.
+  }, [finishRecording]);
+
   // ── Voice: request permission and start recording ──────────────────────────
   // This function intentionally does not contain the first-use notice gate so
   // accepting the notice can proceed directly to the browser permission prompt.
   const beginVoiceRecording = useCallback(async () => {
     setVoiceState("requesting");
+    let stream: MediaStream | null = null;
     try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (document.visibilityState !== "visible") {
+        stream.getTracks().forEach((track) => track.stop());
+        setVoiceState("idle");
+        return;
+      }
+
+      // Prefer one standards-based PCM WAV path for all browsers that support
+      // Web Audio. It avoids Safari's fragmented M4A containers entirely while
+      // retaining the same private, in-memory-only upload contract.
+      if (canRecordBrowserPcm()) {
+        try {
+          pcmRecorderRef.current = await startBrowserPcmVoiceRecorder(stream);
+          recordingStartedAtRef.current = performance.now();
+          setVoiceState("recording");
+          setRecordingElapsed(0);
+          elapsedTimerRef.current = setInterval(() => {
+            setRecordingElapsed(prev => {
+              if (prev >= 59) {
+                stopRecording();
+                return prev;
+              }
+              return prev + 1;
+            });
+          }, 1000);
+          return;
+        } catch {
+          // Retain a MediaRecorder fallback only for browsers without usable
+          // Web Audio capture. The stream stays private and is released below.
+        }
+      }
+
       // Do not request the microphone when this browser cannot produce a format
       // the server accepts; in particular, Ogg is not an upload fallback.
       if (typeof MediaRecorder === "undefined") {
+        stream.getTracks().forEach((track) => track.stop());
         setVoiceState("unsupported");
         return;
       }
       const requestedMimeType = SUPPORTED_RECORDING_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
       if (!requestedMimeType) {
-        setVoiceState("unsupported");
-        return;
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (document.visibilityState !== "visible") {
         stream.getTracks().forEach((track) => track.stop());
-        setVoiceState("idle");
+        setVoiceState("unsupported");
         return;
       }
       const recorder = new MediaRecorder(stream, { mimeType: requestedMimeType });
@@ -1427,6 +1472,7 @@ function TravelPage() {
         });
       }, 1000);
     } catch {
+      stream?.getTracks().forEach((track) => track.stop());
       setVoiceState("denied");
       setTimeout(() => setVoiceState("idle"), 4000);
     }

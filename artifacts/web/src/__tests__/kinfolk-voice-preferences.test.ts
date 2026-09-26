@@ -27,10 +27,13 @@ describe("Kinfolk web voice upload", () => {
     expect(recorder).not.toContain('"Content-Type": "multipart/form-data"');
   });
 
-  it("uses server-supported recording types and discards hidden-page recordings", () => {
+  it("prefers standards-based PCM WAV capture and discards hidden-page recordings", () => {
     const travel = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
     expect(travel).toContain('SUPPORTED_RECORDING_MIME_TYPES = ["audio/webm", "audio/mp4", "audio/wav"]');
     expect(travel).not.toContain('"audio/ogg"');
+    expect(travel).toContain("canRecordBrowserPcm()");
+    expect(travel).toContain("startBrowserPcmVoiceRecorder(stream)");
+    expect(travel).toContain('finishRecording(blob, "audio/wav")');
     expect(travel).toContain('transcription_timeout');
     expect(travel).toContain('document.addEventListener("visibilitychange", handleVisibilityChange)');
     expect(travel).toContain('discardRecording("page_hidden")');
