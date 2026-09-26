@@ -5,6 +5,7 @@ export interface CanonicalBusinessSearchInput {
   specialty?: string | null;
   ownership?: string | null;
   designations?: readonly string[];
+  vibes?: readonly string[];
   searchText?: string;
   offset?: number;
   limit?: number;
@@ -28,6 +29,11 @@ export function buildCanonicalBusinessSearchParams(
       (input.designations ?? []).map((value) => value.trim()).filter(Boolean),
     ),
   ].slice(0, 8);
+  const vibes = [
+    ...new Set(
+      (input.vibes ?? []).map((value) => value.trim()).filter(Boolean),
+    ),
+  ].slice(0, 8);
   const search = [searchText, specialty].filter(Boolean).join(" ").trim();
   if (state) params.set("state", state.toUpperCase());
   if (category) params.set("category", category);
@@ -35,6 +41,7 @@ export function buildCanonicalBusinessSearchParams(
   if (ownership) params.set("ownership", ownership);
   if (designations.length > 0)
     params.set("designations", designations.join(","));
+  if (vibes.length > 0) params.set("vibes", vibes.join(","));
   return params;
 }
 

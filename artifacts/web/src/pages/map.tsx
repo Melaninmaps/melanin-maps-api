@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
 import { parseLocalMapSearch } from "@/features/map/parseLocalMapSearch";
+import { parseBusinessMapSearchPhrase } from "@/features/map/parseBusinessMapSearchPhrase";
 import AddPlaceModal from "@/components/AddPlaceModal";
 import UniversalSearchResults, { type UniversalSearchResult } from "@/components/UniversalSearchResults";
 
@@ -377,6 +378,7 @@ export default function MapPage() {
     namedBusinessNotFound?: boolean; namedBusinessMessage?: string; namedBusinessNextActions?: string[];
     heritageGeoExpansion?: string; heritageGeoMessage?: string;
     libraryTopicQueued?: boolean; libraryQueueMessage?: string;
+    exactDirectorySearch?: boolean;
   } | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
 
@@ -463,30 +465,6 @@ export default function MapPage() {
     () => sundownTowns.filter((town) => isWithinActiveLocalScope(town.latitude, town.longitude)),
     [sundownTowns, isWithinActiveLocalScope],
   );
-
-  // Parses structured phrases like "Black-owned grocery stores in Atlanta"
-  // into discrete API parameters so the business endpoint returns real results
-  // instead of a universal-search zero-result fallback.
-  function parseMapSearchPhrase(input: string): {
-    search: string; city?: string; ownership?: "black-owned"; category?: string;
-  } {
-    const lower = input.toLowerCase().trim();
-    const cityMatch = lower.match(/\bin\s+([a-z][a-z .'-]+?)(?:\s*$|\s+(?:near|around)\b)/);
-    const city = cityMatch?.[1]?.trim().replace(/[.,]+$/, "");
-    const ownership: "black-owned" | undefined = /\bblack[- ]owned\b/i.test(input) ? "black-owned" : undefined;
-    const category =
-      /\bgrocery\s+stores?\b/i.test(input) ? "Grocery" :
-      /\brestaurants?\b|\bdining\b/i.test(input) ? "Food" :
-      /\bbarber|salon|beauty\b/i.test(input) ? "Beauty & Personal Care" :
-      undefined;
-    const search = input
-      .replace(/\bblack[- ]owned\b/gi, "")
-      .replace(/\bgrocery\s+stores?\b/gi, "")
-      .replace(/\bin\s+[a-z][a-z .'-]+?\s*$/i, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    return { search, city, ownership, category };
-  }
 
   // Universal Search — triggered on Enter or button click.
   //
@@ -629,27 +607,29 @@ export default function MapPage() {
         const payload = await res.json();
         const universalBusinesses: any[] = payload?.results?.businesses ?? [];
 
-        // Phrase-search fallback: when universal search returns 0 businesses for a
-        // structured phrase ("Black-owned grocery stores in Atlanta"), also call the
-        // direct businesses endpoint with parsed ownership/category/city params.
+        // A structured phrase ("Black-owned restaurants in Philadelphia, PA")
+        // is an explicit directory request. Query the canonical directory with
+        // its actual ownership, category, and geography constraints even when a
+        // broad universal search happened to return unrelated records.
         let phraseBusinesses: any[] = [];
-        if (universalBusinesses.length === 0) {
+        let usedExactDirectorySearch = false;
+        const parsed = parseBusinessMapSearchPhrase(q);
+        if (parsed.ownership || parsed.category || parsed.city) {
           try {
-            const parsed = parseMapSearchPhrase(q);
-            if (parsed.ownership || parsed.category || parsed.city) {
-              const bp = new URLSearchParams({ limit: "200" });
-              if (parsed.search) bp.set("search", parsed.search);
-              if (parsed.city) bp.set("city", parsed.city);
-              if (parsed.ownership) bp.set("ownership", parsed.ownership);
-              if (parsed.category) bp.set("category", parsed.category);
-              if (mapSupportScope) bp.set("supportScope", mapSupportScope);
-              const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
-              if (bizRes.ok) {
-                const bizPayload = await bizRes.json();
-                phraseBusinesses = Array.isArray(bizPayload.businesses) ? bizPayload.businesses : [];
-              }
+            const bp = new URLSearchParams({ limit: "200" });
+            if (parsed.search) bp.set("search", parsed.search);
+            if (parsed.city) bp.set("city", parsed.city);
+            if (parsed.stateCode) bp.set("state", parsed.stateCode);
+            if (parsed.ownership) bp.set("ownership", parsed.ownership);
+            if (parsed.category) bp.set("category", parsed.category);
+            if (mapSupportScope) bp.set("supportScope", mapSupportScope);
+            const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
+            if (bizRes.ok) {
+              const bizPayload = await bizRes.json();
+              phraseBusinesses = Array.isArray(bizPayload.businesses) ? bizPayload.businesses : [];
+              usedExactDirectorySearch = phraseBusinesses.length > 0;
             }
-          } catch { /* phrase fallback failed — continue with universal results */ }
+          } catch { /* exact directory request failed — continue with universal results */ }
         }
 
         const finalBusinesses = phraseBusinesses.length > 0 ? phraseBusinesses : universalBusinesses;
@@ -659,6 +639,7 @@ export default function MapPage() {
               results: { ...payload.results, businesses: phraseBusinesses },
               totalResults: phraseBusinesses.length,
               fallbackMessage: null,
+              exactDirectorySearch: usedExactDirectorySearch,
             }
           : payload;
 
@@ -1544,6 +1525,29 @@ export default function MapPage() {
     };
   }
 
+  // A directory-to-map handoff retains the exact canonical directory result
+  // set. Its validated coordinates own the search-pin layer, rather than the
+  // generic nearby-search endpoint substituting unrelated local records.
+  useEffect(() => {
+    if (!universalResults?.exactDirectorySearch || !detectedLocation) return;
+    const pins = (universalResults.results.businesses ?? []).flatMap((business: any) => {
+      const latitude = Number(business.latitude);
+      const longitude = Number(business.longitude);
+      return Number.isFinite(latitude) && Number.isFinite(longitude)
+        && !(latitude === 0 && longitude === 0)
+        ? [{ id: String(business.id), latitude, longitude }]
+        : [];
+    });
+    applyLocalMapViewport(makeMapAdapter(), {
+      latitude: detectedLocation.lat,
+      longitude: detectedLocation.lng,
+    }, pins);
+    return () => {
+      localSearchMarkersRef.current.forEach((marker) => marker.setMap(null));
+      localSearchMarkersRef.current = [];
+    };
+  }, [detectedLocation, universalResults]);
+
   const renderSidebar = () => {
     // Content when a cultural legend filter is active
     const showingCultural = legendFilter && legendFilter !== "business";
@@ -1982,7 +1986,7 @@ export default function MapPage() {
                 )}
 
                 {/* Business results — local-scoped endpoint when coordinates are known */}
-                {!isDiscoveryFilterActive && businessSearchActive && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
+                {!isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch && (detectedLocation || (userCoords && parseLocalMapSearch(search).usesDeviceLocation)) ? (
                   <LocalBusinessResults
                     query={search}
                     subject={parseLocalMapSearch(search).subject}

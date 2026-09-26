@@ -23,6 +23,12 @@ type DirectoryHistoryEntry = {
   stateCode: string | null;
 };
 
+type VibeOption = {
+  id: string;
+  label: string;
+  description: string;
+};
+
 const CATEGORIES = [
   "Food & Drink",
   "Beauty & Personal Care",
@@ -38,6 +44,10 @@ export function LocationFirstBusinessDirectory() {
   const [category, setCategory] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [designationIds, setDesignationIds] = useState<string[]>([]);
+  const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
+  const [vibeOptions, setVibeOptions] = useState<VibeOption[]>([]);
+  const [vibesOpen, setVibesOpen] = useState(false);
+  const [vibesError, setVibesError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [records, setRecords] = useState<CanonicalBusinessSearchRecord[]>([]);
   const [total, setTotal] = useState(0);
@@ -60,6 +70,30 @@ export function LocationFirstBusinessDirectory() {
     } catch {
       // Browser-local history is optional and must never block discovery.
     }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    authenticatedFetch(`${BASE}api/vibes/list`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("VIBES are unavailable right now.");
+        const payload = await response.json() as { vibes?: unknown };
+        if (!Array.isArray(payload.vibes)) throw new Error("VIBES are unavailable right now.");
+        return payload.vibes.flatMap((value): VibeOption[] => {
+          if (!value || typeof value !== "object") return [];
+          const vibe = value as Partial<VibeOption>;
+          return typeof vibe.id === "string" && typeof vibe.label === "string" && typeof vibe.description === "string"
+            ? [{ id: vibe.id, label: vibe.label, description: vibe.description }]
+            : [];
+        });
+      })
+      .then((options) => {
+        if (!controller.signal.aborted) setVibeOptions(options);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setVibesError("VIBES are unavailable right now.");
+      });
+    return () => controller.abort();
   }, []);
 
   const saveRecentSearch = useCallback((entry: DirectoryHistoryEntry) => {
@@ -101,6 +135,7 @@ export function LocationFirstBusinessDirectory() {
       category,
       specialty: specialtyLabel,
       designations: designationIds,
+      vibes: selectedVibes,
       searchText,
       limit: PAGE_SIZE,
       offset: 0,
@@ -111,6 +146,7 @@ export function LocationFirstBusinessDirectory() {
     location.city,
     location.stateCode,
     searchText,
+    selectedVibes,
     specialtyLabel,
   ]);
 
@@ -222,6 +258,12 @@ export function LocationFirstBusinessDirectory() {
   ]
     .filter(Boolean)
     .join(", ");
+  const selectedVibeLabels = vibeOptions
+    .filter((vibe) => selectedVibes.includes(vibe.id))
+    .map((vibe) => vibe.label);
+  const mapSearchQuery = [searchText, ...selectedVibeLabels]
+    .filter(Boolean)
+    .join(" ");
   const countLabel = !location.city
     ? "Choose your area to begin"
     : loading
@@ -233,6 +275,15 @@ export function LocationFirstBusinessDirectory() {
   function toggleDesignation(value: string) {
     invalidateRequests();
     setDesignationIds((current) =>
+      current.includes(value)
+        ? current.filter((id) => id !== value)
+        : [...current, value],
+    );
+  }
+
+  function toggleVibe(value: string) {
+    invalidateRequests();
+    setSelectedVibes((current) =>
       current.includes(value)
         ? current.filter((id) => id !== value)
         : [...current, value],
@@ -313,7 +364,7 @@ export function LocationFirstBusinessDirectory() {
         </p>
         {location.city && (
           <Link
-            href={`/map?area=${encodeURIComponent([location.city, location.stateCode].filter(Boolean).join("-"))}${searchText.trim() ? `&q=${encodeURIComponent(searchText.trim())}` : ""}`}
+            href={`/map?area=${encodeURIComponent([location.city, location.stateCode].filter(Boolean).join("-"))}${mapSearchQuery.trim() ? `&q=${encodeURIComponent(`${mapSearchQuery.trim()} in ${[location.city, location.stateCode].filter(Boolean).join(", ")}`)}` : ""}`}
             className="mt-3 inline-flex rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]"
           >
             Open this business search on Map
@@ -360,6 +411,55 @@ export function LocationFirstBusinessDirectory() {
           Choose one or more labels. When more than one is selected, a listing
           must match <strong>every</strong> selected owner-provided label.
         </p>
+
+        <section className="mt-5 rounded-2xl border border-[#CA922B]/30 bg-white">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
+            aria-expanded={vibesOpen}
+            aria-controls="business-vibes-filter"
+            onClick={() => setVibesOpen((current) => !current)}
+          >
+            <span>
+              <span className="block text-[11px] font-bold uppercase tracking-[0.15em] text-[#8D5C17]">VIBES</span>
+              <span className="mt-1 block text-sm text-[#3A1F0E]/70">
+                {selectedVibeLabels.length > 0
+                  ? `${selectedVibeLabels.length} selected`
+                  : "Search businesses by mood or occasion"}
+              </span>
+            </span>
+            <span aria-hidden="true" className="text-lg font-bold text-[#8D5C17]">{vibesOpen ? "−" : "+"}</span>
+          </button>
+          {vibesOpen && (
+            <div id="business-vibes-filter" className="border-t border-[#CA922B]/20 px-4 pb-4 pt-3">
+              <p className="text-xs leading-5 text-[#3A1F0E]/65">
+                Select one or more VIBES. Results keep your existing city, category, specialty, and support-designation filters.
+              </p>
+              {vibesError ? (
+                <p className="mt-3 text-sm text-[#9F2D20]" role="alert">{vibesError}</p>
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {vibeOptions.map((vibe) => (
+                    <button
+                      key={vibe.id}
+                      type="button"
+                      title={vibe.description}
+                      aria-pressed={selectedVibes.includes(vibe.id)}
+                      onClick={() => toggleVibe(vibe.id)}
+                      className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                        selectedVibes.includes(vibe.id)
+                          ? "bg-[#3A1F0E] text-white"
+                          : "border border-[#3A1F0E]/15 bg-[#FBF6EC] text-[#3A1F0E] hover:border-[#CA922B]/40"
+                      }`}
+                    >
+                      {vibe.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
 
         {!location.city && <LocationNeededState />}
         {!loading && error && (

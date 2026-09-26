@@ -18,6 +18,7 @@ describe("routed canonical business directory", () => {
       category: "Food & Drink",
       specialty: "Restaurant",
       ownership: "Woman-Owned",
+      vibes: ["date_night", "romantic", "date_night"],
       searchText: "AMINA",
       offset: 60,
       limit: 500,
@@ -30,6 +31,7 @@ describe("routed canonical business directory", () => {
       category: "Food & Drink",
       search: "AMINA Restaurant",
       ownership: "Woman-Owned",
+      vibes: "date_night,romantic",
     });
   });
 
@@ -62,6 +64,9 @@ describe("routed canonical business directory", () => {
     expect(directory).not.toContain("api/discovery/query");
     expect(directory).toContain("requestIdRef.current");
     expect(directory).toContain("queryKeyRef.current");
+    expect(directory).toContain('api/vibes/list');
+    expect(directory).toContain('aria-controls="business-vibes-filter"');
+    expect(directory).toContain("Search businesses by mood or occasion");
     expect(directory).toContain("Load more (");
     expect(directory).toContain("Unclaimed · Not verified");
     expect(directory).toContain(

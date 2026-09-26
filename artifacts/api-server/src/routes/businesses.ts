@@ -65,10 +65,17 @@ import {
   findBusinessExperienceKeysForSearch,
   findVibeKeysForSearch,
   findSafeSearchClarification,
+  normalizeOwnerExperienceKey,
+  VIBES_BY_CATEGORY,
 } from "@workspace/constants";
 import { buildDesignationPredicateSql, legacyDesignationColumn, resolveDesignationScope } from "../kinfolk/designation-predicate-policy";
 
 const communitySubmissionRepository = new SubmissionRepository();
+const CANONICAL_VIBE_KEYS = new Set(
+  Object.values(VIBES_BY_CATEGORY)
+    .flat()
+    .map((vibe) => normalizeOwnerExperienceKey(vibe.label)),
+);
 
 // Tester privileges never expose pending/review rows. Anonymous and member
 // discovery both consume only records accepted by the canonical public lifecycle.
@@ -507,6 +514,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           culturalPreference,
           ownership,
           designations,
+          vibes: vibesParam,
           offset: offsetParam,
           limit: limitParam,
           lat: latParam,
@@ -631,6 +639,23 @@ router.get("/businesses", async (req: Request, res: Response) => {
           );
         }
         conditions.push(...designationConditions);
+
+        const requestedVibes = typeof vibesParam === "string"
+          ? [...new Set(
+              vibesParam
+                .split(",")
+                .map((value) => normalizeOwnerExperienceKey(value))
+                .filter((value) => CANONICAL_VIBE_KEYS.has(value)),
+            )].slice(0, 8)
+          : [];
+        if (requestedVibes.length > 0) {
+          conditions.push(
+            sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(
+              requestedVibes.map((key) => sql`${key}`),
+              sql`, `,
+            )}]`,
+          );
+        }
 
         if (search && typeof search === "string") {
           const q = search.trim();
