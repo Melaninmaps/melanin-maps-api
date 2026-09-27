@@ -2032,30 +2032,36 @@ export default function Profile() {
                     Your business on Mapping with Melanin™
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">
-                    Add a business from your member account or check the status of a prior submission. A complete ordinary listing can publish as community-listed, unclaimed, and not verified; claiming a public listing remains a separate owner-verification step.
+                    Add your own business from this member account, share another owner’s business with the community, or check the status of a prior request. Ownership-control approval and MWM verification remain separate.
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <Link href="/submit-business?source=profile&campaign=member-business-entry">
+                <Link href="/submit-business?intent=owner&source=profile&campaign=member-business-owner-entry">
                   <Button className="h-auto w-full justify-start rounded-2xl bg-[#CA922B] px-4 py-4 text-left text-white hover:bg-[#B38024]">
                     <Store className="mr-3 h-5 w-5 shrink-0" />
                     <span>
                       <span className="block text-sm font-bold">Add my business</span>
-                      <span className="mt-0.5 block text-xs font-normal text-white/85">Create a profile-ready listing from this account</span>
+                      <span className="mt-0.5 block text-xs font-normal text-white/85">Request profile-linked management access</span>
                     </span>
                   </Button>
                 </Link>
-                <Link href="/my-business-submissions">
+                <Link href="/submit-business?source=profile&campaign=member-community-business-entry">
                   <Button variant="outline" className="h-auto w-full justify-start rounded-2xl border-[#CA922B]/40 bg-[#FAF6EF] px-4 py-4 text-left text-[#2B1507] hover:border-[#CA922B] hover:bg-[#CA922B]/10">
-                    <ClipboardList className="mr-3 h-5 w-5 shrink-0 text-[#CA922B]" />
+                    <Heart className="mr-3 h-5 w-5 shrink-0 text-[#CA922B]" />
                     <span>
-                      <span className="block text-sm font-bold">My business submissions</span>
-                      <span className="mt-0.5 block text-xs font-normal text-[#3A1F0E]/60">Review, amend, or open a published listing</span>
+                      <span className="block text-sm font-bold">Share another business</span>
+                      <span className="mt-0.5 block text-xs font-normal text-[#3A1F0E]/60">Recommend a business without claiming it</span>
                     </span>
                   </Button>
                 </Link>
+              </div>
+              <Link href="/my-business-submissions" className="mt-4 inline-flex text-sm font-semibold text-[#9A6717] hover:text-[#6F4810]">
+                <ClipboardList className="mr-2 h-4 w-4" /> Review my business submissions and requests
+              </Link>
+              <div className="mt-3 rounded-xl border border-[#CA922B]/20 bg-[#FAF6EF] px-4 py-3 text-xs leading-5 text-[#3A1F0E]/70">
+                A community recommendation is searchable only as a community-listed, unclaimed listing. An approved ownership-control claim is required before a member can manage a business page. Neither step verifies ownership designations.
               </div>
             </div>
           </div>

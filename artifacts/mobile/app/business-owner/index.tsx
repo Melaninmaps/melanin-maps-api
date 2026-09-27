@@ -265,10 +265,10 @@ export default function BusinessOwnerHome() {
             </Text>
             <TouchableOpacity activeOpacity={0.85}
               style={[styles.listBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.push("/list-business" as never)}
+              onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)}
             >
               <Feather name="plus" size={16} color="#FFF" />
-              <Text style={styles.listBtnTxt}>List My Business</Text>
+              <Text style={styles.listBtnTxt}>Add My Business</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -413,7 +413,7 @@ export default function BusinessOwnerHome() {
 
             <TouchableOpacity activeOpacity={0.85}
               style={[styles.listAnotherBtn, { borderColor: colors.border }]}
-              onPress={() => router.push("/list-business" as never)}
+              onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)}
             >
               <Feather name="plus-circle" size={15} color={colors.mutedForeground} />
               <Text style={[styles.listAnotherTxt, { color: colors.mutedForeground }]}>List another business</Text>

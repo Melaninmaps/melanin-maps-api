@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory, type CategoryGroup } from "@/constants/categories";
 import { OWNERSHIP_CHIPS } from "@/config/chips";
+import { useAuth } from "@/lib/auth";
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
 
@@ -78,6 +79,11 @@ interface FormData {
   tags: string;
   communityReportedOwnership: CommunityReportedOwnership;
   ownershipDesignations: string[];
+  ownerName: string;
+  ownerBusinessEmail: string;
+  ownerRole: "owner" | "co-owner" | "manager" | "authorized_rep";
+  ownerVerificationMethod: "domain_email" | "social_account" | "booking_page" | "manual_review" | "business_document";
+  ownerAttestation: boolean;
 }
 
 const INITIAL_FORM: FormData = {
@@ -103,6 +109,11 @@ const INITIAL_FORM: FormData = {
   tags: "",
   communityReportedOwnership: "not_sure",
   ownershipDesignations: [],
+  ownerName: "",
+  ownerBusinessEmail: "",
+  ownerRole: "owner",
+  ownerVerificationMethod: "manual_review",
+  ownerAttestation: false,
 };
 
 function ProgressBar({ step, total, colors }: { step: number; total: number; colors: any }) {
@@ -290,6 +301,9 @@ export default function ListBusinessScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { intent } = useLocalSearchParams<{ intent?: string }>();
+  const { user } = useAuth();
+  const isOwnerIntent = intent === "owner";
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -314,6 +328,15 @@ export default function ListBusinessScreen() {
 
   const update = (field: keyof FormData) => (value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  useEffect(() => {
+    if (!isOwnerIntent || !user) return;
+    setForm((current) => ({
+      ...current,
+      ownerName: current.ownerName || [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "",
+      ownerBusinessEmail: current.ownerBusinessEmail || user.email || "",
+    }));
+  }, [isOwnerIntent, user]);
 
   useEffect(() => {
     setDuplicateCandidates([]);
@@ -465,8 +488,16 @@ export default function ListBusinessScreen() {
           tags: form.tags,
           communityReportedOwnership: form.communityReportedOwnership,
           ownershipDesignations: form.ownershipDesignations,
+          submissionIntent: isOwnerIntent ? "owner" : "community",
+          ...(isOwnerIntent ? {
+            ownerName: form.ownerName,
+            ownerBusinessEmail: form.ownerBusinessEmail,
+            ownerRole: form.ownerRole,
+            ownerVerificationMethod: form.ownerVerificationMethod,
+            ownerAttestation: form.ownerAttestation,
+          } : {}),
           locationSource: "member_entered",
-          sourceChannel: "expo_list_business",
+          sourceChannel: isOwnerIntent ? "expo_profile_owner_business" : "expo_list_business",
           clientRequestId,
         }),
       });
@@ -502,7 +533,11 @@ export default function ListBusinessScreen() {
   const canProceed = () => {
     if (step === 1) return form.name.trim().length > 0 && form.category.length > 0;
     if (step === 2) return form.address.trim().length > 0 && form.city.trim().length > 0 && form.state.trim().length > 0;
-    if (step === 3) return true;
+    if (step === 3) return !isOwnerIntent || (
+      form.ownerName.trim().length >= 2
+      && form.ownerBusinessEmail.includes("@")
+      && form.ownerAttestation
+    );
     return true;
   };
 
@@ -516,7 +551,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? (submissionOutcome?.status === "published" ? "Live on the Map" : "Submission Saved") : "Add a Community Business"}
+          {isSuccess ? (submissionOutcome?.status === "published" ? "Live on the Map" : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -557,7 +592,7 @@ export default function ListBusinessScreen() {
                 { icon: "check-circle", label: "Status", value: submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
                 { icon: submissionOutcome?.mapPin ? "map-pin" : "eye-off", label: "Directory", value: submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Not public yet", color: colors.primary },
                 { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
-                { icon: "user-x", label: "Owner", value: "Unclaimed", color: colors.primary },
+                { icon: "user-x", label: "Owner", value: isOwnerIntent ? "Claim review pending" : "Unclaimed", color: colors.primary },
               ].map((item) => (
                 <View key={item.label} style={styles.successRow}>
                   <Feather name={item.icon as any} size={16} color={item.color} />
@@ -572,7 +607,7 @@ export default function ListBusinessScreen() {
               onPress={() => router.replace("/my-business-submissions" as any)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>View My Submissions</Text>
+              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>{isOwnerIntent ? "View My Business Requests" : "View My Submissions"}</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
             {submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
@@ -599,7 +634,15 @@ export default function ListBusinessScreen() {
             <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
               {step === 1 && (
                 <View>
-                  <StepLabel step={1} total={TOTAL_STEPS} title="Business Basics" colors={colors} />
+                  <StepLabel step={1} total={TOTAL_STEPS} title={isOwnerIntent ? "Your Business Basics" : "Business Basics"} colors={colors} />
+
+                  <View style={[styles.intentNotice, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                    <Feather name={isOwnerIntent ? "briefcase" : "heart"} size={16} color={colors.primary} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.intentNoticeTitle, { color: colors.foreground }]}>{isOwnerIntent ? "This is my business" : "I am sharing someone else’s business"}</Text>
+                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This request is tied to your community profile, but dashboard access begins only after your ownership-control claim is approved. Verification is separate." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
+                    </View>
+                  </View>
 
                   <Field
                     label="Business Name *"
@@ -990,6 +1033,23 @@ export default function ListBusinessScreen() {
                     )}
                   </View>
 
+                  {isOwnerIntent ? (
+                    <View style={[styles.ownerClaimCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <Text style={[styles.ownerClaimTitle, { color: colors.foreground }]}>Ownership request for this listing</Text>
+                      <Text style={[styles.ownerClaimCopy, { color: colors.mutedForeground }]}>Required for a profile-linked business. Your claim is reviewed separately from the public listing and does not create a verification badge.</Text>
+                      <Field label="Your name *" value={form.ownerName} onChangeText={update("ownerName")} placeholder="Full name" colors={colors} />
+                      <Field label="Business email *" value={form.ownerBusinessEmail} onChangeText={update("ownerBusinessEmail")} placeholder="owner@yourbusiness.com" keyboardType="email-address" colors={colors} />
+                      <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 8 }]}>Your role</Text>
+                      <ChipGroup options={["owner", "co-owner", "manager", "authorized_rep"]} value={form.ownerRole} onSelect={(value) => setForm((current) => ({ ...current, ownerRole: value as FormData["ownerRole"] }))} colors={colors} />
+                      <Text style={[fieldStyles.label, { color: colors.foreground, marginTop: 16, marginBottom: 8 }]}>How can we review it?</Text>
+                      <ChipGroup options={["manual_review", "domain_email", "social_account", "booking_page", "business_document"]} value={form.ownerVerificationMethod} onSelect={(value) => setForm((current) => ({ ...current, ownerVerificationMethod: value as FormData["ownerVerificationMethod"] }))} colors={colors} />
+                      <TouchableOpacity style={styles.ownerAttestation} onPress={() => setForm((current) => ({ ...current, ownerAttestation: !current.ownerAttestation }))} activeOpacity={0.8}>
+                        <Feather name={form.ownerAttestation ? "check-square" : "square"} size={20} color={form.ownerAttestation ? colors.primary : colors.mutedForeground} />
+                        <Text style={[styles.ownerAttestationText, { color: colors.foreground }]}>I confirm I am the owner or an authorized representative, and this information is accurate. *</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+
                   <View style={[styles.reviewNotice, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                     <Feather name="shield" size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
@@ -1053,7 +1113,7 @@ export default function ListBusinessScreen() {
               disabled={!canProceed() || duplicateCheckLoading}
             >
               <Text style={[styles.nextBtnText, { color: canProceed() ? colors.primaryForeground : colors.mutedForeground }]}>
-                {isLastForm ? (duplicateCheckLoading ? "Checking listings…" : "Add Community Business") : "Continue"}
+                {isLastForm ? (duplicateCheckLoading ? "Checking listings…" : isOwnerIntent ? "Submit My Business Request" : "Share Business") : "Continue"}
               </Text>
               <Feather
                 name={isLastForm ? "send" : "arrow-right"}
@@ -1093,6 +1153,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   mapHintText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
+  intentNotice: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 18 },
+  intentNoticeTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 3 },
+  intentNoticeCopy: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  ownerClaimCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16 },
+  ownerClaimTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 5 },
+  ownerClaimCopy: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginBottom: 14 },
+  ownerAttestation: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 18 },
+  ownerAttestationText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
   reviewNotice: {
     flexDirection: "row",
     gap: 12,

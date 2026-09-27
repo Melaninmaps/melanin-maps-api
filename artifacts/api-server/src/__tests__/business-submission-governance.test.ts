@@ -54,6 +54,12 @@ function submission(overrides: Partial<Submission> = {}): Submission {
     submitter_note: "Recommended by a member.",
     client_request_id: "request-00000001",
     request_payload_hash: null,
+    submission_intent: "community",
+    owner_name: null,
+    owner_business_email: null,
+    owner_role: null,
+    owner_verification_method: null,
+    owner_attested_at: null,
     submitted_by_id: "approved-member",
     status: "pending_review",
     reviewed_by_id: null,
@@ -198,6 +204,30 @@ describe("community business submission input", () => {
     expect(input.communityReportedOwnership).toBe("non_minority_owned");
     expect(input.ownershipDesignations).toEqual([]);
     expect(input).not.toHaveProperty("verified");
+  });
+
+  it("requires a separate attested claim packet for an owner-intent submission", () => {
+    expect(() => validateSubmission({
+      ...completeBody(),
+      submissionIntent: "owner",
+    })).toThrow("ownerName");
+
+    const input = validateSubmission({
+      ...completeBody(),
+      submissionIntent: "owner",
+      ownerName: "Jo Smith",
+      ownerBusinessEmail: "owner@communitybooks.example",
+      ownerRole: "owner",
+      ownerVerificationMethod: "domain_email",
+      ownerAttestation: true,
+    });
+
+    expect(input).toMatchObject({
+      submissionIntent: "owner",
+      ownerName: "Jo Smith",
+      ownerBusinessEmail: "owner@communitybooks.example",
+      ownerAttestation: true,
+    });
   });
 
   it("rejects contradictory ownership, unsafe URLs, and incomplete coordinate pairs", () => {
@@ -615,8 +645,43 @@ describe("POST /api/community/business-submissions", () => {
       true,
     ]));
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(true);
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_claims"))).toBe(false);
     expect(tx.query.mock.calls.map(([sql]) => sql)).toEqual(expect.arrayContaining(["BEGIN", "COMMIT"]));
     expect(tx.release).toHaveBeenCalledOnce();
+  });
+
+  it("creates a pending ownership-control claim for an owner submission without creating an owner link or verification", async () => {
+    const ownerSubmission = submission({
+      submission_intent: "owner",
+      owner_name: "Jo Smith",
+      owner_business_email: "owner@communitybooks.example",
+      owner_role: "owner",
+      owner_verification_method: "domain_email",
+      owner_attested_at: "2026-09-27T12:00:00.000Z",
+    });
+    const repository = repositoryMock({
+      create: vi.fn().mockResolvedValue({ submission: ownerSubmission, created: true }),
+      getByIdForUpdate: vi.fn().mockResolvedValue(ownerSubmission),
+    });
+    const tx = transactionHarness();
+    const response = await request(appWith(repository, "approved", tx.pool))
+      .post("/api/community/business-submissions")
+      .send(completeBody({
+        submissionIntent: "owner",
+        ownerName: "Jo Smith",
+        ownerBusinessEmail: "owner@communitybooks.example",
+        ownerRole: "owner",
+        ownerVerificationMethod: "domain_email",
+        ownerAttestation: true,
+      }));
+
+    expect(response.status).toBe(201);
+    expect(response.body.message).toContain("ownership request is pending review");
+    const claimInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO business_claims"));
+    expect(String(claimInsert?.[0])).toContain("'ownership_control'");
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(false);
+    const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
+    expect(String(businessInsert?.[0])).toContain("'[]'::jsonb,'[]'::jsonb,'unclaimed_community_submission',false,false");
   });
 
   it("publishes an explicit non-minority report without making a public ownership assertion", async () => {

@@ -180,7 +180,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
       res.status(409).json({ error: "This listing is not currently eligible for claim" }); return;
     }
     if (biz.ocs === "claimed") {
-      res.status(409).json({ error: "This business already has a verified owner" }); return;
+      res.status(409).json({ error: "This business already has an approved management owner" }); return;
     }
 
     // One-open-claim-per-member-per-business guard

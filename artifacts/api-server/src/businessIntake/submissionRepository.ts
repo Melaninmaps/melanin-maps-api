@@ -39,6 +39,12 @@ export interface Submission {
   submitter_note: string | null;
   client_request_id: string | null;
   request_payload_hash: string | null;
+  submission_intent: "community" | "owner";
+  owner_name: string | null;
+  owner_business_email: string | null;
+  owner_role: string | null;
+  owner_verification_method: string | null;
+  owner_attested_at: string | null;
   submitted_by_id: string | null;
   status: SubmissionStatus;
   reviewed_by_id: string | null;
@@ -76,7 +82,8 @@ const SUBMISSION_COLUMNS = `
   postal_code, country, website, phone, social_profiles, media_urls, media_asset_ids,
   ownership_designations, community_reported_ownership, price_range, hours, tags, latitude, longitude,
   provider_place_id, location_source, source_campaign, source_channel,
-  submitter_note, client_request_id, request_payload_hash, submitted_by_id, status, reviewed_by_id,
+  submitter_note, client_request_id, request_payload_hash, submission_intent, owner_name,
+  owner_business_email, owner_role, owner_verification_method, owner_attested_at, submitted_by_id, status, reviewed_by_id,
   review_note, matched_business_id, created_at, updated_at
 `;
 
@@ -88,7 +95,30 @@ function submissionIdentityKey(input: CommunityBusinessSubmissionInput): string 
 }
 
 export function submissionPayloadHash(input: CommunityBusinessSubmissionInput): string {
-  const { clientRequestId: _clientRequestId, ...payload } = input;
+  const {
+    clientRequestId: _clientRequestId,
+    submissionIntent,
+    ownerName,
+    ownerBusinessEmail,
+    ownerRole,
+    ownerVerificationMethod,
+    ownerAttestation,
+    ...communityPayload
+  } = input;
+  // Existing in-flight community submissions were hashed before owner intent
+  // existed. Keep that payload byte-for-byte compatible; only owner requests
+  // add ownership-control evidence to their idempotency identity.
+  const payload = submissionIntent === "owner"
+    ? {
+      ...communityPayload,
+      submissionIntent,
+      ownerName,
+      ownerBusinessEmail,
+      ownerRole,
+      ownerVerificationMethod,
+      ownerAttestation,
+    }
+    : communityPayload;
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
@@ -209,12 +239,13 @@ export class SubmissionRepository {
             postal_code, country, website, phone, social_profiles, media_urls, media_asset_ids,
             ownership_designations, community_reported_ownership, price_range, hours, tags, latitude, longitude,
             provider_place_id, location_source, source_campaign, source_channel,
-            submitter_note, client_request_id, request_payload_hash, identity_key, submitted_by_id,
+            submitter_note, client_request_id, request_payload_hash, identity_key, submission_intent, owner_name,
+            owner_business_email, owner_role, owner_verification_method, owner_attested_at, submitted_by_id,
             status, review_note, created_at, updated_at)
          VALUES
            ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,$15::jsonb,$16::jsonb,
             $17,$18,$19,$20::jsonb,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,
-            $31,$32,$33,NOW(),NOW())
+            $31,$32,$33,$34,$35,$36,$37,$38,$39,$40,NOW(),NOW())
          ON CONFLICT DO NOTHING
          RETURNING ${SUBMISSION_COLUMNS}`,
         [
@@ -248,6 +279,12 @@ export class SubmissionRepository {
           input.clientRequestId ?? null,
           submissionPayloadHash(input),
           submissionIdentityKey(input),
+          input.submissionIntent,
+          input.ownerName ?? null,
+          input.ownerBusinessEmail ?? null,
+          input.ownerRole ?? null,
+          input.ownerVerificationMethod ?? null,
+          input.ownerAttestation ? new Date().toISOString() : null,
           submittedById,
           initialStatus,
           initialReviewNote ?? null,
@@ -334,9 +371,10 @@ export class SubmissionRepository {
            price_range = $19, hours = $20, tags = $21::jsonb,
            latitude = $22, longitude = $23, provider_place_id = $24,
            location_source = $25, source_campaign = $26, source_channel = $27,
-           submitter_note = $28, identity_key = $29, status = $30, reviewed_by_id = NULL,
-           review_note = $31,
-           matched_business_id = NULL, updated_at = NOW()
+           submitter_note = $28, identity_key = $29, submission_intent = $30, owner_name = $31,
+           owner_business_email = $32, owner_role = $33, owner_verification_method = $34,
+           owner_attested_at = $35, status = $36, reviewed_by_id = NULL,
+           review_note = $37, matched_business_id = NULL, updated_at = NOW()
        WHERE id = $1 AND submitted_by_id = $2 AND status = 'needs_info'
        RETURNING ${SUBMISSION_COLUMNS}`,
       [
@@ -369,6 +407,12 @@ export class SubmissionRepository {
         input.sourceChannel ?? null,
         input.submitterNote ?? null,
         submissionIdentityKey(input),
+        input.submissionIntent,
+        input.ownerName ?? null,
+        input.ownerBusinessEmail ?? null,
+        input.ownerRole ?? null,
+        input.ownerVerificationMethod ?? null,
+        input.ownerAttestation ? new Date().toISOString() : null,
         nextStatus,
         reviewNote ?? null,
       ],

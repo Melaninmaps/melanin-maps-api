@@ -17414,7 +17414,13 @@ async function ensureCommunityBusinessSubmissionsSchema(
         ADD COLUMN IF NOT EXISTS location_source TEXT,
         ADD COLUMN IF NOT EXISTS client_request_id TEXT,
         ADD COLUMN IF NOT EXISTS request_payload_hash TEXT,
-        ADD COLUMN IF NOT EXISTS identity_key TEXT
+        ADD COLUMN IF NOT EXISTS identity_key TEXT,
+        ADD COLUMN IF NOT EXISTS submission_intent TEXT NOT NULL DEFAULT 'community',
+        ADD COLUMN IF NOT EXISTS owner_name TEXT,
+        ADD COLUMN IF NOT EXISTS owner_business_email TEXT,
+        ADD COLUMN IF NOT EXISTS owner_role TEXT,
+        ADD COLUMN IF NOT EXISTS owner_verification_method TEXT,
+        ADD COLUMN IF NOT EXISTS owner_attested_at TIMESTAMPTZ
     `);
     await pool.query(`
       ALTER TABLE community_business_submissions
@@ -17422,6 +17428,11 @@ async function ensureCommunityBusinessSubmissionsSchema(
       ALTER TABLE community_business_submissions
         ADD CONSTRAINT community_business_submissions_community_reported_ownership_check
         CHECK (community_reported_ownership IN ('minority_owned','non_minority_owned','not_sure'));
+      ALTER TABLE community_business_submissions
+        DROP CONSTRAINT IF EXISTS community_business_submissions_submission_intent_check;
+      ALTER TABLE community_business_submissions
+        ADD CONSTRAINT community_business_submissions_submission_intent_check
+        CHECK (submission_intent IN ('community','owner'));
     `);
     await pool.query(`
       ALTER TABLE community_business_submissions

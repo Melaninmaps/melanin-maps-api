@@ -1748,7 +1748,14 @@ export default function BusinessDetail() {
         <div className="border border-white/10 rounded-2xl overflow-hidden">
           <button
             className="w-full flex items-center gap-3 px-6 py-4 bg-[#1E1510] hover:bg-[#241810] transition-colors text-left"
-            onClick={() => { if (!claimSubmitted) setClaimOpen(o => !o); }}
+            onClick={() => {
+              if (claimSubmitted) return;
+              if (!auth?.user) {
+                window.location.href = "/login";
+                return;
+              }
+              setClaimOpen((open) => !open);
+            }}
           >
             <div className="w-8 h-8 rounded-full bg-[#CA922B]/10 flex items-center justify-center flex-shrink-0">
               <Shield className="w-4 h-4 text-[#CA922B]" />
@@ -1756,7 +1763,7 @@ export default function BusinessDetail() {
             <div className="flex-1">
               <p className="font-semibold text-white text-sm">Is this your business?</p>
               <p className="text-white/60 text-xs">
-                {claimSubmitted ? "Claim submitted — we'll be in touch within 2–3 business days." : "Claim this listing to manage your profile, respond to reviews, and get verified."}
+                {claimSubmitted ? "Claim submitted — ownership-control review is pending." : auth?.user ? "Request management access. Claim approval and MWM verification are separate." : "Sign in or join to make a claim from your community profile."}
               </p>
             </div>
             {!claimSubmitted && (claimOpen ? <ChevronUp className="w-4 h-4 text-white/40 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/40 flex-shrink-0" />)}
@@ -1768,7 +1775,7 @@ export default function BusinessDetail() {
               <div className="bg-[#CA922B]/8 border border-[#CA922B]/20 rounded-xl p-3 flex gap-2 items-start">
                 <ShieldCheck className="w-4 h-4 text-[#CA922B] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-white/70 leading-relaxed">
-                  Once approved, you'll get an email with a link to log in and manage your listing. Our team reviews all claims within 2–3 business days.
+                  You need a Mapping with Melanin™ community profile to submit this claim. Once the ownership-control claim is approved, that profile can manage this listing. MWM verification and ownership designations remain separate.
                 </p>
               </div>
 

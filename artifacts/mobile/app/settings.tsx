@@ -90,7 +90,8 @@ export default function SettingsScreen() {
     {
       title: "Business",
       rows: [
-        { id: "list", icon: "plus-circle", label: "List My Business", route: "/list-business" },
+        { id: "add-my-business", icon: "plus-circle", label: "Add My Business", sub: "Connect an ownership request to your community profile", route: "/list-business?intent=owner" },
+        { id: "share-business", icon: "heart", label: "Share Another Business", sub: "Recommend a business without claiming it", route: "/list-business" },
         { id: "dashboard", icon: "bar-chart-2", label: "Business Dashboard", route: "/business-dashboard" },
         { id: "verify", icon: "check-circle", label: "Verify My Business", route: "/business-verify" },
         { id: "creator-profile", icon: "video", label: "Creator Profile", sub: "Connect your channels — send fans to where you create", route: "/creator-profile" },

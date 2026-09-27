@@ -1738,13 +1738,30 @@ export default function BusinessDetailScreen() {
 
         {/* Claim this business */}
         <View style={[styles.claimSection, { borderTopColor: colors.border }]}>
-          <TouchableOpacity style={styles.claimRow} onPress={() => setClaimModalOpen(true)} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.claimRow}
+            onPress={() => {
+              if (!user) {
+                Alert.alert(
+                  "Community profile required",
+                  "Sign in or join Mapping With Melanin™ first. A business claim is tied to your community profile; ownership and verification are reviewed separately.",
+                  [
+                    { text: "Not now", style: "cancel" },
+                    { text: "Sign in or join", onPress: () => router.push("/login" as never) },
+                  ],
+                );
+                return;
+              }
+              setClaimModalOpen(true);
+            }}
+            activeOpacity={0.7}
+          >
             <View style={[styles.claimIcon, { backgroundColor: colors.primary + "14" }]}>
               <Feather name="shield" size={14} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.claimLabel, { color: colors.foreground }]}>Is this your business?</Text>
-              <Text style={[styles.claimSub, { color: colors.mutedForeground }]}>Claim this listing to manage your profile</Text>
+              <Text style={[styles.claimSub, { color: colors.mutedForeground }]}>Request management access — ownership and verification are reviewed separately</Text>
             </View>
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>

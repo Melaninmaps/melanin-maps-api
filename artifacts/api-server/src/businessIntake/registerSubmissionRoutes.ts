@@ -344,6 +344,66 @@ async function publishFromSubmission(
   return result.rows[0].id;
 }
 
+// A self-submitted listing is deliberately not an owner link. It creates the
+// same auditable, pending ownership-control claim that a claimant opens from an
+// existing listing. Approval is still the sole path to dashboard access, and
+// this helper never changes verification fields or ownership designations.
+async function createPendingOwnerClaimFromSubmission(
+  submission: Submission,
+  businessId: string,
+  actorId: string,
+  client: PoolClient,
+): Promise<string | null> {
+  if (submission.submission_intent !== "owner") return null;
+  if (!submission.owner_name || !submission.owner_business_email || !submission.owner_attested_at) {
+    throw new RouteError(409, "OWNER_CLAIM_EVIDENCE_REQUIRED", "Your ownership request is incomplete; the listing was not published.");
+  }
+
+  const existing = await client.query<{ id: string }>(
+    `SELECT id FROM business_claims
+     WHERE business_id = $1 AND user_id = $2 AND status IN ('pending', 'needs_info')
+     LIMIT 1`,
+    [businessId, actorId],
+  );
+  if (existing.rows[0]) return existing.rows[0].id;
+
+  const claimId = `clm_${Date.now()}_${randomUUID().slice(0, 8)}`;
+  await client.query(
+    `INSERT INTO business_claims
+       (id, business_id, user_id, business_name, owner_name, email, role,
+        claim_type, verification_method, evidence_url, evidence_summary,
+        attested_at, additional_info, status, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,'ownership_control',$8,$9,$10,$11,$12,'pending',NOW(),NOW())`,
+    [
+      claimId,
+      businessId,
+      actorId,
+      submission.name,
+      submission.owner_name,
+      submission.owner_business_email,
+      submission.owner_role ?? "owner",
+      submission.owner_verification_method ?? "manual_review",
+      submission.website,
+      "Created with an owner-intent business submission; owner-control claim requires separate approval.",
+      submission.owner_attested_at,
+      submission.submitter_note,
+    ],
+  );
+  await client.query(
+    `UPDATE businesses
+     SET ownership_control_status = 'claim_pending', updated_at = NOW()
+     WHERE id = $1 AND ownership_control_status = 'unclaimed'`,
+    [businessId],
+  );
+  return claimId;
+}
+
+function ownerClaimMessage(claimId: string | null): string | null {
+  return claimId
+    ? " Your listing is live, and your ownership request is pending review. Claiming controls the page only after approval; verification remains separate."
+    : null;
+}
+
 export function registerSubmissionRoutes(
   app: Express,
   dependencies: RouteDependencies = {},
@@ -434,6 +494,7 @@ export function registerSubmissionRoutes(
           const stored = await repository.getByIdForUpdate(result.submission.id, client)
             ?? result.submission;
           businessId = await publishFromSubmission(stored, user.id, client, preparedLocation);
+          const ownerClaimId = await createPendingOwnerClaimFromSubmission(stored, businessId, user.id, client);
           const reviewNote = automaticPublicationReviewNote(preparedLocation);
           const published = await repository.finalizeAutomaticPublication(
             stored.id,
@@ -448,7 +509,7 @@ export function registerSubmissionRoutes(
           status = "published";
           publicationOutcome = "published";
           mapPin = true;
-          message = "Published on the map as community-listed, unclaimed, and not verified.";
+          message = `Published on the map as community-listed, unclaimed, and not verified.${ownerClaimMessage(ownerClaimId) ?? ""}`;
         } else {
           await repository.logAuditEvent(
             result.submission.id,
@@ -563,6 +624,7 @@ export function registerSubmissionRoutes(
         let message = assessment.publicMessage;
         if (assessment.outcome === "eligible" && preparedLocation) {
           businessId = await publishFromSubmission(amended, user.id, client, preparedLocation);
+          const ownerClaimId = await createPendingOwnerClaimFromSubmission(amended, businessId, user.id, client);
           const reviewNote = automaticPublicationReviewNote(preparedLocation);
           const published = await repository.finalizeAutomaticPublication(
             amended.id,
@@ -577,7 +639,7 @@ export function registerSubmissionRoutes(
           status = "published";
           publicationOutcome = "published";
           mapPin = true;
-          message = "Published on the map as community-listed, unclaimed, and not verified.";
+          message = `Published on the map as community-listed, unclaimed, and not verified.${ownerClaimMessage(ownerClaimId) ?? ""}`;
         } else {
           await repository.logAuditEvent(
             amended.id,
@@ -734,8 +796,15 @@ export function registerSubmissionRoutes(
         }
 
         let businessId: string | undefined;
+        let ownerClaimId: string | null = null;
         if (status === "published") {
           businessId = await publishFromSubmission(submission, admin.id, client, preparedLocation!);
+          ownerClaimId = await createPendingOwnerClaimFromSubmission(
+            submission,
+            businessId,
+            submission.submitted_by_id ?? admin.id,
+            client,
+          );
         }
 
         const updated = await repository.decide(
@@ -756,7 +825,7 @@ export function registerSubmissionRoutes(
           submission: updated,
           businessId,
           message: status === "published"
-            ? "Community-listed, unclaimed business published. This does not mark it verified."
+            ? `Community-listed, unclaimed business published. This does not mark it verified.${ownerClaimMessage(ownerClaimId) ?? ""}`
             : status === "declined"
             ? "Submission declined."
             : "More information requested from the submitter.",

@@ -80,7 +80,8 @@ describe("community-fed business publication governance", () => {
     expect(nomination).toContain('headers["Authorization"] = `Bearer ${token}`');
     expect(nomination).toContain("submitterNote: why.trim() || undefined");
     expect(nomination).toContain("providerPlaceId: selectedPlace.id");
-    expect(nomination).toContain('locationSource: "mwm_directory"');
+    // Autocomplete results carry provider provenance; do not relabel them as MWM directory rows.
+    expect(nomination).toContain('locationSource: "google_places"');
     expect(nomination).toContain("communityReportedOwnership");
     expect(nomination).toContain("Non-minority-owned");
     expect(nomination).toContain("Can&apos;t find it? Add the complete business");
@@ -105,16 +106,46 @@ describe("community-fed business publication governance", () => {
     expect(smartSearch).not.toContain("blackOwned: true");
   });
 
-  it("keeps review status reachable after success and from Profile", () => {
+  it("keeps review status reachable after success and from Settings", () => {
     const status = source("../app/my-business-submissions.tsx");
-    const profile = source("../app/(tabs)/profile.tsx");
+    const settings = source("../app/settings.tsx");
     const listBusiness = source("../app/list-business.tsx");
     expect(status).toContain("/api/community/business-submissions/mine");
     expect(status).toContain("Authorization: `Bearer ${token}`");
     expect(status).toContain("Community-listed · Unclaimed · Not verified");
     expect(status).toContain("More information needed");
-    expect(profile).toContain('route: "/my-business-submissions"');
+    expect(settings).toContain('route: "/my-business-submissions"');
     expect(listBusiness).toContain('router.replace("/my-business-submissions"');
+  });
+
+  it("keeps member-owned and community-recommended business journeys distinct", () => {
+    const listBusiness = source("../app/list-business.tsx");
+    const profile = source("../app/(tabs)/profile.tsx");
+    const settings = source("../app/settings.tsx");
+
+    expect(listBusiness).toContain('const isOwnerIntent = intent === "owner"');
+    expect(listBusiness).toContain('submissionIntent: isOwnerIntent ? "owner" : "community"');
+    expect(listBusiness).toContain('ownerAttestation: form.ownerAttestation');
+    expect(listBusiness).toContain('This is a community recommendation. It will not be connected to your profile as an owner.');
+    expect(listBusiness).toContain('dashboard access begins only after your ownership-control claim is approved');
+    expect(profile).toContain('params: { intent: "owner" }');
+    expect(settings).toContain('label: "Add My Business"');
+    expect(settings).toContain('label: "Share Another Business"');
+  });
+
+  it("uses the canonical protected claim endpoint and never equates a claim with verification", () => {
+    const claimModal = source("../components/ClaimBusinessModal.tsx");
+    const businessDetail = source("../app/business/[id].tsx");
+
+    expect(claimModal).toContain('from "@/lib/api"');
+    expect(claimModal).toContain('/api/businesses/${businessId}/claims');
+    expect(claimModal).toContain('getMemberApiHeaders()');
+    expect(claimModal).toContain('businessEmail: email.trim()');
+    expect(claimModal).toContain('verificationMethod');
+    expect(claimModal).toContain('attestation: true');
+    expect(claimModal).not.toContain('/api/businesses/${businessId}/claim`');
+    expect(claimModal).toContain('does not verify this business or its ownership designations');
+    expect(businessDetail).toContain('ownership and verification are reviewed separately');
   });
 });
 
@@ -155,7 +186,9 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
     expect(activityAlerts).toContain("setError(cause instanceof Error");
     expect(alerts).toContain("Authorization: `Bearer ${token}`");
     expect(alerts).not.toContain('import { ALERTS } from "@/constants/data"');
-    expect(home).toContain("error: alertError");
+    // Discovery no longer renders safety status. Its absence is safer than a
+    // fabricated all-clear state; Safety Hub owns the protected read below.
+    expect(home).not.toContain('import { ALERTS } from "@/constants/data"');
     expect(home).not.toContain('useAlerts("GA")');
     expect(safetyHub).toContain("Authorization: `Bearer ${token}`");
     expect(safetyHub).toContain("Could not verify nearby conditions");

@@ -66,7 +66,9 @@ const CATEGORIES = [
 ];
 
 export default function SubmitBusiness() {
-  const amendId = new URLSearchParams(window.location.search).get("amend");
+  const searchParams = new URLSearchParams(window.location.search);
+  const amendId = searchParams.get("amend");
+  const isOwnerIntent = !amendId && searchParams.get("intent") === "owner";
   const [step, setStep] = useState<Step>("form");
   const [submissionId, setSubmissionId] = useState("");
   const [outcome, setOutcome] = useState<SubmissionOutcome | null>(null);
@@ -96,6 +98,11 @@ export default function SubmitBusiness() {
     communityReportedOwnership: "not_sure" as CommunityReportedOwnership,
     ownershipDesignations: [] as string[],
     submitterNote: "",
+    ownerName: "",
+    ownerBusinessEmail: "",
+    ownerRole: "owner" as "owner" | "co-owner" | "manager" | "authorized_rep",
+    ownerVerificationMethod: "manual_review" as "domain_email" | "social_account" | "booking_page" | "manual_review" | "business_document",
+    ownerAttestation: false,
   });
 
   const set = (field: keyof typeof form, value: string) =>
@@ -146,6 +153,11 @@ export default function SubmitBusiness() {
             ? item.ownership_designations.map(String).map((value) => OWNERSHIP_TO_FORM[value] ?? value)
             : [],
           submitterNote: String(item.submitter_note ?? ""),
+          ownerName: String(item.owner_name ?? ""),
+          ownerBusinessEmail: String(item.owner_business_email ?? ""),
+          ownerRole: (item.owner_role === "co-owner" || item.owner_role === "manager" || item.owner_role === "authorized_rep") ? item.owner_role : "owner",
+          ownerVerificationMethod: (item.owner_verification_method === "domain_email" || item.owner_verification_method === "social_account" || item.owner_verification_method === "booking_page" || item.owner_verification_method === "business_document") ? item.owner_verification_method : "manual_review",
+          ownerAttestation: Boolean(item.owner_attested_at),
         });
         setUploadedAssetIds(Array.isArray(item.media_asset_ids) ? item.media_asset_ids.map(String) : []);
       })
@@ -159,6 +171,10 @@ export default function SubmitBusiness() {
     e.preventDefault();
     if (!form.name.trim() || !form.category || !form.city.trim()) {
       setError("Business name, category, and city are required.");
+      return;
+    }
+    if (isOwnerIntent && (!form.ownerName.trim() || !form.ownerBusinessEmail.includes("@") || !form.ownerAttestation)) {
+      setError("Add your name, business email, and ownership attestation to request profile-linked management access.");
       return;
     }
     setSubmitting(true);
@@ -202,7 +218,15 @@ export default function SubmitBusiness() {
           communityReportedOwnership: form.communityReportedOwnership,
           ownershipDesignations: form.ownershipDesignations,
           submitterNote: form.submitterNote,
-          sourceChannel,
+          submissionIntent: isOwnerIntent ? "owner" : "community",
+          ...(isOwnerIntent ? {
+            ownerName: form.ownerName,
+            ownerBusinessEmail: form.ownerBusinessEmail,
+            ownerRole: form.ownerRole,
+            ownerVerificationMethod: form.ownerVerificationMethod,
+            ownerAttestation: form.ownerAttestation,
+          } : {}),
+          sourceChannel: sourceChannel ?? (isOwnerIntent ? "profile_owner_business" : "web_community_business"),
           sourceCampaign,
           mediaAssetIds: uploadedAssetIds,
           locationSource: "member_entered",
@@ -294,10 +318,10 @@ export default function SubmitBusiness() {
               )}
               {!amendId && (
                 <button
-                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedAssetIds([]); setSubmissionId(""); setOutcome(null); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", communityReportedOwnership: "not_sure", ownershipDesignations: [], submitterNote: "" }); }}
+                  onClick={() => { clientRequestId.current = crypto.randomUUID(); setUploadedAssetIds([]); setSubmissionId(""); setOutcome(null); setStep("form"); setForm({ name: "", category: "", subcategory: "", description: "", address: "", city: "", state: "", postalCode: "", country: "", website: "", phone: "", instagram: "", facebook: "", tiktok: "", youtube: "", twitch: "", snapchat: "", communityReportedOwnership: "not_sure", ownershipDesignations: [], submitterNote: "", ownerName: "", ownerBusinessEmail: "", ownerRole: "owner", ownerVerificationMethod: "manual_review", ownerAttestation: false }); }}
                   className="px-6 py-3 border border-[#CA922B]/30 text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm"
                 >
-                  Submit another
+                  {isOwnerIntent ? "Add another business" : "Share another"}
                 </button>
               )}
               <Link href="/my-business-submissions">
@@ -332,12 +356,14 @@ export default function SubmitBusiness() {
             </span>
           </div>
           <h1 className="font-serif text-4xl font-bold text-[#FFF8EB] mb-3">
-            {amendId ? "Update Your Submission" : "Share a Business"}
+            {amendId ? "Update Your Submission" : isOwnerIntent ? "Add My Business" : "Share a Business"}
           </h1>
           <p className="text-[#F5EBD8]/90 leading-relaxed text-lg">
             {amendId
               ? "Add the missing information. If it now passes the location, evidence, duplicate, and safety checks, it will publish immediately."
-              : "Add a community business. Complete ordinary businesses publish immediately as community-listed, unclaimed, and not verified."}
+              : isOwnerIntent
+              ? "Create a listing connected to your community profile. A separate ownership-control claim is created for review; this is not identity verification."
+              : "Recommend a business for someone else. This community submission is never linked to you as an owner."}
           </p>
         </div>
 
@@ -566,6 +592,30 @@ export default function SubmitBusiness() {
             </div>
           </div>
 
+          {isOwnerIntent && (
+            <div className="rounded-2xl border border-[#F2C465]/45 bg-[#241810]/70 p-5 space-y-4">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-[#FFF8EB]">Your ownership request</h2>
+                <p className="mt-1 text-sm leading-6 text-[#F5EBD8]/90">This keeps your personal profile and business request connected. Approval grants page-management access; it never creates a verification badge or changes community-reported ownership.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-[#F2C465]">Your name <span className="text-[#CA922B]">*</span></label>
+                  <input value={form.ownerName} onChange={(e) => set("ownerName", e.target.value)} placeholder="Full name" className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-[#F2C465]">Business email <span className="text-[#CA922B]">*</span></label>
+                  <input type="email" value={form.ownerBusinessEmail} onChange={(e) => set("ownerBusinessEmail", e.target.value)} placeholder="owner@yourbusiness.com" className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5"><label className="text-sm font-bold text-[#F2C465]">Your role</label><select value={form.ownerRole} onChange={(e) => set("ownerRole", e.target.value)} className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"><option value="owner">Owner</option><option value="co-owner">Co-owner</option><option value="manager">Manager</option><option value="authorized_rep">Authorized representative</option></select></div>
+                <div className="space-y-1.5"><label className="text-sm font-bold text-[#F2C465]">How can we review it?</label><select value={form.ownerVerificationMethod} onChange={(e) => set("ownerVerificationMethod", e.target.value)} className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"><option value="manual_review">Details for review</option><option value="domain_email">Business-domain email</option><option value="social_account">Business social account</option><option value="booking_page">Booking page</option><option value="business_document">Business document</option></select></div>
+              </div>
+              <label className="flex items-start gap-3 text-sm leading-6 text-[#F5EBD8] cursor-pointer"><input type="checkbox" checked={form.ownerAttestation} onChange={(e) => setForm((current) => ({ ...current, ownerAttestation: e.target.checked }))} className="mt-1 h-4 w-4 accent-[#CA922B]" /><span>I confirm that I am the owner or authorized representative and that this information is accurate. <span className="text-[#CA922B]">*</span></span></label>
+            </div>
+          )}
+
           {/* Photos */}
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#F2C465]">
@@ -607,7 +657,7 @@ export default function SubmitBusiness() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={submitting || !form.name.trim() || !form.category || !form.city.trim()}
+            disabled={submitting || !form.name.trim() || !form.category || !form.city.trim() || (isOwnerIntent && (!form.ownerName.trim() || !form.ownerBusinessEmail.includes("@") || !form.ownerAttestation))}
             className="w-full bg-[#CA922B] text-white font-bold py-4 rounded-2xl hover:bg-[#B38024] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
           >
             {submitting ? (
@@ -616,7 +666,7 @@ export default function SubmitBusiness() {
                 Submitting…
               </span>
             ) : (
-              amendId ? "Update business →" : "Add community business →"
+              amendId ? "Update business →" : isOwnerIntent ? "Submit my business request →" : "Share business →"
             )}
           </button>
 

@@ -903,7 +903,7 @@ export default function ProfileScreen() {
           {/* Business management remains reachable from Settings, not the social Profile. */}
           {false && <TouchableOpacity
             style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/list-business")}
+            onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)}
             activeOpacity={0.88}
           >
             <View style={styles.listBizLeft}>
@@ -1400,7 +1400,7 @@ export default function ProfileScreen() {
 
       <TouchableOpacity
         style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
-        onPress={() => router.push("/list-business")}
+        onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)}
         activeOpacity={0.88}
       >
         <View style={styles.listBizLeft}>

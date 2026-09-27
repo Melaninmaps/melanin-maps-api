@@ -680,11 +680,11 @@ export default function BusinessDashboardScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.listBtn, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/list-business")}
+            onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)}
             activeOpacity={0.85}
           >
             <Feather name="plus" size={18} color="#FFF" />
-            <Text style={styles.listBtnText}>List Your Business</Text>
+            <Text style={styles.listBtnText}>Add My Business</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.verifyBtn, { borderColor: colors.border }]}

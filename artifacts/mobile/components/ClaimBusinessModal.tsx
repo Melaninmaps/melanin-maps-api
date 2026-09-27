@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
 const ROLES = [
   { id: "owner", label: "Owner" },
@@ -20,11 +21,6 @@ interface Props {
   onClose: () => void;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-
 export function ClaimBusinessModal({ visible, businessId, businessName, onClose }: Props) {
   const colors = useColors();
   const [ownerName, setOwnerName] = useState("");
@@ -34,36 +30,43 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
   const [website, setWebsite] = useState("");
   const [instagram, setInstagram] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [verificationMethod, setVerificationMethod] = useState("manual_review");
+  const [attested, setAttested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit() {
     if (!ownerName.trim() || !email.trim()) {
-      setError("Name and email are required."); return;
+      setError("Name and business email are required."); return;
+    }
+    if (!attested) {
+      setError("Confirm that you are authorized to claim this listing."); return;
     }
     setError(null);
     setLoading(true);
     try {
       const apiBase = getApiBase();
-      const res = await fetch(`${apiBase}/api/businesses/${businessId}/claim`, {
+      const memberHeaders = await getMemberApiHeaders();
+      const res = await fetch(`${apiBase}/api/businesses/${businessId}/claims`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...memberHeaders },
         body: JSON.stringify({
-          businessName,
           ownerName: ownerName.trim(),
-          email: email.trim(),
-          phone: phone.trim() || null,
+          businessEmail: email.trim(),
           role,
-          website: website.trim() || null,
-          instagramHandle: instagram.replace("@", "").trim() || null,
-          additionalInfo: additionalInfo.trim() || null,
+          officialUrl: website.trim() || null,
+          socialHandle: instagram.replace("@", "").trim() || null,
+          notes: additionalInfo.trim() || null,
+          verificationMethod,
+          attestation: true,
         }),
       });
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setError("Something went wrong. Please try again.");
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setError(body.error ?? "Something went wrong. Please try again.");
       }
     } catch {
       setError("Unable to submit. Check your connection and try again.");
@@ -74,7 +77,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
 
   function handleClose() {
     setOwnerName(""); setEmail(""); setPhone(""); setRole("owner");
-    setWebsite(""); setInstagram(""); setAdditionalInfo("");
+    setWebsite(""); setInstagram(""); setAdditionalInfo(""); setVerificationMethod("manual_review"); setAttested(false);
     setError(null); setLoading(false); setSubmitted(false);
     onClose();
   }
@@ -114,7 +117,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               <View style={[styles.infoBadge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                 <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
                 <Text style={[styles.infoBadgeText, { color: colors.text }]}>
-                  Claiming your listing lets you update business info, respond to reviews, and get the verified owner badge.
+                  Claiming requests management access after review. It does not verify this business or its ownership designations.
                 </Text>
               </View>
 
@@ -182,6 +185,25 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                 autoCapitalize="none"
               />
 
+              <Text style={[styles.label, { color: colors.text }]}>How can we review your claim? *</Text>
+              <View style={styles.roleRow}>
+                {[
+                  ["manual_review", "Details for review"],
+                  ["domain_email", "Business email"],
+                  ["social_account", "Social account"],
+                  ["booking_page", "Booking page"],
+                  ["business_document", "Business document"],
+                ].map(([value, label]) => (
+                  <TouchableOpacity
+                    key={value}
+                    style={[styles.roleChip, { backgroundColor: verificationMethod === value ? colors.primary : colors.card, borderColor: verificationMethod === value ? colors.primary : colors.border }]}
+                    onPress={() => setVerificationMethod(value)}
+                  >
+                    <Text style={[styles.roleChipText, { color: verificationMethod === value ? "#fff" : colors.text }]}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <Text style={[styles.label, { color: colors.text }]}>Anything else? (optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
@@ -193,6 +215,15 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                 numberOfLines={4}
               />
 
+              <TouchableOpacity
+                style={styles.attestationRow}
+                onPress={() => setAttested((current) => !current)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name={attested ? "checkbox" : "square-outline"} size={22} color={attested ? colors.primary : colors.mutedForeground} />
+                <Text style={[styles.attestationText, { color: colors.text }]}>I confirm I am the owner or authorized representative and that this information is accurate. *</Text>
+              </TouchableOpacity>
+
               {error && (
                 <View style={styles.errorRow}>
                   <Ionicons name="alert-circle-outline" size={15} color="#DC2626" />
@@ -201,9 +232,9 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               )}
 
               <TouchableOpacity
-                style={[styles.submitBtn, { backgroundColor: ownerName.trim() && email.trim() ? colors.primary : colors.border }]}
+                style={[styles.submitBtn, { backgroundColor: ownerName.trim() && email.trim() && attested ? colors.primary : colors.border }]}
                 onPress={handleSubmit}
-                disabled={loading || !ownerName.trim() || !email.trim()}
+                disabled={loading || !ownerName.trim() || !email.trim() || !attested}
                 activeOpacity={0.85}
               >
                 {loading ? (
@@ -239,6 +270,8 @@ const styles = StyleSheet.create({
   roleChipText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   errorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12 },
   errorText: { fontFamily: "Inter_400Regular", fontSize: 13, color: "#DC2626" },
+  attestationRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 20 },
+  attestationText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
   submitBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, padding: 16, marginTop: 20 },
   submitBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
   successContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },

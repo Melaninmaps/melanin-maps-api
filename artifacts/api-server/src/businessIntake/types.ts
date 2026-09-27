@@ -19,8 +19,14 @@ export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 export type SubmissionSocialProfiles = Partial<Record<SocialPlatform, string>>;
 export type SubmissionLocationSource = "member_entered" | "mwm_directory" | "google_places";
 export type CommunityReportedOwnership = "minority_owned" | "non_minority_owned" | "not_sure";
+export type SubmissionIntent = "community" | "owner";
+export type OwnerClaimVerificationMethod = "domain_email" | "social_account" | "booking_page" | "manual_review" | "business_document";
 
 export interface CommunityBusinessSubmissionInput {
+  // A community submission recommends a business for someone else. An owner
+  // submission is still public intake, but creates a separate pending
+  // ownership-control claim only after the listing publishes.
+  submissionIntent: SubmissionIntent;
   name: string;
   category: string;
   subcategory?: string;
@@ -48,6 +54,11 @@ export interface CommunityBusinessSubmissionInput {
   sourceChannel?: string;
   submitterNote?: string;
   clientRequestId?: string;
+  ownerName?: string;
+  ownerBusinessEmail?: string;
+  ownerRole?: "owner" | "co-owner" | "manager" | "authorized_rep";
+  ownerVerificationMethod?: OwnerClaimVerificationMethod;
+  ownerAttestation?: boolean;
 }
 
 const OWNERSHIP_ALIASES: Record<string, string> = {
@@ -122,6 +133,13 @@ function requiredText(
 ): string {
   const value = optionalText(body, key, maximumLength);
   if (!value) throw new Error(`${key} is required`);
+  return value;
+}
+
+function optionalBoolean(body: Record<string, unknown>, key: string): boolean | undefined {
+  const value = body[key];
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "boolean") throw new Error(`${key} must be true or false`);
   return value;
 }
 
@@ -312,6 +330,27 @@ function optionalCoordinate(
 
 export function validateSubmission(input: unknown): CommunityBusinessSubmissionInput {
   const body = objectBody(input);
+  const rawSubmissionIntent = optionalText(body, "submissionIntent", 20) ?? "community";
+  if (rawSubmissionIntent !== "community" && rawSubmissionIntent !== "owner") {
+    throw new Error("submissionIntent is invalid");
+  }
+  const submissionIntent = rawSubmissionIntent as SubmissionIntent;
+  const ownerName = optionalText(body, "ownerName", 255);
+  const ownerBusinessEmail = optionalText(body, "ownerBusinessEmail", 255);
+  const rawOwnerRole = optionalText(body, "ownerRole", 30) ?? "owner";
+  if (!["owner", "co-owner", "manager", "authorized_rep"].includes(rawOwnerRole)) {
+    throw new Error("ownerRole is invalid");
+  }
+  const rawOwnerVerificationMethod = optionalText(body, "ownerVerificationMethod", 40) ?? "manual_review";
+  if (!["domain_email", "social_account", "booking_page", "manual_review", "business_document"].includes(rawOwnerVerificationMethod)) {
+    throw new Error("ownerVerificationMethod is invalid");
+  }
+  const ownerAttestation = optionalBoolean(body, "ownerAttestation") ?? false;
+  if (submissionIntent === "owner") {
+    if (!ownerName || ownerName.length < 2) throw new Error("ownerName (2–255 chars) is required for your business");
+    if (!ownerBusinessEmail || !ownerBusinessEmail.includes("@")) throw new Error("A valid ownerBusinessEmail is required for your business");
+    if (!ownerAttestation) throw new Error("ownerAttestation is required for your business");
+  }
   const website = optionalText(body, "website", 512);
   const mediaUrls = normalizeMediaUrls(body.mediaUrls);
   const mediaAssetIds = normalizeMediaAssetIds(body.mediaAssetIds);
@@ -339,6 +378,7 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
   }
 
   return {
+    submissionIntent,
     name: requiredText(body, "name", 255),
     category: requiredText(body, "category", 100),
     subcategory: optionalText(body, "subcategory", 100),
@@ -366,5 +406,12 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
     sourceChannel: optionalText(body, "sourceChannel", 100),
     submitterNote: optionalText(body, "submitterNote", 2_000),
     clientRequestId,
+    ...(submissionIntent === "owner" ? {
+      ownerName,
+      ownerBusinessEmail,
+      ownerRole: rawOwnerRole as CommunityBusinessSubmissionInput["ownerRole"],
+      ownerVerificationMethod: rawOwnerVerificationMethod as OwnerClaimVerificationMethod,
+      ownerAttestation,
+    } : {}),
   };
 }
