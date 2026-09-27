@@ -254,6 +254,7 @@ type AdminBusinessInventoryFilters = Readonly<{
   filterParams: unknown[];
   completedCohortPredicate: string;
   nationalMasterPredicate: string;
+  manusCreatedPredicate: string;
 }>;
 
 /**
@@ -318,6 +319,32 @@ async function compileAdminBusinessInventoryFilters(
   const completedCohortPredicate = `(${completedCohortPredicateParts.join(" OR ")})`;
   const nationalMasterPredicate =
     "COALESCE(to_jsonb(businesses)->>'data_source', '') = 'national_diaspora_master_18294'";
+  // This is an affirmative provenance filter, not an identity judgement. It
+  // includes only records directly inserted by a tracked Manus research/import
+  // job or by a receipt whose actual publication outcome was `created`; a
+  // receipt that merely linked an existing listing never appears here.
+  const manusCreatedPredicateParts = [
+    "COALESCE(to_jsonb(businesses)->>'data_source', '') IN ('mwm_research_part3', 'completed_cohort_directory_discovery')",
+    "(COALESCE(to_jsonb(businesses)->>'enrichment_source', '') = 'google_places' AND COALESCE(to_jsonb(businesses)->>'enrichment_note', '') ILIKE '%Added Aug 2026 after founder spotted in TikTok%')",
+  ];
+  if (hasReceiptTable("directory_publication_provenance")) {
+    manusCreatedPredicateParts.push(`EXISTS (
+      SELECT 1
+        FROM directory_publication_provenance manus_created_provenance
+       WHERE manus_created_provenance.record_id = businesses.id
+         AND manus_created_provenance.source_sha256 = '${COMPLETED_COHORT_MANIFEST_CHECKSUM}'
+         AND manus_created_provenance.outcome = 'created'
+    )`);
+  }
+  if (hasReceiptTable("completed_cohort_directory_discovery_receipts")) {
+    manusCreatedPredicateParts.push(`EXISTS (
+      SELECT 1
+        FROM completed_cohort_directory_discovery_receipts manus_created_discovery_receipt
+       WHERE manus_created_discovery_receipt.business_id = businesses.id
+         AND manus_created_discovery_receipt.outcome = 'created'
+    )`);
+  }
+  const manusCreatedPredicate = `(${manusCreatedPredicateParts.join(" OR ")})`;
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -339,7 +366,9 @@ async function compileAdminBusinessInventoryFilters(
   }
   if (category) addFilter("category = ?", category);
   if (subcategory) addFilter("subcategory = ?", subcategory);
-  if (intakeCohort === "protected_historical_cohort") {
+  if (intakeCohort === "manus_created") {
+    filters.push(manusCreatedPredicate);
+  } else if (intakeCohort === "protected_historical_cohort") {
     filters.push(completedCohortPredicate);
   } else if (intakeCohort === "user_national_master") {
     filters.push(nationalMasterPredicate);
@@ -388,6 +417,7 @@ async function compileAdminBusinessInventoryFilters(
     filterParams,
     completedCohortPredicate,
     nationalMasterPredicate,
+    manusCreatedPredicate,
   };
 }
 
@@ -672,6 +702,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       filterParams,
       completedCohortPredicate,
       nationalMasterPredicate,
+      manusCreatedPredicate,
     } = await compileAdminBusinessInventoryFilters(req.query);
     const pageParams = [...filterParams, String(pageSize), String((page - 1) * pageSize)];
 
@@ -700,6 +731,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       cities,
       services,
       cohortCounts,
+      manusCreatedCount,
     ] = await Promise.all([
       pool.query<{
       id: string;
@@ -729,6 +761,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       kinfolk_recommendation_reason: string | null;
       intake_batch_reference: string | null;
       intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
+      manus_created: boolean;
       }>(
       `SELECT id, name, category, subcategory, city, state, verified, black_owned, status,
               listing_status, phone, website, instagram, tiktok, facebook, created_at,
@@ -742,7 +775,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
                 WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
                 WHEN ${nationalMasterPredicate} THEN 'user_national_master'
                 ELSE 'other_inventory'
-              END AS intake_cohort
+              END AS intake_cohort,
+              CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
        FROM businesses
        ${where}
        ORDER BY ${orderBy}
@@ -822,6 +856,12 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
            FROM businesses
           WHERE ${inventoryScopeWhere}`,
       ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total
+           FROM businesses
+          WHERE ${inventoryScopeWhere}
+            AND ${manusCreatedPredicate}`,
+      ),
     ]);
     const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
     const liveInventoryTotal = Number(liveInventoryCount.rows[0]?.total ?? 0);
@@ -864,6 +904,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
         Number(b.longitude) !== 0,
       hasStreetAddress: Boolean(b.address?.trim()),
       intakeCohort: b.intake_cohort,
+      manusCreated: b.manus_created,
       dataSource: b.data_source,
       researchSourceLabel: b.research_source_label,
       researchSourceUrl: b.research_source_url,
@@ -929,6 +970,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
           : []),
       ]),
       intakeCohortOptions: [
+        {
+          value: "manus_created",
+          label: "Manus-created research/imports (direct provenance)",
+          count: Number(manusCreatedCount.rows[0]?.total ?? 0),
+        },
         {
           value: "protected_historical_cohort",
           label: "Protected historical cohort (receipt-backed)",
@@ -4206,6 +4252,7 @@ router.get(
         filterParams,
         completedCohortPredicate,
         nationalMasterPredicate,
+        manusCreatedPredicate,
       } = await compileAdminBusinessInventoryFilters(req.query);
       const businesses = await pool.query<{
         id: string;
@@ -4230,6 +4277,7 @@ router.get(
         kinfolk_recommendation_reason: string | null;
         intake_batch_reference: string | null;
         intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
+        manus_created: boolean;
       }>(
         `SELECT id, name, category, subcategory, city, state, listing_status, verified,
                 black_owned, status, phone, website, instagram, tiktok, facebook,
@@ -4242,7 +4290,8 @@ router.get(
                   WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
                   WHEN ${nationalMasterPredicate} THEN 'user_national_master'
                   ELSE 'other_inventory'
-                END AS intake_cohort
+                END AS intake_cohort,
+                CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
            FROM businesses
            ${where}
            ORDER BY ${orderBy}`,
@@ -4294,6 +4343,7 @@ router.get(
         "Account status",
         "Needs verification",
         "Intake cohort",
+        "Manus-created direct provenance",
         "Intake batch reference",
         "Research source label",
         "Research source URL",
@@ -4323,6 +4373,7 @@ router.get(
           b.status,
           b.needs_verification ? "Yes" : "No",
           b.intake_cohort,
+          b.manus_created ? "Yes" : "No",
           b.intake_batch_reference ?? "",
           b.research_source_label ?? "",
           b.research_source_url ?? "",

@@ -215,6 +215,18 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Filter businesses by receipt-backed intake cohort");
   });
 
+  it("provides a separate Manus-created review list from affirmative creation receipts only", () => {
+    expect(adminRoute).toContain('intakeCohort === "manus_created"');
+    expect(adminRoute).toContain("const manusCreatedPredicateParts");
+    expect(adminRoute).toContain("manus_created_provenance.outcome = 'created'");
+    expect(adminRoute).toContain("manus_created_discovery_receipt.outcome = 'created'");
+    expect(adminRoute).toContain("Manus-created research/imports (direct provenance)");
+    expect(adminRoute).toContain("Manus-created direct provenance");
+    expect(adminScreen).toContain("Manus-created review");
+    expect(adminScreen).toContain("Direct Manus research/import provenance");
+    expect(adminScreen).toContain("manus_created");
+  });
+
   it("lets an administrator preview and explicitly publish the protected source-backed directory in retry-safe batches", () => {
     expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed"');
     expect(adminRoute).toContain("requiresExplicitApply");

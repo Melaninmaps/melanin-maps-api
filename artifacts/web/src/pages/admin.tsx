@@ -111,6 +111,7 @@ function formatWaitlistSignupSources(value: string | null | undefined): string {
 
 type IntakeCohort =
   | "all"
+  | "manus_created"
   | "protected_historical_cohort"
   | "user_national_master"
   | "other_inventory";
@@ -183,6 +184,7 @@ function normalizeAdminCityOptions(options: unknown): AdminCityOption[] {
 }
 
 const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
+  manus_created: "Manus-created research/imports (direct provenance)",
   protected_historical_cohort: "Protected historical cohort (receipt-backed)",
   user_national_master: "User-supplied national master",
   other_inventory: "Other existing, manual, or community inventory",
@@ -258,6 +260,7 @@ type AdminBusiness = {
   hasMapPin: boolean;
   hasStreetAddress: boolean;
   intakeCohort: Exclude<IntakeCohort, "all">;
+  manusCreated: boolean;
   dataSource: string | null;
   researchSourceLabel: string | null;
   researchSourceUrl: string | null;
@@ -4970,6 +4973,11 @@ export default function Admin() {
                                 Black-Owned
                               </span>
                             )}
+                            {biz.manusCreated && (
+                              <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-xs font-bold">
+                                Manus-created review
+                              </span>
+                            )}
                             {biz.permanentlyClosed && (
                               <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold">
                                 Perm. Closed
@@ -4993,10 +5001,14 @@ export default function Admin() {
                             {new Date(biz.createdAt).toLocaleDateString()}
                           </div>
                           <div className="mt-1 font-semibold text-[#3A1F0E]/70">
-                            {INTAKE_COHORT_LABELS[biz.intakeCohort]}
+                            {biz.manusCreated
+                              ? INTAKE_COHORT_LABELS.manus_created
+                              : INTAKE_COHORT_LABELS[biz.intakeCohort]}
                           </div>
                           <div className="mt-1 text-[#3A1F0E]/45">
-                            Source receipts retained in Admin exports and audit history.
+                            {biz.manusCreated
+                              ? "Direct Manus research/import provenance. Review and use the existing reversible Archive action if needed."
+                              : "Source receipts retained in Admin exports and audit history."}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
