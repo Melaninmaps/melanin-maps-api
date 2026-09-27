@@ -7,6 +7,7 @@ import type {
 } from "./governedBusinessRepository";
 import {
   matchesDocumentedDietaryRequirement,
+  matchesDocumentedServiceRequirement,
   type NormalizedBusinessSubject,
 } from "./business-subject";
 import {
@@ -176,23 +177,29 @@ function concise(value: string, maxLength = 180): string {
   return `${clean.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
+function requestedSubjectLabel(subject: NormalizedBusinessSubject): string {
+  const qualifiers = [
+    subject.dietaryRequirement?.label,
+    subject.documentedServiceRequirement?.label,
+  ].filter((value): value is string => Boolean(value));
+  return [...qualifiers, subject.label].join(" ");
+}
+
 function webQueries(
   subject: NormalizedBusinessSubject,
   scope: ValidatedKinfolkCityScope,
 ): SearchQuery[] {
   const location = `${scope.city}, ${scope.stateCode}`;
-  const requestedSubjectLabel = subject.dietaryRequirement
-    ? `${subject.dietaryRequirement.label} ${subject.label}`
-    : subject.label;
+  const subjectLabel = requestedSubjectLabel(subject);
   return [
     {
-      text: `community and minority-owned ${requestedSubjectLabel} ${location}`,
+      text: `community and minority-owned ${subjectLabel} ${location}`,
       role: "community_primary",
       reason:
         "MWM mission query for community-serving and minority-owned options; this is a search criterion, never an inference about the member.",
     },
     {
-      text: `${requestedSubjectLabel} ${location}`,
+      text: `${subjectLabel} ${location}`,
       role: "general",
       reason:
         "Neutral local query retained for broad coverage and cross-checking.",
@@ -290,11 +297,9 @@ function buildReply(input: {
     web,
     webState,
   } = input;
-  const requestedSubjectLabel = subject.dietaryRequirement
-    ? `${subject.dietaryRequirement.label} ${subject.label}`
-    : subject.label;
+  const subjectLabel = requestedSubjectLabel(subject);
   const lines = [
-    `Here’s what I found for ${requestedSubjectLabel} in ${scope.city}, ${scope.stateCode}.`,
+    `Here’s what I found for ${subjectLabel} in ${scope.city}, ${scope.stateCode}.`,
   ];
 
   if (businesses.length > 0) {
@@ -341,7 +346,7 @@ function buildReply(input: {
   ) {
     lines.push(
       "",
-      `I couldn’t find matching MWM records or current web results for ${requestedSubjectLabel} in ${scope.city}, ${scope.stateCode}.`,
+      `I couldn’t find matching MWM records or current web results for ${subjectLabel} in ${scope.city}, ${scope.stateCode}.`,
     );
   } else if (businesses.length + mapPlaces.length === 0) {
     lines.push(
@@ -487,6 +492,25 @@ export async function discoverLocalBusinesses(input: {
     mapRows = platformResults[1].value;
   else platformStatus = "degraded";
 
+  // A cuisine or another documented current-turn detail cannot be broadened by
+  // a stale repository row, an external result, or a cultural-place record.
+  // The database predicate is the primary guard; these checks keep every
+  // emitted channel aligned with that same no-false-match contract.
+  if (input.subject.documentedServiceRequirement) {
+    businessRows = businessRows.filter((business) =>
+      matchesDocumentedServiceRequirement(
+        business,
+        input.subject.documentedServiceRequirement!,
+      ),
+    );
+    mapRows = mapRows.filter((place) =>
+      matchesDocumentedServiceRequirement(
+        { name: place.title, description: place.summary },
+        input.subject.documentedServiceRequirement!,
+      ),
+    );
+  }
+
   // A strict Support Lens and the default Diaspora Promotion Catalog are
   // documentary-only. Kinfolk may answer general factual questions with
   // sources, but it must never promote an externally found business unless a
@@ -537,6 +561,14 @@ export async function discoverLocalBusinesses(input: {
           input.subject.dietaryRequirement,
         ),
     )
+    .filter(
+      (result) =>
+        !input.subject.documentedServiceRequirement ||
+        matchesDocumentedServiceRequirement(
+          { name: result.title, description: result.content },
+          input.subject.documentedServiceRequirement,
+        ),
+    )
     .filter((result) =>
       audienceAllowsBusinessText({
         ageBand: input.personalization?.ageBand,
@@ -552,9 +584,7 @@ export async function discoverLocalBusinesses(input: {
   )
     .slice(0, 12)
     .map(platformBusiness);
-  const requestedSubjectLabel = input.subject.dietaryRequirement
-    ? `${input.subject.dietaryRequirement.label} ${input.subject.label}`
-    : input.subject.label;
+  const subjectLabel = requestedSubjectLabel(input.subject);
   const mapPlaces = (input.requiredDesignationIds?.length ? [] : mapRows)
     .filter((place) =>
       audienceAllowsBusinessText({
@@ -621,7 +651,7 @@ export async function discoverLocalBusinesses(input: {
       businesses.length > 0
         ? {
             destination: `${input.scope.city}, ${input.scope.stateCode}`,
-            summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${requestedSubjectLabel}.`,
+            summary: `${businesses.length} matching MWM public business listing${businesses.length === 1 ? "" : "s"} found for ${subjectLabel}.`,
             businesses: businesses.slice(0, 6).map((business) => ({
               id: business.id,
               name: business.name,
@@ -665,7 +695,7 @@ export async function discoverLocalBusinesses(input: {
     resultView: buildConversationalBusinessResultView({
       businesses,
       external: rankedWeb,
-      subjectLabel: requestedSubjectLabel,
+      subjectLabel,
     }),
   };
 }

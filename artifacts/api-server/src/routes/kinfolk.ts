@@ -6679,9 +6679,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
-  const requestedSubjectLabel = subject.dietaryRequirement
-    ? `${subject.dietaryRequirement.label} ${subject.label}`
-    : subject.label;
+  const requestedSubjectLabel = [
+    subject.dietaryRequirement?.label,
+    subject.documentedServiceRequirement?.label,
+    subject.label,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" ");
   const proximityCaveat = requiresDocumentedProximityCaveat(input.message)
     ? DOCUMENTED_PROXIMITY_CAVEAT
     : "";

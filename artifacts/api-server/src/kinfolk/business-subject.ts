@@ -391,6 +391,16 @@ const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+/**
+ * A cuisine is a current-turn capability, not a generic restaurant category.
+ * “Ethiopian food” must therefore match documented published business data;
+ * a general restaurant must not be surfaced merely because it is nearby.
+ */
+const ETHIOPIAN_CUISINE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "Ethiopian",
+  searchTerms: ["ethiopian"],
+};
+
 const AMENITY_EVIDENCE_TERMS = [
   "coffee",
   "tea",
@@ -467,6 +477,7 @@ export function deriveDocumentedServiceRequirement(
 ): DocumentedServiceRequirement | undefined {
   const quoted = quotedServiceRequirement(message);
   if (quoted) return quoted;
+  if (/\bethiopian\b/i.test(message)) return ETHIOPIAN_CUISINE_REQUIREMENT;
   return /\b(?:full\s+wash\s+and\s+detangle|wash\s+and\s+detangle|washing\s+and\s+detangling|wash\s+and\s+braid(?:ing)?|wash\s+and\s+style)\b/i.test(
     message,
   )

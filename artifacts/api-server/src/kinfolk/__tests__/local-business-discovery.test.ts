@@ -281,6 +281,47 @@ describe("deterministic local business discovery", () => {
     ]);
   });
 
+  it("does not substitute general restaurants for an Ethiopian-food request", async () => {
+    const subject = deriveBusinessSubject(
+      "Where could I go for Ethiopian food in Minneapolis?",
+    )!;
+    expect(subject).toMatchObject({
+      key: "restaurant",
+      documentedServiceRequirement: { label: "Ethiopian" },
+    });
+
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Minneapolis", stateCode: "MN" },
+      subject,
+      repository: repository({
+        businesses: [
+          { ...governedBusiness, id: "generic-restaurant", city: "Minneapolis", stateCode: "MN", name: "General Lunch", category: "Food", subcategory: "Restaurant", description: "Lunch and dinner." },
+          { ...governedBusiness, id: "ethiopian-restaurant", city: "Minneapolis", stateCode: "MN", name: "Documented Ethiopian Kitchen", category: "Food", subcategory: "Restaurant", description: "Ethiopian food and coffee." },
+        ],
+      }),
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: true,
+        provider: "openai",
+        results: [
+          { title: "Generic Minneapolis restaurant", url: "https://example.com/generic", content: "Lunch and dinner.", providerScore: 0.9, sourceQuery: { text: "restaurants Minneapolis, MN", role: "general", reason: "neutral" } },
+          { title: "Ethiopian restaurant guide", url: "https://example.com/ethiopian", content: "Ethiopian food in Minneapolis.", providerScore: 0.8, sourceQuery: { text: "Ethiopian restaurants Minneapolis, MN", role: "general", reason: "neutral" } },
+        ],
+      }),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({ id: "ethiopian-restaurant" }),
+    ]);
+    expect(result.discovery.platformBusinesses).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "generic-restaurant" })]),
+    );
+    expect(result.discovery.webFindings).toEqual([
+      expect.objectContaining({ title: "Ethiopian restaurant guide" }),
+    ]);
+    expect(result.recommendations?.summary).toContain("Ethiopian restaurants");
+  });
+
   it("uses one generic Philadelphia activity request to produce four distinct profile-backed cards", async () => {
     const activity = deriveBusinessSubject("Find things to do in Philadelphia PA")!;
     const profiles = [
