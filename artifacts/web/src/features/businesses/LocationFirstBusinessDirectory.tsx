@@ -40,11 +40,20 @@ const CATEGORIES = [
   "Faith & Community",
 ];
 
+const DOCUMENTED_OWNERSHIP_FILTERS = [
+  { id: "black", label: "Black / African American-Owned" },
+  { id: "hispanic", label: "Latino / Hispanic-Owned" },
+  { id: "no_tag", label: "No ownership tag" },
+] as const;
+
+type DocumentedOwnershipFilter = (typeof DOCUMENTED_OWNERSHIP_FILTERS)[number]["id"];
+
 export function LocationFirstBusinessDirectory() {
   const { location, setExplicitLocation } = useDiscoveryLocation();
   const [category, setCategory] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [designationIds, setDesignationIds] = useState<string[]>([]);
+  const [documentedOwnership, setDocumentedOwnership] = useState<DocumentedOwnershipFilter | null>(null);
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [vibeOptions, setVibeOptions] = useState<VibeOption[]>([]);
   const [vibesOpen, setVibesOpen] = useState(false);
@@ -136,7 +145,10 @@ export function LocationFirstBusinessDirectory() {
     [searchText],
   );
   const effectiveCategory = category ?? parsedFinderQuery.category ?? null;
-  const effectiveOwnership = parsedFinderQuery.ownership ?? null;
+  // A visible documented-ownership selection is exact and takes precedence
+  // over wording inferred from the free-text query. The no-tag option means
+  // there is no recorded owner label; it never makes an identity claim.
+  const effectiveOwnership = documentedOwnership ?? parsedFinderQuery.ownership ?? null;
   const effectiveSearchText = parsedFinderQuery.search ||
     (parsedFinderQuery.category || parsedFinderQuery.ownership ? "" : searchText);
 
@@ -156,6 +168,7 @@ export function LocationFirstBusinessDirectory() {
     });
   }, [
     designationIds,
+    documentedOwnership,
     effectiveCategory,
     effectiveOwnership,
     effectiveSearchText,
@@ -408,6 +421,22 @@ export function LocationFirstBusinessDirectory() {
             setSpecialty(slug === specialty ? null : slug);
           }}
         />
+        <FilterRow
+          label="Documented ownership"
+          values={DOCUMENTED_OWNERSHIP_FILTERS.map((option) => option.label)}
+          selected={documentedOwnership
+            ? [DOCUMENTED_OWNERSHIP_FILTERS.find((option) => option.id === documentedOwnership)?.label ?? ""]
+            : []}
+          onToggle={(label) => {
+            const selected = DOCUMENTED_OWNERSHIP_FILTERS.find((option) => option.label === label);
+            if (!selected) return;
+            invalidateRequests();
+            setDocumentedOwnership((current) => current === selected.id ? null : selected.id);
+          }}
+        />
+        <p className="mt-2 text-xs text-[#3A1F0E]/60">
+          Filters use only recorded owner labels. “No ownership tag” means no label is recorded; it does not infer identity.
+        </p>
         <FilterRow
           label="Support designations"
           values={INTERSECTIONAL_SUPPORT_FILTER_OPTIONS.map(

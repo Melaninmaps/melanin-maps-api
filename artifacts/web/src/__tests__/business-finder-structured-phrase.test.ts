@@ -36,4 +36,13 @@ describe("structured Business finder phrases", () => {
     expect(directorySource).toContain("category: effectiveCategory");
     expect(directorySource).toContain("searchText: effectiveSearchText");
   });
+
+  it("offers exact documented Black, Hispanic, and no-tag filters in the live finder", () => {
+    expect(directorySource).toContain('label="Documented ownership"');
+    expect(directorySource).toContain('label: "Black / African American-Owned"');
+    expect(directorySource).toContain('label: "Latino / Hispanic-Owned"');
+    expect(directorySource).toContain('label: "No ownership tag"');
+    expect(directorySource).toContain('documentedOwnership ?? parsedFinderQuery.ownership ?? null');
+    expect(directorySource).toContain("No ownership tag” means no label is recorded");
+  });
 });
