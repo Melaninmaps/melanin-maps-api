@@ -43,6 +43,8 @@ export type NormalizedBusinessSubject = Readonly<{
   dietaryRequirement?: DietaryRequirement;
   /** A current-turn service detail that every returned card must document. */
   documentedServiceRequirement?: DocumentedServiceRequirement;
+  /** Current-turn street or amenity cues that must be documented on the listing. */
+  contextualEvidenceTerms?: readonly string[];
 }>;
 
 export type DietaryRequirement = Readonly<{
@@ -389,6 +391,59 @@ const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+const AMENITY_EVIDENCE_TERMS = [
+  "coffee",
+  "tea",
+  "outdoor seating",
+  "parking",
+  "delivery",
+  "wheelchair accessible",
+] as const;
+
+function normalizeEvidenceTerm(value: string): string {
+  return value
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Extract only a small, documented set of location/amenity cues from the
+ * current turn. These are hard result constraints, not inferred preferences:
+ * “bookstore on Germantown Avenue that sells coffee” must have both pieces of
+ * evidence in the published business record before Kinfolk presents its card.
+ */
+export function deriveContextualBusinessEvidenceTerms(
+  message: string,
+): readonly string[] {
+  const terms = new Set<string>();
+  const streetSuffix = "avenue|ave\\.?|street|st\\.?|road|rd\\.?|boulevard|blvd\\.?|drive|dr\\.?|lane|ln\\.?|place|pl\\.?|court|ct\\.?|way|pike";
+  // Prefer a deliberate location preposition so “the bookstore in Philadelphia
+  // on Germantown Avenue” extracts only the street, not the preceding request.
+  const explicitStreetPattern = new RegExp(
+    `\\b(?:on|at|near|along)\\s+([A-Za-z][A-Za-z0-9.'-]*(?:\\s+[A-Za-z][A-Za-z0-9.'-]*){0,3}\\s+(?:${streetSuffix}))\\b`,
+    "gi",
+  );
+  const fallbackStreetPattern = new RegExp(
+    `\\b([A-Za-z][A-Za-z0-9.'-]*(?:\\s+[A-Za-z][A-Za-z0-9.'-]*){0,1}\\s+(?:${streetSuffix}))\\b`,
+    "gi",
+  );
+  const streetMatches = [...message.matchAll(explicitStreetPattern)];
+  for (const match of streetMatches.length ? streetMatches : message.matchAll(fallbackStreetPattern)) {
+    const normalized = normalizeEvidenceTerm(match[1] ?? "");
+    if (normalized) terms.add(normalized);
+  }
+  for (const term of AMENITY_EVIDENCE_TERMS) {
+    const normalized = normalizeEvidenceTerm(term);
+    if (new RegExp(`(^|[^a-z0-9])${normalized.replace(/ /g, "\\s+")}([^a-z0-9]|$)`, "i").test(message)) {
+      terms.add(normalized);
+    }
+  }
+  return [...terms].slice(0, 4);
+}
+
 export function deriveDietaryRequirement(
   message: string,
 ): DietaryRequirement | undefined {
@@ -456,6 +511,7 @@ export function deriveBusinessSubject(
         vibeKeys: findVibeKeysForSearch(message),
         dietaryRequirement: deriveDietaryRequirement(message),
         documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
+        contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
       };
     }
     const booksAsShoppingRequest =
@@ -472,6 +528,7 @@ export function deriveBusinessSubject(
       vibeKeys: findVibeKeysForSearch(message),
       dietaryRequirement: deriveDietaryRequirement(message),
       documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
+      contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
     };
   }
   return {
@@ -481,6 +538,7 @@ export function deriveBusinessSubject(
     vibeKeys: findVibeKeysForSearch(message),
     dietaryRequirement: deriveDietaryRequirement(message),
     documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
+    contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
   };
 }
 
@@ -605,6 +663,47 @@ export function matchesDocumentedServiceRequirement(
   });
 }
 
+/**
+ * A member can add a street or amenity cue to a category search. The cue must
+ * be present in published listing data; it never classifies a business on its
+ * own and it never searches private, unreviewed information.
+ */
+export function matchesDocumentedContextualEvidence(
+  business: Readonly<{
+    name?: string | null;
+    category?: string | null;
+    subcategory?: string | null;
+    description?: string | null;
+    address?: string | null;
+    city?: string | null;
+    stateCode?: string | null;
+    tags?: readonly string[] | null;
+    specialties?: readonly string[] | null;
+  }>,
+  evidenceTerms: readonly string[] | undefined,
+): boolean {
+  if (!evidenceTerms?.length) return true;
+  const evidence = [
+    business.name ?? "",
+    business.category ?? "",
+    business.subcategory ?? "",
+    business.description ?? "",
+    business.address ?? "",
+    business.city ?? "",
+    business.stateCode ?? "",
+    ...(business.tags ?? []),
+    ...(business.specialties ?? []),
+  ]
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return evidenceTerms.every((term) => {
+    const phrase = normalizeEvidenceTerm(term);
+    return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
+  });
+}
+
 function searchTermPatterns(searchTerms: readonly string[]): string[] {
   return searchTerms
     .map((term) => term.trim().toLowerCase())
@@ -637,6 +736,12 @@ export function documentedServiceRequirementSearchPatterns(
   requirement: DocumentedServiceRequirement,
 ): string[] {
   return searchTermPatterns(requirement.searchTerms);
+}
+
+export function contextualEvidenceSearchPatterns(
+  evidenceTerms: readonly string[] | undefined,
+): string[] {
+  return searchTermPatterns(evidenceTerms ?? []);
 }
 
 export const BUSINESS_SUBJECTS = SUBJECTS.map(

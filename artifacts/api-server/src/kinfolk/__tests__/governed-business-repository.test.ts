@@ -316,6 +316,7 @@ describe("governed Kinfolk business repository", () => {
       [],
       [],
       [],
+      [],
     ]);
   });
 
@@ -358,6 +359,7 @@ describe("governed Kinfolk business repository", () => {
       ["\\msenior[[:space:]-]+support\\M", "\\msenior[[:space:]-]+care\\M", "\\mhome[[:space:]-]+care\\M", "\\mcaregiver\\M"],
       12,
       "senior_home_care",
+      [],
       [],
       [],
       [],
@@ -411,6 +413,7 @@ describe("governed Kinfolk business repository", () => {
       "restaurant",
       [],
       ["\\mvegan\\M", "\\mplant[[:space:]-]+based\\M", "\\mplant[[:space:]-]+based\\M"],
+      [],
       [],
     ]);
   });
@@ -468,6 +471,73 @@ describe("governed Kinfolk business repository", () => {
       subject.vibeKeys ?? [],
       [],
       ["\\mfull[[:space:]-]+wash[[:space:]-]+and[[:space:]-]+detangle\\M"],
+      [],
+    ]);
+  });
+
+  it("requires both a documented street and amenity before returning a bookstore card", async () => {
+    const subject = deriveBusinessSubject(
+      "Find me the bookstore in Philadelphia on Germantown Avenue that sells coffee",
+    )!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "uncle-bobbies",
+        name: "Uncle Bobbie's Coffee & Books",
+        category: "Food & Drink",
+        subcategory: "Cafe",
+        address: "5445 Germantown Avenue",
+        description: "Coffee, books, and community events.",
+        specialties: [],
+        tags: ["coffee", "independent bookstore"],
+      },
+      {
+        ...AMINA_ROW,
+        id: "other-bookstore",
+        name: "City Books",
+        category: "Shopping",
+        subcategory: "Bookstore",
+        address: "100 Market Street",
+        description: "Independent bookstore.",
+        specialties: [],
+        tags: ["books"],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(subject.contextualEvidenceTerms).toEqual([
+      "germantown avenue",
+      "coffee",
+    ]);
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: "uncle-bobbies",
+        name: "Uncle Bobbie's Coffee & Books",
+        matchReasons: expect.arrayContaining([
+          "name",
+          "listing evidence: germantown avenue",
+          "listing evidence: coffee",
+        ]),
+      }),
+    ]);
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("Street and amenity phrases refine an already-matched governed");
+    expect(sql).toContain("cardinality($9::text[]) = 0");
+    expect(sql).toContain("FROM unnest($9::text[]) AS contextual(pattern)");
+    expect(params.slice(0, 5)).toEqual([
+      "Philadelphia",
+      "PA",
+      ["\\mbookstore\\M", "\\mbook[[:space:]-]+store\\M", "\\mbookshop\\M", "\\mbookseller\\M"],
+      12,
+      "bookstore",
+    ]);
+    expect(params[8]).toEqual([
+      "\\mgermantown[[:space:]-]+avenue\\M",
+      "\\mcoffee\\M",
     ]);
   });
 

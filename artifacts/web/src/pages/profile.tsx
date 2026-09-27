@@ -28,6 +28,8 @@ import {
   BadgeCheck,
   CheckCircle,
   Building2,
+  ClipboardList,
+  Store,
   Plane,
   Globe,
   Home,
@@ -795,7 +797,12 @@ function BadgePanel({
 
 type ProfileHubSection = "overview" | "activity" | "saved" | "circles" | "settings";
 
-type ProfileSettingsFolder = "profile" | "safety" | "kinfolk" | "community";
+type ProfileSettingsFolder =
+  | "profile"
+  | "business"
+  | "safety"
+  | "kinfolk"
+  | "community";
 
 const PROFILE_SETTINGS_FOLDERS: ReadonlyArray<{
   id: ProfileSettingsFolder;
@@ -806,6 +813,11 @@ const PROFILE_SETTINGS_FOLDERS: ReadonlyArray<{
     id: "profile",
     title: "Profile & saved places",
     description: "Photo, name, bio, and saved businesses",
+  },
+  {
+    id: "business",
+    title: "Business & ownership",
+    description: "Add a business or review a submission from your member account",
   },
   {
     id: "safety",
@@ -1999,6 +2011,51 @@ export default function Profile() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="profile-settings-folder-business"
+            role="tabpanel"
+            aria-label="Business and ownership settings"
+            hidden={activeSettingsFolder !== "business"}
+            className="md:col-span-3 mx-auto w-full max-w-2xl"
+          >
+            <div className="rounded-3xl border border-[#3A1F0E]/10 bg-white p-6 shadow-sm md:p-8">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#CA922B]/10">
+                  <Building2 className="h-5 w-5 text-[#CA922B]" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-2xl font-bold text-[#2B1507]">
+                    Your business on Mapping with Melanin™
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">
+                    Add a business from your member account or check the status of a prior submission. A complete ordinary listing can publish as community-listed, unclaimed, and not verified; claiming a public listing remains a separate owner-verification step.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <Link href="/submit-business?source=profile&campaign=member-business-entry">
+                  <Button className="h-auto w-full justify-start rounded-2xl bg-[#CA922B] px-4 py-4 text-left text-white hover:bg-[#B38024]">
+                    <Store className="mr-3 h-5 w-5 shrink-0" />
+                    <span>
+                      <span className="block text-sm font-bold">Add my business</span>
+                      <span className="mt-0.5 block text-xs font-normal text-white/85">Create a profile-ready listing from this account</span>
+                    </span>
+                  </Button>
+                </Link>
+                <Link href="/my-business-submissions">
+                  <Button variant="outline" className="h-auto w-full justify-start rounded-2xl border-[#CA922B]/40 bg-[#FAF6EF] px-4 py-4 text-left text-[#2B1507] hover:border-[#CA922B] hover:bg-[#CA922B]/10">
+                    <ClipboardList className="mr-3 h-5 w-5 shrink-0 text-[#CA922B]" />
+                    <span>
+                      <span className="block text-sm font-bold">My business submissions</span>
+                      <span className="mt-0.5 block text-xs font-normal text-[#3A1F0E]/60">Review, amend, or open a published listing</span>
+                    </span>
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

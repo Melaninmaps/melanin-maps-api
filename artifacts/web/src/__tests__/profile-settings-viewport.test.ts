@@ -37,17 +37,27 @@ describe("profile settings viewport", () => {
   });
 
   it("organizes retained controls into one visible settings folder at a time", () => {
-    expect(profile).toContain('type ProfileSettingsFolder = "profile" | "safety" | "kinfolk" | "community"');
+    expect(profile).toContain("type ProfileSettingsFolder =");
+    expect(profile).toContain('| "business"');
     expect(profile).toContain("Settings folders");
     expect(profile).toContain("Profile & saved places");
+    expect(profile).toContain("Business & ownership");
     expect(profile).toContain("Privacy, safety & security");
     expect(profile).toContain("Kinfolk preferences");
     expect(profile).toContain("Community & badges");
     expect(profile).toContain('hidden={activeSettingsFolder !== "profile"}');
+    expect(profile).toContain('hidden={activeSettingsFolder !== "business"}');
     expect(profile).toContain('hidden={activeSettingsFolder !== "safety"}');
     expect(profile).toContain('hidden={activeSettingsFolder !== "kinfolk"}');
     expect(profile).toContain('hidden={activeSettingsFolder !== "community"}');
     expect(profile).toContain('onClick={() => onOpenSettingsFolder("profile")}');
     expect(profile).toContain('onClick={() => onOpenSettingsFolder("safety")}');
+  });
+
+  it("keeps a member-linked business entry and submission review route reachable", () => {
+    expect(profile).toContain('id="profile-settings-folder-business"');
+    expect(profile).toContain('href="/submit-business?source=profile&campaign=member-business-entry"');
+    expect(profile).toContain('href="/my-business-submissions"');
+    expect(profile).toContain("Add my business");
   });
 });

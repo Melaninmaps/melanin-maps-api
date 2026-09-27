@@ -10,8 +10,10 @@ import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
   dietaryRequirementSearchPatterns,
+  contextualEvidenceSearchPatterns,
   documentedServiceRequirementSearchPatterns,
   matchesDocumentedDietaryRequirement,
+  matchesDocumentedContextualEvidence,
   matchesDocumentedServiceRequirement,
   type NormalizedBusinessSubject,
 } from "./business-subject";
@@ -369,6 +371,14 @@ function subjectMatchReasons(
   ) {
     return [];
   }
+  if (
+    !matchesDocumentedContextualEvidence(
+      business,
+      subject.contextualEvidenceTerms,
+    )
+  ) {
+    return [];
+  }
   const terms = subject.searchTerms.map((term) => term.toLowerCase());
   const structuredText = [
     business.name,
@@ -400,6 +410,9 @@ function subjectMatchReasons(
     ...fieldMatches(business.category, "category"),
     ...fieldMatches(business.subcategory, "subcategory"),
     ...fieldMatches(business.name, "name"),
+    ...(subject.key === "bookstore" && /\bbooks\b/i.test(business.name)
+      ? ["name"]
+      : []),
     ...business.specialties.flatMap((specialty) =>
       fieldMatches(specialty, "specialty"),
     ),
@@ -412,6 +425,9 @@ function subjectMatchReasons(
     ...(subject.documentedServiceRequirement
       ? [`service detail: ${subject.documentedServiceRequirement.label}`]
       : []),
+    ...(subject.contextualEvidenceTerms?.map(
+      (term) => `listing evidence: ${term}`,
+    ) ?? []),
   ];
 }
 
@@ -541,13 +557,16 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
             subject.documentedServiceRequirement,
           )
         : [];
+      const contextualEvidencePatterns = contextualEvidenceSearchPatterns(
+        subject.contextualEvidenceTerms,
+      );
       const vibeKeys = subject.vibeKeys ?? [];
       if (!patterns.length) return [];
       const designationIds = normalizeOwnershipDesignationFilterIds(requiredDesignationIds);
       const designationValueGroups = designationIds.map((id) => ownershipDesignationStorageValues(id).values);
       const designationClauses = designationValueGroups
         .map((_, index) => {
-          const parameter = 9 + index;
+          const parameter = 10 + index;
           return `AND ${buildDesignationPredicateSql(designationIds[index], "b.ownership_designations", parameter)}`;
         })
         .join("");
@@ -564,9 +583,14 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           -- business name, or a governed specialty. General tags and
           -- descriptions/stories are not service taxonomies: e.g. a city
           -- context tag such as "cooling/AC" must not turn a restaurant into
-          -- an HVAC business.
+          -- an HVAC business. “Coffee & Books” is the narrow bookstore-name
+          -- exception so mixed-format bookstore/café listings stay findable.
           AND (
             LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])
+            OR (
+              $5::text = 'bookstore'
+              AND LOWER(COALESCE(b.name, '')) ~ '\\mbooks\\M'
+            )
             OR LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])
             OR LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])
             OR EXISTS (
@@ -630,6 +654,27 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
                 AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($8::text[])
             )
           )
+          -- Street and amenity phrases refine an already-matched governed
+          -- service. Every supplied cue must appear in the published listing;
+          -- this prevents a generic bookstore from outranking the member's
+          -- documented Germantown Avenue coffee-bookstore request.
+          AND (
+            cardinality($9::text[]) = 0
+            OR NOT EXISTS (
+              SELECT 1
+              FROM unnest($9::text[]) AS contextual(pattern)
+              WHERE NOT LOWER(CONCAT_WS(' ',
+                b.name,
+                b.category,
+                b.subcategory,
+                b.description,
+                b.address,
+                b.city,
+                b.state,
+                COALESCE(b.tags, '[]'::jsonb)::text
+              )) ~ contextual.pattern
+            )
+          )
           ${designationClauses}
         ORDER BY
           CASE
@@ -645,6 +690,8 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
             WHEN LOWER(COALESCE(b.category, '')) ~ ANY($3::text[]) THEN 0
             WHEN LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[]) THEN 1
             WHEN LOWER(COALESCE(b.name, '')) ~ ANY($3::text[]) THEN 2
+            WHEN $5::text = 'bookstore'
+              AND LOWER(COALESCE(b.name, '')) ~ '\\mbooks\\M' THEN 3
             WHEN EXISTS (
               SELECT 1 FROM public.business_specialties AS specialty
               WHERE specialty.business_id::text = b.id::text
@@ -664,6 +711,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           vibeKeys,
           dietaryPatterns,
           documentedServicePatterns,
+          contextualEvidencePatterns,
           ...designationValueGroups,
         ],
       );

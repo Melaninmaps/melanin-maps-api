@@ -175,9 +175,19 @@ describe("local business subject classification", () => {
       const subject = deriveBusinessSubject(`Find ${variant} in Atlanta GA`);
       expect(subject).toMatchObject({ key: "bookstore", label: "bookstores" });
       expect(subject?.searchTerms).toEqual(expect.arrayContaining(["bookstore", "book store", "bookshop", "bookseller"]));
-      expect(subject?.searchTerms).not.toContain("books");
     },
   );
+
+  it("treats a named street and coffee as documentary bookstore constraints", () => {
+    const subject = deriveBusinessSubject(
+      "What is the bookstore in Philadelphia on Germantown Avenue that sells coffee?",
+    );
+    expect(subject).toMatchObject({ key: "bookstore" });
+    expect(subject?.contextualEvidenceTerms).toEqual([
+      "germantown avenue",
+      "coffee",
+    ]);
+  });
 
   it("routes the production bookstore question to business discovery", () => {
     expect(classifyKinfolkRequest("Can you tell me about bookstores in Atlanta GA", "Atlanta")).toMatchObject({
