@@ -1,6 +1,6 @@
 import OpenAI, { toFile } from "openai";
 import type { SpeechCreateParams } from "openai/resources/audio/speech";
-import { Buffer } from "node:buffer";
+import { Buffer, File as NodeFile } from "node:buffer";
 import { spawn } from "child_process";
 import { writeFile, unlink, readFile } from "fs/promises";
 import { randomUUID } from "crypto";
@@ -31,7 +31,32 @@ export function resolveAudioOpenAIConfiguration(
   return configuration;
 }
 
+/**
+ * Node 18 exposes Blob but not a global File constructor. OpenAI's SDK checks
+ * for that global before it accepts an upload, so install Node's compatible
+ * implementation only on runtimes that do not already provide one.
+ */
+export function ensureAudioFileSupport(): void {
+  if (typeof globalThis.File !== "undefined") return;
+  Object.defineProperty(globalThis, "File", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: NodeFile,
+  });
+}
+
+export async function createAudioUploadFile(
+  audio: Buffer | Uint8Array,
+  filename: string,
+  mimeType: string,
+) {
+  ensureAudioFileSupport();
+  return toFile(audio, filename, { type: mimeType });
+}
+
 function getOpenAI(): OpenAI {
+  ensureAudioFileSupport();
   const configuration = resolveAudioOpenAIConfiguration();
   return new OpenAI({
     apiKey: configuration.apiKey,

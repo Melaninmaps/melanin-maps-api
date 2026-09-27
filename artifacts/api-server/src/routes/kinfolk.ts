@@ -5,6 +5,7 @@ import {
 } from "@workspace/integrations-openai-ai-server";
 import {
   audioOpenai,
+  createAudioUploadFile,
   resolveAudioOpenAIConfiguration,
   textToSpeechWithStyle,
 } from "@workspace/integrations-openai-ai-server/audio";
@@ -12050,11 +12051,11 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   const transcriptionModel = kinfolkModel("transcription");
 
   try {
-    const audioBytes = new Uint8Array(buffer);
-    const blob = new Blob([audioBytes], { type: canonicalMimeType });
-    const file = new File([blob], `voice.${safeFormat}`, {
-      type: canonicalMimeType,
-    });
+    const file = await createAudioUploadFile(
+      buffer,
+      `voice.${safeFormat}`,
+      canonicalMimeType,
+    );
 
     const transcription = await audioOpenai.audio.transcriptions.create(
       { file, model: transcriptionModel },

@@ -2,6 +2,8 @@ export {
   openai,
   audioOpenai,
   resolveAudioOpenAIConfiguration,
+  ensureAudioFileSupport,
+  createAudioUploadFile,
   createOpenAISpeechRequest,
   detectAudioFormat,
   convertToWav,

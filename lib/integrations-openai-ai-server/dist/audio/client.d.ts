@@ -5,6 +5,13 @@ export declare function resolveAudioOpenAIConfiguration(environment?: NodeJS.Pro
     apiKey: string;
     baseURL: string;
 }>;
+/**
+ * Node 18 exposes Blob but not a global File constructor. OpenAI's SDK checks
+ * for that global before it accepts an upload, so install Node's compatible
+ * implementation only on runtimes that do not already provide one.
+ */
+export declare function ensureAudioFileSupport(): void;
+export declare function createAudioUploadFile(audio: Buffer | Uint8Array, filename: string, mimeType: string): Promise<File>;
 export declare const openai: OpenAI;
 export declare const audioOpenai: OpenAI;
 export type AudioFormat = "wav" | "mp3" | "webm" | "mp4" | "ogg" | "unknown";

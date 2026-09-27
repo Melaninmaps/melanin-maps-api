@@ -1,2 +1,2 @@
-export { openai, audioOpenai, resolveAudioOpenAIConfiguration, createOpenAISpeechRequest, detectAudioFormat, convertToWav, ensureCompatibleFormat, type AudioFormat, voiceChat, voiceChatStream, textToSpeech, textToSpeechWithStyle, textToSpeechStream, speechToText, speechToTextStream, } from "./client";
+export { openai, audioOpenai, resolveAudioOpenAIConfiguration, ensureAudioFileSupport, createAudioUploadFile, createOpenAISpeechRequest, detectAudioFormat, convertToWav, ensureCompatibleFormat, type AudioFormat, voiceChat, voiceChatStream, textToSpeech, textToSpeechWithStyle, textToSpeechStream, speechToText, speechToTextStream, } from "./client";
 //# sourceMappingURL=index.d.ts.map

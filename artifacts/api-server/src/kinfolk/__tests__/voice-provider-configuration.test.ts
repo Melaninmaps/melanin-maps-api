@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { File as NodeFile } from "node:buffer";
 import {
   resolveOpenAIConfiguration,
   STANDARD_OPENAI_BASE_URL,
 } from "@workspace/integrations-openai-ai-server";
 import {
+  createAudioUploadFile,
   createOpenAISpeechRequest,
   resolveAudioOpenAIConfiguration,
 } from "@workspace/integrations-openai-ai-server/audio";
@@ -64,6 +66,27 @@ describe("Kinfolk voice provider configuration", () => {
     expect(() => resolveAudioOpenAIConfiguration({} as NodeJS.ProcessEnv)).toThrow(
       /OpenAI configuration is required/,
     );
+  });
+
+  it("provides a compatible File constructor for audio uploads on Node 18", async () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, "File");
+    try {
+      Object.defineProperty(globalThis, "File", {
+        configurable: true,
+        writable: true,
+        value: undefined,
+      });
+      const file = await createAudioUploadFile(
+        Buffer.from("voice-bytes"),
+        "voice.wav",
+        "audio/wav",
+      );
+      expect(globalThis.File).toBe(NodeFile);
+      expect(file).toMatchObject({ name: "voice.wav", type: "audio/wav" });
+    } finally {
+      if (original) Object.defineProperty(globalThis, "File", original);
+      else Reflect.deleteProperty(globalThis, "File");
+    }
   });
 
   it("uses the documented speech endpoint request shape and keeps delivery direction separate from the script", () => {
