@@ -198,6 +198,16 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Filter businesses by receipt-backed intake cohort");
   });
 
+  it("lets an administrator preview and explicitly publish the protected source-backed directory in retry-safe batches", () => {
+    expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed"');
+    expect(adminRoute).toContain("requiresExplicitApply");
+    expect(adminRoute).toContain("remainingCreateCount");
+    expect(adminScreen).toContain("Founder source directory intake");
+    expect(adminScreen).toContain("api/admin/directory-intake/source-backed");
+    expect(adminScreen).toContain("Publish all remaining");
+    expect(adminScreen).toContain("searchable, unclaimed MWM profile");
+  });
+
   it("creates a map pin only from a successfully geocoded supplied street address", () => {
     expect(adminPublisher).toContain("const coordinates = input.address");
     expect(adminPublisher).toContain("if (coordinates)");

@@ -127,7 +127,13 @@ type AdminCityOption = {
   variants: string[];
   count: number;
 };
-
+type SourceBackedDirectoryIntakePreview = {
+  sourceCandidateCount: number;
+  createCount: number;
+  exactDuplicateCount: number;
+  addressEligibleForGeocodingCount: number;
+  maplessProfileCount: number;
+};
 /**
  * The Business inventory groups city spelling/case variants into objects, while
  * the older Waitlist contract returns strings. Keep all response parsing here
@@ -1018,6 +1024,11 @@ export default function Admin() {
   const [cityHealthLoading, setCityHealthLoading] = useState(false);
   const [cityAlertRunning, setCityAlertRunning] = useState(false);
   const [cityAlertResult, setCityAlertResult] = useState<string | null>(null);
+  const [sourceDirectoryIntakePreview, setSourceDirectoryIntakePreview] =
+    useState<SourceBackedDirectoryIntakePreview | null>(null);
+  const [sourceDirectoryIntakeLoading, setSourceDirectoryIntakeLoading] = useState(false);
+  const [sourceDirectoryIntakeApplying, setSourceDirectoryIntakeApplying] = useState(false);
+  const [sourceDirectoryIntakeResult, setSourceDirectoryIntakeResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedCity) {
@@ -1289,6 +1300,69 @@ export default function Admin() {
       });
   }, []);
 
+  const loadSourceBackedDirectoryIntakePreview = useCallback(async () => {
+    setSourceDirectoryIntakeLoading(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/directory-intake/source-backed`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apply: false, batchSize: 100 }),
+      });
+      const body = await response.json().catch(() => ({})) as SourceBackedDirectoryIntakePreview & { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Could not prepare the source directory intake.");
+      setSourceDirectoryIntakePreview(body);
+    } catch (error) {
+      setSourceDirectoryIntakeResult(error instanceof Error ? error.message : "Could not prepare the source directory intake.");
+    } finally {
+      setSourceDirectoryIntakeLoading(false);
+    }
+  }, [fetch]);
+
+  const publishAllSourceBackedDirectoryBatches = useCallback(async () => {
+    const preview = sourceDirectoryIntakePreview;
+    if (!preview || preview.createCount <= 0) return;
+    if (!window.confirm(
+      `Add ${preview.createCount.toLocaleString()} source-backed business profiles now? Exact duplicates will be skipped. This adds searchable, unclaimed profiles; only supplied street addresses may receive a map pin.`,
+    )) return;
+
+    setSourceDirectoryIntakeApplying(true);
+    setSourceDirectoryIntakeResult(null);
+    let created = 0;
+    let remaining = preview.createCount;
+    try {
+      // The protected server recomputes its exact duplicate plan before every
+      // batch, so a retry cannot recreate a row that was already committed.
+      while (remaining > 0) {
+        const response = await fetch(`${BASE}api/admin/directory-intake/source-backed`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ apply: true, batchSize: 100 }),
+        });
+        const body = await response.json().catch(() => ({})) as {
+          createdCount?: number;
+          remainingCreateCount?: number;
+          error?: string;
+        };
+        if (!response.ok) throw new Error(body.error ?? "The source directory intake stopped before completion.");
+        const createdThisBatch = Number(body.createdCount ?? 0);
+        created += createdThisBatch;
+        remaining = Number(body.remainingCreateCount ?? 0);
+        if (createdThisBatch === 0 && remaining > 0) {
+          throw new Error("The source directory intake made no progress; no additional records were added.");
+        }
+      }
+      setSourceDirectoryIntakeResult(`Added ${created.toLocaleString()} source-backed profiles. Exact duplicates were skipped; mapless profiles remain searchable without a fabricated pin.`);
+      await Promise.all([loadBusinesses(), loadSourceBackedDirectoryIntakePreview()]);
+    } catch (error) {
+      setSourceDirectoryIntakeResult(error instanceof Error ? error.message : "The source directory intake stopped before completion.");
+      await Promise.all([loadBusinesses(), loadSourceBackedDirectoryIntakePreview()]);
+    } finally {
+      setSourceDirectoryIntakeApplying(false);
+    }
+  }, [fetch, loadBusinesses, loadSourceBackedDirectoryIntakePreview, sourceDirectoryIntakePreview]);
+
   const loadMembers = useCallback(() => {
     return fetch(`${BASE}api/admin/members`, { credentials: "include" })
       .then((r) => r.json())
@@ -1516,6 +1590,11 @@ export default function Admin() {
     if (!isAdmin) return;
     if (tab === "leaderboard" && leaderboard.length === 0) loadLeaderboard();
   }, [tab, isAdmin, leaderboard.length, loadLeaderboard]);
+
+  useEffect(() => {
+    if (!isAdmin || tab !== "businesses") return;
+    void loadSourceBackedDirectoryIntakePreview();
+  }, [isAdmin, tab, loadSourceBackedDirectoryIntakePreview]);
 
   useEffect(() => {
     setSecondsSinceUpdate(0);
@@ -4365,6 +4444,46 @@ export default function Admin() {
                 All current live public listings remain in the Kinfolk, map, and category/city catalog while you review. Archive a listing to remove it from those default surfaces; it remains deliberately name-reachable, restorable, and retained in the separate vault.
               </p>
             </div>
+
+            <section className="mb-4 rounded-2xl border border-[#CA922B]/30 bg-[#FFF9EF] p-4" aria-label="Founder source directory intake">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8D5C17]">Founder source directory intake</p>
+                  <h3 className="mt-1 font-serif text-xl font-bold text-[#3A1F0E]">Publish the received source-backed directory</h3>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-[#3A1F0E]/65">
+                    Exact same-place duplicates are skipped. Every other source listing becomes a searchable, unclaimed MWM profile; only a supplied street address can be used for a map pin.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void publishAllSourceBackedDirectoryBatches()}
+                  disabled={sourceDirectoryIntakeLoading || sourceDirectoryIntakeApplying || !sourceDirectoryIntakePreview || sourceDirectoryIntakePreview.createCount === 0}
+                  className="shrink-0 rounded-xl bg-[#CA922B] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#B38024] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {sourceDirectoryIntakeApplying
+                    ? "Publishing protected batches…"
+                    : sourceDirectoryIntakePreview?.createCount
+                      ? `Publish all remaining (${sourceDirectoryIntakePreview.createCount.toLocaleString()})`
+                      : "No remaining source listings"}
+                </button>
+              </div>
+              {sourceDirectoryIntakeLoading ? (
+                <p className="mt-3 text-sm text-[#3A1F0E]/60">Checking the protected duplicate plan…</p>
+              ) : sourceDirectoryIntakePreview ? (
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
+                  <div><dt className="text-[#3A1F0E]/55">Received source records</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Remaining to publish</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.createCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Exact duplicates skipped</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.exactDuplicateCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Street-address profiles</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.addressEligibleForGeocodingCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Searchable without pin</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.maplessProfileCount.toLocaleString()}</dd></div>
+                </dl>
+              ) : null}
+              {sourceDirectoryIntakeResult && (
+                <p className="mt-3 rounded-xl border border-[#3A1F0E]/10 bg-white px-3 py-2 text-sm text-[#3A1F0E]/75" role="status">
+                  {sourceDirectoryIntakeResult}
+                </p>
+              )}
+            </section>
 
             {/* Inventory scope tabs */}
             <div className="flex flex-wrap gap-2 mb-4">
