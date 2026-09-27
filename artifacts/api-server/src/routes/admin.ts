@@ -32,8 +32,150 @@ import {
 } from "../lib/business-dedup.js";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortReconciliation";
+import { sourceBackedDirectoryCandidates } from "../directoryIntake/sourceBackedDirectoryCandidates";
+import {
+  buildSourceBackedDirectoryIntakePlan,
+  normalizeDirectoryIdentity,
+} from "../directoryIntake/sourceBackedDirectoryIntake";
 
 const router: IRouter = Router();
+
+type SourceDirectoryExistingBusiness = Readonly<{
+  id: string;
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  address: string | null;
+  website: string | null;
+  sourceUrl: string | null;
+  dedupeKey: string | null;
+}>;
+
+async function sourceDirectoryExistingBusinessCandidates(): Promise<
+  SourceDirectoryExistingBusiness[]
+> {
+  // Only request records whose normalized name appears in this protected source
+  // batch. This preserves full-inventory performance while making the exact
+  // duplicate check compare all potentially matching existing records.
+  const sourceNames = [
+    ...new Set(sourceBackedDirectoryCandidates.map((candidate) =>
+      normalizeDirectoryIdentity(candidate.name),
+    )),
+  ];
+  const result = await pool.query<SourceDirectoryExistingBusiness>(
+    `SELECT id, name, city, state, address, website, source_url AS "sourceUrl", dedupe_key AS "dedupeKey"
+       FROM businesses
+      WHERE LOWER(REGEXP_REPLACE(COALESCE(name, ''), '[^a-z0-9]+', '', 'g')) = ANY($1::text[])`,
+    [sourceNames],
+  );
+  return result.rows;
+}
+
+/**
+ * Founder-authorized, source-backed intake. It deliberately never alters an
+ * existing row: exact source duplicates are skipped, similar names stay for
+ * manual review, and all created records begin as community-listed/unclaimed.
+ */
+router.post("/admin/directory-intake/source-backed", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const apply = req.body?.apply === true;
+  const requestedBatchSize = Number(req.body?.batchSize ?? 75);
+  const batchSize = Number.isFinite(requestedBatchSize)
+    ? Math.min(Math.max(Math.floor(requestedBatchSize), 1), 100)
+    : 75;
+  try {
+    const existingBusinesses = await sourceDirectoryExistingBusinessCandidates();
+    const plan = buildSourceBackedDirectoryIntakePlan(
+      sourceBackedDirectoryCandidates,
+      existingBusinesses,
+    );
+    const nextBatch = plan.toCreate.slice(0, batchSize);
+    const mapEligibleCount = nextBatch.filter((candidate) => Boolean(candidate.address)).length;
+
+    if (!apply) {
+      res.json({
+        ok: true,
+        requiresExplicitApply: true,
+        sourceCandidateCount: sourceBackedDirectoryCandidates.length,
+        createCount: plan.toCreate.length,
+        nextBatchCreateCount: nextBatch.length,
+        batchSize,
+        exactDuplicateCount: plan.duplicateMatches.length,
+        addressEligibleForGeocodingCount: plan.toCreate.filter((candidate) => Boolean(candidate.address)).length,
+        maplessProfileCount: plan.toCreate.filter((candidate) => !candidate.address).length,
+        duplicateReasons: plan.duplicateMatches.reduce<Record<string, number>>((counts, match) => {
+          counts[match.reason] = (counts[match.reason] ?? 0) + 1;
+          return counts;
+        }, {}),
+      });
+      return;
+    }
+
+    // The same exact plan is recomputed immediately before creation, so retrying
+    // the action after a network failure cannot recreate an already-inserted row.
+    await db.transaction(async (transaction) => {
+      for (const candidate of nextBatch) {
+        const blackOwned = candidate.ownershipDesignations.includes("Black / African American-Owned");
+        const canonicalDedupeKey = candidate.address
+          ? _dedupeKey({
+              name: candidate.name,
+              city: candidate.city,
+              state: candidate.state,
+              address: candidate.address,
+            })
+          : candidate.sourceRecordKey;
+        await transaction.insert(businessesTable).values({
+          id: `source_${randomUUID()}`,
+          name: candidate.name,
+          category: candidate.category,
+          subcategory: candidate.subcategory,
+          description: `${candidate.category} business in ${candidate.city}. Listed by ${candidate.sourceLabel}.`,
+          address: candidate.address,
+          city: candidate.city,
+          state: candidate.state,
+          country: candidate.country,
+          phone: candidate.phone,
+          website: candidate.officialUrl,
+          sourceUrl: candidate.sourceListingUrl ?? candidate.sourceUrl,
+          dedupeKey: canonicalDedupeKey,
+          ownershipDesignations: candidate.ownershipDesignations,
+          blackOwned,
+          tags: [...new Set([candidate.category, ...candidate.serviceTerms])],
+          status: "active",
+          listingStatus: "live_unclaimed",
+          ownerClaimStatus: "unclaimed",
+          profileStatus: "community_listed",
+          verified: false,
+          featured: false,
+          promotionEligible: false,
+          feedbackOptIn: false,
+          dataSource: "founder_source_directory_intake",
+          researchSourceLabel: candidate.sourceLabel,
+          researchSourceUrl: candidate.sourceUrl,
+          kinfolkRecommendationReason: candidate.ownershipEvidence || null,
+          intakeBatchReference: candidate.batch,
+        } as typeof businessesTable.$inferInsert);
+      }
+    });
+
+    res.status(201).json({
+      ok: true,
+      createdCount: nextBatch.length,
+      remainingCreateCount: plan.toCreate.length - nextBatch.length,
+      batchSize,
+      exactDuplicateCount: plan.duplicateMatches.length,
+      addressEligibleForGeocodingCount: mapEligibleCount,
+      maplessProfileCount: nextBatch.length - mapEligibleCount,
+      message: "Source-backed listings were added as searchable, unclaimed MWM profiles. Street-address records are eligible for exact geocoding; mapless records remain searchable without a fabricated pin.",
+    });
+  } catch (error) {
+    req.log.error({ error }, "Failed to publish source-backed directory intake");
+    res.status(500).json({ error: "Failed to publish source-backed directory intake." });
+  }
+});
 
 // Administration can group superficial city variants (case, leading/trailing
 // spaces, or repeated spaces) without rewriting source data. A spelling variant
