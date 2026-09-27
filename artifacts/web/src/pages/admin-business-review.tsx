@@ -169,9 +169,9 @@ export default function AdminBusinessReview({ embedded }: { embedded?: boolean }
     <div className={`${embedded ? "" : "min-h-screen bg-background p-6"} max-w-6xl mx-auto`}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Business Review Queue</h1>
+          <h1 className="text-2xl font-bold">Duplicates &amp; review</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Candidates held for human review before publication. Possible duplicates, unverified ownership claims, and low-confidence records appear here.
+            Review potential duplicates before deciding whether to keep both or merge. A merge retains both records, removes only the duplicate from public discovery, and can be restored from its append-only audit history. Ownership and low-confidence records also remain here for review.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchItems} disabled={loading}>

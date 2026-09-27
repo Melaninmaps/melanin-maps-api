@@ -885,7 +885,7 @@ export default function Admin() {
   const [bizSearch, setBizSearch] = useState("");
   const [bizSearchInput, setBizSearchInput] = useState("");
   const [bizStatusFilter, setBizStatusFilter] = useState<
-    "active" | "permanently_closed" | "needs_review" | "archived"
+    "active" | "permanently_closed" | "needs_review" | "archived" | "duplicates"
   >("active");
   const [bizCityFilters, setBizCityFilters] = useState<string[]>([]);
   const [bizCityFilterSearch, setBizCityFilterSearch] = useState("");
@@ -908,6 +908,8 @@ export default function Admin() {
   const [businessInventoryTotal, setBusinessInventoryTotal] = useState(0);
   const [businessLiveInventoryTotal, setBusinessLiveInventoryTotal] = useState(0);
   const [businessArchivedInventoryTotal, setBusinessArchivedInventoryTotal] =
+    useState(0);
+  const [businessDuplicateInventoryTotal, setBusinessDuplicateInventoryTotal] =
     useState(0);
   const [businessPublicDirectoryTotal, setBusinessPublicDirectoryTotal] =
     useState(0);
@@ -1252,6 +1254,11 @@ export default function Admin() {
         setBusinessArchivedInventoryTotal(
           typeof data.archivedInventoryTotal === "number"
             ? data.archivedInventoryTotal
+            : 0,
+        );
+        setBusinessDuplicateInventoryTotal(
+          typeof data.duplicateInventoryTotal === "number"
+            ? data.duplicateInventoryTotal
             : 0,
         );
         setBusinessPublicDirectoryTotal(
@@ -2240,6 +2247,7 @@ export default function Admin() {
   const permanentlyClosedCount = businessPermanentlyClosedTotal;
   const needsReviewCount = businessNeedsReviewTotal;
   const archivedCount = businessArchivedInventoryTotal;
+  const duplicateCount = businessDuplicateInventoryTotal;
   const inventoryCities = businessCityOptions;
   const selectedInventoryCities = inventoryCities.filter((city) =>
     bizCityFilters.includes(city.value),
@@ -2369,7 +2377,9 @@ export default function Admin() {
   };
 
   const selectAllVisibleBusinessListings = () => {
-    const selectable = bizStatusFilter === "archived"
+    const selectable = bizStatusFilter === "duplicates"
+      ? []
+      : bizStatusFilter === "archived"
       ? restorableFilteredBiz
       : archivableFilteredBiz;
     setSelectedBusinessIds(new Set(selectable.map((business) => business.id)));
@@ -2588,7 +2598,7 @@ export default function Admin() {
     },
     {
       id: "biz-review",
-      label: "Business Review Queue",
+      label: "Duplicates & review",
       icon: <Store className="w-4 h-4" />,
     },
     {
@@ -4407,7 +4417,7 @@ export default function Admin() {
               </div>
             )}
 
-            <div className="mb-4 grid gap-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF9EF] p-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-4 grid gap-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF9EF] p-4 sm:grid-cols-2 xl:grid-cols-5">
               <div>
                 <div className="text-2xl font-serif font-bold text-[#3A1F0E]">
                   {businessLiveInventoryTotal.toLocaleString()}
@@ -4440,8 +4450,16 @@ export default function Admin() {
                   Archived in separate vault
                 </div>
               </div>
-              <p className="sm:col-span-2 xl:col-span-4 text-xs leading-5 text-[#3A1F0E]/55">
-                All current live public listings remain in the Kinfolk, map, and category/city catalog while you review. Archive a listing to remove it from those default surfaces; it remains deliberately name-reachable, restorable, and retained in the separate vault.
+              <div>
+                <div className="text-2xl font-serif font-bold text-[#3A1F0E]">
+                  {businessDuplicateInventoryTotal.toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#3A1F0E]/55">
+                  Confirmed duplicates retained
+                </div>
+              </div>
+              <p className="sm:col-span-2 xl:col-span-5 text-xs leading-5 text-[#3A1F0E]/55">
+                All current live public listings remain in the Kinfolk, map, and category/city catalog while you review. Archive a listing to remove it from those default surfaces; it remains deliberately name-reachable, restorable, and retained in the Archive vault. Confirmed duplicates are separate from both lists and can only be restored through their audited duplicate-review action.
               </p>
             </div>
 
@@ -4507,6 +4525,11 @@ export default function Admin() {
                   {
                     key: "archived",
                     label: `📦 Archive vault (${archivedCount.toLocaleString()})`,
+                    warn: false,
+                  },
+                  {
+                    key: "duplicates",
+                    label: `Duplicate vault (${duplicateCount.toLocaleString()})`,
                     warn: false,
                   },
                 ] as const
@@ -4740,7 +4763,9 @@ export default function Admin() {
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[#2B1507]/10 bg-[#2B1507]/5 px-4 py-3 text-sm text-[#3A1F0E]/70 md:flex-row md:items-center md:justify-between">
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
-                {bizStatusFilter === "archived"
+                {bizStatusFilter === "duplicates"
+                  ? "These are confirmed duplicate records retained from all historical states. They are excluded from public discovery and cannot be archived, restored, or permanently deleted from this list. Open Duplicates & review to restore an audited merge."
+                  : bizStatusFilter === "archived"
                   ? "These are separated from routine city and business-name review. Use Restore public listing only after confirming the record should return to normal discovery."
                   : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration."}
               </div>
@@ -4757,7 +4782,15 @@ export default function Admin() {
                     <option value={100}>100</option>
                   </select>
                 </label>
-                {bizStatusFilter !== "archived" ? (
+                {bizStatusFilter === "duplicates" ? (
+                  <button
+                    type="button"
+                    onClick={() => setTab("biz-review")}
+                    className="rounded-lg border border-[#CA922B]/40 bg-white px-3 py-1.5 text-xs font-bold text-[#8A5B13] transition-colors hover:bg-[#CA922B]/10"
+                  >
+                    Open Duplicates &amp; review
+                  </button>
+                ) : bizStatusFilter !== "archived" ? (
                   <>
                     <button
                       type="button"
@@ -4828,10 +4861,14 @@ export default function Admin() {
                       <th className="w-10 px-3 py-3 text-center">
                         <input
                           type="checkbox"
-                          aria-label={bizStatusFilter === "archived"
-                            ? "Select all visible archived listings"
-                            : "Select all visible live listings"}
+                          aria-label={bizStatusFilter === "duplicates"
+                            ? "Duplicate vault entries cannot be selected for lifecycle changes"
+                            : bizStatusFilter === "archived"
+                              ? "Select all visible archived listings"
+                              : "Select all visible live listings"}
+                          disabled={bizStatusFilter === "duplicates"}
                           checked={
+                            bizStatusFilter !== "duplicates" &&
                             (bizStatusFilter === "archived"
                               ? restorableFilteredBiz
                               : archivableFilteredBiz).length > 0 &&
@@ -4840,10 +4877,11 @@ export default function Admin() {
                               : archivableFilteredBiz).every((business) => selectedBusinessIds.has(business.id))
                           }
                           onChange={(event) => {
+                            if (bizStatusFilter === "duplicates") return;
                             if (event.target.checked) selectAllVisibleBusinessListings();
                             else setSelectedBusinessIds(new Set());
                           }}
-                          className="h-4 w-4 accent-[#CA922B]"
+                          className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-40"
                         />
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -4879,9 +4917,12 @@ export default function Admin() {
                           <input
                             type="checkbox"
                             aria-label={`Select ${biz.name}`}
+                            disabled={bizStatusFilter === "duplicates"}
                             checked={selectedBusinessIds.has(biz.id)}
-                            onChange={() => toggleBusinessSelection(biz.id)}
-                            className="h-4 w-4 accent-[#CA922B]"
+                            onChange={() => {
+                              if (bizStatusFilter !== "duplicates") toggleBusinessSelection(biz.id);
+                            }}
+                            className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-40"
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -4994,14 +5035,22 @@ export default function Admin() {
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1.5">
                             <button
-                              onClick={() =>
-                                setEditingBiz({ id: biz.id, name: biz.name })
-                              }
-                              className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                              onClick={() => {
+                                if (bizStatusFilter !== "duplicates") {
+                                  setEditingBiz({ id: biz.id, name: biz.name });
+                                }
+                              }}
+                              disabled={bizStatusFilter === "duplicates"}
+                              title={bizStatusFilter === "duplicates" ? "Duplicate records remain unchanged unless an audited merge is restored." : undefined}
+                              className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-45"
                             >
                               Edit profile
                             </button>
-                            {biz.listingStatus !== "archived" ? (
+                            {bizStatusFilter === "duplicates" ? (
+                              <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
+                                Retained duplicate. Use Duplicates &amp; review for the audited restore action.
+                              </span>
+                            ) : biz.listingStatus !== "archived" ? (
                               <button
                                 onClick={async () => {
                                   const reason = window.prompt(

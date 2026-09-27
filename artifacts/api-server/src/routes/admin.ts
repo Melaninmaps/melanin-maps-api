@@ -340,12 +340,18 @@ async function compileAdminBusinessInventoryFilters(
   } else if (intakeCohort === "other_inventory") {
     filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
   }
-  if (status === "archived") {
-    filters.push("listing_status = 'archived'");
+  if (status === "duplicates") {
+    // Confirmed duplicate records are retained for evidence and reversible
+    // merge restoration, but review them in their own all-status vault rather
+    // than mixing them into ordinary or Archive-vault inventory.
+    filters.push("COALESCE(is_duplicate, false) = true");
+  } else if (status === "archived") {
+    filters.push("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
   } else if (status !== "all") {
     // All ordinary review modes exclude the reversible archive. `all` is used
-    // only by the explicit Admin CSV inventory download.
-    filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
+    // only by the explicit Admin CSV inventory download. Confirmed duplicates
+    // are intentionally reviewed only in the dedicated Duplicate vault.
+    filters.push("COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false");
   }
   if (status === "permanently_closed") {
     filters.push("COALESCE(enrichment_note, '') ILIKE '%permanently closed%'");
@@ -666,13 +672,20 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     // Use to_jsonb for the optional, additive intake fields. The older records
     // predate those fields, and an incomplete startup-migration retry must not
     // make the entire administrator inventory unavailable.
-    const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived'";
-    const archivedInventoryWhere = "listing_status = 'archived'";
+    const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false";
+    const archivedInventoryWhere = "listing_status = 'archived' AND COALESCE(is_duplicate, false) = false";
+    const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true";
+    const inventoryScopeWhere = status === "duplicates"
+      ? duplicateInventoryWhere
+      : status === "archived"
+        ? archivedInventoryWhere
+        : liveInventoryWhere;
     const [
       businesses,
       inventoryCount,
       liveInventoryCount,
       archivedInventoryCount,
+      duplicateInventoryCount,
       publicDirectoryCount,
       kinfolkRecommendableCount,
       permanentlyClosedCount,
@@ -738,6 +751,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total FROM businesses WHERE ${archivedInventoryWhere}`,
       ),
+      pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total FROM businesses WHERE ${duplicateInventoryWhere}`,
+      ),
       // The public view is the canonical answer to "how many can members find
       // through normal Directory/category/city search?" It excludes archived,
       // duplicate, hidden, suspended, and demonstration records.
@@ -773,7 +789,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
                 ARRAY_AGG(DISTINCT BTRIM(city) ORDER BY BTRIM(city)) AS variants,
                 COUNT(*)::text AS count
            FROM businesses
-          WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}
+          WHERE ${inventoryScopeWhere}
             AND NULLIF(BTRIM(city), '') IS NOT NULL
           GROUP BY ${normalizedAdminCitySql}
           ORDER BY MIN(BTRIM(city)) ASC`,
@@ -781,7 +797,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       pool.query<{ category: string; subcategory: string | null }>(
         `SELECT DISTINCT category, subcategory
            FROM businesses
-          WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}
+          WHERE ${inventoryScopeWhere}
             AND NULLIF(BTRIM(category), '') IS NOT NULL
           ORDER BY category ASC, subcategory ASC NULLS FIRST`,
       ),
@@ -798,12 +814,13 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
            COUNT(*) FILTER (WHERE NOT (${completedCohortPredicate} OR ${nationalMasterPredicate}))::text
              AS other_inventory
            FROM businesses
-          WHERE ${status === "archived" ? archivedInventoryWhere : liveInventoryWhere}`,
+          WHERE ${inventoryScopeWhere}`,
       ),
     ]);
     const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
     const liveInventoryTotal = Number(liveInventoryCount.rows[0]?.total ?? 0);
     const archivedInventoryTotal = Number(archivedInventoryCount.rows[0]?.total ?? 0);
+    const duplicateInventoryTotal = Number(duplicateInventoryCount.rows[0]?.total ?? 0);
     const publicDirectoryTotal = Number(publicDirectoryCount.rows[0]?.total ?? 0);
     const kinfolkRecommendableTotal = Number(kinfolkRecommendableCount.rows[0]?.total ?? 0);
     const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
@@ -881,6 +898,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       inventoryTotal,
       liveInventoryTotal,
       archivedInventoryTotal,
+      duplicateInventoryTotal,
       publicDirectoryTotal,
       kinfolkRecommendableTotal,
       permanentlyClosedTotal,

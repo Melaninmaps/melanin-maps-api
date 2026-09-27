@@ -96,6 +96,18 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Restore public listing");
   });
 
+  it("keeps confirmed duplicates in their own all-status vault without exposing delete or ordinary restore controls", () => {
+    expect(adminRoute).toContain('status === "duplicates"');
+    expect(adminRoute).toContain('const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true"');
+    expect(adminRoute).toContain("duplicateInventoryTotal");
+    expect(adminRoute).toContain("COALESCE(is_duplicate, false) = false");
+    expect(adminScreen).toContain("Duplicate vault");
+    expect(adminScreen).toContain("Duplicates &amp; review");
+    expect(adminScreen).toContain("Duplicate records remain unchanged unless an audited merge is restored.");
+    expect(adminScreen).toContain('disabled={bizStatusFilter === "duplicates"}');
+    expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
+  });
+
   it("shows administrators website and social links and can isolate missing websites", () => {
     for (const field of ["website", "instagram", "tiktok", "facebook"]) {
       expect(adminRoute).toContain(field);
