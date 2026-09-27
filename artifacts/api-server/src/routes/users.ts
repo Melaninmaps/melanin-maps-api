@@ -8,6 +8,7 @@ import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 import { isAdmin } from "../lib/adminAuth";
+import { getUserTier, TIER_DISPLAY } from "../middleware/requireMembership";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -25,6 +26,22 @@ function isReservedUsername(username: string): boolean {
 }
 
 const router: IRouter = Router();
+
+// Private account status only. Public member profiles intentionally do not
+// disclose a person's tier, business plan, billing, or testing entitlement.
+router.get("/users/me/membership-status", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  try {
+    const membershipTier = await getUserTier(req.user.id);
+    res.json({ membershipTier, membershipLabel: TIER_DISPLAY[membershipTier] });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/me/membership-status error");
+    res.status(500).json({ error: "Could not load membership status" });
+  }
+});
 
 router.get("/users/me/content-preferences", async (req: Request, res: Response) => {
   if (!req.user?.id) {

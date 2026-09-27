@@ -859,6 +859,7 @@ type ProfileHubProps = {
   }>;
   circles: Array<{ id: string; name: string; memberCount?: number; description?: string }>;
   isBusinessOwner: boolean;
+  membershipLabel: string | null;
 };
 
 /**
@@ -882,6 +883,7 @@ function SocialProfileHub({
   recentReviews,
   circles,
   isBusinessOwner,
+  membershipLabel,
 }: ProfileHubProps) {
   const displayName = [profile?.firstName, profile?.lastName]
     .filter(Boolean)
@@ -933,6 +935,7 @@ function SocialProfileHub({
             {isPrivate ? <Lock className="h-3.5 w-3.5" /> : <Globe className="h-3.5 w-3.5" />}
             {isPrivate ? "Private profile" : "Community-visible profile"}
           </span>
+          {membershipLabel ? <Link href="/membership" className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 font-semibold transition-colors hover:bg-black/30"><Gem className="h-3.5 w-3.5" />Your membership · {membershipLabel}</Link> : null}
           {profile?.jobTitle || profile?.industry ? <span className="text-[#F5EBD8]/80">{[profile.jobTitle, profile.industry].filter(Boolean).join(" · ")}</span> : null}
         </div>
         {profile?.bio ? <p className="mt-3 max-w-3xl text-sm leading-6 text-[#F5EBD8]/90">{profile.bio}</p> : <p className="mt-3 max-w-3xl text-sm leading-6 text-[#F5EBD8]/70">Add a short bio in Account & settings to help people understand what you want to share.</p>}
@@ -1192,6 +1195,7 @@ export default function Profile() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
+  const [membershipLabel, setMembershipLabel] = useState<string | null>(null);
 
   // ── Safety Alerts settings ─────────────────────────────────────────────────
   const [safetyAlertPolice, setSafetyAlertPolice] = useState(true);
@@ -1410,6 +1414,15 @@ export default function Profile() {
         if (d?.circles) setMyCircles(d.circles.slice(0, 3));
       })
       .catch(() => {});
+  }, [auth?.user]);
+
+  useEffect(() => {
+    if (!auth?.user) { setMembershipLabel(null); return; }
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${base}/api/users/me/membership-status`, { credentials: "include" })
+      .then((response) => response.ok ? response.json() as Promise<{ membershipLabel?: string }> : null)
+      .then((data) => setMembershipLabel(data?.membershipLabel ?? null))
+      .catch(() => setMembershipLabel(null));
   }, [auth?.user]);
 
   // Sync isPrivate from profile data once loaded
@@ -1719,6 +1732,7 @@ export default function Profile() {
           recentReviews={recentReviews}
           circles={myCircles}
           isBusinessOwner={Boolean((auth?.user as any)?.isBusinessOwner)}
+          membershipLabel={membershipLabel}
         />
       </div>
 

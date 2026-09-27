@@ -31,7 +31,6 @@ import { useAuth } from "@/lib/auth";
 import { getApiBase } from "@/lib/api";
 import { resetRevenueCatUser } from "@/lib/revenuecat";
 import { usePoints } from "@/hooks/usePoints";
-import { useMembership } from "@/hooks/useMembership";
 import { useCheckins } from "@/hooks/useCheckins";
 import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
 import { BadgeSection } from "@/components/BadgeSection";
@@ -757,7 +756,25 @@ export default function ProfileScreen() {
   const { isWarned } = useSpaceWarnings();
   const { total: pointsTotal, ledger } = usePoints();
   const reviewCount = ledger.filter((e) => e.action === "review").length;
-  const { subscription } = useMembership();
+  const [membershipLabel, setMembershipLabel] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isAuthenticated) { setMembershipLabel(null); return; }
+    let active = true;
+    const loadMembership = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/users/me/membership-status`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = response.ok ? await response.json() as { membershipLabel?: string } : null;
+        if (active) setMembershipLabel(data?.membershipLabel ?? null);
+      } catch {
+        if (active) setMembershipLabel(null);
+      }
+    };
+    void loadMembership();
+    return () => { active = false; };
+  }, [isAuthenticated]);
   const { checkedInIds } = useCheckins();
   const checkInCount = checkedInIds.length;
   const eventsAttended = ledger.filter((e) => e.action === "rsvp").length;
@@ -878,11 +895,11 @@ export default function ProfileScreen() {
               {(user as any)?.bio ? (
                 <Text style={[styles.bio, { color: colors.mutedForeground }]} numberOfLines={2}>{(user as any).bio}</Text>
               ) : null}
-              {subscription ? (
+              {membershipLabel ? (
                 <View style={[styles.memberBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
                   <Feather name="award" size={10} color={colors.primary} />
                   <Text style={[styles.memberBadgeText, { color: colors.primary }]}>
-                    {subscription.productName || "Member"}
+                    Your membership · {membershipLabel}
                   </Text>
                 </View>
               ) : null}
