@@ -25,6 +25,12 @@ import { useSearchHistory } from "@/hooks/useSearchHistory";
 import { getBusinessExperiencePolicy } from "@workspace/constants";
 
 const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c !== "All");
+const OWNERSHIP_OPTIONS = [
+  { value: "", label: "All ownership tags" },
+  { value: "black-african-american", label: "Black / African American-Owned" },
+  { value: "latino-hispanic", label: "Latino / Hispanic-Owned" },
+  { value: "no_tag", label: "No ownership tag" },
+] as const;
 
 interface Business {
   id: string;
@@ -74,6 +80,8 @@ export default function BusinessSearchScreen() {
   const [handle, setHandle] = useState("");
   const [category, setCategory] = useState("");
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  const [ownership, setOwnership] = useState<(typeof OWNERSHIP_OPTIONS)[number]["value"]>("");
+  const [ownershipPickerOpen, setOwnershipPickerOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Business[]>([]);
@@ -99,13 +107,14 @@ export default function BusinessSearchScreen() {
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
-  const handleSearch = useCallback(async (override?: Partial<{ name: string; city: string; state: string; handle: string; category: string }>) => {
+  const handleSearch = useCallback(async (override?: Partial<{ name: string; city: string; state: string; handle: string; category: string; ownership: string }>) => {
     const searchName = override?.name ?? name;
     const searchCity = override?.city ?? city;
     const searchState = override?.state ?? state;
     const searchHandle = override?.handle ?? handle;
     const searchCategory = override?.category ?? category;
-    const hasQuery = searchName.trim() || searchCity.trim() || searchState.trim() || searchHandle.trim() || searchCategory;
+    const searchOwnership = override?.ownership ?? ownership;
+    const hasQuery = searchName.trim() || searchCity.trim() || searchState.trim() || searchHandle.trim() || searchCategory || searchOwnership;
     if (!hasQuery) return;
     const requestId = ++searchRequestIdRef.current;
     Keyboard.dismiss();
@@ -124,6 +133,10 @@ export default function BusinessSearchScreen() {
       if (stateParam) allParams.set("state", stateParam);
       if (handleParam) allParams.set("handle", handleParam);
       if (searchCategory) allParams.set("category", searchCategory);
+      if (searchOwnership) {
+        if (searchOwnership === "no_tag") allParams.set("ownership", "no_tag");
+        else allParams.set("designations", searchOwnership);
+      }
       allParams.set("limit", "200");
 
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -165,7 +178,7 @@ export default function BusinessSearchScreen() {
     } finally {
       if (requestId === searchRequestIdRef.current) setLoading(false);
     }
-  }, [name, city, state, handle, category, addHistory]);
+  }, [name, city, state, handle, category, ownership, addHistory]);
 
   const handleSendInquiry = useCallback(async () => {
     if (!name.trim()) return;
@@ -193,7 +206,7 @@ export default function BusinessSearchScreen() {
     }
   }, [name, city, state, handle, category, inviteContact]);
 
-  const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category;
+  const hasQuery = name.trim() || city.trim() || state.trim() || handle.trim() || category || ownership;
   const primaryGold = "#CA922B";
 
   const renderBusiness = ({ item }: { item: Business }) => {
@@ -410,6 +423,21 @@ export default function BusinessSearchScreen() {
             </Text>
             <Feather name="chevron-down" size={17} color={colors.mutedForeground} />
           </TouchableOpacity>
+
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 16 }]}>OWNERSHIP TAG</Text>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setOwnershipPickerOpen(true)}
+            style={[styles.inputRow, { borderColor: colors.border, marginTop: 8 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Choose a documented ownership tag"
+          >
+            <Feather name="heart" size={16} color={primaryGold} />
+            <Text style={[styles.input, { color: ownership ? colors.foreground : colors.mutedForeground }]} numberOfLines={1}>
+              {OWNERSHIP_OPTIONS.find((option) => option.value === ownership)?.label ?? "All ownership tags"}
+            </Text>
+            <Feather name="chevron-down" size={17} color={colors.mutedForeground} />
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -515,6 +543,7 @@ export default function BusinessSearchScreen() {
                     setState("");
                     setHandle("");
                     setCategory("");
+                    setOwnership("");
                     setInviteContact("");
                   }}
                 >
@@ -585,6 +614,25 @@ export default function BusinessSearchScreen() {
           </View>
         )}
       </ScrollView>
+      <Modal visible={ownershipPickerOpen} transparent animationType="fade" onRequestClose={() => setOwnershipPickerOpen(false)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => setOwnershipPickerOpen(false)} style={styles.pickerBackdrop}>
+          <View style={[styles.pickerSheet, { backgroundColor: colors.card }]}>
+            <Text style={[styles.pickerTitle, { color: colors.foreground }]}>Documented ownership tag</Text>
+            <Text style={[styles.pickerSubtitle, { color: colors.mutedForeground }]}>This filters only by labels recorded for a business. It does not infer identity.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}>
+              {OWNERSHIP_OPTIONS.map((option) => {
+                const selected = ownership === option.value;
+                return (
+                  <TouchableOpacity key={option.value || "all"} onPress={() => { setOwnership(option.value); setOwnershipPickerOpen(false); }} style={[styles.pickerOption, { borderColor: colors.border, backgroundColor: selected ? primaryGold + "16" : "transparent" }]} accessibilityRole="button" accessibilityState={{ selected }}>
+                    <Text style={[styles.pickerOptionText, { color: colors.foreground }]}>{option.label}</Text>
+                    {selected && <Feather name="check" size={17} color={primaryGold} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
       <Modal visible={categoryPickerOpen} transparent animationType="fade" onRequestClose={() => setCategoryPickerOpen(false)}>
         <TouchableOpacity activeOpacity={1} onPress={() => setCategoryPickerOpen(false)} style={styles.pickerBackdrop}>
           <View style={[styles.pickerSheet, { backgroundColor: colors.card }]}>

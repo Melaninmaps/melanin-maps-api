@@ -24,7 +24,11 @@ import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { ENDORSEMENT_TAGS } from "@workspace/db";
 import { ENDORSEMENT_TAG_VARIANTS } from "@workspace/db";
 import { THE_REAL_TAGS } from "@workspace/db";
-import { DIASPORA_OWNERSHIP_DESIGNATIONS, ownershipDesignationFilterId } from "@workspace/constants";
+import {
+  DIASPORA_OWNERSHIP_DESIGNATIONS,
+  ownershipDesignationFilterId,
+  ownershipDesignationStorageValues,
+} from "@workspace/constants";
 import { createSession } from "../lib/auth";
 import {
   dedupeKey as _dedupeKey,
@@ -241,6 +245,7 @@ type AdminBusinessInventoryQuery = Readonly<{
   intakeCohort?: unknown;
   status?: unknown;
   link?: unknown;
+  ownership?: unknown;
   addedFrom?: unknown;
   addedTo?: unknown;
   sort?: unknown;
@@ -274,6 +279,7 @@ async function compileAdminBusinessInventoryFilters(
   const intakeCohort = String(query.intakeCohort ?? "all").trim();
   const status = String(query.status ?? "active");
   const link = String(query.link ?? "all");
+  const ownership = String(query.ownership ?? "all");
   const addedFrom = String(query.addedFrom ?? "").trim();
   const addedTo = String(query.addedTo ?? "").trim();
   const sort = String(query.sort ?? "name_asc") === "added_desc"
@@ -408,6 +414,22 @@ async function compileAdminBusinessInventoryFilters(
   } else if (status === "needs_review") {
     filters.push("needs_verification = true");
   }
+  // This is an exact, documentary review filter. It does not infer ownership
+  // from a business name, category, neighborhood, image, or city. `no_tag`
+  // means the record carries no ownership designation and is not a legacy
+  // Black-owned record; it is deliberately distinct from an unreviewed claim.
+  if (ownership === "black") {
+    const values = ownershipDesignationStorageValues("black-african-american").values;
+    filterParams.push(values);
+    filters.push(`(COALESCE(black_owned, false) = true OR COALESCE(ownership_designations, '[]'::jsonb) ?| $${filterParams.length}::text[])`);
+  } else if (ownership === "hispanic") {
+    const values = ownershipDesignationStorageValues("latino-hispanic").values;
+    filterParams.push(values);
+    filters.push(`COALESCE(ownership_designations, '[]'::jsonb) ?| $${filterParams.length}::text[]`);
+  } else if (ownership === "no_tag") {
+    filters.push("COALESCE(black_owned, false) = false AND COALESCE(jsonb_array_length(ownership_designations), 0) = 0");
+  }
+
   if (link === "website_present") {
     filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NOT NULL");
   } else if (link === "website_missing") {
@@ -757,6 +779,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       state: string;
       verified: boolean;
       black_owned: boolean;
+      ownership_designations: string[] | null;
       status: string;
       listing_status: string;
       phone: string | null;
@@ -778,7 +801,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
       manus_created: boolean;
       }>(
-      `SELECT id, name, category, subcategory, city, state, verified, black_owned, status,
+      `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
               listing_status, phone, website, instagram, tiktok, facebook, created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
@@ -901,6 +924,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       state: b.state,
       verified: b.verified,
       blackOwned: b.black_owned,
+      ownershipDesignations: Array.isArray(b.ownership_designations) ? b.ownership_designations : [],
       status: b.status,
       listingStatus: b.listing_status,
       phone: b.phone,

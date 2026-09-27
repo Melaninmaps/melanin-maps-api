@@ -17,4 +17,14 @@ describe("native business filter picker", () => {
     expect(screen).toContain("Optional — leave this open to search every category.");
     expect(screen).not.toContain("contentContainerStyle={styles.categoryScroll}");
   });
+
+  it("offers exact documented Black, Hispanic, and no-tag filters", () => {
+    expect(screen).toContain("const OWNERSHIP_OPTIONS");
+    expect(screen).toContain("Black / African American-Owned");
+    expect(screen).toContain("Latino / Hispanic-Owned");
+    expect(screen).toContain("No ownership tag");
+    expect(screen).toContain('allParams.set("designations", searchOwnership)');
+    expect(screen).toContain('allParams.set("ownership", "no_tag")');
+    expect(screen).toContain("This filters only by labels recorded for a business. It does not infer identity.");
+  });
 });

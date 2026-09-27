@@ -173,9 +173,16 @@ describe("immediate positive-feedback governance", () => {
 
   it("keeps community-published listings unclaimed until a real owner claim succeeds", () => {
     const publication = source("../businessIntake/registerSubmissionRoutes.ts");
-    expect(publication).toContain("'community','community_listed','unclaimed',NULL");
+    expect(publication).toContain('ownerSelfCreated ? "live_claimed" : "live_unclaimed"');
+    expect(publication).toContain('ownerSelfCreated ? "claimed" : "community_listed"');
+    expect(publication).toContain('ownerSelfCreated ? "claimed" : "unclaimed"');
+    expect(publication).toContain('ownerSelfCreated ? actorId : null');
     expect(publication).toContain("added_by_member_id");
-    expect(publication).toContain("'[]'::jsonb,'[]'::jsonb,'unclaimed_community_submission',false,false");
+    expect(publication).toContain('ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission"');
+    expect(publication).toContain("if (ownerSelfCreated)");
+    expect(publication).toContain("grantOwnerSelfCreatedManagement");
+    expect(publication).toContain("else {\n            await createPendingOwnerClaimFromSubmission");
+    expect(publication).toContain('ownerSelfCreated ? "owner_self_created" : "community_submission"');
     expect(publication).not.toContain("ownershipClaimValue(submission)");
     expect(publication).not.toContain("hasBlackOwnedDesignation(submission.ownership_designations");
   });

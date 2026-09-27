@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
-import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
 import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 
 const BASE = import.meta.env.BASE_URL;
@@ -75,9 +75,23 @@ interface UniversalResult {
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const OWNERSHIP_FILTERS = [
-  "Black-Owned", "Minority-Owned", "Hispanic-Owned", "Women-Owned",
-  "Veteran-Owned", "LGBTQ+-Owned", "Indigenous-Owned", "Melanated Diaspora-Owned", "Disability-Owned",
-];
+  { id: "black-african-american", label: "Black / African American-Owned" },
+  { id: "latino-hispanic", label: "Latino / Hispanic-Owned" },
+  { id: "no_tag", label: "No ownership tag" },
+] as const;
+
+type DirectoryOwnershipFilter = (typeof OWNERSHIP_FILTERS)[number]["id"];
+
+function hasRecordedDesignation(business: Business, designationId: string): boolean {
+  if (designationId === "black-african-american" && business.blackOwned) return true;
+  return (business.ownershipDesignations ?? []).some(
+    (designation) => ownershipDesignationFilterId(designation) === designationId,
+  );
+}
+
+function hasNoRecordedOwnershipTag(business: Business): boolean {
+  return !business.blackOwned && (business.ownershipDesignations?.length ?? 0) === 0;
+}
 
 const CATEGORY_FILTERS = [
   "All", "Food & Drink", "Beauty & Personal Care", "Health & Wellness",
@@ -337,7 +351,7 @@ export default function Businesses() {
   // Search state
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [activeOwnership, setActiveOwnership] = useState<string | null>(null);
+  const [activeOwnership, setActiveOwnership] = useState<DirectoryOwnershipFilter | null>(null);
   const [directorySupportScope, setDirectorySupportScope] = useState<"all_businesses" | null>(null);
   const [directoryRefreshGeneration, setDirectoryRefreshGeneration] = useState(0);
   const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
@@ -356,8 +370,13 @@ export default function Businesses() {
 
   // Load directory on mount
   useEffect(() => {
-    const scope = directorySupportScope ? `&supportScope=${directorySupportScope}` : "";
-    fetch(`${BASE}api/businesses?limit=200${scope}`, { credentials: "include" })
+    const params = new URLSearchParams({ limit: "200" });
+    if (directorySupportScope) params.set("supportScope", directorySupportScope);
+    if (activeOwnership) {
+      if (activeOwnership === "no_tag") params.set("ownership", "no_tag");
+      else params.set("designations", activeOwnership);
+    }
+    fetch(`${BASE}api/businesses?${params.toString()}`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         const list: Business[] = Array.isArray(d) ? d : (d?.businesses ?? d?.data ?? []);
@@ -365,7 +384,7 @@ export default function Businesses() {
       })
       .catch(() => {})
       .finally(() => setDirectoryLoading(false));
-  }, [directorySupportScope, directoryRefreshGeneration]);
+  }, [directorySupportScope, directoryRefreshGeneration, activeOwnership]);
 
   const showAllBusinesses = useCallback(() => {
     void (async () => {
@@ -384,7 +403,7 @@ export default function Businesses() {
         setSupportLensError("Could not update Support Lens. Please try again.");
       }
     })();
-  }, []);
+  }, [activeOwnership]);
   const removeSavedDesignation = useCallback(async (designation: string) => {
     setSupportLensError(null);
     const result = await persistReducedSupportLensRemoval({
@@ -463,6 +482,7 @@ export default function Businesses() {
     // Step 2 — MWM database search only (never display geocoder businesses)
     try {
       const p = new URLSearchParams({ q: query, surface: "directory", limit: "30" });
+      if (activeOwnership && activeOwnership !== "no_tag") p.set("designations", activeOwnership);
       if (geoLat !== null && geoLng !== null) {
         // Geo-bound to the detected destination.
         // radius=50 mirrors the map page — covers a full province/island/metro area
@@ -485,12 +505,10 @@ export default function Businesses() {
     if (activeCategory !== "All") {
       result = result.filter(b => b.category?.toLowerCase().includes(activeCategory.toLowerCase()));
     }
-    if (activeOwnership) {
-      const term = activeOwnership.replace("-Owned", "").toLowerCase();
-      result = result.filter(b => {
-        const label = ownershipLabel(b)?.toLowerCase() ?? "";
-        return label.includes(term) || (term === "black" && b.blackOwned);
-      });
+    if (activeOwnership === "no_tag") {
+      result = result.filter(hasNoRecordedOwnershipTag);
+    } else if (activeOwnership) {
+      result = result.filter((business) => hasRecordedDesignation(business, activeOwnership));
     }
     return result;
   })();
@@ -510,7 +528,13 @@ export default function Businesses() {
 
   // Determine what to display
   const isSearchMode = !!universalResult || universalLoading || searchMode === "bookstore";
-  const universalBusinesses = universalResult?.results.businesses ?? [];
+  const universalBusinesses = (universalResult?.results.businesses ?? []).filter((business) =>
+    activeOwnership === "no_tag"
+      ? hasNoRecordedOwnershipTag(business)
+      : activeOwnership
+        ? hasRecordedDesignation(business, activeOwnership)
+        : true,
+  );
   const universalHeritage = universalResult?.results.heritage ?? [];
   const universalCommunityOrgs = universalResult?.results.communityOrgs ?? [];
   const intentType = universalResult?.intentType ?? "general";
@@ -599,10 +623,10 @@ export default function Businesses() {
                 ))}
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                {OWNERSHIP_FILTERS.map(c => (
-                  <button key={c} onClick={() => setActiveOwnership(activeOwnership === c ? null : c)}
-                    className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeOwnership === c ? 'bg-[#CA922B] text-white border border-[#CA922B]' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
-                    {c}
+                {OWNERSHIP_FILTERS.map((option) => (
+                  <button key={option.id} onClick={() => setActiveOwnership(activeOwnership === option.id ? null : option.id)}
+                    className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeOwnership === option.id ? 'bg-[#CA922B] text-white border border-[#CA922B]' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
+                    {option.label}
                   </button>
                 ))}
               </div>

@@ -532,11 +532,14 @@ export default function ListBusinessScreen() {
 
   const canProceed = () => {
     if (step === 1) return form.name.trim().length > 0 && form.category.length > 0;
-    if (step === 2) return form.address.trim().length > 0 && form.city.trim().length > 0 && form.state.trim().length > 0;
+    if (step === 2) return isOwnerIntent
+      ? form.city.trim().length > 0
+      : form.address.trim().length > 0 && form.city.trim().length > 0 && form.state.trim().length > 0;
     if (step === 3) return !isOwnerIntent || (
       form.ownerName.trim().length >= 2
       && form.ownerBusinessEmail.includes("@")
       && form.ownerAttestation
+      && Boolean(form.website.trim() || form.instagram.trim() || form.facebook.trim() || form.tiktok.trim() || form.youtube.trim())
     );
     return true;
   };
@@ -551,7 +554,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? (submissionOutcome?.status === "published" ? "Live on the Map" : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
+          {isSuccess ? (submissionOutcome?.status === "published" ? (isOwnerIntent ? "Business Page Live" : "Live on the Map") : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -576,7 +579,7 @@ export default function ListBusinessScreen() {
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              {submissionOutcome?.status === "published" ? "This business is live" : "This submission is saved"}
+              {submissionOutcome?.status === "published" ? (isOwnerIntent ? "Your business page is live" : "This business is live") : "This submission is saved"}
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
@@ -590,9 +593,9 @@ export default function ListBusinessScreen() {
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {[
                 { icon: "check-circle", label: "Status", value: submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
-                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye-off", label: "Directory", value: submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Not public yet", color: colors.primary },
+                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye", label: "Directory", value: submissionOutcome?.status === "published" ? (submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Searchable without a map pin") : "Not public yet", color: colors.primary },
                 { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
-                { icon: "user-x", label: "Owner", value: isOwnerIntent ? "Claim review pending" : "Unclaimed", color: colors.primary },
+                { icon: isOwnerIntent ? "briefcase" : "user-x", label: "Owner", value: isOwnerIntent ? "Profile-linked manager" : "Unclaimed", color: colors.primary },
               ].map((item) => (
                 <View key={item.label} style={styles.successRow}>
                   <Feather name={item.icon as any} size={16} color={item.color} />
@@ -607,7 +610,7 @@ export default function ListBusinessScreen() {
               onPress={() => router.replace("/my-business-submissions" as any)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>{isOwnerIntent ? "View My Business Requests" : "View My Submissions"}</Text>
+              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>{isOwnerIntent ? "View My Business Submissions" : "View My Submissions"}</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
             {submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
@@ -616,8 +619,18 @@ export default function ListBusinessScreen() {
                 onPress={() => router.push({ pathname: "/business/[id]", params: { id: submissionOutcome.businessId } } as never)}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.successBtnText, { color: colors.primary }]}>View Community Listing</Text>
+                <Text style={[styles.successBtnText, { color: colors.primary }]}>{isOwnerIntent ? "View My Business Page" : "View Community Listing"}</Text>
                 <Feather name="map-pin" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            ) : null}
+            {isOwnerIntent && submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
+              <TouchableOpacity
+                style={[styles.successBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.primary }]}
+                onPress={() => router.push({ pathname: "/business-dashboard", params: { businessId: submissionOutcome.businessId } } as never)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.successBtnText, { color: colors.primary }]}>Manage My Business</Text>
+                <Feather name="briefcase" size={16} color={colors.primary} />
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity onPress={() => router.replace("/(tabs)" as any)} activeOpacity={0.7}>
@@ -640,7 +653,7 @@ export default function ListBusinessScreen() {
                     <Feather name={isOwnerIntent ? "briefcase" : "heart"} size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.intentNoticeTitle, { color: colors.foreground }]}>{isOwnerIntent ? "This is my business" : "I am sharing someone else’s business"}</Text>
-                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This request is tied to your community profile, but dashboard access begins only after your ownership-control claim is approved. Verification is separate." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
+                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This creates a business page tied to your profile. Add a public website or social profile; an exact street address is optional and only controls the map pin. Verification is separate." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
                     </View>
                   </View>
 
@@ -884,7 +897,7 @@ export default function ListBusinessScreen() {
                   <StepLabel step={2} total={TOTAL_STEPS} title="Location" colors={colors} />
 
                   <Field
-                    label="Street Address *"
+                    label={isOwnerIntent ? "Street Address (optional)" : "Street Address *"}
                     value={form.address}
                     onChangeText={update("address")}
                     placeholder="123 Main Street"
@@ -904,7 +917,7 @@ export default function ListBusinessScreen() {
                     <View style={{ width: 12 }} />
                     <View style={{ flex: 1 }}>
                       <Field
-                        label="State *"
+                        label={isOwnerIntent ? "State / Region" : "State *"}
                         value={form.state}
                         onChangeText={update("state")}
                         placeholder="GA"
@@ -925,7 +938,9 @@ export default function ListBusinessScreen() {
                   <View style={[styles.mapHint, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                     <Feather name="map-pin" size={16} color={colors.primary} />
                     <Text style={[styles.mapHintText, { color: colors.foreground }]}>
-                      A complete street address is required for an immediate precise pin. We never use 0,0 or a city-center fallback.
+                      {isOwnerIntent
+                        ? "A precise street address creates a truthful map pin. You can publish without one; we never use 0,0 or a city-center fallback."
+                        : "A complete street address is required for an immediate precise pin. We never use 0,0 or a city-center fallback."}
                     </Text>
                   </View>
                 </View>
@@ -945,13 +960,13 @@ export default function ListBusinessScreen() {
                   />
 
                   <Field
-                    label="Website"
+                    label={isOwnerIntent ? "Website or public social profile *" : "Website"}
                     value={form.website}
                     onChangeText={update("website")}
                     placeholder="yourwebsite.com"
                     keyboardType="url"
                     colors={colors}
-                    hint="Add a website or one public social profile for immediate publication"
+                    hint={isOwnerIntent ? "Add this or one public social profile below to publish your owner-created page" : "Add a website or one public social profile for immediate publication"}
                   />
 
                   <Field

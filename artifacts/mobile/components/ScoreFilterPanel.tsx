@@ -18,11 +18,24 @@ const PRESET_CHIPS = [
   { label: "90+", min: 90 },
 ];
 
-export const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({
-  ...option,
-  emoji: "🤎",
-  color: "#CA922B",
-}));
+export const OWNERSHIP_OPTIONS: Array<{
+  id: string;
+  label: string;
+  emoji: string;
+  color: string;
+}> = [
+  ...OWNERSHIP_FILTER_OPTIONS.map((option) => ({
+    ...option,
+    emoji: "🤎",
+    color: "#CA922B",
+  })),
+  {
+    id: "no_tag",
+    label: "No ownership tag",
+    emoji: "○",
+    color: "#6B7280",
+  },
+];
 
 export interface FilterState {
   minScore: number;
@@ -51,9 +64,18 @@ export function ScoreFilterPanel({ filters, onChange }: Props) {
 
   const toggleOwnership = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // "No ownership tag" is a mutually exclusive documentary review state,
+    // never an inferred identity and never combinable with an ownership label.
+    if (id === "no_tag") {
+      onChange({
+        ...filters,
+        ownershipTypes: filters.ownershipTypes.includes(id) ? [] : [id],
+      });
+      return;
+    }
     const next = filters.ownershipTypes.includes(id)
       ? filters.ownershipTypes.filter((t) => t !== id)
-      : [...filters.ownershipTypes, id];
+      : [...filters.ownershipTypes.filter((t) => t !== "no_tag"), id];
     onChange({ ...filters, ownershipTypes: next });
   };
 
@@ -139,7 +161,7 @@ export function ScoreFilterPanel({ filters, onChange }: Props) {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Ownership</Text>
-          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>Select owner-provided labels to support. Verification remains a separate filter.</Text>
+          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>Select documented labels to support, or review records with no ownership tag. Verification remains separate.</Text>
           <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ownershipRow}>
             {OWNERSHIP_OPTIONS.map((opt) => {

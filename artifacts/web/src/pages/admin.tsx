@@ -247,6 +247,7 @@ type AdminBusiness = {
   state: string;
   verified: boolean;
   blackOwned: boolean;
+  ownershipDesignations: string[];
   status: string;
   listingStatus: string;
   needsVerification: boolean;
@@ -899,6 +900,7 @@ export default function Admin() {
   const [bizLinkFilter, setBizLinkFilter] = useState<
     "all" | "website_present" | "website_missing" | "social_present" | "no_public_link"
   >("all");
+  const [bizOwnershipFilter, setBizOwnershipFilter] = useState<"all" | "black" | "hispanic" | "no_tag">("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
   const [bizSort, setBizSort] = useState<"added_desc" | "name_asc">("name_asc");
@@ -944,6 +946,7 @@ export default function Admin() {
     category: "all",
     intakeCohort: "all" as IntakeCohort,
     link: "all" as typeof bizLinkFilter,
+    ownership: "all" as typeof bizOwnershipFilter,
     addedFrom: "",
     addedTo: "",
     sort: "name_asc" as typeof bizSort,
@@ -1104,6 +1107,7 @@ export default function Admin() {
       category: bizCategoryFilter,
       intakeCohort: bizIntakeCohortFilter,
       link: bizLinkFilter,
+      ownership: bizOwnershipFilter,
       addedFrom: bizAddedFrom,
       addedTo: bizAddedTo,
       sort: bizSort,
@@ -1115,6 +1119,7 @@ export default function Admin() {
     bizCityFilters,
     bizIntakeCohortFilter,
     bizLinkFilter,
+    bizOwnershipFilter,
     bizSearch,
     bizSort,
     bizStatusFilter,
@@ -1205,6 +1210,7 @@ export default function Admin() {
     category?: string;
     intakeCohort?: IntakeCohort;
     link?: typeof bizLinkFilter;
+    ownership?: typeof bizOwnershipFilter;
     addedFrom?: string;
     addedTo?: string;
     sort?: typeof bizSort;
@@ -1218,6 +1224,7 @@ export default function Admin() {
     const categoryValue = next.category ?? current.category;
     const intakeCohortValue = next.intakeCohort ?? current.intakeCohort;
     const linkValue = next.link ?? current.link;
+    const ownershipValue = next.ownership ?? current.ownership;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
     const addedToValue = next.addedTo ?? current.addedTo;
     const sortValue = next.sort ?? current.sort;
@@ -1236,6 +1243,7 @@ export default function Admin() {
     }
     if (intakeCohortValue !== "all") params.set("intakeCohort", intakeCohortValue);
     if (linkValue !== "all") params.set("link", linkValue);
+    if (ownershipValue !== "all") params.set("ownership", ownershipValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
     if (addedToValue) params.set("addedTo", addedToValue);
     if (sortValue !== "added_desc") params.set("sort", sortValue);
@@ -2284,6 +2292,7 @@ export default function Admin() {
     }
     if (bizIntakeCohortFilter !== "all") params.set("intakeCohort", bizIntakeCohortFilter);
     if (bizLinkFilter !== "all") params.set("link", bizLinkFilter);
+    if (bizOwnershipFilter !== "all") params.set("ownership", bizOwnershipFilter);
     if (bizAddedFrom) params.set("addedFrom", bizAddedFrom);
     if (bizAddedTo) params.set("addedTo", bizAddedTo);
     if (bizSort !== "added_desc") params.set("sort", bizSort);
@@ -2299,6 +2308,7 @@ export default function Admin() {
     category?: string;
     intakeCohort?: IntakeCohort;
     link?: typeof bizLinkFilter;
+    ownership?: typeof bizOwnershipFilter;
     addedFrom?: string;
     addedTo?: string;
     sort?: typeof bizSort;
@@ -2319,6 +2329,7 @@ export default function Admin() {
       category: next.category ?? bizCategoryFilter,
       intakeCohort: requestedIntakeCohort,
       link: next.link ?? bizLinkFilter,
+      ownership: next.ownership ?? bizOwnershipFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
       sort: next.sort ?? bizSort,
@@ -2330,6 +2341,7 @@ export default function Admin() {
     setBizCategoryFilter(query.category);
     setBizIntakeCohortFilter(query.intakeCohort);
     setBizLinkFilter(query.link);
+    setBizOwnershipFilter(query.ownership);
     setBizAddedFrom(query.addedFrom);
     setBizAddedTo(query.addedTo);
     setBizSort(query.sort);
@@ -2350,6 +2362,7 @@ export default function Admin() {
       category: "all",
       intakeCohort: "all",
       link: "all",
+      ownership: "all",
       addedFrom: "",
       addedTo: "",
       sort: "name_asc",
@@ -4719,6 +4732,20 @@ export default function Admin() {
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Ownership tag
+                <select
+                  value={bizOwnershipFilter}
+                  onChange={(event) => applyBusinessInventoryFilters({ ownership: event.target.value as typeof bizOwnershipFilter })}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                  aria-label="Filter businesses by documented ownership tag"
+                >
+                  <option value="all">All ownership tag states</option>
+                  <option value="black">Black / African American-Owned only</option>
+                  <option value="hispanic">Latino / Hispanic-Owned only</option>
+                  <option value="no_tag">No ownership tag</option>
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 Website / social
                 <select
                   value={bizLinkFilter}
@@ -4764,7 +4791,7 @@ export default function Admin() {
             </div>
 
             <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
-              Filters combine: select one or more cities, then add business type, source cohort, website/social, date, and name/key-phrase filters to narrow the same review list. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
+              Filters combine: select one or more cities, then add business type, documented ownership tag, source cohort, website/social, date, and name/key-phrase filters to narrow the same review list. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
             </p>
 
             {bizStatusFilter === "permanently_closed" && (

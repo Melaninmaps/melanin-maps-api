@@ -16,6 +16,7 @@ const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.ts
 const adminEditBusiness = source("../../../web/src/components/AdminEditBusiness.tsx");
 const publicBusinessDetail = source("../../../web/src/pages/business-detail.tsx");
 const mobileBusinessHook = source("../../../mobile/hooks/useBusinesses.ts");
+const publicDirectory = source("../../../web/src/pages/businesses.tsx");
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns one server-filtered page instead of sending the full inventory to the browser", () => {
@@ -120,6 +121,30 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("No website or social media");
     expect(adminScreen).toContain("Website &amp; social");
     expect(adminScreen).toContain("Select this page");
+  });
+
+  it("filters ownership only by documented Black, Hispanic, or no-tag states", () => {
+    expect(adminRoute).toContain('const ownership = String(query.ownership ?? "all")');
+    expect(adminRoute).toContain('ownership === "black"');
+    expect(adminRoute).toContain('ownership === "hispanic"');
+    expect(adminRoute).toContain('ownership === "no_tag"');
+    expect(adminRoute).toContain("ownershipDesignationStorageValues");
+    expect(adminRoute).toContain("jsonb_array_length(ownership_designations)");
+    expect(adminScreen).toContain("Ownership tag");
+    expect(adminScreen).toContain("Black / African American-Owned only");
+    expect(adminScreen).toContain("Latino / Hispanic-Owned only");
+    expect(adminScreen).toContain("No ownership tag");
+    expect(adminScreen).toContain('params.set("ownership", ownershipValue)');
+    expect(adminScreen).toContain("they never infer identity");
+  });
+
+  it("keeps the public directory ownership choices exact and in its API requests", () => {
+    expect(publicDirectory).toContain("Black / African American-Owned");
+    expect(publicDirectory).toContain("Latino / Hispanic-Owned");
+    expect(publicDirectory).toContain("No ownership tag");
+    expect(publicDirectory).toContain('params.set("designations", activeOwnership)');
+    expect(publicDirectory).toContain('params.set("ownership", "no_tag")');
+    expect(publicDirectory).toContain("hasNoRecordedOwnershipTag");
   });
 
   it("finds a listing by name, key phrase, tag, or public contact handle", () => {

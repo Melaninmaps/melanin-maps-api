@@ -584,9 +584,23 @@ router.get("/businesses", async (req: Request, res: Response) => {
           ...(typeof ownership === "string" ? [ownership] : []),
           ...(typeof designations === "string" ? designations.split(",") : []),
         ];
-        const explicitDesignationFilterIds = normalizeOwnershipDesignationFilterIds(
-          requestedDesignationValues,
+        // `no_tag` is an explicit review/browse state, not an ownership claim.
+        // It returns only listings without any recorded ownership designation and
+        // without the legacy Black-owned flag. It never tries to infer identity.
+        const requestsNoOwnershipTag = requestedDesignationValues.some(
+          (value) => String(value).trim().toLocaleLowerCase("en-US") === "no_tag",
         );
+        const explicitDesignationFilterIds = normalizeOwnershipDesignationFilterIds(
+          requestedDesignationValues.filter(
+            (value) => String(value).trim().toLocaleLowerCase("en-US") !== "no_tag",
+          ),
+        );
+        if (requestsNoOwnershipTag) {
+          conditions.push(
+            sql<boolean>`COALESCE(${businessesTable.blackOwned}, false) = false
+              AND COALESCE(jsonb_array_length(${businessesTable.ownershipDesignations}), 0) = 0`,
+          );
+        }
         let savedDesignationFilterIds: string[] = [];
         if (req.user?.id) {
           try {

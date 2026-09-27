@@ -209,11 +209,13 @@ export default function DiscoverScreen() {
     const matchesVerified = !filters.verifiedOnly || b.verified;
     const matchesOwnership =
       filters.ownershipTypes.length === 0 ||
-      filters.ownershipTypes.every(
-        (t) =>
-          (t === "black-african-american" && b.blackOwned) ||
-          b.ownershipFilterIds?.includes(t)
-      );
+      (filters.ownershipTypes.includes("no_tag")
+        ? !b.blackOwned && (b.ownershipDesignations?.length ?? 0) === 0
+        : filters.ownershipTypes.every(
+            (t) =>
+              (t === "black-african-american" && b.blackOwned) ||
+              b.ownershipFilterIds?.includes(t)
+          ));
     const activeVibeObj = VIBES.find((v) => v.label === activeVibe);
     const matchesVibe = !activeVibe
       ? true

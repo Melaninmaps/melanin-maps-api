@@ -665,8 +665,13 @@ describe("POST /api/community/business-submissions", () => {
     );
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
     expect(String(businessInsert?.[0])).toContain("ownership_claim");
-    expect(String(businessInsert?.[0])).toContain("'community','community_listed','unclaimed',NULL");
-    expect(businessInsert?.[1]).toEqual(expect.arrayContaining(["approved-member"]));
+    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
+      "unclaimed_community_submission",
+      "live_unclaimed",
+      "community_listed",
+      "unclaimed",
+      "approved-member",
+    ]));
     expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([
       "community_reported_minority_owned",
       true,
@@ -677,7 +682,7 @@ describe("POST /api/community/business-submissions", () => {
     expect(tx.release).toHaveBeenCalledOnce();
   });
 
-  it("creates a pending ownership-control claim for an owner submission without creating an owner link or verification", async () => {
+  it("publishes an owner-created page with management access but without verification", async () => {
     const ownerSubmission = submission({
       submission_intent: "owner",
       owner_name: "Jo Smith",
@@ -700,15 +705,29 @@ describe("POST /api/community/business-submissions", () => {
         ownerRole: "owner",
         ownerVerificationMethod: "domain_email",
         ownerAttestation: true,
+        address: "",
+        postalCode: "",
       }));
 
     expect(response.status).toBe(201);
-    expect(response.body.message).toContain("ownership request is pending review");
+    expect(response.body).toMatchObject({
+      status: "published",
+      publicationOutcome: "published",
+      mapPin: false,
+    });
+    expect(response.body.message).toContain("connected to your profile");
     const claimInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO business_claims"));
-    expect(String(claimInsert?.[0])).toContain("'ownership_control'");
-    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(false);
+    expect(claimInsert).toBeUndefined();
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(true);
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
-    expect(String(businessInsert?.[0])).toContain("'[]'::jsonb,'[]'::jsonb,'unclaimed_community_submission',false,false");
+    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
+      "owner_self_created",
+      "live_claimed",
+      "claimed",
+      "approved-member",
+    ]));
+    expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([true]));
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(false);
   });
 
   it("publishes an explicit non-minority report without making a public ownership assertion", async () => {
@@ -931,8 +950,12 @@ describe("founder atomic publication", () => {
     expect(response.status).toBe(200);
     expect(response.body.message).toContain("does not mark it verified");
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
-    expect(String(businessInsert?.[0])).toContain("'active','live_unclaimed'");
-    expect(String(businessInsert?.[0])).toContain("'community','community_listed','unclaimed',NULL");
+    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
+      "unclaimed_community_submission",
+      "live_unclaimed",
+      "community_listed",
+      "unclaimed",
+    ]));
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(true);
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("pg_advisory_xact_lock"))).toBe(true);
     expect(repository.decide).toHaveBeenCalledWith(
@@ -1095,7 +1118,7 @@ describe("source contracts", () => {
     ]) expect(communityPublicViewDefinitionIsSafe(unsafeView)).toBe(false);
   });
 
-  it("retains canonical duplicate locking, pin indexing, unclaimed status, and no direct notification side effect", () => {
+  it("retains canonical duplicate locking, truthful pin indexing, and no direct notification side effect", () => {
     const route = source("../businessIntake/registerSubmissionRoutes.ts");
     const repository = source("../businessIntake/submissionRepository.ts");
     const media = source("../media/registerMediaRoutes.ts");
@@ -1104,8 +1127,10 @@ describe("source contracts", () => {
     expect(route).toContain("pg_advisory_xact_lock");
     expect(route).toContain("business_publication_identities");
     expect(route).toContain("canonical_record_locations");
-    expect(route).toContain("'community','community_listed','unclaimed',NULL");
-    expect(route).toContain("'unclaimed_community_submission',false,false");
+    expect(route).toContain('ownerSelfCreated ? "live_claimed" : "live_unclaimed"');
+    expect(route).toContain('ownerSelfCreated ? "claimed" : "community_listed"');
+    expect(route).toContain('ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission"');
+    expect(route).toContain('if (hasPreciseLocation && coordinates)');
     expect(route).not.toContain("ownershipClaimValue(submission)");
     expect(route).not.toContain('return { lat: "0", lng: "0" }');
     expect(route).not.toMatch(/send[A-Za-z]+Notif/);

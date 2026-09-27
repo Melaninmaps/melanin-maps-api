@@ -177,6 +177,10 @@ export default function SubmitBusiness() {
       setError("Add your name, business email, and ownership attestation to request profile-linked management access.");
       return;
     }
+    if (isOwnerIntent && ![form.website, form.instagram, form.facebook, form.tiktok, form.youtube, form.twitch, form.snapchat].some((value) => value.trim())) {
+      setError("Add your public website or at least one public social profile before publishing your business page.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -277,7 +281,9 @@ export default function SubmitBusiness() {
             <div>
               <h1 className="font-serif text-3xl font-bold text-[#FFF8EB] mb-3">
                 {outcome?.status === "published"
-                  ? "This business is live on the map"
+                  ? isOwnerIntent
+                    ? "Your business page is live"
+                    : "This business is live on the map"
                   : "Your business submission is saved"}
               </h1>
               <p className="text-[#F5EBD8]/90 leading-relaxed">
@@ -295,10 +301,21 @@ export default function SubmitBusiness() {
               </p>
               {outcome?.status === "published" ? (
                 <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
-                  <li>• It is searchable now and has a precise map pin</li>
-                  <li>• It is labeled community-listed, unclaimed, and not verified</li>
-                  <li>• Ownership information is community-reported, never identity verification</li>
-                  <li>• The business can claim the listing through the separate claim process</li>
+                  {isOwnerIntent ? (
+                    <>
+                      <li>• Your page is searchable now and connected to your profile</li>
+                      <li>• You can manage the listing from your owner dashboard</li>
+                      <li>• {outcome?.mapPin ? "A precise address created a map pin" : "No map pin was created; add a precise street address when you are ready"}</li>
+                      <li>• Owner management does not mean the business is verified</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• It is searchable now and has a precise map pin</li>
+                      <li>• It is labeled community-listed, unclaimed, and not verified</li>
+                      <li>• Ownership information is community-reported, never identity verification</li>
+                      <li>• The business can claim the listing through the separate claim process</li>
+                    </>
+                  )}
                 </ul>
               ) : (
                 <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
@@ -312,7 +329,14 @@ export default function SubmitBusiness() {
               {outcome?.status === "published" && outcome.businessId && (
                 <Link href={`/business/${encodeURIComponent(outcome.businessId)}`}>
                   <button className="px-6 py-3 border border-[#CA922B] text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm">
-                    View listing
+                    {isOwnerIntent ? "View my business page" : "View listing"}
+                  </button>
+                </Link>
+              )}
+              {isOwnerIntent && outcome?.status === "published" && outcome.businessId && (
+                <Link href={`/business-dashboard?businessId=${encodeURIComponent(outcome.businessId)}`}>
+                  <button className="px-6 py-3 border border-[#CA922B] text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm">
+                    Manage my business
                   </button>
                 </Link>
               )}
@@ -362,7 +386,7 @@ export default function SubmitBusiness() {
             {amendId
               ? "Add the missing information. If it now passes the location, evidence, duplicate, and safety checks, it will publish immediately."
               : isOwnerIntent
-              ? "Create a listing connected to your community profile. A separate ownership-control claim is created for review; this is not identity verification."
+              ? "Create a business page connected to your community profile. Add a public website or social profile; a precise street address is optional and only controls whether the page receives a map pin. Management access does not mean the business is verified."
               : "Recommend a business for someone else. This community submission is never linked to you as an owner."}
           </p>
         </div>
@@ -461,7 +485,7 @@ export default function SubmitBusiness() {
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#CA922B]" />
-              Street address <span className="font-medium text-[#F5EBD8]/85">(required for an immediate map pin)</span>
+              Street address <span className="font-medium text-[#F5EBD8]/85">{isOwnerIntent ? "(optional — adds a truthful map pin)" : "(required for an immediate map pin)"}</span>
             </label>
             <input
               value={form.address}
@@ -476,7 +500,7 @@ export default function SubmitBusiness() {
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-[#CA922B]" />
-                Website
+                Website{isOwnerIntent ? " or public social *" : ""}
               </label>
               <input
                 value={form.website}
@@ -671,7 +695,9 @@ export default function SubmitBusiness() {
           </button>
 
           <p className="text-center text-xs font-medium text-[#F5EBD8]/85">
-            Complete ordinary businesses with a precise address and public website or social profile can publish immediately. Regulated, resource, duplicate, unsafe, or unlocatable records stay private. Publication never means verified ownership.
+            {isOwnerIntent
+              ? "Your business page can publish with a business name, category, city, public website or social profile, and attestation. A precise address only controls the map pin. Regulated, resource, duplicate, and unsafe records stay private. Publication never means verified ownership."
+              : "Complete ordinary businesses with a precise address and public website or social profile can publish immediately. Regulated, resource, duplicate, unsafe, or unlocatable records stay private. Publication never means verified ownership."}
           </p>
         </form>
       </div>
