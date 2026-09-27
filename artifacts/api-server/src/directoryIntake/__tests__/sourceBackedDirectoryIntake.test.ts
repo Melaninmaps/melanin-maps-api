@@ -94,6 +94,23 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-intake");
   });
 
+  it("publishes one exact same-place record when distinct source receipts arrive together", () => {
+    const secondReceipt = candidate({
+      sourceRecordKey: "source-receipt:ammina-secondary-directory",
+      sourceUrl: "https://other-directory.example/black-businesses",
+      sourceListingUrl: "https://other-directory.example/listing/aminas-kitchen",
+    });
+    const plan = buildSourceBackedDirectoryIntakePlan([candidate(), secondReceipt], []);
+
+    expect(plan.toCreate).toEqual([candidate()]);
+    expect(plan.duplicateMatches).toEqual([{
+      candidate: secondReceipt,
+      existingBusinessId: null,
+      matchedSourceReceiptKey: "source-receipt:ammina",
+      reason: "within_source_batch",
+    }]);
+  });
+
   it("preserves overlong source categories and contacts without overflowing bounded columns", () => {
     const originalCategory = "Media Streaming Distribution Services, Social Networks, and other Media Networks and Content Providers";
     const sourceContact = "Place Orders here: https://www.darnelscakes.com/shop";

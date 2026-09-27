@@ -15,8 +15,9 @@ export type SourceBackedDirectoryIntakePlan = Readonly<{
   toCreate: readonly SourceBackedDirectoryCandidate[];
   duplicateMatches: readonly Readonly<{
     candidate: SourceBackedDirectoryCandidate;
-    existingBusinessId: string;
-    reason: "exact_address" | "exact_official_destination";
+    existingBusinessId: string | null;
+    matchedSourceReceiptKey?: string;
+    reason: "exact_address" | "exact_official_destination" | "within_source_batch";
   }>[];
 }>;
 
@@ -88,6 +89,15 @@ function hostname(value: string | null | undefined): string {
   }
 }
 
+function sameNameAndPlace(
+  left: Readonly<{ name: string | null; city: string | null; state: string | null }>,
+  right: Readonly<{ name: string | null; city: string | null; state: string | null }>,
+): boolean {
+  return normalizeDirectoryIdentity(left.name) === normalizeDirectoryIdentity(right.name)
+    && normalizeDirectoryIdentity(left.city) === normalizeDirectoryIdentity(right.city)
+    && normalizeDirectoryIdentity(left.state) === normalizeDirectoryIdentity(right.state);
+}
+
 /**
  * A source listing is skipped only when it can be tied to an already-live record
  * by the same normalized name + city + state and an exact street address or
@@ -101,8 +111,9 @@ export function buildSourceBackedDirectoryIntakePlan(
   const toCreate: SourceBackedDirectoryCandidate[] = [];
   const duplicateMatches: Array<{
     candidate: SourceBackedDirectoryCandidate;
-    existingBusinessId: string;
-    reason: "exact_address" | "exact_official_destination";
+    existingBusinessId: string | null;
+    matchedSourceReceiptKey?: string;
+    reason: "exact_address" | "exact_official_destination" | "within_source_batch";
   }> = [];
 
   for (const candidate of candidates) {
@@ -118,14 +129,10 @@ export function buildSourceBackedDirectoryIntakePlan(
       continue;
     }
 
-    const sameNameAndPlace = existingBusinesses.filter((existing) =>
-      normalizeDirectoryIdentity(existing.name) === normalizeDirectoryIdentity(candidate.name) &&
-      normalizeDirectoryIdentity(existing.city) === normalizeDirectoryIdentity(candidate.city) &&
-      normalizeDirectoryIdentity(existing.state) === normalizeDirectoryIdentity(candidate.state),
-    );
+    const samePlaceExisting = existingBusinesses.filter((existing) => sameNameAndPlace(existing, candidate));
 
     const addressMatch = candidate.address
-      ? sameNameAndPlace.find((existing) =>
+      ? samePlaceExisting.find((existing) =>
           normalizeStreetAddress(existing.address) === normalizeStreetAddress(candidate.address),
         )
       : undefined;
@@ -136,13 +143,34 @@ export function buildSourceBackedDirectoryIntakePlan(
 
     const candidateHost = hostname(candidate.officialUrl);
     const officialDestinationMatch = candidateHost
-      ? sameNameAndPlace.find((existing) => hostname(existing.website) === candidateHost)
+      ? samePlaceExisting.find((existing) => hostname(existing.website) === candidateHost)
       : undefined;
     if (officialDestinationMatch) {
       duplicateMatches.push({
         candidate,
         existingBusinessId: officialDestinationMatch.id,
         reason: "exact_official_destination",
+      });
+      continue;
+    }
+
+    // Retain every source receipt in the protected manifest, but do not create
+    // two records in one publish transaction when exact same-place evidence
+    // ties independently sourced records together. Similar names stay separate.
+    const sourceBatchMatch = toCreate.find((created) => {
+      if (!sameNameAndPlace(created, candidate)) return false;
+      if (candidate.address && created.address) {
+        return normalizeStreetAddress(created.address) === normalizeStreetAddress(candidate.address);
+      }
+      const createdHost = hostname(created.officialUrl);
+      return Boolean(candidateHost && createdHost && candidateHost === createdHost);
+    });
+    if (sourceBatchMatch) {
+      duplicateMatches.push({
+        candidate,
+        existingBusinessId: null,
+        matchedSourceReceiptKey: sourceBatchMatch.sourceRecordKey,
+        reason: "within_source_batch",
       });
       continue;
     }
