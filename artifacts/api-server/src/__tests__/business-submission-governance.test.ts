@@ -545,6 +545,33 @@ describe("durable submission repository", () => {
     ]));
   });
 
+  it("keeps the submission insert placeholder count aligned with its bound values", async () => {
+    const stored = submission();
+    const query = vi.fn(async (sql: string, _values?: readonly unknown[]) => {
+      if (sql.includes("FROM media_assets")) return { rows: [] };
+      if (sql.includes("INSERT INTO community_business_submissions")) return { rows: [stored] };
+      return { rows: [] };
+    });
+    const repository = new SubmissionRepository({ query } as any);
+
+    await repository.create(validateSubmission({
+      ...completeBody(),
+      submissionIntent: "owner",
+      ownerName: "Jo Smith",
+      ownerBusinessEmail: "owner@communitybooks.example",
+      ownerRole: "owner",
+      ownerVerificationMethod: "domain_email",
+      ownerAttestation: true,
+    }), "approved-member");
+
+    const insert = query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO community_business_submissions"));
+    const statement = String(insert?.[0]);
+    const values = insert?.[1] as readonly unknown[];
+    const placeholders = Array.from(statement.matchAll(/\$(\d+)/g), (match) => Number(match[1]));
+    expect(Math.max(...placeholders)).toBe(values.length);
+    expect(values).toHaveLength(39);
+  });
+
   it("rejects arbitrary media URLs that do not belong to the submitter", async () => {
     const query = vi.fn(async (_sql: string, _values?: readonly unknown[]) => ({ rows: [] }));
     const repository = new SubmissionRepository({ query } as any);
