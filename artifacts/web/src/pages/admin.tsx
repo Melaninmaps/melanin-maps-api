@@ -4353,17 +4353,25 @@ export default function Admin() {
             <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#CA922B]">
-                  {bizStatusFilter === "archived" ? "Archive vault" : "Live business inventory"}
+                  {bizStatusFilter === "duplicates"
+                    ? "Duplicate vault"
+                    : bizStatusFilter === "archived"
+                      ? "Archive vault"
+                      : "Live business inventory"}
                 </p>
                 <h2 className="mt-1 text-2xl font-serif font-bold text-[#3A1F0E]">
-                  {bizStatusFilter === "archived"
-                    ? `Archived business records (${businessArchivedInventoryTotal.toLocaleString()})`
-                    : `Live business inventory (${businessLiveInventoryTotal.toLocaleString()})`}
+                  {bizStatusFilter === "duplicates"
+                    ? `Duplicate vault (${duplicateCount.toLocaleString()})`
+                    : bizStatusFilter === "archived"
+                      ? `Archived business records (${businessArchivedInventoryTotal.toLocaleString()})`
+                      : `Live business inventory (${businessLiveInventoryTotal.toLocaleString()})`}
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-[#3A1F0E]/60">
-                  {bizStatusFilter === "archived"
-                    ? "This separate vault retains archived profiles, research, source links, and audit history. Restore only a record you have re-confirmed."
-                    : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
+                  {bizStatusFilter === "duplicates"
+                    ? "Review confirmed duplicates retained from every inventory state. They remain excluded from public discovery and all outreach until an audited merge is restored."
+                    : bizStatusFilter === "archived"
+                      ? "This separate vault retains archived profiles, research, source links, and audit history. Restore only a record you have re-confirmed."
+                      : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
                 </p>
                 {contactedCount > 0 && (
                   <p className="mt-1 text-xs text-[#3A1F0E]/45">
@@ -5027,10 +5035,16 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="px-4 py-4">
-                          <OutreachCell
-                            business={biz}
-                            onSent={loadBusinesses}
-                          />
+                          {bizStatusFilter === "duplicates" ? (
+                            <span className="text-xs leading-5 text-[#3A1F0E]/50">
+                              Outreach unavailable for retained duplicates
+                            </span>
+                          ) : (
+                            <OutreachCell
+                              business={biz}
+                              onSent={loadBusinesses}
+                            />
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1.5">

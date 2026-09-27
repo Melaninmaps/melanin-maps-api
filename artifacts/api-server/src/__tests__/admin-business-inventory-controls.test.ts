@@ -105,6 +105,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Duplicates &amp; review");
     expect(adminScreen).toContain("Duplicate records remain unchanged unless an audited merge is restored.");
     expect(adminScreen).toContain('disabled={bizStatusFilter === "duplicates"}');
+    expect(adminScreen).toContain("Outreach unavailable for retained duplicates");
     expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
   });
 
