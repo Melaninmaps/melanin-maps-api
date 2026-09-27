@@ -1899,7 +1899,7 @@ export default function MapPage() {
             ) : (
               <div>
                 {/* Heritage / cultural sites section */}
-                {(universalResults?.results?.heritage?.length ?? 0) > 0 && (
+                {!universalResults?.exactDirectorySearch && (universalResults?.results?.heritage?.length ?? 0) > 0 && (
                   <div className="border-b border-[#CA922B]/20 bg-[#FDF8F0]">
                     <div className="px-4 pt-3 pb-2">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mb-1.5">
@@ -1969,7 +1969,7 @@ export default function MapPage() {
                 {/* Preserve Map's proven business/heritage pin controls above and
                     expose the universal record types that previously had no visible
                     result cards. These are cards/handoffs only, never fabricated pins. */}
-                {universalResults && (
+                {universalResults && !universalResults.exactDirectorySearch && (
                   <div className="border-b border-[#3A1F0E]/6">
                     <UniversalSearchResults
                       result={universalResults}

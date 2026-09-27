@@ -30,4 +30,9 @@ describe("exact directory-to-Map handoff", () => {
   it("renders the exact directory records as Map cards instead of the location empty state", () => {
     expect(mapSource).toContain(") : !isDiscoveryFilterActive && businessSearchActive && !universalResults?.exactDirectorySearch ? (");
   });
+
+  it("places exact directory cards before unrelated universal record types", () => {
+    expect(mapSource).toContain("!universalResults?.exactDirectorySearch && (universalResults?.results?.heritage?.length ?? 0) > 0");
+    expect(mapSource).toContain("universalResults && !universalResults.exactDirectorySearch");
+  });
 });
