@@ -8,6 +8,7 @@ import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 import { isAdmin } from "../lib/adminAuth";
+import { getUserTier, TIER_DISPLAY } from "../middleware/requireMembership";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -415,6 +416,11 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
 
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
+    // Display the same effective tier used for access. This is additive public
+    // profile metadata only; billing, tester status, and entitlement fields stay private.
+    const membershipTier = await getUserTier(targetId).catch(() => "free" as const);
+    const membershipLabel = TIER_DISPLAY[membershipTier];
+
     if (callerId && callerId !== targetId) {
       const [block] = await db
         .select({ id: userBlocksTable.id })
@@ -500,8 +506,8 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
     const { isPrivate, allowDm, ...profile } = user;
     const { followersCount, followingCount, ...publicProfile } = profile;
     res.json({
-      user: publicProfile,
-      profile: publicProfile,
+      user: { ...publicProfile, membershipTier, membershipLabel },
+      profile: { ...publicProfile, membershipTier, membershipLabel },
       // Follow totals are returned only to the account owner. Other member
       // profile reads retain their current privacy-shaped response.
       ...(callerId === targetId ? { followersCount, followingCount } : {}),

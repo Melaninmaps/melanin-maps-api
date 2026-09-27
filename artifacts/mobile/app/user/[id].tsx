@@ -47,6 +47,8 @@ interface UserProfile {
   trustLevel?: string | null;
   identityVerified?: boolean;
   memberType?: string | null;
+  membershipTier?: string;
+  membershipLabel?: string;
   industry?: string | null;
   jobTitle?: string | null;
   createdAt?: string;
@@ -57,6 +59,8 @@ type FollowStatus = "not_following" | "following" | "pending";
 const MEMBER_BADGE: Record<string, { label: string; color: string }> = {
   navigator:   { label: "Navigator",   color: "#2D7A4F" },
   trailblazer: { label: "Trailblazer", color: "#7B2D8B" },
+  community_builder: { label: "Community Builder", color: "#9A6E13" },
+  legacy_member: { label: "Legacy Member", color: "#6B3D17" },
   free:        { label: "Member",      color: "#C4622D" },
 };
 
@@ -261,7 +265,8 @@ export default function VisitorProfileScreen() {
 
   const displayName = profile?.username ? `@${profile.username}` : "Community Member";
   const initials = (profile?.username ?? "CM").slice(0, 2).toUpperCase();
-  const memberBadge = MEMBER_BADGE[(profile?.memberType ?? "free").toLowerCase()];
+  const memberBadge = MEMBER_BADGE[(profile?.membershipTier ?? profile?.memberType ?? "free").toLowerCase()] ?? MEMBER_BADGE.free;
+  const membershipLabel = profile?.membershipLabel ?? memberBadge.label;
   const isOwnProfile = myId && id && myId === id;
 
   const followBtnLabel =
@@ -335,10 +340,10 @@ export default function VisitorProfileScreen() {
                   <Feather name="check-circle" size={16} color="#2D7A4F" />
                 )}
               </View>
-              {memberBadge && (
+              {membershipLabel && (
                 <View style={[s.memberBadge, { backgroundColor: memberBadge.color + "15", borderColor: memberBadge.color + "40" }]}>
                   <View style={[s.memberDot, { backgroundColor: memberBadge.color }]} />
-                  <Text style={[s.memberBadgeText, { color: memberBadge.color }]}>{memberBadge.label}</Text>
+                  <Text style={[s.memberBadgeText, { color: memberBadge.color }]}>Membership · {membershipLabel}</Text>
                 </View>
               )}
 

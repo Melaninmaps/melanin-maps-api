@@ -18,6 +18,8 @@ type MemberProfile = {
   jobTitle: string | null;
   createdAt: string | null;
   memberType: string | null;
+  membershipTier?: string;
+  membershipLabel?: string;
 };
 
 type Review = { id: string; businessId: string; rating: number; text: string | null; createdAt: string | null };
@@ -116,6 +118,7 @@ export default function MemberProfilePage() {
               <div className="pb-1">
                 <h1 className="font-serif text-2xl font-bold text-[#2B1507]">{nameFor(profile)}</h1>
                 {profile.username ? <p className="text-sm text-[#3A1F0E]/55">@{profile.username}</p> : null}
+                {profile.membershipLabel ? <p className="mt-1 text-xs font-semibold tracking-wide text-[#8D5C17]">Membership · {profile.membershipLabel}</p> : null}
               </div>
             </div>
             {!isSelf && data?.canReceiveDirectMessages ? (
