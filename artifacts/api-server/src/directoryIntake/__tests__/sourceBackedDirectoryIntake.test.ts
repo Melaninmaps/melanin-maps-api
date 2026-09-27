@@ -111,6 +111,17 @@ describe("source-backed directory reconciliation", () => {
     }]);
   });
 
+  it("keeps separately addressed source records even when they share an official domain", () => {
+    const separatelyAddressedReceipt = candidate({
+      sourceRecordKey: "source-receipt:ammina-second-location",
+      address: "456 Walnut Street",
+    });
+    const plan = buildSourceBackedDirectoryIntakePlan([candidate(), separatelyAddressedReceipt], []);
+
+    expect(plan.duplicateMatches).toHaveLength(0);
+    expect(plan.toCreate).toEqual([candidate(), separatelyAddressedReceipt]);
+  });
+
   it("preserves overlong source categories and contacts without overflowing bounded columns", () => {
     const originalCategory = "Media Streaming Distribution Services, Social Networks, and other Media Networks and Content Providers";
     const sourceContact = "Place Orders here: https://www.darnelscakes.com/shop";

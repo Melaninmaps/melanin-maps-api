@@ -89,13 +89,33 @@ function hostname(value: string | null | undefined): string {
   }
 }
 
-function sameNameAndPlace(
-  left: Readonly<{ name: string | null; city: string | null; state: string | null }>,
-  right: Readonly<{ name: string | null; city: string | null; state: string | null }>,
-): boolean {
-  return normalizeDirectoryIdentity(left.name) === normalizeDirectoryIdentity(right.name)
-    && normalizeDirectoryIdentity(left.city) === normalizeDirectoryIdentity(right.city)
-    && normalizeDirectoryIdentity(left.state) === normalizeDirectoryIdentity(right.state);
+function samePlaceKey(value: Readonly<{ name: string | null; city: string | null; state: string | null }>): string {
+  return [
+    normalizeDirectoryIdentity(value.name),
+    normalizeDirectoryIdentity(value.city),
+    normalizeDirectoryIdentity(value.state),
+  ].join("|");
+}
+
+function exactAddressKey(value: Readonly<{
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  address: string | null;
+}>): string | null {
+  const address = normalizeStreetAddress(value.address);
+  return address ? `${samePlaceKey(value)}|address:${address}` : null;
+}
+
+function officialDestinationKey(value: Readonly<{
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  officialUrl?: string | null;
+  website?: string | null;
+}>): string | null {
+  const domain = hostname(value.officialUrl ?? value.website);
+  return domain ? `${samePlaceKey(value)}|host:${domain}` : null;
 }
 
 /**
@@ -116,10 +136,25 @@ export function buildSourceBackedDirectoryIntakePlan(
     reason: "exact_address" | "exact_official_destination" | "within_source_batch";
   }> = [];
 
+  // The protected founder manifest is intentionally large. Indexing preserves
+  // the exact same-place rules while avoiding repeated full-list scans in the
+  // admin preview and in every bounded publication retry.
+  const existingByReceipt = new Map<string, ExistingDirectoryBusiness>();
+  const existingByAddress = new Map<string, ExistingDirectoryBusiness>();
+  const existingByOfficialDestination = new Map<string, ExistingDirectoryBusiness>();
+  for (const existing of existingBusinesses) {
+    if (existing.dedupeKey) existingByReceipt.set(existing.dedupeKey, existing);
+    const addressKey = exactAddressKey(existing);
+    if (addressKey) existingByAddress.set(addressKey, existing);
+    const destinationKey = officialDestinationKey(existing);
+    if (destinationKey) existingByOfficialDestination.set(destinationKey, existing);
+  }
+
+  const createdByAddress = new Map<string, SourceBackedDirectoryCandidate>();
+  const createdByOfficialDestination = new Map<string, SourceBackedDirectoryCandidate>();
+
   for (const candidate of candidates) {
-    const sourceReceiptMatch = existingBusinesses.find(
-      (existing) => existing.dedupeKey === candidate.sourceRecordKey,
-    );
+    const sourceReceiptMatch = existingByReceipt.get(candidate.sourceRecordKey);
     if (sourceReceiptMatch) {
       duplicateMatches.push({
         candidate,
@@ -129,21 +164,16 @@ export function buildSourceBackedDirectoryIntakePlan(
       continue;
     }
 
-    const samePlaceExisting = existingBusinesses.filter((existing) => sameNameAndPlace(existing, candidate));
-
-    const addressMatch = candidate.address
-      ? samePlaceExisting.find((existing) =>
-          normalizeStreetAddress(existing.address) === normalizeStreetAddress(candidate.address),
-        )
-      : undefined;
+    const addressKey = exactAddressKey(candidate);
+    const addressMatch = addressKey ? existingByAddress.get(addressKey) : undefined;
     if (addressMatch) {
       duplicateMatches.push({ candidate, existingBusinessId: addressMatch.id, reason: "exact_address" });
       continue;
     }
 
-    const candidateHost = hostname(candidate.officialUrl);
-    const officialDestinationMatch = candidateHost
-      ? samePlaceExisting.find((existing) => hostname(existing.website) === candidateHost)
+    const destinationKey = officialDestinationKey(candidate);
+    const officialDestinationMatch = destinationKey
+      ? existingByOfficialDestination.get(destinationKey)
       : undefined;
     if (officialDestinationMatch) {
       duplicateMatches.push({
@@ -157,14 +187,18 @@ export function buildSourceBackedDirectoryIntakePlan(
     // Retain every source receipt in the protected manifest, but do not create
     // two records in one publish transaction when exact same-place evidence
     // ties independently sourced records together. Similar names stay separate.
-    const sourceBatchMatch = toCreate.find((created) => {
-      if (!sameNameAndPlace(created, candidate)) return false;
-      if (candidate.address && created.address) {
-        return normalizeStreetAddress(created.address) === normalizeStreetAddress(candidate.address);
-      }
-      const createdHost = hostname(created.officialUrl);
-      return Boolean(candidateHost && createdHost && candidateHost === createdHost);
-    });
+    const sameAddressCreated = addressKey ? createdByAddress.get(addressKey) : undefined;
+    const sameDestinationCreated = destinationKey
+      ? createdByOfficialDestination.get(destinationKey)
+      : undefined;
+    // Preserve the established conservative rule: when both source records have
+    // addresses, only the exact address can collapse them. An official-domain
+    // match remains sufficient when the candidate or its earlier receipt is
+    // mapless, where it is the only exact identity evidence available.
+    const sourceBatchMatch = sameAddressCreated
+      ?? (sameDestinationCreated && (!candidate.address || !sameDestinationCreated.address)
+        ? sameDestinationCreated
+        : undefined);
     if (sourceBatchMatch) {
       duplicateMatches.push({
         candidate,
@@ -176,6 +210,8 @@ export function buildSourceBackedDirectoryIntakePlan(
     }
 
     toCreate.push(candidate);
+    if (addressKey) createdByAddress.set(addressKey, candidate);
+    if (destinationKey) createdByOfficialDestination.set(destinationKey, candidate);
   }
 
   return { toCreate, duplicateMatches };
