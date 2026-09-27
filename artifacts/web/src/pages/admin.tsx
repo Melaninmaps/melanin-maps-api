@@ -4348,7 +4348,7 @@ export default function Admin() {
               </div>
             )}
           </div>
-        ) : tab !== "reviews" ? (
+        ) : tab !== "reviews" && tab !== "biz-review" ? (
           <div>
             <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
