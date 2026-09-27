@@ -204,6 +204,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed"');
     expect(adminRoute).toContain("requiresExplicitApply");
     expect(adminRoute).toContain("remainingCreateCount");
+    expect(adminRoute).toContain("transaction.insert(businessesTable).values(nextBatch.map");
+    expect(adminRoute).toContain("all-or-nothing publication");
     expect(adminScreen).toContain("Founder source directory intake");
     expect(adminScreen).toContain("api/admin/directory-intake/source-backed");
     expect(adminScreen).toContain("Publish all remaining");

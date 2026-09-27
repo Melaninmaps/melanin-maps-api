@@ -116,8 +116,12 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
 
     // The same exact plan is recomputed immediately before creation, so retrying
     // the action after a network failure cannot recreate an already-inserted row.
+    // Insert the already-reconciled batch in one database statement. The prior
+    // per-row loop could exceed the browser request window even though it made
+    // no changes outside this transaction. A single bounded insert keeps the
+    // retry-safe source receipts and preserves all-or-nothing publication.
     await db.transaction(async (transaction) => {
-      for (const candidate of nextBatch) {
+      await transaction.insert(businessesTable).values(nextBatch.map((candidate) => {
         const blackOwned = candidate.ownershipDesignations.includes("Black / African American-Owned");
         const canonicalDedupeKey = candidate.address
           ? _dedupeKey({
@@ -127,7 +131,7 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
               address: candidate.address,
             })
           : candidate.sourceRecordKey;
-        await transaction.insert(businessesTable).values({
+        return {
           id: `source_${randomUUID()}`,
           name: candidate.name,
           category: candidate.category,
@@ -157,8 +161,8 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
           researchSourceUrl: candidate.sourceUrl,
           kinfolkRecommendationReason: candidate.ownershipEvidence || null,
           intakeBatchReference: candidate.batch,
-        } as typeof businessesTable.$inferInsert);
-      }
+        } as typeof businessesTable.$inferInsert;
+      }));
     });
 
     res.status(201).json({
