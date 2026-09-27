@@ -345,6 +345,16 @@ async function compileAdminBusinessInventoryFilters(
     )`);
   }
   const manusCreatedPredicate = `(${manusCreatedPredicateParts.join(" OR ")})`;
+  // The founder's Manus-created review list is intentionally a clean worklist:
+  // a prior archive, duplicate merge, or hide decision always wins. The exact
+  // records remain in their existing Archive/Duplicate audit vaults, but never
+  // reappear here and force the founder to review them twice.
+  const manusCreatedVisibleReviewPredicate = `(
+    COALESCE(listing_status, 'live_unclaimed') <> 'archived'
+    AND COALESCE(is_duplicate, false) = false
+    AND COALESCE(permanently_hidden, false) = false
+    AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+  )`;
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -366,8 +376,10 @@ async function compileAdminBusinessInventoryFilters(
   }
   if (category) addFilter("category = ?", category);
   if (subcategory) addFilter("subcategory = ?", subcategory);
-  if (intakeCohort === "manus_created") {
+  const isManusCreatedReview = intakeCohort === "manus_created";
+  if (isManusCreatedReview) {
     filters.push(manusCreatedPredicate);
+    filters.push(manusCreatedVisibleReviewPredicate);
   } else if (intakeCohort === "protected_historical_cohort") {
     filters.push(completedCohortPredicate);
   } else if (intakeCohort === "user_national_master") {
@@ -375,7 +387,10 @@ async function compileAdminBusinessInventoryFilters(
   } else if (intakeCohort === "other_inventory") {
     filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
   }
-  if (status === "duplicates") {
+  if (isManusCreatedReview) {
+    // Do not permit URL parameters or an older browser tab to reopen a hidden
+    // record inside this clean review list.
+  } else if (status === "duplicates") {
     // Confirmed duplicate records are retained for evidence and reversible
     // merge restoration, but review them in their own all-status vault rather
     // than mixing them into ordinary or Archive-vault inventory.

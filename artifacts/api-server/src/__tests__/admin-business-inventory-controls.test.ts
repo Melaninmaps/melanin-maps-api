@@ -222,8 +222,12 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("manus_created_discovery_receipt.outcome = 'created'");
     expect(adminRoute).toContain("Manus-created research/imports (direct provenance)");
     expect(adminRoute).toContain("Manus-created direct provenance");
+    expect(adminRoute).toContain("const manusCreatedVisibleReviewPredicate");
+    expect(adminRoute).toContain("COALESCE(permanently_hidden, false) = false");
+    expect(adminRoute).toContain("a prior archive, duplicate merge, or hide decision always wins");
     expect(adminScreen).toContain("Manus-created review");
     expect(adminScreen).toContain("Direct Manus research/import provenance");
+    expect(adminScreen).toContain("Anything you already archived, hid, or retained as a duplicate is excluded here");
     expect(adminScreen).toContain("manus_created");
   });
 

@@ -2303,14 +2303,21 @@ export default function Admin() {
     addedTo?: string;
     sort?: typeof bizSort;
   }) => {
+    const requestedIntakeCohort = next.intakeCohort ?? bizIntakeCohortFilter;
     const query = {
       page: 1,
       pageSize: next.pageSize ?? businessInventoryPageSize,
       search: next.search ?? bizSearch,
-      status: next.status ?? bizStatusFilter,
+      // The Manus-created review list intentionally excludes records that have
+      // already been archived, hidden, or retained as duplicates. Resetting
+      // its status tab also prevents a stale Archive/Duplicate selection from
+      // making a founder re-review the same record.
+      status: requestedIntakeCohort === "manus_created"
+        ? "active" as const
+        : next.status ?? bizStatusFilter,
       cities: next.cities ?? bizCityFilters,
       category: next.category ?? bizCategoryFilter,
-      intakeCohort: next.intakeCohort ?? bizIntakeCohortFilter,
+      intakeCohort: requestedIntakeCohort,
       link: next.link ?? bizLinkFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
@@ -4360,6 +4367,8 @@ export default function Admin() {
                     ? "Duplicate vault"
                     : bizStatusFilter === "archived"
                       ? "Archive vault"
+                      : bizIntakeCohortFilter === "manus_created"
+                        ? "Manus-created review list"
                       : "Live business inventory"}
                 </p>
                 <h2 className="mt-1 text-2xl font-serif font-bold text-[#3A1F0E]">
@@ -4367,6 +4376,8 @@ export default function Admin() {
                     ? `Duplicate vault (${duplicateCount.toLocaleString()})`
                     : bizStatusFilter === "archived"
                       ? `Archived business records (${businessArchivedInventoryTotal.toLocaleString()})`
+                      : bizIntakeCohortFilter === "manus_created"
+                        ? `Manus-created review list (${businessInventoryFilteredTotal.toLocaleString()})`
                       : `Live business inventory (${businessLiveInventoryTotal.toLocaleString()})`}
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-[#3A1F0E]/60">
@@ -4374,6 +4385,8 @@ export default function Admin() {
                     ? "Review confirmed duplicates retained from every inventory state. They remain excluded from public discovery and all outreach until an audited merge is restored."
                     : bizStatusFilter === "archived"
                       ? "This separate vault retains archived profiles, research, source links, and audit history. Restore only a record you have re-confirmed."
+                      : bizIntakeCohortFilter === "manus_created"
+                        ? "Direct Manus research/import records only. Anything you already archived, hid, or retained as a duplicate is excluded here so you do not review it twice."
                       : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
                 </p>
                 {contactedCount > 0 && (
