@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
+  sourceBackedDirectoryPublicationFields,
 } from "../sourceBackedDirectoryIntake";
 import type { SourceBackedDirectoryCandidate } from "../sourceBackedDirectoryCandidates";
 
@@ -91,5 +92,21 @@ describe("source-backed directory reconciliation", () => {
     }]);
     expect(plan.toCreate).toHaveLength(0);
     expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-intake");
+  });
+
+  it("preserves overlong source categories and contacts without overflowing bounded columns", () => {
+    const originalCategory = "Media Streaming Distribution Services, Social Networks, and other Media Networks and Content Providers";
+    const sourceContact = "Place Orders here: https://www.darnelscakes.com/shop";
+    const fields = sourceBackedDirectoryPublicationFields(candidate({
+      category: originalCategory,
+      subcategory: originalCategory,
+      phone: sourceContact,
+    }));
+
+    expect(fields.category).toBe("Community business");
+    expect(fields.subcategory).toBe("Source-listed category");
+    expect(fields.phone).toBeNull();
+    expect(fields.tags).toContain(originalCategory);
+    expect(fields.description).toContain(sourceContact);
   });
 });

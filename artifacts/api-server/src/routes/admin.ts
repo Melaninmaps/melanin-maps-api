@@ -36,6 +36,7 @@ import { sourceBackedDirectoryCandidates } from "../directoryIntake/sourceBacked
 import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
+  sourceBackedDirectoryPublicationFields,
 } from "../directoryIntake/sourceBackedDirectoryIntake";
 
 const router: IRouter = Router();
@@ -127,6 +128,7 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     await db.transaction(async (transaction) => {
       await transaction.insert(businessesTable).values(nextBatch.map((candidate) => {
         const blackOwned = candidate.ownershipDesignations.includes("Black / African American-Owned");
+        const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
         const canonicalDedupeKey = candidate.address
           ? _dedupeKey({
               name: candidate.name,
@@ -138,20 +140,20 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
         return {
           id: `source_${randomUUID()}`,
           name: candidate.name,
-          category: candidate.category,
-          subcategory: candidate.subcategory,
-          description: `${candidate.category} business in ${candidate.city}. Listed by ${candidate.sourceLabel}.`,
+          category: publicationFields.category,
+          subcategory: publicationFields.subcategory,
+          description: publicationFields.description,
           address: candidate.address,
           city: candidate.city,
           state: candidate.state,
           country: candidate.country,
-          phone: candidate.phone,
+          phone: publicationFields.phone,
           website: candidate.officialUrl,
           sourceUrl: candidate.sourceListingUrl ?? candidate.sourceUrl,
           dedupeKey: canonicalDedupeKey,
           ownershipDesignations: candidate.ownershipDesignations,
           blackOwned,
-          tags: [...new Set([candidate.category, ...candidate.serviceTerms])],
+          tags: publicationFields.tags,
           status: "active",
           listingStatus: "live_unclaimed",
           ownerClaimStatus: "unclaimed",

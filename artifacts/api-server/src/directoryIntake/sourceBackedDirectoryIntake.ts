@@ -24,6 +24,47 @@ export function normalizeDirectoryIdentity(value: string | null | undefined): st
   return (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+/**
+ * The protected source manifest retains its original values verbatim. This
+ * helper only creates safe database-column values for the few legacy bounded
+ * columns on businesses, while preserving the full source value in searchable
+ * tags and the member-safe source description.
+ */
+export function sourceBackedDirectoryPublicationFields(candidate: SourceBackedDirectoryCandidate): Readonly<{
+  category: string;
+  subcategory: string;
+  phone: string | null;
+  tags: string[];
+  description: string;
+}> {
+  const category = candidate.category.length <= 100
+    ? candidate.category
+    : "Community business";
+  const subcategory = candidate.subcategory.length <= 100
+    ? candidate.subcategory
+    : "Source-listed category";
+  const sourceListedContact = candidate.phone && candidate.phone.length > 30
+    ? candidate.phone
+    : null;
+
+  return {
+    category,
+    subcategory,
+    phone: sourceListedContact ? null : candidate.phone,
+    tags: [...new Set([
+      category,
+      subcategory,
+      candidate.category,
+      candidate.subcategory,
+      ...candidate.serviceTerms,
+    ])],
+    description: [
+      `${candidate.category} business in ${candidate.city}. Listed by ${candidate.sourceLabel}.`,
+      sourceListedContact ? `Source-listed contact: ${sourceListedContact}.` : null,
+    ].filter(Boolean).join(" "),
+  };
+}
+
 function normalizeStreetAddress(value: string | null | undefined): string {
   return (value ?? "")
     .toLowerCase()
