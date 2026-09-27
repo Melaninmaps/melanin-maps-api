@@ -56,8 +56,6 @@ interface UserProfile {
   jobTitle: string | null;
   createdAt: string;
   memberType: string | null;
-  membershipTier?: string;
-  membershipLabel?: string;
 }
 
 interface ReviewItem {
@@ -357,10 +355,10 @@ export default function UserProfileScreen() {
               {profile.bio && (
                 <Text style={[s.heroBio, { color: colors.foreground }]}>{profile.bio}</Text>
               )}
-              {profile.membershipLabel && (
+              {profile.memberType && profile.memberType !== "free" && (
                 <View style={[s.memberBadge, { backgroundColor: colors.primary + "18" }]}>
                   <Text style={[s.memberBadgeText, { color: colors.primary }]}>
-                    Membership · {profile.membershipLabel}
+                    {profile.memberType === "founding" ? "⭐ Founding Member" : "🌍 Community Member"}
                   </Text>
                 </View>
               )}
