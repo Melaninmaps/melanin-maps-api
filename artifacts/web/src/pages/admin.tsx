@@ -4376,7 +4376,7 @@ export default function Admin() {
                   placeholder="Search a business name or key phrase"
                   aria-label="Search business names and key phrases"
                   title={'Use quotes for one exact phrase, for example "full wash and detangle".'}
-                  className="w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] sm:w-72"
+                  className="w-full rounded-xl border border-[#3A1F0E]/30 bg-white px-4 py-2.5 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/70 focus:outline-none focus:border-[#CA922B] sm:w-72"
                 />
                 <button
                   type="button"
@@ -4584,7 +4584,7 @@ export default function Admin() {
                         }}
                         placeholder="Find a city or variant"
                         aria-label="Find a city or variant; press Enter or Escape when done"
-                        className="min-w-0 flex-1 rounded-lg border border-[#3A1F0E]/15 px-2.5 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                        className="min-w-0 flex-1 rounded-lg border border-[#3A1F0E]/30 bg-white px-2.5 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] placeholder:text-[#3A1F0E]/70 focus:outline-none focus:border-[#CA922B]"
                       />
                       {bizCityFilters.length > 0 && (
                         <button
@@ -4702,7 +4702,7 @@ export default function Admin() {
                   type="date"
                   value={bizAddedFrom}
                   onChange={(event) => applyBusinessInventoryFilters({ addedFrom: event.target.value })}
-                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/30 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal !text-[#3A1F0E] [color-scheme:light] focus:outline-none focus:border-[#CA922B]"
                 />
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -4711,7 +4711,7 @@ export default function Admin() {
                   type="date"
                   value={bizAddedTo}
                   onChange={(event) => applyBusinessInventoryFilters({ addedTo: event.target.value })}
-                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/30 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal !text-[#3A1F0E] [color-scheme:light] focus:outline-none focus:border-[#CA922B]"
                 />
               </label>
             </div>

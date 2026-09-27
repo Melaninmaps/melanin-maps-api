@@ -111,6 +111,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Search a business name or key phrase");
     expect(adminScreen).toContain("Search business names and key phrases");
     expect(adminScreen).toContain("Press Enter or select Search");
+    expect(adminScreen).toContain("placeholder:text-[#3A1F0E]/70");
+    expect(adminScreen).toContain("[color-scheme:light]");
     for (const field of [
       "COALESCE(description, '') ILIKE",
       "COALESCE(tags::text, '') ILIKE",
