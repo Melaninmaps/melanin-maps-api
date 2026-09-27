@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
+import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -500,21 +500,11 @@ export default function KinfolkSettingsScreen() {
               </Text>
             </View>
           </View>
-          <View style={styles.supportGrid}>
-            {OWNERSHIP_FILTER_OPTIONS.map((option) => {
-              const active = supportLens.includes(option.id);
-              return (
-                <TouchableOpacity
-                  key={option.id}
-                  onPress={() => void saveSupportLens(active
-                    ? supportLens.filter((id) => id !== option.id)
-                    : [...supportLens, option.id])}
-                  style={[styles.supportChip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.card }]}
-                >
-                  <Text style={{ color: active ? "#fff" : colors.foreground, fontSize: 12 }}>{option.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          <View style={styles.supportSelectors}>
+            <SupportLensDropdowns
+              selected={supportLens}
+              onChange={(next) => void saveSupportLens(next)}
+            />
           </View>
           <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
             {supportLens.length > 1 ? "Results match every selection." : supportLens.length > 0 ? "Strict documented-designation results are active." : "All documented businesses are available."}
@@ -629,8 +619,7 @@ const styles = StyleSheet.create({
   chipRowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 14 },
   chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
   chipText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  supportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 14 },
-  supportChip: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 18, borderWidth: 1 },
+  supportSelectors: { padding: 14 },
   clearLens: { paddingHorizontal: 16, paddingBottom: 14, paddingTop: 4 },
   detailRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
   segmentRow: { flexDirection: "row", gap: 4 },

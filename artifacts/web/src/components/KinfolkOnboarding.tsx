@@ -13,7 +13,12 @@ import {
   Zap,
 } from "lucide-react";
 import { useAgeAssurance } from "@/hooks/useAgeAssurance";
-import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import {
+  replaceSelectedSupportLensOption,
+  selectedSupportLensOption,
+  SUPPORT_LENS_PRIMARY_OPTIONS,
+  SUPPORT_LENS_SECONDARY_OPTIONS,
+} from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -102,8 +107,6 @@ const ATMOSPHERE_OPTIONS = [
   { value: "relaxed", label: "Relaxed & low-key" },
   { value: "upscale", label: "Elevated & refined" },
 ];
-
-const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS;
 
 const LIFESTYLE_OPTIONS = [
   "Childcare & Early Education",
@@ -236,6 +239,13 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
     },
     [],
   );
+
+  const primarySupportChoice = selectedSupportLensOption(ownershipPrefs, SUPPORT_LENS_PRIMARY_OPTIONS);
+  const secondarySupportChoice = selectedSupportLensOption(ownershipPrefs, SUPPORT_LENS_SECONDARY_OPTIONS);
+  const replaceSupportChoice = (
+    options: readonly { id: string; label: string }[],
+    nextId: string | null,
+  ) => setOwnershipPrefs((current) => replaceSelectedSupportLensOption(current, options, nextId));
 
   const saveAndComplete = useCallback(async () => {
     setSaving(true);
@@ -730,21 +740,37 @@ export function KinfolkOnboarding({ firstName, onComplete }: Props) {
             <p className="text-xs font-bold text-[#2B1507] mb-2">
               Businesses you may want to support
             </p>
-            <div className="flex flex-wrap gap-2">
-              {OWNERSHIP_OPTIONS.map((o) => (
-                <Chip
-                  key={o.id}
-                  label={o.label}
-                  selected={ownershipPrefs.includes(o.id)}
-                  onClick={() => toggle(ownershipPrefs, o.id, setOwnershipPrefs)}
-                />
-              ))}
+            <div className="space-y-3 rounded-2xl border border-[#E8DDD0] bg-[#FAF6EF] p-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-[#2B1507]">Primary support choice</span>
+                <span className="mb-2 block text-xs leading-5 text-[#3A1F0E]/55">Black / African American-Owned is first, Foundational Black American-Owned is second, and Latino / Hispanic-Owned is third.</span>
+                <select
+                  value={primarySupportChoice ?? ""}
+                  onChange={(event) => replaceSupportChoice(SUPPORT_LENS_PRIMARY_OPTIONS, event.target.value || null)}
+                  className="min-h-11 w-full rounded-xl border border-[#E8DDD0] bg-white px-3 text-sm font-semibold text-[#2B1507] focus:border-[#CA922B] focus:outline-none focus:ring-2 focus:ring-[#CA922B]/20"
+                >
+                  <option value="">No primary choice</option>
+                  {SUPPORT_LENS_PRIMARY_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-[#2B1507]">Additional profile badge <span className="font-normal text-[#3A1F0E]/55">optional</span></span>
+                <span className="mb-2 block text-xs leading-5 text-[#3A1F0E]/55">Choose one additional criterion, including Divine Nine-Affiliated or Veteran-Owned.</span>
+                <select
+                  value={secondarySupportChoice ?? ""}
+                  onChange={(event) => replaceSupportChoice(SUPPORT_LENS_SECONDARY_OPTIONS, event.target.value || null)}
+                  className="min-h-11 w-full rounded-xl border border-[#E8DDD0] bg-white px-3 text-sm font-semibold text-[#2B1507] focus:border-[#CA922B] focus:outline-none focus:ring-2 focus:ring-[#CA922B]/20"
+                >
+                  <option value="">No secondary criterion</option>
+                  {SUPPORT_LENS_SECONDARY_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+              </label>
             </div>
           </div>
           <p className="text-xs leading-relaxed text-[#3A1F0E]/45">
             Your Support Lens is optional and private. It never says who you
-            are or removes anyone from MWM. Multiple selections match every
-            documented designation; you can change, clear, or broaden it any time.
+            are or removes anyone from MWM. A primary and secondary choice match
+            every documented designation; you can change, clear, or broaden it any time.
           </p>
         </div>
       ),

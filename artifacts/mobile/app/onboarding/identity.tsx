@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DiasporaFlagPicker from "@/components/DiasporaFlagPicker";
+import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
 import { getFlag, DIASPORA_COUNTRIES } from "@/constants/diaspora-countries";
-import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -36,12 +36,6 @@ const CURRENT = 3;
 const markComplete = () =>
   AsyncStorage.setItem("@mapping_with_melanin_onboarding_complete", "true").catch(() => {});
 
-const DESIGNATIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({
-  ...option,
-  emoji: "🤎",
-  sub: "Documented designation only",
-}));
-
 export default function OnboardingIdentity() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -58,16 +52,6 @@ export default function OnboardingIdentity() {
   };
 
   const skip = () => { router.replace("/onboarding/join" as never); };
-
-  const toggle = (id: string) => {
-    if (Platform.OS !== "web") Haptics.selectionAsync();
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   const handleNext = async () => {
     setSaving(true);
@@ -131,27 +115,15 @@ export default function OnboardingIdentity() {
           We only use designations a business has documented. We never infer identity from names, photos, location, cuisine, language, or appearance. Your choice is private and additive.
         </Text>
 
-        <View style={styles.grid}>
-          {DESIGNATIONS.map((item) => {
-            const on = selected.has(item.id);
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.chip, on && styles.chipSelected]}
-                onPress={() => toggle(item.id)}
-                activeOpacity={0.8}
-              >
-                {on && (
-                  <View style={styles.checkBadge}>
-                    <Feather name="check" size={10} color="#FFF" />
-                  </View>
-                )}
-                <Text style={styles.chipEmoji}>{item.emoji}</Text>
-                <Text style={[styles.chipLabel, on && styles.chipLabelOn]}>{item.label}</Text>
-                <Text style={[styles.chipSub, on && styles.chipSubOn]}>{item.sub}</Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.supportChoices}>
+          <SupportLensDropdowns
+            selected={Array.from(selected)}
+            onChange={(next) => {
+              if (Platform.OS !== "web") Haptics.selectionAsync();
+              setSelected(new Set(next));
+            }}
+            disabled={saving}
+          />
         </View>
 
         {selected.has("immigrant-owned") && (
@@ -255,7 +227,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.55)",
     lineHeight: 18, marginBottom: 16,
   },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 16 },
+  supportChoices: { marginBottom: 16 },
   chip: {
     width: "47%",
     borderRadius: 16,

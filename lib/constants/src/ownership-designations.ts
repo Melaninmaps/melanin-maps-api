@@ -218,6 +218,64 @@ export const INTERSECTIONAL_SUPPORT_FILTER_IDS = [
 export const INTERSECTIONAL_SUPPORT_FILTER_OPTIONS = INTERSECTIONAL_SUPPORT_FILTER_IDS
   .flatMap((id) => OWNERSHIP_FILTER_OPTIONS.filter((option) => option.id === id));
 
+/**
+ * Member-facing Support Lens choices. The first menu is intentionally ordered
+ * by the founder's required default priority; the second keeps role and
+ * intersectional criteria separate without changing how the API matches them.
+ */
+export const SUPPORT_LENS_SECONDARY_FILTER_IDS = [
+  "divine-nine-affiliated",
+  "veteran",
+  "woman",
+  "disability",
+  "lgbtqia",
+  "indigenous-native",
+  "immigrant",
+  "refugee",
+  "family",
+  "cooperative-worker",
+] as const;
+
+const REQUIRED_PRIMARY_SUPPORT_FILTER_IDS = [
+  "black-african-american",
+  "foundational-black-american",
+  "latino-hispanic",
+] as const;
+
+function supportLensOptionsFor(ids: readonly string[]) {
+  return ids.flatMap((id) => OWNERSHIP_FILTER_OPTIONS.filter((option) => option.id === id));
+}
+
+export const SUPPORT_LENS_PRIMARY_OPTIONS = [
+  ...supportLensOptionsFor(REQUIRED_PRIMARY_SUPPORT_FILTER_IDS),
+  ...OWNERSHIP_FILTER_OPTIONS.filter((option) =>
+    !REQUIRED_PRIMARY_SUPPORT_FILTER_IDS.includes(option.id as typeof REQUIRED_PRIMARY_SUPPORT_FILTER_IDS[number])
+    && !SUPPORT_LENS_SECONDARY_FILTER_IDS.includes(option.id as typeof SUPPORT_LENS_SECONDARY_FILTER_IDS[number]),
+  ),
+];
+export const SUPPORT_LENS_PRIMARY_FILTER_IDS = SUPPORT_LENS_PRIMARY_OPTIONS.map((option) => option.id);
+export const SUPPORT_LENS_SECONDARY_OPTIONS = supportLensOptionsFor(SUPPORT_LENS_SECONDARY_FILTER_IDS);
+
+export function selectedSupportLensOption(
+  selected: readonly string[],
+  options: readonly { id: string; label: string }[],
+): string | null {
+  return options.find((option) => selected.includes(option.id))?.id ?? null;
+}
+
+/** Replaces one visible Support Lens choice without discarding other saved choices. */
+export function replaceSelectedSupportLensOption(
+  selected: readonly string[],
+  options: readonly { id: string; label: string }[],
+  nextId: string | null,
+): string[] {
+  const optionIds = new Set(options.map((option) => option.id));
+  return [
+    ...selected.filter((id) => !optionIds.has(id) && id !== nextId),
+    ...(nextId ? [nextId] : []),
+  ];
+}
+
 const LEGACY_OWNERSHIP_FILTER_VALUES: Record<string, string[]> = {
   "black-african-american": ["black-owned", "Black-Owned"],
   "foundational-black-american": [

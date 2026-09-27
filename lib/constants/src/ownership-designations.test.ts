@@ -4,6 +4,10 @@ import {
   normalizeOwnershipDesignationFilterIds,
   normalizeSupportLensMode,
   ownershipDesignationStorageValues,
+  replaceSelectedSupportLensOption,
+  selectedSupportLensOption,
+  SUPPORT_LENS_PRIMARY_OPTIONS,
+  SUPPORT_LENS_SECONDARY_OPTIONS,
 } from "./ownership-designations";
 
 describe("explicit ownership support requests", () => {
@@ -72,5 +76,25 @@ describe("explicit ownership support requests", () => {
     expect(normalizeSupportLensMode("strict_documented_designations", [])).toBe(
       "all_businesses",
     );
+  });
+
+  it("uses founder-ordered primary choices and separate optional secondary criteria", () => {
+    expect(SUPPORT_LENS_PRIMARY_OPTIONS.slice(0, 3).map((option) => option.id)).toEqual([
+      "black-african-american",
+      "foundational-black-american",
+      "latino-hispanic",
+    ]);
+    expect(SUPPORT_LENS_SECONDARY_OPTIONS.slice(0, 2).map((option) => option.id)).toEqual([
+      "divine-nine-affiliated",
+      "veteran",
+    ]);
+  });
+
+  it("replaces a displayed choice without discarding legacy saved criteria", () => {
+    const previous = ["black-african-american", "woman", "veteran"];
+    expect(selectedSupportLensOption(previous, SUPPORT_LENS_PRIMARY_OPTIONS)).toBe("black-african-american");
+    expect(selectedSupportLensOption(previous, SUPPORT_LENS_SECONDARY_OPTIONS)).toBe("veteran");
+    expect(replaceSelectedSupportLensOption(previous, SUPPORT_LENS_PRIMARY_OPTIONS, "foundational-black-american"))
+      .toEqual(["woman", "veteran", "foundational-black-american"]);
   });
 });

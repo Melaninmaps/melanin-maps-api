@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -15,10 +15,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import {
-  OWNERSHIP_FILTER_OPTIONS,
-  ownershipDesignationFilterId,
-} from "@workspace/constants";
+import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
+import { ownershipDesignationFilterId } from "@workspace/constants";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN)
@@ -46,7 +44,6 @@ export default function CulturalPreferenceScreen() {
   const [communities, setCommunities] = useState("");
   const [cultures, setCultures] = useState("");
   const [preferredLanguages, setPreferredLanguages] = useState("");
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -93,22 +90,6 @@ export default function CulturalPreferenceScreen() {
       void loadPreference();
     });
   }, [loadPreference]);
-
-  const toggle = (key: string) => {
-    if (Platform.OS !== "web")
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelected((prev) =>
-      prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key],
-    );
-  };
-
-  const visibleOptions = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase();
-    if (!normalized) return OWNERSHIP_FILTER_OPTIONS;
-    return OWNERSHIP_FILTER_OPTIONS.filter((option) =>
-      option.label.toLocaleLowerCase().includes(normalized),
-    );
-  }, [query]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -285,73 +266,15 @@ export default function CulturalPreferenceScreen() {
             </Text>
           </View>
 
-          <View
-            style={[
-              s.searchRow,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <Feather name="search" size={17} color={colors.mutedForeground} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search ownership labels"
-              placeholderTextColor={colors.mutedForeground}
-              style={[s.searchInput, { color: colors.foreground }]}
+          <View style={s.supportSelectors}>
+            <SupportLensDropdowns
+              selected={selected}
+              onChange={(next) => {
+                if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelected(next);
+              }}
+              disabled={saving}
             />
-          </View>
-
-          <View style={s.list}>
-            {visibleOptions.map((option) => {
-              const isSelected = selected.includes(option.id);
-              return (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    s.identityCard,
-                    {
-                      backgroundColor: isSelected
-                        ? colors.primary + "12"
-                        : colors.card,
-                      borderColor: isSelected ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => toggle(option.id)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={{ fontSize: 24 }}>🤎</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[s.identityLabel, { color: colors.foreground }]}
-                    >
-                      {option.label}
-                    </Text>
-                    <Text
-                      style={[s.identitySub, { color: colors.mutedForeground }]}
-                    >
-                      Owner-provided identity; verification is separate
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      s.checkCircle,
-                      {
-                        backgroundColor: isSelected
-                          ? colors.primary
-                          : "transparent",
-                        borderColor: isSelected
-                          ? colors.primary
-                          : colors.border,
-                      },
-                    ]}
-                  >
-                    {isSelected && (
-                      <Feather name="check" size={14} color="#FFF" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
           </View>
 
           <View
@@ -362,8 +285,8 @@ export default function CulturalPreferenceScreen() {
           >
             <Feather name="info" size={15} color="#2D7A4F" />
             <Text style={[s.noteText, { color: "#2D7A4F" }]}>
-              Select as many as you want. These choices only prioritize matching
-              businesses; they never hide the rest of the directory.
+              Primary and secondary choices prioritize documented matches. They
+              never hide the rest of the directory.
             </Text>
           </View>
 
@@ -467,42 +390,7 @@ const s = StyleSheet.create({
     borderTopWidth: 1,
     gap: 4,
   },
-  searchRow: {
-    minHeight: 50,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: "Inter_400Regular",
-    fontSize: 15,
-    paddingVertical: 10,
-  },
-  list: { paddingHorizontal: 16, gap: 10, marginBottom: 16 },
-  identityCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 14,
-  },
-  identityLabel: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 3 },
-  identitySub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
-  checkCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  supportSelectors: { paddingHorizontal: 16, marginBottom: 16 },
   noteCard: {
     marginHorizontal: 16,
     borderRadius: 12,
