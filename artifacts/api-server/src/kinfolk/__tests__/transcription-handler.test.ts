@@ -124,7 +124,7 @@ describe("actual Kinfolk transcription handler", () => {
     expect(response.body).toMatchObject({ error: "AUTHENTICATION_REQUIRED", audioRetained: false });
   });
 
-  it("accepts the standard production OpenAI configuration for voice input", async () => {
+  it("uses the provider-compatible server-owned model for voice input", async () => {
     const response = await request(app())
       .post("/api/kinfolk/transcribe")
       .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
@@ -132,7 +132,7 @@ describe("actual Kinfolk transcription handler", () => {
     expect(resolveAudioOpenAIConfiguration).toHaveBeenCalled();
     expect(transcribe).toHaveBeenCalledTimes(1);
     expect(transcribe).toHaveBeenCalledWith(
-      expect.objectContaining({ model: "gpt-transcribe" }),
+      expect.objectContaining({ model: "whisper-1" }),
       expect.anything(),
     );
   });

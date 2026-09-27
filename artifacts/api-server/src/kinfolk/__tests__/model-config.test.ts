@@ -11,7 +11,7 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("fallback", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("webSearch", {})).toBe("gpt-5-mini");
     expect(kinfolkModel("libraryResearch", {})).toBe("gpt-4o-mini");
-    expect(kinfolkModel("transcription", {})).toBe("gpt-transcribe");
+    expect(kinfolkModel("transcription", {})).toBe("whisper-1");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
@@ -26,14 +26,14 @@ describe("Kinfolk model configuration", () => {
   it("fails closed to the role default for arbitrary or cross-purpose IDs", () => {
     expect(kinfolkModel("staffDemo", { KINFOLK_STAFF_DEMO_MODEL: "private-preview-model" })).toBe("gpt-4o-mini");
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-4o-mini-transcribe" })).toBe("gpt-5-mini");
-    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("gpt-transcribe");
+    expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("whisper-1");
   });
 
-  it("pins transcription to the documented completed-recording model despite stale deployment variables", () => {
+  it("pins transcription to the provider-compatible completed-recording model despite stale deployment variables", () => {
     expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe" }))
-      .toBe("gpt-transcribe");
+      .toBe("whisper-1");
     expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-4o-transcribe" }))
-      .toBe("gpt-transcribe");
+      .toBe("whisper-1");
   });
 
   it("omits semantic embedding configuration when dimensions are absent or blank", () => {

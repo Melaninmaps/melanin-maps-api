@@ -21,10 +21,10 @@ const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string;
   // use the reviewed GPT-5 mini tool-capable default for current facts.
   webSearch: { env: "KINFOLK_WEB_SEARCH_MODEL", fallback: "gpt-5-mini", allowed: RESEARCH_MODELS },
   libraryResearch: { env: "LIBRARY_RESEARCH_MODEL", fallback: "gpt-4o-mini", allowed: RESEARCH_MODELS },
-  // OpenAI's documented completed-recording transcription model. Keep this
-  // server-owned rather than accepting a deployment override: recordings stay
-  // on the existing private endpoint, with no retention or service change.
-  transcription: { env: null, fallback: "gpt-transcribe", allowed: TRANSCRIPTION_MODELS },
+  // This production audio endpoint accepts whisper-1 for completed-recording
+  // transcription. Keep the selection server-owned: recordings stay on the
+  // existing private endpoint, with no retention or service change.
+  transcription: { env: null, fallback: "whisper-1", allowed: TRANSCRIPTION_MODELS },
   // Semantic retrieval is an existing optional internal path, not a configurable
   // provider-readiness role. Keep its model centralized without inventing an
   // additional environment role beyond the five approved by this assignment.
