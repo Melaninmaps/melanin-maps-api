@@ -316,6 +316,10 @@ import {
   isCityBriefingRequest,
 } from "../kinfolk/city-briefing";
 import {
+  DOCUMENTED_PROXIMITY_CAVEAT,
+  requiresDocumentedProximityCaveat,
+} from "../kinfolk/business-proximity";
+import {
   contextualEvidenceNeedsFailClosedResponse,
   orchestrateContextualResearch,
   type ContextualEvidenceBundle,
@@ -6678,13 +6682,16 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const requestedSubjectLabel = subject.dietaryRequirement
     ? `${subject.dietaryRequirement.label} ${subject.label}`
     : subject.label;
+  const proximityCaveat = requiresDocumentedProximityCaveat(input.message)
+    ? DOCUMENTED_PROXIMITY_CAVEAT
+    : "";
   const conciseReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
       ? `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
         ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"} in ${scope.city}. I put the documented matches below so you can open the details or website.${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"} in ${scope.city}. I put the documented matches below so you can open the details or website.${proximityCaveat}${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${requestedSubjectLabel} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
@@ -9447,6 +9454,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ? buildCityBriefingPromptBlock({
             city: destination,
             stateCode: destinationState,
+            mode: contextualPlan.freshness === "stable" ? "stable" : "current",
             // `prefs` is already null when the member disables personalised
             // suggestions. The helper admits only explicitly saved interest labels.
             preferences: prefs,
@@ -10475,7 +10483,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       sourceContext:
         lifeGuidance?.sourceContext ??
         (contextualPlan?.taskMode === "city_briefing"
-          ? "This current city briefing uses the linked public sources. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
+          ? contextualPlan.freshness === "stable"
+            ? "This stable city background is not a current travel-status update. Check current alerts, hours, transit conditions, and events again closer to travel. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
+            : "This current city briefing uses the linked public sources. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
           : undefined),
       // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.

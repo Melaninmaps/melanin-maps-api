@@ -3,7 +3,12 @@ import {
   buildCityBriefingPlan,
   buildCityBriefingPromptBlock,
   isCityBriefingRequest,
+  isStableCityBriefingBackgroundRequest,
 } from "../city-briefing";
+import {
+  DOCUMENTED_PROXIMITY_CAVEAT,
+  requiresDocumentedProximityCaveat,
+} from "../business-proximity";
 
 describe("city briefing policy", () => {
   it("recognizes a current briefing about a resolved city without treating it as a business search", () => {
@@ -38,6 +43,43 @@ describe("city briefing policy", () => {
         "Minneapolis",
       ),
     ).toBe(true);
+  });
+
+  it("turns the fail-closed stable-background action into a stable city briefing, not a literal search", () => {
+    expect(isStableCityBriefingBackgroundRequest("Show me the stable background")).toBe(true);
+    expect(isCityBriefingRequest("Show me the stable background", "Minneapolis")).toBe(true);
+
+    const plan = buildCityBriefingPlan({
+      message: "Show me the stable background",
+      city: "Minneapolis",
+      stateCode: "MN",
+    });
+    expect(plan).toMatchObject({
+      taskMode: "city_briefing",
+      freshness: "stable",
+      evidenceNeeds: ["reputable_reporting"],
+    });
+    expect(plan.retrievalQueries.join(" ")).toMatch(/official city overview/i);
+
+    const prompt = buildCityBriefingPromptBlock({
+      city: "Minneapolis",
+      stateCode: "MN",
+      preferences: null,
+      mode: "stable",
+    });
+    expect(prompt).toContain("stable factual background, not a current-status update");
+    expect(prompt).toContain("current alerts, hours, transit conditions, and events need a fresh check");
+  });
+
+  it("does not present city-only business matches as an exact hotel or route search", () => {
+    expect(
+      requiresDocumentedProximityCaveat(
+        "Find a Black-owned lunch spot near the Royal Sonesta Minneapolis Downtown",
+      ),
+    ).toBe(true);
+    expect(requiresDocumentedProximityCaveat("Find Black-owned lunch in Minneapolis")).toBe(false);
+    expect(DOCUMENTED_PROXIMITY_CAVEAT).toContain("verified distance");
+    expect(DOCUMENTED_PROXIMITY_CAVEAT).toContain("map pin");
   });
 
   it("uses only saved interests as an optional lens and preserves a factual core", () => {

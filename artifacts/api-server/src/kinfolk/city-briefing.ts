@@ -13,6 +13,13 @@ const CITY_BRIEFING_PATTERNS = [
   /\b(?:anything|what) new\b/i,
 ];
 
+/**
+ * This is a server-authored recovery action shown only after a current city
+ * briefing cannot gather enough independent sources. It must resolve as a
+ * stable briefing, rather than being treated as an unrelated literal phrase.
+ */
+const STABLE_CITY_BACKGROUND_PATTERN = /^show me (?:the )?stable background$/i;
+
 const cleanList = (value: unknown, limit = 6): string[] => Array.isArray(value)
   ? value
     .filter((item): item is string => typeof item === "string")
@@ -28,11 +35,16 @@ export type CityBriefingPreferenceInput = {
   knowBeforeYouGo?: unknown;
 } | null | undefined;
 
+export function isStableCityBriefingBackgroundRequest(message: string): boolean {
+  return STABLE_CITY_BACKGROUND_PATTERN.test(message.trim());
+}
+
 /** A city must already be resolved by the existing guarded geography resolver. */
 export function isCityBriefingRequest(message: string, destination: string | null): boolean {
   if (!destination) return false;
   const normalized = message.trim();
   if (!normalized || normalized.length > 600) return false;
+  if (isStableCityBriefingBackgroundRequest(normalized)) return true;
   const escapedDestination = destination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const explicitlyReferencesPlace = new RegExp(`\\b${escapedDestination}\\b`, "i").test(normalized)
     || /\b(?:this city|the city|there|around town|local(?:ly)?|citywide)\b/i.test(normalized);
@@ -45,6 +57,7 @@ export function buildCityBriefingPlan(input: {
   stateCode: string | null;
 }): SemanticTurnPlan {
   const location = [input.city, input.stateCode].filter(Boolean).join(", ");
+  const stableBackground = isStableCityBriefingBackgroundRequest(input.message);
   return {
     taskMode: "city_briefing",
     primaryDomain: "city_briefing",
@@ -54,13 +67,21 @@ export function buildCityBriefingPlan(input: {
     confidence: 1,
     needsClarification: false,
     clarificationQuestion: null,
-    freshness: "current",
-    evidenceNeeds: ["official_current", "reputable_reporting", "platform_records"],
-    retrievalQueries: [
-      `${location} latest local news public safety travel advisories`,
-      `${location} official city public notices transit weather current`,
-      `${location} Black community culture current local reporting`,
-    ],
+    freshness: stableBackground ? "stable" : "current",
+    evidenceNeeds: stableBackground
+      ? ["reputable_reporting"]
+      : ["official_current", "reputable_reporting", "platform_records"],
+    retrievalQueries: stableBackground
+      ? [
+          `${location} official city overview neighborhoods transit`,
+          `${location} Black history culture institutions`,
+          `${location} visitor guide public transportation`,
+        ]
+      : [
+          `${location} latest local news public safety travel advisories`,
+          `${location} official city public notices transit weather current`,
+          `${location} Black community culture current local reporting`,
+        ],
     answerPerspective: "mixed",
     identityContextUsed: [],
   };
@@ -75,8 +96,10 @@ export function buildCityBriefingPromptBlock(input: {
   city: string;
   stateCode: string | null;
   preferences: CityBriefingPreferenceInput;
+  mode?: "current" | "stable";
 }): string {
   const place = [input.city, input.stateCode].filter(Boolean).join(", ");
+  const stableBackground = input.mode === "stable";
   const interests = [
     ...cleanList(input.preferences?.favoriteCategories),
     ...cleanList(input.preferences?.culturalInterests),
@@ -86,8 +109,12 @@ export function buildCityBriefingPromptBlock(input: {
   const knowBeforeYouGo = input.preferences?.knowBeforeYouGo !== false;
   const lines = [
     `CITY BRIEFING — ${place}:`,
-    "Give a current, source-cited overview with clearly labeled sections: What is happening in current news and reporting; Civic and practical updates; Culture and community; and What to watch next.",
-    "Start with material verified facts. Separate reporting from analysis and never present a rumor, post, or unverified community submission as fact.",
+    stableBackground
+      ? "Give a stable factual background, not a current-status update. Use clearly labeled sections: City orientation; Civic and practical context; Culture and community; and What to verify closer to travel."
+      : "Give a current, source-cited overview with clearly labeled sections: What is happening in current news and reporting; Civic and practical updates; Culture and community; and What to watch next.",
+    stableBackground
+      ? "Do not describe a condition as current, active, open, safe, disrupted, or scheduled today. State clearly that current alerts, hours, transit conditions, and events need a fresh check closer to travel."
+      : "Start with material verified facts. Separate reporting from analysis and never present a rumor, post, or unverified community submission as fact.",
     "Do not invent local events, crime/safety claims, political positions, statistics, businesses, or community sentiment. If evidence is incomplete, say so plainly.",
     "Do not make a restaurant, nightlife, or business list unless the member separately asks for one. A direct request always overrides any optional interest lens.",
     "The Community perspective is not currently source evidence. Do not claim community-feed findings unless a separately governed, visible Community perspective is supplied by the server.",
