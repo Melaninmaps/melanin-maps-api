@@ -62,11 +62,15 @@ async function sourceDirectoryExistingBusinessCandidates(): Promise<
       normalizeDirectoryIdentity(candidate.name),
     )),
   ];
+  const sourceReceiptKeys = sourceBackedDirectoryCandidates.map(
+    (candidate) => candidate.sourceRecordKey,
+  );
   const result = await pool.query<SourceDirectoryExistingBusiness>(
     `SELECT id, name, city, state, address, website, source_url AS "sourceUrl", dedupe_key AS "dedupeKey"
        FROM businesses
-      WHERE LOWER(REGEXP_REPLACE(COALESCE(name, ''), '[^a-z0-9]+', '', 'g')) = ANY($1::text[])`,
-    [sourceNames],
+      WHERE REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = ANY($1::text[])
+         OR dedupe_key = ANY($2::text[])`,
+    [sourceNames, sourceReceiptKeys],
   );
   return result.rows;
 }

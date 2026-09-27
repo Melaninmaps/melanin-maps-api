@@ -221,6 +221,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("remainingCreateCount");
     expect(adminRoute).toContain("transaction.insert(businessesTable).values(nextBatch.map");
     expect(adminRoute).toContain("all-or-nothing publication");
+    expect(adminRoute).toContain("REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g')");
+    expect(adminRoute).toContain("dedupe_key = ANY($2::text[])");
     expect(adminScreen).toContain("Founder source directory intake");
     expect(adminScreen).toContain("api/admin/directory-intake/source-backed");
     expect(adminScreen).toContain("Publish all remaining");
