@@ -4296,6 +4296,7 @@ export default function Admin() {
                   }}
                   placeholder="Search a business name or key phrase"
                   aria-label="Search business names and key phrases"
+                  title={'Use quotes for one exact phrase, for example "full wash and detangle".'}
                   className="w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] sm:w-72"
                 />
                 <button
@@ -4597,7 +4598,7 @@ export default function Admin() {
             </div>
 
             <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
-              Filters combine: select one or more cities, then add business type, source cohort, website/social, date, and name/key-phrase filters to narrow the same review list.
+              Filters combine: select one or more cities, then add business type, source cohort, website/social, date, and name/key-phrase filters to narrow the same review list. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
             </p>
 
             {bizStatusFilter === "permanently_closed" && (

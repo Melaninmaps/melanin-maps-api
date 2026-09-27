@@ -62,6 +62,25 @@ function parseAdminCityFilters(value: unknown): string[] {
   ].slice(0, 50);
 }
 
+/**
+ * Quotes preserve a single exact phrase for the inventory search. Unquoted
+ * terms stay individually searchable so an administrator can still narrow a
+ * list with ordinary words. LIKE metacharacters are escaped at query time.
+ */
+function parseAdminBusinessSearchTerms(value: string): string[] {
+  const terms: string[] = [];
+  const matcher = /["“]([^"”]+)["”]|([^\s]+)/g;
+  for (const match of value.matchAll(matcher)) {
+    const term = (match[1] ?? match[2] ?? "").replace(/\s+/g, " ").trim();
+    if (term) terms.push(term);
+  }
+  return [...new Set(terms)].slice(0, 12);
+}
+
+function escapeAdminBusinessSearchTerm(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
 type AdminBusinessInventoryQuery = Readonly<{
   search?: unknown;
   city?: unknown;
@@ -154,13 +173,13 @@ async function compileAdminBusinessInventoryFilters(
     filters.push(clause.replace("?", `$${filterParams.length}`));
   };
 
-  if (search) {
+  for (const term of parseAdminBusinessSearchTerms(search)) {
     addFilter(
-      "(name ILIKE ? OR city ILIKE ? OR category ILIKE ? OR COALESCE(subcategory, '') ILIKE ? OR COALESCE(description, '') ILIKE ? OR COALESCE(tags::text, '') ILIKE ? OR COALESCE(vibes::text, '') ILIKE ? OR COALESCE(website, '') ILIKE ? OR COALESCE(instagram, '') ILIKE ? OR COALESCE(tiktok, '') ILIKE ? OR COALESCE(facebook, '') ILIKE ? OR COALESCE(twitter, '') ILIKE ? OR COALESCE(youtube, '') ILIKE ? OR COALESCE(pinterest, '') ILIKE ?)",
-      `%${search}%`,
+      "(name ILIKE ? ESCAPE '\\' OR city ILIKE ? ESCAPE '\\' OR category ILIKE ? ESCAPE '\\' OR COALESCE(subcategory, '') ILIKE ? ESCAPE '\\' OR COALESCE(description, '') ILIKE ? ESCAPE '\\' OR COALESCE(tags::text, '') ILIKE ? ESCAPE '\\' OR COALESCE(vibes::text, '') ILIKE ? ESCAPE '\\' OR COALESCE(website, '') ILIKE ? ESCAPE '\\' OR COALESCE(instagram, '') ILIKE ? ESCAPE '\\' OR COALESCE(tiktok, '') ILIKE ? ESCAPE '\\' OR COALESCE(facebook, '') ILIKE ? ESCAPE '\\' OR COALESCE(twitter, '') ILIKE ? ESCAPE '\\' OR COALESCE(youtube, '') ILIKE ? ESCAPE '\\' OR COALESCE(pinterest, '') ILIKE ? ESCAPE '\\')",
+      `%${escapeAdminBusinessSearchTerm(term)}%`,
     );
     const parameter = `$${filterParams.length}`;
-    filters[filters.length - 1] = `(name ILIKE ${parameter} OR city ILIKE ${parameter} OR category ILIKE ${parameter} OR COALESCE(subcategory, '') ILIKE ${parameter} OR COALESCE(description, '') ILIKE ${parameter} OR COALESCE(tags::text, '') ILIKE ${parameter} OR COALESCE(vibes::text, '') ILIKE ${parameter} OR COALESCE(website, '') ILIKE ${parameter} OR COALESCE(instagram, '') ILIKE ${parameter} OR COALESCE(tiktok, '') ILIKE ${parameter} OR COALESCE(facebook, '') ILIKE ${parameter} OR COALESCE(twitter, '') ILIKE ${parameter} OR COALESCE(youtube, '') ILIKE ${parameter} OR COALESCE(pinterest, '') ILIKE ${parameter})`;
+    filters[filters.length - 1] = `(name ILIKE ${parameter} ESCAPE '\\' OR city ILIKE ${parameter} ESCAPE '\\' OR category ILIKE ${parameter} ESCAPE '\\' OR COALESCE(subcategory, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(description, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(tags::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(vibes::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(website, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(instagram, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(tiktok, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(facebook, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(twitter, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(youtube, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(pinterest, '') ILIKE ${parameter} ESCAPE '\\')`;
   }
   if (cityFilters.length > 0) {
     filterParams.push(cityFilters);

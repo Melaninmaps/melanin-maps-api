@@ -122,6 +122,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     ]) {
       expect(adminRoute).toContain(field);
     }
+    expect(adminRoute).toContain("function parseAdminBusinessSearchTerms");
+    expect(adminRoute).toContain("function escapeAdminBusinessSearchTerm");
+    expect(adminRoute).toContain("ILIKE ${parameter} ESCAPE");
+    expect(adminScreen).toContain("Use quotes for one exact phrase");
   });
 
   it("publishes saved Admin links and profile categories to fresh web and mobile profile reads", () => {

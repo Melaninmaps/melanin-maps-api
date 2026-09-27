@@ -10,7 +10,9 @@ import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
   dietaryRequirementSearchPatterns,
+  documentedServiceRequirementSearchPatterns,
   matchesDocumentedDietaryRequirement,
+  matchesDocumentedServiceRequirement,
   type NormalizedBusinessSubject,
 } from "./business-subject";
 import { canonicalizeContextualUrl } from "./contextual-url";
@@ -358,6 +360,15 @@ function subjectMatchReasons(
   ) {
     return [];
   }
+  if (
+    subject.documentedServiceRequirement &&
+    !matchesDocumentedServiceRequirement(
+      business,
+      subject.documentedServiceRequirement,
+    )
+  ) {
+    return [];
+  }
   const terms = subject.searchTerms.map((term) => term.toLowerCase());
   const structuredText = [
     business.name,
@@ -393,9 +404,15 @@ function subjectMatchReasons(
       fieldMatches(specialty, "specialty"),
     ),
   ];
-  return subject.dietaryRequirement
-    ? [...reasons, `dietary: ${subject.dietaryRequirement.label}`]
-    : reasons;
+  return [
+    ...reasons,
+    ...(subject.dietaryRequirement
+      ? [`dietary: ${subject.dietaryRequirement.label}`]
+      : []),
+    ...(subject.documentedServiceRequirement
+      ? [`service detail: ${subject.documentedServiceRequirement.label}`]
+      : []),
+  ];
 }
 
 export type GovernedDuplicateSuppression = Readonly<{
@@ -519,13 +536,18 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       const dietaryPatterns = subject.dietaryRequirement
         ? dietaryRequirementSearchPatterns(subject.dietaryRequirement)
         : [];
+      const documentedServicePatterns = subject.documentedServiceRequirement
+        ? documentedServiceRequirementSearchPatterns(
+            subject.documentedServiceRequirement,
+          )
+        : [];
       const vibeKeys = subject.vibeKeys ?? [];
       if (!patterns.length) return [];
       const designationIds = normalizeOwnershipDesignationFilterIds(requiredDesignationIds);
       const designationValueGroups = designationIds.map((id) => ownershipDesignationStorageValues(id).values);
       const designationClauses = designationValueGroups
         .map((_, index) => {
-          const parameter = 8 + index;
+          const parameter = 9 + index;
           return `AND ${buildDesignationPredicateSql(designationIds[index], "b.ownership_designations", parameter)}`;
         })
         .join("");
@@ -587,6 +609,25 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
               FROM public.business_specialties AS specialty
               WHERE specialty.business_id::text = b.id::text
                 AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($7::text[])
+              )
+          )
+          -- A quoted or recognized service detail is a documented-evidence
+          -- requirement inside the already-matched service category. It never
+          -- substitutes for the governed service classification above.
+          AND (
+            cardinality($8::text[]) = 0
+            OR LOWER(CONCAT_WS(' ',
+              b.name,
+              b.category,
+              b.subcategory,
+              b.description,
+              COALESCE(b.tags, '[]'::jsonb)::text
+            )) ~ ANY($8::text[])
+            OR EXISTS (
+              SELECT 1
+              FROM public.business_specialties AS specialty
+              WHERE specialty.business_id::text = b.id::text
+                AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($8::text[])
             )
           )
           ${designationClauses}
@@ -622,6 +663,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           subject.key,
           vibeKeys,
           dietaryPatterns,
+          documentedServicePatterns,
           ...designationValueGroups,
         ],
       );

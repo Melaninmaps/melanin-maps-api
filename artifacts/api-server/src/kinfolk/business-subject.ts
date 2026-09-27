@@ -41,11 +41,18 @@ export type NormalizedBusinessSubject = Readonly<{
   vibeKeys?: readonly string[];
   /** A current-turn dietary requirement that every returned card must document. */
   dietaryRequirement?: DietaryRequirement;
+  /** A current-turn service detail that every returned card must document. */
+  documentedServiceRequirement?: DocumentedServiceRequirement;
 }>;
 
 export type DietaryRequirement = Readonly<{
   key: "vegan";
   label: "vegan";
+  searchTerms: readonly string[];
+}>;
+
+export type DocumentedServiceRequirement = Readonly<{
+  label: string;
   searchTerms: readonly string[];
 }>;
 
@@ -370,11 +377,45 @@ const VEGAN_REQUIREMENT: DietaryRequirement = {
   searchTerms: ["vegan", "plant based", "plant-based"],
 };
 
+const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "washing service included",
+  searchTerms: [
+    "full wash and detangle",
+    "wash and detangle",
+    "washing and detangling",
+    "wash and braid",
+    "wash and braiding",
+    "wash and style",
+  ],
+};
+
 export function deriveDietaryRequirement(
   message: string,
 ): DietaryRequirement | undefined {
   return /\b(?:vegan|plant[ -]?based)\b/i.test(message)
     ? VEGAN_REQUIREMENT
+    : undefined;
+}
+
+function quotedServiceRequirement(
+  message: string,
+): DocumentedServiceRequirement | undefined {
+  // Quotes deliberately turn a member's test/search phrase into a literal
+  // published-evidence requirement. Bound the phrase to avoid a broad scan.
+  const match = /["“]([^"”]{3,100})["”]/.exec(message);
+  const phrase = match?.[1]?.replace(/\s+/g, " ").trim();
+  return phrase ? { label: phrase, searchTerms: [phrase] } : undefined;
+}
+
+export function deriveDocumentedServiceRequirement(
+  message: string,
+): DocumentedServiceRequirement | undefined {
+  const quoted = quotedServiceRequirement(message);
+  if (quoted) return quoted;
+  return /\b(?:full\s+wash\s+and\s+detangle|wash\s+and\s+detangle|washing\s+and\s+detangling|wash\s+and\s+braid(?:ing)?|wash\s+and\s+style)\b/i.test(
+    message,
+  )
+    ? WASHING_SERVICE_REQUIREMENT
     : undefined;
 }
 
@@ -414,6 +455,7 @@ export function deriveBusinessSubject(
         searchTerms: salon.searchTerms,
         vibeKeys: findVibeKeysForSearch(message),
         dietaryRequirement: deriveDietaryRequirement(message),
+        documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
       };
     }
     const booksAsShoppingRequest =
@@ -429,6 +471,7 @@ export function deriveBusinessSubject(
       searchTerms: bookstore.searchTerms,
       vibeKeys: findVibeKeysForSearch(message),
       dietaryRequirement: deriveDietaryRequirement(message),
+      documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
     };
   }
   return {
@@ -437,6 +480,7 @@ export function deriveBusinessSubject(
     searchTerms: subject.searchTerms,
     vibeKeys: findVibeKeysForSearch(message),
     dietaryRequirement: deriveDietaryRequirement(message),
+    documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
   };
 }
 
@@ -526,6 +570,41 @@ export function matchesDocumentedDietaryRequirement(
   });
 }
 
+/**
+ * A documented service detail can refine a known business category, but cannot
+ * independently qualify a listing. This keeps a salon search specific without
+ * treating incidental description text as a standalone service taxonomy.
+ */
+export function matchesDocumentedServiceRequirement(
+  business: Readonly<{
+    name?: string | null;
+    category?: string | null;
+    subcategory?: string | null;
+    description?: string | null;
+    tags?: readonly string[] | null;
+    specialties?: readonly string[] | null;
+  }>,
+  requirement: DocumentedServiceRequirement,
+): boolean {
+  const evidence = [
+    business.name ?? "",
+    business.category ?? "",
+    business.subcategory ?? "",
+    business.description ?? "",
+    ...(business.tags ?? []),
+    ...(business.specialties ?? []),
+  ]
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!evidence) return false;
+  return requirement.searchTerms.some((term) => {
+    const phrase = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
+  });
+}
+
 function searchTermPatterns(searchTerms: readonly string[]): string[] {
   return searchTerms
     .map((term) => term.trim().toLowerCase())
@@ -550,6 +629,12 @@ export function businessSubjectSearchPatterns(
 
 export function dietaryRequirementSearchPatterns(
   requirement: DietaryRequirement,
+): string[] {
+  return searchTermPatterns(requirement.searchTerms);
+}
+
+export function documentedServiceRequirementSearchPatterns(
+  requirement: DocumentedServiceRequirement,
 ): string[] {
   return searchTermPatterns(requirement.searchTerms);
 }

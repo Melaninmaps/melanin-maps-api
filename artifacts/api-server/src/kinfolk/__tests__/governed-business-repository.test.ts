@@ -315,6 +315,7 @@ describe("governed Kinfolk business repository", () => {
       "bookstore",
       [],
       [],
+      [],
     ]);
   });
 
@@ -357,6 +358,7 @@ describe("governed Kinfolk business repository", () => {
       ["\\msenior[[:space:]-]+support\\M", "\\msenior[[:space:]-]+care\\M", "\\mhome[[:space:]-]+care\\M", "\\mcaregiver\\M"],
       12,
       "senior_home_care",
+      [],
       [],
       [],
     ]);
@@ -409,6 +411,63 @@ describe("governed Kinfolk business repository", () => {
       "restaurant",
       [],
       ["\\mvegan\\M", "\\mplant[[:space:]-]+based\\M", "\\mplant[[:space:]-]+based\\M"],
+      [],
+    ]);
+  });
+
+  it("requires a documented wash-service phrase after matching the salon category", async () => {
+    const subject = deriveBusinessSubject(
+      'Find a salon in Philadelphia with "full wash and detangle"',
+    )!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "wash-included-salon",
+        name: "Care First Salon",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Appointments include a full wash and detangle before styling.",
+        tags: ["natural hair care"],
+        specialties: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "no-wash-documentation",
+        name: "Quick Braids Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Protective styling appointments.",
+        tags: ["braiding"],
+        specialties: [],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: "wash-included-salon",
+        matchReasons: expect.arrayContaining([
+          "subcategory",
+          "service detail: full wash and detangle",
+        ]),
+      }),
+    ]);
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("documented-evidence");
+    expect(sql).toContain("cardinality($8::text[]) = 0");
+    expect(params).toEqual([
+      "Philadelphia",
+      "PA",
+      ["\\msalon\\M", "\\mhair[[:space:]-]+salon\\M", "\\mhair[[:space:]-]+stylist\\M", "\\mhair[[:space:]-]+color\\M", "\\mwash[[:space:]-]+and[[:space:]-]+style\\M"],
+      12,
+      "salon",
+      subject.vibeKeys ?? [],
+      [],
+      ["\\mfull[[:space:]-]+wash[[:space:]-]+and[[:space:]-]+detangle\\M"],
     ]);
   });
 
