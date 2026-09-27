@@ -77,6 +77,23 @@ describe("mobile Community feed recovery", () => {
     expect(modal).toContain("<Text style={m.initials}>{post.authorInitials}</Text>");
   });
 
+  it("opens a recorded reaction member list without bypassing member profiles", () => {
+    const card = readFileSync(
+      fileURLToPath(new URL("../components/CommunityPostCard.tsx", import.meta.url)),
+      "utf8",
+    );
+    const reactions = readFileSync(
+      fileURLToPath(new URL("../components/CommunityReactionsModal.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(source).toContain("<CommunityReactionsModal");
+    expect(source).toContain("onLikesPress={() => setReactionTarget(item)}");
+    expect(card).toContain("See ${likeCount} member${likeCount === 1 ? \"\" : \"s\"} who liked this post");
+    expect(reactions).toContain("/api/community/posts/${postId}/reactions");
+    expect(reactions).toContain("router.push(`/user/${item.userId}` as never)");
+    expect(reactions).toContain("hasUnattributedLikes");
+  });
+
   it("keeps Conversation, Community Mix, and Watch as accessible presentation-only choices", () => {
     const card = readFileSync(
       fileURLToPath(new URL("../components/CommunityPostCard.tsx", import.meta.url)),

@@ -284,6 +284,18 @@ function serializeCommunityPost(row: Record<string, any>) {
   };
 }
 
+async function fetchViewerReactionIds(postIds: string[], viewerId: string): Promise<Set<string>> {
+  if (postIds.length === 0) return new Set();
+  const { rows } = await pool.query<{ post_id: string }>(
+    `SELECT post_id
+       FROM community_post_reactions
+      WHERE user_id = $1
+        AND post_id = ANY($2::varchar[])`,
+    [viewerId, postIds],
+  );
+  return new Set(rows.map((row) => row.post_id));
+}
+
 // GET /community/social-video-preview — safe, ephemeral cover metadata for canonical TikTok posts.
 // This route never fetches the supplied URL. The provider URL is validated again inside
 // fetchTikTokVideoPreview, and other community attachments retain their existing rendering.
@@ -375,6 +387,8 @@ router.get("/community/posts", async (req: Request, res: Response) => {
           offset,
         });
 
+    const likedPostIds = await fetchViewerReactionIds(rows.map((row) => row.id), req.user.id);
+
     // Map snake_case → camelCase to match existing shape
     const posts = rows.map((r: any) => ({
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
@@ -407,7 +421,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       mentionedBusinessName: r.mentioned_business_name ?? null,
       mentionedBusinessTag: r.mentioned_business_tag ?? null,
       mentionedBusinessRating: r.mentioned_business_rating ?? null,
-      upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count,
+      upvotes: r.upvotes, downvotes: r.downvotes, liked: likedPostIds.has(r.id), commentsCount: r.comments_count,
       threadId: r.thread_id ?? null, threadPosition: r.thread_position ?? 1, threadTotal: r.thread_total ?? 1,
       createdAt: r.created_at,
     }));
@@ -1007,20 +1021,58 @@ router.post("/community/posts/:id/vote", async (req: Request, res: Response) => 
     const id = req.params["id"] as string;
     const voterId = req.user?.id as string | undefined;
     const { direction } = req.body as { direction: "up" | "down" };
+    if (!voterId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
     if (!["up", "down"].includes(direction)) {
       res.status(400).json({ error: "direction must be 'up' or 'down'" });
       return;
     }
-    const col = direction === "up" ? communityPostsTable.upvotes : communityPostsTable.downvotes;
-    const [post] = await db
-      .update(communityPostsTable)
-      .set({ [direction === "up" ? "upvotes" : "downvotes"]: sql`${col} + 1` })
-      .where(eq(communityPostsTable.id, id))
-      .returning();
+
+    const access = await resolveCommentAccess(id, voterId);
+    // Reactions follow the same visibility and block boundaries as the post
+    // itself. Return a neutral not-found response rather than revealing a
+    // private or blocked post's existence.
+    if (!access.post || !access.canView) {
+      res.status(404).json({ error: "Post not found" });
+      return;
+    }
+
+    const changed = direction === "up"
+      ? await pool.query<{ post_id: string }>(
+          `INSERT INTO community_post_reactions (post_id, user_id)
+           VALUES ($1, $2)
+           ON CONFLICT (post_id, user_id) DO NOTHING
+           RETURNING post_id`,
+          [id, voterId],
+        )
+      : await pool.query<{ post_id: string }>(
+          `DELETE FROM community_post_reactions
+            WHERE post_id = $1 AND user_id = $2
+            RETURNING post_id`,
+          [id, voterId],
+        );
+
+    const [post] = changed.rows.length > 0
+      ? await db
+          .update(communityPostsTable)
+          .set({
+            upvotes: direction === "up"
+              ? sql`${communityPostsTable.upvotes} + 1`
+              : sql`GREATEST(${communityPostsTable.upvotes} - 1, 0)`,
+          })
+          .where(eq(communityPostsTable.id, id))
+          .returning()
+      : await db
+          .select()
+          .from(communityPostsTable)
+          .where(eq(communityPostsTable.id, id))
+          .limit(1);
     if (!post) { res.status(404).json({ error: "Post not found" }); return; }
 
-    // Send push notification to post author on upvote (but not if they liked their own post)
-    if (direction === "up" && post.authorId && post.authorId !== voterId) {
+    // Send a push only for a newly recorded like, never for a repeat request.
+    if (direction === "up" && changed.rows.length > 0 && post.authorId && post.authorId !== voterId) {
       const preview = post.content.length > 60 ? post.content.slice(0, 60) + "…" : post.content;
       sendPushToUser(post.authorId, {
         title: "Someone liked your post 👍🏾",
@@ -1029,10 +1081,62 @@ router.post("/community/posts/:id/vote", async (req: Request, res: Response) => 
       }).catch(() => {});
     }
 
-    res.json({ post });
+    res.json({ post, liked: direction === "up" });
   } catch (err) {
     req.log.error({ err }, "Failed to vote on post");
     res.status(500).json({ error: "Failed to vote" });
+  }
+});
+
+// GET /community/posts/:id/reactions — members who visibly liked an accessible post.
+router.get("/community/posts/:id/reactions", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const postId = req.params["id"] as string;
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Post not found" }); return; }
+
+    const [{ rows: members }, { rows: totals }] = await Promise.all([
+      pool.query<{
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        username: string | null;
+        profileImageUrl: string | null;
+      }>(`
+        SELECT
+          r.user_id AS "userId",
+          u.first_name AS "firstName",
+          u.last_name AS "lastName",
+          u.username AS username,
+          u.profile_image_url AS "profileImageUrl"
+        FROM community_post_reactions r
+        INNER JOIN users u ON u.id = r.user_id
+        WHERE r.post_id = $1
+          AND NOT EXISTS (
+            SELECT 1
+            FROM user_blocks ub
+            WHERE (ub.blocker_id = $2 AND ub.blocked_id = r.user_id)
+               OR (ub.blocker_id = r.user_id AND ub.blocked_id = $2)
+          )
+        ORDER BY r.created_at DESC
+        LIMIT 100`, [postId, req.user.id]),
+      pool.query<{ upvotes: number }>(
+        `SELECT upvotes FROM community_posts WHERE id = $1 LIMIT 1`,
+        [postId],
+      ),
+    ]);
+    const totalLikes = Number(totals[0]?.upvotes ?? 0);
+    res.json({
+      members,
+      totalLikes,
+      // Legacy totals are retained without fabrication. This flag tells clients
+      // when the aggregate has more likes than safely attributable accounts.
+      hasUnattributedLikes: totalLikes > members.length,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch post reactions");
+    res.status(500).json({ error: "Failed to fetch post reactions" });
   }
 });
 

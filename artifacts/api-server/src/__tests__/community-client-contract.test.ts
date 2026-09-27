@@ -12,11 +12,30 @@ describe("Community client contract", () => {
 
   it("uses the protected vote endpoint and authenticated native requests", () => {
     expect(web).toContain("api/community/posts/${postId}/vote");
-    expect(web).toContain('body: JSON.stringify({ direction: "up" })');
+    expect(web).toContain("body: JSON.stringify({ direction })");
     expect(web).not.toContain("api/community/posts/${postId}/upvote");
     expect(mobile).toContain("Authorization: `Bearer ${token}`");
     expect(mobile).toContain('body: JSON.stringify({ direction: next ? "up" : "down" })');
     expect(mobile).toContain("Could not save your reaction");
+  });
+
+  it("exposes only accessible, recorded member reactions through profile links", () => {
+    const route = source("../routes/community.ts");
+    const mobileFeed = source("../../../mobile/app/(tabs)/community.tsx");
+    const reactionsModal = source("../../../mobile/components/CommunityReactionsModal.tsx");
+
+    expect(route).toContain('router.get("/community/posts/:id/reactions"');
+    expect(route).toContain("resolveCommentAccess(postId, req.user.id)");
+    expect(route).toContain("community_post_reactions");
+    expect(route).toContain("FROM user_blocks ub");
+    expect(route).toContain("hasUnattributedLikes: totalLikes > members.length");
+    expect(route).toContain("fetchViewerReactionIds");
+    expect(web).toContain("community-reactions-dialog");
+    expect(web).toContain("href={`/members/${encodeURIComponent(member.userId)}`}");
+    expect(mobile).toContain("onLikesPress?: () => void");
+    expect(mobileFeed).toContain("<CommunityReactionsModal");
+    expect(reactionsModal).toContain("/api/community/posts/${postId}/reactions");
+    expect(reactionsModal).toContain("router.push(`/user/${item.userId}` as never)");
   });
 
   it("connects web reporting and blocking to existing protected routes", () => {

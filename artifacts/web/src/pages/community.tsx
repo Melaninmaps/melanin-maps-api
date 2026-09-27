@@ -25,6 +25,7 @@ interface Post {
   authorProfileImageUrl?: string;
   content: string;
   upvotes: number;
+  liked?: boolean;
   commentsCount: number;
   commentPolicy?: "everyone" | "followers" | "off";
   createdAt: string;
@@ -39,6 +40,20 @@ interface Post {
   hasContentWarning?: boolean;
   contentWarningType?: string;
   audienceRating?: string;
+}
+
+interface ReactionMember {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  profileImageUrl: string | null;
+}
+
+interface ReactionsResponse {
+  members?: ReactionMember[];
+  totalLikes?: number;
+  hasUnattributedLikes?: boolean;
 }
 
 interface CommunityEvent {
@@ -133,14 +148,77 @@ function normalizeMediaUrls(value: unknown): string[] | undefined {
   return undefined;
 }
 
+function reactionMemberName(member: ReactionMember): string {
+  return [member.firstName, member.lastName].filter(Boolean).join(" ") || member.username || "Community member";
+}
+
+function reactionMemberInitials(member: ReactionMember): string {
+  return `${member.firstName?.[0] ?? ""}${member.lastName?.[0] ?? ""}`.toUpperCase()
+    || member.username?.slice(0, 2).toUpperCase()
+    || "M";
+}
+
+function ReactionsDialog({ post, onClose }: { post: Post; onClose: () => void }) {
+  const [data, setData] = useState<ReactionsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(post.id)}/reactions`, { signal: controller.signal })
+      .then(async (response) => response.ok ? response.json() as Promise<ReactionsResponse> : null)
+      .then((response) => setData(response))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+    return () => controller.abort();
+  }, [post.id]);
+
+  const totalLikes = data?.totalLikes ?? post.upvotes;
+  const members = data?.members ?? [];
+  return (
+    <div data-testid="community-reactions-dialog" className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={onClose}>
+      <section role="dialog" aria-modal="true" aria-labelledby="community-reactions-title" className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="community-reactions-title" className="font-serif text-xl font-bold text-[#2B1507]">Liked by</h2>
+            <p className="mt-1 text-sm text-[#3A1F0E]/60">{totalLikes} {totalLikes === 1 ? "like" : "likes"}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close likes" className="rounded-full bg-[#FAF6EF] p-2 text-[#3A1F0E]/60 hover:text-[#2B1507]"><X className="h-4 w-4" /></button>
+        </div>
+        {loading ? (
+          <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#CA922B]" /></div>
+        ) : members.length ? (
+          <div className="mt-5 space-y-2">
+            {members.map((member) => (
+              <Link key={member.userId} href={`/members/${encodeURIComponent(member.userId)}`} onClick={onClose} className="flex items-center gap-3 rounded-2xl px-2 py-2 hover:bg-[#FAF6EF]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#CA922B] text-sm font-bold text-white">
+                  {member.profileImageUrl ? <img src={member.profileImageUrl} alt="" className="h-full w-full object-cover" /> : reactionMemberInitials(member)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-[#2B1507]">{reactionMemberName(member)}</span>
+                  {member.username ? <span className="block truncate text-xs text-[#3A1F0E]/55">@{member.username}</span> : null}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 rounded-2xl bg-[#FAF6EF] p-4 text-sm leading-6 text-[#3A1F0E]/65">No visible member profiles are available for these likes yet.</p>
+        )}
+        {data?.hasUnattributedLikes ? <p className="mt-4 text-xs leading-5 text-[#3A1F0E]/50">The total includes earlier likes that were counted before individual member lists were available.</p> : null}
+      </section>
+    </div>
+  );
+}
+
 // ── Post Card ──────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpenComments, presentation = "mixed" }: {
-  post: Post; onLike: (id: string) => void; onDelete: (id: string) => void;
+function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpenComments, onOpenReactions, presentation = "mixed" }: {
+  post: Post; onLike: (id: string, direction: "up" | "down") => Promise<boolean>; onDelete: (id: string) => void;
   currentUserId?: string; onHashtagClick: (tag: string) => void;
   onOpenComments: (post: Post) => void;
+  onOpenReactions: (post: Post) => void;
   presentation?: CommunityFeedDisplay;
 }) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(Boolean(post.liked));
   const [likes, setLikes] = useState(post.upvotes);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(post.hasContentWarning ?? false);
@@ -153,14 +231,22 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
       ))}
     </div>
   ) : null;
+  useEffect(() => { setLiked(Boolean(post.liked)); }, [post.id, post.liked]);
+  useEffect(() => { setLikes(post.upvotes); }, [post.id, post.upvotes]);
   // This account-level choice changes only the order of presentation inside the
   // same permitted post card. It does not change post eligibility or ranking.
   const showMediaBeforeText = Boolean(media) && presentation !== "text_first";
 
-  const handleLike = () => {
-    setLiked(l => !l);
-    setLikes(l => liked ? l - 1 : l + 1);
-    onLike(post.id);
+  const handleLike = async () => {
+    const previous = liked;
+    const next = !previous;
+    setLiked(next);
+    setLikes((count) => next ? count + 1 : Math.max(0, count - 1));
+    const saved = await onLike(post.id, next ? "up" : "down");
+    if (!saved) {
+      setLiked(previous);
+      setLikes((count) => previous ? count + 1 : Math.max(0, count - 1));
+    }
   };
 
   const updateCommentPolicy = async (next: "everyone" | "followers" | "off") => {
@@ -308,11 +394,13 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
 
       {/* Footer */}
       <div className="flex items-center gap-4 px-4 py-3 border-t border-[#3A1F0E]/6">
-        <button onClick={handleLike}
-          className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${liked ? "text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#CA922B]"}`}>
+        <button onClick={() => { void handleLike(); }}
+          aria-label={liked ? "Remove reaction from post" : "React to post"}
+          aria-pressed={liked}
+          className={`flex items-center text-sm font-medium transition-colors ${liked ? "text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#CA922B]"}`}>
           <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
-          <span>{likes > 0 ? likes : ""}</span>
         </button>
+        {likes > 0 ? <button type="button" onClick={() => onOpenReactions(post)} aria-label={`See ${likes} member${likes === 1 ? "" : "s"} who liked this post`} className="-ml-3 text-sm font-medium text-[#3A1F0E]/50 hover:text-[#CA922B] hover:underline">{likes} {likes === 1 ? "like" : "likes"}</button> : null}
         <button data-testid={`community-post-comments-${post.id}`} onClick={() => onOpenComments(post)} disabled={commentPolicy === "off"}
           className="flex items-center gap-1.5 text-sm font-medium text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors disabled:cursor-not-allowed disabled:opacity-60">
           <MessageSquare className="w-4 h-4" />
@@ -855,6 +943,7 @@ export default function Community() {
   const [loadErrorRequestId, setLoadErrorRequestId] = useState<string | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [commentTarget, setCommentTarget] = useState<{ postId: string; label: string } | null>(null);
+  const [reactionTarget, setReactionTarget] = useState<Post | null>(null);
   const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
   const [trending, setTrending] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -919,6 +1008,7 @@ export default function Community() {
           authorProfileImageUrl: p.authorProfileImageUrl as string | undefined,
           content: p.content as string,
           upvotes: (p.upvotes as number) ?? 0,
+          liked: Boolean(p.liked),
           commentsCount: (p.commentsCount as number) ?? 0,
           commentPolicy: (["everyone", "followers", "off"].includes(String(p.commentPolicy)) ? p.commentPolicy : "everyone") as Post["commentPolicy"],
           createdAt: p.createdAt as string,
@@ -955,15 +1045,20 @@ export default function Community() {
       .catch(() => {});
   }, []);
 
-  const handleLike = async (postId: string) => {
-    if (!isAuthenticated) { toast({ title: "Sign in to like posts" }); return; }
+  const handleLike = async (postId: string, direction: "up" | "down"): Promise<boolean> => {
+    if (!isAuthenticated) { toast({ title: "Sign in to like posts" }); return false; }
     try {
-      await authenticatedFetch(`${BASE}api/community/posts/${postId}/vote`, {
+      const response = await authenticatedFetch(`${BASE}api/community/posts/${postId}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ direction: "up" }),
+        body: JSON.stringify({ direction }),
       });
-    } catch { /* ignore */ }
+      if (!response.ok) throw new Error("reaction failed");
+      return true;
+    } catch {
+      toast({ title: "Could not save your reaction", description: "Your reaction was not changed. Please try again.", variant: "destructive" });
+      return false;
+    }
   };
 
   const handleDelete = async (postId: string) => {
@@ -1194,6 +1289,7 @@ export default function Community() {
                     presentation={communityFeedDisplay}
                     onHashtagClick={tag => setHashtagFilter(hashtagFilter === tag ? null : tag)}
                     onOpenComments={selected => setCommentTarget({ postId: selected.id, label: selected.content })}
+                    onOpenReactions={setReactionTarget}
                   />
                 ))}
               </div>
@@ -1241,6 +1337,7 @@ export default function Community() {
       )}
 
       {/* Compose modal */}
+      {reactionTarget ? <ReactionsDialog post={reactionTarget} onClose={() => setReactionTarget(null)} /> : null}
       {showCompose && <ComposeModal groupId={activeGroupId ?? undefined} groupName={activeGroupId ? activeGroupName : undefined} onClose={() => setShowCompose(false)} onPost={p => setPosts(ps => [p, ...ps])} />}
       {commentTarget && <CommentsDialog
         postId={commentTarget.postId}

@@ -23,6 +23,7 @@ interface Props {
   currentUserId?: string;
   onCommentPress?: () => void;
   onLikeChange?: (liked: boolean) => void;
+  onLikesPress?: () => void;
   onAuthorPress?: (authorId: string) => void;
   onLocationPress?: (locationTag: string) => void;
   onTopicPress?: (topicTag: string) => void;
@@ -427,7 +428,7 @@ function BusinessMentionCard({ businessId, businessName, stanceTag, rating }: {
   );
 }
 
-export function CommunityPostCard({ post, presentation = "mixed", currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress, onHashtagPress }: Props) {
+export function CommunityPostCard({ post, presentation = "mixed", currentUserId, onCommentPress, onLikeChange, onLikesPress, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress, onHashtagPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -435,6 +436,9 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const [showBizCard, setShowBizCard] = useState(false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
   const [captionExpanded, setCaptionExpanded] = useState(false);
+
+  useEffect(() => { setLiked(post.liked); }, [post.id, post.liked]);
+  useEffect(() => { setLikeCount(post.likes); }, [post.id, post.likes]);
 
   const isOwnPost = !!(currentUserId && post.authorId && currentUserId === post.authorId);
 
@@ -830,17 +834,29 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
 
       {/* Footer actions */}
       <View style={[s.footer, { borderTopColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={handleLike}
-          style={s.action}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={liked ? "Remove reaction from post" : "React to post"}
-          accessibilityState={{ selected: liked }}
-        >
-          <Feather name="heart" size={16} color={liked ? "#C4622D" : colors.mutedForeground} />
-          <Text style={[s.actionText, { color: liked ? "#C4622D" : colors.mutedForeground }]}>{likeCount}</Text>
-        </TouchableOpacity>
+        <View style={s.action}>
+          <TouchableOpacity
+            onPress={handleLike}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={liked ? "Remove reaction from post" : "React to post"}
+            accessibilityState={{ selected: liked }}
+          >
+            <Feather name="heart" size={16} color={liked ? "#C4622D" : colors.mutedForeground} />
+          </TouchableOpacity>
+          {likeCount > 0 && onLikesPress ? (
+            <TouchableOpacity
+              onPress={onLikesPress}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`See ${likeCount} member${likeCount === 1 ? "" : "s"} who liked this post`}
+            >
+              <Text style={[s.actionText, { color: liked ? "#C4622D" : colors.mutedForeground }]}>{likeCount} {likeCount === 1 ? "like" : "likes"}</Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={[s.actionText, { color: liked ? "#C4622D" : colors.mutedForeground }]}>{likeCount}</Text>
+          )}
+        </View>
         {commentPolicy === "off" ? (
           <View style={s.action} accessibilityLabel="Comments are off">
             <Feather name="message-circle" size={16} color={colors.mutedForeground} />

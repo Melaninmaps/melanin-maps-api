@@ -5785,6 +5785,12 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
       content TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS community_post_reactions (
+      post_id VARCHAR NOT NULL,
+      user_id VARCHAR NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (post_id, user_id)
+    );
     CREATE TABLE IF NOT EXISTS user_blocks (
       id SERIAL PRIMARY KEY,
       blocker_id VARCHAR NOT NULL,
@@ -5811,6 +5817,8 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
       ON community_posts (created_at DESC);
     CREATE INDEX IF NOT EXISTS community_post_comments_post_created_idx
       ON community_post_comments (post_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS community_post_reactions_post_created_idx
+      ON community_post_reactions (post_id, created_at DESC);
     CREATE UNIQUE INDEX IF NOT EXISTS user_blocks_unique_idx
       ON user_blocks (blocker_id, blocked_id);
     CREATE UNIQUE INDEX IF NOT EXISTS user_follows_unique_idx
@@ -5822,6 +5830,7 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
   const required = [
     ["community_posts", ["id", "author_id", "author_name", "author_initials", "author_color", "content", "category", "upvotes", "downvotes", "created_at"]],
     ["community_post_comments", ["post_id", "created_at"]],
+    ["community_post_reactions", ["post_id", "user_id", "created_at"]],
     ["user_blocks", ["blocker_id", "blocked_id"]],
     ["user_follows", ["follower_id", "following_id", "status"]],
     ["member_connections", ["requester_id", "recipient_id", "status"]],

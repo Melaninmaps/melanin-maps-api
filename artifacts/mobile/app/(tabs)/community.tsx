@@ -26,6 +26,7 @@ import { BusinessMentionPicker, type SelectedBusiness } from "@/components/Busin
 import { UserMentionPicker } from "@/components/UserMentionPicker";
 import { LocationPicker, type LocationSelection } from "@/components/LocationPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
+import { CommunityReactionsModal } from "@/components/CommunityReactionsModal";
 import { PostDetailModal } from "@/components/PostDetailModal";
 import { HappeningNowPanel, type HappeningNowStory } from "@/components/HappeningNowPanel";
 import { EventCard } from "@/components/EventCard";
@@ -126,7 +127,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
       ? raw.postType as CommunityPost["postType"]
       : "community"),
     groupId: typeof raw.groupId === "number" ? raw.groupId : undefined,
-    liked: false,
+    liked: raw.liked === true,
     businessId: (raw.businessId as string) ?? undefined,
     businessName: (raw.businessName as string) ?? undefined,
     businessLink: (raw.businessLink as string) ?? undefined,
@@ -280,6 +281,7 @@ export default function CommunityScreen() {
   const [newPostRatingReason, setNewPostRatingReason] = useState("");
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+  const [reactionTarget, setReactionTarget] = useState<CommunityPost | null>(null);
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
   const [editPostText, setEditPostText] = useState("");
   const [submittingEdit, setSubmittingEdit] = useState(false);
@@ -1488,6 +1490,7 @@ export default function CommunityScreen() {
                 currentUserId={user?.id}
                 onCommentPress={() => setSelectedPost(item)}
                 onAuthorPress={(id) => { router.push(`/user/${id}` as any); }}
+                onLikesPress={() => setReactionTarget(item)}
                 onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
                 onTopicPress={(tag) => router.push({ pathname: "/topic-feed", params: { topic: tag.toLowerCase() } } as any)}
                 onHashtagPress={(tag) => router.push({ pathname: "/hashtag-feed", params: { tag } } as any)}
@@ -1496,6 +1499,13 @@ export default function CommunityScreen() {
                 onDelete={(id) => handleDeletePost(id)}
               />
             )}
+          />
+
+          <CommunityReactionsModal
+            visible={reactionTarget !== null}
+            postId={reactionTarget?.id ?? null}
+            fallbackLikeCount={reactionTarget?.likes ?? 0}
+            onClose={() => setReactionTarget(null)}
           />
 
           <TouchableOpacity

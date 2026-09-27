@@ -17,6 +17,7 @@ describe("Community feed pre-traffic schema guard", () => {
     for (const table of [
       "community_posts",
       "community_post_comments",
+      "community_post_reactions",
       "user_blocks",
       "user_follows",
       "member_connections",
@@ -24,6 +25,7 @@ describe("Community feed pre-traffic schema guard", () => {
       expect(source).toContain(`CREATE TABLE IF NOT EXISTS ${table}`);
     }
     expect(source).toContain("user_blocks_unique_idx");
+    expect(source).toContain("community_post_reactions_post_created_idx");
     expect(source).toContain("Community feed schema verification failed");
     expect(source).not.toMatch(/DELETE\s+FROM\s+(?:community_posts|community_post_comments)/i);
   });
