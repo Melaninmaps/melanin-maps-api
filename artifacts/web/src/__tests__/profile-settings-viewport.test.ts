@@ -6,10 +6,6 @@ const profile = readFileSync(
   fileURLToPath(new URL("../pages/profile.tsx", import.meta.url)),
   "utf8",
 );
-const travel = readFileSync(
-  fileURLToPath(new URL("../pages/travel.tsx", import.meta.url)),
-  "utf8",
-);
 
 describe("profile settings viewport", () => {
   it("opens retained account controls without reinstating a second profile header or off-screen avatar", () => {
@@ -40,10 +36,18 @@ describe("profile settings viewport", () => {
     }
   });
 
-  it("provides a visible Profile entry point to the existing Kinfolk settings drawer", () => {
-    expect(profile).toContain('href="/travel?settings=kinfolk"');
-    expect(profile).toContain("KinfolkAI preferences");
-    expect(travel).toContain('new URLSearchParams(window.location.search).get("settings") === "kinfolk"');
-    expect(travel).toContain("const closePreferences = useCallback");
+  it("organizes retained controls into one visible settings folder at a time", () => {
+    expect(profile).toContain('type ProfileSettingsFolder = "profile" | "safety" | "kinfolk" | "community"');
+    expect(profile).toContain("Settings folders");
+    expect(profile).toContain("Profile & saved places");
+    expect(profile).toContain("Privacy, safety & security");
+    expect(profile).toContain("Kinfolk preferences");
+    expect(profile).toContain("Community & badges");
+    expect(profile).toContain('hidden={activeSettingsFolder !== "profile"}');
+    expect(profile).toContain('hidden={activeSettingsFolder !== "safety"}');
+    expect(profile).toContain('hidden={activeSettingsFolder !== "kinfolk"}');
+    expect(profile).toContain('hidden={activeSettingsFolder !== "community"}');
+    expect(profile).toContain('onClick={() => onOpenSettingsFolder("profile")}');
+    expect(profile).toContain('onClick={() => onOpenSettingsFolder("safety")}');
   });
 });

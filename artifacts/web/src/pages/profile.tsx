@@ -795,9 +795,39 @@ function BadgePanel({
 
 type ProfileHubSection = "overview" | "activity" | "saved" | "circles" | "settings";
 
+type ProfileSettingsFolder = "profile" | "safety" | "kinfolk" | "community";
+
+const PROFILE_SETTINGS_FOLDERS: ReadonlyArray<{
+  id: ProfileSettingsFolder;
+  title: string;
+  description: string;
+}> = [
+  {
+    id: "profile",
+    title: "Profile & saved places",
+    description: "Photo, name, bio, and saved businesses",
+  },
+  {
+    id: "safety",
+    title: "Privacy, safety & security",
+    description: "Visibility, alerts, password, and device access",
+  },
+  {
+    id: "kinfolk",
+    title: "Kinfolk preferences",
+    description: "Voice, memory controls, and recommendation preferences",
+  },
+  {
+    id: "community",
+    title: "Community & badges",
+    description: "Activity, badges, groups, and contributions",
+  },
+];
+
 type ProfileHubProps = {
   activeSection: ProfileHubSection;
   onSectionChange: (section: ProfileHubSection) => void;
+  onOpenSettingsFolder: (folder: ProfileSettingsFolder) => void;
   profile: any;
   avatarPreview: string | null;
   isPrivate: boolean;
@@ -827,6 +857,7 @@ type ProfileHubProps = {
 function SocialProfileHub({
   activeSection,
   onSectionChange,
+  onOpenSettingsFolder,
   profile,
   avatarPreview,
   isPrivate,
@@ -871,14 +902,14 @@ function SocialProfileHub({
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <button
               type="button"
-              onClick={() => onSectionChange("settings")}
+              onClick={() => onOpenSettingsFolder("profile")}
               className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-[#2B1507] transition-colors hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#4A2711]"
             >
               <Pencil className="h-4 w-4" /> Edit profile
             </button>
             <button
               type="button"
-              onClick={() => onSectionChange("settings")}
+              onClick={() => onOpenSettingsFolder("safety")}
               className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3.5 py-2 text-sm font-bold text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#4A2711]"
             >
               <Settings className="h-4 w-4" /> Account controls
@@ -1085,12 +1116,19 @@ function SocialProfileHub({
               </div>
               {isBusinessOwner ? <Link href="/business-dashboard" className="inline-flex items-center gap-2 rounded-xl border border-[#CA922B]/40 bg-white px-3.5 py-2 text-sm font-bold text-[#8D5C17] hover:bg-[#F5EBD8]"><Building2 className="h-4 w-4" /> Business dashboard</Link> : null}
             </div>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm">
-              <Link href="/travel?settings=kinfolk" className="inline-flex items-center gap-1.5 font-bold text-[#8D5C17] hover:underline">
+            <div className="mt-4 flex flex-wrap gap-2 text-sm">
+              <button type="button" onClick={() => onOpenSettingsFolder("profile")} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold text-[#8D5C17] hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                <Pencil className="h-4 w-4" /> Edit profile
+              </button>
+              <button type="button" onClick={() => onOpenSettingsFolder("safety")} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold text-[#8D5C17] hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                <Shield className="h-4 w-4" /> Privacy & security
+              </button>
+              <button type="button" onClick={() => onOpenSettingsFolder("kinfolk")} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold text-[#8D5C17] hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
                 <Sparkles className="h-4 w-4" /> KinfolkAI preferences
-              </Link>
-              <a href="#legacy-account-controls" className="font-bold text-[#8D5C17] hover:underline">Profile & privacy controls ↓</a>
-              <a href="#legacy-community-badges" className="font-bold text-[#8D5C17] hover:underline">Community badges ↓</a>
+              </button>
+              <button type="button" onClick={() => onOpenSettingsFolder("community")} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-bold text-[#8D5C17] hover:bg-[#F5EBD8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B]">
+                <Trophy className="h-4 w-4" /> Community & badges
+              </button>
             </div>
           </section>
         )}
@@ -1228,7 +1266,19 @@ export default function Profile() {
     }>
   >([]);
   const [activeProfileSection, setActiveProfileSection] = useState<ProfileHubSection>("overview");
+  const [activeSettingsFolder, setActiveSettingsFolder] =
+    useState<ProfileSettingsFolder>("profile");
   const legacyAccountControlsRef = useRef<HTMLDivElement>(null);
+
+  const openSettingsFolder = (folder: ProfileSettingsFolder) => {
+    setActiveSettingsFolder(folder);
+    setActiveProfileSection("settings");
+  };
+
+  const changeProfileSection = (section: ProfileHubSection) => {
+    if (section === "settings") setActiveSettingsFolder("profile");
+    setActiveProfileSection(section);
+  };
 
   useEffect(() => {
     if (activeProfileSection !== "settings") return;
@@ -1643,7 +1693,8 @@ export default function Profile() {
       <div className="container mx-auto max-w-6xl px-4 pb-2 pt-6 md:px-6 md:pt-10">
         <SocialProfileHub
           activeSection={activeProfileSection}
-          onSectionChange={setActiveProfileSection}
+          onSectionChange={changeProfileSection}
+          onOpenSettingsFolder={openSettingsFolder}
           profile={profile}
           avatarPreview={avatarPreview}
           isPrivate={isPrivate}
@@ -1697,10 +1748,45 @@ export default function Profile() {
             </div>
           </div>
 
+          <section aria-label="Settings folders" className="mb-6 rounded-2xl border border-[#3A1F0E]/10 bg-white p-3 shadow-sm">
+            <div className="mb-2 px-2 pt-1">
+              <h3 className="font-serif text-lg font-bold text-[#2B1507]">Settings folders</h3>
+              <p className="mt-0.5 text-xs text-[#3A1F0E]/60">Open one section at a time. Your existing settings stay unchanged.</p>
+            </div>
+            <div role="tablist" aria-label="Profile settings folders" className="grid gap-2 md:grid-cols-2">
+              {PROFILE_SETTINGS_FOLDERS.map((folder) => {
+                const selected = activeSettingsFolder === folder.id;
+                return (
+                  <button
+                    key={folder.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    aria-controls={`profile-settings-folder-${folder.id}`}
+                    onClick={() => setActiveSettingsFolder(folder.id)}
+                    className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] ${selected ? "border-[#CA922B]/50 bg-[#FAF6EF] text-[#2B1507]" : "border-transparent bg-white text-[#3A1F0E]/70 hover:border-[#3A1F0E]/15 hover:bg-[#FFFDF9]"}`}
+                  >
+                    <span>
+                      <span className="block text-sm font-bold">{folder.title}</span>
+                      <span className="mt-0.5 block text-xs leading-5 text-[#3A1F0E]/55">{folder.description}</span>
+                    </span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${selected ? "rotate-180 text-[#CA922B]" : "text-[#3A1F0E]/35"}`} />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
         {/* Main content grid */}
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left column: profile card */}
-          <div className="md:col-span-1">
+          <div
+            id="profile-settings-folder-profile"
+            role="tabpanel"
+            aria-label="Profile and saved places settings"
+            hidden={activeSettingsFolder !== "profile"}
+            className="md:col-span-3 mx-auto w-full max-w-2xl"
+          >
             <div className="bg-white rounded-3xl p-8 border border-[#3A1F0E]/5 shadow-sm text-center relative">
               <div className="relative w-24 h-24 mx-auto mb-4">
                 <div className="w-24 h-24 rounded-full bg-[#FAF6EF] border-4 border-white shadow-lg flex items-center justify-center text-[#CA922B] text-3xl font-serif font-bold overflow-hidden">
@@ -1918,7 +2004,13 @@ export default function Profile() {
           </div>
 
           {/* Right 2 columns: full badge panel + quick links */}
-          <div className="md:col-span-2 mt-8 md:mt-0 space-y-6">
+          <div
+            id="profile-settings-folder-community"
+            role="tabpanel"
+            aria-label="Community and badges settings"
+            hidden={activeSettingsFolder !== "community"}
+            className="md:col-span-3 space-y-6"
+          >
             <div id="legacy-community-badges" className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm">
               <BadgePanel
                 savedCount={savedCount}
@@ -1952,7 +2044,7 @@ export default function Profile() {
         </div>
 
         {/* ── Your Activity ──────────────────────────────────────────────── */}
-        <div className="grid md:grid-cols-2 gap-6 mt-8">
+        <div hidden={activeSettingsFolder !== "community"} className="grid md:grid-cols-2 gap-6 mt-8">
           <div className="bg-white rounded-3xl p-6 border border-[#3A1F0E]/5 shadow-sm">
             <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
               <Star className="w-5 h-5 text-[#CA922B]" /> Your Activity
@@ -2172,7 +2264,7 @@ export default function Profile() {
         </div>
 
         {/* ── Safety Alerts ────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+        <div id="profile-settings-folder-safety" role="tabpanel" aria-label="Privacy safety and security settings" hidden={activeSettingsFolder !== "safety"} className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
           <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#CA922B]" /> Safety Alerts
           </h3>
@@ -2262,7 +2354,7 @@ export default function Profile() {
         </div>
 
         {/* ── Account & Privacy Settings ──────────────────────────────────── */}
-        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+        <div hidden={activeSettingsFolder !== "safety"} className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
           <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-6 flex items-center gap-2">
             <Settings className="w-5 h-5 text-[#CA922B]" /> Account &amp;
             Privacy
@@ -2419,17 +2511,16 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="mt-8">
+        <div id="profile-settings-folder-kinfolk" role="tabpanel" aria-label="Kinfolk preference settings" hidden={activeSettingsFolder !== "kinfolk"} className="mt-8">
           <SocialVideoPreferences />
-        </div>
 
-        <div className="mt-8">
-          <MemberContextPreferences />
-        </div>
+          <div className="mt-8">
+            <MemberContextPreferences />
+          </div>
 
-        <div className="mt-8">
-          <BusinessSupportPreferences />
-        </div>
+          <div className="mt-8">
+            <BusinessSupportPreferences />
+          </div>
 
         {/* ── What Kinfolk Knows About You ────────────────────────────── */}
         <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
@@ -2571,7 +2662,9 @@ export default function Profile() {
         <div className="mt-8">
           <KinfolkTonePreference initialValue={null} />
         </div>
+        </div>
 
+        <div hidden={activeSettingsFolder !== "community"}>
         {/* ── My Community Impact ─────────────────────────────────────────── */}
         {impact &&
           (impact.reviewCount > 0 ||
@@ -2824,6 +2917,7 @@ export default function Profile() {
               </Link>
             ))}
           </div>
+        </div>
         </div>
       </div>
       )}
