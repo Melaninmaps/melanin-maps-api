@@ -251,12 +251,12 @@ export default function SubmitBusiness() {
               <CheckCircle2 className="w-10 h-10 text-[#CA922B]" />
             </div>
             <div>
-              <h1 className="font-serif text-3xl font-bold text-[#3A1F0E] mb-3">
+              <h1 className="font-serif text-3xl font-bold text-[#FFF8EB] mb-3">
                 {outcome?.status === "published"
                   ? "This business is live on the map"
                   : "Your business submission is saved"}
               </h1>
-              <p className="text-[#3A1F0E]/70 leading-relaxed">
+              <p className="text-[#F5EBD8]/90 leading-relaxed">
                 {outcome?.message ?? "Your submission was saved."}
               </p>
             </div>
@@ -318,7 +318,7 @@ export default function SubmitBusiness() {
         {/* Header */}
         <div className="mb-10">
           <Link href={amendId ? "/my-business-submissions" : "/businesses"}>
-            <button className="flex items-center gap-1.5 text-sm text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors mb-6">
+            <button className="flex items-center gap-1.5 text-sm font-semibold text-[#F2C465] hover:text-[#FFF8EB] transition-colors mb-6">
               <ArrowLeft className="w-4 h-4" />
               {amendId ? "Back to my submissions" : "Back to directory"}
             </button>
@@ -331,10 +331,10 @@ export default function SubmitBusiness() {
               Put your people on
             </span>
           </div>
-          <h1 className="font-serif text-4xl font-bold text-[#3A1F0E] mb-3">
+          <h1 className="font-serif text-4xl font-bold text-[#FFF8EB] mb-3">
             {amendId ? "Update Your Submission" : "Share a Business"}
           </h1>
-          <p className="text-[#3A1F0E]/70 leading-relaxed text-lg">
+          <p className="text-[#F5EBD8]/90 leading-relaxed text-lg">
             {amendId
               ? "Add the missing information. If it now passes the location, evidence, duplicate, and safety checks, it will publish immediately."
               : "Add a community business. Complete ordinary businesses publish immediately as community-listed, unclaimed, and not verified."}
@@ -344,7 +344,7 @@ export default function SubmitBusiness() {
         <form onSubmit={submit} className="space-y-6">
           {/* Business name */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
+            <label className="text-sm font-bold text-[#F2C465]">
               Business name <span className="text-[#CA922B]">*</span>
             </label>
             <input
@@ -358,7 +358,7 @@ export default function SubmitBusiness() {
 
           {/* Category */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
+            <label className="text-sm font-bold text-[#F2C465]">
               Category <span className="text-[#CA922B]">*</span>
             </label>
             <div className="relative">
@@ -378,7 +378,7 @@ export default function SubmitBusiness() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">Subcategory</label>
+            <label className="text-sm font-bold text-[#F2C465]">Subcategory</label>
             <input
               value={form.subcategory}
               onChange={(e) => set("subcategory", e.target.value)}
@@ -390,7 +390,7 @@ export default function SubmitBusiness() {
           {/* City + State + postal row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[#3A1F0E]">
+              <label className="text-sm font-bold text-[#F2C465]">
                 City <span className="text-[#CA922B]">*</span>
               </label>
               <input
@@ -402,7 +402,7 @@ export default function SubmitBusiness() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[#3A1F0E]">State / Region</label>
+              <label className="text-sm font-bold text-[#F2C465]">State / Region</label>
               <input
                 value={form.state}
                 onChange={(e) => set("state", e.target.value)}
@@ -411,7 +411,7 @@ export default function SubmitBusiness() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[#3A1F0E]">ZIP / Postal code</label>
+              <label className="text-sm font-bold text-[#F2C465]">ZIP / Postal code</label>
               <input
                 value={form.postalCode}
                 onChange={(e) => set("postalCode", e.target.value)}
@@ -422,7 +422,7 @@ export default function SubmitBusiness() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">Country</label>
+            <label className="text-sm font-bold text-[#F2C465]">Country</label>
             <input
               value={form.country}
               onChange={(e) => set("country", e.target.value)}
@@ -433,9 +433,9 @@ export default function SubmitBusiness() {
 
           {/* Address */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
+            <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#CA922B]" />
-              Street address <span className="font-normal text-[#3A1F0E]/40">(required for an immediate map pin)</span>
+              Street address <span className="font-medium text-[#F5EBD8]/85">(required for an immediate map pin)</span>
             </label>
             <input
               value={form.address}
@@ -448,7 +448,7 @@ export default function SubmitBusiness() {
           {/* Website + Phone */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
+              <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-[#CA922B]" />
                 Website
               </label>
@@ -461,7 +461,7 @@ export default function SubmitBusiness() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
+              <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-[#CA922B]" />
                 Phone
               </label>
@@ -476,8 +476,8 @@ export default function SubmitBusiness() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#3A1F0E]">Social profiles</label>
-            <p className="text-xs text-[#3A1F0E]/45">Optional. Add handles or full profile links; each is validated for the selected platform.</p>
+            <label className="text-sm font-bold text-[#F2C465]">Social profiles</label>
+            <p className="text-xs font-medium text-[#F5EBD8]/85">Optional. Add handles or full profile links; each is validated for the selected platform.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {([
                 ["instagram", "Instagram", "@yourbusiness"],
@@ -488,7 +488,7 @@ export default function SubmitBusiness() {
                 ["snapchat", "Snapchat", "@yourbusiness"],
               ] as const).map(([field, label, placeholder]) => (
                 <div key={field} className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#3A1F0E]/70">{label}</label>
+                  <label className="text-xs font-bold text-[#F5EBD8]">{label}</label>
                   <input
                     value={form[field]}
                     onChange={(e) => set(field, e.target.value)}
@@ -503,8 +503,8 @@ export default function SubmitBusiness() {
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Tell us about this business <span className="font-normal text-[#3A1F0E]/40">(optional)</span>
+            <label className="text-sm font-bold text-[#F2C465]">
+              Tell us about this business <span className="font-medium text-[#F5EBD8]/85">(optional)</span>
             </label>
             <textarea
               value={form.description}
@@ -517,11 +517,11 @@ export default function SubmitBusiness() {
 
           {/* Ownership designations */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
+            <label className="text-sm font-bold text-[#F2C465] flex items-center gap-1.5">
               <Heart className="w-3.5 h-3.5 text-[#CA922B]" />
               Community-reported ownership
             </label>
-            <p className="text-xs text-[#3A1F0E]/50">Tell us what you understand the business to be. This is never treated as verified owner identity.</p>
+            <p className="text-xs font-medium text-[#F5EBD8]/90">Tell us what you understand the business to be. This is never treated as verified owner identity.</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {([
                 ["minority_owned", "Minority-owned"],
@@ -543,7 +543,7 @@ export default function SubmitBusiness() {
               ))}
             </div>
             {form.communityReportedOwnership === "minority_owned" && (
-              <p className="text-xs text-[#3A1F0E]/50 pt-1">Optional: select any community-reported designations that apply.</p>
+              <p className="text-xs font-medium text-[#F5EBD8]/90 pt-1">Optional: select any community-reported designations that apply.</p>
             )}
             <div className="flex flex-wrap gap-2">
               {form.communityReportedOwnership === "minority_owned" && OWNERSHIP_OPTIONS.map((opt) => {
@@ -568,8 +568,8 @@ export default function SubmitBusiness() {
 
           {/* Photos */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Photos <span className="font-normal text-[#3A1F0E]/40">(optional)</span>
+            <label className="text-sm font-bold text-[#F2C465]">
+              Photos <span className="font-medium text-[#F5EBD8]/85">(optional)</span>
             </label>
             <MediaUploader
               purpose="business_submission"
@@ -579,14 +579,14 @@ export default function SubmitBusiness() {
               onFilesChange={(files) => setUploadedAssetIds((current) => Array.from(new Set([...current, ...getMediaAssetIds(files)])))}
             />
             {amendId && uploadedAssetIds.length > 0 && (
-              <p className="text-xs text-[#3A1F0E]/45">{uploadedAssetIds.length} previously submitted photo{uploadedAssetIds.length === 1 ? " is" : "s are"} retained privately for moderation.</p>
+              <p className="text-xs font-medium text-[#F5EBD8]/85">{uploadedAssetIds.length} previously submitted photo{uploadedAssetIds.length === 1 ? " is" : "s are"} retained privately for moderation.</p>
             )}
           </div>
 
           {/* Note to reviewer */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Note to our team <span className="font-normal text-[#3A1F0E]/40">(optional)</span>
+            <label className="text-sm font-bold text-[#F2C465]">
+              Note to our team <span className="font-medium text-[#F5EBD8]/85">(optional)</span>
             </label>
             <textarea
               value={form.submitterNote}
@@ -620,7 +620,7 @@ export default function SubmitBusiness() {
             )}
           </button>
 
-          <p className="text-center text-xs text-[#3A1F0E]/40">
+          <p className="text-center text-xs font-medium text-[#F5EBD8]/85">
             Complete ordinary businesses with a precise address and public website or social profile can publish immediately. Regulated, resource, duplicate, unsafe, or unlocatable records stay private. Publication never means verified ownership.
           </p>
         </form>
