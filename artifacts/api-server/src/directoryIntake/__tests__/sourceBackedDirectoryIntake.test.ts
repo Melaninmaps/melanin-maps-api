@@ -137,4 +137,14 @@ describe("source-backed directory reconciliation", () => {
     expect(fields.tags).toContain(originalCategory);
     expect(fields.description).toContain(sourceContact);
   });
+
+  it("keeps a source-published service description searchable in the public listing copy", () => {
+    const fields = sourceBackedDirectoryPublicationFields(candidate({
+      sourceDescription: "A neighborhood restaurant serving Ethiopian cuisine and vegan dishes.",
+      serviceTerms: ["restaurant", "Ethiopian", "vegan"],
+    }));
+
+    expect(fields.description).toContain("Ethiopian cuisine");
+    expect(fields.tags).toEqual(expect.arrayContaining(["restaurant", "Ethiopian", "vegan"]));
+  });
 });

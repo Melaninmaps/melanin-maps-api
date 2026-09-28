@@ -36,7 +36,11 @@ import {
 } from "../lib/business-dedup.js";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortReconciliation";
-import { sourceBackedDirectoryCandidates } from "../directoryIntake/sourceBackedDirectoryCandidates";
+import {
+  sourceBackedDirectoryCandidates,
+  type SourceBackedDirectoryCandidate,
+} from "../directoryIntake/sourceBackedDirectoryCandidates";
+import { minneapolisSourceBackedDirectoryCandidates } from "../directoryIntake/minneapolisSourceBackedDirectoryCandidates";
 import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
@@ -45,6 +49,13 @@ import {
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
 
 const router: IRouter = Router();
+
+// Additive source receipt set. The historical founder manifest remains
+// untouched; the Minneapolis proof-of-concept is isolated by its own batch.
+const protectedSourceDirectoryCandidates: readonly SourceBackedDirectoryCandidate[] = [
+  ...sourceBackedDirectoryCandidates,
+  ...minneapolisSourceBackedDirectoryCandidates,
+];
 
 type SourceDirectoryExistingBusiness = Readonly<{
   id: string;
@@ -55,30 +66,89 @@ type SourceDirectoryExistingBusiness = Readonly<{
   website: string | null;
   sourceUrl: string | null;
   dedupeKey: string | null;
+  description: string | null;
+  phone: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  twitter: string | null;
+  youtube: string | null;
+  pinterest: string | null;
+  ownershipDesignations: string[] | null;
+  blackOwned: boolean | null;
+  tags: string[] | null;
+  researchSourceLabel: string | null;
+  researchSourceUrl: string | null;
+  kinfolkRecommendationReason: string | null;
+  intakeBatchReference: string | null;
+  isDuplicate: boolean | null;
 }>;
 
-async function sourceDirectoryExistingBusinessCandidates(): Promise<
+async function sourceDirectoryExistingBusinessCandidates(
+  sourceCandidates: readonly SourceBackedDirectoryCandidate[],
+): Promise<
   SourceDirectoryExistingBusiness[]
 > {
   // Only request records whose normalized name appears in this protected source
   // batch. This preserves full-inventory performance while making the exact
   // duplicate check compare all potentially matching existing records.
   const sourceNames = [
-    ...new Set(sourceBackedDirectoryCandidates.map((candidate) =>
+    ...new Set(sourceCandidates.map((candidate) =>
       normalizeDirectoryIdentity(candidate.name),
     )),
   ];
-  const sourceReceiptKeys = sourceBackedDirectoryCandidates.map(
+  const sourceReceiptKeys = sourceCandidates.map(
     (candidate) => candidate.sourceRecordKey,
   );
   const result = await pool.query<SourceDirectoryExistingBusiness>(
-    `SELECT id, name, city, state, address, website, source_url AS "sourceUrl", dedupe_key AS "dedupeKey"
+    `SELECT id, name, city, state, address, website, description, phone,
+            facebook, instagram, tiktok, twitter, youtube, pinterest,
+            ownership_designations AS "ownershipDesignations", black_owned AS "blackOwned",
+            tags, source_url AS "sourceUrl", dedupe_key AS "dedupeKey",
+            research_source_label AS "researchSourceLabel",
+            research_source_url AS "researchSourceUrl",
+            kinfolk_recommendation_reason AS "kinfolkRecommendationReason",
+            intake_batch_reference AS "intakeBatchReference",
+            COALESCE(is_duplicate, false) AS "isDuplicate"
        FROM businesses
-      WHERE REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = ANY($1::text[])
-         OR dedupe_key = ANY($2::text[])`,
+      WHERE COALESCE(is_duplicate, false) = false
+        AND (
+          REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = ANY($1::text[])
+          OR dedupe_key = ANY($2::text[])
+        )`,
     [sourceNames, sourceReceiptKeys],
   );
   return result.rows;
+}
+
+function distinctSourceText(values: readonly (string | null | undefined)[]): string[] {
+  return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))];
+}
+
+/**
+ * Exact matches may receive missing source-backed fields, never a replacement
+ * of owner, community, or already-published business information. Repeating a
+ * receipt is idempotent because an already-appended source detail is not added
+ * a second time.
+ */
+function appendSourceDescription(
+  existingDescription: string | null,
+  candidateDescription: string | null | undefined,
+): string {
+  const existing = existingDescription?.trim() ?? "";
+  const addition = candidateDescription?.trim() ?? "";
+  if (!existing) return addition || "Source-backed directory listing.";
+  if (!addition || existing.toLowerCase().includes(addition.toLowerCase())) return existing;
+  return `${existing}\n\nSource directory details: ${addition}`;
+}
+
+function sameNamedDirectoryPlace(
+  candidate: SourceBackedDirectoryCandidate,
+  existing: SourceDirectoryExistingBusiness,
+): boolean {
+  return normalizeDirectoryIdentity(candidate.name) === normalizeDirectoryIdentity(existing.name)
+    && normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(existing.city)
+    && normalizeDirectoryIdentity(candidate.state) === normalizeDirectoryIdentity(existing.state);
 }
 
 type CitySafetySourceAdminRow = Readonly<{
@@ -200,9 +270,9 @@ router.put("/admin/kinfolk/city-safety-sources/:sourceId", async (req: Request, 
 });
 
 /**
- * Founder-authorized, source-backed intake. It deliberately never alters an
- * existing row: exact source duplicates are skipped, similar names stay for
- * manual review, and all created records begin as community-listed/unclaimed.
+ * Founder-authorized, source-backed intake. Exact evidence can add only
+ * missing directory fields to the established canonical record; similar names
+ * stay separate for manual review, and all created records begin unclaimed.
  */
 router.post("/admin/directory-intake/source-backed", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
@@ -210,30 +280,54 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     return;
   }
   const apply = req.body?.apply === true;
+  const requestedBatch = typeof req.body?.batch === "string"
+    ? req.body.batch.trim()
+    : "";
+  const intakeCandidates = requestedBatch
+    ? protectedSourceDirectoryCandidates.filter((candidate) => candidate.batch === requestedBatch)
+    : protectedSourceDirectoryCandidates;
+  if (requestedBatch && intakeCandidates.length === 0) {
+    res.status(400).json({ error: "Unknown source-backed intake batch." });
+    return;
+  }
   const requestedBatchSize = Number(req.body?.batchSize ?? 75);
   const batchSize = Number.isFinite(requestedBatchSize)
     ? Math.min(Math.max(Math.floor(requestedBatchSize), 1), 100)
     : 75;
   try {
-    const existingBusinesses = await sourceDirectoryExistingBusinessCandidates();
+    const existingBusinesses = await sourceDirectoryExistingBusinessCandidates(intakeCandidates);
     const plan = buildSourceBackedDirectoryIntakePlan(
-      sourceBackedDirectoryCandidates,
+      intakeCandidates,
       existingBusinesses,
     );
     const nextBatch = plan.toCreate.slice(0, batchSize);
-    const mapEligibleCount = nextBatch.filter((candidate) => Boolean(candidate.address)).length;
+    const possibleDuplicateCanonicalByReceipt = new Map(
+      plan.toCreate.flatMap((candidate) => {
+        const canonical = existingBusinesses.find((existing) => sameNamedDirectoryPlace(candidate, existing));
+        return canonical ? [[candidate.sourceRecordKey, canonical.id] as const] : [];
+      }),
+    );
+    const publicNextBatch = nextBatch.filter((candidate) => !possibleDuplicateCanonicalByReceipt.has(candidate.sourceRecordKey));
+    const duplicateReviewNextBatch = nextBatch.filter((candidate) => possibleDuplicateCanonicalByReceipt.has(candidate.sourceRecordKey));
+    const mapEligibleCount = publicNextBatch.filter((candidate) => Boolean(candidate.address)).length;
 
     if (!apply) {
       res.json({
         ok: true,
         requiresExplicitApply: true,
-        sourceCandidateCount: sourceBackedDirectoryCandidates.length,
+        batch: requestedBatch || "all_source_backed_batches",
+        sourceCandidateCount: intakeCandidates.length,
         createCount: plan.toCreate.length,
-        nextBatchCreateCount: nextBatch.length,
+        nextBatchCreateCount: publicNextBatch.length,
+        potentialDuplicateReviewCount: possibleDuplicateCanonicalByReceipt.size,
         batchSize,
         exactDuplicateCount: plan.duplicateMatches.length,
-        addressEligibleForGeocodingCount: plan.toCreate.filter((candidate) => Boolean(candidate.address)).length,
-        maplessProfileCount: plan.toCreate.filter((candidate) => !candidate.address).length,
+        addressEligibleForGeocodingCount: plan.toCreate.filter((candidate) => (
+          !possibleDuplicateCanonicalByReceipt.has(candidate.sourceRecordKey) && Boolean(candidate.address)
+        )).length,
+        maplessProfileCount: plan.toCreate.filter((candidate) => (
+          !possibleDuplicateCanonicalByReceipt.has(candidate.sourceRecordKey) && !candidate.address
+        )).length,
         duplicateReasons: plan.duplicateMatches.reduce<Record<string, number>>((counts, match) => {
           counts[match.reason] = (counts[match.reason] ?? 0) + 1;
           return counts;
@@ -243,15 +337,56 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     }
 
     // The same exact plan is recomputed immediately before creation, so retrying
-    // the action after a network failure cannot recreate an already-inserted row.
-    // Insert the already-reconciled batch in one database statement. The prior
-    // per-row loop could exceed the browser request window even though it made
-    // no changes outside this transaction. A single bounded insert keeps the
-    // retry-safe source receipts and preserves all-or-nothing publication.
+    // the action after a network failure cannot recreate a listing or erase a
+    // canonical record. Exact matches are enriched only where a field is blank;
+    // source descriptions and tags are appended/unioned idempotently. The
+    // transaction keeps each bounded batch an all-or-nothing publication.
     await db.transaction(async (transaction) => {
+      // Legacy no-batch reconciliation preserves its historical create-only
+      // behavior. Additive enrichment is deliberately available only to an
+      // explicitly selected source cohort, such as the Minneapolis proof set.
+      const exactMatches = requestedBatch
+        ? plan.duplicateMatches.filter((match) => match.existingBusinessId)
+        : [];
+      const existingById = new Map(existingBusinesses.map((business) => [business.id, business]));
+      for (const match of exactMatches) {
+        const existing = existingById.get(match.existingBusinessId!);
+        if (!existing) continue;
+        const candidate = match.candidate;
+        const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
+        const social = candidate.socialLinks ?? {};
+        await transaction.update(businessesTable).set({
+          description: appendSourceDescription(existing.description, candidate.sourceDescription),
+          phone: existing.phone ?? publicationFields.phone,
+          website: existing.website ?? candidate.officialUrl,
+          facebook: existing.facebook ?? social.facebook ?? null,
+          instagram: existing.instagram ?? social.instagram ?? null,
+          tiktok: existing.tiktok ?? social.tiktok ?? null,
+          twitter: existing.twitter ?? social.twitter ?? null,
+          youtube: existing.youtube ?? social.youtube ?? null,
+          pinterest: existing.pinterest ?? social.pinterest ?? null,
+          ownershipDesignations: distinctSourceText([
+            ...(existing.ownershipDesignations ?? []),
+            ...candidate.ownershipDesignations,
+          ]),
+          blackOwned: Boolean(existing.blackOwned || candidate.ownershipDesignations.includes("Black / African American-Owned")),
+          tags: distinctSourceText([
+            ...(existing.tags ?? []),
+            ...publicationFields.tags,
+          ]),
+          researchSourceLabel: existing.researchSourceLabel ?? candidate.sourceLabel,
+          researchSourceUrl: existing.researchSourceUrl ?? candidate.sourceUrl,
+          kinfolkRecommendationReason: existing.kinfolkRecommendationReason ?? candidate.ownershipEvidence,
+          intakeBatchReference: existing.intakeBatchReference ?? candidate.batch,
+          updatedAt: new Date(),
+        }).where(eq(businessesTable.id, existing.id));
+      }
+
       await transaction.insert(businessesTable).values(nextBatch.map((candidate) => {
         const blackOwned = candidate.ownershipDesignations.includes("Black / African American-Owned");
         const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
+        const social = candidate.socialLinks ?? {};
+        const duplicateOfId = possibleDuplicateCanonicalByReceipt.get(candidate.sourceRecordKey) ?? null;
         const canonicalDedupeKey = candidate.address
           ? _dedupeKey({
               name: candidate.name,
@@ -272,15 +407,23 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
           country: candidate.country,
           phone: publicationFields.phone,
           website: candidate.officialUrl,
+          facebook: social.facebook ?? null,
+          instagram: social.instagram ?? null,
+          tiktok: social.tiktok ?? null,
+          twitter: social.twitter ?? null,
+          youtube: social.youtube ?? null,
+          pinterest: social.pinterest ?? null,
           sourceUrl: candidate.sourceListingUrl ?? candidate.sourceUrl,
           dedupeKey: canonicalDedupeKey,
           ownershipDesignations: candidate.ownershipDesignations,
           blackOwned,
           tags: publicationFields.tags,
-          status: "active",
-          listingStatus: "live_unclaimed",
+          status: duplicateOfId ? "pending_review" : "active",
+          listingStatus: duplicateOfId ? "archived" : "live_unclaimed",
           ownerClaimStatus: "unclaimed",
           profileStatus: "community_listed",
+          isDuplicate: Boolean(duplicateOfId),
+          duplicateOfId,
           verified: false,
           featured: false,
           promotionEligible: false,
@@ -296,12 +439,17 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
 
     res.status(201).json({
       ok: true,
-      createdCount: nextBatch.length,
+      batch: requestedBatch || "all_source_backed_batches",
+      createdCount: publicNextBatch.length,
+      duplicateReviewCreatedCount: duplicateReviewNextBatch.length,
+      exactExistingEnrichedCount: requestedBatch
+        ? plan.duplicateMatches.filter((match) => Boolean(match.existingBusinessId)).length
+        : 0,
       remainingCreateCount: plan.toCreate.length - nextBatch.length,
       batchSize,
       exactDuplicateCount: plan.duplicateMatches.length,
       addressEligibleForGeocodingCount: mapEligibleCount,
-      maplessProfileCount: nextBatch.length - mapEligibleCount,
+      maplessProfileCount: publicNextBatch.length - mapEligibleCount,
       message: "Source-backed listings were added as searchable, unclaimed MWM profiles. Street-address records are eligible for exact geocoding; mapless records remain searchable without a fabricated pin.",
     });
   } catch (error) {
@@ -376,6 +524,7 @@ type AdminBusinessInventoryFilters = Readonly<{
   orderBy: string;
   where: string;
   filterParams: unknown[];
+  cityFilters: string[];
   completedCohortPredicate: string;
   nationalMasterPredicate: string;
   manusCreatedPredicate: string;
@@ -542,9 +691,9 @@ async function compileAdminBusinessInventoryFilters(
   } else if (link === "website_missing") {
     filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL");
   } else if (link === "social_present") {
-    filters.push("NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL");
+    filters.push("NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NOT NULL");
   } else if (link === "no_public_link") {
-    filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL");
+    filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NULL");
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(addedFrom)) {
     addFilter("created_at >= ?::date", addedFrom);
@@ -559,6 +708,7 @@ async function compileAdminBusinessInventoryFilters(
     orderBy,
     where: filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "",
     filterParams,
+    cityFilters,
     completedCohortPredicate,
     nationalMasterPredicate,
     manusCreatedPredicate,
@@ -872,6 +1022,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       orderBy,
       where,
       filterParams,
+      cityFilters,
       completedCohortPredicate,
       nationalMasterPredicate,
       manusCreatedPredicate,
@@ -922,6 +1073,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       instagram: string | null;
       tiktok: string | null;
       facebook: string | null;
+      twitter: string | null;
+      youtube: string | null;
+      pinterest: string | null;
       created_at: string;
       needs_verification: boolean;
       enrichment_note: string | null;
@@ -937,7 +1091,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       manus_created: boolean;
       }>(
       `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
-              listing_status, phone, website, instagram, tiktok, facebook, created_at,
+              listing_status, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest, created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
               to_jsonb(businesses)->>'research_source_label' AS research_source_label,
@@ -1067,6 +1221,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       instagram: b.instagram,
       tiktok: b.tiktok,
       facebook: b.facebook,
+      twitter: b.twitter,
+      youtube: b.youtube,
+      pinterest: b.pinterest,
       createdAt: b.created_at,
       needsVerification: b.needs_verification,
       hasMapPin:
@@ -1131,6 +1288,16 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
       inventoryLimit: MAX_INVENTORY_PAGE_SIZE,
       inventoryIsTruncated: filteredTotal > result.length,
+      appliedFilters: {
+        status,
+        cities: cityFilters,
+        category: String(req.query.category ?? "").trim(),
+        subcategory: String(req.query.subcategory ?? "").trim(),
+        intakeCohort: String(req.query.intakeCohort ?? "all").trim(),
+        link: String(req.query.link ?? "all").trim(),
+        ownership: String(req.query.ownership ?? "all").trim(),
+        search: String(req.query.search ?? "").trim(),
+      },
       cityOptions: cities.rows.map((row) => ({
         value: row.value,
         label: row.label,

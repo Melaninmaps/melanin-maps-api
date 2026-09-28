@@ -61,6 +61,7 @@ export function sourceBackedDirectoryPublicationFields(candidate: SourceBackedDi
     ])],
     description: [
       `${candidate.category} business in ${candidate.city}. Listed by ${candidate.sourceLabel}.`,
+      candidate.sourceDescription?.trim() || null,
       sourceListedContact ? `Source-listed contact: ${sourceListedContact}.` : null,
     ].filter(Boolean).join(" "),
   };

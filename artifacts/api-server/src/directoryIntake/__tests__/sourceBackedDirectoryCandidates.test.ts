@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sourceBackedDirectoryCandidates } from "../sourceBackedDirectoryCandidates";
+import { minneapolisSourceBackedDirectoryCandidates } from "../minneapolisSourceBackedDirectoryCandidates";
 
 describe("source-backed directory candidate manifest", () => {
   it("preserves the complete community-sourced Philadelphia Black restaurant sheet", () => {
@@ -27,5 +28,21 @@ describe("source-backed directory candidate manifest", () => {
     expect(new Set(founderCityRows.map((candidate) => `${candidate.city}|${candidate.state}`)).size).toBeGreaterThanOrEqual(45);
     expect(founderCityRows.every((candidate) => candidate.sourceUrl.startsWith("http"))).toBe(true);
     expect(founderCityRows.every((candidate) => candidate.sourceLabel.trim().length > 0)).toBe(true);
+  });
+
+  it("retains the complete Minneapolis proof cohort with searchable source details", () => {
+    expect(minneapolisSourceBackedDirectoryCandidates).toHaveLength(129);
+    expect(minneapolisSourceBackedDirectoryCandidates.every((candidate) => (
+      candidate.city === "Minneapolis"
+      && candidate.state === "MN"
+      && candidate.batch === "mn_black_business_directory_minneapolis_2026_09_28"
+      && candidate.ownershipDesignations.includes("Black / African American-Owned")
+      && candidate.sourceListingUrl?.startsWith("https://mnblackbusiness.com/businesses/")
+    ))).toBe(true);
+    expect(minneapolisSourceBackedDirectoryCandidates.filter((candidate) => (
+      candidate.sourceDescription?.trim().length
+    ))).toHaveLength(123);
+    expect(minneapolisSourceBackedDirectoryCandidates.some((candidate) => candidate.socialLinks?.instagram)).toBe(true);
+    expect(minneapolisSourceBackedDirectoryCandidates.some((candidate) => !candidate.address && candidate.officialUrl)).toBe(true);
   });
 });

@@ -64,9 +64,12 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("const cityFilters = parseAdminCityFilters(query.city)");
     expect(adminRoute).toContain("= ANY($${filterParams.length}::text[])");
     expect(adminRoute).toContain("ARRAY_AGG(DISTINCT BTRIM(city) ORDER BY BTRIM(city)) AS variants");
+    expect(adminRoute).toContain("appliedFilters");
+    expect(adminRoute).toContain("cityFilters,");
     expect(adminScreen).toContain("Cities (select one or more)");
     expect(adminScreen).toContain("toggleBusinessInventoryCity");
     expect(adminScreen).toContain('params.append("city", city)');
+    expect(adminScreen).toContain("The inventory response did not confirm the city filter");
   });
 
   it("keeps same-name duplicate review together with a safe server-side A–Z order", () => {
@@ -116,7 +119,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   });
 
   it("shows administrators website and social links and can isolate missing websites", () => {
-    for (const field of ["website", "instagram", "tiktok", "facebook"]) {
+    for (const field of ["website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"]) {
       expect(adminRoute).toContain(field);
       expect(adminScreen).toContain(field);
     }
@@ -283,17 +286,21 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Existing legacy/imported values remain reviewable");
   });
 
-  it("lets an administrator preview and explicitly publish the protected source-backed directory in retry-safe batches", () => {
+  it("lets an administrator preview and explicitly publish only the Minneapolis source-backed proof cohort in retry-safe batches", () => {
     expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed"');
+    expect(adminRoute).toContain("requestedBatch");
+    expect(adminRoute).toContain("Unknown source-backed intake batch.");
     expect(adminRoute).toContain("requiresExplicitApply");
     expect(adminRoute).toContain("remainingCreateCount");
+    expect(adminRoute).toContain("duplicateReviewCreatedCount");
     expect(adminRoute).toContain("transaction.insert(businessesTable).values(nextBatch.map");
     expect(adminRoute).toContain("all-or-nothing publication");
     expect(adminRoute).toContain("REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g')");
     expect(adminRoute).toContain("dedupe_key = ANY($2::text[])");
     expect(adminScreen).toContain("Founder source directory intake");
     expect(adminScreen).toContain("api/admin/directory-intake/source-backed");
-    expect(adminScreen).toContain("Publish all remaining");
+    expect(adminScreen).toContain("MINNEAPOLIS_SOURCE_INTAKE_BATCH");
+    expect(adminScreen).toContain("Publish Minneapolis");
     expect(adminScreen).toContain("searchable, unclaimed MWM profile");
   });
 

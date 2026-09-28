@@ -93,6 +93,16 @@ function publicSocialHref(value: string | null, platform: "instagram" | "tiktok"
   return `https://www.facebook.com/${handle}`;
 }
 
+function publicHttpsHref(value: string | null): string | null {
+  if (!value?.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 const WAITLIST_SOURCE_LABELS: Record<string, string> = {
   web: "Website",
   ios: "iOS app",
@@ -130,12 +140,16 @@ type AdminCityOption = {
   count: number;
 };
 type SourceBackedDirectoryIntakePreview = {
+  batch: string;
   sourceCandidateCount: number;
   createCount: number;
+  nextBatchCreateCount: number;
+  potentialDuplicateReviewCount: number;
   exactDuplicateCount: number;
   addressEligibleForGeocodingCount: number;
   maplessProfileCount: number;
 };
+const MINNEAPOLIS_SOURCE_INTAKE_BATCH = "mn_black_business_directory_minneapolis_2026_09_28";
 /**
  * The Business inventory groups city spelling/case variants into objects, while
  * the older Waitlist contract returns strings. Keep all response parsing here
@@ -182,6 +196,14 @@ function normalizeAdminCityOptions(options: unknown): AdminCityOption[] {
     .filter((option: AdminCityOption | null): option is AdminCityOption => option !== null);
 
   return Array.from(new Map(normalized.map((option) => [option.value, option])).values());
+}
+
+function normalizedCityFilterValues(values: unknown): string[] {
+  if (!Array.isArray(values)) return [];
+  return [...new Set(values
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase())
+    .filter(Boolean))].sort();
 }
 
 const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
@@ -258,6 +280,9 @@ type AdminBusiness = {
   instagram: string | null;
   tiktok: string | null;
   facebook: string | null;
+  twitter: string | null;
+  youtube: string | null;
+  pinterest: string | null;
   createdAt: string;
   hasMapPin: boolean;
   hasStreetAddress: boolean;
@@ -931,6 +956,7 @@ export default function Admin() {
   const [businessInventoryTotalPages, setBusinessInventoryTotalPages] =
     useState(1);
   const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
+  const [businessInventoryFilterError, setBusinessInventoryFilterError] = useState<string | null>(null);
   const [businessCityOptions, setBusinessCityOptions] = useState<AdminCityOption[]>([]);
   const [businessServiceOptions, setBusinessServiceOptions] = useState<
     { value: string; label: string }[]
@@ -1255,6 +1281,20 @@ export default function Admin() {
       .then((r) => r.json())
       .then((data) => {
         if (requestId !== businessInventoryRequestId.current) return;
+        const expectedCities = normalizedCityFilterValues(cityValues);
+        const appliedCities = normalizedCityFilterValues(data?.appliedFilters?.cities);
+        if (
+          !Array.isArray(data?.appliedFilters?.cities)
+          || expectedCities.length !== appliedCities.length
+          || expectedCities.some((city, index) => city !== appliedCities[index])
+        ) {
+          setBusinesses([]);
+          setBusinessInventoryFilteredTotal(0);
+          setBusinessInventoryTotalPages(1);
+          setBusinessInventoryFilterError("The inventory response did not confirm the city filter, so no mismatched businesses were shown. Refresh and try the filter again.");
+          return;
+        }
+        setBusinessInventoryFilterError(null);
         setBusinesses(data.businesses ?? []);
         setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
         setBusinessInventoryTotal(
@@ -1326,7 +1366,11 @@ export default function Admin() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apply: false, batchSize: 100 }),
+        body: JSON.stringify({
+          apply: false,
+          batch: MINNEAPOLIS_SOURCE_INTAKE_BATCH,
+          batchSize: 100,
+        }),
       });
       const body = await response.json().catch(() => ({})) as SourceBackedDirectoryIntakePreview & { error?: string };
       if (!response.ok) throw new Error(body.error ?? "Could not prepare the source directory intake.");
@@ -1338,11 +1382,11 @@ export default function Admin() {
     }
   }, [fetch]);
 
-  const publishAllSourceBackedDirectoryBatches = useCallback(async () => {
+  const publishMinneapolisSourceBackedDirectory = useCallback(async () => {
     const preview = sourceDirectoryIntakePreview;
     if (!preview || preview.createCount <= 0) return;
     if (!window.confirm(
-      `Add ${preview.createCount.toLocaleString()} source-backed business profiles now? Exact duplicates will be skipped. This adds searchable, unclaimed profiles; only supplied street addresses may receive a map pin.`,
+      `Add ${preview.createCount.toLocaleString()} Minneapolis source-backed business profiles now? Exact duplicates will be enriched when source details are missing; potential duplicates go to the Duplicate vault for review. This adds searchable, unclaimed profiles; only supplied street addresses may receive a map pin.`,
     )) return;
 
     setSourceDirectoryIntakeApplying(true);
@@ -1357,22 +1401,28 @@ export default function Admin() {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ apply: true, batchSize: 100 }),
+          body: JSON.stringify({
+            apply: true,
+            batch: MINNEAPOLIS_SOURCE_INTAKE_BATCH,
+            batchSize: 100,
+          }),
         });
         const body = await response.json().catch(() => ({})) as {
           createdCount?: number;
+          duplicateReviewCreatedCount?: number;
           remainingCreateCount?: number;
           error?: string;
         };
         if (!response.ok) throw new Error(body.error ?? "The source directory intake stopped before completion.");
         const createdThisBatch = Number(body.createdCount ?? 0);
-        created += createdThisBatch;
+        const duplicateReviewThisBatch = Number(body.duplicateReviewCreatedCount ?? 0);
+        created += createdThisBatch + duplicateReviewThisBatch;
         remaining = Number(body.remainingCreateCount ?? 0);
-        if (createdThisBatch === 0 && remaining > 0) {
+        if (createdThisBatch + duplicateReviewThisBatch === 0 && remaining > 0) {
           throw new Error("The source directory intake made no progress; no additional records were added.");
         }
       }
-      setSourceDirectoryIntakeResult(`Added ${created.toLocaleString()} source-backed profiles. Exact duplicates were skipped; mapless profiles remain searchable without a fabricated pin.`);
+      setSourceDirectoryIntakeResult(`Reconciled ${created.toLocaleString()} Minneapolis source-backed profiles. Exact matches were enriched only with missing source details; potential duplicates remain in the Duplicate vault; mapless profiles remain searchable without a fabricated pin.`);
       await Promise.all([loadBusinesses(), loadSourceBackedDirectoryIntakePreview()]);
     } catch (error) {
       setSourceDirectoryIntakeResult(error instanceof Error ? error.message : "The source directory intake stopped before completion.");
@@ -4507,6 +4557,11 @@ Selected: ${summary}`,
                 Showing {businesses.length.toLocaleString()} records on this page. Use filters and page controls to review all matching inventory without freezing the browser.
               </div>
             )}
+            {businessInventoryFilterError && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                {businessInventoryFilterError}
+              </div>
+            )}
 
             <div className="mb-4 grid gap-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF9EF] p-4 sm:grid-cols-2 xl:grid-cols-5">
               <div>
@@ -4557,32 +4612,33 @@ Selected: ${summary}`,
             <section className="mb-4 rounded-2xl border border-[#CA922B]/30 bg-[#FFF9EF] p-4" aria-label="Founder source directory intake">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8D5C17]">Founder source directory intake</p>
-                  <h3 className="mt-1 font-serif text-xl font-bold text-[#3A1F0E]">Publish the received source-backed directory</h3>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8D5C17]">Minneapolis proof-of-concept intake</p>
+                  <h3 className="mt-1 font-serif text-xl font-bold text-[#3A1F0E]">Publish the received Minneapolis source-backed directory</h3>
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-[#3A1F0E]/65">
-                    Exact same-place duplicates are skipped. Every other source listing becomes a searchable, unclaimed MWM profile; only a supplied street address can be used for a map pin.
+                    Exact same-place records retain their canonical profile and receive only missing source-backed details. Potential same-name records go to the Duplicate vault for review. Every other source listing becomes a searchable, unclaimed MWM profile; only a supplied street address can be used for a map pin.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => void publishAllSourceBackedDirectoryBatches()}
+                  onClick={() => void publishMinneapolisSourceBackedDirectory()}
                   disabled={sourceDirectoryIntakeLoading || sourceDirectoryIntakeApplying || !sourceDirectoryIntakePreview || sourceDirectoryIntakePreview.createCount === 0}
                   className="shrink-0 rounded-xl bg-[#CA922B] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#B38024] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sourceDirectoryIntakeApplying
-                    ? "Publishing protected batches…"
+                    ? "Publishing Minneapolis records…"
                     : sourceDirectoryIntakePreview?.createCount
-                      ? `Publish all remaining (${sourceDirectoryIntakePreview.createCount.toLocaleString()})`
-                      : "No remaining source listings"}
+                      ? `Publish Minneapolis (${sourceDirectoryIntakePreview.createCount.toLocaleString()})`
+                      : "No remaining Minneapolis listings"}
                 </button>
               </div>
               {sourceDirectoryIntakeLoading ? (
                 <p className="mt-3 text-sm text-[#3A1F0E]/60">Checking the protected duplicate plan…</p>
               ) : sourceDirectoryIntakePreview ? (
-                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
-                  <div><dt className="text-[#3A1F0E]/55">Received source records</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
-                  <div><dt className="text-[#3A1F0E]/55">Remaining to publish</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.createCount.toLocaleString()}</dd></div>
-                  <div><dt className="text-[#3A1F0E]/55">Exact duplicates skipped</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.exactDuplicateCount.toLocaleString()}</dd></div>
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-6">
+                  <div><dt className="text-[#3A1F0E]/55">Received Minneapolis source records</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Remaining to reconcile</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.createCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Exact records reconciled</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.exactDuplicateCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Potential duplicates to review</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.potentialDuplicateReviewCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Street-address profiles</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.addressEligibleForGeocodingCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Searchable without pin</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.maplessProfileCount.toLocaleString()}</dd></div>
                 </dl>
@@ -4809,7 +4865,7 @@ Selected: ${summary}`,
                   <option value="all">All contact-link records</option>
                   <option value="website_present">Has a website</option>
                   <option value="website_missing">Missing a website</option>
-                  <option value="social_present">Has social media</option>
+                  <option value="social_present">Has any social media</option>
                   <option value="no_public_link">No website or social media</option>
                 </select>
               </label>
@@ -5151,6 +5207,9 @@ Selected: ${summary}`,
                             ["Instagram", publicSocialHref(biz.instagram, "instagram")],
                             ["TikTok", publicSocialHref(biz.tiktok, "tiktok")],
                             ["Facebook", publicSocialHref(biz.facebook, "facebook")],
+                            ["X / Twitter", publicHttpsHref(biz.twitter)],
+                            ["YouTube", publicHttpsHref(biz.youtube)],
+                            ["Pinterest", publicHttpsHref(biz.pinterest)],
                           ] as const).map(([label, href]) => href ? (
                             <a
                               key={label}
@@ -5162,7 +5221,7 @@ Selected: ${summary}`,
                               <ExternalLink className="w-3 h-3" /> {label}
                             </a>
                           ) : null)}
-                          {!biz.phone && !biz.website && !biz.instagram && !biz.tiktok && !biz.facebook && (
+                          {!biz.phone && !biz.website && !biz.instagram && !biz.tiktok && !biz.facebook && !biz.twitter && !biz.youtube && !biz.pinterest && (
                             <span className="text-[#3A1F0E]/30">—</span>
                           )}
                         </td>
