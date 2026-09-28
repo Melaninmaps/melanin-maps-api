@@ -173,9 +173,14 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
         youtube: youtube || null, pinterest: pinterest || null,
         ownershipDesignations,
         blackOwned: ownershipDesignations.some(d => d.toLowerCase().includes("black")),
-        category, subcategory: subcategory || null,
+        subcategory: subcategory || null,
         vibes: selectedVibes, tags: selectedTags,
       };
+      // Some retained source records pre-date the category taxonomy. Never
+      // replace a stored category with an empty string merely because that
+      // legacy value has no current dropdown option.
+      if (category.trim()) body.category = category.trim();
+      else if (biz?.category?.trim()) body.category = biz.category.trim();
       const res = await fetch(`${BASE}/api/admin/businesses/${businessId}/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -187,6 +192,8 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
       setSavedOk(true);
       onSaved();
       setTimeout(() => setSavedOk(false), 3000);
+    } catch {
+      setSaveError("Could not save this business. Check the connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -208,6 +215,12 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
   }
 
   const selectedCategoryData = BUSINESS_CATEGORY_TAXONOMY.find(c => c.name === category);
+  // Older, source-backed listings retain their originally supplied category
+  // wording (for example, "Beauty & Hair"). Keep that value visible and
+  // selectable so an edit does not silently erase or recategorize the record.
+  const hasLegacyCategory = Boolean(
+    category && !BUSINESS_CATEGORY_TAXONOMY.some((item) => item.name === category),
+  );
   const vibeEligible = VIBE_ELIGIBLE_CATEGORIES.includes(category);
   const availableVibes = VIBES_BY_CATEGORY[category] ?? [];
 
@@ -353,6 +366,9 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
                     <label className={labelCls}>Category</label>
                     <select className={inputCls} value={category} onChange={e => setCategory(e.target.value)}>
                       <option value="">Select category</option>
+                      {hasLegacyCategory && (
+                        <option value={category}>{category} (current category)</option>
+                      )}
                       {BUSINESS_CATEGORY_TAXONOMY.map(c => (
                         <option key={c.name} value={c.name}>{c.name}</option>
                       ))}

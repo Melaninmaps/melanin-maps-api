@@ -176,6 +176,19 @@ describe("safety report incident-location contract", () => {
   });
 });
 
+describe("Kinfolk verified-radius contract", () => {
+  it("sends a public origin only for the current turn and clears it from the mobile composer", () => {
+    const travel = source("../app/travel.tsx");
+    const hook = source("../hooks/useKinfolk.ts");
+
+    expect(travel).toContain("Exact-radius origin (public place only)");
+    expect(travel).toContain("setExactRadiusOrigin(\"\")");
+    expect(travel).toContain("not saved to Kinfolk memory or your profile");
+    expect(hook).toContain("publicOrigin: opts?.publicOrigin?.trim() || undefined");
+    expect(hook).not.toContain("rememberThis: opts?.publicOrigin");
+  });
+});
+
 describe("Build 106 protected-read and Kinfolk response contracts", () => {
   it("authenticates nearby safety reads and never substitutes fabricated all-clear alerts", () => {
     const activityAlerts = source("../hooks/useActivityAlerts.ts");

@@ -237,7 +237,11 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("strictGovernedDiscoveryV2");
     expect(helper).toContain("strictEvidenceRequired: strictSourceBackedDiscovery");
     expect(helper).toContain("GOVERNED_DISCOVERY_V2_RADIUS_REPLY");
-    expect(helper).toContain("radiusVerification: \"unavailable_without_geocoded_origin\"");
+    expect(helper).toContain("isVerifiedRadiusV1Enabled()");
+    expect(helper).toContain("resolveVerifiedPublicOrigin");
+    expect(helper).toContain("verifiedRadius: verifiedRadius ?? undefined");
+    expect(helper).toContain("radiusVerification: \"unavailable_without_verified_public_origin\"");
+    expect(helper).toContain("verified_public_origin_straight_line");
     expect(helper).toContain("I will not substitute an untagged listing or infer ownership.");
   });
 

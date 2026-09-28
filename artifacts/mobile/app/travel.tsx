@@ -2008,6 +2008,7 @@ export default function TravelScreen() {
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
+  const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [kinfolkImages, setKinfolkImages] = useState<string[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
@@ -2342,7 +2343,11 @@ export default function TravelScreen() {
     stopServerVoice("member_new_turn");
     const attachedImages = [...kinfolkImages];
     const shouldRemember = rememberThis;
+    const publicOrigin = exactRadiusOrigin.trim();
     setInputText("");
+    // The origin is one-turn public context only. It is never shown in the
+    // conversation, attached to memory, or kept in the composer after send.
+    setExactRadiusOrigin("");
     onUserSend(); // scroll to bottom, suppress jump button for this send
     armAutoSpeech();
     await sendMessage(msg, {
@@ -2350,11 +2355,12 @@ export default function TravelScreen() {
       imageUrls: attachedImages,
       rememberThis: shouldRemember,
       includeCommunityPerspective,
+      publicOrigin: publicOrigin || undefined,
     });
     setKinfolkImages([]);
     setRememberThis(false);
     setIncludeCommunityPerspective(false);
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech, stopServerVoice]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
 
   const stopPrimaryVoiceRecording = useCallback(async () => {
     const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
@@ -2879,6 +2885,26 @@ export default function TravelScreen() {
                 <Text style={styles.voiceCancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             ) : null}
+          </View>
+        ) : null}
+
+        {/\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(inputText) ? (
+          <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingTop: 10 }}>
+            <Text style={{ color: colors.text, fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 5 }}>
+              Exact-radius origin (public place only)
+            </Text>
+            <TextInput
+              value={exactRadiusOrigin}
+              onChangeText={setExactRadiusOrigin}
+              maxLength={220}
+              placeholder="Hotel, venue, or transit station in the city"
+              placeholderTextColor={colors.mutedForeground}
+              accessibilityLabel="Exact-radius public origin"
+              style={{ height: 42, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, paddingHorizontal: 12, fontFamily: "Inter_400Regular", fontSize: 13 }}
+            />
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 5 }}>
+              Used only to verify this straight-line distance. It is not saved to Kinfolk memory or your profile.
+            </Text>
           </View>
         ) : null}
 

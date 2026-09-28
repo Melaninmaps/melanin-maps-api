@@ -36,10 +36,7 @@ export type CitySafetyPublisherClass =
   | "official_weather"
   | "official_emergency";
 
-export type CitySafetyCityId =
-  | "minneapolis-mn"
-  | "philadelphia-pa"
-  | "houston-tx";
+export type CitySafetyCityId = string;
 
 type SafetySourceNormalizer = "nws_alerts" | "oem_activation" | "none";
 
@@ -55,6 +52,123 @@ export type CitySafetySourceRecord = Readonly<{
   normalizer: SafetySourceNormalizer;
 }>;
 
+
+/**
+ * Representative city centers support only the official weather-source point
+ * selection below. They are reviewed static geography, never member location,
+ * device coordinates, a routing origin, or an ownership/identity signal.
+ */
+export const CITY_SAFETY_CITY_CENTERS = [
+  { cityId: "toronto-on", city: "Toronto", stateCode: "ON", countryCode: "CA", latitude: 43.6534817, longitude: -79.3839347 },
+  { cityId: "philadelphia-pa", city: "Philadelphia", stateCode: "PA", countryCode: "US", latitude: 39.9527237, longitude: -75.1635262 },
+  { cityId: "allentown-pa", city: "Allentown", stateCode: "PA", countryCode: "US", latitude: 40.6022552, longitude: -75.4716115 },
+  { cityId: "doylestown-pa", city: "Doylestown", stateCode: "PA", countryCode: "US", latitude: 40.3100446, longitude: -75.1304588 },
+  { cityId: "new-york-ny", city: "New York", stateCode: "NY", countryCode: "US", latitude: 40.7127281, longitude: -74.0060152 },
+  { cityId: "washington-dc", city: "Washington", stateCode: "DC", countryCode: "US", latitude: 38.8950982, longitude: -77.0363849 },
+  { cityId: "los-angeles-ca", city: "Los Angeles", stateCode: "CA", countryCode: "US", latitude: 34.0536909, longitude: -118.242766 },
+  { cityId: "chicago-il", city: "Chicago", stateCode: "IL", countryCode: "US", latitude: 41.8755616, longitude: -87.6244212 },
+  { cityId: "houston-tx", city: "Houston", stateCode: "TX", countryCode: "US", latitude: 29.7589382, longitude: -95.3676974 },
+  { cityId: "new-orleans-la", city: "New Orleans", stateCode: "LA", countryCode: "US", latitude: 29.9561422, longitude: -90.0733934 },
+  { cityId: "baltimore-md", city: "Baltimore", stateCode: "MD", countryCode: "US", latitude: 39.2908816, longitude: -76.610759 },
+  { cityId: "detroit-mi", city: "Detroit", stateCode: "MI", countryCode: "US", latitude: 42.3315509, longitude: -83.0466403 },
+  { cityId: "oakland-ca", city: "Oakland", stateCode: "CA", countryCode: "US", latitude: 37.8044557, longitude: -122.271356 },
+  { cityId: "nashville-tn", city: "Nashville", stateCode: "TN", countryCode: "US", latitude: 36.1622767, longitude: -86.7742984 },
+  { cityId: "memphis-tn", city: "Memphis", stateCode: "TN", countryCode: "US", latitude: 35.146026, longitude: -90.0517786 },
+  { cityId: "jackson-ms", city: "Jackson", stateCode: "MS", countryCode: "US", latitude: 32.2998686, longitude: -90.1830408 },
+  { cityId: "richmond-va", city: "Richmond", stateCode: "VA", countryCode: "US", latitude: 37.5385087, longitude: -77.43428 },
+  { cityId: "charlotte-nc", city: "Charlotte", stateCode: "NC", countryCode: "US", latitude: 35.2272086, longitude: -80.8430827 },
+  { cityId: "birmingham-al", city: "Birmingham", stateCode: "AL", countryCode: "US", latitude: 33.5206824, longitude: -86.8024326 },
+  { cityId: "atlanta-ga", city: "Atlanta", stateCode: "GA", countryCode: "US", latitude: 33.7544657, longitude: -84.3898151 },
+  { cityId: "miami-fl", city: "Miami", stateCode: "FL", countryCode: "US", latitude: 25.7741566, longitude: -80.1935973 },
+  { cityId: "dallas-tx", city: "Dallas", stateCode: "TX", countryCode: "US", latitude: 32.7762719, longitude: -96.7968559 },
+  { cityId: "san-antonio-tx", city: "San Antonio", stateCode: "TX", countryCode: "US", latitude: 29.4246002, longitude: -98.4951405 },
+  { cityId: "denver-co", city: "Denver", stateCode: "CO", countryCode: "US", latitude: 39.7392364, longitude: -104.984862 },
+  { cityId: "seattle-wa", city: "Seattle", stateCode: "WA", countryCode: "US", latitude: 47.6038321, longitude: -122.330062 },
+  { cityId: "portland-or", city: "Portland", stateCode: "OR", countryCode: "US", latitude: 45.5202471, longitude: -122.674194 },
+  { cityId: "minneapolis-mn", city: "Minneapolis", stateCode: "MN", countryCode: "US", latitude: 44.9772995, longitude: -93.2654692 },
+  { cityId: "cleveland-oh", city: "Cleveland", stateCode: "OH", countryCode: "US", latitude: 41.4996574, longitude: -81.6936772 },
+  { cityId: "cincinnati-oh", city: "Cincinnati", stateCode: "OH", countryCode: "US", latitude: 39.1012809, longitude: -84.5127405 },
+  { cityId: "columbus-oh", city: "Columbus", stateCode: "OH", countryCode: "US", latitude: 39.9622601, longitude: -83.0007065 },
+  { cityId: "pittsburgh-pa", city: "Pittsburgh", stateCode: "PA", countryCode: "US", latitude: 40.4406968, longitude: -80.0025666 },
+  { cityId: "indianapolis-in", city: "Indianapolis", stateCode: "IN", countryCode: "US", latitude: 39.7683331, longitude: -86.1583502 },
+  { cityId: "kansas-city-mo", city: "Kansas City", stateCode: "MO", countryCode: "US", latitude: 39.100105, longitude: -94.5781416 },
+  { cityId: "st-louis-mo", city: "St. Louis", stateCode: "MO", countryCode: "US", latitude: 38.6254063, longitude: -90.190009 },
+  { cityId: "milwaukee-wi", city: "Milwaukee", stateCode: "WI", countryCode: "US", latitude: 43.0386475, longitude: -87.9090751 },
+  { cityId: "louisville-ky", city: "Louisville", stateCode: "KY", countryCode: "US", latitude: 38.2542376, longitude: -85.759407 },
+  { cityId: "tampa-fl", city: "Tampa", stateCode: "FL", countryCode: "US", latitude: 27.9449854, longitude: -82.4583107 },
+  { cityId: "orlando-fl", city: "Orlando", stateCode: "FL", countryCode: "US", latitude: 28.5421218, longitude: -81.379045 },
+  { cityId: "jacksonville-fl", city: "Jacksonville", stateCode: "FL", countryCode: "US", latitude: 30.3262247, longitude: -81.6579179 },
+  { cityId: "raleigh-nc", city: "Raleigh", stateCode: "NC", countryCode: "US", latitude: 35.7803977, longitude: -78.6390989 },
+  { cityId: "durham-nc", city: "Durham", stateCode: "NC", countryCode: "US", latitude: 35.996653, longitude: -78.9018053 },
+  { cityId: "greensboro-nc", city: "Greensboro", stateCode: "NC", countryCode: "US", latitude: 36.0726355, longitude: -79.7919754 },
+  { cityId: "columbia-sc", city: "Columbia", stateCode: "SC", countryCode: "US", latitude: 34.000754, longitude: -81.0352313 },
+  { cityId: "charleston-sc", city: "Charleston", stateCode: "SC", countryCode: "US", latitude: 32.7884363, longitude: -79.9399309 },
+  { cityId: "savannah-ga", city: "Savannah", stateCode: "GA", countryCode: "US", latitude: 32.0790074, longitude: -81.0921335 },
+  { cityId: "montgomery-al", city: "Montgomery", stateCode: "AL", countryCode: "US", latitude: 32.3777111, longitude: -86.3090775 },
+  { cityId: "mobile-al", city: "Mobile", stateCode: "AL", countryCode: "US", latitude: 30.6913462, longitude: -88.0437509 },
+  { cityId: "baton-rouge-la", city: "Baton Rouge", stateCode: "LA", countryCode: "US", latitude: 30.4494155, longitude: -91.1869659 },
+  { cityId: "shreveport-la", city: "Shreveport", stateCode: "LA", countryCode: "US", latitude: 32.5135356, longitude: -93.7477839 },
+  { cityId: "little-rock-ar", city: "Little Rock", stateCode: "AR", countryCode: "US", latitude: 34.7465071, longitude: -92.2896267 },
+  { cityId: "oklahoma-city-ok", city: "Oklahoma City", stateCode: "OK", countryCode: "US", latitude: 35.4729886, longitude: -97.5170536 },
+  { cityId: "tulsa-ok", city: "Tulsa", stateCode: "OK", countryCode: "US", latitude: 36.1563122, longitude: -95.9927516 },
+  { cityId: "las-vegas-nv", city: "Las Vegas", stateCode: "NV", countryCode: "US", latitude: 36.1674263, longitude: -115.1484131 },
+  { cityId: "phoenix-az", city: "Phoenix", stateCode: "AZ", countryCode: "US", latitude: 33.4484367, longitude: -112.074141 },
+  { cityId: "tucson-az", city: "Tucson", stateCode: "AZ", countryCode: "US", latitude: 32.2228765, longitude: -110.974847 },
+  { cityId: "albuquerque-nm", city: "Albuquerque", stateCode: "NM", countryCode: "US", latitude: 35.0841034, longitude: -106.650985 },
+  { cityId: "el-paso-tx", city: "El Paso", stateCode: "TX", countryCode: "US", latitude: 31.7601001, longitude: -106.4870476 },
+  { cityId: "san-francisco-ca", city: "San Francisco", stateCode: "CA", countryCode: "US", latitude: 37.7879363, longitude: -122.4075201 },
+] as const satisfies readonly Readonly<{
+  cityId: string;
+  city: string;
+  stateCode: string;
+  countryCode: "US" | "CA";
+  latitude: number;
+  longitude: number;
+}>[];
+
+function weatherSourceId(cityId: string): string {
+  // Retain the original database/audit identifiers for the initial three
+  // cities while keeping later city source IDs self-describing.
+  const legacy: Readonly<Record<string, string>> = {
+    "minneapolis-mn": "minneapolis-nws-alerts",
+    "philadelphia-pa": "philadelphia-nws-alerts",
+    "houston-tx": "houston-nws-alerts",
+  };
+  return legacy[cityId] ?? `${cityId}-nws-alerts`;
+}
+
+const NATIONAL_WEATHER_SERVICE_CITY_SOURCES: readonly CitySafetySourceRecord[] =
+  CITY_SAFETY_CITY_CENTERS
+    .filter((city) => city.countryCode === "US")
+    .map((city) => ({
+      id: weatherSourceId(city.cityId),
+      cityId: city.cityId,
+      topic: "weather",
+      displayName: `National Weather Service — ${city.city}`,
+      url: `https://api.weather.gov/alerts/active?point=${city.latitude},${city.longitude}`,
+      publisherClass: "official_weather",
+      freshnessMinutes: 15,
+      enabled: true,
+      normalizer: "nws_alerts",
+    }));
+
+const CANADIAN_OFFICIAL_WEATHER_CITY_SOURCES: readonly CitySafetySourceRecord[] =
+  CITY_SAFETY_CITY_CENTERS
+    .filter((city) => city.countryCode === "CA")
+    .map((city) => ({
+      id: `${city.cityId}-eccc-weather-alerts`,
+      cityId: city.cityId,
+      topic: "weather",
+      displayName: `Environment and Climate Change Canada — ${city.city}`,
+      url: "https://weather.gc.ca/warnings/index_e.html",
+      publisherClass: "official_weather",
+      freshnessMinutes: 30,
+      enabled: true,
+      // The Canadian page remains an official link only until a city-bound
+      // normalizer is separately reviewed; it cannot create an alert claim.
+      normalizer: "none",
+    }));
+
 /**
  * Curated, versioned source allowlist. The exact city id, topic, publisher,
  * retrieval method, and freshness are code-reviewed rather than model output.
@@ -62,17 +176,8 @@ export type CitySafetySourceRecord = Readonly<{
  * produce a bounded, current source excerpt.
  */
 export const CITY_SAFETY_SOURCE_REGISTRY: readonly CitySafetySourceRecord[] = [
-  {
-    id: "minneapolis-nws-alerts",
-    cityId: "minneapolis-mn",
-    topic: "weather",
-    displayName: "National Weather Service — Minneapolis",
-    url: "https://api.weather.gov/alerts/active?point=44.9778,-93.2650",
-    publisherClass: "official_weather",
-    freshnessMinutes: 15,
-    enabled: true,
-    normalizer: "nws_alerts",
-  },
+  ...NATIONAL_WEATHER_SERVICE_CITY_SOURCES,
+  ...CANADIAN_OFFICIAL_WEATHER_CITY_SOURCES,
   {
     id: "minneapolis-metro-transit-alerts",
     cityId: "minneapolis-mn",
@@ -96,17 +201,6 @@ export const CITY_SAFETY_SOURCE_REGISTRY: readonly CitySafetySourceRecord[] = [
     normalizer: "none",
   },
   {
-    id: "philadelphia-nws-alerts",
-    cityId: "philadelphia-pa",
-    topic: "weather",
-    displayName: "National Weather Service — Philadelphia",
-    url: "https://api.weather.gov/alerts/active?point=39.9526,-75.1652",
-    publisherClass: "official_weather",
-    freshnessMinutes: 15,
-    enabled: true,
-    normalizer: "nws_alerts",
-  },
-  {
     id: "philadelphia-septa-alerts",
     cityId: "philadelphia-pa",
     topic: "transit",
@@ -127,17 +221,6 @@ export const CITY_SAFETY_SOURCE_REGISTRY: readonly CitySafetySourceRecord[] = [
     freshnessMinutes: 30,
     enabled: true,
     normalizer: "none",
-  },
-  {
-    id: "houston-nws-alerts",
-    cityId: "houston-tx",
-    topic: "weather",
-    displayName: "National Weather Service — Houston",
-    url: "https://api.weather.gov/alerts/active?point=29.7604,-95.3698",
-    publisherClass: "official_weather",
-    freshnessMinutes: 15,
-    enabled: true,
-    normalizer: "nws_alerts",
   },
   {
     id: "houston-oem-activation",
@@ -385,10 +468,9 @@ async function managedSourceRecordsFor(
 export function citySafetyCityId(scope: Readonly<{ city: string; stateCode: string }>): CitySafetyCityId | null {
   const normalizedCity = scope.city.trim().toLowerCase().replace(/\s+/g, " ");
   const normalizedState = scope.stateCode.trim().toUpperCase();
-  if (normalizedCity === "minneapolis" && normalizedState === "MN") return "minneapolis-mn";
-  if (normalizedCity === "philadelphia" && normalizedState === "PA") return "philadelphia-pa";
-  if (normalizedCity === "houston" && normalizedState === "TX") return "houston-tx";
-  return null;
+  return CITY_SAFETY_CITY_CENTERS.find(
+    (city) => city.city.toLowerCase() === normalizedCity && city.stateCode === normalizedState,
+  )?.cityId ?? null;
 }
 
 export async function fetchAndNormalizeSafetySource(input: SafetyFetchInput): Promise<readonly CurrentSafetyEvidence[]> {

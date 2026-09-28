@@ -12,6 +12,8 @@ export type ConversationalBusinessResultView = Readonly<{
     matchReason: string;
     verified: boolean;
     claimed: boolean;
+    /** Present only for a one-turn verified public-origin radius search. */
+    distanceMiles?: number | null;
     ownershipEvidence?: {
       sourceUrl: string;
       sourceLabel: string | null;
@@ -39,13 +41,19 @@ export function buildConversationalBusinessResultView(input: {
     title: business.name,
     supportingText: business.isOnlineOnly
       ? `Online service or shop${business.description ? ` — ${business.description}` : ""}`
-      : business.description || `${business.category} in ${business.city}.`,
+      : [
+          business.distanceMiles != null
+            ? `${business.distanceMiles.toFixed(1)} straight-line mi from your public origin`
+            : null,
+          business.description || `${business.category} in ${business.city}.`,
+        ].filter(Boolean).join(" — "),
     isOnlineOnly: business.isOnlineOnly === true,
     matchReason: business.matchReasons[0]
       ? `Matched by ${business.matchReasons.join(" and ")}.`
       : `Matched as a ${input.subjectLabel} listing.`,
     verified: business.verified,
     claimed: business.claimed === true,
+    distanceMiles: business.distanceMiles,
     ownershipEvidence: business.ownershipEvidence,
     actions: [
       { label: "View details" as const, url: business.detailUrl },

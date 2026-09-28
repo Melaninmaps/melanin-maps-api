@@ -749,6 +749,51 @@ describe("deterministic local business discovery", () => {
     expect(serialized).not.toContain("Can you tell me");
     expect(serialized).not.toMatch(/latitude|longitude|coordinates/i);
   });
+
+  it("returns only physical listings inside a verified straight-line radius and shows the distance", async () => {
+    const nearby = { ...governedBusiness, latitude: 33.75, longitude: -84.39 };
+    const outsideRadius = {
+      ...governedBusiness,
+      id: "business-outside-radius",
+      name: "Farther Atlanta Reading Room",
+      latitude: 34.15,
+      longitude: -84.39,
+    };
+    const onlineOnly = {
+      ...governedBusiness,
+      id: "business-online-radius",
+      name: "Online Atlanta Reading Room",
+      isOnlineOnly: true,
+      latitude: 33.75,
+      longitude: -84.39,
+    };
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [nearby, outsideRadius, onlineOnly], places: [forKeepsPlace] }),
+      verifiedRadius: {
+        latitude: 33.75,
+        longitude: -84.39,
+        radiusMiles: 10,
+        resolvedCity: "Atlanta",
+        resolvedStateCode: "GA",
+      },
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: false,
+        provider: null,
+        results: [],
+      }),
+    });
+
+    expect(result.discovery.platformBusinesses).toHaveLength(1);
+    expect(result.discovery.platformBusinesses[0]).toMatchObject({
+      id: "business-1",
+      distanceMiles: 0,
+    });
+    expect(result.discovery.mapPlaces).toEqual([]);
+    expect(result.resultView.cards[0]?.supportingText).toMatch(/straight-line mi from your public origin/i);
+  });
 });
 
 describe("local web provider-state contract", () => {

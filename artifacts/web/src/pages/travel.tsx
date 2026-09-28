@@ -1000,6 +1000,7 @@ function TravelPage() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
 
   // Pre-fill from ?q= URL param — set once on mount (map/business search handoff)
   useEffect(() => {
@@ -1771,7 +1772,12 @@ function TravelPage() {
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
+    const publicOrigin = exactRadiusOrigin.trim();
     setInput("");
+    // An exact-radius origin is current-turn context only. Clear the browser
+    // control immediately after capturing the request value; it is not added to
+    // the message, continuity payload, profile, or Kinfolk memory.
+    setExactRadiusOrigin("");
     if (inputRef.current) { inputRef.current.style.height = "auto"; }
 
     const attachedImages = [...imageUrls];
@@ -1806,7 +1812,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective, cityHint: recentLocation, conversationContext }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext }),
         signal: controller.signal,
       });
 
@@ -1968,7 +1974,7 @@ function TravelPage() {
       clearResponseStatusTimers();
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, saveSpecificMemory]);
+  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, saveSpecificMemory, exactRadiusOrigin]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2777,6 +2783,23 @@ function TravelPage() {
                   {imageUrls.map((url) => <div key={url} className="relative"><img src={url} alt="Ready to ask Kinfolk about" className="h-20 w-20 rounded-xl object-cover" /><button onClick={() => setImageUrls((items) => items.filter((item) => item !== url))} aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-[#2B1507] p-1 text-white"><X size={11} /></button></div>)}
                 </div>}
                 {imageError && <p className="mb-2 max-w-3xl mx-auto text-xs text-red-600">{imageError}</p>}
+
+                {/\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(input) && (
+                  <label className="mb-2 flex max-w-3xl flex-col gap-1.5 mx-auto text-xs font-medium text-[#3A1F0E]">
+                    Exact-radius origin (public place only)
+                    <input
+                      value={exactRadiusOrigin}
+                      onChange={(event) => setExactRadiusOrigin(event.target.value)}
+                      maxLength={220}
+                      placeholder="Hotel, venue, or transit station in the city"
+                      aria-describedby="kinfolk-radius-origin-note"
+                      className="h-10 rounded-xl border border-[#3A1F0E]/15 bg-white px-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/35 focus:border-[#CA922B]/60 focus:outline-none"
+                    />
+                    <span id="kinfolk-radius-origin-note" className="font-normal text-[11px] leading-snug text-[#3A1F0E]/60">
+                      Used only to verify this straight-line distance; it is not saved to Kinfolk memory or your profile.
+                    </span>
+                  </label>
+                )}
 
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
                   <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadKinfolkImage(file); event.target.value = ""; }} />

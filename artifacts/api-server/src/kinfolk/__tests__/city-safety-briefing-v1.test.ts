@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  CITY_SAFETY_CITY_CENTERS,
   CITY_SAFETY_SOURCE_REGISTRY,
   citySafetyCityId,
   citySafetySourcesForResponse,
@@ -24,10 +25,13 @@ describe("city safety briefing v1", () => {
     expect(isCitySafetyBriefingV1Enabled({ CITY_SAFETY_BRIEFING_V1: "true" })).toBe(true);
   });
 
-  it("has bounded official source records for the three initial audit cities", () => {
-    expect(new Set(CITY_SAFETY_SOURCE_REGISTRY.map((source) => source.cityId))).toEqual(
-      new Set(["minneapolis-mn", "philadelphia-pa", "houston-tx"]),
-    );
+  it("has a bounded official weather source for every active city scope", () => {
+    expect(CITY_SAFETY_CITY_CENTERS).toHaveLength(58);
+    const registeredCityIds = new Set(CITY_SAFETY_SOURCE_REGISTRY.map((source) => source.cityId));
+    for (const city of CITY_SAFETY_CITY_CENTERS) {
+      expect(registeredCityIds).toContain(city.cityId);
+    }
+    expect(CITY_SAFETY_SOURCE_REGISTRY.filter((source) => source.topic === "weather")).toHaveLength(58);
     for (const source of CITY_SAFETY_SOURCE_REGISTRY) {
       expect(source.url).toMatch(/^https:\/\//);
       expect(source.freshnessMinutes).toBeGreaterThanOrEqual(5);
@@ -40,6 +44,8 @@ describe("city safety briefing v1", () => {
     expect(citySafetyCityId({ city: "Minneapolis", stateCode: "MN" })).toBe("minneapolis-mn");
     expect(citySafetyCityId({ city: "Philadelphia", stateCode: "PA" })).toBe("philadelphia-pa");
     expect(citySafetyCityId({ city: "Houston", stateCode: "TX" })).toBe("houston-tx");
+    expect(citySafetyCityId({ city: "Atlanta", stateCode: "GA" })).toBe("atlanta-ga");
+    expect(citySafetyCityId({ city: "Toronto", stateCode: "ON" })).toBe("toronto-on");
     expect(citySafetyCityId({ city: "Minneapolis", stateCode: "PA" })).toBeNull();
     expect(citySafetyCityId({ city: "Saint Paul", stateCode: "MN" })).toBeNull();
   });

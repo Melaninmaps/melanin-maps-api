@@ -90,6 +90,12 @@ import {
   requestsExactRadius,
 } from "../kinfolk/governed-discovery-v2";
 import {
+  isVerifiedRadiusV1Enabled,
+  requestedRadiusMiles,
+  resolveVerifiedPublicOrigin,
+  VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY,
+} from "../kinfolk/verified-radius-v1";
+import {
   citySafetyCityId,
   citySafetySourcesForResponse,
   currentCitySafetyBriefing,
@@ -6577,6 +6583,8 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   cityHint?: string;
   conversationContext?: unknown;
   staffAudit?: boolean;
+  /** Current-turn public origin only; never sent to memory or session storage. */
+  publicOrigin?: unknown;
 }): Promise<boolean> {
   // A city-bearing health, safety, legal, or financial question must never be
   // consumed by the ordinary business-card fast path. It continues below to the
@@ -6775,18 +6783,34 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     : requiredDesignationIds;
   const strictSourceBackedDiscovery =
     strictGovernedDiscoveryV2 && discoveryDesignationIds.length > 0;
-  if (strictSourceBackedDiscovery && requestsExactRadius(input.message)) {
+  const radiusMiles =
+    strictSourceBackedDiscovery && requestsExactRadius(input.message)
+      ? requestedRadiusMiles(input.message)
+      : null;
+  const verifiedRadius =
+    radiusMiles !== null && isVerifiedRadiusV1Enabled()
+      ? await resolveVerifiedPublicOrigin({
+          publicOrigin: input.publicOrigin,
+          city: scope.city,
+          stateCode: scope.stateCode,
+          radiusMiles,
+        })
+      : null;
+  if (radiusMiles !== null && !verifiedRadius) {
+    const radiusReply = isVerifiedRadiusV1Enabled()
+      ? VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY
+      : GOVERNED_DISCOVERY_V2_RADIUS_REPLY;
     const radiusSessionId = await persistDeterministicDiscoveryTurn({
       userId: input.req.user!.id,
       memoryEnabled: input.memoryEnabled,
       sessionId: input.sessionId,
       message: input.message,
-      reply: GOVERNED_DISCOVERY_V2_RADIUS_REPLY,
+      reply: radiusReply,
       recommendations: null,
       resultView: null,
       followUpSuggestions: [
         "Show city-level documented matches",
-        "Open a listing map pin",
+        "Add a public exact-radius origin",
       ],
       sources: [],
       destination: scope.city,
@@ -6794,12 +6818,12 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     });
     input.res.status(200).json({
       sessionId: radiusSessionId,
-      reply: GOVERNED_DISCOVERY_V2_RADIUS_REPLY,
+      reply: radiusReply,
       recommendations: null,
       itinerary: null,
       followUpSuggestions: [
         "Show city-level documented matches",
-        "Open a listing map pin",
+        "Add a public exact-radius origin",
       ],
       resultView: null,
       smartPromotion: null,
@@ -6814,10 +6838,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         allowBusinessCards: false,
         evidenceRequired: true,
         requiresClarification: false,
-        radiusVerification: "unavailable_without_geocoded_origin",
+        radiusVerification: "unavailable_without_verified_public_origin",
       },
       sources: [],
-      sourceNote: "A numeric radius was not applied without a verified geocoded origin.",
+      sourceNote: "A numeric radius was not applied without a verified geocoded public origin.",
       educationalStatus: "limited",
       discovery: null,
       needsClarification: false,
@@ -6875,6 +6899,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     documentedSourceTaxonomy:
       strictSourceBackedDiscovery && isDirectoryTaxonomyV2Enabled(),
     allowAllPublicPlaces: explicitAllPlacesExpansion,
+    verifiedRadius: verifiedRadius ?? undefined,
   });
   const resultView = buildConversationalBusinessResultView({
     businesses: discoveryResult.discovery.platformBusinesses,
@@ -6916,15 +6941,18 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const proximityCaveat = requiresDocumentedProximityCaveat(input.message)
     ? DOCUMENTED_PROXIMITY_CAVEAT
     : "";
+  const verifiedRadiusSummary = verifiedRadius
+    ? ` within ${verifiedRadius.radiusMiles} straight-line miles of your verified public origin`
+    : "";
   const conciseDirectoryReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
       ? strictSourceBackedDiscovery
-        ? `I found no source-backed MWM ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I will not substitute an untagged listing or infer ownership. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
+        ? `I found no source-backed MWM ${designationSummary} ${requestedSubjectLabel} match for every designation you selected${verifiedRadiusSummary} in ${scope.city}. I will not substitute an untagged listing or infer ownership. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
         : `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
         ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"} in ${scope.city}. I put the documented matches below so you can open the details or website.${proximityCaveat}${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+      ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"}${verifiedRadiusSummary} in ${scope.city}. I put the documented matches below so you can open the details or website.${proximityCaveat}${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${requestedSubjectLabel} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
@@ -6978,6 +7006,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       evidenceRequired: strictSourceBackedDiscovery,
       requiresClarification: false,
       strictOwnershipEvidence: strictSourceBackedDiscovery,
+      ...(verifiedRadius
+        ? { radiusVerification: "verified_public_origin_straight_line" }
+        : {}),
     },
     sources: [
       ...discoveryResult.sources,
@@ -7046,6 +7077,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     voiceMode: requestedVoiceMode,
     imageUrls = [],
     cityHint,
+    publicOrigin,
     includeCommunityPerspective,
     conversationContext,
     staffAudit: requestedStaffAudit,
@@ -7056,6 +7088,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     voiceMode?: string;
     imageUrls?: unknown;
     cityHint?: unknown;
+    publicOrigin?: unknown;
     includeCommunityPerspective?: unknown;
     conversationContext?: unknown;
     staffAudit?: unknown;
@@ -7069,6 +7102,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   if (message.length > 2000) {
     res.status(400).json({
       error: "Message is too long. Please keep it under 2,000 characters.",
+    });
+    return;
+  }
+  if (typeof publicOrigin === "string" && publicOrigin.length > 220) {
+    res.status(400).json({
+      error: "Exact-radius origin is too long. Please use a public place name or address under 220 characters.",
     });
     return;
   }
@@ -7473,6 +7512,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         typeof cityHint === "string" && cityHint.length <= 120
           ? cityHint
           : undefined,
+      publicOrigin,
       conversationContext: staffAuditPolicy ? undefined : conversationContext,
       staffAudit: Boolean(staffAuditPolicy),
     }))

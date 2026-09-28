@@ -5,6 +5,7 @@ import type {
   GovernedKinfolkMapPlace,
   ValidatedKinfolkCityScope,
 } from "./governedBusinessRepository";
+import type { VerifiedRadiusOrigin } from "./verified-radius-v1";
 import {
   matchesDocumentedDietaryRequirement,
   matchesDocumentedServiceRequirement,
@@ -66,6 +67,8 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   verified: boolean;
   claimed: boolean;
   isOnlineOnly?: boolean;
+  /** Present only when the member supplied a verified public starting point. */
+  distanceMiles?: number | null;
   matchReasons: string[];
   ownershipEvidence?: {
     sourceUrl: string;
@@ -184,6 +187,43 @@ function concise(value: string, maxLength = 180): string {
   return `${clean.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
+function straightLineMiles(
+  from: Pick<VerifiedRadiusOrigin, "latitude" | "longitude">,
+  to: Pick<GovernedKinfolkBusiness, "latitude" | "longitude">,
+): number | null {
+  if (to.latitude === null || to.longitude === null) return null;
+  const radians = (value: number) => (value * Math.PI) / 180;
+  const deltaLatitude = radians(to.latitude - from.latitude);
+  const deltaLongitude = radians(to.longitude - from.longitude);
+  const haversine =
+    Math.sin(deltaLatitude / 2) ** 2 +
+    Math.cos(radians(from.latitude)) *
+      Math.cos(radians(to.latitude)) *
+      Math.sin(deltaLongitude / 2) ** 2;
+  return 3_958.7613 * 2 * Math.asin(Math.sqrt(haversine));
+}
+
+/**
+ * Exact-radius results require both a transient geocoded public origin and
+ * stored coordinates on the business. Online-only records and map entities
+ * never substitute for a physical listing inside the requested distance.
+ */
+function withinVerifiedRadius(
+  businesses: readonly GovernedKinfolkBusiness[],
+  radius: VerifiedRadiusOrigin | undefined,
+): GovernedKinfolkBusiness[] {
+  if (!radius) return [...businesses];
+  return businesses.flatMap((business) => {
+    if (business.isOnlineOnly) return [];
+    const distanceMiles = straightLineMiles(radius, business);
+    if (distanceMiles === null || distanceMiles > radius.radiusMiles) return [];
+    return [{
+      ...business,
+      distanceMiles: Math.round(distanceMiles * 10) / 10,
+    }];
+  });
+}
+
 function requestedSubjectLabel(subject: NormalizedBusinessSubject): string {
   const qualifiers = [
     subject.dietaryRequirement?.label,
@@ -232,6 +272,7 @@ function platformBusiness(
     verified: business.verified,
     claimed: business.claimed,
     isOnlineOnly: business.isOnlineOnly === true,
+    distanceMiles: business.distanceMiles,
     matchReasons:
       "matchReasons" in business && Array.isArray(business.matchReasons)
         ? business.matchReasons.filter(
@@ -446,6 +487,8 @@ export async function discoverLocalBusinesses(input: {
   documentedSourceTaxonomy?: boolean;
   /** Member explicitly consented to leave the Diaspora Promotion Catalog. */
   allowAllPublicPlaces?: boolean;
+  /** Transient geocoded public origin for a one-turn exact-radius request. */
+  verifiedRadius?: VerifiedRadiusOrigin;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
   let platformStatus: "completed" | "degraded" = "completed";
   let businessRows: GovernedKinfolkBusiness[] = [];
@@ -460,11 +503,16 @@ export async function discoverLocalBusinesses(input: {
       subject: input.subject,
       strictOwnershipEvidence: input.strictEvidenceRequired === true,
     });
+  const candidateLimit = input.verifiedRadius
+    ? 50
+    : input.personalization
+      ? 50
+      : 12;
   const subjectBusinessRead = input.allowAllPublicPlaces
     ? input.repository.findBySubject(
         input.scope,
         input.subject,
-        input.personalization ? 50 : 12,
+        candidateLimit,
         input.requiredDesignationIds,
         true,
         ...(sourceBackedTagEvidence ? [true] : []),
@@ -472,7 +520,7 @@ export async function discoverLocalBusinesses(input: {
     : input.repository.findBySubject(
         input.scope,
         input.subject,
-        input.personalization ? 50 : 12,
+        candidateLimit,
         input.requiredDesignationIds,
         ...(sourceBackedTagEvidence ? [false, true] : []),
       );
@@ -516,6 +564,11 @@ export async function discoverLocalBusinesses(input: {
   if (platformResults[1].status === "fulfilled")
     mapRows = platformResults[1].value;
   else platformStatus = "degraded";
+
+  businessRows = withinVerifiedRadius(businessRows, input.verifiedRadius);
+  // A mapped cultural/place entity has no business coordinate contract, so it
+  // cannot be offered as an exact-radius result.
+  if (input.verifiedRadius) mapRows = [];
 
   // An explicit ownership request is never fulfilled by a profile that merely
   // carries a matching tag. In strict mode, a card must retain its source
@@ -707,9 +760,10 @@ export async function discoverLocalBusinesses(input: {
               website: business.website,
               detailUrl: business.detailUrl,
               verified: business.verified,
-              claimed: business.claimed,
-              isOnlineOnly: business.isOnlineOnly === true,
-              matchReasons: business.matchReasons,
+    claimed: business.claimed,
+    isOnlineOnly: business.isOnlineOnly === true,
+    distanceMiles: business.distanceMiles,
+    matchReasons: business.matchReasons,
               ownershipEvidence: business.ownershipEvidence,
             })),
             neighborhoods: [],
