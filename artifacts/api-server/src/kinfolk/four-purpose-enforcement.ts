@@ -163,7 +163,9 @@ function sourceLimitationNote(
 
 /** Consistent safety envelope for emergency, travel-safety, and community reports. */
 export function safetyEnvelope(intentClass: string, sources: SafeSource[]): string | null {
-  if (!/safety|emergency|crime|danger|safe|unsafe|violence|medical/i.test(intentClass)) return null;
+  // Medical answers have a distinct care-navigation safeguard. They must not
+  // inherit a city-alert disclaimer merely because health can be safety-sensitive.
+  if (!/safety|emergency|crime|danger|safe|unsafe|violence/i.test(intentClass)) return null;
   const official = sources.some((s) => s.label === "official_safety");
   return official
     ? "Safety information can change. Verify current alerts with official local authorities. For an immediate emergency, contact local emergency services. Community reports are experiences, not guarantees."

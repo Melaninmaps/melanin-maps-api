@@ -119,6 +119,7 @@ describe("safetyEnvelope", () => {
     expect(safetyEnvelope("business_discovery", [])).toBeNull();
     expect(safetyEnvelope("general_knowledge", [])).toBeNull();
     expect(safetyEnvelope("travel_general", [])).toBeNull();
+    expect(safetyEnvelope("medical_health", [])).toBeNull();
   });
 });
 
