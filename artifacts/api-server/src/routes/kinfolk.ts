@@ -7007,6 +7007,15 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   ]
     .filter((value): value is string => Boolean(value))
     .join(" ");
+  // General directory descriptions cannot establish that a venue can safely
+  // accommodate an allergy or prevent cross-contact. Keep an explicit allergy
+  // request in practical discovery, but never turn a listing into dietary-safety
+  // evidence or a medical assurance.
+  const allergySafetyCaveat = /\b(?:shellfish|seafood|peanut|tree[- ]?nut|dairy|milk|egg|wheat|gluten|soy|sesame)\b[\s\S]{0,80}\b(?:allerg(?:y|ic)?|avoid|sensitive)\b|\b(?:allerg(?:y|ic)?|avoid|sensitive)\b[\s\S]{0,80}\b(?:shellfish|seafood|peanut|tree[- ]?nut|dairy|milk|egg|wheat|gluten|soy|sesame)\b/i.test(
+    input.message,
+  )
+    ? "Food-allergy note: MWM listing details cannot verify allergen handling or cross-contact. Before ordering, call the business directly and tell them about the allergy."
+    : "";
   const proximityCaveat = requiresDocumentedProximityCaveat(input.message)
     ? DOCUMENTED_PROXIMITY_CAVEAT
     : "";
@@ -7027,7 +7036,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         : externalCount > 0
           ? `I didn't find a matching MWM public listing for ${requestedSubjectLabel} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
           : `I didn't find a matching ${designationSummary} place for ${requestedSubjectLabel} in ${scope.city}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
-  const conciseReply = [strictSafetyLimit, conciseDirectoryReply]
+  const conciseReply = [strictSafetyLimit, allergySafetyCaveat, conciseDirectoryReply]
     .filter(Boolean)
     .join("\n\n");
   const deterministicFollowUps = [

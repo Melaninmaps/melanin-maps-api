@@ -259,14 +259,25 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   const isExplicitLocalDiscovery =
     hasBusinessSignal &&
     (hasDestination || DISCOVERY_ACTION_SIGNALS.some((re) => re.test(msg)));
+  // A food-venue request can naturally include a budget qualifier or a food
+  // allergy. Those details must not turn "find a restaurant" into investment
+  // advice or a diagnosis. Emergency language remains higher priority below,
+  // and the discovery response adds a direct-confirmation safety caveat.
+  const isExplicitFoodVenueDiscovery =
+    isExplicitLocalDiscovery &&
+    /\b(?:restaurant|cafe|coffee|bakery|dining|dinner|lunch|breakfast|brunch|food(?:\s+spots?)?)\b/i.test(
+      msg,
+    );
 
   // Safety emergency — absolute top priority
   if (SAFETY_EMERGENCY_SIGNALS.some((re) => re.test(msg))) return "safety_emergency";
 
   // High-consequence regulated domains
-  if (MEDICAL_SIGNALS.some((re) => re.test(msg))) return "medical_health";
+  if (MEDICAL_SIGNALS.some((re) => re.test(msg)) && !isExplicitFoodVenueDiscovery)
+    return "medical_health";
   if (LEGAL_SIGNALS.some((re) => re.test(msg))) return "legal_regulated";
-  if (FINANCIAL_SIGNALS.some((re) => re.test(msg))) return "financial_regulated";
+  if (FINANCIAL_SIGNALS.some((re) => re.test(msg)) && !isExplicitFoodVenueDiscovery)
+    return "financial_regulated";
 
   // Platform-policy questions may use a city and a service category only as an
   // example. They need a conversational policy answer, not a directory search

@@ -146,6 +146,7 @@ describe("false positive guard (must NOT be high-consequence)", () => {
     "Black art galleries in Harlem",
     "Jazz clubs in New Orleans",
     "Where do local families go for brunch in DC",
+    "I need a Black-owned dinner in Minneapolis with a flexible budget; I have a shellfish allergy.",
   ];
 
   const HIGH_CONSEQUENCE_INTENTS = new Set([
@@ -171,6 +172,15 @@ describe("false positive guard (must NOT be high-consequence)", () => {
   it("does not block community data for culture / entertainment", () => {
     const policy = getEvidencePolicy("culture_entertainment");
     expect(policy.blockCommunityAsProof).toBe(false);
+  });
+
+  it("keeps an explicit food search in discovery when budget and allergy are supporting constraints", () => {
+    expect(
+      classifyIntent(
+        "I need a Black-owned dinner in Minneapolis with a flexible budget; I have a shellfish allergy.",
+        false,
+      ),
+    ).toBe("business_discovery");
   });
 });
 

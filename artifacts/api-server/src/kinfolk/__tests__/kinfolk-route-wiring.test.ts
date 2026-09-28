@@ -255,6 +255,16 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("strictSafetyLimit");
   });
 
+  it("keeps food-allergy requests in discovery without treating a listing as allergy-safety evidence", () => {
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(helper).toContain("allergySafetyCaveat");
+    expect(helper).toContain("cannot verify allergen handling or cross-contact");
+    expect(helper).toContain("call the business directly");
+  });
+
   it("keeps staff audit isolation server-authorized and independent of New Chat", () => {
     expect(routeSource).toContain("resolveKinfolkStaffAuditPolicy");
     expect(routeSource).toContain("requested: requestedStaffAudit");
