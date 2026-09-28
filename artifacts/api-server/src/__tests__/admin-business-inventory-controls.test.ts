@@ -297,6 +297,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("all-or-nothing publication");
     expect(migrations).toContain("ALTER COLUMN duplicate_of_id TYPE text USING duplicate_of_id::text");
     expect(migrations).toContain("data_type = 'uuid'");
+    expect(migrations).toContain("DROP VIEW IF EXISTS public.public_businesses");
     expect(adminRoute).toContain("REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g')");
     expect(adminRoute).toContain("dedupe_key = ANY($2::text[])");
     expect(adminScreen).toContain("Founder source directory intake");

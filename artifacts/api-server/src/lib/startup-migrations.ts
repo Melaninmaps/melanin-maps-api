@@ -15765,6 +15765,10 @@ async function ensureBusinessDedupSchema(
             AND column_name = 'duplicate_of_id'
             AND data_type = 'uuid'
         ) THEN
+          -- public_businesses selects b.* and therefore depends on this
+          -- column's type. Startup recreates the fail-closed view immediately
+          -- after this compatibility migration, before accepting traffic.
+          DROP VIEW IF EXISTS public.public_businesses;
           ALTER TABLE businesses
             ALTER COLUMN duplicate_of_id TYPE text USING duplicate_of_id::text;
         END IF;
