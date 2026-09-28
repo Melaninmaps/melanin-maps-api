@@ -204,6 +204,8 @@ describe("city briefing policy", () => {
     expect(prompt).toContain("Black, African, Afro-Latin, or broader diaspora context");
     expect(prompt).toContain("federal immigration-enforcement or public-service response");
     expect(prompt).toContain("Do not infer a contributor's nationality");
+    expect(prompt).toContain("not travel-brochure filler");
+    expect(prompt).toContain("weather and packing");
   });
 
   it("does not claim a preference lens when no interests were explicitly saved", () => {

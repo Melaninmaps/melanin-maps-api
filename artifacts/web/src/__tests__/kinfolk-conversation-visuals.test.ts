@@ -40,4 +40,13 @@ describe("web Kinfolk conversation-first visuals", () => {
     expect(travelPageSource).toContain('data-testid="kinfolk-community-perspective-opt-in"');
     expect(travelPageSource).toContain("Manage private Kinfolk memory");
   });
+
+  it("keeps research diagnostics out of the member-facing reply presentation", () => {
+    const presentationSource = readFileSync(
+      fileURLToPath(new URL("../components/kinfolk/KinfolkChatPresentation.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(presentationSource).toContain("Updated ");
+    expect(presentationSource).not.toContain('Research: {[researchStatus.usedInternal');
+  });
 });

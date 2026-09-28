@@ -386,6 +386,7 @@ import {
   normalizeKinfolkFormalDocumentReply,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import { normalizeKinfolkMemberReply } from "../kinfolk/response-format";
 import { buildKinfolkCurrentTurnCorrectionInstruction } from "../kinfolk/current-turn-correction";
 import {
   KINFOLK_VOICE_PREVIEW_TEXT,
@@ -10916,13 +10917,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentClass,
       allowBusinessCards: decisionPlan.allowBusinessCards,
     });
-    reply = enforced.reply
-      // The model's reply is already plain text. This narrowly converts any
-      // accidental Markdown heading into the requested readable bullet style
-      // without parsing or rendering untrusted HTML.
-      .replace(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/gm, "• $1")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+    reply = normalizeKinfolkMemberReply(enforced.reply);
     if (isKinfolkFormalDocumentRequest(message)) {
       reply = normalizeKinfolkFormalDocumentReply(reply);
     }
