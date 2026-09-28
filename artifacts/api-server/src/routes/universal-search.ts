@@ -98,8 +98,8 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   caribbean:     ["Food"],
   jamaican:      ["Food"],
   african:       ["Food"],
-  restaurant:    ["Food"],
-  restaurants:   ["Food"],
+  restaurant:    ["Food", "Restaurant", "Cafe", "Bakery", "Bar"],
+  restaurants:   ["Food", "Restaurant", "Cafe", "Bakery", "Bar"],
   food:          ["Food"],
   catering:      ["Food"],
   pancake:       ["Food"],
@@ -1022,8 +1022,18 @@ async function searchBusinesses(opts: {
         // Capture city-only tokens (not state abbrevs) for Pass 3 scope propagation.
         // This prevents "Philadelphia nightlife" from leaking Allentown/Elkins Park results.
         pass25CityTokens = locationTokens.filter(w => detectedCities.has(w));
+        // Intent/designation and connecting words identify the requested scope,
+        // but must never be used as category/description matching terms. In
+        // particular, every correctly designated Black-owned profile shares
+        // "black" and "owned" language; treating them as content turns a
+        // restaurant search into a city-wide mixed-category result set.
+        const LOCATION_SEARCH_STOP_WORDS = new Set([
+          "a", "an", "and", "at", "best", "black", "by", "for", "from",
+          "in", "me", "near", "of", "on", "owned", "place", "places",
+          "restaurant", "restaurants", "show", "the", "to", "with",
+        ]);
         const contentTokens = allWords.filter(
-          w => !locationTokens.includes(w) && w.length >= 2,
+          w => !locationTokens.includes(w) && w.length >= 2 && !LOCATION_SEARCH_STOP_WORDS.has(w),
         );
 
         if (locationTokens.length > 0 && contentTokens.length > 0) {
@@ -2036,6 +2046,18 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     // If there are no category anchors, drop all nearby_alternative results entirely —
     // an honest empty state beats an irrelevant recommendation for any intent type.
     if (mappedCategories.length > 0) {
+      // City-embedded discovery must still honor the kind of place requested.
+      // A legacy city-wide source description can mention a directory but does
+      // not turn an art studio, salon, or publisher into a restaurant. Exact
+      // name/specialty matches remain eligible; category-derived city cards do
+      // not unless their visible category or subcategory supports the request.
+      businesses = businesses.filter((business) =>
+        !["city_exact", "related_category", "nearby_alternative"].includes(business.matchTier)
+        || mappedCategories.some((category) => {
+          const categoryText = `${business.category ?? ""} ${business.subcategory ?? ""}`.toLowerCase();
+          return categoryText.includes(category.toLowerCase());
+        }),
+      );
       businesses = businesses.filter(
         (b) =>
           b.matchTier !== "nearby_alternative" ||

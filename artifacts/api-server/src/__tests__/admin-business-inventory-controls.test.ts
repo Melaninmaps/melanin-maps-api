@@ -318,6 +318,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("const createdRows = nextBatch.length > 0");
     expect(adminRoute).toContain("matchedExisting.isDuplicate && matchedExisting.duplicateOfId");
     expect(adminRoute).toContain("existingById.get(matchedExisting.duplicateOfId)");
+    expect(adminRoute).toContain("buildMinnesotaLegacyCanonicalReconciliations");
+    expect(adminRoute).toContain("Current Minneapolis listing");
+    expect(adminRoute).toContain("category: publicationFields.category");
+    expect(adminRoute).toContain("sourceUrl: candidate.sourceListingUrl ?? candidate.sourceUrl");
   });
 
   it("creates a map pin only from a successfully geocoded supplied street address", () => {

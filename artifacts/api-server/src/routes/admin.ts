@@ -51,6 +51,7 @@ import {
   normalizeDirectoryIdentity,
   sourceBackedDirectoryPublicationFields,
 } from "../directoryIntake/sourceBackedDirectoryIntake";
+import { buildMinnesotaLegacyCanonicalReconciliations } from "../directoryIntake/mnBlackDirectoryLegacyCanonicalReconciliation";
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
 
 const router: IRouter = Router();
@@ -424,6 +425,65 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
           && existing.city?.trim()
           && existing.state?.trim()
         ) {
+          exactSourcePinTargets.push({
+            id: existing.id,
+            name: existing.name ?? candidate.name,
+            address: retainedAddress,
+            city: existing.city,
+            state: existing.state,
+            country: retainedCountry ?? candidate.country,
+          });
+        }
+      }
+
+      // The first Minnesota import had only the public location-card copy. It
+      // created generic public profiles such as "Current Minneapolis listing"
+      // before individual source detail pages were captured. When the current
+      // detail receipt identifies the same named Minnesota place, preserve the
+      // public profile id and replace that importer-only copy with the richer,
+      // explicitly published source detail. This is deliberately narrower than
+      // normal source enrichment: it never replaces owner/community content.
+      const legacyMinnesotaCanonicals = isMinnesotaSourceBatch
+        ? buildMinnesotaLegacyCanonicalReconciliations(intakeCandidates, existingBusinesses)
+        : [];
+      for (const { candidate, canonicalId } of legacyMinnesotaCanonicals) {
+        const existing = existingById.get(canonicalId);
+        if (!existing) continue;
+        const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
+        const social = candidate.socialLinks ?? {};
+        const retainedAddress = firstSourceValue(existing.address, candidate.address);
+        const retainedCountry = firstSourceValue(existing.country, candidate.country);
+        await transaction.update(businessesTable).set({
+          category: publicationFields.category,
+          subcategory: publicationFields.subcategory,
+          address: retainedAddress,
+          country: retainedCountry,
+          description: publicationFields.description,
+          phone: firstSourceValue(existing.phone, publicationFields.phone),
+          website: firstSourceValue(existing.website, candidate.officialUrl),
+          facebook: firstSourceValue(existing.facebook, social.facebook ?? null),
+          instagram: firstSourceValue(existing.instagram, social.instagram ?? null),
+          tiktok: firstSourceValue(existing.tiktok, social.tiktok ?? null),
+          twitter: firstSourceValue(existing.twitter, social.twitter ?? null),
+          youtube: firstSourceValue(existing.youtube, social.youtube ?? null),
+          pinterest: firstSourceValue(existing.pinterest, social.pinterest ?? null),
+          ownershipDesignations: distinctSourceText([
+            ...(existing.ownershipDesignations ?? []),
+            ...candidate.ownershipDesignations,
+          ]),
+          blackOwned: Boolean(existing.blackOwned || candidate.ownershipDesignations.includes("Black / African American-Owned")),
+          tags: distinctSourceText([
+            ...(existing.tags ?? []),
+            ...publicationFields.tags,
+          ]),
+          sourceUrl: candidate.sourceListingUrl ?? candidate.sourceUrl,
+          researchSourceLabel: candidate.sourceLabel,
+          researchSourceUrl: candidate.sourceUrl,
+          kinfolkRecommendationReason: candidate.ownershipEvidence,
+          intakeBatchReference: candidate.batch,
+          updatedAt: new Date(),
+        }).where(eq(businessesTable.id, existing.id));
+        if (retainedAddress?.trim() && existing.city?.trim() && existing.state?.trim()) {
           exactSourcePinTargets.push({
             id: existing.id,
             name: existing.name ?? candidate.name,

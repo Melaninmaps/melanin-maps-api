@@ -148,6 +148,43 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     ]);
   });
 
+  it("does not label unrelated Minneapolis businesses as restaurant matches", async () => {
+    const artStudio = {
+      ...publicBusiness(),
+      id: "legacy-zoma",
+      name: "ZOMA House",
+      category: "Events & Culture",
+      subcategory: "Community art studio",
+      city: "Minneapolis",
+      state: "MN",
+      description: "Black/African American business ecosystem Current Minneapolis listing in the Minnesota Black-Owned Business Directory.",
+    };
+    const restaurant = {
+      ...publicBusiness(),
+      id: "source-pimento",
+      name: "Pimento Jamaican Kitchen & Rum Bar",
+      category: "Restaurants, coffee shops, bars & bakeries",
+      subcategory: "Restaurants, coffee shops, bars & bakeries",
+      city: "Minneapolis",
+      state: "MN",
+      description: "Authentic Jamaican jerk dishes using family recipes.",
+    };
+    poolQuery.mockImplementation(async (query: string) => {
+      if (query.includes("AND (b.category ILIKE")) {
+        return { rows: [artStudio, restaurant] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({ q: "Black owned restaurant", city: "Minneapolis", resultTypes: "businesses" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses.map((business: { name: string }) => business.name))
+      .toEqual(["Pimento Jamaican Kitchen & Rum Bar"]);
+  });
+
   it("accepts a documented legacy minority row and applies the lens in SQL before limits", async () => {
     const calls: QueryCall[] = [];
     const legacyMinorityBusiness = {
