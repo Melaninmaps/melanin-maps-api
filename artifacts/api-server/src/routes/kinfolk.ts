@@ -6574,20 +6574,45 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
   cityHint?: string;
   staffAudit?: boolean;
 }): Promise<boolean> {
-  if (!isCitySafetyBriefingV1Enabled() || !requestsCurrentCitySafetyBriefing(input.message)) {
-    return false;
-  }
+  if (!isCitySafetyBriefingV1Enabled()) return false;
   const location = resolveTurnGeography(input.message, input.cityHint ?? null);
   if (!location?.state) return false;
+  const requestedCityBriefing = isCityBriefingRequest(input.message, location.city);
+  if (!requestsCurrentCitySafetyBriefing(input.message) && !requestedCityBriefing) {
+    return false;
+  }
   const cityId = citySafetyCityId({ city: location.city, stateCode: location.state });
   if (!cityId) return false;
 
-  const briefing = await currentCitySafetyBriefing({
-    cityId,
-    auditPool: input.staffAudit ? undefined : pool,
-  });
-  const sources = citySafetySourcesForResponse(briefing);
-  const reply = renderDirectCitySafetyBriefing(location.city, briefing);
+  const [briefing, weather] = await Promise.all([
+    currentCitySafetyBriefing({
+      cityId,
+      auditPool: input.staffAudit ? undefined : pool,
+    }),
+    requestedCityBriefing
+      ? resolveAuthoritativeWeather(`${location.city}, ${location.state}`).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+  const sources = [
+    ...citySafetySourcesForResponse(briefing),
+    ...(weather ? [{ title: weather.source.title, url: weather.source.url }] : []),
+  ];
+  const purpose = requestedCityBriefing
+    ? deriveCityBriefingPurpose(input.message)
+    : "general";
+  const reply = requestedCityBriefing
+    ? [
+        purpose === "moving"
+          ? `For a move to ${location.city}, here is the current arrival check I can verify from the linked public sources.`
+          : `For a visit to ${location.city}, here is the current arrival check I can verify from the linked public sources.`,
+        weather?.reply ?? `• Weather: I could not load a live ${location.city} forecast in this check. Open the linked official weather source before departure.`,
+        renderCitySafetyBriefing(briefing),
+        purpose === "moving"
+          ? "• Moving lens: use the linked city and transit sources to verify resident services and commuting conditions for the specific area you are considering; I will not infer a neighborhood safety level."
+          : "• Visit lens: recheck the linked transit, city, and weather updates close to departure and before changing routes; I will not infer a neighborhood safety level.",
+        "• Immigration and civic context: these sources do not establish a current city-level federal immigration-enforcement response, so I will not speculate or label one as active.",
+      ].join("\n\n")
+    : renderDirectCitySafetyBriefing(location.city, briefing);
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
@@ -6617,11 +6642,11 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
     smartPromotion: null,
     taskAction: null,
     libraryAction: null,
-    intentClass: "safety",
+    intentClass: requestedCityBriefing ? "current_information" : "safety",
     responseMeta: {
       schemaVersion: 1,
-      planKind: "city_safety_briefing",
-      answerMode: "official_city_safety",
+      planKind: requestedCityBriefing ? "city_briefing" : "city_safety_briefing",
+      answerMode: requestedCityBriefing ? "official_city_arrival" : "official_city_safety",
       retrieval: "approved_official_city_sources",
       allowBusinessCards: false,
       evidenceRequired: true,
@@ -6631,9 +6656,9 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
       id: url,
       title,
       url,
-      label: "official_safety" as const,
+      label: url === weather?.source.url ? "current_weather" : "official_safety",
     })),
-    sourceNote: "This answer uses approved official city, transit, or weather sources only. Business-directory and safety sources are separate.",
+    sourceNote: "This answer uses linked official city/transit sources and current weather data. Business-directory and safety sources are separate.",
     educationalStatus: briefing.unavailable ? "limited" : "current_official_sources",
     discovery: null,
     needsClarification: false,
@@ -7644,15 +7669,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
   if (
     verifiedImageUrls.length === 0 &&
-    !isCityBriefingRequest(
-      message,
-      resolveTurnGeography(
-        message,
-        typeof cityHint === "string" && cityHint.length <= 120
-          ? cityHint
-          : null,
-      )?.city ?? null,
-    ) &&
     (await tryAnswerCurrentCitySafetyBriefing({
       req,
       res,

@@ -241,6 +241,14 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("not going to fill the gaps with generic travel advice");
   });
 
+  it("routes plain-language city arrival questions through the reviewed official check before model prose", () => {
+    expect(routeSource).toContain("const requestedCityBriefing = isCityBriefingRequest(input.message, location.city)");
+    expect(routeSource).toContain("!requestsCurrentCitySafetyBriefing(input.message) && !requestedCityBriefing");
+    expect(routeSource).toContain("resolveAuthoritativeWeather(`${location.city}, ${location.state}`)");
+    expect(routeSource).toContain("For a visit to ${location.city}, here is the current arrival check I can verify from the linked public sources.");
+    expect(routeSource).toContain("these sources do not establish a current city-level federal immigration-enforcement response");
+  });
+
   it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {
     const cityBriefingPlan = chatRoute.indexOf("let cityBriefingPlan = isCityBriefingRequest(message, destination)");
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
@@ -340,7 +348,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(directSafety).toBeGreaterThan(-1);
     expect(routeSource).toContain("requestsCurrentCitySafetyBriefing(input.message)");
     expect(routeSource).toContain("renderDirectCitySafetyBriefing(location.city, briefing)");
-    expect(routeSource).toContain('answerMode: "official_city_safety"');
+    expect(routeSource).toContain('answerMode: requestedCityBriefing ? "official_city_arrival" : "official_city_safety"');
     expect(routeSource).toContain("recommendations: null");
     expect(routeSource).toContain("resultView: null");
     expect(safetyInvocation).toBeGreaterThan(-1);
@@ -384,10 +392,11 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain('answerMode: "authoritative_weather"');
   });
 
-  it("does not let weather or direct-safety shortcuts replace a whole city-arrival briefing", () => {
+  it("uses the reviewed city-arrival shortcut rather than generic model prose for a whole arrival briefing", () => {
     expect(routeSource).toContain("A broad \"before I go\" request may include weather");
     expect(routeSource).toContain("if (isCityBriefingRequest(input.message, currentTurnCity)) return false;");
-    expect(chatRoute).toContain("!isCityBriefingRequest(");
+    expect(chatRoute).toContain("await tryAnswerCurrentCitySafetyBriefing({");
+    expect(routeSource).toContain("const requestedCityBriefing = isCityBriefingRequest(input.message, location.city)");
   });
 
   it("uses the bounded source-seeking ancient Mediterranean follow-up only for the supplied cultural case", () => {
