@@ -14,6 +14,10 @@ export function normalizeKinfolkMemberReply(value: string): string {
     .replace(/^[ \t]*(?:\*\*|__)([^*_\n]+?)(?:\*\*|__):?[ \t]+(.+)$/gm, (_match, label: string, trailing: string) => bulletHeading(label, trailing))
     .replace(/^[ \t]*(?:\*\*|__)([^*_\n]+?)(?:\*\*|__):?[ \t]*$/gm, (_match, label: string) => bulletHeading(label))
     .replace(/^[ \t]{0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/gm, (_match, label: string) => bulletHeading(label))
+    // Conversational Kinfolk responses use one quiet, scan-friendly list style.
+    // Numbered sequences are reserved for an explicitly formal document, which
+    // follows its own formatter after this normalizer.
+    .replace(/^[ \t]*(?:•[ \t]*)?\d+[.)][ \t]+(.+)$/gm, "• $1")
     .replace(/^[ \t]*[-*+][ \t]+(.+)$/gm, "• $1")
     .replace(/\*\*([^*\n]+)\*\*/g, "$1")
     .replace(/__([^_\n]+)__/g, "$1")

@@ -51,6 +51,13 @@ describe("Kinfolk conversation modes", () => {
     }
   });
 
+  it("provides materially distinct ordinary-advice framing for all four voices", () => {
+    expect(buildKinfolkConversationModeInstruction("community")).toContain("here is how to go about it");
+    expect(buildKinfolkConversationModeInstruction("best_friend")).toContain("here is the move");
+    expect(buildKinfolkConversationModeInstruction("professor")).toContain("Answer, Why it matters, and Practice line");
+    expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("Priority, Decision, and Next action");
+  });
+
   it("requires natural reference resolution without inventing prior history or dialect", () => {
     const contract = buildKinfolkNaturalConversationContract();
     expect(contract).toContain("jawn we went to last time for soul food");

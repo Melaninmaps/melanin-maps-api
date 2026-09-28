@@ -17,6 +17,14 @@ export function isCitySafetyBriefingV1Enabled(
  * request only; it does not infer a risk profile, a route, or a neighborhood.
  */
 export function requestsCurrentCitySafetyBriefing(message: string): boolean {
+  // "Shellfish-safe" and similar dietary wording describes a restaurant
+  // constraint, not a city safety emergency. Preserve governed business
+  // discovery so the response can return cards plus a direct-confirmation
+  // caveat rather than replacing dinner search with civic-alert prose.
+  const dietaryBusinessRequest =
+    /\b(?:shellfish|allerg(?:y|ic)|gluten(?:-free)?|vegan|vegetarian|halal|kosher)\b/i.test(message) &&
+    /\b(?:restaurant|dinner|lunch|breakfast|food|eat|dining|cafe|bakery)\b/i.test(message);
+  if (dietaryBusinessRequest) return false;
   const asksForSafety = /\b(?:safety|safe(?:ty)?|unsafe|crime|danger|emergency|travel advis(?:ory|ories)|weather alert)\b/i.test(message);
   const asksForTransit = /\b(?:transit|public transport(?:ation)?|rider alerts?|service alerts?|service disruption|detours?|subway|metro|septa|bus(?:es)?|train(?:s)?)\b/i.test(message);
   const currentOrTravelContext = /\b(?:current|today|right now|before (?:i|we) go|travel(?:ing)?|trip|visit(?:ing)?|heading to|going to)\b/i.test(message);

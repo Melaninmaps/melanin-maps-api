@@ -60,6 +60,9 @@ describe("city safety briefing v1", () => {
     expect(requestsCurrentCitySafetyBriefing(
       "Find a Black-owned lunch restaurant in Houston.",
     )).toBe(false);
+    expect(requestsCurrentCitySafetyBriefing(
+      "Find a shellfish-safe Black-owned dinner in Minneapolis.",
+    )).toBe(false);
   });
 
   it("returns an active official condition only from an unexpired official source", async () => {

@@ -16,4 +16,9 @@ describe("Kinfolk member response formatting", () => {
     expect(normalizeKinfolkMemberReply("**What should I do if I have severe side effects?"))
       .toBe("What should I do if I have severe side effects?");
   });
+
+  it("uses bullets rather than numbered or mixed conversational lists", () => {
+    expect(normalizeKinfolkMemberReply("1. First step\n• 2. Second step\n3) Third step"))
+      .toBe("• First step\n• Second step\n• Third step");
+  });
 });
