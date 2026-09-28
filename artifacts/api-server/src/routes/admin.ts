@@ -164,6 +164,13 @@ function appendSourceDescription(
   const addition = candidateDescription?.trim() ?? "";
   if (!existing) return addition || "Source-backed directory listing.";
   if (!addition) return existing;
+  // The earlier protected intake used a generic category/city sentence when a
+  // directory detail page had not yet been crawled. It is importer metadata,
+  // not owner or community copy, and must not remain ahead of the later
+  // business-specific detail text on a public card.
+  if (
+    /^(?:source-backed directory listing\.|[^.\n]{1,160}\s+listing in\s+[^.\n]{1,160}\.)$/i.test(existing)
+  ) return addition;
   // Earlier Minnesota source imports prefixed every record with this generic
   // location-card sentence. It is importer-created—not owner or community
   // copy—so remove it only when replacing it with source-published detail.

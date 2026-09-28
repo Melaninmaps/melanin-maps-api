@@ -17,6 +17,7 @@ const adminEditBusiness = source("../../../web/src/components/AdminEditBusiness.
 const publicBusinessDetail = source("../../../web/src/pages/business-detail.tsx");
 const mobileBusinessHook = source("../../../mobile/hooks/useBusinesses.ts");
 const publicDirectory = source("../../../web/src/pages/businesses.tsx");
+const directoryAssembly = source("../../../../scripts/assemble-source-backed-directory-candidates.ts");
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns one server-filtered page instead of sending the full inventory to the browser", () => {
@@ -322,6 +323,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("Current Minneapolis listing");
     expect(adminRoute).toContain("category: publicationFields.category");
     expect(adminRoute).toContain("sourceUrl: candidate.sourceListingUrl ?? candidate.sourceUrl");
+    expect(adminRoute).toContain("source-backed directory listing");
+    expect(adminRoute).toContain("business-specific detail text on a public card");
+    expect(directoryAssembly).toContain("sourceDescription: existing.sourceDescription ?? incoming.sourceDescription ?? null");
+    expect(directoryAssembly).toContain("mergeMissingCrawlEvidence");
   });
 
   it("creates a map pin only from a successfully geocoded supplied street address", () => {

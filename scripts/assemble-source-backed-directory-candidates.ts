@@ -35,6 +35,8 @@ type ExtractedCandidate = Readonly<{
   category?: unknown;
   subcategory?: unknown;
   serviceTerms?: unknown;
+  sourceDescription?: unknown;
+  socialLinks?: unknown;
   sourceRecordKey?: unknown;
   batch?: unknown;
 }>;
@@ -92,6 +94,15 @@ function asStringArray(value: unknown): string[] {
     .filter((entry): entry is string => Boolean(entry)))];
 }
 
+function verifiedSocialLinks(value: unknown): SourceBackedDirectoryCandidate["socialLinks"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const supported = new Set(["facebook", "instagram", "tiktok", "twitter", "youtube", "pinterest"]);
+  const entries = Object.entries(value)
+    .filter(([platform, url]) => supported.has(platform) && Boolean(normalizedHttpUrl(url)))
+    .map(([platform, url]) => [platform, normalizedHttpUrl(url)!] as const);
+  return entries.length ? Object.fromEntries(entries) : null;
+}
+
 function normalizeDesignation(value: string): string | null {
   const compact = value.toLowerCase().replace(/[^a-z]/g, "");
   if (compact.includes("black") || compact.includes("africanamerican")) {
@@ -107,6 +118,27 @@ function sourceReceiptKey(sourceUrl: string, sourceRecordKey: string, sourceList
   if (sourceRecordKey.startsWith("source-receipt:")) return sourceRecordKey;
   const fingerprint = `${sourceUrl}\n${sourceListingUrl ?? ""}\n${sourceRecordKey}`;
   return `source-receipt:${createHash("sha256").update(fingerprint).digest("hex")}`;
+}
+
+/**
+ * A receipt key is immutable. When its crawl evidence is re-read, keep the
+ * original business identity and source values and fill only facts that were
+ * missing: a business-specific detail description and direct official socials.
+ */
+function mergeMissingCrawlEvidence(
+  existing: SourceBackedDirectoryCandidate,
+  incoming: SourceBackedDirectoryCandidate,
+): SourceBackedDirectoryCandidate {
+  const existingSocial = existing.socialLinks ?? {};
+  const incomingSocial = incoming.socialLinks ?? {};
+  const socialLinks = Object.keys(existingSocial).length || Object.keys(incomingSocial).length
+    ? { ...incomingSocial, ...existingSocial }
+    : null;
+  return {
+    ...existing,
+    sourceDescription: existing.sourceDescription ?? incoming.sourceDescription ?? null,
+    socialLinks,
+  };
 }
 
 function safeCandidate(input: ExtractedCandidate, sourceFile: string): {
@@ -149,6 +181,8 @@ function safeCandidate(input: ExtractedCandidate, sourceFile: string): {
       country,
       phone: stringOrNull(input.phone),
       officialUrl,
+      sourceDescription: stringOrNull(input.sourceDescription),
+      socialLinks: verifiedSocialLinks(input.socialLinks),
       ownershipDesignations: [...new Set(designations)],
       serviceTerms: asStringArray(input.serviceTerms),
       sourceLabel,
@@ -192,9 +226,12 @@ async function main(): Promise<void> {
     // The receipt is the preservation boundary. Cross-source records stay in
     // this protected manifest so no supplied provenance is discarded; the
     // intake planner decides whether exact same-place records can publish.
-    if (!byReceipt.has(normalized.candidate.sourceRecordKey)) {
-      byReceipt.set(normalized.candidate.sourceRecordKey, normalized.candidate);
-    }
+    const existing = byReceipt.get(normalized.candidate.sourceRecordKey);
+    if (!existing) byReceipt.set(normalized.candidate.sourceRecordKey, normalized.candidate);
+    else byReceipt.set(
+      normalized.candidate.sourceRecordKey,
+      mergeMissingCrawlEvidence(existing, normalized.candidate),
+    );
   }
 
   const candidates = [...byReceipt.values()].sort((left, right) =>
@@ -205,7 +242,7 @@ async function main(): Promise<void> {
   );
 
   const encodedCandidates = JSON.stringify(JSON.stringify(candidates));
-  const output = `/**\n * Internal source-backed directory intake candidates.\n * Generated from founder-provided public-directory reviews and source-receipted\n * city extraction artifacts. This module is consumed only by an admin-protected\n * reconciliation route.\n */\nexport type SourceBackedDirectoryCandidate = {\n  name: string; category: string; subcategory: string; address: string | null; city: string; state: string | null; country: string; phone: string | null; officialUrl: string | null; ownershipDesignations: string[]; serviceTerms: string[]; sourceLabel: string; sourceUrl: string; sourceListingUrl: string | null; sourceRecordKey: string; ownershipEvidence: string; batch: string;\n};\n\nexport const sourceBackedDirectoryCandidates: readonly SourceBackedDirectoryCandidate[] = JSON.parse(${encodedCandidates}) as SourceBackedDirectoryCandidate[];\n`;
+  const output = `/**\n * Internal source-backed directory intake candidates.\n * Generated from founder-provided public-directory reviews and source-receipted\n * city extraction artifacts. This module is consumed only by an admin-protected\n * reconciliation route.\n */\nexport type SourceBackedDirectoryCandidate = {\n  name: string; category: string; subcategory: string; address: string | null; city: string; state: string | null; country: string; phone: string | null; officialUrl: string | null; socialLinks?: Partial<Record<"facebook" | "instagram" | "tiktok" | "twitter" | "youtube" | "pinterest", string>> | null; sourceDescription?: string | null; ownershipDesignations: string[]; serviceTerms: string[]; sourceLabel: string; sourceUrl: string; sourceListingUrl: string | null; sourceRecordKey: string; ownershipEvidence: string; batch: string;\n};\n\nexport const sourceBackedDirectoryCandidates: readonly SourceBackedDirectoryCandidate[] = JSON.parse(${encodedCandidates}) as SourceBackedDirectoryCandidate[];\n`;
   await fs.writeFile(manifestPath, output);
   await fs.writeFile(reportPath, JSON.stringify({
     existingManifestRows: sourceBackedDirectoryCandidates.length,
