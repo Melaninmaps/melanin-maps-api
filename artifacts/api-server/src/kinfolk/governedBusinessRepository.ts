@@ -86,6 +86,11 @@ export type GovernedKinfolkBusiness = Readonly<{
   matchReasons: string[];
   /** Administrator-supplied, source-backed context for a future recommendation. */
   recommendationContext?: string | null;
+  /** Source receipt retained with an imported or source-backed public listing. */
+  researchSourceUrl?: string | null;
+  researchSourceLabel?: string | null;
+  /** When MWM captured or last updated the public listing record. */
+  sourceCapturedAt?: string | null;
   /** Non-destructive identity evidence retained when likely duplicates are suppressed. */
   identityReasons: string[];
 }>;
@@ -141,6 +146,9 @@ type BusinessRow = {
   environment_tags: unknown;
   amenity_tags: unknown;
   kinfolk_recommendation_reason: unknown;
+  research_source_url: unknown;
+  research_source_label: unknown;
+  source_captured_at: unknown;
 };
 
 type MapPlaceRow = {
@@ -232,7 +240,10 @@ const CANONICAL_SELECT = `
   bi.audience_type,
   COALESCE(bi.environment_tags, '[]'::jsonb) AS environment_tags,
   COALESCE(bi.amenity_tags, '[]'::jsonb) AS amenity_tags,
-  b.kinfolk_recommendation_reason`;
+  b.kinfolk_recommendation_reason,
+  b.research_source_url,
+  b.research_source_label,
+  b.created_at AS source_captured_at`;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
@@ -309,6 +320,11 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     recommendationContext: sanitizePublicListingCopyOrNull(
       row.kinfolk_recommendation_reason,
     ),
+    researchSourceUrl:
+      nullableText(row.research_source_url) &&
+      canonicalizeContextualUrl(text(row.research_source_url)),
+    researchSourceLabel: nullableText(row.research_source_label),
+    sourceCapturedAt: nullableText(row.source_captured_at),
     identityReasons: [],
   };
 }

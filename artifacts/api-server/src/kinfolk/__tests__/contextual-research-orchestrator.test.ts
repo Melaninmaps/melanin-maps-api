@@ -81,6 +81,42 @@ describe("contextual research orchestrator", () => {
     expect(result).toMatchObject({ degraded: true, degradedReason: "A retrieval provider was unavailable." });
   });
 
+  it("rejects a prior-city source from a Philadelphia city briefing", async () => {
+    const result = await orchestrateContextualResearch(plan({
+      taskMode: "city_briefing",
+      freshness: "current",
+      evidenceNeeds: ["official_current", "reputable_reporting"],
+      namedEntities: [{ text: "Philadelphia", type: "place" }],
+      retrievalQueries: ["Philadelphia PA latest public notices travel"],
+    }), {
+      searchLive: async () => [
+        item(
+          "Minneapolis road closures",
+          "https://www.minneapolismn.gov/getting-around/parking-driving/road-closures-map/",
+          "official",
+        ),
+        item(
+          "Philadelphia public notices",
+          "https://www.phila.gov/2026/09/28/philadelphia-public-notices/",
+          "official",
+        ),
+        item(
+          "Philadelphia local reporting",
+          "https://www.npr.org/philadelphia/current-reporting",
+          "reporting",
+        ),
+      ],
+      now: () => NOW,
+    });
+
+    expect(result.external).toEqual([
+      expect.objectContaining({ title: "Philadelphia public notices" }),
+      expect.objectContaining({ title: "Philadelphia local reporting" }),
+    ]);
+    expect(JSON.stringify(result)).not.toContain("Minneapolis road closures");
+    expect(result.degraded).toBe(false);
+  });
+
   it("limits provider work and accepted documents", async () => {
     const search = vi.fn().mockImplementation(async ({ query, maxResults }) => ({
       documents: Array.from({ length: maxResults }, (_, index) => document(index, {

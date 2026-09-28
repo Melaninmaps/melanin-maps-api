@@ -12,6 +12,11 @@ export type ConversationalBusinessResultView = Readonly<{
     matchReason: string;
     verified: boolean;
     claimed: boolean;
+    ownershipEvidence?: {
+      sourceUrl: string;
+      sourceLabel: string | null;
+      capturedAt: string | null;
+    } | null;
     actions: Array<{ label: "View details" | "Visit website"; url: string }>;
   }>;
   seeAll: { label: "See all matching listings"; count: number } | null;
@@ -41,6 +46,7 @@ export function buildConversationalBusinessResultView(input: {
       : `Matched as a ${input.subjectLabel} listing.`,
     verified: business.verified,
     claimed: business.claimed === true,
+    ownershipEvidence: business.ownershipEvidence,
     actions: [
       { label: "View details" as const, url: business.detailUrl },
       ...(business.website ? [{ label: "Visit website" as const, url: business.website }] : []),

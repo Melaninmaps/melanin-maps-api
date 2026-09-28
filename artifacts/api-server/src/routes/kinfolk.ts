@@ -82,6 +82,12 @@ import {
   kinfolkDecisionResponseMeta,
 } from "../kinfolk/decision-retrieval-plan";
 import {
+  GOVERNED_DISCOVERY_V2_RADIUS_REPLY,
+  isGovernedDiscoveryV2Enabled,
+  isStrictDocumentedOwnershipDiscoveryRequest,
+  requestsExactRadius,
+} from "../kinfolk/governed-discovery-v2";
+import {
   destinationForEnabledSession,
   getHeritageCity,
   resolveTurnGeography,
@@ -6457,11 +6463,15 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // consumed by the ordinary business-card fast path. It continues below to the
   // evidence and care-navigation policies instead.
   const fastPathEvidenceDomain = classifyEvidenceRoute(input.message).domain;
+  const strictGovernedDiscoveryV2 =
+    isGovernedDiscoveryV2Enabled() &&
+    isStrictDocumentedOwnershipDiscoveryRequest(input.message);
   if (
     fastPathEvidenceDomain === "medical_health" ||
     fastPathEvidenceDomain === "legal_regulated" ||
     fastPathEvidenceDomain === "financial_regulated" ||
-    fastPathEvidenceDomain === "safety_emergency"
+    (fastPathEvidenceDomain === "safety_emergency" &&
+      !strictGovernedDiscoveryV2)
   ) {
     return false;
   }
@@ -6642,6 +6652,78 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const discoveryDesignationIds = explicitAllPlacesExpansion
     ? []
     : requiredDesignationIds;
+  const strictSourceBackedDiscovery =
+    strictGovernedDiscoveryV2 && discoveryDesignationIds.length > 0;
+  if (strictSourceBackedDiscovery && requestsExactRadius(input.message)) {
+    const radiusSessionId = await persistDeterministicDiscoveryTurn({
+      userId: input.req.user!.id,
+      memoryEnabled: input.memoryEnabled,
+      sessionId: input.sessionId,
+      message: input.message,
+      reply: GOVERNED_DISCOVERY_V2_RADIUS_REPLY,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [
+        "Show city-level documented matches",
+        "Open a listing map pin",
+      ],
+      sources: [],
+      destination: scope.city,
+      vibes: input.vibes,
+    });
+    input.res.status(200).json({
+      sessionId: radiusSessionId,
+      reply: GOVERNED_DISCOVERY_V2_RADIUS_REPLY,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [
+        "Show city-level documented matches",
+        "Open a listing map pin",
+      ],
+      resultView: null,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "business_discovery",
+      responseMeta: {
+        schemaVersion: 1,
+        planKind: "direct_discovery",
+        answerMode: "governed_discovery",
+        retrieval: "governed_business_catalog",
+        allowBusinessCards: false,
+        evidenceRequired: true,
+        requiresClarification: false,
+        radiusVerification: "unavailable_without_geocoded_origin",
+      },
+      sources: [],
+      sourceNote: "A numeric radius was not applied without a verified geocoded origin.",
+      educationalStatus: "limited",
+      discovery: null,
+      needsClarification: false,
+      originalQuery: input.message,
+      location: {
+        city: location.city,
+        state: location.state,
+        source: location.source,
+      },
+      locationSource: location.source,
+      degraded: false,
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return true;
+  }
   const discoveryResult = await discoverLocalBusinesses({
     scope,
     subject,
@@ -6668,6 +6750,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       currentRequest: input.message,
     },
     requiredDesignationIds: discoveryDesignationIds,
+    strictEvidenceRequired: strictSourceBackedDiscovery,
     allowAllPublicPlaces: explicitAllPlacesExpansion,
   });
   const resultView = buildConversationalBusinessResultView({
@@ -6691,7 +6774,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     : "";
   const conciseReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
-      ? `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
+      ? strictSourceBackedDiscovery
+        ? `I found no source-backed MWM ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I will not substitute an untagged listing or infer ownership. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
+        : `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
         ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
@@ -6739,8 +6824,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       answerMode: "governed_discovery",
       retrieval: "governed_business_catalog",
       allowBusinessCards: true,
-      evidenceRequired: false,
+      evidenceRequired: strictSourceBackedDiscovery,
       requiresClarification: false,
+      strictOwnershipEvidence: strictSourceBackedDiscovery,
     },
     sources: discoveryResult.sources,
     sourceNote: discoveryResult.sourceNote,
@@ -10210,7 +10296,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       mediaLinks: contextualMediaLinks,
       relatedConnections: contextualRelatedConnections,
       evidenceUrls: [
-        ...contextResolution.sources.map((source) => source.url),
+        ...(!isCurrentCityBriefing
+          ? contextResolution.sources.map((source) => source.url)
+          : []),
         ...healthRetrievalSources.map((source) => source.url),
         ...knowledgeGraphSources.map((source) => source.url),
         ...(contextualEvidence
@@ -10232,12 +10320,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Assemble the sources array before enforcement so the educator/safety checks
     // have access to the same source list that will be returned to the client.
     const assembledSources: SafeSource[] = [
-      ...contextResolution.sources.map((s) => ({
-        id: s.url,
-        label: s.tier as SafeSource["label"],
-        title: s.title,
-        url: s.url,
-      })),
+      ...(!isCurrentCityBriefing
+        ? contextResolution.sources.map((s) => ({
+            id: s.url,
+            label: s.tier as SafeSource["label"],
+            title: s.title,
+            url: s.url,
+          }))
+        : []),
       ...healthRetrievalSources.map((s) => ({
         id: s.url,
         label: s.source as SafeSource["label"],
@@ -10401,12 +10491,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     const memberFacingSources = filterMemberFacingSources(
       [
-        ...contextResolution.sources.map((s) => ({
-          id: s.url,
-          label: s.tier,
-          title: s.title,
-          url: s.url,
-        })),
+        ...(!isCurrentCityBriefing
+          ? contextResolution.sources.map((s) => ({
+              id: s.url,
+              label: s.tier,
+              title: s.title,
+              url: s.url,
+            }))
+          : []),
         ...healthRetrievalSources.map((s) => ({
           id: s.url,
           label: s.source,

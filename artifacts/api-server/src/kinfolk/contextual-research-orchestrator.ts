@@ -99,6 +99,33 @@ function sourceUrlKey(value: string): string | null {
   return canonicalizeContextualUrl(value)?.replace(/[?#].*$/, "") ?? null;
 }
 
+/**
+ * City briefings have a deliberately stronger scope check than generic current
+ * research. A live Minneapolis source must never appear under a Philadelphia
+ * briefing merely because a prior session or provider returned it. This checks
+ * the destination resolved into the server-authored plan, never a profile or
+ * stored conversation preference.
+ */
+function cityBriefingScopeMatches(
+  plan: SemanticTurnPlan,
+  item: Pick<ContextualEvidenceItem, "title" | "url" | "excerpt">,
+): boolean {
+  if (plan.taskMode !== "city_briefing") return true;
+  const city = plan.namedEntities.find((entity) => entity.type === "place")?.text;
+  const normalizedCity = canonicalizeContextualPolicyText(city ?? "")
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!normalizedCity) return false;
+  const haystack = ` ${canonicalizeContextualPolicyText(
+    `${item.title} ${item.url} ${item.excerpt}`,
+  )
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()} `;
+  return haystack.includes(` ${normalizedCity} `);
+}
+
 function isOfficialHost(host: string): boolean {
   return host.endsWith(".gov") || host === "who.int" || host === "un.org";
 }
@@ -311,7 +338,9 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
     throwIfAborted(signal);
     return dedupe(items.flatMap((item) => {
       const normalized = normalizeItem(item, now);
-      return normalized && allowedForPlan(plan, normalized) ? [normalized] : [];
+      return normalized && allowedForPlan(plan, normalized) && cityBriefingScopeMatches(plan, normalized)
+        ? [normalized]
+        : [];
     }));
   }
 
@@ -339,7 +368,9 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
     }
     if (documents.length > 0) break;
   }
-  const accepted = dedupe(documents.filter((item) => allowedForPlan(plan, item)));
+  const accepted = dedupe(documents.filter((item) =>
+    allowedForPlan(plan, item) && cityBriefingScopeMatches(plan, item),
+  ));
   // A current claim must be supported by sources about the member's actual
   // question. This prevents a generic city/business link from appearing beside
   // an unrelated population, price, policy, or other changing fact.
@@ -391,11 +422,13 @@ export async function orchestrateContextualResearch(
         // Keep it only when its title/excerpt actually concerns this turn.
         if (plan.freshness === "current") {
           const memberQuestion = plan.retrievalQueries[0] ?? "";
-          internal = internal.filter((item) => sourceHasMemberQuestionRelevance({
-            title: item.title,
-            url: item.url,
-            evidenceText: `${item.excerpt} ${item.supports.join(" ")}`,
-          }, memberQuestion));
+          internal = internal.filter((item) =>
+            cityBriefingScopeMatches(plan, item) && sourceHasMemberQuestionRelevance({
+              title: item.title,
+              url: item.url,
+              evidenceText: `${item.excerpt} ${item.supports.join(" ")}`,
+            }, memberQuestion),
+          );
         }
       } catch (error) {
         if (controller.signal.aborted) providerUnavailable = true;

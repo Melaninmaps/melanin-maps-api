@@ -137,6 +137,10 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/designation-predicate-policy.test.ts \
   src/businesses/__tests__/mwmCoreDiscoveryPolicy.test.ts \
   src/kinfolk/__tests__/governed-business-repository.test.ts \
+  src/kinfolk/__tests__/governed-discovery-v2.test.ts \
+  src/kinfolk/__tests__/local-business-discovery.test.ts \
+  src/kinfolk/__tests__/contextual-research-orchestrator.test.ts \
+  src/kinfolk/__tests__/kinfolk-route-wiring.test.ts \
   src/routes/__tests__/universal-search-hotfix.test.ts
 
 node scripts/test-mwm-core-evidence-lanes.mjs

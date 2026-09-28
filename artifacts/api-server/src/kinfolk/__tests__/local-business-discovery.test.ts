@@ -541,6 +541,45 @@ describe("deterministic local business discovery", () => {
     );
   });
 
+  it("returns strict ownership cards only when the catalog record retains a source receipt", async () => {
+    const documented = {
+      ...governedBusiness,
+      researchSourceUrl: "https://directory.example.org/black-businesses",
+      researchSourceLabel: "Example Black Business Directory",
+      sourceCapturedAt: "2026-09-28T00:00:00.000Z",
+    };
+    const undocumented = {
+      ...governedBusiness,
+      id: "business-without-receipt",
+      researchSourceUrl: null,
+      researchSourceLabel: null,
+      sourceCapturedAt: null,
+    };
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [documented, undocumented] }),
+      requiredDesignationIds: ["black-african-american"],
+      strictEvidenceRequired: true,
+      webSearch: vi.fn(),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({
+        id: "business-1",
+        ownershipEvidence: {
+          sourceUrl: "https://directory.example.org/black-businesses",
+          sourceLabel: "Example Black Business Directory",
+          capturedAt: "2026-09-28T00:00:00.000Z",
+        },
+      }),
+    ]);
+    expect(JSON.stringify(result)).not.toContain("business-without-receipt");
+    expect(result.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ url: "https://directory.example.org/black-businesses" }),
+    ]));
+  });
+
   it("keeps current public discovery available during founder-led cleanup", async () => {
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",

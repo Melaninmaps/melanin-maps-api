@@ -66,6 +66,11 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
   claimed: boolean;
   isOnlineOnly?: boolean;
   matchReasons: string[];
+  ownershipEvidence?: {
+    sourceUrl: string;
+    sourceLabel: string | null;
+    capturedAt: string | null;
+  } | null;
   provenance: "mwm_public_business";
 }>;
 
@@ -111,6 +116,7 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
       claimed: boolean;
       isOnlineOnly: boolean;
       matchReasons: string[];
+      ownershipEvidence: BusinessDiscoveryPlatformBusiness["ownershipEvidence"];
     }>;
     neighborhoods: [];
     events: [];
@@ -231,6 +237,13 @@ function platformBusiness(
             (reason): reason is string => typeof reason === "string",
           )
         : [],
+    ownershipEvidence: business.researchSourceUrl
+      ? {
+          sourceUrl: business.researchSourceUrl,
+          sourceLabel: business.researchSourceLabel ?? null,
+          capturedAt: business.sourceCapturedAt ?? null,
+        }
+      : null,
     provenance: "mwm_public_business",
   };
 }
@@ -426,6 +439,8 @@ export async function discoverLocalBusinesses(input: {
   personalization?: KinfolkBusinessPersonalization;
   /** Every value is an explicit owner-provided designation requirement. */
   requiredDesignationIds?: readonly string[];
+  /** Strict documented-ownership cards require a stored source receipt. */
+  strictEvidenceRequired?: boolean;
   /** Member explicitly consented to leave the Diaspora Promotion Catalog. */
   allowAllPublicPlaces?: boolean;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
@@ -491,6 +506,16 @@ export async function discoverLocalBusinesses(input: {
   if (platformResults[1].status === "fulfilled")
     mapRows = platformResults[1].value;
   else platformStatus = "degraded";
+
+  // An explicit ownership request is never fulfilled by a profile that merely
+  // carries a matching tag. In strict mode, a card must retain its source
+  // receipt; otherwise it becomes a catalog-grounded no-match rather than an
+  // unproven ownership recommendation.
+  if (input.strictEvidenceRequired) {
+    businessRows = businessRows.filter((business) =>
+      Boolean(business.researchSourceUrl),
+    );
+  }
 
   // A cuisine or another documented current-turn detail cannot be broadened by
   // a stale repository row, an external result, or a cultural-place record.
@@ -612,6 +637,16 @@ export async function discoverLocalBusinesses(input: {
         url: business.detailUrl,
         label: "mwM_database" as const,
       },
+      ...(business.ownershipEvidence
+        ? [{
+            id: business.ownershipEvidence.sourceUrl,
+            title: business.ownershipEvidence.sourceLabel
+              ? `${business.name} — ${business.ownershipEvidence.sourceLabel}`
+              : `${business.name} ownership source`,
+            url: business.ownershipEvidence.sourceUrl,
+            label: "mwM_database" as const,
+          }]
+        : []),
       ...(business.website
         ? [
             {
@@ -665,6 +700,7 @@ export async function discoverLocalBusinesses(input: {
               claimed: business.claimed,
               isOnlineOnly: business.isOnlineOnly === true,
               matchReasons: business.matchReasons,
+              ownershipEvidence: business.ownershipEvidence,
             })),
             neighborhoods: [],
             events: [],

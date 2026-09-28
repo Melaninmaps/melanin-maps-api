@@ -8,6 +8,14 @@ const routeSource = readFileSync(
   fileURLToPath(new URL("../../routes/kinfolk.ts", import.meta.url)),
   "utf8",
 );
+const orchestratorSource = readFileSync(
+  fileURLToPath(new URL("../contextual-research-orchestrator.ts", import.meta.url)),
+  "utf8",
+);
+const governedDiscoveryV2Source = readFileSync(
+  fileURLToPath(new URL("../governed-discovery-v2.ts", import.meta.url)),
+  "utf8",
+);
 const chatRoute = routeSource.slice(
   routeSource.indexOf('router.post("/kinfolk/chat"'),
   routeSource.indexOf('router.get("/kinfolk/business-action-plan'),
@@ -213,6 +221,27 @@ describe("Kinfolk chat static wiring", () => {
     expect(researchExecution).toBeGreaterThan(semanticPlanner);
     expect(chatRoute).toContain('contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000');
     expect(chatRoute).toContain("I will not substitute a generic city description");
+  });
+
+  it("keeps the corrected strict directory path disabled until its exact release flag is enabled", () => {
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(routeSource).toContain("isGovernedDiscoveryV2Enabled");
+    expect(governedDiscoveryV2Source).toContain("KINFOLK_GOVERNED_DISCOVERY_V2_ENABLED");
+    expect(helper).toContain("strictGovernedDiscoveryV2");
+    expect(helper).toContain("strictEvidenceRequired: strictSourceBackedDiscovery");
+    expect(helper).toContain("GOVERNED_DISCOVERY_V2_RADIUS_REPLY");
+    expect(helper).toContain("radiusVerification: \"unavailable_without_geocoded_origin\"");
+    expect(helper).toContain("I will not substitute an untagged listing or infer ownership.");
+  });
+
+  it("keeps city briefing sources out of prior-city resolver context", () => {
+    expect(chatRoute).toContain("!isCurrentCityBriefing");
+    expect(chatRoute).toContain("contextResolution.sources.map((source) => source.url)");
+    expect(chatRoute).toContain("contextResolution.sources.map((s) => ({");
+    expect(orchestratorSource).toContain("cityBriefingScopeMatches");
   });
 
   it("routes a current question through cited research even when optional contextual intelligence is off", () => {
