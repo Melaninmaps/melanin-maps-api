@@ -185,6 +185,47 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
       .toEqual(["Pimento Jamaican Kitchen & Rum Bar"]);
   });
 
+  it("uses a city named in plain-English search text to remove earlier national matches", async () => {
+    const nationalRestaurant = {
+      ...publicBusiness(),
+      id: "restaurant-in-denver",
+      name: "Denver Jerk House",
+      city: "Denver",
+      state: "CO",
+      category: "Food",
+      subcategory: "Restaurant",
+    };
+    const minneapolisRestaurant = {
+      ...publicBusiness(),
+      id: "restaurant-in-minneapolis",
+      name: "Pimento Jamaican Kitchen & Rum Bar",
+      city: "Minneapolis",
+      state: "MN",
+      category: "Restaurants, coffee shops, bars & bakeries",
+      subcategory: "Restaurants, coffee shops, bars & bakeries",
+    };
+    poolQuery.mockImplementation(async (query: string) => {
+      if (query.includes("SELECT DISTINCT lower(city) AS city_lower")) {
+        return { rows: [{ city_lower: "minneapolis" }] };
+      }
+      if (query.includes("AND b.name ILIKE $1")) {
+        return { rows: [nationalRestaurant] };
+      }
+      if (query.includes("AND (b.category ILIKE")) {
+        return { rows: [minneapolisRestaurant] };
+      }
+      return { rows: [] };
+    });
+
+    const response = await supertest(createApp())
+      .get("/api/search/universal")
+      .query({ q: "Black owned restaurant in Minneapolis", resultTypes: "businesses" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.businesses.map((business: { name: string }) => business.name))
+      .toEqual(["Pimento Jamaican Kitchen & Rum Bar"]);
+  });
+
   it("accepts a documented legacy minority row and applies the lens in SQL before limits", async () => {
     const calls: QueryCall[] = [];
     const legacyMinorityBusiness = {

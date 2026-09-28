@@ -1022,6 +1022,19 @@ async function searchBusinesses(opts: {
         // Capture city-only tokens (not state abbrevs) for Pass 3 scope propagation.
         // This prevents "Philadelphia nightlife" from leaking Allentown/Elkins Park results.
         pass25CityTokens = locationTokens.filter(w => detectedCities.has(w));
+        // Passes 1–2 run before this embedded-city detector. Once the member
+        // names a real directory city, remove those earlier national matches so
+        // a Minneapolis restaurant search cannot be filled by restaurants in
+        // Philadelphia, Denver, or another city that happen to share a term.
+        // The subsequent city/category passes repopulate only the requested
+        // city; this never changes an explicit ?city= request.
+        if (pass25CityTokens.length > 0) {
+          for (const [id, business] of results) {
+            if (!pass25CityTokens.includes(String(business.city ?? "").toLowerCase())) {
+              results.delete(id);
+            }
+          }
+        }
         // Intent/designation and connecting words identify the requested scope,
         // but must never be used as category/description matching terms. In
         // particular, every correctly designated Black-owned profile shares
