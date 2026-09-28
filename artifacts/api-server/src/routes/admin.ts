@@ -457,13 +457,20 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     const databaseCode = typeof error === "object" && error !== null && "code" in error
       ? String((error as { code?: unknown }).code ?? "unknown")
       : "unknown";
+    const cause = error instanceof Error ? error.cause : undefined;
+    const diagnosticCause = cause instanceof Error
+      ? `${cause.name}: ${cause.message}`.replace(/\b\S+@\S+\b/g, "[redacted]").slice(0, 280)
+      : typeof cause === "string"
+        ? cause.replace(/\b\S+@\S+\b/g, "[redacted]").slice(0, 280)
+        : null;
     const diagnosticMessage = error instanceof Error
-      ? `${error.name}: ${error.message}`.replace(/\b\S+@\S+\b/g, "[redacted]").slice(0, 280)
+      ? `${error.name}: ${error.message}`.replace(/\b\S+@\S+\b/g, "[redacted]").slice(-280)
       : "Unknown source intake failure";
     res.status(500).json({
       error: "Failed to publish source-backed directory intake.",
       diagnosticCode: databaseCode,
       diagnosticMessage,
+      diagnosticCause,
     });
   }
 });
