@@ -103,12 +103,12 @@ export async function resolveMinnesotaSourcePins(
                 source_evidence=CASE
                   WHEN jsonb_typeof(COALESCE(source_evidence, '[]'::jsonb))='array'
                     THEN COALESCE(source_evidence, '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
-                      'sourceType',$4,'field','precise_location','supports',true,
-                      'verifiedByMwm',false,'excerpt',$5,'policyVersion',$6
+                      'sourceType',$4::text,'field','precise_location','supports',true,
+                      'verifiedByMwm',false,'excerpt',$5::text,'policyVersion',$6::text
                     ))
                   ELSE jsonb_build_array(source_evidence,jsonb_build_object(
-                    'sourceType',$4,'field','precise_location','supports',true,
-                    'verifiedByMwm',false,'excerpt',$5,'policyVersion',$6
+                    'sourceType',$4::text,'field','precise_location','supports',true,
+                    'verifiedByMwm',false,'excerpt',$5::text,'policyVersion',$6::text
                   ))
                 END,
                 updated_at=NOW()
