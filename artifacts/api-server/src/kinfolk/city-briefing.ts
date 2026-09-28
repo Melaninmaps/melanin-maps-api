@@ -10,6 +10,7 @@ const CITY_BRIEFING_PATTERNS = [
   /\bwhat should i know\b/i,
   /\bwhat will i see\b/i,
   /\b(?:what (?:should i|do i|current|practical)|anything).{0,80}\bbefore (?:i|we) (?:go|travel|arrive)\b/i,
+  /\bbefore (?:i|we) (?:go|travel|arrive)\b.{0,100}\b(?:what|anything|current|practical|safety|transit|weather|verify)\b/i,
   /\b(?:city|local|neighborhood) (?:news|briefing|update|politics|policy)\b/i,
   /\b(?:brief|catch me) up\b/i,
   /\b(?:anything|what) new\b/i,

@@ -101,6 +101,15 @@ describe("city briefing policy", () => {
     expect(plan.retrievalQueries.join(" ")).toMatch(/federal immigration enforcement/i);
   });
 
+  it("recognizes the same whole-arrival request when the before-I-go phrase comes first", () => {
+    expect(
+      isCityBriefingRequest(
+        "I am a Black woman visiting Minneapolis for work next week. Before I go, what current safety, transit, weather, and practical public-service information should I verify?",
+        "Minneapolis",
+      ),
+    ).toBe(true);
+  });
+
   it("turns the fail-closed stable-background action into a stable city briefing, not a literal search", () => {
     expect(isStableCityBriefingBackgroundRequest("Show me the stable background")).toBe(true);
     expect(isCityBriefingRequest("Show me the stable background", "Minneapolis")).toBe(true);
