@@ -26,6 +26,48 @@ export type ConversationalBusinessResultView = Readonly<{
   external: Array<{ title: string; url: string; sourceHost: string; disclaimer: string }>;
 }>;
 
+function normalizedPublicIdentity(value: string | null | undefined): string {
+  return (value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("en-US")
+    .replace(/\band\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function hasPublicDetailAction(value: string): boolean {
+  return /^\/businesses\/[^/?#]+$/.test(value);
+}
+
+/**
+ * Removes duplicate display candidates without changing, merging, hiding, or
+ * deleting any underlying directory record. A card must keep a public detail
+ * page or a validated official-website action.
+ */
+export function uniqueActionableBusinessResults<
+  T extends BusinessDiscoveryPlatformBusiness & { claimed?: boolean },
+>(businesses: readonly T[]): T[] {
+  const ids = new Set<string>();
+  const publicIdentities = new Set<string>();
+  return businesses.filter((business) => {
+    const hasDetail = hasPublicDetailAction(business.detailUrl);
+    const hasWebsite = Boolean(business.website);
+    if (!hasDetail && !hasWebsite) return false;
+    if (ids.has(business.id)) return false;
+    // The public list adapter does not receive a street address. Name/city is
+    // intentionally presentation-only de-duplication; it never chooses a
+    // canonical database record or alters the Duplicate vault.
+    const identity = [
+      normalizedPublicIdentity(business.name),
+      normalizedPublicIdentity(business.city),
+    ].join("|");
+    if (publicIdentities.has(identity)) return false;
+    ids.add(business.id);
+    publicIdentities.add(identity);
+    return true;
+  });
+}
+
 /**
  * A compact, presentation-ready view of governed results. It deliberately
  * keeps external research outside MWM cards, and only exposes actions backed
@@ -36,7 +78,8 @@ export function buildConversationalBusinessResultView(input: {
   external?: readonly BusinessDiscoveryWebFinding[];
   subjectLabel: string;
 }): ConversationalBusinessResultView {
-  const cards = input.businesses.slice(0, 5).map((business) => ({
+  const businesses = uniqueActionableBusinessResults(input.businesses);
+  const cards = businesses.slice(0, 5).map((business) => ({
     id: business.id,
     title: business.name,
     supportingText: business.isOnlineOnly
@@ -56,14 +99,16 @@ export function buildConversationalBusinessResultView(input: {
     distanceMiles: business.distanceMiles,
     ownershipEvidence: business.ownershipEvidence,
     actions: [
-      { label: "View details" as const, url: business.detailUrl },
+      ...(hasPublicDetailAction(business.detailUrl)
+        ? [{ label: "View details" as const, url: business.detailUrl }]
+        : []),
       ...(business.website ? [{ label: "Visit website" as const, url: business.website }] : []),
     ],
   }));
   return {
     cards,
-    seeAll: input.businesses.length > cards.length
-      ? { label: "See all matching listings", count: input.businesses.length }
+    seeAll: businesses.length > cards.length
+      ? { label: "See all matching listings", count: businesses.length }
       : null,
     followUp: cards.length
       ? "Want me to narrow these by neighborhood, hours, or another preference?"

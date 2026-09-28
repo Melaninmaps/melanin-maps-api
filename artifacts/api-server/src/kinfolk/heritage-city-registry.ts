@@ -14,6 +14,50 @@ export {
   type HeritageCityResolution,
 };
 
+const DIRECT_LOCAL_TIME_REQUEST = /\b(?:what(?:'s| is) the time|what time is it|local time|time ?zone|central time)\b/i;
+
+/**
+ * Deterministic local-time support for the active Minneapolis audit city. It
+ * uses only a public city/state pair, never device, browser, or private origin.
+ */
+function directTimeZoneForCity(
+  city: string | null | undefined,
+  stateCode: string | null | undefined,
+): { label: string; timeZone: string } | null {
+  if (
+    city?.trim().toLocaleLowerCase("en-US") === "minneapolis" &&
+    stateCode?.trim().toUpperCase() === "MN"
+  ) {
+    return { label: "Central Time", timeZone: "America/Chicago" };
+  }
+  return null;
+}
+
+export function isDirectKinfolkLocalTimeQuestion(message: string): boolean {
+  return DIRECT_LOCAL_TIME_REQUEST.test(message);
+}
+
+export function answerDirectKinfolkLocalTime(input: {
+  message: string;
+  city: string | null | undefined;
+  stateCode: string | null | undefined;
+  now?: Date;
+}): string | null {
+  if (!isDirectKinfolkLocalTimeQuestion(input.message)) return null;
+  const location = directTimeZoneForCity(input.city, input.stateCode);
+  if (!location || !input.city) return null;
+  const rendered = new Intl.DateTimeFormat("en-US", {
+    timeZone: location.timeZone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(input.now ?? new Date());
+  return `${input.city} is in ${location.label}. Right now it is ${rendered}.`;
+}
+
 export type TurnGeographyResolution = Readonly<{
   city: string;
   state: string | null;

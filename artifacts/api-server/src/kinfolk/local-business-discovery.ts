@@ -27,6 +27,7 @@ import type { SearchQuery } from "./lens-planner";
 import { canonicalizeContextualUrl } from "./contextual-url";
 import {
   buildConversationalBusinessResultView,
+  uniqueActionableBusinessResults,
   type ConversationalBusinessResultView,
 } from "./business-result-view";
 import { isMwmDiasporaPromotionEnabled } from "../businesses/mwmCoreDiscoveryPolicy";
@@ -666,12 +667,17 @@ export async function discoverLocalBusinesses(input: {
     .slice(0, 8)
     .map(webFinding)
     .filter((value): value is BusinessDiscoveryWebFinding => value !== null);
-  const businesses = rankGovernedBusinessesForMember(
-    businessRows,
-    input.personalization,
-  )
-    .slice(0, 12)
-    .map(platformBusiness);
+  // Keep a single actionable display cohort for cards, text, and serialized
+  // recommendations. This never alters directory records; it only prevents a
+  // response from naming a duplicate or actionless place that is not clickable.
+  const businesses = uniqueActionableBusinessResults(
+    rankGovernedBusinessesForMember(
+      businessRows,
+      input.personalization,
+    )
+      .slice(0, 12)
+      .map(platformBusiness),
+  ).slice(0, 5);
   const subjectLabel = requestedSubjectLabel(input.subject);
   const mapPlaces = (input.requiredDesignationIds?.length ? [] : mapRows)
     .filter((place) =>

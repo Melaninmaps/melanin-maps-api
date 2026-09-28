@@ -124,6 +124,16 @@ describe("safety_emergency classification", () => {
     ).toBe("medical_health");
   });
 
+  it("does not treat ordinary requests for help as emergencies", () => {
+    for (const query of [
+      "Help me draft a text inviting my coworker to dinner for their birthday while I am in Minneapolis for work.",
+      "I am in Minneapolis for work and feel nervous about asking my boss for a raise. Help me prepare for that conversation tomorrow.",
+      "Please remind me tomorrow at 9 AM to send my coworker a birthday dinner invitation.",
+    ]) {
+      expect(classifyIntent(query, true)).not.toBe("safety_emergency");
+    }
+  });
+
   it("blocks community data and requires citations for emergencies", () => {
     const policy = getEvidencePolicy("safety_emergency");
     expect(policy.blockCommunityAsProof).toBe(true);

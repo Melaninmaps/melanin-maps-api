@@ -52,6 +52,8 @@ interface Message {
   fromUser: boolean;
   ts: number;
   taskCreated?: { listName?: string; taskCount?: number; taskTitle?: string };
+  taskAction?: TaskActionPayload | null;
+  taskActionDone?: boolean;
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
   sourceNote?: string | null;
@@ -65,8 +67,8 @@ interface Message {
 interface TaskActionPayload {
   type: "create_list" | "create_task" | "add_tasks";
   list?: { name: string; icon?: string };
-  tasks?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string }[];
-  task?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string };
+  tasks?: { title: string; notes?: string | null; dueAt?: string | null; dueTimeLabel?: string | null; category?: string }[];
+  task?: { title: string; notes?: string | null; dueAt?: string | null; dueTimeLabel?: string | null; category?: string };
 }
 
 const AUTH_TOKEN_KEY = "auth_session_token";
@@ -246,36 +248,38 @@ async function handleTaskAction(action: TaskActionPayload, token: string | null)
       headers,
       body: JSON.stringify({ name: action.list.name, icon: action.list.icon ?? "📋" }),
     });
-    if (listRes.ok) {
-      const { list } = await listRes.json() as { list: { id: string } };
-      const tasks = action.tasks ?? [];
-      if (tasks.length > 0 && list?.id) {
-        await fetch(`${base}/api/kinfolk/tasks/bulk`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ listId: list.id, tasks }),
-        });
-      }
-      return { listName: action.list.name, taskCount: tasks.length };
-    }
-  } else if ((action.type === "create_task" || action.type === "add_tasks") && action.tasks?.length) {
-    for (const t of action.tasks) {
-      await fetch(`${base}/api/kinfolk/tasks`, {
+    if (!listRes.ok) throw new Error("Task list was not saved");
+    const { list } = await listRes.json() as { list: { id: string } };
+    const tasks = action.tasks ?? [];
+    if (tasks.length > 0 && list?.id) {
+      const tasksRes = await fetch(`${base}/api/kinfolk/tasks/bulk`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ title: t.title, notes: t.notes, dueTimeLabel: t.dueTimeLabel, category: t.category }),
+        body: JSON.stringify({ listId: list.id, tasks }),
       });
+      if (!tasksRes.ok) throw new Error("Tasks were not saved");
+    }
+    return { listName: action.list.name, taskCount: tasks.length };
+  } else if ((action.type === "create_task" || action.type === "add_tasks") && action.tasks?.length) {
+    for (const t of action.tasks) {
+      const response = await fetch(`${base}/api/kinfolk/tasks`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ title: t.title, notes: t.notes, dueAt: t.dueAt, dueTimeLabel: t.dueTimeLabel, category: t.category }),
+      });
+      if (!response.ok) throw new Error("Task was not saved");
     }
     return { taskCount: action.tasks.length, taskTitle: action.tasks[0]?.title };
   } else if (action.type === "create_task" && action.task) {
-    await fetch(`${base}/api/kinfolk/tasks`, {
+    const response = await fetch(`${base}/api/kinfolk/tasks`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ title: action.task.title, notes: action.task.notes, dueTimeLabel: action.task.dueTimeLabel, category: action.task.category }),
+      body: JSON.stringify({ title: action.task.title, notes: action.task.notes, dueAt: action.task.dueAt, dueTimeLabel: action.task.dueTimeLabel, category: action.task.category }),
     });
+    if (!response.ok) throw new Error("Task was not saved");
     return { taskTitle: action.task.title };
   }
-  return {};
+  throw new Error("Task action was incomplete");
 }
 
 export function AIChatWidget() {
@@ -931,21 +935,15 @@ export function AIChatWidget() {
         companionMemoryOffer,
       } = await sendToKinfolk(text, token, voiceMode, await nearbyCityHint(text));
 
-      let taskCreated: Message["taskCreated"] | undefined;
-      if (taskAction && token) {
-        try {
-          taskCreated = await handleTaskAction(taskAction, token);
-        } catch {
-          // task creation failed silently — reply still shows
-        }
-      }
-
       const aiMsg: Message = {
         id: String(Date.now() + 1),
         text: reply,
         fromUser: false,
         ts: Date.now(),
-        taskCreated,
+        // Task proposals are intentionally not persisted here. The member must
+        // review and explicitly save the action below before any private task is
+        // written through the established authenticated task route.
+        taskAction: taskAction ?? null,
         location,
         locationSource,
         sourceNote,
@@ -982,6 +980,28 @@ export function AIChatWidget() {
       setWidgetAtBottom(true);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
+  };
+
+  const saveProposedTaskAction = async (messageId: string, action: TaskActionPayload) => {
+    const token = await getToken();
+    if (!token) {
+      Alert.alert("Sign in required", "Please sign in again before saving a Kinfolk reminder.");
+      return;
+    }
+    try {
+      const taskCreated = await handleTaskAction(action, token);
+      setMessages((current) => current.map((item) => item.id === messageId
+        ? { ...item, taskCreated, taskActionDone: true }
+        : item));
+    } catch {
+      Alert.alert("Reminder not saved", "Kinfolk could not save that reminder yet. Please try again.");
+    }
+  };
+
+  const dismissProposedTaskAction = (messageId: string) => {
+    setMessages((current) => current.map((item) => item.id === messageId
+      ? { ...item, taskActionDone: true }
+      : item));
   };
 
   const send = () => void sendMessage(input);
@@ -1262,6 +1282,29 @@ export function AIChatWidget() {
                     {responseFeedback[item.id] && (
                       <Text style={[styles.responseFeedbackThanks, { color: colors.mutedForeground }]}>Thanks — this helps Kinfolk tailor future answers for you.</Text>
                     )}
+                  </View>
+                )}
+                {item.taskAction && !item.taskActionDone && (
+                  <View style={[styles.taskCreatedBadge, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+                    <Feather name="clock" size={13} color={colors.primary} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.taskCreatedTxt, { color: colors.primary }]}>Kinfolk reminder ready to save</Text>
+                      <Text style={[styles.taskCreatedTxt, { color: colors.mutedForeground, fontSize: 10 }]}>Review the details above, then save it to your private task list.</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => void saveProposedTaskAction(item.id, item.taskAction!)}
+                      accessibilityLabel="Save this Kinfolk reminder"
+                      style={[styles.responseFeedbackButton, { borderColor: colors.primary, backgroundColor: `${colors.primary}18` }]}
+                    >
+                      <Text style={[styles.responseFeedbackButtonText, { color: colors.primary }]}>Save</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => dismissProposedTaskAction(item.id)}
+                      accessibilityLabel="Dismiss this Kinfolk reminder"
+                      style={[styles.responseFeedbackButton, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    >
+                      <Text style={[styles.listenTxt, { color: colors.mutedForeground }]}>Not now</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
                 {item.taskCreated && (

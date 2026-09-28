@@ -232,6 +232,15 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("I will not substitute a generic city description");
   });
 
+  it("returns a linked official Minneapolis arrival recovery instead of source-less filler when broad reporting is insufficient", () => {
+    expect(chatRoute).toContain("city_briefing_partial_official_recovery");
+    expect(chatRoute).toContain("resolveAuthoritativeWeather(destination)");
+    expect(chatRoute).toContain("currentCitySafetyBriefing({");
+    expect(chatRoute).toContain("citySafetySourcesForResponse(arrivalSafety)");
+    expect(chatRoute).toContain("this check did not establish a current city-level federal immigration-enforcement response");
+    expect(chatRoute).toContain("not going to fill the gaps with generic travel advice");
+  });
+
   it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {
     const cityBriefingPlan = chatRoute.indexOf("let cityBriefingPlan = isCityBriefingRequest(message, destination)");
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
@@ -295,6 +304,20 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("!memoryEnabled && !staffAuditPolicy");
     expect(routeSource).toContain("!staffAuditPolicy");
     expect(routeSource).not.toContain("New Chat is an audit control");
+  });
+
+  it("keeps ordinary draft, revision, career, reminder, and direct-time requests out of generic research fallback", () => {
+    const timeAnswer = chatRoute.indexOf("const directLocalTimeReply =");
+    const currentFallback = chatRoute.indexOf("contextualEvidenceNeedsFailClosedResponse(");
+
+    expect(chatRoute).toContain("isKinfolkOrdinaryAssistantRequest(message)");
+    expect(chatRoute).toContain("!ordinaryAssistantRequest &&");
+    expect(chatRoute).toContain("isKinfolkReminderRequest(message)");
+    expect(chatRoute).toContain("boundedEphemeralConversation(conversationContext)");
+    expect(chatRoute).toContain("reminder_audit_unavailable");
+    expect(timeAnswer).toBeGreaterThan(-1);
+    expect(timeAnswer).toBeLessThan(currentFallback);
+    expect(routeSource).toContain("answerDirectKinfolkLocalTime");
   });
 
   it("keeps current city-safety evidence separately gated from directory cards", () => {

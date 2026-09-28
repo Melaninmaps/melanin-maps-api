@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   HERITAGE_CITIES,
+  answerDirectKinfolkLocalTime,
   destinationForEnabledSession,
   getHeritageCity,
   resolveHeritageCity,
@@ -77,6 +78,23 @@ describe("canonical heritage-city geography resolution", () => {
 });
 
 describe("turn geography and enabled-session continuity", () => {
+  it("answers a direct Minneapolis time question in Central Time, not device time", () => {
+    const answer = answerDirectKinfolkLocalTime({
+      message: "What time is it in Minneapolis right now, and is Minneapolis on Central Time?",
+      city: "Minneapolis",
+      stateCode: "MN",
+      now: new Date("2026-09-28T21:30:00.000Z"),
+    });
+    expect(answer).toContain("Minneapolis is in Central Time");
+    expect(answer).toContain("4:30 PM CDT");
+    expect(answerDirectKinfolkLocalTime({
+      message: "What time is it in Minneapolis right now?",
+      city: "Philadelphia",
+      stateCode: "PA",
+      now: new Date("2026-09-28T21:30:00.000Z"),
+    })).toBeNull();
+  });
+
   it("resolves each confirmed Philadelphia screenshot query on the current turn", () => {
     const queries = [
       "tell me about Philadelphia",

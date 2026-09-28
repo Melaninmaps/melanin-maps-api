@@ -79,6 +79,8 @@ import {
 } from "../kinfolk/request-classifier";
 import {
   buildKinfolkDecisionRetrievalPlan,
+  isKinfolkOrdinaryAssistantRequest,
+  isKinfolkReminderRequest,
   kinfolkDecisionResponseMeta,
 } from "../kinfolk/decision-retrieval-plan";
 import {
@@ -110,8 +112,10 @@ import {
 import { isDirectoryTaxonomyV2Enabled } from "../kinfolk/directory-taxonomy-v2";
 import { resolveKinfolkStaffAuditPolicy } from "../kinfolk/staff-audit-mode";
 import {
+  answerDirectKinfolkLocalTime,
   destinationForEnabledSession,
   getHeritageCity,
+  isDirectKinfolkLocalTimeQuestion,
   resolveTurnGeography,
 } from "../kinfolk/heritage-city-registry";
 import {
@@ -388,6 +392,7 @@ import {
 } from "../kinfolk/conversation-mode";
 import { normalizeKinfolkMemberReply } from "../kinfolk/response-format";
 import { buildKinfolkCurrentTurnCorrectionInstruction } from "../kinfolk/current-turn-correction";
+import { normalizeKinfolkTaskAction } from "../kinfolk/task-action-contract";
 import {
   KINFOLK_VOICE_PREVIEW_TEXT,
   normalizeKinfolkSpeechRequest,
@@ -4556,7 +4561,7 @@ ${languagePersonalization}`
       : ""
   }${kbygInstructions}
 
-TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Create it immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other. For an explicit date and time, include that task's "dueAt" as an ISO-8601 timestamp and preserve "dueTimeLabel"; never invent a date/time. For a birthday or anniversary with no exact date/time, create the task without "dueAt" and warmly ask for the date afterward.
+TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Propose the task immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other. For an explicit date and time, include that task's "dueAt" as an ISO-8601 timestamp and preserve "dueTimeLabel"; never invent a date/time. In the reply, say it is ready to save; never claim it has been saved, scheduled, or that a notification will be delivered until the member confirms Save reminder. For a birthday or anniversary with no exact date/time, propose the task without "dueAt" and warmly ask for the date afterward.
 
 WHEN GIVING STRUCTURED RECOMMENDATIONS:
 Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON):
@@ -7663,6 +7668,39 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }))
   )
     return;
+  // Staff-audit mode is deliberately read/write isolated. A reminder request
+  // receives a truthful structured unavailable result rather than a discovery
+  // result or an unverified claim that a task was persisted.
+  if (staffAuditPolicy && isKinfolkReminderRequest(message)) {
+    res.status(200).json({
+      sessionId,
+      reply:
+        "This isolated staff audit does not create or schedule reminders, so no reminder was saved. In a member session, Kinfolk provides a reviewable Save reminder action and writes the task only after the member confirms it.",
+      reminder: { status: "unavailable", reason: "staff_audit_isolation" },
+      recommendations: null,
+      itinerary: null,
+      resultView: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "reminder_audit_unavailable",
+      responseMeta: {
+        schemaVersion: 1,
+        planKind: "general_assistant",
+        answerMode: "conversation",
+        retrieval: "none",
+        allowBusinessCards: false,
+        evidenceRequired: false,
+        requiresClarification: false,
+      },
+    });
+    return;
+  }
   if (
     verifiedImageUrls.length === 0 &&
     (await tryAnswerDeterministicBusinessDiscovery({
@@ -7972,8 +8010,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    const existingMessages: SessionMessage[] =
-      currentSession?.messages ?? ephemeralSession?.messages ?? [];
+    // Staff audits never read or write member sessions. They may pass only the
+    // immediate synthetic conversation being evaluated so a revision can be
+    // tested without weakening audit isolation.
+    const existingMessages: SessionMessage[] = staffAuditPolicy
+      ? boundedEphemeralConversation(conversationContext)
+      : currentSession?.messages ?? ephemeralSession?.messages ?? [];
     const conversationHistoryForContext: Array<{ role: "user" | "assistant"; content: string }> = buildKinfolkHistory(
       existingMessages,
       modelPolicy,
@@ -8003,9 +8045,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // through to a cached Library answer merely because optional adaptive
     // contextual intelligence is disabled. They still use the existing cited
     // provider path and preserve the same fail-closed evidence behavior.
+    const ordinaryAssistantRequest = isKinfolkOrdinaryAssistantRequest(message);
     const citedResearchRequired =
-      requiresCurrentResearch(researchContextMessage) ||
-      culturalLearningOpportunity !== null;
+      !ordinaryAssistantRequest &&
+      (requiresCurrentResearch(researchContextMessage) ||
+        culturalLearningOpportunity !== null);
     contextualResearchEnabled =
       contextualIntelligenceEnabled || citedResearchRequired;
 
@@ -8089,6 +8133,79 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
 
+    // A direct local-time question for a recognized current-turn city is stable
+    // enough to answer deterministically. It must not inherit the browser/server
+    // timezone or fall into generic current-research failure handling.
+    const directLocalTimeReply =
+      ![
+        "medical_health",
+        "legal_regulated",
+        "financial_regulated",
+        "safety_emergency",
+      ].includes(evidenceRoute.domain) &&
+      turnGeography?.currentTurn &&
+      isDirectKinfolkLocalTimeQuestion(message)
+        ? answerDirectKinfolkLocalTime({
+            message,
+            city: destination,
+            stateCode: destinationState,
+          })
+        : null;
+    if (directLocalTimeReply) {
+      const finalSessionId = await persistDeterministicDiscoveryTurn({
+        userId: req.user.id,
+        memoryEnabled,
+        sessionId,
+        message,
+        reply: directLocalTimeReply,
+        recommendations: null,
+        resultView: null,
+        followUpSuggestions: [],
+        sources: [],
+        destination: destination ?? "",
+        vibes,
+      });
+      res.status(200).json({
+        sessionId: finalSessionId,
+        reply: directLocalTimeReply,
+        recommendations: null,
+        itinerary: null,
+        resultView: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "general_knowledge",
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "direct_answer",
+        responseMeta: {
+          schemaVersion: 1,
+          planKind: "general_assistant",
+          answerMode: "conversation",
+          retrieval: "none",
+          allowBusinessCards: false,
+          evidenceRequired: false,
+          requiresClarification: false,
+        },
+        researchStatus: {
+          usedInternal: false,
+          usedLiveWeb: false,
+          degraded: false,
+          web: {
+            attempted: false,
+            state: "not_needed",
+            provider: null,
+            fallbackUsed: false,
+            partial: false,
+          },
+          asOf: new Date().toISOString(),
+        },
+      });
+      return;
+    }
+
     // ── Hair-loss / alopecia detection — pre-LLM care path ────────────────────
     // When the member asks about hair loss, alopecia, or thinning hair, Kinfolk
     // does NOT return a generic salon list. It returns a structured care plan with
@@ -8162,7 +8279,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       evidenceIntentClass === "financial_regulated" ||
       evidenceIntentClass === "safety_emergency";
     const rawIntentClass: KinfolkIntent =
-      earlyDecision.route === "business_discovery" &&
+      ordinaryAssistantRequest && !highConsequenceEvidence
+        ? "general_knowledge"
+        : earlyDecision.route === "business_discovery" &&
       !highConsequenceEvidence
         ? "business_discovery"
         : earlyDecision.route === "travel_planning" &&
@@ -8216,10 +8335,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
 
     const shouldResearchInLibrary =
-      (!lifeGuidance && intentClass === "medical_health") ||
+      !ordinaryAssistantRequest &&
+      ((!lifeGuidance && intentClass === "medical_health") ||
       intentClass === "legal_regulated" ||
       (intentClass === "general_knowledge" &&
-        requiresCurrentResearch(researchContextMessage));
+        requiresCurrentResearch(researchContextMessage)));
 
     // Kinfolk is the member's conversational companion; the Library is shared,
     // curator-approved community knowledge. For stable general questions, reuse
@@ -8782,6 +8902,102 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ...contextualEvidence.external,
         ...contextualEvidence.media,
       ];
+      // A whole-city arrival briefing may not degrade into generic travel filler
+      // simply because broad independent reporting did not clear its stricter
+      // corroboration gate. For cities in the reviewed official registry, return
+      // the available live weather plus direct city/transit alert links. This is
+      // deliberately a partial check—not a claim that no issue exists—and keeps
+      // current immigration context explicitly unknown when no applicable public
+      // source was retrieved.
+      const recoverySafetyCityId =
+        contextualPlan.taskMode === "city_briefing" && destination && destinationState
+          ? citySafetyCityId({ city: destination, stateCode: destinationState })
+          : null;
+      if (contextualPlan.taskMode === "city_briefing" && destination) {
+        const [arrivalWeather, arrivalSafety] = await Promise.all([
+          resolveAuthoritativeWeather(destination).catch(() => null),
+          recoverySafetyCityId && isCitySafetyBriefingV1Enabled()
+            ? currentCitySafetyBriefing({
+                cityId: recoverySafetyCityId,
+                auditPool: staffAuditPolicy ? undefined : pool,
+              }).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        const recoverySources = [
+          ...(arrivalWeather ? [{
+            id: arrivalWeather.source.url,
+            label: "official_weather" as const,
+            title: arrivalWeather.source.title,
+            url: arrivalWeather.source.url,
+          }] : []),
+          ...(arrivalSafety
+            ? citySafetySourcesForResponse(arrivalSafety).map((source) => ({
+                id: source.url,
+                label: "official_safety" as const,
+                title: source.title,
+                url: source.url,
+              }))
+            : []),
+        ];
+        const safetyCheck = arrivalSafety
+          ? arrivalSafety.unavailable
+            ? `• Official alert check: I could not verify a current ${destination}-specific safety condition from the available official feeds. Open the linked city and transit alerts before you head out; that is not a guarantee that every area or route is clear.`
+            : `• Official alert check: ${arrivalSafety.evidence.slice(0, 2).map((item) => `${item.title}: ${item.summary}`).join(" ")}`
+          : `• Official alert check: I could not complete the ${destination} official-alert check right now. Use the linked city and transit sources before you go.`;
+        const recoveryReply = [
+          `I could not complete the broader live ${destination} briefing from enough independent public reporting, so I am not going to fill the gaps with generic travel advice. Here is the current arrival check I could verify:`,
+          arrivalWeather ? arrivalWeather.reply : `• Weather: I could not load a current ${destination} forecast in this check. Use the linked official local alerts and your travel provider before departure.`,
+          safetyCheck,
+          "• Immigration and civic context: this check did not establish a current city-level federal immigration-enforcement response, so I will not speculate or label one as active. If that affects your plans, use an official local or federal update before travel.",
+        ].join("\n\n");
+        recordKinfolkTelemetry({
+          requestId: _kinfolkReqId,
+          questionClass: intentClass,
+          status: 200,
+          degraded: true,
+          degradedReason: "city_briefing_partial_official_recovery",
+          providerStatus: null,
+          latencyMs: Date.now() - _kinfolkStartedAt,
+          taskMode: contextualPlan.taskMode,
+          retrievalState: recoverySources.length > 0 ? "degraded" : "not_used",
+          sourceCount: recoverySources.length,
+        });
+        res.status(200).json({
+          sessionId,
+          reply: recoveryReply,
+          recommendations: null,
+          itinerary: null,
+          followUpSuggestions: ["Try the full current briefing again", "Show me the stable background"],
+          smartPromotion: null,
+          taskAction: null,
+          libraryAction: null,
+          intentClass,
+          sources: recoverySources,
+          sourceContext: "These links support the current weather and official city/transit checks shown above. The broader briefing remains incomplete.",
+          needsClarification: false,
+          originalQuery: message,
+          answerMode: "city_briefing_partial_official_recovery",
+          structuredContent: null,
+          mediaLinks: [],
+          relatedConnections: [],
+          degraded: true,
+          degradedReason: "city_briefing_partial_official_recovery",
+          researchStatus: {
+            usedInternal: false,
+            usedLiveWeb: Boolean(arrivalWeather) || Boolean(arrivalSafety),
+            degraded: true,
+            web: {
+              attempted: true,
+              state: "degraded",
+              provider: "official_city_sources",
+              fallbackUsed: true,
+              partial: true,
+            },
+            asOf: new Date().toISOString(),
+          },
+        });
+        return;
+      }
       recordKinfolkTelemetry({
         requestId: _kinfolkReqId,
         questionClass: intentClass,
@@ -10436,12 +10652,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         !Array.isArray(parsed.smartPromotion)
           ? (parsed.smartPromotion as Record<string, unknown>)
           : null;
-      taskAction =
-        parsed.taskAction &&
-        typeof parsed.taskAction === "object" &&
-        !Array.isArray(parsed.taskAction)
-          ? (parsed.taskAction as Record<string, unknown>)
-          : null;
+      // Model output can propose a task, but never creates one server-side.
+      // Only this bounded action shape reaches the existing authenticated task
+      // endpoints after the member explicitly selects Save reminder.
+      taskAction = normalizeKinfolkTaskAction(parsed.taskAction);
       if (contextualPlan) {
         try {
           contextualStructuredContent = parseKinfolkStructuredContent(

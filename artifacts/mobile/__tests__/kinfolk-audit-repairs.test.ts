@@ -46,4 +46,13 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(travel).toContain("setInputText(primaryRecordingDraftRef.current)");
     expect(travel).toContain("cancelPrimaryVoiceRecording()");
   });
+
+  it("does not silently persist a mobile reminder proposal and preserves its due date on explicit save", () => {
+    expect(widget).toContain("taskAction: taskAction ?? null");
+    expect(widget).not.toContain("if (taskAction && token)");
+    expect(widget).toContain("const saveProposedTaskAction = async");
+    expect(widget).toContain("handleTaskAction(action, token)");
+    expect(widget).toContain('accessibilityLabel="Save this Kinfolk reminder"');
+    expect(widget).toContain("dueAt: t.dueAt");
+  });
 });

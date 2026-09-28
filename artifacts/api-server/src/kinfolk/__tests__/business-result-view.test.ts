@@ -57,10 +57,77 @@ describe("conversational governed business result view", () => {
     expect(block).toContain("buildConversationalBusinessResultView({");
     expect(block).toContain("businesses: discoveryResult.discovery.platformBusinesses");
     expect(block).toContain("external: discoveryResult.discovery.webFindings");
-    expect(block).toContain("const conciseReply =\n    platformCount > 0");
+    expect(block).toContain("const conciseReply = [strictSafetyLimit, allergySafetyCaveat, conciseDirectoryReply]");
     expect(block).toContain("reply: conciseReply");
     expect(block).not.toContain("reply: discoveryResult.reply");
     expect(block).toContain("resultView,");
-    expect(block).toContain("followUpSuggestions: [resultView.followUp]");
+    expect(block).toContain("followUpSuggestions: deterministicFollowUps");
+  });
+
+  it("shows one actionable card for duplicate display candidates without changing records", () => {
+    const businesses = [
+      {
+        id: "salon-a",
+        recordType: "business" as const,
+        name: "Sister's & Combs",
+        category: "Beauty",
+        subcategory: "Salon",
+        description: "Salon listing.",
+        city: "Minneapolis",
+        stateCode: "MN",
+        detailUrl: "/businesses/salon-a",
+        website: null,
+        phone: null,
+        verified: false,
+        claimed: false,
+        matchReasons: ["subcategory"],
+        provenance: "mwm_public_business" as const,
+      },
+      {
+        id: "salon-b",
+        recordType: "business" as const,
+        name: "Sisters and Combs",
+        category: "Beauty",
+        subcategory: "Salon",
+        description: "Duplicate display candidate.",
+        city: "Minneapolis",
+        stateCode: "MN",
+        detailUrl: "/businesses/salon-b",
+        website: "https://sisters.example/",
+        phone: null,
+        verified: false,
+        claimed: false,
+        matchReasons: ["subcategory"],
+        provenance: "mwm_public_business" as const,
+      },
+      {
+        id: "actionless",
+        recordType: "business" as const,
+        name: "Unlinked Salon",
+        category: "Beauty",
+        subcategory: "Salon",
+        description: "No public action.",
+        city: "Minneapolis",
+        stateCode: "MN",
+        detailUrl: "not-a-public-route",
+        website: null,
+        phone: null,
+        verified: false,
+        claimed: false,
+        matchReasons: ["subcategory"],
+        provenance: "mwm_public_business" as const,
+      },
+    ];
+    const view = buildConversationalBusinessResultView({
+      businesses,
+      subjectLabel: "salons",
+    });
+
+    expect(businesses).toHaveLength(3);
+    expect(view.cards).toHaveLength(1);
+    expect(view.cards[0]).toMatchObject({ id: "salon-a", title: "Sister's & Combs" });
+    expect(view.cards[0]?.actions).toEqual([
+      { label: "View details", url: "/businesses/salon-a" },
+    ]);
   });
 });

@@ -205,8 +205,10 @@ const FINANCIAL_SIGNALS = [
   /\b(invest|investing|investment|stock|bonds|mutual fund|401k|ira|roth|pension|retirement|portfolio|dividend|crypto|bitcoin|ethereum|nft|tax|taxes|tax return|irs|deduction|audit|credit score|credit report|loan|mortgage|refinance|interest rate|apr|heloc|debt|bankruptcy|budget|financial plan|wealth|net worth|income|expense|savings|compound interest|index fund|etf|brokerage)\b/i,
 ];
 
+// Emergency routing requires concrete immediate-danger language. Everyday
+// phrases such as “help me draft…” or “help me prepare…” remain conversational.
 const SAFETY_EMERGENCY_SIGNALS = [
-  /\b(emergency|911|help me|i'm in danger|in danger|being followed|someone is following|domestic violence|abuse|assault|attacked|attack|shooting|shot|stabbed|fire|flood|evacuation|evacuate|missing person|kidnap|trafficking|human trafficking|suicid|self.harm|overdos|unconscious|not breathing|call 911|call the police)\b/i,
+  /\b(?:911|call 911|call the police|i(?:'m| am) in danger|being followed|someone is following(?: me)?|someone (?:is )?trying to break into|domestic violence|being abused|sexual assault|being attacked|shooting|been shot|stabbed|fire|flood|evacuat(?:e|ion)|missing person|kidnap(?:ped|ping)?|human trafficking|suicid(?:e|al)?|self[ -]?harm|overdos(?:e|ing)|unconscious|not breathing)\b/i,
 ];
 
 const CURRENT_INFO_SIGNALS = [

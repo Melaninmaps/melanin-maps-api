@@ -23,7 +23,20 @@ export type KinfolkDecisionRetrievalPlan = Readonly<{
 }>;
 
 const DRAFT_OR_REVISION_RE = /\b(?:draft|write|rewrite|revise|edit|email|text message|message to|make (?:that|it) (?:more |less )?(?:formal|casual|lighter|shorter|longer|warmer|clearer)|help me (?:say|talk|have (?:a )?conversation))\b/i;
+const REMINDER_RE = /\b(?:remind me|set (?:a )?reminder|reminder|don'?t let me forget|add (?:this|that|it) to (?:my )?(?:task|to-do|todo|list))\b/i;
+const CAREER_COACHING_RE = /\b(?:ask(?:ing)? (?:my )?(?:boss|manager|supervisor) for (?:a )?raise|prepare for (?:a |that )?(?:raise|salary|performance|career|job) conversation|career coaching|interview prep)\b/i;
 const POLICY_TRADEOFF_RE = /\b(?:protect|overshadow(?:ed|ing)?|trade[- ]?off|balance|limited (?:options|choices)|where (?:the )?(?:community|people) gather|practical (?:information|guidance)|economic support)\b/i;
+
+/** A date word never turns drafting, career coaching, or a reminder into research. */
+export function isKinfolkReminderRequest(message: string): boolean {
+  return REMINDER_RE.test(message);
+}
+
+export function isKinfolkOrdinaryAssistantRequest(message: string): boolean {
+  return DRAFT_OR_REVISION_RE.test(message)
+    || isKinfolkReminderRequest(message)
+    || CAREER_COACHING_RE.test(message);
+}
 
 function responseMeta(plan: KinfolkDecisionRetrievalPlan): KinfolkResponseMeta {
   return {
@@ -52,6 +65,8 @@ export function buildKinfolkDecisionRetrievalPlan(input: Readonly<{
   const message = input.message.trim();
   const currentRequired = requiresCurrentResearch(message);
   const isDraftOrRevision = DRAFT_OR_REVISION_RE.test(message);
+  const isReminder = isKinfolkReminderRequest(message);
+  const isCareerCoaching = CAREER_COACHING_RE.test(message);
   const isPlatformPolicy = input.request.reason === "platform_policy_question_routes_to_general_knowledge";
   const highConsequence = input.evidence.risk === "high" ||
     input.evidence.domain === "medical_health" ||
@@ -79,10 +94,14 @@ export function buildKinfolkDecisionRetrievalPlan(input: Readonly<{
   // A request to draft or revise a message is ordinary assistant work. A word
   // such as "boss" or "formal" must not accidentally make it a legal/financial
   // research request; the member has not asked Kinfolk to advise on that topic.
-  if (isDraftOrRevision) {
+  if (isDraftOrRevision || isReminder || isCareerCoaching) {
     return {
       kind: "general_assistant",
-      userGoal: "Draft, revise, or coach through an everyday communication task.",
+      userGoal: isReminder
+        ? "Create a practical reminder or task without searching for businesses."
+        : isCareerCoaching
+          ? "Prepare for an everyday career conversation without unnecessary current research."
+          : "Draft, revise, or coach through an everyday communication task.",
       decisionNeeded: null,
       tensions: [],
       retrieval: "none",
@@ -90,7 +109,7 @@ export function buildKinfolkDecisionRetrievalPlan(input: Readonly<{
       allowBusinessCards: false,
       requireEvidence: false,
       requiresClarification: false,
-      answerMode: "draft_or_revision",
+      answerMode: isDraftOrRevision ? "draft_or_revision" : "conversation",
     };
   }
 

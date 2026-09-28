@@ -76,6 +76,10 @@ const DIRECT_DISCOVERY_IMPERATIVE_RE =
 // remains a discovery request.
 const DIRECT_LOCATION_QUESTION_RE =
   /^\s*where\s+is\s+(?!a\b|an\b|the\b|my\b|your\b)([A-Za-z][A-Za-z .'-]{1,50}?)\s*[?!.]?\s*$/i;
+// City, travel, or dinner words can appear inside a normal draft, career, or
+// reminder request. These requests are never directory discovery by themselves.
+const ORDINARY_ASSISTANT_RE =
+  /\b(?:draft|rewrite|revise|reword|edit|text message|email|remind me|set (?:a )?reminder|don'?t let me forget|ask(?:ing)? (?:my )?(?:boss|manager|supervisor) for (?:a )?raise|prepare for (?:a |that )?(?:raise|salary|performance|career|job) conversation)\b/i;
 
 export function isKinfolkPlatformPolicyQuestion(message: string): boolean {
   return (
@@ -139,6 +143,18 @@ export function classifyKinfolkRequest(
       culturalContext,
       clarification: null,
       reason: "platform_policy_question_routes_to_general_knowledge",
+    };
+  }
+
+  if (ORDINARY_ASSISTANT_RE.test(text)) {
+    return {
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location,
+      ownershipPreference,
+      culturalContext,
+      clarification: null,
+      reason: "ordinary_assistant_request_routes_to_general_knowledge",
     };
   }
 

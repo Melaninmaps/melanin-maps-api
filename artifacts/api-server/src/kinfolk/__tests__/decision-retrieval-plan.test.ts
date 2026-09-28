@@ -67,4 +67,25 @@ describe("Kinfolk decision and retrieval plan", () => {
       allowBusinessCards: false,
     });
   });
+
+  it("keeps career coaching and reminders out of current-research fallback", () => {
+    expect(plan(
+      "I am in Minneapolis for work and feel nervous about asking my boss for a raise. Help me prepare for that conversation tomorrow.",
+      "Minneapolis",
+    )).toMatchObject({
+      kind: "general_assistant",
+      retrieval: "none",
+      allowBusinessCards: false,
+      requireEvidence: false,
+    });
+    expect(plan(
+      "Please remind me tomorrow at 9 AM to send my coworker a birthday dinner invitation.",
+      "Minneapolis",
+    )).toMatchObject({
+      kind: "general_assistant",
+      retrieval: "none",
+      allowBusinessCards: false,
+      requireEvidence: false,
+    });
+  });
 });
