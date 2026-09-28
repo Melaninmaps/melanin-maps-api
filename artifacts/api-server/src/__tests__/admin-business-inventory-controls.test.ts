@@ -199,6 +199,14 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(migrations).toContain("ensureBusinessPermanentDeletionAuditSchema");
   });
 
+  it("retains a source cohort receipt in the private deletion audit before removing only its restrictive link", () => {
+    expect(adminRoute).toContain("inventoryCohortReceipt");
+    expect(adminRoute).toContain("FROM business_inventory_cohort_receipts");
+    expect(adminRoute).toContain("DELETE FROM business_inventory_cohort_receipts WHERE business_id = ANY($1::text[])");
+    expect(adminRoute).toContain("every other dependent record remains");
+    expect(adminRoute).not.toContain("DELETE FROM business_inventory_cohort_receipts CASCADE");
+  });
+
   it("exports the exact filtered inventory, Archive vault, or deliberate all-inventory scope", () => {
     expect(adminRoute).toContain("compileAdminBusinessInventoryFilters");
     expect(adminRoute).toContain("status !== \"all\"");

@@ -1372,14 +1372,50 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
       return;
     }
 
+    // Source-cohort receipts are factual reconciliation evidence rather than
+    // community or owner content. Their restrictive FK correctly prevents an
+    // accidental delete, but an administrator's explicitly confirmed permanent
+    // deletion must be able to move that evidence into the private deletion
+    // receipt first. No other relationship is removed or cascaded.
+    const cohortReceipts = await client.query<{
+      business_id: string;
+      snapshot: Record<string, unknown>;
+    }>(
+      `SELECT business_id, to_jsonb(business_inventory_cohort_receipts) AS snapshot
+         FROM business_inventory_cohort_receipts
+        WHERE business_id = ANY($1::text[])
+        FOR UPDATE`,
+      [ids],
+    );
+    const cohortReceiptsByBusinessId = new Map<string, Record<string, unknown>>();
+    for (const receipt of cohortReceipts.rows) {
+      cohortReceiptsByBusinessId.set(receipt.business_id, receipt.snapshot);
+    }
+
     for (const row of current.rows) {
       await client.query(
         `INSERT INTO business_permanent_deletion_audit_events
            (id, business_id, actor_user_id, reason, snapshot)
          VALUES ($1, $2, $3, $4, $5::jsonb)`,
-        [randomUUID(), row.id, req.user?.id ?? null, reason, JSON.stringify(row.snapshot)],
+        [
+          randomUUID(),
+          row.id,
+          req.user?.id ?? null,
+          reason,
+          JSON.stringify({
+            business: row.snapshot,
+            inventoryCohortReceipt: cohortReceiptsByBusinessId.get(row.id) ?? null,
+          }),
+        ],
       );
     }
+    // Deliberately explicit rather than cascading. The source receipt is now
+    // retained in the audit event above; every other dependent record remains
+    // protected by its own restrictive foreign key.
+    await client.query(
+      "DELETE FROM business_inventory_cohort_receipts WHERE business_id = ANY($1::text[])",
+      [ids],
+    );
     // Deliberately no CASCADE. If this record has linked data protected by a
     // foreign key, PostgreSQL rejects the transaction and preserves everything.
     await client.query("DELETE FROM businesses WHERE id = ANY($1::text[])", [ids]);
