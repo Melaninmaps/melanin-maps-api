@@ -316,6 +316,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("startMinnesotaSourcePinResolution");
     expect(adminRoute).toContain("isMinnesotaSourceBatch");
     expect(adminRoute).toContain("const createdRows = nextBatch.length > 0");
+    expect(adminRoute).toContain("matchedExisting.isDuplicate && matchedExisting.duplicateOfId");
+    expect(adminRoute).toContain("existingById.get(matchedExisting.duplicateOfId)");
   });
 
   it("creates a map pin only from a successfully geocoded supplied street address", () => {

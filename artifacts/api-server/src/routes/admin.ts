@@ -90,6 +90,7 @@ type SourceDirectoryExistingBusiness = Readonly<{
   kinfolkRecommendationReason: string | null;
   intakeBatchReference: string | null;
   isDuplicate: boolean | null;
+  duplicateOfId: string | null;
 }>;
 
 async function sourceDirectoryExistingBusinessCandidates(
@@ -120,7 +121,8 @@ async function sourceDirectoryExistingBusinessCandidates(
             research_source_url AS "researchSourceUrl",
             kinfolk_recommendation_reason AS "kinfolkRecommendationReason",
             intake_batch_reference AS "intakeBatchReference",
-            COALESCE(is_duplicate, false) AS "isDuplicate"
+            COALESCE(is_duplicate, false) AS "isDuplicate",
+            duplicate_of_id AS "duplicateOfId"
        FROM businesses
       WHERE (
           COALESCE(is_duplicate, false) = false
@@ -374,8 +376,16 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
         : [];
       const existingById = new Map(existingBusinesses.map((business) => [business.id, business]));
       for (const match of exactMatches) {
-        const existing = existingById.get(match.existingBusinessId!);
-        if (!existing) continue;
+        const matchedExisting = existingById.get(match.existingBusinessId!);
+        if (!matchedExisting) continue;
+        // A prior source receipt can live in the Duplicate vault while pointing
+        // at a canonical public record. Preserve the vault row for admin review,
+        // but add source-backed fields only to that linked canonical profile.
+        const existing = (
+          matchedExisting.isDuplicate && matchedExisting.duplicateOfId
+            ? existingById.get(matchedExisting.duplicateOfId)
+            : null
+        ) ?? matchedExisting;
         const candidate = match.candidate;
         const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
         const social = candidate.socialLinks ?? {};
