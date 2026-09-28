@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCityBriefingPlan,
   buildCityBriefingPromptBlock,
+  deriveCityBriefingPurpose,
   isCityBriefingRequest,
   isStableCityBriefingBackgroundRequest,
 } from "../city-briefing";
@@ -43,6 +44,61 @@ describe("city briefing policy", () => {
         "Minneapolis",
       ),
     ).toBe(true);
+  });
+
+  it("recognizes a future resident's city-life question in any resolved city", () => {
+    expect(
+      isCityBriefingRequest(
+        "What will I see in Milwaukee before I move there?",
+        "Milwaukee",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps visiting and moving briefings distinct", () => {
+    expect(deriveCityBriefingPurpose("I am visiting Minneapolis for a week.")).toBe("visiting");
+    expect(deriveCityBriefingPurpose("I am planning to move to Minneapolis.")).toBe("moving");
+
+    const visitPlan = buildCityBriefingPlan({
+      message: "What should I know before I visit Minneapolis?",
+      city: "Minneapolis",
+      stateCode: "MN",
+    });
+    const movePlan = buildCityBriefingPlan({
+      message: "What will I see in Milwaukee before I move there?",
+      city: "Milwaukee",
+      stateCode: "WI",
+    });
+    expect(visitPlan.retrievalQueries.join(" ")).toMatch(/visitor travel arrival/i);
+    expect(movePlan.retrievalQueries.join(" ")).toMatch(/resident services housing tenant/i);
+
+    expect(buildCityBriefingPromptBlock({
+      city: "Minneapolis",
+      stateCode: "MN",
+      preferences: null,
+      purpose: "visiting",
+    })).toContain("immediate arrival needs");
+    expect(buildCityBriefingPromptBlock({
+      city: "Milwaukee",
+      stateCode: "WI",
+      preferences: null,
+      purpose: "moving",
+    })).toContain("longer-term city-life questions");
+  });
+
+  it("keeps a whole-arrival question source-backed even when weather and transit are included", () => {
+    expect(
+      isCityBriefingRequest(
+        "What current safety, transit, weather, and practical information should I verify before I travel to Minneapolis?",
+        "Minneapolis",
+      ),
+    ).toBe(true);
+    const plan = buildCityBriefingPlan({
+      message: "What current safety, transit, weather, and practical information should I verify before I travel to Minneapolis?",
+      city: "Minneapolis",
+      stateCode: "MN",
+    });
+    expect(plan.retrievalQueries.join(" ")).toMatch(/federal immigration enforcement/i);
   });
 
   it("turns the fail-closed stable-background action into a stable city briefing, not a literal search", () => {
@@ -103,6 +159,8 @@ describe("city briefing policy", () => {
     expect(prompt).toContain("member’s actual current plan support it");
     expect(prompt).toContain("hotel, itinerary, route, planned stop, or travel date is known");
     expect(prompt).toContain("Black, African, Afro-Latin, or broader diaspora context");
+    expect(prompt).toContain("federal immigration-enforcement or public-service response");
+    expect(prompt).toContain("Do not infer a contributor's nationality");
   });
 
   it("does not claim a preference lens when no interests were explicitly saved", () => {

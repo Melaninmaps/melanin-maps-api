@@ -341,6 +341,7 @@ import {
 import {
   buildCityBriefingPlan,
   buildCityBriefingPromptBlock,
+  deriveCityBriefingPurpose,
   isCityBriefingRequest,
 } from "../kinfolk/city-briefing";
 import {
@@ -6333,6 +6334,14 @@ async function tryAnswerAuthoritativeWeather(input: {
   cityHint?: string;
 }): Promise<boolean> {
   if (!isLiveWeatherQuestion(input.message)) return false;
+  const currentTurnCity = resolveTurnGeography(
+    input.message,
+    input.cityHint ?? null,
+  )?.city ?? null;
+  // A broad "before I go" request may include weather, but it remains a
+  // source-backed city-arrival briefing. Do not collapse its transit, civic,
+  // and public-service context into a weather-only reply.
+  if (isCityBriefingRequest(input.message, currentTurnCity)) return false;
 
   const requestedLocation = extractLiveWeatherLocation(
     input.message,
@@ -7626,6 +7635,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
   if (
     verifiedImageUrls.length === 0 &&
+    !isCityBriefingRequest(
+      message,
+      resolveTurnGeography(
+        message,
+        typeof cityHint === "string" && cityHint.length <= 120
+          ? cityHint
+          : null,
+      )?.city ?? null,
+    ) &&
     (await tryAnswerCurrentCitySafetyBriefing({
       req,
       res,
@@ -9925,6 +9943,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             city: destination,
             stateCode: destinationState,
             mode: contextualPlan.freshness === "stable" ? "stable" : "current",
+            purpose: deriveCityBriefingPurpose(message),
             // `prefs` is already null when the member disables personalised
             // suggestions. The helper admits only explicitly saved interest labels.
             preferences: prefs,

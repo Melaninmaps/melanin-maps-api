@@ -343,6 +343,12 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain('answerMode: "authoritative_weather"');
   });
 
+  it("does not let weather or direct-safety shortcuts replace a whole city-arrival briefing", () => {
+    expect(routeSource).toContain("A broad \"before I go\" request may include weather");
+    expect(routeSource).toContain("if (isCityBriefingRequest(input.message, currentTurnCity)) return false;");
+    expect(chatRoute).toContain("!isCityBriefingRequest(");
+  });
+
   it("uses the bounded source-seeking ancient Mediterranean follow-up only for the supplied cultural case", () => {
     expect(routeSource).toContain("buildKinfolkCulturalLearningOpportunity");
     expect(chatRoute).toContain("const culturalLearningOpportunity =");
