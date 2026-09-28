@@ -43,6 +43,10 @@ import {
 import { minneapolisSourceBackedDirectoryCandidates } from "../directoryIntake/minneapolisSourceBackedDirectoryCandidates";
 import { mnblackStatewideSourceBackedDirectoryCandidates } from "../directoryIntake/mnblackStatewideSourceBackedDirectoryCandidates";
 import {
+  startMinnesotaSourcePinResolution,
+  type MinnesotaSourcePinTarget,
+} from "../directoryIntake/mnBlackDirectoryPinResolution";
+import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
   sourceBackedDirectoryPublicationFields,
@@ -66,6 +70,7 @@ type SourceDirectoryExistingBusiness = Readonly<{
   city: string | null;
   state: string | null;
   address: string | null;
+  country: string | null;
   website: string | null;
   sourceUrl: string | null;
   dedupeKey: string | null;
@@ -107,7 +112,7 @@ async function sourceDirectoryExistingBusinessCandidates(
     (candidate) => candidate.sourceListingUrl ?? candidate.sourceUrl,
   );
   const result = await pool.query<SourceDirectoryExistingBusiness>(
-    `SELECT id, name, city, state, address, website, description, phone,
+    `SELECT id, name, city, state, address, country, website, description, phone,
             facebook, instagram, tiktok, twitter, youtube, pinterest,
             ownership_designations AS "ownershipDesignations", black_owned AS "blackOwned",
             tags, source_url AS "sourceUrl", dedupe_key AS "dedupeKey",
@@ -132,6 +137,14 @@ async function sourceDirectoryExistingBusinessCandidates(
 
 function distinctSourceText(values: readonly (string | null | undefined)[]): string[] {
   return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))];
+}
+
+/** Returns source text only when the established record has no retained value. */
+function firstSourceValue<T extends string | null | undefined>(
+  existing: T,
+  source: T,
+): T {
+  return existing?.trim() ? existing : source;
 }
 
 /**
@@ -350,6 +363,8 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     // canonical record. Exact matches are enriched only where a field is blank;
     // source descriptions and tags are appended/unioned idempotently. The
     // transaction keeps each bounded batch an all-or-nothing publication.
+    const isMinnesotaSourceBatch = requestedBatch.startsWith("mn_black_business_directory_");
+    const exactSourcePinTargets: MinnesotaSourcePinTarget[] = [];
     await db.transaction(async (transaction) => {
       // Legacy no-batch reconciliation preserves its historical create-only
       // behavior. Additive enrichment is deliberately available only to an
@@ -364,7 +379,11 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
         const candidate = match.candidate;
         const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
         const social = candidate.socialLinks ?? {};
+        const retainedAddress = firstSourceValue(existing.address, candidate.address);
+        const retainedCountry = firstSourceValue(existing.country, candidate.country);
         await transaction.update(businessesTable).set({
+          address: retainedAddress,
+          country: retainedCountry,
           description: appendSourceDescription(existing.description, candidate.sourceDescription),
           phone: existing.phone ?? publicationFields.phone,
           website: existing.website ?? candidate.officialUrl,
@@ -389,9 +408,25 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
           intakeBatchReference: existing.intakeBatchReference ?? candidate.batch,
           updatedAt: new Date(),
         }).where(eq(businessesTable.id, existing.id));
+        if (
+          isMinnesotaSourceBatch
+          && retainedAddress?.trim()
+          && existing.city?.trim()
+          && existing.state?.trim()
+        ) {
+          exactSourcePinTargets.push({
+            id: existing.id,
+            name: existing.name ?? candidate.name,
+            address: retainedAddress,
+            city: existing.city,
+            state: existing.state,
+            country: retainedCountry ?? candidate.country,
+          });
+        }
       }
 
-      await transaction.insert(businessesTable).values(nextBatch.map((candidate) => {
+      const createdRows = nextBatch.length > 0
+        ? await transaction.insert(businessesTable).values(nextBatch.map((candidate) => {
         const blackOwned = candidate.ownershipDesignations.includes("Black / African American-Owned");
         const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
         const social = candidate.socialLinks ?? {};
@@ -443,8 +478,42 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
           kinfolkRecommendationReason: candidate.ownershipEvidence || null,
           intakeBatchReference: candidate.batch,
         } as typeof businessesTable.$inferInsert;
-      }));
+        })).returning({
+          id: businessesTable.id,
+          name: businessesTable.name,
+          address: businessesTable.address,
+          city: businessesTable.city,
+          state: businessesTable.state,
+          country: businessesTable.country,
+          sourceUrl: businessesTable.sourceUrl,
+        })
+        : [];
+
+      if (isMinnesotaSourceBatch) {
+        const publicSourceUrls = new Set(
+          publicNextBatch.map((candidate) => candidate.sourceListingUrl ?? candidate.sourceUrl),
+        );
+        for (const row of createdRows) {
+          if (!publicSourceUrls.has(row.sourceUrl ?? "")) continue;
+          exactSourcePinTargets.push({
+            id: row.id,
+            name: row.name,
+            address: row.address,
+            city: row.city,
+            state: row.state,
+            country: row.country,
+          });
+        }
+      }
     });
+
+    if (isMinnesotaSourceBatch) {
+      startMinnesotaSourcePinResolution(
+        pool,
+        (message, details) => console.info(message, details ?? {}),
+        exactSourcePinTargets,
+      );
+    }
 
     res.status(201).json({
       ok: true,

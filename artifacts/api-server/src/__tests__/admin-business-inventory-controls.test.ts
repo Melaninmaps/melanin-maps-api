@@ -311,6 +311,11 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("mn_black_business_directory_statewide_2026_09_28");
     expect(adminScreen).toContain("Publish Minnesota");
     expect(adminScreen).toContain("searchable, unclaimed MWM profile");
+    expect(adminRoute).toContain("address: retainedAddress");
+    expect(adminRoute).toContain("country: retainedCountry");
+    expect(adminRoute).toContain("startMinnesotaSourcePinResolution");
+    expect(adminRoute).toContain("isMinnesotaSourceBatch");
+    expect(adminRoute).toContain("const createdRows = nextBatch.length > 0");
   });
 
   it("creates a map pin only from a successfully geocoded supplied street address", () => {
