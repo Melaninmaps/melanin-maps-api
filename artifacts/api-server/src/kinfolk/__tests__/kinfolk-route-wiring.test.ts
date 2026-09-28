@@ -277,6 +277,21 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("input.staffAudit ? undefined : pool");
   });
 
+  it("answers an explicit city safety or transit question before business discovery and never returns a directory card", () => {
+    const directSafety = routeSource.indexOf("async function tryAnswerCurrentCitySafetyBriefing");
+    const safetyInvocation = chatRoute.indexOf("await tryAnswerCurrentCitySafetyBriefing({");
+    const discoveryInvocation = chatRoute.indexOf("await tryAnswerDeterministicBusinessDiscovery({");
+
+    expect(directSafety).toBeGreaterThan(-1);
+    expect(routeSource).toContain("requestsCurrentCitySafetyBriefing(input.message)");
+    expect(routeSource).toContain("renderDirectCitySafetyBriefing(location.city, briefing)");
+    expect(routeSource).toContain('answerMode: "official_city_safety"');
+    expect(routeSource).toContain("recommendations: null");
+    expect(routeSource).toContain("resultView: null");
+    expect(safetyInvocation).toBeGreaterThan(-1);
+    expect(safetyInvocation).toBeLessThan(discoveryInvocation);
+  });
+
   it("keeps documentary taxonomy tags separately gated from ownership evidence", () => {
     const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
     const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);

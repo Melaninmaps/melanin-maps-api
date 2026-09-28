@@ -7,7 +7,9 @@ import {
   currentCitySafetyBriefing,
   fetchAndNormalizeSafetySource,
   isCitySafetyBriefingV1Enabled,
+  renderDirectCitySafetyBriefing,
   renderCitySafetyBriefing,
+  requestsCurrentCitySafetyBriefing,
 } from "../city-safety-briefing-v1";
 
 describe("city safety briefing v1", () => {
@@ -40,6 +42,18 @@ describe("city safety briefing v1", () => {
     expect(citySafetyCityId({ city: "Houston", stateCode: "TX" })).toBe("houston-tx");
     expect(citySafetyCityId({ city: "Minneapolis", stateCode: "PA" })).toBeNull();
     expect(citySafetyCityId({ city: "Saint Paul", stateCode: "MN" })).toBeNull();
+  });
+
+  it("recognizes explicit current safety and transit questions without treating ordinary business requests as safety", () => {
+    expect(requestsCurrentCitySafetyBriefing(
+      "What current, source-backed safety and transit considerations should I know before I go to Minneapolis?",
+    )).toBe(true);
+    expect(requestsCurrentCitySafetyBriefing(
+      "Are there current transit service alerts in Philadelphia today?",
+    )).toBe(true);
+    expect(requestsCurrentCitySafetyBriefing(
+      "Find a Black-owned lunch restaurant in Houston.",
+    )).toBe(false);
   });
 
   it("returns an active official condition only from an unexpired official source", async () => {
@@ -101,6 +115,10 @@ describe("city safety briefing v1", () => {
     );
     expect(renderCitySafetyBriefing(result)).toMatch(/could not verify a current city-specific safety condition/i);
     expect(renderCitySafetyBriefing(result)).not.toMatch(/\bsafe\b/i);
+    const directReply = renderDirectCitySafetyBriefing("Philadelphia", result);
+    expect(directReply).toMatch(/official sources/i);
+    expect(directReply).not.toMatch(/hotel|restaurant/i);
+    expect(directReply).toMatch(/will not turn this into a business recommendation/i);
   });
 
   it("rejects a cross-city evidence payload at the rendering boundary", () => {

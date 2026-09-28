@@ -94,7 +94,9 @@ import {
   citySafetySourcesForResponse,
   currentCitySafetyBriefing,
   isCitySafetyBriefingV1Enabled,
+  renderDirectCitySafetyBriefing,
   renderCitySafetyBriefing,
+  requestsCurrentCitySafetyBriefing,
 } from "../kinfolk/city-safety-briefing-v1";
 import { isDirectoryTaxonomyV2Enabled } from "../kinfolk/directory-taxonomy-v2";
 import { resolveKinfolkStaffAuditPolicy } from "../kinfolk/staff-audit-mode";
@@ -6460,6 +6462,111 @@ function resolveBusinessResultFollowUp(
   };
 }
 
+/**
+ * An explicit current safety/transit question is answered from the reviewed
+ * official-source registry before any business-category or travel heuristic can
+ * attach a listing. It deliberately has no access to member memory or catalog
+ * records, and it fails closed to the normal evidence route outside its three
+ * supported cities.
+ */
+async function tryAnswerCurrentCitySafetyBriefing(input: {
+  req: Request;
+  res: Response;
+  sessionId?: string;
+  message: string;
+  vibes: string[];
+  memoryEnabled: boolean;
+  cityHint?: string;
+  staffAudit?: boolean;
+}): Promise<boolean> {
+  if (!isCitySafetyBriefingV1Enabled() || !requestsCurrentCitySafetyBriefing(input.message)) {
+    return false;
+  }
+  const location = resolveTurnGeography(input.message, input.cityHint ?? null);
+  if (!location?.state) return false;
+  const cityId = citySafetyCityId({ city: location.city, stateCode: location.state });
+  if (!cityId) return false;
+
+  const briefing = await currentCitySafetyBriefing({
+    cityId,
+    auditPool: input.staffAudit ? undefined : pool,
+  });
+  const sources = citySafetySourcesForResponse(briefing);
+  const reply = renderDirectCitySafetyBriefing(location.city, briefing);
+  const finalSessionId = await persistDeterministicDiscoveryTurn({
+    userId: input.req.user!.id,
+    memoryEnabled: input.memoryEnabled,
+    sessionId: input.sessionId,
+    message: input.message,
+    reply,
+    recommendations: null,
+    resultView: null,
+    followUpSuggestions: [
+      `Check official ${location.city} transit alerts`,
+      `Ask about documented businesses in ${location.city}`,
+    ],
+    sources,
+    destination: location.city,
+    vibes: input.vibes,
+  });
+  input.res.status(200).json({
+    sessionId: finalSessionId,
+    reply,
+    recommendations: null,
+    itinerary: null,
+    followUpSuggestions: [
+      `Check official ${location.city} transit alerts`,
+      `Ask about documented businesses in ${location.city}`,
+    ],
+    resultView: null,
+    smartPromotion: null,
+    taskAction: null,
+    libraryAction: null,
+    intentClass: "safety",
+    responseMeta: {
+      schemaVersion: 1,
+      planKind: "city_safety_briefing",
+      answerMode: "official_city_safety",
+      retrieval: "approved_official_city_sources",
+      allowBusinessCards: false,
+      evidenceRequired: true,
+      requiresClarification: false,
+    },
+    sources: sources.map(({ title, url }) => ({
+      id: url,
+      title,
+      url,
+      label: "official_safety" as const,
+    })),
+    sourceNote: "This answer uses approved official city, transit, or weather sources only. Business-directory and safety sources are separate.",
+    educationalStatus: briefing.unavailable ? "limited" : "current_official_sources",
+    discovery: null,
+    needsClarification: false,
+    originalQuery: input.message,
+    location: {
+      city: location.city,
+      state: location.state,
+      source: location.source,
+    },
+    locationSource: location.source,
+    degraded: briefing.unavailable,
+    researchStatus: {
+      usedInternal: false,
+      usedLiveWeb: true,
+      degraded: briefing.unavailable,
+      web: {
+        attempted: true,
+        state: briefing.unavailable ? "degraded" : "completed",
+        provider: "approved_official_city_sources",
+        fallbackUsed: false,
+        partial: briefing.unavailable,
+      },
+      asOf: new Date().toISOString(),
+    },
+  });
+  return true;
+}
+
 async function tryAnswerDeterministicBusinessDiscovery(input: {
   req: Request;
   res: Response;
@@ -7336,6 +7443,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
   }
 
+  if (
+    verifiedImageUrls.length === 0 &&
+    (await tryAnswerCurrentCitySafetyBriefing({
+      req,
+      res,
+      sessionId,
+      message,
+      vibes,
+      memoryEnabled,
+      cityHint:
+        typeof cityHint === "string" && cityHint.length <= 120
+          ? cityHint
+          : undefined,
+      staffAudit: Boolean(staffAuditPolicy),
+    }))
+  )
+    return;
   if (
     verifiedImageUrls.length === 0 &&
     (await tryAnswerDeterministicBusinessDiscovery({

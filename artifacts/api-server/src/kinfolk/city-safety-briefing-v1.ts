@@ -11,6 +11,18 @@ export function isCitySafetyBriefingV1Enabled(
   return environment.CITY_SAFETY_BRIEFING_V1 === "true";
 }
 
+/**
+ * Keep a city-level safety or transit question out of the directory and model
+ * recommendation paths. This detects the member's explicit current-turn
+ * request only; it does not infer a risk profile, a route, or a neighborhood.
+ */
+export function requestsCurrentCitySafetyBriefing(message: string): boolean {
+  const asksForSafety = /\b(?:safety|safe(?:ty)?|unsafe|crime|danger|emergency|travel advis(?:ory|ories)|weather alert)\b/i.test(message);
+  const asksForTransit = /\b(?:transit|public transport(?:ation)?|rider alerts?|service alerts?|service disruption|detours?|subway|metro|septa|bus(?:es)?|train(?:s)?)\b/i.test(message);
+  const currentOrTravelContext = /\b(?:current|today|right now|before (?:i|we) go|travel(?:ing)?|trip|visit(?:ing)?|heading to|going to)\b/i.test(message);
+  return asksForSafety || (asksForTransit && currentOrTravelContext);
+}
+
 export type CitySafetyTopic =
   | "official_alert"
   | "transit"
@@ -482,6 +494,17 @@ export function renderCitySafetyBriefing(result: CitySafetyBriefing): string {
     .map((item) => `${item.title}: ${item.summary}`)
     .join(" ");
   return `Current official information for this city: ${evidenceCopy} This is source-attributed current information, not a determination that an area is safe.`;
+}
+
+export function renderDirectCitySafetyBriefing(
+  city: string,
+  result: CitySafetyBriefing,
+): string {
+  return [
+    `For ${city}, I can provide only the current information supported by approved official sources.`,
+    renderCitySafetyBriefing(result),
+    "I will not turn this into a business recommendation, infer a personal risk level, or make a neighborhood safety determination. For immediate danger, contact local emergency services.",
+  ].join("\n\n");
 }
 
 export function citySafetySourcesForResponse(result: CitySafetyBriefing): Array<{ title: string; url: string }> {
