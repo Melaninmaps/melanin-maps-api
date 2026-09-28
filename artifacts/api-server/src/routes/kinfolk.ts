@@ -339,10 +339,13 @@ import {
   type SemanticTurnPlan,
 } from "../kinfolk/semantic-turn-planner";
 import {
+  buildSemanticCityReadinessClassifierPrompt,
   buildCityBriefingPlan,
   buildCityBriefingPromptBlock,
   deriveCityBriefingPurpose,
+  isSemanticCityReadinessDecision,
   isCityBriefingRequest,
+  mayNeedSemanticCityReadiness,
 } from "../kinfolk/city-briefing";
 import {
   DOCUMENTED_PROXIMITY_CAVEAT,
@@ -4423,10 +4426,10 @@ ENGLISH QUERY RECOVERY — NON-NEGOTIABLE:
 All current member-facing search and conversation is in English. Treat ordinary spelling errors, transposed letters, missing apostrophes, speech-to-text errors, and plain-language wording as an accessibility issue, not a reason to shame or abandon the member. When one ordinary English meaning is clearly supported by the full sentence, answer that meaning in clear English; briefly state the interpretation only when it would help the member understand it.
 - Never silently substitute a named person, school, business, medicine, law, financial product, diagnosis, place, date, amount, or other material fact. If two reasonable interpretations could change the answer, say what you can verify and ask one focused question instead of guessing.
 - Do not manufacture a correction just to make a search work. Preserve the member's explicit request, and do not let a saved preference, demographic cue, or cultural context override it.
-- Keep the tone respectful: do not comment on education, grammar, intelligence, or language ability. Offer the next useful question or action after the verified answer.
+- Keep the tone respectful: do not comment on education, grammar, intelligence, or language ability. Offer the next useful question or action after the grounded answer.
 
 SOURCE AND ANSWER RULES:
-Prioritize primary, official, and community-relevant sources appropriate to the topic. For health, law, money, housing, and other high-stakes topics, provide educational information and reliable next-step resources; do not diagnose, give personal legal advice, promise outcomes, or present recommendations as guarantees. Cite sources in the full Library entry. Distinguish verified facts, community-sourced experience, and Kinfolk's practical synthesis. State uncertainty when evidence is limited.
+Prioritize primary, official, and community-relevant sources appropriate to the topic. For health, law, money, housing, and other high-stakes topics, provide educational information and reliable next-step resources; do not diagnose, give personal legal advice, promise outcomes, or present recommendations as guarantees. Use the research to keep the answer grounded, but do not narrate the research process or call the answer source-backed, verified, evidence-based, or system-generated. The interface handles links separately. State uncertainty naturally when it matters.
 
 UNIVERSAL ASSISTANT + CULTURAL RELEVANCE STANDARD:
 Kinfolk can answer the same broad non-coding questions a capable general assistant can answer: ordinary facts, school help, current events, entertainment, family life, food, travel, money, credit, and practical how-to questions. Never force every question through an identity or minority lens.
@@ -4513,7 +4516,7 @@ HONESTY RULE: Don't have real-time data (transit, tutor databases, scholarships,
 GENERAL ASSISTANT BASELINE — NON-NEGOTIABLE:
 - Kinfolk is a capable, impartial general assistant as well as a local-discovery companion. Answer the actual question first; do not redirect an unrelated question into travel, businesses, a Library handoff, or a promotion.
 - A saved preference may improve a later optional recommendation, but it must never change, soften, omit, or distort the direct factual answer. Direct current-turn requests always win.
-- For current matters, use the supplied live evidence. Separate verified facts from a person's claim, an interpretation, and material uncertainty. Link sources when the server supplied them; never invent citations.
+- For current matters, use the supplied live evidence. Keep facts, a person's claim, an interpretation, and material uncertainty distinct without turning the answer into a report about evidence. Link sources when the server supplied them; never invent citations.
 - For a cultural-consensus question, explain the conclusion as a consensus or an evaluative judgment, name the criteria (for example impact, critical reception, awards, sales, or audience response), acknowledge a defensible alternative when warranted, and never present an opinion as settled fact.
 - Give a complete answer at the depth the question calls for. A simple fact may be brief; a comparison, planning question, explanation, or "what should I do next" question deserves the useful context, tradeoffs, and next steps in the same response.
 
@@ -7048,7 +7051,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const conciseDirectoryReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
       ? strictSourceBackedDiscovery
-        ? `I found no source-backed MWM ${designationSummary} ${requestedSubjectLabel} match for every designation you selected${verifiedRadiusSummary} in ${scope.city}. I will not substitute an untagged listing or infer ownership. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
+        ? `I couldn't find an MWM ${designationSummary} ${requestedSubjectLabel} listing that matches every designation you selected${verifiedRadiusSummary} in ${scope.city}. I won't guess at ownership or quietly swap in a listing outside your focus. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
         : `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
       : explicitAllPlacesExpansion && platformCount > 0
         ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
@@ -8333,13 +8336,73 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // the optional semantic-ambiguity planner is disabled: otherwise Kinfolk can
     // fall through to a model-only description instead of checking current news,
     // public notices, and local reporting.
-    const cityBriefingPlan = isCityBriefingRequest(message, destination)
+    let cityBriefingPlan = isCityBriefingRequest(message, destination)
       ? buildCityBriefingPlan({
           message,
           city: destination!,
           stateCode: destinationState,
         })
       : null;
+
+    // Do not make members learn a private command vocabulary. When a city is
+    // resolved but the request is casual or incomplete, a bounded semantic
+    // classifier decides only whether this is a city-readiness request. It can
+    // activate the existing governed briefing, never create facts, listings, or
+    // identity assumptions. Explicit business and high-consequence requests
+    // retain their deterministic routes above.
+    if (
+      !cityBriefingPlan &&
+      mayNeedSemanticCityReadiness({
+        message,
+        destination,
+        currentTurnLocation: Boolean(turnGeography?.currentTurn),
+        requestRoute: earlyDecision.route,
+        highConsequence: highConsequenceEvidence,
+      }) &&
+      destination
+    ) {
+      try {
+        const completion = await openai.chat.completions.create(
+          buildKinfolkChatCompletionRequest({
+            model: kinfolkModel("fallback"),
+            maxOutputTokens: 48,
+            temperature: 0,
+            messages: [
+              {
+                role: "system",
+                content: buildSemanticCityReadinessClassifierPrompt({
+                  city: destination,
+                  stateCode: destinationState,
+                }),
+              },
+              { role: "user", content: message },
+            ],
+          }) as ChatCompletionCreateParamsNonStreaming,
+          {
+            signal: AbortSignal.any([
+              contextualRequestAbort.signal,
+              AbortSignal.timeout(3_000),
+            ]),
+          },
+        );
+        const content = completion.choices[0]?.message?.content ?? "{}";
+        const semanticDecision = JSON.parse(content) as unknown;
+        if (isSemanticCityReadinessDecision(semanticDecision)) {
+          cityBriefingPlan = buildCityBriefingPlan({
+            message,
+            city: destination,
+            stateCode: destinationState,
+          });
+        }
+      } catch (error) {
+        // This enhancement fails open to the established general-chat path;
+        // it cannot make a normal Kinfolk turn unavailable.
+        req.log.debug(
+          { event: "KINFOLK_CITY_READINESS_CLASSIFIER_UNAVAILABLE", pgCode: pgCode(error) },
+          "city-readiness semantic classifier unavailable",
+        );
+      }
+    }
 
     // The contextual planner is intentionally downstream of deterministic safety
     // routing and governed business handling. It receives the locked route and no
@@ -10403,7 +10466,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     if (travelPlanning && destination && !hasGovernedItineraryCoverage) {
-      reply = `I can help with general, source-backed information about ${destination}, but I cannot build an MWM itinerary there yet because the MWM directory does not have governed coverage for that destination. I will not substitute listings from another city. Ask a general question about ${destination}, or choose a city covered by the MWM directory.`;
+      reply = `I can still help you get oriented in ${destination}, but I can't build an MWM itinerary there yet because the directory does not have enough local coverage for that. I won't swap in listings from another city. Ask a general question about ${destination}, or choose a city already covered by the MWM directory.`;
       recommendations = null;
       itinerary = null;
       followUpSuggestions = [];

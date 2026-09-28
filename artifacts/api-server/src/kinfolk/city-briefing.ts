@@ -41,6 +41,53 @@ export type CityBriefingPreferenceInput = {
 export type CityBriefingPurpose = "visiting" | "moving" | "general";
 
 /**
+ * A first-class semantic handoff candidate. This deliberately recognizes a
+ * resolved place plus an ordinary conversational or travel turn; the bounded
+ * classifier below decides whether the person actually wants city readiness.
+ * It is not a growing list of member phrases, and it never runs for a
+ * high-consequence or explicit local-business request.
+ */
+export function mayNeedSemanticCityReadiness(input: {
+  message: string;
+  destination: string | null;
+  currentTurnLocation: boolean;
+  requestRoute: "business_discovery" | "travel_planning" | "clarification" | "general_knowledge";
+  highConsequence: boolean;
+}): boolean {
+  const message = input.message.trim();
+  if (!input.destination || input.highConsequence || message.length < 3 || message.length > 600) return false;
+  if (input.requestRoute !== "general_knowledge" && input.requestRoute !== "travel_planning") return false;
+  // A travel continuation can use the active conversation's resolved city;
+  // otherwise require that the member named a city in the current turn.
+  return input.currentTurnLocation || input.requestRoute === "travel_planning";
+}
+
+/** The model chooses only whether to activate the existing governed city briefing. */
+export function isSemanticCityReadinessDecision(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const result = value as { intent?: unknown; confidence?: unknown };
+  return result.intent === "city_readiness"
+    && typeof result.confidence === "number"
+    && Number.isFinite(result.confidence)
+    && result.confidence >= 0.76;
+}
+
+export function buildSemanticCityReadinessClassifierPrompt(input: {
+  city: string;
+  stateCode: string | null;
+}): string {
+  const place = [input.city, input.stateCode].filter(Boolean).join(", ");
+  return [
+    "Classify the member's newest message only. Do not answer it.",
+    `The active city context is ${place}.`,
+    "Return strict JSON only: {\"intent\":\"city_readiness\"|\"not_city_readiness\",\"confidence\":0..1}.",
+    "Choose city_readiness when ordinary, incomplete, casual, or slang wording means the member wants help arriving, visiting, moving through, settling into, or getting current practical context for that city. This includes an implied request for a current city update, arrival orientation, local conditions, or what they should be prepared for.",
+    "Choose not_city_readiness for a single local business/service search, a narrow weather-only question, a direct fact or history question, a specific event lookup, a regulated medical/legal/financial question, or an unrelated question.",
+    "Do not infer identity, profile data, protected traits, immigration status, safety needs, or a hotel. The city name is location context only.",
+  ].join("\n");
+}
+
+/**
  * A short visit and a prospective move have different practical questions.
  * This uses only words the member supplied in the current turn; it does not
  * infer residency, identity, household, immigration status, or life stage.
@@ -150,12 +197,13 @@ export function buildCityBriefingPromptBlock(input: {
       : "The member did not state whether this is a visit or a move. Give a neutral city overview and ask one concise follow-up only if visit-versus-move would materially change the next answer.";
   const lines = [
     `CITY BRIEFING — ${place}:`,
+    "MEMBER VOICE: Speak like a thoughtful, well-connected cousin helping someone get oriented—not like a research report. Lead with what matters in plain language. Do not say source-backed, verified facts, evidence, data, system, or explain the research process. The app shows any available links separately. When a current detail cannot be confirmed, say naturally that you could not confirm a current update and give the next sensible check.",
     stableBackground
       ? "Give a stable factual background, not a current-status update. Use clearly labeled sections: City orientation; Civic and practical context; Culture and community; and What to verify closer to travel."
-      : "Give a current, source-cited overview with clearly labeled sections: What is happening in current news and reporting; Civic and practical updates; Culture and community; and What to watch next.",
+      : "Give a current overview with clear, human section labels: What is happening; Practical heads-up; Culture and community; and What to watch next.",
     stableBackground
       ? "Do not describe a condition as current, active, open, safe, disrupted, or scheduled today. State clearly that current alerts, hours, transit conditions, and events need a fresh check closer to travel."
-      : "Start with material verified facts. Separate reporting from analysis and never present a rumor, post, or unverified community submission as fact.",
+      : "Start with the material current information. Separate reporting from analysis and never present a rumor, post, or unverified community submission as fact.",
     purposeInstruction,
     "Do not invent local events, crime/safety claims, political positions, statistics, businesses, or community sentiment. If evidence is incomplete, say so plainly.",
     "Do not make a restaurant, nightlife, or business list unless the member separately asks for one. A direct request always overrides any optional interest lens.",

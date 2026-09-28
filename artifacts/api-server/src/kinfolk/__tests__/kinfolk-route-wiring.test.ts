@@ -150,7 +150,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("const hasGovernedItineraryCoverage =");
     expect(chatRoute).toContain("Boolean(destinationScope) && businessCatalog.length > 0");
     expect(chatRoute).toContain("travelPlanning && hasGovernedItineraryCoverage && destination");
-    expect(chatRoute).toContain("I will not substitute listings from another city.");
+    expect(chatRoute).toContain("I won't swap in listings from another city.");
     expect(chatRoute).toContain("!hasGovernedItineraryCoverage && destination");
     expect(chatRoute).toContain("itiner(?:ary|aries)|plan(?:ning)?|trip|visit(?:ing)?");
     expect(chatRoute).toContain("may offer useful, general travel");
@@ -214,7 +214,7 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("routes a resolved before-you-go question through current news research even when semantic planning is off", () => {
-    const cityBriefingPlan = chatRoute.indexOf("const cityBriefingPlan = isCityBriefingRequest(message, destination)");
+    const cityBriefingPlan = chatRoute.indexOf("let cityBriefingPlan = isCityBriefingRequest(message, destination)");
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
     const semanticPlanner = chatRoute.indexOf("if (contextualResearchEnabled && !contextualPlan)");
     const researchExecution = chatRoute.indexOf("if (contextualPlan) {");
@@ -225,6 +225,19 @@ describe("Kinfolk chat static wiring", () => {
     expect(researchExecution).toBeGreaterThan(semanticPlanner);
     expect(chatRoute).toContain('contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000');
     expect(chatRoute).toContain("I will not substitute a generic city description");
+  });
+
+  it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {
+    const cityBriefingPlan = chatRoute.indexOf("let cityBriefingPlan = isCityBriefingRequest(message, destination)");
+    const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
+
+    expect(cityBriefingPlan).toBeGreaterThan(-1);
+    expect(contextualPlan).toBeGreaterThan(cityBriefingPlan);
+    expect(chatRoute).toContain("mayNeedSemanticCityReadiness({");
+    expect(chatRoute).toContain("highConsequence: highConsequenceEvidence");
+    expect(chatRoute).toContain("buildSemanticCityReadinessClassifierPrompt");
+    expect(chatRoute).toContain("isSemanticCityReadinessDecision(semanticDecision)");
+    expect(chatRoute).toContain("KINFOLK_CITY_READINESS_CLASSIFIER_UNAVAILABLE");
   });
 
   it("keeps the corrected strict directory path disabled until its exact release flag is enabled", () => {
@@ -242,7 +255,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("verifiedRadius: verifiedRadius ?? undefined");
     expect(helper).toContain("radiusVerification: \"unavailable_without_verified_public_origin\"");
     expect(helper).toContain("verified_public_origin_straight_line");
-    expect(helper).toContain("I will not substitute an untagged listing or infer ownership.");
+    expect(helper).toContain("I won't guess at ownership or quietly swap in a listing outside your focus.");
   });
 
   it("does not omit a requested current-safety concern from a strict directory reply", () => {

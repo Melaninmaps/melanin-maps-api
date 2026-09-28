@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildCityBriefingPlan,
   buildCityBriefingPromptBlock,
+  buildSemanticCityReadinessClassifierPrompt,
   deriveCityBriefingPurpose,
   isCityBriefingRequest,
+  isSemanticCityReadinessDecision,
+  mayNeedSemanticCityReadiness,
   isStableCityBriefingBackgroundRequest,
 } from "../city-briefing";
 import {
@@ -53,6 +56,36 @@ describe("city briefing policy", () => {
         "Milwaukee",
       ),
     ).toBe(true);
+  });
+
+  it("offers a bounded semantic handoff for natural city-readiness language without overriding protected routes", () => {
+    expect(mayNeedSemanticCityReadiness({
+      message: "I'm headed to Minneapolis this weekend. Put me on to what I should know.",
+      destination: "Minneapolis",
+      currentTurnLocation: true,
+      requestRoute: "travel_planning",
+      highConsequence: false,
+    })).toBe(true);
+    expect(mayNeedSemanticCityReadiness({
+      message: "I need legal advice about my visa in Minneapolis.",
+      destination: "Minneapolis",
+      currentTurnLocation: true,
+      requestRoute: "general_knowledge",
+      highConsequence: true,
+    })).toBe(false);
+    expect(mayNeedSemanticCityReadiness({
+      message: "Find a nail salon in Minneapolis.",
+      destination: "Minneapolis",
+      currentTurnLocation: true,
+      requestRoute: "business_discovery",
+      highConsequence: false,
+    })).toBe(false);
+    expect(isSemanticCityReadinessDecision({ intent: "city_readiness", confidence: 0.76 })).toBe(true);
+    expect(isSemanticCityReadinessDecision({ intent: "city_readiness", confidence: 0.75 })).toBe(false);
+    expect(isSemanticCityReadinessDecision({ intent: "not_city_readiness", confidence: 1 })).toBe(false);
+    const prompt = buildSemanticCityReadinessClassifierPrompt({ city: "Milwaukee", stateCode: "WI" });
+    expect(prompt).toContain("ordinary, incomplete, casual, or slang wording");
+    expect(prompt).toContain("Do not infer identity");
   });
 
   it("keeps visiting and moving briefings distinct", () => {
@@ -158,12 +191,13 @@ describe("city briefing policy", () => {
         knowBeforeYouGo: true,
       },
     });
-    expect(prompt).toContain("Start with material verified facts");
+    expect(prompt).toContain("MEMBER VOICE: Speak like a thoughtful, well-connected cousin");
+    expect(prompt).toContain("Start with the material current information");
     expect(prompt).toContain("museums");
     expect(prompt).toContain("family activities");
     expect(prompt).toContain("not assumptions about identity");
     expect(prompt).toContain("Community perspective is not currently source evidence");
-    expect(prompt).toContain("current news and reporting");
+    expect(prompt).toContain("What is happening; Practical heads-up");
     expect(prompt).toContain("supplied current sources support that specific claim");
     expect(prompt).toContain("member’s actual current plan support it");
     expect(prompt).toContain("hotel, itinerary, route, planned stop, or travel date is known");
