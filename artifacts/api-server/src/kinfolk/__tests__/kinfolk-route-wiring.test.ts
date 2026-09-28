@@ -65,6 +65,11 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("namedBusiness && !healthCareOverride.suppressesGeneralBusinessCatalog");
   });
 
+  it("runs medical questions through authoritative retrieval before the Living Library shortcut", () => {
+    expect(chatRoute).toContain('intentClass !== "medical_health"');
+    expect(chatRoute).toContain("buildHealthRetrievalContext(");
+  });
+
   it("keeps city-bearing health requests out of the ordinary discovery fast path", () => {
     const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
     const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);

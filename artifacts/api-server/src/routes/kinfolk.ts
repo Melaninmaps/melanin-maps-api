@@ -8550,6 +8550,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // optional enrichment and may never block an in-chat answer.
     if (
       shouldResearchInLibrary &&
+      intentClass !== "medical_health" &&
       !contextualResearchEnabled &&
       !destination &&
       message.trim().length > 15
